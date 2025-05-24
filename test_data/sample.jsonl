@@ -1,0 +1,10 @@
+{"timestamp":"2023-07-18T15:04:23.456Z","level":"ERROR","component":"database","message":"Connection failed","host":"db.example.com","port":5432,"retry":3,"error_code":"CONN_REFUSED"}
+{"timestamp":"2023-07-18T15:04:25.789Z","level":"WARN","component":"database","message":"Using fallback connection","fallback":"localhost:5433","original_host":"db.example.com"}
+{"timestamp":"2023-07-18T15:06:41.210Z","level":"INFO","component":"database","message":"Connection established","host":"localhost","port":5433,"latency_ms":45}
+{"timestamp":"2023-07-18T15:07:12.345Z","level":"DEBUG","component":"auth","message":"User authentication attempt","user_id":"user123","method":"password","success":true,"ip":"192.168.1.100"}
+{"timestamp":"2023-07-18T15:08:30.678Z","level":"INFO","component":"api","message":"Request completed","endpoint":"/users","method":"GET","status":200,"duration_ms":127,"user_agent":"curl/7.68.0"}
+{"timestamp":"2023-07-18T15:09:15.234Z","level":"ERROR","component":"api","message":"Rate limit exceeded","endpoint":"/api/data","client_ip":"192.168.1.50","rate_limit":100,"current_requests":150}
+{"timestamp":"2023-07-18T15:10:00.000Z","level":"INFO","component":"scheduler","message":"Daily backup started","backup_type":"incremental","estimated_duration":"30m"}
+{"timestamp":"2023-07-18T15:11:45.567Z","level":"DEBUG","component":"cache","message":"Cache miss","key":"user:123:profile","ttl":3600,"cache_size":"85%"}
+{"timestamp":"2023-07-18T15:12:30.890Z","level":"WARN","component":"disk","message":"Low disk space","partition":"/var/log","free_space":"1.2GB","threshold":"2GB"}
+{"timestamp":"2023-07-18T15:13:10.123Z","level":"INFO","component":"auth","message":"User logout","user_id":"user123","session_duration":"45m","reason":"timeout"}

@@ -178,6 +178,304 @@ your_application | kelora -k timestamp,level,message -i
 
 This is particularly useful for monitoring applications in real-time while focusing only on the information you need.
 
+
+# Testing Kelora
+
+This document describes how to test kelora to ensure it works correctly.
+
+## Quick Start
+
+The easiest way to run all tests is:
+
+```bash
+# Run all tests (recommended)
+make test-full
+
+# Or just the automated tests
+make test
+```
+
+## Test Types
+
+### 1. Unit Tests
+These test individual components in isolation:
+
+```bash
+# Run unit tests
+cargo test --lib
+# or
+make test-unit
+```
+
+Unit tests cover:
+- Event parsing and field extraction
+- Formatter output correctness
+- Core field identification
+- Error handling in parsers
+
+### 2. Integration Tests
+These test the complete application end-to-end:
+
+```bash
+# Run integration tests
+cargo test --test integration_tests
+# or 
+make test-integration
+```
+
+Integration tests cover:
+- Complete parsing pipelines
+- CLI argument handling
+- Input/output processing
+- Error scenarios
+- Performance characteristics
+
+### 3. Manual Tests
+Comprehensive tests including real file processing:
+
+```bash
+# Run the full test suite
+./test_kelora.sh
+# or
+make test-full
+```
+
+## Setting Up Test Environment
+
+1. **Install dependencies:**
+   ```bash
+   cargo fetch
+   # or
+   make install
+   ```
+
+2. **Build the project:**
+   ```bash
+   cargo build --release
+   # or
+   make build
+   ```
+
+3. **Make test script executable:**
+   ```bash
+   chmod +x test_kelora.sh
+   ```
+
+## Test Data
+
+Create test data files in a `test_data/` directory:
+
+```bash
+mkdir -p test_data
+```
+
+**test_data/sample.jsonl:**
+```json
+{"timestamp":"2023-07-18T15:04:23.456Z","level":"ERROR","message":"Connection failed","host":"db.example.com"}
+{"timestamp":"2023-07-18T15:04:25.789Z","level":"INFO","message":"Connection established","host":"localhost"}
+```
+
+**test_data/sample.logfmt:**
+```
+timestamp="2023-07-18T15:04:23.456Z" level=ERROR message="Connection failed" host="db.example.com"
+timestamp="2023-07-18T15:04:25.789Z" level=INFO message="Connection established" host="localhost"
+```
+
+## Manual Testing Examples
+
+### Basic Functionality
+```bash
+# Test JSONL parsing
+cat test_data/sample.jsonl | ./target/release/kelora -f jsonl
+
+# Test key filtering
+./target/release/kelora -f jsonl -k timestamp,level,message test_data/sample.jsonl
+
+# Test level filtering
+./target/release/kelora -f jsonl -l ERROR,WARN test_data/sample.jsonl
+
+# Test statistics
+./target/release/kelora -f jsonl -S test_data/sample.jsonl
+```
+
+### Format Conversion
+```bash
+# Convert logfmt to JSONL
+./target/release/kelora -f logfmt -F jsonl test_data/sample.logfmt
+
+# Show only core fields
+./target/release/kelora -f jsonl -c test_data/sample.jsonl
+```
+
+### Error Handling
+```bash
+# Test with malformed data
+echo '{"valid":"json"}
+{invalid json}
+{"another":"valid"}' | ./target/release/kelora -f jsonl
+
+# Debug mode
+echo '{invalid}' | ./target/release/kelora -f jsonl --debug
+```
+
+## Performance Testing
+
+Test with larger datasets:
+
+```bash
+# Generate 10,000 log entries
+for i in $(seq 1 10000); do
+  echo "{\"timestamp\":\"2023-07-18T15:04:23.456Z\",\"level\":\"INFO\",\"message\":\"Message $i\",\"id\":$i}"
+done > large_test.jsonl
+
+# Test performance
+time ./target/release/kelora -f jsonl -S large_test.jsonl
+```
+
+## Expected Test Results
+
+### Unit Tests
+All unit tests should pass:
+```
+running 8 tests
+test event::tests::test_filter_keys ... ok
+test formatters::tests::test_default_formatter_empty_event ... ok
+test formatters::tests::test_escape_quotes ... ok
+test parsers::tests::test_logfmt_parser_basic ... ok
+...
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+```
+
+### Integration Tests
+All integration tests should pass:
+```
+running 18 tests
+test test_basic_jsonl_parsing ... ok
+test test_basic_logfmt_parsing ... ok
+test test_key_filtering ... ok
+...
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+```
+
+### Manual Tests
+The test script should show:
+```
+🧪 Running kelora test suite...
+================================
+📦 Building kelora...
+✅ Build successful
+🔧 Running unit tests...
+✅ Unit tests passed
+🔄 Running integration tests...
+✅ Integration tests passed
+📝 Running manual tests with sample data...
+✅ JSONL parsing works
+✅ Key filtering works
+✅ Level filtering works
+✅ Statistics mode works
+✅ All tests completed successfully!
+```
+
+## Troubleshooting
+
+### Build Issues
+```bash
+# Clean and rebuild
+make clean
+make build
+
+# Check Rust version
+rustc --version  # Should be 1.70+
+```
+
+### Test Failures
+```bash
+# Run tests with verbose output
+cargo test -- --nocapture
+
+# Run specific test
+cargo test test_basic_jsonl_parsing
+
+# Debug integration test
+cargo test --test integration_tests test_basic_jsonl_parsing -- --nocapture
+```
+
+### Permission Issues
+```bash
+# Make test script executable
+chmod +x test_kelora.sh
+
+# Check if binary was built
+ls -la target/release/kelora
+```
+
+## Continuous Integration
+
+For CI/CD pipelines, use:
+
+```bash
+# Install dependencies
+cargo fetch
+
+# Check formatting
+cargo fmt --check
+
+# Run linter
+cargo clippy -- -D warnings
+
+# Run all tests
+cargo test
+
+# Build release
+cargo build --release
+```
+
+## Adding New Tests
+
+### Unit Tests
+Add to the appropriate module's `#[cfg(test)]` section:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_new_functionality() {
+        // Your test here
+    }
+}
+```
+
+### Integration Tests
+Add to `tests/integration_tests.rs`:
+
+```rust
+#[test]
+fn test_new_feature() {
+    let input = r#"test input"#;
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "jsonl"], input);
+    assert_eq!(exit_code, 0);
+    // Your assertions here
+}
+```
+
+### Manual Tests
+Add to `test_kelora.sh`:
+
+```bash
+# Test N: Description
+print_status "Test N: Description" $YELLOW
+./target/release/kelora [args] > "$TEMP_DIR/outputN.txt"
+if [[ condition ]]; then
+    print_status "✅ Test N passed" $GREEN
+else
+    print_status "❌ Test N failed" $RED
+fi
+```
+
+Happy testing! 🧪
+
 ## Future Development
 
 This is an MVP (Minimum Viable Product) implementation. Future versions will include:

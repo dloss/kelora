@@ -1,0 +1,6 @@
+<34>Oct 11 22:14:15 webserver nginx: 192.168.1.10 - - [11/Oct/2023:22:14:15 +0000] "GET /index.html HTTP/1.1" 200 612
+<13>Oct 11 22:14:16 appserver myapp[1234]: User authentication successful for user: admin
+<11>Oct 11 22:14:17 dbserver postgres[5432]: LOG: database system is ready to accept connections
+<27>Oct 11 22:14:18 webserver nginx: 192.168.1.20 - - [11/Oct/2023:22:14:18 +0000] "POST /api/login HTTP/1.1" 401 0
+<19>Oct 11 22:14:19 appserver myapp[1234]: Failed login attempt from IP: 192.168.1.20
+<14>Oct 11 22:14:20 loadbalancer haproxy: Server backend1/web1 is UP
