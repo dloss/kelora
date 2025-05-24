@@ -29,17 +29,8 @@ impl Event {
         }
     }
     
-    pub fn with_field(mut self, key: String, value: FieldValue) -> Self {
-        self.fields.insert(key, value);
-        self
-    }
-    
     pub fn set_field(&mut self, key: String, value: FieldValue) {
         self.fields.insert(key, value);
-    }
-    
-    pub fn get_field(&self, key: &str) -> Option<&FieldValue> {
-        self.fields.get(key)
     }
     
     /// Filter to only show specified keys, keeping core fields
@@ -48,14 +39,14 @@ impl Event {
         
         for key in keys {
             match key.as_str() {
-                "timestamp" | "ts" => {
-                    // Keep timestamp as-is
+                "timestamp" | "ts" | "time" | "at" | "_t" | "@t" => {
+                    // Keep timestamp as-is - these are handled by core fields
                 }
-                "level" => {
-                    // Keep level as-is  
+                "level" | "log_level" | "loglevel" | "lvl" | "severity" | "@l" => {
+                    // Keep level as-is - these are handled by core fields
                 }
-                "message" | "msg" => {
-                    // Keep message as-is
+                "message" | "msg" | "@m" => {
+                    // Keep message as-is - these are handled by core fields
                 }
                 _ => {
                     if let Some(value) = self.fields.remove(key) {
@@ -109,20 +100,6 @@ impl FieldValue {
             _ => None,
         }
     }
-    
-    pub fn as_number(&self) -> Option<f64> {
-        match self {
-            FieldValue::Number(n) => Some(*n),
-            _ => None,
-        }
-    }
-    
-    pub fn as_bool(&self) -> Option<bool> {
-        match self {
-            FieldValue::Boolean(b) => Some(*b),
-            _ => None,
-        }
-    }
 }
 
 impl std::fmt::Display for FieldValue {
@@ -137,7 +114,7 @@ impl std::fmt::Display for FieldValue {
 }
 
 fn parse_timestamp(ts_str: &str) -> Result<DateTime<Utc>, chrono::ParseError> {
-    // Try common timestamp formats
+    // Try common timestamp formats in order of likelihood
     let formats = [
         "%Y-%m-%dT%H:%M:%S%.fZ",           // ISO 8601 with subseconds
         "%Y-%m-%dT%H:%M:%SZ",              // ISO 8601 
@@ -157,7 +134,7 @@ fn parse_timestamp(ts_str: &str) -> Result<DateTime<Utc>, chrono::ParseError> {
         }
     }
     
-    // Return a generic parse error
-    chrono::NaiveDateTime::parse_from_str("", "%Y")?;
-    unreachable!()
+    // Return a proper chrono parse error
+    chrono::NaiveDateTime::parse_from_str(ts_str, "%Y-%m-%dT%H:%M:%SZ")
+        .map(|dt| dt.and_utc())
 }
