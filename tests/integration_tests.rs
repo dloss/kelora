@@ -424,7 +424,11 @@ fn test_version_flag() {
         0,
         "Version should exit successfully"
     );
-    assert!(stdout.contains("0.1.0"), "Should show version number");
+    assert!(
+        stdout.contains(env!("CARGO_PKG_VERSION")),
+        "Should show version number {}",
+        env!("CARGO_PKG_VERSION")
+    );
 }
 
 // Performance and edge case tests

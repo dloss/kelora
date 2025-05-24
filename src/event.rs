@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Event {
@@ -23,20 +23,20 @@ impl Event {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     pub fn set_field(&mut self, key: String, value: FieldValue) {
         self.fields.insert(key, value);
     }
-    
+
     /// Filter to only show specified keys, keeping only fields that actually exist
     pub fn filter_keys(&mut self, keys: &[String]) {
         let mut new_fields = HashMap::new();
-        
+
         // First, handle core fields - only keep them if they exist and are requested
         let mut keep_timestamp = false;
         let mut keep_level = false;
         let mut keep_message = false;
-        
+
         for key in keys {
             match key.as_str() {
                 "timestamp" | "ts" | "time" | "at" | "_t" | "@t" | "t" => {
@@ -62,7 +62,7 @@ impl Event {
                 }
             }
         }
-        
+
         // Clear core fields if they weren't requested or don't exist
         if !keep_timestamp {
             self.timestamp = None;
@@ -73,10 +73,10 @@ impl Event {
         if !keep_message {
             self.message = None;
         }
-        
+
         self.fields = new_fields;
     }
-    
+
     /// Try to parse and extract core fields from the fields map
     pub fn extract_core_fields(&mut self) {
         // Extract timestamp
@@ -88,7 +88,7 @@ impl Event {
                 }
             }
         }
-        
+
         // Extract level
         for level_key in &["level", "log_level", "loglevel", "lvl", "severity", "@l"] {
             if let Some(value) = self.fields.get(*level_key) {
@@ -98,7 +98,7 @@ impl Event {
                 }
             }
         }
-        
+
         // Extract message
         for msg_key in &["message", "msg", "@m"] {
             if let Some(value) = self.fields.get(*msg_key) {
@@ -109,13 +109,13 @@ impl Event {
             }
         }
     }
-    
+
     /// Check if the event has any content to display
     pub fn has_displayable_content(&self) -> bool {
-        self.timestamp.is_some() || 
-        self.level.is_some() || 
-        self.message.is_some() || 
-        !self.fields.is_empty()
+        self.timestamp.is_some()
+            || self.level.is_some()
+            || self.message.is_some()
+            || !self.fields.is_empty()
     }
 }
 
@@ -142,15 +142,15 @@ impl std::fmt::Display for FieldValue {
 fn parse_timestamp(ts_str: &str) -> Result<DateTime<Utc>, chrono::ParseError> {
     // Try common timestamp formats in order of likelihood
     let formats = [
-        "%Y-%m-%dT%H:%M:%S%.fZ",           // ISO 8601 with subseconds
-        "%Y-%m-%dT%H:%M:%SZ",              // ISO 8601 
-        "%Y-%m-%dT%H:%M:%S%.f%:z",         // ISO 8601 with timezone
-        "%Y-%m-%dT%H:%M:%S%:z",            // ISO 8601 with timezone
-        "%Y-%m-%d %H:%M:%S%.f",            // Common log format with subseconds
-        "%Y-%m-%d %H:%M:%S",               // Common log format
-        "%b %d %H:%M:%S",                  // Syslog format
+        "%Y-%m-%dT%H:%M:%S%.fZ",   // ISO 8601 with subseconds
+        "%Y-%m-%dT%H:%M:%SZ",      // ISO 8601
+        "%Y-%m-%dT%H:%M:%S%.f%:z", // ISO 8601 with timezone
+        "%Y-%m-%dT%H:%M:%S%:z",    // ISO 8601 with timezone
+        "%Y-%m-%d %H:%M:%S%.f",    // Common log format with subseconds
+        "%Y-%m-%d %H:%M:%S",       // Common log format
+        "%b %d %H:%M:%S",          // Syslog format
     ];
-    
+
     for format in &formats {
         if let Ok(dt) = DateTime::parse_from_str(ts_str, format) {
             return Ok(dt.with_timezone(&Utc));
@@ -159,8 +159,7 @@ fn parse_timestamp(ts_str: &str) -> Result<DateTime<Utc>, chrono::ParseError> {
             return Ok(dt.and_utc());
         }
     }
-    
+
     // Return a proper chrono parse error
-    chrono::NaiveDateTime::parse_from_str(ts_str, "%Y-%m-%dT%H:%M:%SZ")
-        .map(|dt| dt.and_utc())
+    chrono::NaiveDateTime::parse_from_str(ts_str, "%Y-%m-%dT%H:%M:%SZ").map(|dt| dt.and_utc())
 }

@@ -16,7 +16,7 @@ use parsers::{JsonlParser, LogParser, LogfmtParser, SyslogParser};
 #[derive(Parser)]
 #[command(name = "kelora")]
 #[command(about = "A fast, extensible log parser")]
-#[command(version = "0.1.0")]
+#[command(version = "0.1.1")]
 #[command(author = "Dirk Loss <mail@dirk-loss.de>")]
 pub struct Cli {
     /// Input files (stdin if not specified)
