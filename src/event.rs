@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Event {
     pub timestamp: Option<DateTime<Utc>>,
     pub level: Option<String>,
@@ -21,12 +21,7 @@ pub enum FieldValue {
 
 impl Event {
     pub fn new() -> Self {
-        Self {
-            timestamp: None,
-            level: None,
-            message: None,
-            fields: HashMap::new(),
-        }
+        Self::default()
     }
     
     pub fn set_field(&mut self, key: String, value: FieldValue) {

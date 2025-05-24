@@ -16,24 +16,27 @@ impl DefaultFormatter {
 impl Formatter for DefaultFormatter {
     fn format(&self, event: &Event) -> String {
         let mut parts = Vec::new();
-        
+
         // Add core fields first if they exist
         if let Some(timestamp) = &event.timestamp {
-            parts.push(format!("timestamp=\"{}\"", timestamp.format("%Y-%m-%dT%H:%M:%S%.3fZ")));
+            parts.push(format!(
+                "timestamp=\"{}\"",
+                timestamp.format("%Y-%m-%dT%H:%M:%S%.3fZ")
+            ));
         }
-        
+
         if let Some(level) = &event.level {
             parts.push(format!("level=\"{}\"", level));
         }
-        
+
         if let Some(message) = &event.message {
             parts.push(format!("message=\"{}\"", escape_quotes(message)));
         }
-        
+
         // Add other fields in sorted order
         let mut field_keys: Vec<_> = event.fields.keys().collect();
         field_keys.sort();
-        
+
         for key in field_keys {
             if let Some(value) = event.fields.get(key) {
                 let formatted_value = match value {
@@ -45,14 +48,14 @@ impl Formatter for DefaultFormatter {
                         } else {
                             format!("{}", n)
                         }
-                    },
+                    }
                     FieldValue::Boolean(b) => b.to_string(),
                     FieldValue::Null => "null".to_string(),
                 };
                 parts.push(format!("{}={}", key, formatted_value));
             }
         }
-        
+
         parts.join(" ")
     }
 }
@@ -69,36 +72,42 @@ impl JsonlFormatter {
 impl Formatter for JsonlFormatter {
     fn format(&self, event: &Event) -> String {
         let mut json_obj = serde_json::Map::new();
-        
+
         // Add core fields
         if let Some(timestamp) = &event.timestamp {
-            json_obj.insert("timestamp".to_string(), 
-                           serde_json::Value::String(timestamp.to_rfc3339()));
+            json_obj.insert(
+                "timestamp".to_string(),
+                serde_json::Value::String(timestamp.to_rfc3339()),
+            );
         }
-        
+
         if let Some(level) = &event.level {
-            json_obj.insert("level".to_string(), 
-                           serde_json::Value::String(level.clone()));
+            json_obj.insert(
+                "level".to_string(),
+                serde_json::Value::String(level.clone()),
+            );
         }
-        
+
         if let Some(message) = &event.message {
-            json_obj.insert("message".to_string(), 
-                           serde_json::Value::String(message.clone()));
+            json_obj.insert(
+                "message".to_string(),
+                serde_json::Value::String(message.clone()),
+            );
         }
-        
+
         // Add other fields
         for (key, value) in &event.fields {
             let json_value = match value {
                 FieldValue::String(s) => serde_json::Value::String(s.clone()),
                 FieldValue::Number(n) => serde_json::Value::Number(
-                    serde_json::Number::from_f64(*n).unwrap_or_else(|| serde_json::Number::from(0))
+                    serde_json::Number::from_f64(*n).unwrap_or_else(|| serde_json::Number::from(0)),
                 ),
                 FieldValue::Boolean(b) => serde_json::Value::Bool(*b),
                 FieldValue::Null => serde_json::Value::Null,
             };
             json_obj.insert(key.clone(), json_value);
         }
-        
+
         serde_json::to_string(&serde_json::Value::Object(json_obj))
             .unwrap_or_else(|_| "{}".to_string())
     }
@@ -128,10 +137,10 @@ mod tests {
         event.message = Some("Test message".to_string());
         event.set_field("key1".to_string(), FieldValue::String("value1".to_string()));
         event.set_field("key2".to_string(), FieldValue::Number(42.0));
-        
+
         let formatter = DefaultFormatter::new();
         let result = formatter.format(&event);
-        
+
         assert!(result.contains("level=\"INFO\""));
         assert!(result.contains("message=\"Test message\""));
         assert!(result.contains("key1=\"value1\""));
@@ -143,10 +152,10 @@ mod tests {
         let mut event = Event::new();
         event.set_field("int".to_string(), FieldValue::Number(42.0));
         event.set_field("float".to_string(), FieldValue::Number(42.5));
-        
+
         let formatter = DefaultFormatter::new();
         let result = formatter.format(&event);
-        
+
         assert!(result.contains("int=42"));
         assert!(result.contains("float=42.5"));
     }

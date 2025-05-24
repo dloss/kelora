@@ -1,17 +1,17 @@
-use clap::Parser;
-use std::io::{self, BufRead, BufReader, Write};
-use std::fs::File;
-use std::path::PathBuf;
-use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use anyhow::{Context, Result};
+use chrono::{DateTime, Utc};
+use clap::Parser;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{self, BufRead, BufReader, Write};
+use std::path::PathBuf;
 
 mod event;
-mod parsers;
 mod formatters;
+mod parsers;
 
-use parsers::{LogParser, LogfmtParser, JsonlParser, SyslogParser};
-use formatters::{Formatter, DefaultFormatter, JsonlFormatter};
+use formatters::{DefaultFormatter, Formatter, JsonlFormatter};
+use parsers::{JsonlParser, LogParser, LogfmtParser, SyslogParser};
 
 #[derive(Parser)]
 #[command(name = "kelora")]
@@ -21,35 +21,40 @@ use formatters::{Formatter, DefaultFormatter, JsonlFormatter};
 pub struct Cli {
     /// Input files (stdin if not specified)
     pub files: Vec<PathBuf>,
-    
+
     /// Input format
     #[arg(short = 'f', long = "format", value_enum, default_value = "logfmt")]
     pub input_format: InputFormat,
-    
+
     /// Output format  
-    #[arg(short = 'F', long = "output-format", value_enum, default_value = "default")]
+    #[arg(
+        short = 'F',
+        long = "output-format",
+        value_enum,
+        default_value = "default"
+    )]
     pub output_format: OutputFormat,
-    
+
     /// Only show specific keys (comma-separated)
     #[arg(short = 'k', long = "keys", value_delimiter = ',')]
     pub keys: Vec<String>,
-    
+
     /// Filter by log levels (comma-separated)
     #[arg(short = 'l', long = "level", value_delimiter = ',')]
     pub levels: Vec<String>,
-    
+
     /// Show statistics only
     #[arg(short = 'S', long = "stats-only")]
     pub stats_only: bool,
-    
+
     /// Show statistics alongside output
     #[arg(short = 's', long = "stats")]
     pub stats: bool,
-    
+
     /// Enable debug output
     #[arg(long)]
     pub debug: bool,
-    
+
     /// Show only core fields (timestamp, level, message)
     #[arg(short = 'c', long = "common")]
     pub common: bool,
@@ -83,10 +88,10 @@ impl Stats {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     pub fn record_event(&mut self, event: &event::Event) {
         self.events_shown += 1;
-        
+
         if let Some(timestamp) = &event.timestamp {
             if self.start_time.is_none() || Some(*timestamp) < self.start_time {
                 self.start_time = Some(*timestamp);
@@ -95,32 +100,39 @@ impl Stats {
                 self.end_time = Some(*timestamp);
             }
         }
-        
+
         if let Some(level) = &event.level {
             *self.levels_seen.entry(level.clone()).or_insert(0) += 1;
         }
     }
-    
+
     pub fn print_stats(&self) {
-        eprintln!("Events shown: {} (parse errors: {}, lines seen: {}, filtered: {})", 
-                  self.events_shown, self.parse_errors, self.lines_seen, self.filtered_out);
-        
+        eprintln!(
+            "Events shown: {} (parse errors: {}, lines seen: {}, filtered: {})",
+            self.events_shown, self.parse_errors, self.lines_seen, self.filtered_out
+        );
+
         if let (Some(start), Some(end)) = (&self.start_time, &self.end_time) {
             let duration = end.signed_duration_since(*start);
-            eprintln!("Time span: {} to {} (duration: {})", 
-                      start.format("%Y-%m-%dT%H:%M:%S%.3fZ"),
-                      end.format("%Y-%m-%dT%H:%M:%S%.3fZ"),
-                      format_duration(duration));
+            eprintln!(
+                "Time span: {} to {} (duration: {})",
+                start.format("%Y-%m-%dT%H:%M:%S%.3fZ"),
+                end.format("%Y-%m-%dT%H:%M:%S%.3fZ"),
+                format_duration(duration)
+            );
         }
-        
+
         if !self.levels_seen.is_empty() {
             let mut levels: Vec<_> = self.levels_seen.iter().collect();
             levels.sort_by_key(|(level, _)| level.as_str());
-            eprintln!("Log levels: {}", 
-                      levels.iter()
-                            .map(|(level, count)| format!("{}({})", level, count))
-                            .collect::<Vec<_>>()
-                            .join(", "));
+            eprintln!(
+                "Log levels: {}",
+                levels
+                    .iter()
+                    .map(|(level, count)| format!("{}({})", level, count))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
         }
     }
 }
@@ -130,7 +142,7 @@ fn format_duration(duration: chrono::Duration) -> String {
     let hours = seconds / 3600;
     let minutes = (seconds % 3600) / 60;
     let secs = seconds % 60;
-    
+
     if hours > 0 {
         format!("{}h{}m{}s", hours, minutes, secs)
     } else if minutes > 0 {
@@ -142,30 +154,39 @@ fn format_duration(duration: chrono::Duration) -> String {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    
+
     let parser = create_parser(&cli.input_format);
     let formatter = create_formatter(&cli.output_format);
-    
+
     let readers: Vec<Box<dyn BufRead>> = if cli.files.is_empty() {
         vec![Box::new(io::stdin().lock())]
     } else {
-        cli.files.iter()
+        cli.files
+            .iter()
             .map(|path| open_input_file(path))
             .collect::<Result<Vec<_>>>()?
     };
-    
+
     let mut stats = Stats::new();
     let levels_filter = prepare_levels_filter(&cli.levels);
     let keys_filter = prepare_keys_filter(&cli);
-    
+
     for reader in readers {
-        process_reader(reader, &*parser, &*formatter, &mut stats, &levels_filter, &keys_filter, &cli)?;
+        process_reader(
+            reader,
+            &*parser,
+            &*formatter,
+            &mut stats,
+            &levels_filter,
+            &keys_filter,
+            &cli,
+        )?;
     }
-    
+
     if cli.stats_only || cli.stats {
         stats.print_stats();
     }
-    
+
     Ok(())
 }
 
@@ -185,15 +206,15 @@ fn create_formatter(format: &OutputFormat) -> Box<dyn Formatter> {
 }
 
 fn open_input_file(path: &PathBuf) -> Result<Box<dyn BufRead>> {
-    let file = File::open(path)
-        .with_context(|| format!("Failed to open file: {}", path.display()))?;
-    
+    let file =
+        File::open(path).with_context(|| format!("Failed to open file: {}", path.display()))?;
+
     // Future: Add compression support here
     // if path.extension() == Some(OsStr::new("gz")) {
     //     use flate2::read::GzDecoder;
     //     Ok(Box::new(BufReader::new(GzDecoder::new(file))))
     // } else {
-        Ok(Box::new(BufReader::new(file)))
+    Ok(Box::new(BufReader::new(file)))
     // }
 }
 
@@ -208,7 +229,11 @@ fn prepare_levels_filter(levels: &[String]) -> Option<Vec<String>> {
 fn prepare_keys_filter(cli: &Cli) -> Option<Vec<String>> {
     if cli.common {
         // Show only core fields
-        Some(vec!["timestamp".to_string(), "level".to_string(), "message".to_string()])
+        Some(vec![
+            "timestamp".to_string(),
+            "level".to_string(),
+            "message".to_string(),
+        ])
     } else if !cli.keys.is_empty() {
         Some(cli.keys.clone())
     } else {
@@ -228,12 +253,12 @@ fn process_reader(
     for (line_num, line_result) in reader.lines().enumerate() {
         let line = line_result.with_context(|| format!("Failed to read line {}", line_num + 1))?;
         stats.lines_seen += 1;
-        
+
         // Skip empty lines
         if line.trim().is_empty() {
             continue;
         }
-        
+
         match parser.parse(&line) {
             Ok(mut event) => {
                 // Apply level filtering first
@@ -249,21 +274,21 @@ fn process_reader(
                         continue;
                     }
                 }
-                
+
                 // Apply key filtering
                 if let Some(ref keys) = keys_filter {
                     event.filter_keys(keys);
-                    
+
                     // Skip events that have no displayable content after filtering
                     if !event.has_displayable_content() {
                         stats.filtered_out += 1;
                         continue;
                     }
                 }
-                
+
                 // Record the event for stats
                 stats.record_event(&event);
-                
+
                 // Output the event (unless we're in stats-only mode)
                 if !cli.stats_only {
                     // Handle broken pipe gracefully (e.g., when piping to `head`)
@@ -285,32 +310,32 @@ fn process_reader(
             }
         }
     }
-    
+
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_format_duration() {
         let duration = chrono::Duration::seconds(3661); // 1h 1m 1s
         assert_eq!(format_duration(duration), "1h1m1s");
-        
+
         let duration = chrono::Duration::seconds(61); // 1m 1s
         assert_eq!(format_duration(duration), "1m1s");
-        
+
         let duration = chrono::Duration::seconds(30); // 30s
         assert_eq!(format_duration(duration), "30s");
     }
-    
+
     #[test]
     fn test_prepare_levels_filter() {
         let levels = vec!["error".to_string(), "warn".to_string()];
         let result = prepare_levels_filter(&levels);
         assert_eq!(result, Some(vec!["ERROR".to_string(), "WARN".to_string()]));
-        
+
         let empty_levels: Vec<String> = vec![];
         let result = prepare_levels_filter(&empty_levels);
         assert_eq!(result, None);
