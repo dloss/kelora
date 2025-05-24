@@ -1,488 +1,394 @@
-# Kelora - A High-Performance Log Viewer
+# Kelora - A Fast, Extensible Log Parser
 
-## Overview
+Kelora is a command-line log parsing and analysis tool built in Rust, designed to help developers and system administrators efficiently process, filter, and analyze structured log data. It focuses on performance, simplicity, and extensibility.
 
-Kelora is a command-line log viewing and processing tool designed to help developers and system administrators efficiently parse, filter, and analyze log data. This MVP implementation focuses on the most essential functionality:
+## Features
 
-- Reading JSON Lines (JSONL) format log data from stdin
-- Filtering log entries based on specified keys
-- Outputting logs in logfmt format to stdout
+- **Multiple Input Formats**: Support for logfmt, JSON Lines (JSONL), and syslog formats
+- **Flexible Output**: Choose between logfmt (default) and JSONL output formats
+- **Smart Filtering**: Filter by log levels and specific fields
+- **Statistics**: Get comprehensive statistics about your log data
+- **Core Field Detection**: Automatically detects timestamps, log levels, and messages
+- **Performance**: Built in Rust for speed and memory efficiency
+- **Error Handling**: Graceful handling of malformed log entries
 
 ## Installation
 
 ### Prerequisites
 
-Make sure you have Rust and Cargo installed on your system. If not, you can install them from [rustup.rs](https://rustup.rs/).
+- Rust 1.70+ and Cargo (install from [rustup.rs](https://rustup.rs/))
 
 ### Building from Source
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/kelora.git
-   cd kelora
-   ```
+```bash
+git clone https://github.com/dloss/kelora.git
+cd kelora
+cargo build --release
+```
 
-2. Build the project:
-   ```bash
-   cargo build --release
-   ```
+The executable will be available at `target/release/kelora`.
 
-3. The executable will be available at `target/release/kelora`
+### Installing with Cargo
+
+```bash
+cargo install --path .
+```
+
+## Quick Start
+
+```bash
+# Parse logfmt logs from a file
+kelora access.logfmt
+
+# Parse JSON Lines from stdin
+cat app.jsonl | kelora -f jsonl
+
+# Show only error and warning logs
+kelora -l error,warn app.logfmt
+
+# Get statistics about your logs
+kelora -S server.log
+
+# Show only core fields (timestamp, level, message)
+kelora -c app.jsonl
+```
 
 ## Usage
 
-```bash
-kelora [OPTIONS]
+```
+kelora [OPTIONS] [FILES...]
 ```
 
 ### Options
 
-- `-k, --keys <KEYS>`: Comma-separated list of keys to display
-- `-i, --include-only`: When specified, only include the keys listed with `-k` in the output
+#### Input Control
+- `-f, --format <FORMAT>`: Input format [default: logfmt] [possible values: logfmt, jsonl, syslog]
+- `<FILES>`: Input files (reads from stdin if not specified)
+
+#### Output Control
+- `-F, --output-format <FORMAT>`: Output format [default: default] [possible values: default, jsonl]
+- `-k, --keys <KEYS>`: Only show specific keys (comma-separated)
+- `-c, --common`: Show only core fields (timestamp, level, message)
+
+#### Filtering
+- `-l, --level <LEVELS>`: Filter by log levels (comma-separated)
+
+#### Information
+- `-S, --stats-only`: Show statistics only (no log output)
+- `-s, --stats`: Show statistics alongside log output
+- `--debug`: Enable debug output for troubleshooting
+
+#### Help
 - `-h, --help`: Print help information
 - `-V, --version`: Print version information
 
-### Examples
+## Input Formats
 
-#### Process JSONL and output all fields in logfmt format
-
-```bash
-cat logs.jsonl | kelora
+### Logfmt (Default)
+Key-value pairs with optional quoted values:
+```
+timestamp="2024-01-15T10:30:00Z" level=info message="Server started" port=8080
+timestamp="2024-01-15T10:30:05Z" level=error message="Database connection failed" error="timeout"
 ```
 
-#### Display only specific fields
-
-```bash
-cat logs.jsonl | kelora -k timestamp,level,message
-```
-
-#### Only include specific fields in the output (exclude all others)
-
-```bash
-cat logs.jsonl | kelora -k timestamp,level,message -i
-```
-
-## Input Format
-
-Kelora currently supports JSON Lines (JSONL) as input format. Each line should be a valid JSON object:
-
+### JSON Lines (JSONL)
+One JSON object per line:
 ```json
-{"timestamp": "2023-07-18T15:04:23.456Z", "level": "ERROR", "message": "Failed to connect to database", "host": "db.example.com"}
-{"timestamp": "2023-07-18T15:04:25.789Z", "level": "WARN", "message": "Using fallback connection settings", "fallback": "localhost:5433"}
+{"timestamp": "2024-01-15T10:30:00Z", "level": "info", "message": "Server started", "port": 8080}
+{"timestamp": "2024-01-15T10:30:05Z", "level": "error", "message": "Database connection failed", "error": "timeout"}
 ```
 
-## Output Format
-
-The output is formatted as logfmt, which is a key-value format commonly used for logging:
-
+### Syslog
+Standard syslog format with priority, timestamp, hostname, and process:
 ```
-timestamp="2023-07-18T15:04:23.456Z" level="ERROR" message="Failed to connect to database" host="db.example.com"
-timestamp="2023-07-18T15:04:25.789Z" level="WARN" message="Using fallback connection settings" fallback="localhost:5433"
+<13>Jan 15 10:30:00 server01 myapp[1234]: Connection established
+<11>Jan 15 10:30:05 server01 myapp[1234]: Database error occurred
 ```
 
+## Output Formats
 
-# Kelora Example Usage
-
-Let's walk through some practical examples of using the Kelora log viewer.
-
-## Sample Log Data
-
-First, let's create a sample JSONL file to work with:
-
-```bash
-cat > sample_logs.jsonl << 'EOF'
-{"timestamp": "2023-07-18T15:04:23.456Z", "level": "ERROR", "component": "app.server", "message": "Failed to connect to database", "host": "db.example.com", "port": 5432, "retry": 3, "error": "connection refused"}
-{"timestamp": "2023-07-18T15:04:25.789Z", "level": "WARN", "component": "app.server", "message": "Using fallback connection settings", "fallback": "localhost:5433"}
-{"timestamp": "2023-07-18T15:06:41.210Z", "level": "INFO", "component": "app.server", "message": "Database connection established", "host": "localhost", "port": 5433, "latency": 45}
-{"timestamp": "2023-07-18T15:07:12.345Z", "level": "DEBUG", "component": "app.auth", "message": "User authentication attempt", "user_id": "user123", "method": "password", "success": true}
-{"timestamp": "2023-07-18T15:08:30.678Z", "level": "INFO", "component": "app.api", "message": "API request completed", "endpoint": "/users", "method": "GET", "status": 200, "duration_ms": 127}
-EOF
+### Default (Logfmt)
+Clean, readable key-value format:
+```
+timestamp="2024-01-15T10:30:00.000Z" level="info" message="Server started" port=8080
 ```
 
-## Basic Usage
-
-### View All Log Fields
-
-Process the sample log file and output all fields:
-
-```bash
-cat sample_logs.jsonl | kelora
-```
-
-Output:
-```
-component="app.server" error="connection refused" host="db.example.com" level="ERROR" message="Failed to connect to database" port=5432 retry=3 timestamp="2023-07-18T15:04:23.456Z"
-component="app.server" fallback="localhost:5433" level="WARN" message="Using fallback connection settings" timestamp="2023-07-18T15:04:25.789Z"
-component="app.server" host="localhost" latency=45 level="INFO" message="Database connection established" port=5433 timestamp="2023-07-18T15:06:41.210Z"
-component="app.auth" level="DEBUG" message="User authentication attempt" method="password" success=true timestamp="2023-07-18T15:07:12.345Z" user_id="user123"
-component="app.api" duration_ms=127 endpoint="/users" level="INFO" message="API request completed" method="GET" status=200 timestamp="2023-07-18T15:08:30.678Z"
-```
-
-### Focus on Key Information
-
-Show only timestamp, level, and message fields:
-
-```bash
-cat sample_logs.jsonl | kelora -k timestamp,level,message
-```
-
-Output:
-```
-component="app.server" error="connection refused" host="db.example.com" level="ERROR" message="Failed to connect to database" port=5432 retry=3 timestamp="2023-07-18T15:04:23.456Z"
-component="app.server" fallback="localhost:5433" level="WARN" message="Using fallback connection settings" timestamp="2023-07-18T15:04:25.789Z"
-component="app.server" host="localhost" latency=45 level="INFO" message="Database connection established" port=5433 timestamp="2023-07-18T15:06:41.210Z"
-component="app.auth" level="DEBUG" message="User authentication attempt" method="password" success=true timestamp="2023-07-18T15:07:12.345Z" user_id="user123"
-component="app.api" duration_ms=127 endpoint="/users" level="INFO" message="API request completed" method="GET" status=200 timestamp="2023-07-18T15:08:30.678Z"
-```
-
-### Include Only Specific Fields
-
-Show only timestamp, level, and message fields, excluding all others:
-
-```bash
-cat sample_logs.jsonl | kelora -k timestamp,level,message -i
-```
-
-Output:
-```
-level="ERROR" message="Failed to connect to database" timestamp="2023-07-18T15:04:23.456Z"
-level="WARN" message="Using fallback connection settings" timestamp="2023-07-18T15:04:25.789Z"
-level="INFO" message="Database connection established" timestamp="2023-07-18T15:06:41.210Z"
-level="DEBUG" message="User authentication attempt" timestamp="2023-07-18T15:07:12.345Z"
-level="INFO" message="API request completed" timestamp="2023-07-18T15:08:30.678Z"
-```
-
-### Filtering and Piping
-
-You can combine Kelora with other command-line tools for more advanced filtering:
-
-```bash
-# Show only ERROR and WARN logs with timestamps and messages
-cat sample_logs.jsonl | kelora -k timestamp,level,message -i | grep -E 'level="ERROR"|level="WARN"'
-```
-
-Output:
-```
-level="ERROR" message="Failed to connect to database" timestamp="2023-07-18T15:04:23.456Z"
-level="WARN" message="Using fallback connection settings" timestamp="2023-07-18T15:04:25.789Z"
-```
-
-### Processing Real-time Logs
-
-You can also use Kelora with live logs by piping from a command that generates log output:
-
-```bash
-# Example with an application that outputs JSONL logs
-your_application | kelora -k timestamp,level,message -i
-```
-
-This is particularly useful for monitoring applications in real-time while focusing only on the information you need.
-
-
-# Testing Kelora
-
-This document describes how to test kelora to ensure it works correctly.
-
-## Quick Start
-
-The easiest way to run all tests is:
-
-```bash
-# Run all tests (recommended)
-make test-full
-
-# Or just the automated tests
-make test
-```
-
-## Test Types
-
-### 1. Unit Tests
-These test individual components in isolation:
-
-```bash
-# Run unit tests
-cargo test --lib
-# or
-make test-unit
-```
-
-Unit tests cover:
-- Event parsing and field extraction
-- Formatter output correctness
-- Core field identification
-- Error handling in parsers
-
-### 2. Integration Tests
-These test the complete application end-to-end:
-
-```bash
-# Run integration tests
-cargo test --test integration_tests
-# or 
-make test-integration
-```
-
-Integration tests cover:
-- Complete parsing pipelines
-- CLI argument handling
-- Input/output processing
-- Error scenarios
-- Performance characteristics
-
-### 3. Manual Tests
-Comprehensive tests including real file processing:
-
-```bash
-# Run the full test suite
-./test_kelora.sh
-# or
-make test-full
-```
-
-## Setting Up Test Environment
-
-1. **Install dependencies:**
-   ```bash
-   cargo fetch
-   # or
-   make install
-   ```
-
-2. **Build the project:**
-   ```bash
-   cargo build --release
-   # or
-   make build
-   ```
-
-3. **Make test script executable:**
-   ```bash
-   chmod +x test_kelora.sh
-   ```
-
-## Test Data
-
-Create test data files in a `test_data/` directory:
-
-```bash
-mkdir -p test_data
-```
-
-**test_data/sample.jsonl:**
+### JSONL
+One JSON object per line for easy programmatic processing:
 ```json
-{"timestamp":"2023-07-18T15:04:23.456Z","level":"ERROR","message":"Connection failed","host":"db.example.com"}
-{"timestamp":"2023-07-18T15:04:25.789Z","level":"INFO","message":"Connection established","host":"localhost"}
+{"timestamp":"2024-01-15T10:30:00.000Z","level":"info","message":"Server started","port":8080}
 ```
 
-**test_data/sample.logfmt:**
-```
-timestamp="2023-07-18T15:04:23.456Z" level=ERROR message="Connection failed" host="db.example.com"
-timestamp="2023-07-18T15:04:25.789Z" level=INFO message="Connection established" host="localhost"
-```
+## Examples
 
-## Manual Testing Examples
+### Basic Usage
 
-### Basic Functionality
 ```bash
-# Test JSONL parsing
-cat test_data/sample.jsonl | ./target/release/kelora -f jsonl
+# View all fields from a logfmt file
+kelora app.logfmt
 
-# Test key filtering
-./target/release/kelora -f jsonl -k timestamp,level,message test_data/sample.jsonl
+# Parse JSONL input and show in logfmt format
+cat logs.jsonl | kelora -f jsonl
 
-# Test level filtering
-./target/release/kelora -f jsonl -l ERROR,WARN test_data/sample.jsonl
-
-# Test statistics
-./target/release/kelora -f jsonl -S test_data/sample.jsonl
-```
-
-### Format Conversion
-```bash
 # Convert logfmt to JSONL
-./target/release/kelora -f logfmt -F jsonl test_data/sample.logfmt
+kelora -f logfmt -F jsonl app.logfmt > app.jsonl
+```
 
-# Show only core fields
-./target/release/kelora -f jsonl -c test_data/sample.jsonl
+### Filtering
+
+```bash
+# Show only error and warning logs
+kelora -l error,warn app.logfmt
+
+# Show only specific fields
+kelora -k timestamp,level,message,error app.logfmt
+
+# Show only core fields (timestamp, level, message)
+kelora -c app.logfmt
+
+# Combine filtering options
+kelora -l error -k timestamp,message,error app.logfmt
+```
+
+### Statistics and Analysis
+
+```bash
+# Get comprehensive statistics
+kelora -S app.logfmt
+
+# Show logs with statistics
+kelora -s app.logfmt
+
+# Statistics output includes:
+# - Number of events processed and shown
+# - Parse errors and filtered events
+# - Time span of logs
+# - Log levels distribution
+```
+
+Example statistics output:
+```
+Events shown: 1542 (parse errors: 3, lines seen: 1545, filtered: 0)
+Time span: 2024-01-15T10:00:00.000Z to 2024-01-15T11:30:45.123Z (duration: 1h30m45s)
+Log levels: DEBUG(234), ERROR(45), INFO(1205), WARN(58)
+```
+
+### Working with Multiple Files
+
+```bash
+# Process multiple log files
+kelora app1.logfmt app2.logfmt error.log
+
+# Combine with shell globbing
+kelora logs/*.logfmt
+
+# Process different formats
+kelora -f jsonl app.jsonl
+kelora -f syslog system.log
+```
+
+### Pipeline Integration
+
+```bash
+# Use with other command-line tools
+kelora app.logfmt | grep "database"
+kelora -l error app.logfmt | wc -l
+
+# Real-time log monitoring
+tail -f app.log | kelora -f jsonl -l error,warn
+
+# Convert and process
+kelora -F jsonl app.logfmt | jq '.message'
 ```
 
 ### Error Handling
-```bash
-# Test with malformed data
-echo '{"valid":"json"}
-{invalid json}
-{"another":"valid"}' | ./target/release/kelora -f jsonl
-
-# Debug mode
-echo '{invalid}' | ./target/release/kelora -f jsonl --debug
-```
-
-## Performance Testing
-
-Test with larger datasets:
 
 ```bash
-# Generate 10,000 log entries
-for i in $(seq 1 10000); do
-  echo "{\"timestamp\":\"2023-07-18T15:04:23.456Z\",\"level\":\"INFO\",\"message\":\"Message $i\",\"id\":$i}"
-done > large_test.jsonl
+# Debug parsing issues
+kelora --debug malformed.log
 
-# Test performance
-time ./target/release/kelora -f jsonl -S large_test.jsonl
+# Continue processing despite errors (default behavior)
+kelora mixed-quality.log
+
+# View statistics to see parse error counts
+kelora -S problematic.log
 ```
 
-## Expected Test Results
+## Core Field Detection
 
-### Unit Tests
-All unit tests should pass:
-```
-running 8 tests
-test event::tests::test_filter_keys ... ok
-test formatters::tests::test_default_formatter_empty_event ... ok
-test formatters::tests::test_escape_quotes ... ok
-test parsers::tests::test_logfmt_parser_basic ... ok
-...
-test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
-```
+Kelora automatically recognizes common field names for core log components:
 
-### Integration Tests
-All integration tests should pass:
-```
-running 18 tests
-test test_basic_jsonl_parsing ... ok
-test test_basic_logfmt_parsing ... ok
-test test_key_filtering ... ok
-...
-test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
-```
+- **Timestamp**: `timestamp`, `ts`, `time`, `at`, `_t`, `@t`, `t`
+- **Log Level**: `level`, `log_level`, `loglevel`, `lvl`, `severity`, `@l`
+- **Message**: `message`, `msg`, `@m`
 
-### Manual Tests
-The test script should show:
-```
-🧪 Running kelora test suite...
-================================
-📦 Building kelora...
-✅ Build successful
-🔧 Running unit tests...
-✅ Unit tests passed
-🔄 Running integration tests...
-✅ Integration tests passed
-📝 Running manual tests with sample data...
-✅ JSONL parsing works
-✅ Key filtering works
-✅ Level filtering works
-✅ Statistics mode works
-✅ All tests completed successfully!
-```
+These fields receive special treatment in filtering, statistics, and output formatting.
 
-## Troubleshooting
+## Log Level Filtering
 
-### Build Issues
+Kelora recognizes standard log levels and handles case-insensitive matching:
+
+- `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`
+- `FATAL`, `CRITICAL`, `NOTICE` (syslog levels)
+- Custom levels are also supported
+
+Examples:
 ```bash
-# Clean and rebuild
-make clean
-make build
+# Case-insensitive level filtering
+kelora -l error,WARN,Info app.logfmt
 
-# Check Rust version
-rustc --version  # Should be 1.70+
+# Multiple level specification
+kelora -l error -l warn app.logfmt
 ```
 
-### Test Failures
-```bash
-# Run tests with verbose output
-cargo test -- --nocapture
+## Performance Tips
 
-# Run specific test
-cargo test test_basic_jsonl_parsing
+- **Streaming**: Kelora processes logs in a streaming fashion, handling large files efficiently
+- **Memory Usage**: Low memory footprint even with large log files
+- **Error Recovery**: Continues processing even when individual log entries are malformed
+- **Broken Pipe Handling**: Gracefully handles interruption when piping to tools like `head`
 
-# Debug integration test
-cargo test --test integration_tests test_basic_jsonl_parsing -- --nocapture
-```
+## Integration Examples
 
-### Permission Issues
-```bash
-# Make test script executable
-chmod +x test_kelora.sh
-
-# Check if binary was built
-ls -la target/release/kelora
-```
-
-## Continuous Integration
-
-For CI/CD pipelines, use:
+### With Standard Unix Tools
 
 ```bash
-# Install dependencies
-cargo fetch
+# Count error logs
+kelora -l error app.logfmt | wc -l
 
-# Check formatting
+# Find specific patterns
+kelora -k message app.logfmt | grep -i "database"
+
+# Get unique error messages
+kelora -l error -k message app.logfmt | sort | uniq -c
+
+# Time-based analysis with awk
+kelora -k timestamp,level app.logfmt | awk -F'"' '{print $2, $4}' | sort
+```
+
+### With JSON Tools
+
+```bash
+# Use with jq for complex JSON processing
+kelora -F jsonl app.logfmt | jq 'select(.level == "error") | .message'
+
+# Extract specific fields
+kelora -F jsonl app.logfmt | jq -r '.timestamp + " " + .message'
+
+# Group by field values
+kelora -F jsonl app.logfmt | jq -r '.level' | sort | uniq -c
+```
+
+### Log Monitoring Workflows
+
+```bash
+# Monitor application errors in real-time
+tail -f app.log | kelora -f jsonl -l error,warn -k timestamp,level,message
+
+# Process logs and save filtered results
+kelora -l error app.logfmt > error_logs.txt
+
+# Create summary reports
+kelora -S *.logfmt > daily_summary.txt
+```
+
+## Error Handling and Debugging
+
+Kelora is designed to be robust when dealing with real-world log data:
+
+- **Parse Errors**: Malformed entries are skipped with optional debug output
+- **Missing Fields**: Gracefully handles logs with inconsistent field sets
+- **Format Detection**: Automatically works with variations in timestamp and level formats
+- **Empty Lines**: Skips empty lines without errors
+
+Enable debug mode to see detailed error information:
+```bash
+kelora --debug problematic.log
+```
+
+## Supported Timestamp Formats
+
+Kelora automatically recognizes various timestamp formats:
+
+- ISO 8601: `2024-01-15T10:30:00.123Z`
+- ISO 8601 with timezone: `2024-01-15T10:30:00.123+01:00`
+- Common log format: `2024-01-15 10:30:00.123`
+- Syslog format: `Jan 15 10:30:00`
+- RFC 3339: `2024-01-15T10:30:00Z`
+
+## Development and Contributing
+
+### Building and Testing
+
+```bash
+# Build the project
+cargo build
+
+# Run tests
+cargo test
+
+# Run with optimizations
+cargo build --release
+
+# Check code formatting
 cargo fmt --check
 
 # Run linter
-cargo clippy -- -D warnings
-
-# Run all tests
-cargo test
-
-# Build release
-cargo build --release
+cargo clippy
 ```
 
-## Adding New Tests
+### Project Structure
 
-### Unit Tests
-Add to the appropriate module's `#[cfg(test)]` section:
-
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_new_functionality() {
-        // Your test here
-    }
-}
+```
+src/
+├── main.rs          # CLI interface and main application logic
+├── event.rs         # Event data structure and core field extraction
+├── parsers.rs       # Input format parsers (logfmt, JSONL, syslog)
+├── formatters.rs    # Output formatters (logfmt, JSONL)
+└── lib.rs          # Library interface
 ```
 
-### Integration Tests
-Add to `tests/integration_tests.rs`:
+### Architecture
 
-```rust
-#[test]
-fn test_new_feature() {
-    let input = r#"test input"#;
-    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "jsonl"], input);
-    assert_eq!(exit_code, 0);
-    // Your assertions here
-}
+Kelora follows a pipeline architecture:
+
+```
+Input → Parser → Event → Filter → Formatter → Output
 ```
 
-### Manual Tests
-Add to `test_kelora.sh`:
+Each component is designed to be:
+- **Composable**: Easy to add new parsers and formatters
+- **Testable**: Individual components can be tested in isolation
+- **Extensible**: New features can be added without major refactoring
 
-```bash
-# Test N: Description
-print_status "Test N: Description" $YELLOW
-./target/release/kelora [args] > "$TEMP_DIR/outputN.txt"
-if [[ condition ]]; then
-    print_status "✅ Test N passed" $GREEN
-else
-    print_status "❌ Test N failed" $RED
-fi
-```
+## Future Roadmap
 
-Happy testing! 🧪
+Planned enhancements include:
 
-## Future Development
+- **Advanced Filtering**: Time range filtering, regex patterns, field conditions
+- **Compression Support**: Gzip, zip, and other compressed log formats
+- **Configuration Files**: Persistent settings and custom field mappings
+- **Enhanced Statistics**: Histograms, pattern detection, anomaly detection
+- **Performance Optimizations**: Parallel processing, zero-copy parsing
+- **Additional Formats**: CSV, TSV, custom format definitions
 
-This is an MVP (Minimum Viable Product) implementation. Future versions will include:
+## License
 
-- Support for additional input formats (logfmt, CSV, syslog)
-- More advanced filtering options (by patterns, time ranges, log levels)
-- Time-based analysis
-- Syntax highlighting
-- Pattern recognition and deduplication
-- Statistical views and visualizations
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+Kelora draws inspiration from tools like:
+- [klp](https://github.com/dloss/klp) - Kool Log Parser (Python)
+- [jq](https://jqlang.github.io/jq/) - Command-line JSON processor
+- [angle-grinder](https://github.com/rcoh/angle-grinder) - Slice and dice logs on the command line
+
+## Support
+
+- Create an issue on GitHub for bug reports or feature requests
+- Check existing issues for known problems and solutions
+- Contribute code improvements via pull requests
+
+---
+
+**Happy log parsing!** 🪵✨
