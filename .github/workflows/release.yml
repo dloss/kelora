@@ -1,0 +1,139 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write  # needed to create GitHub Releases
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    environment: release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            ext: ""
+            archive: tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            ext: ".exe"
+            archive: zip
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            ext: ""
+            archive: tar.gz
+            needs_signing: true
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            ext: ""
+            archive: tar.gz
+            needs_signing: true
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl-tools (Linux only)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build release binary
+        run: cargo build --locked --release --target ${{ matrix.target }}
+
+      - name: Strip binary (if available)
+        run: |
+          STRIP=$(which strip || true)
+          if [ -n "$STRIP" ] && [ -f target/${{ matrix.target }}/release/kelora${{ matrix.ext }} ]; then
+            $STRIP target/${{ matrix.target }}/release/kelora${{ matrix.ext }} || true
+          fi
+        shell: bash
+
+      # macOS signing steps (optional - only if you have Apple Developer certificates)
+      - name: Import Code-Signing Certificate
+        if: runner.os == 'macOS' && matrix.needs_signing && vars.ENABLE_MACOS_SIGNING == 'true'
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          keychain: signing_temp
+          create-keychain: true
+
+      - name: Sign macOS Binary
+        if: runner.os == 'macOS' && matrix.needs_signing && vars.ENABLE_MACOS_SIGNING == 'true'
+        run: |
+          codesign --force --options runtime \
+            --entitlements entitlements.plist \
+            --sign "${{ secrets.MACOS_IDENTITY }}" \
+            "target/${{ matrix.target }}/release/kelora"
+
+      - name: Create ZIP for notarization (macOS)
+        if: runner.os == 'macOS' && matrix.needs_signing && vars.ENABLE_MACOS_SIGNING == 'true'
+        run: |
+          ditto -c -k --keepParent "target/${{ matrix.target }}/release/kelora" "kelora-${{ matrix.target }}.zip"
+
+      - name: Notarize macOS Binary
+        if: runner.os == 'macOS' && matrix.needs_signing && vars.ENABLE_MACOS_SIGNING == 'true'
+        run: |
+          xcrun notarytool submit "kelora-${{ matrix.target }}.zip" \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --password "${{ secrets.APPLE_APP_PASSWORD }}" \
+            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+            --wait
+
+          # Extract the binary back
+          unzip -o "kelora-${{ matrix.target }}.zip"
+
+          # Verify signing
+          codesign -vvv --deep --strict "target/${{ matrix.target }}/release/kelora"
+
+      - name: Compress to .tar.gz (Unix)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar -czf kelora-${{ matrix.target }}.tar.gz kelora${{ matrix.ext }}
+        shell: bash
+
+      - name: Compress to .zip (Windows)
+        if: matrix.archive == 'zip' && matrix.os != 'macos-latest'
+        run: |
+          cd target/${{ matrix.target }}/release
+          powershell Compress-Archive -Path kelora.exe -DestinationPath kelora-${{ matrix.target }}.zip
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/${{ matrix.target }}/release/kelora-${{ matrix.target }}.tar.gz
+            target/${{ matrix.target }}/release/kelora-${{ matrix.target }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: build
+    environment: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && !contains(github.ref, 'rc')
+    steps:
+      - uses: actions/checkout@v4
+
+      # Restore Rust toolchain
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --token "$CARGO_REGISTRY_TOKEN"

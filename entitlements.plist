@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Allow the app to access files and directories -->
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <true/>
+    
+    <!-- Allow reading from stdin and writing to stdout/stderr -->
+    <key>com.apple.security.files.downloads.read-only</key>
+    <true/>
+    
+    <!-- Allow network access (in case kelora adds network features in the future) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <!-- Allow execution of child processes (for potential future shell integration) -->
+    <key>com.apple.security.temporary-exception.subprocess</key>
+    <true/>
+    
+    <!-- Disable library validation for compatibility -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    
+    <!-- Allow unsigned executable memory (for JIT compilation if needed) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    
+    <!-- Hardened runtime compatibility -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+</dict>
+</plist>
