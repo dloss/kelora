@@ -30,22 +30,22 @@ impl Formatter for DefaultFormatter {
             parts.push(format!("message=\"{}\"", escape_quotes(message)));
         }
         
-        // Add other fields
+        // Add other fields in sorted order
         let mut field_keys: Vec<_> = event.fields.keys().collect();
         field_keys.sort();
         
         for key in field_keys {
             if let Some(value) = event.fields.get(key) {
-                // Skip if we already showed this as a core field
-                if matches!(key.as_str(), "timestamp" | "ts" | "time" | "at" | "_t" | "@t" |
-                                         "level" | "log_level" | "loglevel" | "lvl" | "severity" | "@l" |
-                                         "message" | "msg" | "@m") {
-                    continue;
-                }
-                
                 let formatted_value = match value {
                     FieldValue::String(s) => format!("\"{}\"", escape_quotes(s)),
-                    FieldValue::Number(n) => n.to_string(),
+                    FieldValue::Number(n) => {
+                        // Format numbers nicely - avoid unnecessary decimal places for integers
+                        if n.fract() == 0.0 {
+                            format!("{}", *n as i64)
+                        } else {
+                            format!("{}", n)
+                        }
+                    },
                     FieldValue::Boolean(b) => b.to_string(),
                     FieldValue::Null => "null".to_string(),
                 };
@@ -106,4 +106,55 @@ impl Formatter for JsonlFormatter {
 
 fn escape_quotes(s: &str) -> String {
     s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_default_formatter_empty_event() {
+        let event = Event::new();
+        let formatter = DefaultFormatter::new();
+        assert_eq!(formatter.format(&event), "");
+    }
+
+    #[test]
+    fn test_default_formatter_with_fields() {
+        let mut event = Event::new();
+        event.level = Some("INFO".to_string());
+        event.message = Some("Test message".to_string());
+        event.set_field("key1".to_string(), FieldValue::String("value1".to_string()));
+        event.set_field("key2".to_string(), FieldValue::Number(42.0));
+        
+        let formatter = DefaultFormatter::new();
+        let result = formatter.format(&event);
+        
+        assert!(result.contains("level=\"INFO\""));
+        assert!(result.contains("message=\"Test message\""));
+        assert!(result.contains("key1=\"value1\""));
+        assert!(result.contains("key2=42"));
+    }
+
+    #[test]
+    fn test_number_formatting() {
+        let mut event = Event::new();
+        event.set_field("int".to_string(), FieldValue::Number(42.0));
+        event.set_field("float".to_string(), FieldValue::Number(42.5));
+        
+        let formatter = DefaultFormatter::new();
+        let result = formatter.format(&event);
+        
+        assert!(result.contains("int=42"));
+        assert!(result.contains("float=42.5"));
+    }
+
+    #[test]
+    fn test_escape_quotes() {
+        assert_eq!(escape_quotes("hello"), "hello");
+        assert_eq!(escape_quotes("hello \"world\""), "hello \\\"world\\\"");
+        assert_eq!(escape_quotes("path\\to\\file"), "path\\\\to\\\\file");
+    }
 }

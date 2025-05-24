@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Write};
 use std::fs::File;
 use std::path::PathBuf;
 use std::collections::HashMap;
@@ -236,7 +236,7 @@ fn process_reader(
         
         match parser.parse(&line) {
             Ok(mut event) => {
-                // Apply level filtering
+                // Apply level filtering first
                 if let Some(ref levels) = levels_filter {
                     if let Some(ref level) = event.level {
                         if !levels.contains(&level.to_uppercase()) {
@@ -253,6 +253,12 @@ fn process_reader(
                 // Apply key filtering
                 if let Some(ref keys) = keys_filter {
                     event.filter_keys(keys);
+                    
+                    // Skip events that have no displayable content after filtering
+                    if !event.has_displayable_content() {
+                        stats.filtered_out += 1;
+                        continue;
+                    }
                 }
                 
                 // Record the event for stats
@@ -260,7 +266,15 @@ fn process_reader(
                 
                 // Output the event (unless we're in stats-only mode)
                 if !cli.stats_only {
-                    println!("{}", formatter.format(&event));
+                    // Handle broken pipe gracefully (e.g., when piping to `head`)
+                    if let Err(e) = writeln!(io::stdout(), "{}", formatter.format(&event)) {
+                        if e.kind() == std::io::ErrorKind::BrokenPipe {
+                            // Broken pipe is expected when piping to tools like `head`
+                            break;
+                        } else {
+                            return Err(anyhow::Error::from(e));
+                        }
+                    }
                 }
             }
             Err(e) => {

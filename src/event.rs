@@ -33,27 +33,50 @@ impl Event {
         self.fields.insert(key, value);
     }
     
-    /// Filter to only show specified keys, keeping core fields
+    /// Filter to only show specified keys, keeping only fields that actually exist
     pub fn filter_keys(&mut self, keys: &[String]) {
         let mut new_fields = HashMap::new();
         
+        // First, handle core fields - only keep them if they exist and are requested
+        let mut keep_timestamp = false;
+        let mut keep_level = false;
+        let mut keep_message = false;
+        
         for key in keys {
             match key.as_str() {
-                "timestamp" | "ts" | "time" | "at" | "_t" | "@t" => {
-                    // Keep timestamp as-is - these are handled by core fields
+                "timestamp" | "ts" | "time" | "at" | "_t" | "@t" | "t" => {
+                    if self.timestamp.is_some() {
+                        keep_timestamp = true;
+                    }
                 }
                 "level" | "log_level" | "loglevel" | "lvl" | "severity" | "@l" => {
-                    // Keep level as-is - these are handled by core fields
+                    if self.level.is_some() {
+                        keep_level = true;
+                    }
                 }
                 "message" | "msg" | "@m" => {
-                    // Keep message as-is - these are handled by core fields
+                    if self.message.is_some() {
+                        keep_message = true;
+                    }
                 }
                 _ => {
-                    if let Some(value) = self.fields.remove(key) {
-                        new_fields.insert(key.clone(), value);
+                    // For other fields, only include if they exist
+                    if let Some(value) = self.fields.get(key) {
+                        new_fields.insert(key.clone(), value.clone());
                     }
                 }
             }
+        }
+        
+        // Clear core fields if they weren't requested or don't exist
+        if !keep_timestamp {
+            self.timestamp = None;
+        }
+        if !keep_level {
+            self.level = None;
+        }
+        if !keep_message {
+            self.message = None;
         }
         
         self.fields = new_fields;
@@ -62,7 +85,7 @@ impl Event {
     /// Try to parse and extract core fields from the fields map
     pub fn extract_core_fields(&mut self) {
         // Extract timestamp
-        for ts_key in &["timestamp", "ts", "time", "at", "_t", "@t"] {
+        for ts_key in &["timestamp", "ts", "time", "at", "_t", "@t", "t"] {
             if let Some(FieldValue::String(ts_str)) = self.fields.get(*ts_key) {
                 if let Ok(ts) = parse_timestamp(ts_str) {
                     self.timestamp = Some(ts);
@@ -90,6 +113,14 @@ impl Event {
                 }
             }
         }
+    }
+    
+    /// Check if the event has any content to display
+    pub fn has_displayable_content(&self) -> bool {
+        self.timestamp.is_some() || 
+        self.level.is_some() || 
+        self.message.is_some() || 
+        !self.fields.is_empty()
     }
 }
 

@@ -9,7 +9,6 @@ pub trait LogParser {
 pub enum ParseError {
     InvalidFormat(String),
     JsonError(serde_json::Error),
-    TimestampError(String),
 }
 
 impl std::fmt::Display for ParseError {
@@ -17,7 +16,6 @@ impl std::fmt::Display for ParseError {
         match self {
             ParseError::InvalidFormat(msg) => write!(f, "Invalid format: {}", msg),
             ParseError::JsonError(e) => write!(f, "JSON error: {}", e),
-            ParseError::TimestampError(msg) => write!(f, "Timestamp error: {}", msg),
         }
     }
 }
@@ -210,5 +208,49 @@ impl LogParser for SyslogParser {
         
         event.extract_core_fields();
         Ok(event)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_logfmt_parser_basic() {
+        let parser = LogfmtParser::new();
+        let result = parser.parse(r#"level=info msg="test message" count=42"#).unwrap();
+        
+        assert_eq!(result.level, Some("info".to_string()));
+        assert_eq!(result.message, Some("test message".to_string()));
+        assert!(matches!(result.fields.get("count"), Some(FieldValue::Number(42.0))));
+    }
+
+    #[test]
+    fn test_logfmt_parser_quoted_values() {
+        let parser = LogfmtParser::new();
+        let result = parser.parse(r#"msg="hello world" path="/tmp/file""#).unwrap();
+        
+        assert_eq!(result.message, Some("hello world".to_string()));
+        assert!(matches!(result.fields.get("path"), Some(FieldValue::String(s)) if s == "/tmp/file"));
+    }
+
+    #[test]
+    fn test_jsonl_parser_basic() {
+        let parser = JsonlParser::new();
+        let result = parser.parse(r#"{"level":"info","message":"test","count":42}"#).unwrap();
+        
+        assert_eq!(result.level, Some("info".to_string()));
+        assert_eq!(result.message, Some("test".to_string()));
+        assert!(matches!(result.fields.get("count"), Some(FieldValue::Number(42.0))));
+    }
+
+    #[test]
+    fn test_parse_field_value() {
+        assert!(matches!(parse_field_value("null"), FieldValue::Null));
+        assert!(matches!(parse_field_value("true"), FieldValue::Boolean(true)));
+        assert!(matches!(parse_field_value("false"), FieldValue::Boolean(false)));
+        assert!(matches!(parse_field_value("42"), FieldValue::Number(42.0)));
+        assert!(matches!(parse_field_value("42.5"), FieldValue::Number(42.5)));
+        assert!(matches!(parse_field_value("hello"), FieldValue::String(s) if s == "hello"));
     }
 }
