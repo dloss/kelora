@@ -22,7 +22,7 @@
     
     
       
-        <title>$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g') - Kelora</title>
+        <title>Configuration System - Kelora</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#echo-file-sed-s-g-sed-sbu1g" class="md-skip">
+        <a href="#configuration-system" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+              Configuration System
             
           </span>
         </div>
@@ -694,7 +694,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Parse Syslog Files
     
   </span>
   
@@ -717,7 +717,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Handle Multiline Stacktraces
     
   </span>
   
@@ -740,7 +740,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Extract and Mask Sensitive Data
     
   </span>
   
@@ -763,7 +763,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Process CSV Data
     
   </span>
   
@@ -786,7 +786,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Fan Out Nested Structures
     
   </span>
   
@@ -809,7 +809,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Build Streaming Alerts
     
   </span>
   
@@ -832,7 +832,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Batch Process Archives
     
   </span>
   
@@ -997,7 +997,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Rhai Cheatsheet
     
   </span>
   
@@ -1167,7 +1167,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Multiline Strategies
     
   </span>
   
@@ -1190,7 +1190,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Performance Model
     
   </span>
   
@@ -1217,17 +1217,136 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Configuration System
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Configuration System
     
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#file-locations-and-precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Locations and Precedence
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ini-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      INI Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-and-editing-config-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating and Editing Config Files
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating and Editing Config Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-an-alias-programmatically" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving an Alias Programmatically
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-argument-expansion-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How Argument Expansion Works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ignoring-or-switching-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ignoring or Switching Configurations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-vs-cli-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration vs CLI Flags
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Topics
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1261,6 +1380,101 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#file-locations-and-precedence" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Locations and Precedence
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ini-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      INI Structure
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-and-editing-config-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating and Editing Config Files
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating and Editing Config Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-an-alias-programmatically" class="md-nav__link">
+    <span class="md-ellipsis">
+      Saving an Alias Programmatically
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-argument-expansion-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How Argument Expansion Works
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ignoring-or-switching-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ignoring or Switching Configurations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-vs-cli-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration vs CLI Flags
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Topics
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1278,12 +1492,141 @@
   
 
 
-<h1 id="echo-file-sed-s-g-sed-sbu1g">$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')<a class="headerlink" href="#echo-file-sed-s-g-sed-sbu1g" title="Permanent link">&para;</a></h1>
-<div class="admonition info">
-<p class="admonition-title">Coming Soon</p>
-<p>This concept page is under development and will be available soon.</p>
-</div>
-<p><em>This concept explanation will be available in a future update.</em></p>
+<h1 id="configuration-system">Configuration System<a class="headerlink" href="#configuration-system" title="Permanent link">&para;</a></h1>
+<p>Kelora reads an INI-style configuration file before parsing CLI flags. The goal
+is to capture everyday defaults, share reusable command snippets, and support
+teams that maintain project-specific log pipelines.</p>
+<h2 id="file-locations-and-precedence">File Locations and Precedence<a class="headerlink" href="#file-locations-and-precedence" title="Permanent link">&para;</a></h2>
+<p>Kelora searches for configuration files in the following order:</p>
+<ol>
+<li><strong>Project config</strong> – the nearest <code>.kelora.ini</code> walking up from the current
+   directory.</li>
+<li><strong>User config</strong> – <code>$XDG_CONFIG_HOME/kelora/kelora.ini</code> on Unix, or
+   <code>%APPDATA%\kelora\kelora.ini</code> on Windows.</li>
+</ol>
+<p>Project files override user files. You can override both by passing
+<code>--config-file &lt;path&gt;</code> or ignore them entirely with <code>--ignore-config</code>.</p>
+<p>Inspect what Kelora currently sees with <code>--show-config</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+</code></pre></div>
+<p>If no file exists you will see an example template and the paths that were
+searched.</p>
+<h2 id="ini-structure">INI Structure<a class="headerlink" href="#ini-structure" title="Permanent link">&para;</a></h2>
+<p>Kelora recognizes two sections:</p>
+<ul>
+<li><code>defaults</code> (root level) – prepended to every command before user-supplied
+  flags.</li>
+<li><code>[aliases]</code> – reusable snippets invoked with <code>--alias &lt;name&gt;</code> (short flag
+  <code>-a</code>). Aliases can reference other aliases recursively up to a depth of 10.</li>
+</ul>
+<p>Example <code>.kelora.ini</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>defaults = -f auto --stats
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>[aliases]
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>errors = -l error --stats
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>slow-json = -f json --filter &#39;to_int_or(e.duration_ms, 0) &gt; 1000&#39;
+</code></pre></div>
+<p>Running <code>kelora app.log</code> with this file automatically adds <code>-f auto --stats</code> to
+the invocation. <code>kelora --alias errors app.log</code> expands to
+<code>kelora -l error --stats app.log</code>.</p>
+<h2 id="creating-and-editing-config-files">Creating and Editing Config Files<a class="headerlink" href="#creating-and-editing-config-files" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>--edit-config</code> opens the active config in <code>$EDITOR</code> (default <code>vi</code> on Unix,
+  <code>notepad.exe</code> on Windows). Kelora creates parent directories if needed.</li>
+<li><code>--config-file path/to/file.ini</code> scopes edits to a specific file. Combine
+  this with <code>--save-alias</code> to keep examples alongside project code.</li>
+</ul>
+<h3 id="saving-an-alias-programmatically">Saving an Alias Programmatically<a class="headerlink" href="#saving-an-alias-programmatically" title="Permanent link">&para;</a></h3>
+<p><code>--save-alias</code> writes (or updates) an entry without leaving your editor. The
+example below stores an alias in a temporary file under <code>dev/</code> and then removes
+it so the repository stays clean.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>cat:<span class="w"> </span>dev/kelora-demo.ini:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>rm:<span class="w"> </span>cannot<span class="w"> </span>remove<span class="w"> </span><span class="s1">&#39;dev/kelora-demo.ini&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+</code></pre></div>
+<p>Kelora reports whether the alias replaced an existing value. Alias names must
+match the regex <code>^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$</code>.</p>
+<h2 id="how-argument-expansion-works">How Argument Expansion Works<a class="headerlink" href="#how-argument-expansion-works" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Defaults applied</strong> – the <code>defaults</code> string is parsed with shell-style
+   quoting (<code>shell_words</code>) and inserted immediately after the executable name.</li>
+<li><strong>Alias expansion</strong> – each <code>--alias name</code> (or <code>-a name</code>) is replaced with the
+   corresponding argument list. Aliases can reference other aliases by using
+   <code>--alias other-alias</code> inside their definition.</li>
+<li><strong>CLI parsing</strong> – the augmented argument vector is passed to Clap. The final
+   flags appear in <code>kelora --debug-config</code> output (future feature) and are what
+   the pipeline sees.</li>
+</ol>
+<p>Implications:</p>
+<ul>
+<li>User-provided flags take precedence over defaults if they appear later on the
+  command line (standard CLI precedence rules). For example, <code>defaults = --stats</code>
+  and <code>kelora --no-stats</code> results in stats being disabled.</li>
+<li>Quote arguments that contain spaces inside the config file just as you would
+  in a shell.</li>
+<li>Recursive aliases are allowed but guarded by a maximum depth of 10 to prevent
+  infinite loops.</li>
+</ul>
+<h2 id="ignoring-or-switching-configurations">Ignoring or Switching Configurations<a class="headerlink" href="#ignoring-or-switching-configurations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>--ignore-config</code> bypasses both defaults and aliases, useful for clean-room
+  troubleshooting or one-off commands.</li>
+<li><code>--config-file</code> works with every config-aware flag (<code>--show-config</code>,
+  <code>--edit-config</code>, <code>--save-alias</code>). This makes it easy to ship presets within a
+  project directory while keeping personal settings separate.</li>
+</ul>
+<h2 id="configuration-vs-cli-flags">Configuration vs CLI Flags<a class="headerlink" href="#configuration-vs-cli-flags" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Recommended Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global formatting or stats</td>
+<td><code>defaults = -f json --stats</code></td>
+</tr>
+<tr>
+<td>Reusable command recipes</td>
+<td><code>[aliases]</code> entries; call with <code>--alias</code></td>
+</tr>
+<tr>
+<td>One-time experimentation</td>
+<td>Plain CLI flags (<code>--ignore-config</code> if needed)</td>
+</tr>
+<tr>
+<td>Team-shared profiles</td>
+<td>Commit <code>.kelora.ini</code> to the repo root</td>
+</tr>
+<tr>
+<td>Environment-specific tweaks</td>
+<td>Use project <code>.kelora.ini</code> plus per-user overrides</td>
+</tr>
+</tbody>
+</table>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Keep aliases small</strong> – Compose pipelines by chaining multiple aliases via
+  <code>--alias</code> rather than stuffing every flag into a single macro.</li>
+<li><strong>Document heavy aliases</strong> – Use the repository README or comments in
+  <code>.kelora.ini</code> to explain when to use each alias.</li>
+<li><strong>Pair with <code>just</code> or shell scripts</strong> – For multi-step workflows (downloading
+  logs, running Kelora, archiving output) keep orchestration in a script and
+  have the script call the alias.</li>
+<li><strong>Review before committing</strong> – Project-level <code>.kelora.ini</code> affects every run
+  from that directory. Make sure defaults remain sensible for newcomers.</li>
+</ul>
+<h2 id="related-topics">Related Topics<a class="headerlink" href="#related-topics" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../reference/cli-reference/#configuration-options">CLI Reference – Configuration Options</a>
+  lists every config-aware flag.</li>
+<li><a href="../scripting-stages/">Scripting Stages</a> covers the Rhai pipeline, which you
+  can drive via aliases for complex transformations.</li>
+<li><a href="../../tutorials/metrics-and-tracking/">Tutorial: Metrics and Tracking</a> shows
+  how to package common analytics commands as aliases.</li>
+</ul>
 
 
 

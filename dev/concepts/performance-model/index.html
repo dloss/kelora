@@ -24,7 +24,7 @@
     
     
       
-        <title>$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g') - Kelora</title>
+        <title>Performance Model - Kelora</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#echo-file-sed-s-g-sed-sbu1g" class="md-skip">
+        <a href="#performance-model" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+              Performance Model
             
           </span>
         </div>
@@ -696,7 +696,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Parse Syslog Files
     
   </span>
   
@@ -719,7 +719,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Handle Multiline Stacktraces
     
   </span>
   
@@ -742,7 +742,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Extract and Mask Sensitive Data
     
   </span>
   
@@ -765,7 +765,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Process CSV Data
     
   </span>
   
@@ -788,7 +788,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Fan Out Nested Structures
     
   </span>
   
@@ -811,7 +811,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Build Streaming Alerts
     
   </span>
   
@@ -834,7 +834,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Batch Process Archives
     
   </span>
   
@@ -999,7 +999,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Rhai Cheatsheet
     
   </span>
   
@@ -1169,7 +1169,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Multiline Strategies
     
   </span>
   
@@ -1196,17 +1196,160 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Performance Model
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Performance Model
     
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#execution-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execution Modes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Execution Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequential-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequential Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parallel Mode
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parallel Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequential-vs-parallel-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequential vs Parallel in Practice
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-components-that-affect-throughput" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pipeline Components That Affect Throughput
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#measuring-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Measuring Performance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ordering-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ordering Guarantees
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streaming-vs-batch-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Streaming vs Batch Recommendations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-slow-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Slow Pipelines
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Guides
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1225,7 +1368,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Configuration System
     
   </span>
   
@@ -1263,6 +1406,125 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#execution-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execution Modes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Execution Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequential-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequential Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parallel Mode
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parallel Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequential-vs-parallel-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequential vs Parallel in Practice
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-components-that-affect-throughput" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pipeline Components That Affect Throughput
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#measuring-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Measuring Performance
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ordering-guarantees" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ordering Guarantees
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streaming-vs-batch-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Streaming vs Batch Recommendations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-slow-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Slow Pipelines
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-guides" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related Guides
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1280,12 +1542,157 @@
   
 
 
-<h1 id="echo-file-sed-s-g-sed-sbu1g">$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')<a class="headerlink" href="#echo-file-sed-s-g-sed-sbu1g" title="Permanent link">&para;</a></h1>
-<div class="admonition info">
-<p class="admonition-title">Coming Soon</p>
-<p>This concept page is under development and will be available soon.</p>
-</div>
-<p><em>This concept explanation will be available in a future update.</em></p>
+<h1 id="performance-model">Performance Model<a class="headerlink" href="#performance-model" title="Permanent link">&para;</a></h1>
+<p>Kelora is designed to crunch large log streams quickly while staying responsive
+for interactive use. Understanding the performance levers helps you pick the
+right execution mode for ad-hoc investigations, CI jobs, and heavyweight batch
+pipelines.</p>
+<h2 id="execution-modes">Execution Modes<a class="headerlink" href="#execution-modes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Command</th>
+<th>When to use</th>
+<th>Characteristics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sequential (default)</td>
+<td><code>kelora ...</code></td>
+<td>Tail, streaming pipes, order-sensitive work</td>
+<td>Strict input order, minimal buffering, deterministic output</td>
+</tr>
+<tr>
+<td>Parallel</td>
+<td><code>kelora --parallel ...</code></td>
+<td>Batch jobs, archives, CPU-bound transforms</td>
+<td>Workload split across worker threads, configurable batching</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sequential-mode">Sequential Mode<a class="headerlink" href="#sequential-mode" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Processes one event at a time and forwards it immediately.</li>
+<li>Ideal for <code>tail -f</code> pipelines, interactive filtering, or anything that needs
+  deterministic ordering.</li>
+<li>Windowing (<code>--window</code>), context flags (<code>-A/-B/-C</code>), and Rhai metrics operate
+  with minimal latency.</li>
+</ul>
+<h3 id="parallel-mode">Parallel Mode<a class="headerlink" href="#parallel-mode" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Uses a worker pool (defaults to logical CPU count) to parse, filter, and
+  transform events concurrently.</li>
+<li>Requires buffering to preserve order unless you pass <code>--unordered</code> (faster but
+  only safe when ordering does not matter).</li>
+<li>Adjust batching:</li>
+<li><code>--batch-size &lt;N&gt;</code> – number of events per batch before flushing to workers.</li>
+<li><code>--batch-timeout &lt;ms&gt;</code> – flush partially filled batches after idle period.</li>
+<li><code>--threads &lt;N&gt;</code> – override the thread count (0 = auto).</li>
+<li>Context windows and sliding windows still work, but they maintain per-worker
+  buffers internally. Increase <code>--window</code> sparingly to avoid large per-thread
+  allocations.</li>
+</ul>
+<h4 id="sequential-vs-parallel-in-practice">Sequential vs Parallel in Practice<a class="headerlink" href="#sequential-vs-parallel-in-practice" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">4</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+</code></pre></div>
+<p>On this synthetic access log (<code>1200</code> lines), parallel mode yields higher
+throughput because the CPU-bound combined parser is spread across cores.
+Real-world gains depend on disk speed, decompression cost, and script workload.</p>
+<h2 id="pipeline-components-that-affect-throughput">Pipeline Components That Affect Throughput<a class="headerlink" href="#pipeline-components-that-affect-throughput" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Input</strong> – Kelora streams from files or stdin, automatically decompressing
+   <code>.gz</code>. Network filesystems or slow disks can dominate runtime; consider using
+   <code>pv</code>/<code>zcat</code> to monitor upstream throughput.</li>
+<li><strong>Parsing</strong> – Structured formats like <code>combined</code>, <code>syslog</code>, or <code>cols:</code> spend
+   more CPU cycles than <code>line</code> or <code>raw</code>. Parallel mode shines here.</li>
+<li><strong>Filtering</strong> – Complex regex (<code>--filter</code>, <code>--keep-lines</code>, <code>--ignore-lines</code>)
+   benefit from batching; simple boolean predicates are cheap.</li>
+<li><strong>Transformation</strong> – Rhai scripts are executed for every event. Expensive
+   operations (regex extraction, JSON parsing, cryptographic hashes) may need
+   <code>--parallel</code> or optimized logic (e.g., caching in <code>--begin</code>).</li>
+<li><strong>Output</strong> – <code>-F json</code> and CSV/TSV encoders allocate more than the default
+   key=value printer. Writing to disk (<code>-o file</code>) shifts performance to storage.</li>
+</ol>
+<h2 id="measuring-performance">Measuring Performance<a class="headerlink" href="#measuring-performance" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>--stats</code> or <code>--stats-only</code> print throughput, error counts, time span, and
+  key inventory. Compare sequential vs parallel runs with the same dataset.</li>
+<li><code>--metrics</code> combined with <code>track_sum</code>/<code>track_bucket</code> can act as lightweight
+  profilers (e.g., sum <code>duration_ms</code> to estimate runtime distribution).</li>
+<li>Use <code>time</code>, <code>hyperfine</code>, or CI timers around your Kelora command for wall
+  clock baselines.</li>
+</ul>
+<h2 id="memory-considerations">Memory Considerations<a class="headerlink" href="#memory-considerations" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Multiline (<code>--multiline</code>) and windowing (<code>--window</code>, context flags) enlarge
+  per-event buffers. Monitor with <code>--stats</code> and consider lowering
+  <code>--batch-size</code> if memory grows uncontrollably in parallel mode.</li>
+<li><code>--multiline all</code> or gigantic regex chunks can hold the entire file in RAM.
+  Prefer incremental processing or pre-splitting input.</li>
+<li><code>--metrics</code> keeps maps in memory until the run ends. Guard high-cardinality
+  structures (<code>track_unique</code>) with filters.</li>
+</ul>
+<h2 id="ordering-guarantees">Ordering Guarantees<a class="headerlink" href="#ordering-guarantees" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Sequential mode preserves input order exactly.</li>
+<li>Parallel mode preserves order by default through batch sequencing. Use
+  <code>--unordered</code> only when the output order is irrelevant (e.g., writing JSON
+  lines to a file for downstream aggregation).</li>
+<li><code>--batch-size</code> too large can increase latency before the first events appear.
+  Tune for the desired balance between throughput and interactivity.</li>
+</ul>
+<h2 id="streaming-vs-batch-recommendations">Streaming vs Batch Recommendations<a class="headerlink" href="#streaming-vs-batch-recommendations" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Suggested Flags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Watching logs live</td>
+<td>Sequential (default), <code>--stats</code> for quick counters</td>
+</tr>
+<tr>
+<td>Importing nightly archives</td>
+<td><code>--parallel --batch-size 2000 --stats-only</code></td>
+</tr>
+<tr>
+<td>CPU-heavy Rhai transforms</td>
+<td><code>--parallel --threads 0 --unordered</code> (if orderless)</td>
+</tr>
+<tr>
+<td>Tail with alerts</td>
+<td>Sequential + <code>--metrics</code> for low-latency thresholds</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting-slow-pipelines">Troubleshooting Slow Pipelines<a class="headerlink" href="#troubleshooting-slow-pipelines" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>High CPU usage</strong> – Profile Rhai scripts. Move static setup to <code>--begin</code> and
+  eliminate redundant parsing inside <code>--exec</code>.</li>
+<li><strong>Low throughput in parallel mode</strong> – Increase <code>--batch-size</code>, decrease
+  <code>--batch-timeout</code>, or allow Kelora to run more threads with <code>--threads 0</code>.</li>
+<li><strong>Out-of-order events</strong> – Ensure <code>--unordered</code> is not set. Multiline plus
+  <code>--parallel</code> may delay chunk emission; reduce batch size.</li>
+<li><strong>Backpressure when writing to files</strong> – Use <code>-o output.log</code> to avoid stdout
+  buffering by other processes.</li>
+<li><strong>Gzip bottlenecks</strong> – Pre-decompress with <code>zcat file.gz | kelora -f combined -</code>
+  if CPU is the limiting factor and disk is fast.</li>
+</ul>
+<h2 id="related-guides">Related Guides<a class="headerlink" href="#related-guides" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../tutorials/metrics-and-tracking/">Metrics and Tracking Tutorial</a> – build
+  dashboards to observe throughput.</li>
+<li><a href="../multiline-strategies/">Multiline Strategies</a> – large multiline blocks can
+  influence memory and batching.</li>
+<li><a href="../../reference/cli-reference/#performance-options">CLI Reference – Performance Options</a>
+  – full documentation for <code>--parallel</code>, <code>--threads</code>, and friends.</li>
+</ul>
 
 
 

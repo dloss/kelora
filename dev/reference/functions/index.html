@@ -696,7 +696,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Parse Syslog Files
     
   </span>
   
@@ -719,7 +719,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Handle Multiline Stacktraces
     
   </span>
   
@@ -742,7 +742,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Extract and Mask Sensitive Data
     
   </span>
   
@@ -765,7 +765,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Process CSV Data
     
   </span>
   
@@ -788,7 +788,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Fan Out Nested Structures
     
   </span>
   
@@ -811,7 +811,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Build Streaming Alerts
     
   </span>
   
@@ -834,7 +834,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Batch Process Archives
     
   </span>
   
@@ -2374,6 +2374,16 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tracking-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tracking Functions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tracking Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#track_countkey" class="md-nav__link">
     <span class="md-ellipsis">
       track_count(key)
@@ -2415,6 +2425,11 @@
       track_bucket(key, bucket)
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -2615,7 +2630,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Rhai Cheatsheet
     
   </span>
   
@@ -2780,7 +2795,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Multiline Strategies
     
   </span>
   
@@ -2803,7 +2818,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Performance Model
     
   </span>
   
@@ -2826,7 +2841,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Configuration System
     
   </span>
   
@@ -4288,6 +4303,16 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tracking-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tracking Functions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tracking Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#track_countkey" class="md-nav__link">
     <span class="md-ellipsis">
       track_count(key)
@@ -4329,6 +4354,11 @@
       track_bucket(key, bucket)
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -5059,6 +5089,7 @@
 <hr />
 <h2 id="trackingmetrics-functions">Tracking/Metrics Functions<a class="headerlink" href="#trackingmetrics-functions" title="Permanent link">&para;</a></h2>
 <p>All tracking functions require the <code>--metrics</code> flag.</p>
+<h3 id="tracking-functions">Tracking Functions<a class="headerlink" href="#tracking-functions" title="Permanent link">&para;</a></h3>
 <h4 id="track_countkey"><code>track_count(key)</code><a class="headerlink" href="#track_countkey" title="Permanent link">&para;</a></h4>
 <p>Increment counter for key by 1.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-107-1" name="__codelineno-107-1" href="#__codelineno-107-1"></a>track_count(e.service)                                // Count by service

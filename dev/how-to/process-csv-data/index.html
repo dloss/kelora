@@ -24,7 +24,7 @@
     
     
       
-        <title>$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g') - Kelora</title>
+        <title>Process CSV Data - Kelora</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#echo-file-sed-s-g-sed-sbu1g" class="md-skip">
+        <a href="#process-csv-data" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+              Process CSV Data
             
           </span>
         </div>
@@ -701,7 +701,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Parse Syslog Files
     
   </span>
   
@@ -724,7 +724,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Handle Multiline Stacktraces
     
   </span>
   
@@ -747,7 +747,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Extract and Mask Sensitive Data
     
   </span>
   
@@ -774,17 +774,232 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Process CSV Data
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Process CSV Data
     
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Solutions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-csv-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic CSV Parsing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-with-type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV with Type Annotations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-without-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV without Headers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-csv-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter CSV Rows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggregate-csv-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Aggregate CSV Data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transform-csv-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transform CSV Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convert-csv-to-other-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Convert CSV to Other Formats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-raggedmalformed-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handle Ragged/Malformed CSV
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#select-specific-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Select Specific Columns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-World Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-World Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-slow-api-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Slow API Calls
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calculate-response-time-percentiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Calculate Response Time Percentiles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-error-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export Error Rows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-by-time-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group by Time Windows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clean-and-normalize-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clean and Normalize Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -803,7 +1018,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Fan Out Nested Structures
     
   </span>
   
@@ -826,7 +1041,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Build Streaming Alerts
     
   </span>
   
@@ -849,7 +1064,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Batch Process Archives
     
   </span>
   
@@ -1014,7 +1229,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Rhai Cheatsheet
     
   </span>
   
@@ -1179,7 +1394,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Multiline Strategies
     
   </span>
   
@@ -1202,7 +1417,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Performance Model
     
   </span>
   
@@ -1225,7 +1440,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Configuration System
     
   </span>
   
@@ -1263,6 +1478,197 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Solutions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-csv-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic CSV Parsing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-with-type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV with Type Annotations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-without-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV without Headers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-csv-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter CSV Rows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggregate-csv-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Aggregate CSV Data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transform-csv-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transform CSV Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convert-csv-to-other-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Convert CSV to Other Formats
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-raggedmalformed-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handle Ragged/Malformed CSV
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#select-specific-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Select Specific Columns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-World Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-World Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-slow-api-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Find Slow API Calls
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calculate-response-time-percentiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Calculate Response Time Percentiles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-error-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Export Error Rows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-by-time-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Group by Time Windows
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clean-and-normalize-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Clean and Normalize Data
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1280,12 +1686,180 @@
   
 
 
-<h1 id="echo-file-sed-s-g-sed-sbu1g">$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')<a class="headerlink" href="#echo-file-sed-s-g-sed-sbu1g" title="Permanent link">&para;</a></h1>
-<div class="admonition info">
-<p class="admonition-title">Coming Soon</p>
-<p>This how-to guide is under development and will be available soon.</p>
-</div>
-<p><em>This guide will be available in a future update.</em></p>
+<h1 id="process-csv-data">Process CSV Data<a class="headerlink" href="#process-csv-data" title="Permanent link">&para;</a></h1>
+<p>Parse and analyze CSV/TSV files with type annotations, header handling, and field transformations.</p>
+<h2 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h2>
+<p>You have CSV or TSV files and need to parse them with proper type handling, filter rows, aggregate values, or transform the data for further analysis.</p>
+<h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
+<h3 id="basic-csv-parsing">Basic CSV Parsing<a class="headerlink" href="#basic-csv-parsing" title="Permanent link">&para;</a></h3>
+<p>Parse CSV files with automatic header detection:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Parse CSV with headers</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--take<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Parse TSV (tab-separated)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>tsv<span class="w"> </span>data.tsv<span class="w"> </span>--take<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+<h3 id="csv-with-type-annotations">CSV with Type Annotations<a class="headerlink" href="#csv-with-type-annotations" title="Permanent link">&para;</a></h3>
+<p>Specify field types for proper numeric handling:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Type annotations: :int, :float, :bool</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int duration:float&#39;</span><span class="w"> </span>data.csv
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Example with typed CSV</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int duration:int&#39;</span><span class="w"> </span>examples/csv_typed.csv<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<p>Type annotations enable:
+- Numeric comparisons and arithmetic
+- Sorting by numeric values
+- Proper aggregations (sum, average, etc.)</p>
+<h3 id="csv-without-headers">CSV without Headers<a class="headerlink" href="#csv-without-headers" title="Permanent link">&para;</a></h3>
+<p>Process CSV files without header rows:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># No headers - use csvnh (CSV No Header)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csvnh<span class="w"> </span>data.csv
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Access by index: _1, _2, _3, etc.</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csvnh<span class="w"> </span>data.csv<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.timestamp = e._1; e.status = e._2.to_int()&#39;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># TSV without headers</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>tsvnh<span class="w"> </span>data.tsv
+</code></pre></div>
+<h3 id="filter-csv-rows">Filter CSV Rows<a class="headerlink" href="#filter-csv-rows" title="Permanent link">&para;</a></h3>
+<p>Filter based on field values:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Filter by status code</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Filter by multiple conditions</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int duration:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 200 &amp;&amp; e.duration &gt; 1000&#39;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># Filter by text patterns</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.method == &quot;POST&quot; &amp;&amp; e.path.contains(&quot;/api/&quot;)&#39;</span>
+</code></pre></div>
+<h3 id="aggregate-csv-data">Aggregate CSV Data<a class="headerlink" href="#aggregate-csv-data" title="Permanent link">&para;</a></h3>
+<p>Calculate statistics across rows:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Count by status code</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--metrics
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># Sum bytes transferred</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv bytes:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_bytes&quot;, e.bytes)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--metrics
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># Track unique values</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;methods&quot;, e.method)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="transform-csv-fields">Transform CSV Fields<a class="headerlink" href="#transform-csv-fields" title="Permanent link">&para;</a></h3>
+<p>Create new fields or modify existing ones:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Calculate derived fields</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv bytes:int duration:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.throughput = e.bytes / e.duration&#39;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Normalize timestamps</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.hour = to_datetime(e.timestamp).hour()&#39;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Extract path components</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.endpoint = e.path.split(&quot;/&quot;)[1]&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.endpoint)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="convert-csv-to-other-formats">Convert CSV to Other Formats<a class="headerlink" href="#convert-csv-to-other-formats" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># CSV to JSON</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>output.json
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># CSV to logfmt</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>-F<span class="w"> </span>logfmt<span class="w"> </span>&gt;<span class="w"> </span>output.log
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># CSV to JSON with selected fields</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,status,bytes<span class="w"> </span>-F<span class="w"> </span>json
+</code></pre></div>
+<h3 id="handle-raggedmalformed-csv">Handle Ragged/Malformed CSV<a class="headerlink" href="#handle-raggedmalformed-csv" title="Permanent link">&para;</a></h3>
+<p>Process CSV files with missing or extra fields:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Resilient mode (default) - skip bad rows</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--stats
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># See parsing errors</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--verbose
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Strict mode - abort on first error</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--strict
+</code></pre></div>
+<h3 id="select-specific-columns">Select Specific Columns<a class="headerlink" href="#select-specific-columns" title="Permanent link">&para;</a></h3>
+<p>Output only desired fields:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Select specific fields</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,method,status
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Exclude sensitive fields</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--exclude-keys<span class="w"> </span>email,ip_address
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Reorder fields in output</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--keys<span class="w"> </span>status,method,path<span class="w"> </span>-F<span class="w"> </span>csv
+</code></pre></div>
+<h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
+<h3 id="find-slow-api-calls">Find Slow API Calls<a class="headerlink" href="#find-slow-api-calls" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv path method status:int duration:int&#39;</span><span class="w"> </span>api_log.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>--keys<span class="w"> </span>path,method,duration<span class="w"> </span>--metrics
+</code></pre></div>
+<h3 id="calculate-response-time-percentiles">Calculate Response Time Percentiles<a class="headerlink" href="#calculate-response-time-percentiles" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv duration:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">10000</span><span class="w"> </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="s1">    let times = window_numbers(&quot;duration&quot;);</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">    print(&quot;p50: &quot; + times.percentile(50));</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="s1">    print(&quot;p95: &quot; + times.percentile(95));</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s1">    print(&quot;p99: &quot; + times.percentile(99))</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s1">  &#39;</span>
+</code></pre></div>
+<h3 id="export-error-rows">Export Error Rows<a class="headerlink" href="#export-error-rows" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>errors.json
+</code></pre></div>
+<h3 id="group-by-time-windows">Group by Time Windows<a class="headerlink" href="#group-by-time-windows" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.hour = to_datetime(e.timestamp).format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="clean-and-normalize-data">Clean and Normalize Data<a class="headerlink" href="#clean-and-normalize-data" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>raw_data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.email = e.email.to_lower().strip()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.status = to_int_or(e.status, 0)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.timestamp = to_datetime(e.timestamp).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>cleaned.csv
+</code></pre></div>
+<h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
+<p><strong>Type Handling:</strong>
+- Use <code>:int</code> for status codes, counts, IDs
+- Use <code>:float</code> for durations, measurements, rates
+- Use <code>:bool</code> for flags (accepts: true/false, 1/0, yes/no)
+- Untyped fields remain as strings</p>
+<p><strong>Performance:</strong>
+- Add <code>--parallel</code> for large CSV files
+- Use <code>--batch-size</code> to control memory usage
+- Filter early to reduce processing overhead</p>
+<p><strong>Error Handling:</strong>
+- Use <code>--verbose</code> to see parsing errors
+- Use <code>--stats</code> to see skip/error counts
+- Ragged CSV (missing fields) creates partial events</p>
+<p><strong>Field Access:</strong>
+- Headers become field names (spaces → underscores)
+- Without headers, use <code>_1</code>, <code>_2</code>, <code>_3</code> etc.
+- Use <code>to_int_or()</code> / <code>to_float_or()</code> for safe type conversion</p>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../fan-out-nested-structures/">Fan Out Nested Structures</a> - Process nested CSV data</li>
+<li><a href="../analyze-web-traffic/">Analyze Web Traffic</a> - Similar patterns for log files</li>
+<li><a href="../../reference/functions/">Function Reference</a> - Type conversion functions</li>
+<li><a href="../../reference/cli-reference/">CLI Reference</a> - Format specifications</li>
+</ul>
 
 
 
