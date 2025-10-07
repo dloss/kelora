@@ -787,30 +787,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fields-not-parsing-correctly" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fields Not Parsing Correctly
-    </span>
-  </a>
-  
-</li>
-        
           <li class="md-nav__item">
   <a href="#timestamp-not-recognized" class="md-nav__link">
     <span class="md-ellipsis">
@@ -1881,30 +1857,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Troubleshooting
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fields-not-parsing-correctly" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fields Not Parsing Correctly
-    </span>
-  </a>
-  
-</li>
-        
           <li class="md-nav__item">
   <a href="#timestamp-not-recognized" class="md-nav__link">
     <span class="md-ellipsis">
@@ -2191,16 +2143,33 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>&gt;<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">           </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level message:*&#39;</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="c1">### More Recipes to Practice</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="sb">```</span>bash<span class="w"> </span><span class="nv">exec</span><span class="o">=</span><span class="s2">&quot;on&quot;</span><span class="w"> </span><span class="nv">source</span><span class="o">=</span><span class="s2">&quot;above&quot;</span><span class="w"> </span><span class="nv">result</span><span class="o">=</span><span class="s2">&quot;ansi&quot;</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;csv status:int bytes:int duration_ms:int&quot;</span><span class="w"> </span>examples/simple_csv.csv
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;tsv: user_id:int success:bool&quot;</span><span class="w"> </span>examples/simple_tsv.tsv
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;cols:date(2) level *msg:string&quot;</span><span class="w"> </span>examples/cols_fixed.log
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;csv status:int&quot;</span><span class="w"> </span>--strict<span class="w"> </span>examples/errors_csv_ragged.csv
 </code></pre></div>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="fields-not-parsing-correctly">Fields Not Parsing Correctly<a class="headerlink" href="#fields-not-parsing-correctly" title="Permanent link">&para;</a></h3>
-<p><strong>Problem:</strong> Fields are misaligned or missing.</p>
-<p><strong>Solution:</strong> Check separator and field widths:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Debug by outputting all fields</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:field1 field2 field3:*&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Try different separator</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:field1 field2 field3&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
+<p>Inline type annotations and strict mode are perfect for catching malformed
+rows during ingestion before they reach downstream systems.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>## Troubleshooting
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>### Fields Not Parsing Correctly
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>**Problem:** Fields are misaligned or missing.
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>**Solution:** Check separator and field widths:
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>```bash
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a># Debug by outputting all fields
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>&gt; kelora -f &#39;cols:field1 field2 field3:*&#39; app.log --take 3
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a># Try different separator
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>&gt; kelora -f &#39;cols:field1 field2 field3&#39; --cols-sep &#39;|&#39; app.log --take 3
 </code></pre></div></p>
 <h3 id="timestamp-not-recognized">Timestamp Not Recognized<a class="headerlink" href="#timestamp-not-recognized" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Timestamp field not working with <code>--since</code>.</p>

@@ -1674,6 +1674,11 @@ This command watches a gzipped access log and surfaces top status classes.</p>
 <p>Passing <code>--take 0</code> (or omitting it) keeps processing the entire file. When you run
 Kelora against a stream (<code>tail -f | kelora ...</code>), the metrics snapshot updates when
 you terminate the process.</p>
+<p>Need full histograms instead of counts? Swap in <code>track_bucket()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+</code></pre></div>
+<p><code>track_bucket(key, bucket_value)</code> keeps nested counters so you can emit a
+human-readable histogram once processing finishes.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>No metrics printed</strong>: Ensure you pass <code>--metrics</code> or consume <code>metrics</code> within

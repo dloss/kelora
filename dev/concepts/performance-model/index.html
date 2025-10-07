@@ -1339,6 +1339,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Checklist
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-cheats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Cheats
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#related-guides" class="md-nav__link">
     <span class="md-ellipsis">
       Related Guides
@@ -1515,6 +1533,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Checklist
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-cheats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Cheats
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#related-guides" class="md-nav__link">
     <span class="md-ellipsis">
       Related Guides
@@ -1683,6 +1719,29 @@ Real-world gains depend on disk speed, decompression cost, and script workload.<
   buffering by other processes.</li>
 <li><strong>Gzip bottlenecks</strong> – Pre-decompress with <code>zcat file.gz | kelora -f combined -</code>
   if CPU is the limiting factor and disk is fast.</li>
+</ul>
+<h2 id="quick-checklist">Quick Checklist<a class="headerlink" href="#quick-checklist" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Streaming workloads? Stay sequential and stream to stdout for the lowest
+   latency.</li>
+<li>Batch archives? Combine <code>--parallel --stats</code> and tune <code>--batch-size</code> /
+   <code>--batch-timeout</code> after inspecting skew.</li>
+<li>Heavy windowing? Keep <code>--window</code> small (50 or less) or sample upstream to
+   cap memory.</li>
+<li>Verbose diagnostics? Drop to <code>-q</code> once the pipeline is stable to reduce
+   stderr noise.</li>
+<li>Ordering critical? Avoid <code>--unordered</code>; otherwise enabling it can flush
+   parallel batches faster.</li>
+</ol>
+<h2 id="troubleshooting-cheats">Troubleshooting Cheats<a class="headerlink" href="#troubleshooting-cheats" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Inspect parse hiccups with <code>-F inspect</code> or by raising <code>--verbose</code>.</li>
+<li>Timestamp drift? Pin down <code>--ts-field</code>, <code>--ts-format</code>, or <code>--input-tz</code>
+  (see <code>kelora --help-time</code>).</li>
+<li>Rhai panics? Guard lookups with <code>e.get_path("field", ())</code> and conversions with
+  <code>to_int_or</code> / <code>to_float_or</code>.</li>
+<li>Abundant <code>.gz</code> files? No need for extra tooling—Kelora already detects and
+  decompresses them automatically.</li>
 </ul>
 <h2 id="related-guides">Related Guides<a class="headerlink" href="#related-guides" title="Permanent link">&para;</a></h2>
 <ul>
