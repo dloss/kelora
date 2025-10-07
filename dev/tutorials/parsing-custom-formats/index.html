@@ -561,6 +561,306 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#step-1-understanding-column-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Understanding Column Specifications
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Understanding Column Specifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Log Format
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-basic-whitespace-delimited-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Basic Whitespace-Delimited Parsing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-fixed-width-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Fixed-Width Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-adding-type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Adding Type Annotations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-handling-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Handling Timestamps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-custom-separators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 6: Custom Separators
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-real-world-example-application-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 7: Real-World Example - Application Logs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 7: Real-World Example - Application Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-regex-in-exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Regex in Exec
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-combining-with-transformations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 8: Combining with Transformations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-working-with-mixed-width-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 9: Working with Mixed-Width Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 10: Complete Example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pattern-1-log-level-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 1: Log Level + Message
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-2-timestamp-level-service-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 2: Timestamp + Level + Service + Message
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-3-fixed-width-with-type-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 3: Fixed-Width with Type Conversion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-4-extract-and-transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 4: Extract and Transform
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-and-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips and Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips and Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#use-whitespace-delimiters-when-possible" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Whitespace Delimiters When Possible
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-type-annotations-early" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Type Annotations Early
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#name-fields-descriptively" class="md-nav__link">
+    <span class="md-ellipsis">
+      Name Fields Descriptively
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-greedy-capture-for-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Greedy Capture for Messages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combine-with-extract-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combine with Extract Prefix
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fields-not-parsing-correctly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fields Not Parsing Correctly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-not-recognized" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timestamp Not Recognized
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-conversion-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Conversion Failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#greedy-field-capturing-too-much" class="md-nav__link">
+    <span class="md-ellipsis">
+      Greedy Field Capturing Too Much
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1027,7 +1327,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Format Reference
     
   </span>
   
@@ -1050,7 +1350,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Exit Codes
     
   </span>
   
@@ -1355,6 +1655,306 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#step-1-understanding-column-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Understanding Column Specifications
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Understanding Column Specifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Log Format
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-basic-whitespace-delimited-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Basic Whitespace-Delimited Parsing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-fixed-width-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Fixed-Width Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-adding-type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Adding Type Annotations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-handling-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Handling Timestamps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-custom-separators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 6: Custom Separators
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-real-world-example-application-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 7: Real-World Example - Application Logs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 7: Real-World Example - Application Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-regex-in-exec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Regex in Exec
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-combining-with-transformations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 8: Combining with Transformations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-working-with-mixed-width-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 9: Working with Mixed-Width Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-complete-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 10: Complete Example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pattern-1-log-level-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 1: Log Level + Message
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-2-timestamp-level-service-message" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 2: Timestamp + Level + Service + Message
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-3-fixed-width-with-type-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 3: Fixed-Width with Type Conversion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-4-extract-and-transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pattern 4: Extract and Transform
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-and-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips and Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips and Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#use-whitespace-delimiters-when-possible" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Whitespace Delimiters When Possible
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-type-annotations-early" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Type Annotations Early
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#name-fields-descriptively" class="md-nav__link">
+    <span class="md-ellipsis">
+      Name Fields Descriptively
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-greedy-capture-for-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Greedy Capture for Messages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combine-with-extract-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combine with Extract Prefix
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fields-not-parsing-correctly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fields Not Parsing Correctly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-not-recognized" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timestamp Not Recognized
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-conversion-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Conversion Failures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#greedy-field-capturing-too-much" class="md-nav__link">
+    <span class="md-ellipsis">
+      Greedy Field Capturing Too Much
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Next Steps
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1375,30 +1975,262 @@
 
 
 <h1 id="parsing-custom-formats">Parsing Custom Formats<a class="headerlink" href="#parsing-custom-formats" title="Permanent link">&para;</a></h1>
-<div class="admonition info">
-<p class="admonition-title">Coming Soon</p>
-<p>This tutorial is under development and will be available soon.</p>
-</div>
-<p>Learn how to parse custom log formats using Kelora's <code>cols:&lt;spec&gt;</code> format.</p>
+<p>Learn how to parse custom log formats using Kelora's flexible column format specification.</p>
 <h2 id="what-youll-learn">What You'll Learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
+<p>By the end of this tutorial, you'll be able to:</p>
 <ul>
-<li>How to write column specifications for custom formats</li>
-<li>Type annotations for automatic conversion</li>
-<li>Capturing variable-width fields</li>
-<li>Handling whitespace and delimiters</li>
+<li>Parse fixed-width and delimited custom log formats</li>
+<li>Use column specifications with field names and widths</li>
+<li>Apply type annotations for automatic conversion</li>
+<li>Handle timestamp fields and greedy captures</li>
+<li>Combine custom parsing with filtering and transformation</li>
 </ul>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Completed the <a href="../../quickstart/">Quickstart</a></li>
-<li>Familiarity with basic Kelora commands</li>
+<li>Basic understanding of log formats</li>
+<li>Familiarity with command-line operations</li>
 </ul>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Topics covered:
-- Basic column specs
-- Type annotations (<code>:int</code>, <code>:float</code>, <code>:bool</code>)
-- Field naming
-- Real-world examples</p>
-<p><em>This tutorial will guide you through parsing custom application logs step-by-step.</em></p>
+<p>Many applications generate custom log formats that don't match standard formats like JSON or syslog. Kelora's <code>cols:&lt;spec&gt;</code> format lets you define custom column specifications to parse these logs.</p>
+<p><strong>Time:</strong> ~15 minutes</p>
+<h2 id="step-1-understanding-column-specifications">Step 1: Understanding Column Specifications<a class="headerlink" href="#step-1-understanding-column-specifications" title="Permanent link">&para;</a></h2>
+<p>The basic syntax for column format is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>-f &#39;cols:field1:width field2:width field3:*&#39;
+</code></pre></div>
+<p><strong>Field specification parts:</strong>
+- <code>field1</code> - Field name
+- <code>:width</code> - Field width (optional, whitespace-delimited if omitted)
+- <code>*</code> - Greedy capture (consumes remainder of line)</p>
+<h3 id="example-log-format">Example Log Format<a class="headerlink" href="#example-log-format" title="Permanent link">&para;</a></h3>
+<p>Let's start with a simple application log:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ERROR api Connection failed
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>INFO  db  Query executed
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>WARN  api Slow response time
+</code></pre></div>
+<p>Each line has three whitespace-delimited fields: level, service, message.</p>
+<h2 id="step-2-basic-whitespace-delimited-parsing">Step 2: Basic Whitespace-Delimited Parsing<a class="headerlink" href="#step-2-basic-whitespace-delimited-parsing" title="Permanent link">&para;</a></h2>
+<p>For whitespace-delimited fields, just list the field names:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">3</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+</code></pre></div>
+<p><strong>How it works:</strong>
+- <code>level</code> - First whitespace-delimited field
+- <code>service</code> - Second whitespace-delimited field
+- <code>message</code> - Third whitespace-delimited field (captures rest of line)</p>
+<h2 id="step-3-fixed-width-fields">Step 3: Fixed-Width Fields<a class="headerlink" href="#step-3-fixed-width-fields" title="Permanent link">&para;</a></h2>
+<p>For fixed-width columns, specify the character width:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERROR     api       Connection failed&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level:10 service:10 message:*&#39;</span>
+</code></pre></div>
+<p><strong>Column widths:</strong>
+- <code>level:10</code> - First 10 characters
+- <code>service:10</code> - Next 10 characters
+- <code>message:*</code> - Remainder of line</p>
+<p>The <code>*</code> wildcard must be the last field and consumes everything remaining.</p>
+<h2 id="step-4-adding-type-annotations">Step 4: Adding Type Annotations<a class="headerlink" href="#step-4-adding-type-annotations" title="Permanent link">&para;</a></h2>
+<p>Convert fields to specific types using annotations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;200 1234 0.123</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="s2">404 5678 0.456</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s2">500 9012 0.789&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status:int bytes:int response_time:float&#39;</span>
+</code></pre></div>
+<p><strong>Supported types:</strong>
+- <code>:int</code> - Parse as integer
+- <code>:float</code> - Parse as floating-point number
+- <code>:bool</code> - Parse as boolean</p>
+<p>After type conversion, you can use numeric operations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;200 1234 0.123&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status:int bytes:int response_time:float&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
+</code></pre></div>
+<h2 id="step-5-handling-timestamps">Step 5: Handling Timestamps<a class="headerlink" href="#step-5-handling-timestamps" title="Permanent link">&para;</a></h2>
+<p>Use <code>:ts</code> for timestamp fields that Kelora should recognize:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00Z ERROR Connection failed&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level message&#39;</span>
+</code></pre></div>
+<p>The <code>:ts</code> annotation tells Kelora to:
+- Parse the field as a timestamp
+- Make it available for time-based filtering (<code>--since</code>, <code>--until</code>)
+- Use it for time-related functions</p>
+<h2 id="step-6-custom-separators">Step 6: Custom Separators<a class="headerlink" href="#step-6-custom-separators" title="Permanent link">&para;</a></h2>
+<p>For non-whitespace separators, use <code>--cols-sep</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERROR|api|Connection failed</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s2">INFO|db|Query executed&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service message&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span>
+</code></pre></div>
+<p>Works with any separator string:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Comma-separated</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service message&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Tab-separated</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service message&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">$&#39;\t&#39;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Multi-character separator</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service message&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39; :: &#39;</span>
+</code></pre></div>
+<h2 id="step-7-real-world-example-application-logs">Step 7: Real-World Example - Application Logs<a class="headerlink" href="#step-7-real-world-example-application-logs" title="Permanent link">&para;</a></h2>
+<p>Let's parse a custom application log format:</p>
+<p><strong>Log format:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>[2024-01-15 10:30:00] ERROR api Connection failed to database
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>[2024-01-15 10:30:01] INFO  db  Query executed successfully
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>[2024-01-15 10:30:02] WARN  api Slow response: 2500ms
+</code></pre></div></p>
+<p><strong>Column specification:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level:5 service:4 message:*&#39;</span><span class="w"> </span>app.log
+</code></pre></div></p>
+<p>But the timestamp is wrapped in brackets. We need to extract it first.</p>
+<h3 id="using-regex-in-exec">Using Regex in Exec<a class="headerlink" href="#using-regex-in-exec" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:raw_ts level:5 service:4 message:*&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.timestamp = e.raw_ts.extract_re(r&quot;\[(.*?)\]&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.raw_ts = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,level,service,message
+</code></pre></div>
+<p><strong>What this does:</strong>
+1. Parse <code>raw_ts</code> as the first field (including brackets)
+2. Extract timestamp from brackets using regex
+3. Remove <code>raw_ts</code> field (no longer needed)
+4. Output cleaned fields</p>
+<h2 id="step-8-combining-with-transformations">Step 8: Combining with Transformations<a class="headerlink" href="#step-8-combining-with-transformations" title="Permanent link">&para;</a></h2>
+<p>Parse custom format and add computed fields:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>cat<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level:5 service:4 message:*&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;ms&quot;) { e.duration = e.message.extract_re(r&quot;(\d+)ms&quot;, 1).to_int() }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;duration&quot;) &amp;&amp; e.duration &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,service,duration,message
+</code></pre></div>
+<p><strong>Pipeline:</strong>
+1. Parse custom format
+2. Extract duration from message if present
+3. Filter for slow requests (&gt;1000ms)
+4. Output relevant fields</p>
+<h2 id="step-9-working-with-mixed-width-fields">Step 9: Working with Mixed-Width Fields<a class="headerlink" href="#step-9-working-with-mixed-width-fields" title="Permanent link">&para;</a></h2>
+<p>Some logs have consistent positions but variable content:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>ERROR  2024-01-15 Connection failed
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>INFO   2024-01-15 Query OK
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>WARN   2024-01-15 High memory usage
+</code></pre></div>
+<p>Use whitespace delimiter for variable-width fields:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level timestamp message&#39;</span><span class="w"> </span>app.log
+</code></pre></div>
+<p>Or specify exact positions if alignment is strict:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level:7 timestamp:11 message:*&#39;</span><span class="w"> </span>app.log
+</code></pre></div>
+<h2 id="step-10-complete-example">Step 10: Complete Example<a class="headerlink" href="#step-10-complete-example" title="Permanent link">&para;</a></h2>
+<p>Let's parse a complex custom format with everything we've learned:</p>
+<p><strong>Input log (custom_app.log):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>[2024-01-15 10:30:00] 200 api    1234 0.123 Success
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>[2024-01-15 10:30:01] 404 web    5678 0.456 Not found
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>[2024-01-15 10:30:02] 500 api    9012 0.789 Server error
+</code></pre></div></p>
+<p><strong>Parse specification:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:raw_ts status:int service:7 bytes:int latency:float message:*&#39;</span><span class="w"> </span>custom_app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.timestamp = e.raw_ts.extract_re(r&quot;\[(.*?)\]&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.raw_ts = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_error = e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.latency &gt; 0.5&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.is_error || e.is_slow&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,status,service,message
+</code></pre></div></p>
+<p><strong>What happens:</strong>
+1. Parse fields with type annotations
+2. Extract timestamp from brackets
+3. Add <code>is_error</code> flag for HTTP errors
+4. Add <code>is_slow</code> flag for high latency
+5. Filter for errors or slow requests
+6. Output cleaned fields</p>
+<h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="pattern-1-log-level-message">Pattern 1: Log Level + Message<a class="headerlink" href="#pattern-1-log-level-message" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error,warn
+</code></pre></div>
+<h3 id="pattern-2-timestamp-level-service-message">Pattern 2: Timestamp + Level + Service + Message<a class="headerlink" href="#pattern-2-timestamp-level-service-message" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level:5 service:10 message:*&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+</code></pre></div>
+<h3 id="pattern-3-fixed-width-with-type-conversion">Pattern 3: Fixed-Width with Type Conversion<a class="headerlink" href="#pattern-3-fixed-width-with-type-conversion" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status:int bytes:int duration:float path:*&#39;</span><span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;latency&quot;, e.duration)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--metrics
+</code></pre></div>
+<h3 id="pattern-4-extract-and-transform">Pattern 4: Extract and Transform<a class="headerlink" href="#pattern-4-extract-and-transform" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp level data:*&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.values = e.data.split(&quot;,&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.count = e.values.len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,level,count
+</code></pre></div>
+<h2 id="tips-and-best-practices">Tips and Best Practices<a class="headerlink" href="#tips-and-best-practices" title="Permanent link">&para;</a></h2>
+<h3 id="use-whitespace-delimiters-when-possible">Use Whitespace Delimiters When Possible<a class="headerlink" href="#use-whitespace-delimiters-when-possible" title="Permanent link">&para;</a></h3>
+<p>Simpler and more flexible:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Good - whitespace delimited</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service message&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Avoid unless necessary - fixed width</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level:10 service:10 message:*&#39;</span><span class="w"> </span>app.log
+</code></pre></div>
+<h3 id="use-type-annotations-early">Use Type Annotations Early<a class="headerlink" href="#use-type-annotations-early" title="Permanent link">&para;</a></h3>
+<p>Convert types during parsing, not in exec:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Good - parse as int</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status:int bytes:int&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Less efficient - convert in exec</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status bytes&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.status = e.status.to_int()&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
+</code></pre></div>
+<h3 id="name-fields-descriptively">Name Fields Descriptively<a class="headerlink" href="#name-fields-descriptively" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Good</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp level service message&#39;</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Less clear</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:col1 col2 col3 col4&#39;</span>
+</code></pre></div>
+<h3 id="use-greedy-capture-for-messages">Use Greedy Capture for Messages<a class="headerlink" href="#use-greedy-capture-for-messages" title="Permanent link">&para;</a></h3>
+<p>Always use <code>*</code> for the last field if it's a message:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service message:*&#39;</span>
+</code></pre></div>
+<h3 id="combine-with-extract-prefix">Combine with Extract Prefix<a class="headerlink" href="#combine-with-extract-prefix" title="Permanent link">&para;</a></h3>
+<p>For Docker Compose-style logs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>&gt;<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">           </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level message:*&#39;</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="fields-not-parsing-correctly">Fields Not Parsing Correctly<a class="headerlink" href="#fields-not-parsing-correctly" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Fields are misaligned or missing.</p>
+<p><strong>Solution:</strong> Check separator and field widths:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Debug by outputting all fields</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:field1 field2 field3:*&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Try different separator</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:field1 field2 field3&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
+</code></pre></div></p>
+<h3 id="timestamp-not-recognized">Timestamp Not Recognized<a class="headerlink" href="#timestamp-not-recognized" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Timestamp field not working with <code>--since</code>.</p>
+<p><strong>Solution:</strong> Use <code>:ts</code> annotation and verify format:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span>
+</code></pre></div></p>
+<h3 id="type-conversion-failures">Type Conversion Failures<a class="headerlink" href="#type-conversion-failures" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Integer/float conversions failing.</p>
+<p><strong>Solution:</strong> Use <code>get_path</code> with defaults in resilient mode:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status bytes&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.status_int = to_int_or(e.status, 0)&#39;</span>
+</code></pre></div></p>
+<h3 id="greedy-field-capturing-too-much">Greedy Field Capturing Too Much<a class="headerlink" href="#greedy-field-capturing-too-much" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Last field includes separators.</p>
+<p><strong>Solution:</strong> Be specific with earlier fields:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># If fields are fixed width, specify widths</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level:10 service:10 message:*&#39;</span>
+</code></pre></div></p>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>Now that you understand custom format parsing, explore:</p>
+<ul>
+<li><strong><a href="../working-with-time/">Working with Time</a></strong> - Advanced timestamp handling</li>
+<li><strong><a href="../../reference/formats/">Format Reference</a></strong> - Complete format documentation</li>
+<li><strong><a href="../scripting-transforms/">Scripting Transforms</a></strong> - Advanced event transformation</li>
+</ul>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../reference/formats/">Format Reference</a> - All supported formats</li>
+<li><a href="../../reference/cli-reference/">CLI Reference</a> - Complete flag documentation</li>
+<li><a href="../../reference/functions/">Function Reference</a> - String manipulation functions</li>
+</ul>
 
 
 

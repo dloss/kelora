@@ -24,7 +24,7 @@
     
     
       
-        <title>$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g') - Kelora</title>
+        <title>Exit Codes - Kelora</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#echo-file-sed-s-g-sed-sbu1g" class="md-skip">
+        <a href="#exit-codes" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+              Exit Codes
             
           </span>
         </div>
@@ -958,7 +958,7 @@
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Format Reference
     
   </span>
   
@@ -985,17 +985,493 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Exit Codes
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
-    $(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')
+    Exit Codes
     
   </span>
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#standard-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Standard Exit Codes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signal-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signal Exit Codes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-0-success" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 0: Success
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Code 0: Success">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-occurs" class="md-nav__link">
+    <span class="md-ellipsis">
+      When It Occurs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filtering-vs-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering vs Errors
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-1-processing-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 1: Processing Errors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Code 1: Processing Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-occurs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      When It Occurs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resilient-mode-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resilient Mode (Default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strict-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Strict Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exec Errors
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-2-usage-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 2: Usage Errors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Code 2: Usage Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-occurs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      When It Occurs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invalid Flags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Not Found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invalid Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signal-exit-codes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signal Exit Codes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signal Exit Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-130-sigint-ctrlc" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 130: SIGINT (Ctrl+C)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-141-sigpipe-broken-pipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 141: SIGPIPE (Broken Pipe)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-143-sigterm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 143: SIGTERM
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-exit-codes-in-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Exit Codes in Scripts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using Exit Codes in Scripts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-successfailure-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Success/Failure Check
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-specific-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Specific Exit Codes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-quiet-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Quiet Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cicd-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      CI/CD Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#makefile-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Makefile Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      GitHub Actions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes-with-different-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Codes with Different Modes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Codes with Different Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequential-vs-parallel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequential vs Parallel
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resilient-vs-strict" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resilient vs Strict
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-quiet-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Quiet Modes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validation-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-quality-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Quality Check
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automation-with-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automation with Retry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conditional Processing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-1-when-expecting-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 1 When Expecting 0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-141-in-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 141 in Pipelines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-2-with-valid-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 2 with Valid Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#different-exit-codes-in-ci-vs-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      Different Exit Codes in CI vs Local
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1263,6 +1739,458 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#standard-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Standard Exit Codes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signal-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signal Exit Codes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-0-success" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 0: Success
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Code 0: Success">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-occurs" class="md-nav__link">
+    <span class="md-ellipsis">
+      When It Occurs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filtering-vs-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filtering vs Errors
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-1-processing-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 1: Processing Errors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Code 1: Processing Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-occurs_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      When It Occurs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resilient-mode-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resilient Mode (Default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#strict-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Strict Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filter Errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exec Errors
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-2-usage-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 2: Usage Errors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Code 2: Usage Errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-it-occurs_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      When It Occurs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invalid Flags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      File Not Found
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invalid-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invalid Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signal-exit-codes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signal Exit Codes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Signal Exit Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-130-sigint-ctrlc" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 130: SIGINT (Ctrl+C)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-141-sigpipe-broken-pipe" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 141: SIGPIPE (Broken Pipe)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-143-sigterm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 143: SIGTERM
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-exit-codes-in-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Exit Codes in Scripts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using Exit Codes in Scripts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-successfailure-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Success/Failure Check
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-specific-exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Check Specific Exit Codes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-quiet-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Quiet Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cicd-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      CI/CD Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#makefile-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Makefile Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      GitHub Actions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes-with-different-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Codes with Different Modes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Exit Codes with Different Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequential-vs-parallel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sequential vs Parallel
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resilient-vs-strict" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resilient vs Strict
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-quiet-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Quiet Modes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validation-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-quality-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Quality Check
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automation-with-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automation with Retry
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conditional Processing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-1-when-expecting-0" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 1 When Expecting 0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-141-in-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 141 in Pipelines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-code-2-with-valid-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Code 2 with Valid Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#different-exit-codes-in-ci-vs-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      Different Exit Codes in CI vs Local
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1280,12 +2208,449 @@
   
 
 
-<h1 id="echo-file-sed-s-g-sed-sbu1g">$(echo $file | sed 's/-/ /g' | sed 's/\b(.)/\u\1/g')<a class="headerlink" href="#echo-file-sed-s-g-sed-sbu1g" title="Permanent link">&para;</a></h1>
-<div class="admonition info">
-<p class="admonition-title">Coming Soon</p>
-<p>This reference page is under development and will be available soon.</p>
-</div>
-<p><em>This reference will be available in a future update.</em></p>
+<h1 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h1>
+<p>Complete reference for Kelora's exit codes and their meanings.</p>
+<h2 id="standard-exit-codes">Standard Exit Codes<a class="headerlink" href="#standard-exit-codes" title="Permanent link">&para;</a></h2>
+<p>Kelora uses standard Unix exit codes to indicate success or failure:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Name</th>
+<th>Meaning</th>
+<th>Cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Success</td>
+<td>No errors occurred</td>
+<td>Clean processing, no parse/filter/exec errors</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>General Error</td>
+<td>Processing errors occurred</td>
+<td>Parse errors, filter errors, exec errors</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td>Usage Error</td>
+<td>Invalid command-line usage</td>
+<td>Invalid flags, missing files, configuration errors</td>
+</tr>
+</tbody>
+</table>
+<h2 id="signal-exit-codes">Signal Exit Codes<a class="headerlink" href="#signal-exit-codes" title="Permanent link">&para;</a></h2>
+<p>When Kelora is interrupted by signals:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Signal</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>130</code></td>
+<td>SIGINT</td>
+<td>Interrupted by Ctrl+C</td>
+</tr>
+<tr>
+<td><code>141</code></td>
+<td>SIGPIPE</td>
+<td>Broken pipe (normal in Unix pipelines)</td>
+</tr>
+<tr>
+<td><code>143</code></td>
+<td>SIGTERM</td>
+<td>Terminated by system or user</td>
+</tr>
+</tbody>
+</table>
+<h2 id="exit-code-0-success">Exit Code 0: Success<a class="headerlink" href="#exit-code-0-success" title="Permanent link">&para;</a></h2>
+<h3 id="when-it-occurs">When It Occurs<a class="headerlink" href="#when-it-occurs" title="Permanent link">&para;</a></h3>
+<p>Exit code <code>0</code> indicates <strong>successful processing</strong> with no errors:</p>
+<ul>
+<li>All lines parsed successfully</li>
+<li>No filter errors</li>
+<li>No exec/transform errors</li>
+<li>Processing completed normally</li>
+</ul>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>info
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="m">0</span>
+</code></pre></div>
+<p><strong>Note:</strong> Filtering events is <strong>not</strong> considered an error. If all events are filtered out, exit code is still <code>0</code> (as long as no errors occurred).</p>
+<h3 id="filtering-vs-errors">Filtering vs Errors<a class="headerlink" href="#filtering-vs-errors" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># This returns 0 (filtering is not an error)</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>critical
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="m">0</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># This returns 1 (parse error occurred)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>malformed.log
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="m">1</span>
+</code></pre></div>
+<h2 id="exit-code-1-processing-errors">Exit Code 1: Processing Errors<a class="headerlink" href="#exit-code-1-processing-errors" title="Permanent link">&para;</a></h2>
+<h3 id="when-it-occurs_1">When It Occurs<a class="headerlink" href="#when-it-occurs_1" title="Permanent link">&para;</a></h3>
+<p>Exit code <code>1</code> indicates <strong>processing errors</strong> occurred:</p>
+<ul>
+<li><strong>Parse errors</strong>: Lines that couldn't be parsed in specified format</li>
+<li><strong>Filter errors</strong>: <code>--filter</code> expressions that failed during evaluation</li>
+<li><strong>Exec errors</strong>: <code>--exec</code> scripts that failed during execution</li>
+</ul>
+<h3 id="resilient-mode-default">Resilient Mode (Default)<a class="headerlink" href="#resilient-mode-default" title="Permanent link">&para;</a></h3>
+<p>In resilient mode, errors are recorded but processing continues. Exit code <code>1</code> is returned at the end if any errors occurred:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># ... processing continues despite errors ...</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Errors occurred but processing completed</span>
+</code></pre></div>
+<h3 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h3>
+<p>In strict mode (<code>--strict</code>), processing aborts immediately on first error:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># ... aborts on first error ...</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Processing aborted due to error</span>
+</code></pre></div>
+<h3 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h3>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;valid&quot;: &quot;json&quot;}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>test.log
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{invalid json}&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>test.log
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>test.log
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Parse error occurred</span>
+</code></pre></div></p>
+<h3 id="filter-errors">Filter Errors<a class="headerlink" href="#filter-errors" title="Permanent link">&para;</a></h3>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># If e.timestamp is missing or invalid</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Filter error occurred</span>
+</code></pre></div></p>
+<h3 id="exec-errors">Exec Errors<a class="headerlink" href="#exec-errors" title="Permanent link">&para;</a></h3>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># If e.value is not a valid integer</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Exec error occurred</span>
+</code></pre></div></p>
+<h2 id="exit-code-2-usage-errors">Exit Code 2: Usage Errors<a class="headerlink" href="#exit-code-2-usage-errors" title="Permanent link">&para;</a></h2>
+<h3 id="when-it-occurs_2">When It Occurs<a class="headerlink" href="#when-it-occurs_2" title="Permanent link">&para;</a></h3>
+<p>Exit code <code>2</code> indicates <strong>command-line usage errors</strong>:</p>
+<ul>
+<li><strong>Invalid flags</strong>: Unknown or malformed options</li>
+<li><strong>Missing required arguments</strong>: Required values not provided</li>
+<li><strong>File not found</strong>: Input files don't exist</li>
+<li><strong>Configuration errors</strong>: Invalid configuration file</li>
+<li><strong>Permission denied</strong>: Can't read input files</li>
+</ul>
+<h3 id="invalid-flags">Invalid Flags<a class="headerlink" href="#invalid-flags" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--invalid-flag<span class="w"> </span>app.log
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora:<span class="w"> </span>error:<span class="w"> </span>unrecognized<span class="w"> </span>option<span class="w"> </span><span class="s1">&#39;--invalid-flag&#39;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="m">2</span>
+</code></pre></div>
+<h3 id="file-not-found">File Not Found<a class="headerlink" href="#file-not-found" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>nonexistent.log
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora:<span class="w"> </span>error:<span class="w"> </span>failed<span class="w"> </span>to<span class="w"> </span>open<span class="w"> </span>file<span class="w"> </span><span class="s1">&#39;nonexistent.log&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="m">2</span>
+</code></pre></div>
+<h3 id="invalid-configuration">Invalid Configuration<a class="headerlink" href="#invalid-configuration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--config-file<span class="w"> </span>invalid.ini<span class="w"> </span>app.log
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora:<span class="w"> </span>error:<span class="w"> </span>failed<span class="w"> </span>to<span class="w"> </span>parse<span class="w"> </span>configuration<span class="w"> </span>file
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="m">2</span>
+</code></pre></div>
+<h2 id="signal-exit-codes_1">Signal Exit Codes<a class="headerlink" href="#signal-exit-codes_1" title="Permanent link">&para;</a></h2>
+<h3 id="exit-code-130-sigint-ctrlc">Exit Code 130: SIGINT (Ctrl+C)<a class="headerlink" href="#exit-code-130-sigint-ctrlc" title="Permanent link">&para;</a></h3>
+<p>User interrupted processing with Ctrl+C:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>large.log
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Press Ctrl+C</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>^C
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="m">130</span>
+</code></pre></div>
+<h3 id="exit-code-141-sigpipe-broken-pipe">Exit Code 141: SIGPIPE (Broken Pipe)<a class="headerlink" href="#exit-code-141-sigpipe-broken-pipe" title="Permanent link">&para;</a></h3>
+<p>Output pipe closed (normal in Unix pipelines):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>large.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Kelora receives SIGPIPE when head closes</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="m">141</span>
+</code></pre></div>
+<p><strong>Note:</strong> Exit code <code>141</code> is <strong>normal</strong> in pipelines and typically not an error condition.</p>
+<h3 id="exit-code-143-sigterm">Exit Code 143: SIGTERM<a class="headerlink" href="#exit-code-143-sigterm" title="Permanent link">&para;</a></h3>
+<p>Process terminated by system or user:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>large.log<span class="w"> </span><span class="p">&amp;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="w"> </span><span class="m">12345</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>&gt;<span class="w"> </span><span class="nb">kill</span><span class="w"> </span><span class="m">12345</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="o">[</span><span class="m">1</span><span class="o">]</span>+<span class="w">  </span>Terminated<span class="w">              </span>kelora<span class="w"> </span>-j<span class="w"> </span>large.log
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="m">143</span>
+</code></pre></div>
+<h2 id="using-exit-codes-in-scripts">Using Exit Codes in Scripts<a class="headerlink" href="#using-exit-codes-in-scripts" title="Permanent link">&para;</a></h2>
+<h3 id="basic-successfailure-check">Basic Success/Failure Check<a class="headerlink" href="#basic-successfailure-check" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">if</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ No errors in logs&quot;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="k">else</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Errors detected in logs&quot;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="k">fi</span>
+</code></pre></div>
+<h3 id="check-specific-exit-codes">Check Specific Exit Codes<a class="headerlink" href="#check-specific-exit-codes" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nv">exit_code</span><span class="o">=</span><span class="nv">$?</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="k">case</span><span class="w"> </span><span class="nv">$exit_code</span><span class="w"> </span><span class="k">in</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="m">0</span><span class="o">)</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Success - no errors&quot;</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span><span class="m">1</span><span class="o">)</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Processing errors occurred&quot;</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">    </span><span class="m">2</span><span class="o">)</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Usage error - check command syntax&quot;</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">2</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">    </span><span class="m">130</span><span class="o">)</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;⚠️  Interrupted by user&quot;</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">130</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="w">    </span>*<span class="o">)</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Unknown error (exit code: </span><span class="nv">$exit_code</span><span class="s2">)&quot;</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="nv">$exit_code</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="w">        </span><span class="p">;;</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a><span class="k">esac</span>
+</code></pre></div>
+<h3 id="with-quiet-mode">With Quiet Mode<a class="headerlink" href="#with-quiet-mode" title="Permanent link">&para;</a></h3>
+<p>Use quiet modes to suppress output, rely on exit code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Level 1: Suppress diagnostics</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>&gt;<span class="w"> </span>/dev/null
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No errors&quot;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="k">fi</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Level 2: Suppress events too</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No errors&quot;</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="k">fi</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># Level 3: Complete silence</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>kelora<span class="w"> </span>-qqq<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No errors&quot;</span>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="k">fi</span>
+</code></pre></div>
+<h3 id="cicd-pipeline">CI/CD Pipeline<a class="headerlink" href="#cicd-pipeline" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nb">set</span><span class="w"> </span>-e<span class="w">  </span><span class="c1"># Exit on any error</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Validate log format</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">{</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Log validation failed&quot;</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="o">}</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="c1"># Check for errors in logs</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error,critical<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Found error-level events in logs&quot;</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="k">fi</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ All checks passed&quot;</span>
+</code></pre></div>
+<h3 id="makefile-integration">Makefile Integration<a class="headerlink" href="#makefile-integration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nf">.PHONY</span><span class="o">:</span><span class="w"> </span><span class="n">check</span>-<span class="n">logs</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nf">check-logs</span><span class="o">:</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>@kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.json<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">        </span><span class="o">(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Errors found in logs&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="o">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="nf">.PHONY</span><span class="o">:</span><span class="w"> </span><span class="n">validate</span>-<span class="n">logs</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="nf">validate-logs</span><span class="o">:</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">    </span>@kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>logs/*.json<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">        </span><span class="o">(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Log validation failed&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="o">)</span>
+</code></pre></div>
+<h3 id="github-actions">GitHub Actions<a class="headerlink" href="#github-actions" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Validate logs</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="no">kelora -j --strict app.log || exit 1</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Check for errors</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">    </span><span class="no">if kelora -qq -j app.log --levels error,critical; then</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">      </span><span class="no">echo &quot;✓ No critical errors&quot;</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">    </span><span class="no">else</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">      </span><span class="no">echo &quot;✗ Critical errors found&quot;</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">      </span><span class="no">exit 1</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">    </span><span class="no">fi</span>
+</code></pre></div>
+<h2 id="exit-codes-with-different-modes">Exit Codes with Different Modes<a class="headerlink" href="#exit-codes-with-different-modes" title="Permanent link">&para;</a></h2>
+<h3 id="sequential-vs-parallel">Sequential vs Parallel<a class="headerlink" href="#sequential-vs-parallel" title="Permanent link">&para;</a></h3>
+<p>Exit codes work the same in both modes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Sequential</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1"># Parallel</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>app.log
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+</code></pre></div>
+<p>Both return <code>1</code> if any errors occurred.</p>
+<h3 id="resilient-vs-strict">Resilient vs Strict<a class="headerlink" href="#resilient-vs-strict" title="Permanent link">&para;</a></h3>
+<p><strong>Resilient mode (default):</strong>
+- Collects all errors
+- Returns <code>1</code> if any errors occurred
+- Processing completes</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Processes all lines despite errors</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Errors occurred</span>
+</code></pre></div>
+<p><strong>Strict mode:</strong>
+- Aborts on first error
+- Returns <code>1</code> immediately
+- Processing incomplete</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># Aborts on first error</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Aborted due to error</span>
+</code></pre></div>
+<h3 id="with-quiet-modes">With Quiet Modes<a class="headerlink" href="#with-quiet-modes" title="Permanent link">&para;</a></h3>
+<p>Exit codes are preserved at all quiet levels:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Level 1: Suppress diagnostics</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Error occurred (not shown, but exit code preserved)</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1"># Level 2: Suppress events</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Error occurred</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="c1"># Level 3: Complete silence</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-qqq<span class="w"> </span>-j<span class="w"> </span>app.log
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Error occurred</span>
+</code></pre></div>
+<h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="validation-pipeline">Validation Pipeline<a class="headerlink" href="#validation-pipeline" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1"># Validate log files before processing</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="k">for</span><span class="w"> </span>file<span class="w"> </span><span class="k">in</span><span class="w"> </span>logs/*.json<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$file</span><span class="s2">&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Invalid format: </span><span class="nv">$file</span><span class="s2">&quot;</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">    </span><span class="k">fi</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="k">done</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ All log files valid&quot;</span>
+</code></pre></div>
+<h3 id="data-quality-check">Data Quality Check<a class="headerlink" href="#data-quality-check" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="c1"># Check for errors in logs</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error,critical
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nv">exit_code</span><span class="o">=</span><span class="nv">$?</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$exit_code</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Parse errors in log file&quot;</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$exit_code</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="w">    </span><span class="c1"># Check if any critical events found</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w">    </span><span class="nv">count</span><span class="o">=</span><span class="k">$(</span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>critical<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oP<span class="w"> </span><span class="s1">&#39;\d+(?= events output)&#39;</span><span class="k">)</span>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$count</span><span class="s2">&quot;</span><span class="w"> </span>-gt<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Found </span><span class="nv">$count</span><span class="s2"> critical events&quot;</span>
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a><span class="w">    </span><span class="k">fi</span>
+<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a><span class="k">fi</span>
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ No critical issues&quot;</span>
+</code></pre></div>
+<h3 id="automation-with-retry">Automation with Retry<a class="headerlink" href="#automation-with-retry" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># Process logs with retry on failure</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="nv">max_attempts</span><span class="o">=</span><span class="m">3</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="nv">attempt</span><span class="o">=</span><span class="m">1</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="k">while</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$attempt</span><span class="w"> </span>-le<span class="w"> </span><span class="nv">$max_attempts</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>output.json<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Processing succeeded&quot;</span>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="w">    </span><span class="k">else</span>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Attempt </span><span class="nv">$attempt</span><span class="s2"> failed&quot;</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="w">        </span><span class="nv">attempt</span><span class="o">=</span><span class="k">$((</span><span class="nv">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="m">1</span><span class="k">))</span>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a><span class="w">        </span>sleep<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a><span class="w">    </span><span class="k">fi</span>
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a><span class="k">done</span>
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a>
+<a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Processing failed after </span><span class="nv">$max_attempts</span><span class="s2"> attempts&quot;</span>
+<a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<h3 id="conditional-processing">Conditional Processing<a class="headerlink" href="#conditional-processing" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="c1"># Process only if no errors</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="k">if</span><span class="w"> </span>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ No errors, processing...&quot;</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="k">else</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Errors detected, skipping processing&quot;</span>
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="k">fi</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="exit-code-1-when-expecting-0">Exit Code 1 When Expecting 0<a class="headerlink" href="#exit-code-1-when-expecting-0" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Getting exit code <code>1</code> but don't see errors.</p>
+<p><strong>Solution:</strong> Use <code>--verbose</code> to see errors:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log
+</code></pre></div></p>
+<p>Or check stats:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
+</code></pre></div></p>
+<h3 id="exit-code-141-in-pipelines">Exit Code 141 in Pipelines<a class="headerlink" href="#exit-code-141-in-pipelines" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Getting exit code <code>141</code> (SIGPIPE) in pipelines.</p>
+<p><strong>This is normal:</strong> When downstream commands close the pipe (like <code>head</code>), Kelora receives SIGPIPE.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>large.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="c1"># Exit code 141 is normal here</span>
+</code></pre></div>
+<p>To ignore SIGPIPE:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>large.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">141</span><span class="w"> </span><span class="o">]</span>
+</code></pre></div></p>
+<h3 id="exit-code-2-with-valid-syntax">Exit Code 2 with Valid Syntax<a class="headerlink" href="#exit-code-2-with-valid-syntax" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Getting exit code <code>2</code> but command looks correct.</p>
+<p><strong>Check:</strong>
+- File exists and is readable
+- Configuration file is valid
+- Permissions are correct</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>&gt;<span class="w"> </span>ls<span class="w"> </span>-l<span class="w"> </span>app.log
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
+</code></pre></div>
+<h3 id="different-exit-codes-in-ci-vs-local">Different Exit Codes in CI vs Local<a class="headerlink" href="#different-exit-codes-in-ci-vs-local" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Different exit codes in CI/CD vs local development.</p>
+<p><strong>Possible causes:</strong>
+- Different file permissions
+- Different file paths
+- Different configuration files
+- Different environment variables</p>
+<p><strong>Solution:</strong> Test with same conditions:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ignore-config<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Ignore config files</span>
+</code></pre></div></p>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../concepts/error-handling/">Error Handling</a> - Error handling modes and strategies</li>
+<li><a href="../cli-reference/">CLI Reference</a> - Complete flag documentation</li>
+<li><a href="../../concepts/error-handling/#quiet-modes">Quiet Modes</a> - Suppressing output for automation</li>
+</ul>
 
 
 
