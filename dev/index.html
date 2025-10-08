@@ -1691,14 +1691,84 @@
 </ul>
 <h2 id="quick-examples">Quick Examples<a class="headerlink" href="#quick-examples" title="Permanent link">&para;</a></h2>
 <h3 id="find-errors-in-application-logs">Find errors in application logs<a class="headerlink" href="#find-errors-in-application-logs" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--levels<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,service,message
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; message=&#39;Query timeout&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:03:30Z&#39; service=&#39;auth&#39; message=&#39;Account locked&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:16:00Z&#39; service=&#39;api&#39; message=&#39;Service unavailable&#39;
 </code></pre></div>
 <h3 id="analyze-web-server-traffic">Analyze web server traffic<a class="headerlink" href="#analyze-web-server-traffic" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--keys<span class="w"> </span>ip,timestamp,status,request<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ip=&#39;120.180.198.77&#39; timestamp=&#39;04/Oct/2025:10:27:22 +0200&#39; status=403
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  request=&#39;GET /reintermediate/e-commerce/cross-platform HTTP/1.0&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ip=&#39;83.14.202.89&#39; timestamp=&#39;04/Oct/2025:10:27:22 +0200&#39; status=500
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  request=&#39;PUT /infrastructures/customized/portals/enhance HTTP/1.1&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>ip=&#39;169.247.105.115&#39; timestamp=&#39;04/Oct/2025:10:27:22 +0200&#39; status=406
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  request=&#39;PATCH /e-business HTTP/2.0&#39;
 </code></pre></div>
 <h3 id="track-metrics-from-streaming-logs">Track metrics from streaming logs<a class="headerlink" href="#track-metrics-from-streaming-logs" title="Permanent link">&para;</a></h3>
 <p>Process logs as they arrive (example with static file):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; level=&#39;INFO&#39; message=&#39;Application started&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  service=&#39;api&#39; version=&#39;1.2.3&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:05Z&#39; level=&#39;DEBUG&#39; message=&#39;Loading configuration&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  service=&#39;api&#39; config_file=&#39;/etc/app/config.yml&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; level=&#39;INFO&#39;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  message=&#39;Connection pool initialized&#39; service=&#39;database&#39; max_connections=50
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; level=&#39;WARN&#39;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  message=&#39;High memory usage detected&#39; service=&#39;api&#39; memory_percent=85
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  service=&#39;database&#39; query=&#39;SELECT * FROM users&#39; duration_ms=5000
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; level=&#39;INFO&#39; message=&#39;Request received&#39;
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  service=&#39;api&#39; method=&#39;GET&#39; path=&#39;/api/users&#39; user_id=123
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2024-01-15T10:02:15Z&#39; level=&#39;DEBUG&#39; message=&#39;Cache hit&#39;
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  service=&#39;cache&#39; key=&#39;user:123&#39; ttl=3600
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>timestamp=&#39;2024-01-15T10:02:30Z&#39; level=&#39;INFO&#39; message=&#39;Response sent&#39;
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  service=&#39;api&#39; status=200 duration_ms=45
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; level=&#39;WARN&#39; message=&#39;Failed login attempt&#39;
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  service=&#39;auth&#39; username=&#39;admin&#39; ip=&#39;192.168.1.100&#39;
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>timestamp=&#39;2024-01-15T10:03:30Z&#39; level=&#39;ERROR&#39; message=&#39;Account locked&#39;
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  service=&#39;auth&#39; username=&#39;admin&#39; attempts=5
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>timestamp=&#39;2024-01-15T10:04:00Z&#39; level=&#39;INFO&#39; message=&#39;Cron job started&#39;
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  service=&#39;scheduler&#39; job=&#39;backup&#39; schedule=&#39;0 2 * * *&#39;
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>timestamp=&#39;2024-01-15T10:05:00Z&#39; level=&#39;DEBUG&#39; message=&#39;Running backup script&#39;
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>  service=&#39;scheduler&#39; script=&#39;/usr/local/bin/backup.sh&#39;
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>timestamp=&#39;2024-01-15T10:10:00Z&#39; level=&#39;INFO&#39; message=&#39;Backup completed&#39;
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>  service=&#39;scheduler&#39; size_mb=1024 duration_ms=300000
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>timestamp=&#39;2024-01-15T10:15:00Z&#39; level=&#39;CRITICAL&#39; message=&#39;Disk space critical&#39;
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>  service=&#39;disk&#39; partition=&#39;/var&#39; free_gb=0.5
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>timestamp=&#39;2024-01-15T10:16:00Z&#39; level=&#39;ERROR&#39; message=&#39;Service unavailable&#39;
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>  service=&#39;api&#39; reason=&#39;disk space&#39;
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>timestamp=&#39;2024-01-15T10:17:00Z&#39; level=&#39;WARN&#39; severity=&#39;high&#39;
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>  message=&#39;Alert sent&#39; service=&#39;monitoring&#39; channel=&#39;slack&#39;
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>timestamp=&#39;2024-01-15T10:20:00Z&#39; level=&#39;INFO&#39; message=&#39;Disk cleanup initiated&#39;
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>  service=&#39;admin&#39; target=&#39;/var/log&#39;
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>timestamp=&#39;2024-01-15T10:25:00Z&#39; level=&#39;INFO&#39; message=&#39;Cleanup completed&#39;
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>  service=&#39;admin&#39; freed_gb=10
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>timestamp=&#39;2024-01-15T10:26:00Z&#39; level=&#39;INFO&#39; message=&#39;Service resumed&#39;
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>  service=&#39;api&#39; downtime_seconds=600
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>timestamp=&#39;2024-01-15T10:30:00Z&#39; level=&#39;DEBUG&#39; message=&#39;Health check passed&#39;
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>  service=&#39;health&#39; endpoints=[&quot;api&quot;,&quot;database&quot;,&quot;cache&quot;]
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>admin        = 2
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>api          = 7
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>auth         = 2
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>cache        = 1
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>database     = 2
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>disk         = 1
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>health       = 1
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>monitoring   = 1
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>scheduler    = 3
 </code></pre></div>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <h3 id="prebuilt-binaries-recommended">Prebuilt Binaries (Recommended)<a class="headerlink" href="#prebuilt-binaries-recommended" title="Permanent link">&para;</a></h3>

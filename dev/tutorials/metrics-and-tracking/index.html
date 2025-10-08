@@ -1594,20 +1594,65 @@ paths resolve relative to the docs root:</p>
 expressions and rerun them locally.</p>
 <h2 id="step-1-quick-counts-with-track_count">Step 1 – Quick Counts with <code>track_count()</code><a class="headerlink" href="#step-1-quick-counts-with-track_count" title="Permanent link">&para;</a></h2>
 <p>Count how many events belong to each service while suppressing event output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>admin        = 2
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>api          = 7
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>auth         = 2
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cache        = 1
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>database     = 2
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>disk         = 1
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>health       = 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
 </code></pre></div>
 <p><code>--metrics</code> prints the aggregated map when processing finishes. Use this pattern
 any time you want a quick histogram after a batch run.</p>
 <h3 id="showing-stats-at-the-same-time">Showing Stats at the Same Time<a class="headerlink" href="#showing-stats-at-the-same-time" title="Permanent link">&para;</a></h3>
 <p>Pair <code>--metrics</code> with <code>--stats</code> when you need throughput details as well:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics<span class="w"> </span>--stats
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>admin        = 2
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>api          = 7
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>auth         = 2
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cache        = 1
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>database     = 2
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>disk         = 1
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>health       = 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>kelora: Stats:
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Throughput: 6984 lines/s in 2ms
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>Keys seen: attempts,channel,config_file,downtime_seconds,duration_ms,endpoints,free_gb,freed_gb,ip,job,key,level,max_connections,memory_percent,message,method,partition,path,query,reason,schedule,script,service,severity,size_mb,status,target,timestamp,ttl,user_id,username,version
 </code></pre></div>
 <p><code>--stats</code> adds processing totals, time span, and field inventory without touching
 your metrics map.</p>
 <h2 id="step-2-summaries-with-sums-buckets-and-averages">Step 2 – Summaries with Sums, Buckets, and Averages<a class="headerlink" href="#step-2-summaries-with-sums-buckets-and-averages" title="Permanent link">&para;</a></h2>
 <p>Kelora ships several helpers for numeric metrics. The following example treats
 response sizes and latency as rolling aggregates.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;response_bytes&quot;, to_int_or(e.get_path(&quot;bytes&quot;), 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time_ms&quot;, to_int_or(e.get_path(&quot;duration_ms&quot;), 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;duration_ms&quot;) { track_bucket(&quot;slow_requests&quot;, clamp(to_int_or(e.duration_ms, 0) / 250 * 250, 0, 2000)) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>response_bytes = 0
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>slow_requests = #{&quot;0&quot;: 1, &quot;2000&quot;: 2}
 </code></pre></div>
 <ul>
 <li><code>track_sum</code> accumulates totals (suitable for throughput or volume).</li>
@@ -1618,13 +1663,44 @@ response sizes and latency as rolling aggregates.</p>
 <h2 id="step-3-unique-values-and-cardinality">Step 3 – Unique Values and Cardinality<a class="headerlink" href="#step-3-unique-values-and-cardinality" title="Permanent link">&para;</a></h2>
 <p><code>track_unique()</code> stores distinct values for a key—handy for unique user counts or
 cardinality analysis.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_unique(&quot;error_messages&quot;, e.message) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>error_messages = [&quot;Query timeout&quot;, &quot;Account locked&quot;, &quot;Service unavailable&quot;]
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>services     = [&quot;api&quot;, &quot;database&quot;, &quot;cache&quot;, &quot;auth&quot;, &quot;scheduler&quot;, &quot;disk&quot;, &quot;monitoring&quot;, &quot;admin&quot;, &quot;health&quot;]
 </code></pre></div>
 <p>Use <code>metrics["services"].len()</code> later to compute the number of distinct members.</p>
 <h2 id="step-4-sliding-windows-and-percentiles">Step 4 – Sliding Windows and Percentiles<a class="headerlink" href="#step-4-sliding-windows-and-percentiles" title="Permanent link">&para;</a></h2>
 <p>Enable the window buffer to examine recent events. The example below tracks a
 five-event moving average and P95 latency for CPU metrics.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/window_metrics.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.metric == &quot;cpu&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">$&#39;let values = window_numbers(window, &quot;value&quot;);</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">if values.len() &gt; 0 {</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    let sum = values.reduce(|s, x| s + x, 0.0);</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    let avg = sum / values.len();</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    e.avg_last_5 = round(avg * 100.0) / 100.0;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    if values.len() &gt;= 3 {</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">        e.p95_last_5 = round(values.percentile(95.0) * 100.0) / 100.0;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    }</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; metric=&#39;cpu&#39; value=45.2 host=&#39;server1&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  avg_last_5=45.2
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:01Z&#39; metric=&#39;cpu&#39; value=46.8 host=&#39;server1&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  avg_last_5=46.0
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:00:02Z&#39; metric=&#39;cpu&#39; value=44.5 host=&#39;server1&#39;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  avg_last_5=45.5 p95_last_5=46.64
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:00:03Z&#39; metric=&#39;cpu&#39; value=48.1 host=&#39;server1&#39;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  avg_last_5=46.15 p95_last_5=47.91
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:00:04Z&#39; metric=&#39;cpu&#39; value=47.3 host=&#39;server1&#39;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  avg_last_5=46.38 p95_last_5=47.94
 </code></pre></div>
 <p>The special <code>window</code> variable becomes available once you pass <code>--window</code>. Use
 <code>window_numbers(window, FIELD)</code> for numeric arrays and <code>window_values(window, FIELD)</code>
@@ -1654,28 +1730,77 @@ script and invoke it with <code>--end-file</code> so the same layout works acros
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>rm<span class="w"> </span>metrics_summary.rhai
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bash: line 13: kelora: command not found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Pipeline error: End stage error: Error in function &#39;summarize_metrics&#39; in end expression at line 11, position 1: Variable &#39;metrics&#39; not found in function at line 2, position 16
 </code></pre></div>
 <p>The automatically printed <code>--metrics</code> block remains, while <code>--end</code> gives you a
 clean text summary that you can redirect or feed into alerts.</p>
 <h2 id="step-6-persist-metrics-to-disk">Step 6 – Persist Metrics to Disk<a class="headerlink" href="#step-6-persist-metrics-to-disk" title="Permanent link">&para;</a></h2>
 <p>Use <code>--metrics-file</code> to serialize the metrics map as JSON for other tools.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>cat:<span class="w"> </span>metrics.json:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>rm:<span class="w"> </span>cannot<span class="w"> </span>remove<span class="w"> </span><span class="s1">&#39;metrics.json&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--metrics-file<span class="w"> </span>metrics.json
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>cat<span class="w"> </span>metrics.json
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>rm<span class="w"> </span>metrics.json
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>admin        = 2
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>api          = 7
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>auth         = 2
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cache        = 1
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>database     = 2
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>disk         = 1
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>health       = 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>{
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;disk&quot;: 1,
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;admin&quot;: 2,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;health&quot;: 1,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;cache&quot;: 1,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;auth&quot;: 2,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;database&quot;: 2,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;api&quot;: 7,
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;scheduler&quot;: 3
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>}
 </code></pre></div>
 <p>The JSON structure mirrors the in-memory map, so you can load it with <code>jq</code>, a
 dashboard agent, or any scripting language.</p>
 <h2 id="step-7-streaming-scoreboards">Step 7 – Streaming Scoreboards<a class="headerlink" href="#step-7-streaming-scoreboards" title="Permanent link">&para;</a></h2>
 <p>Kelora keeps metrics up to date even when tailing files or processing archives.
 This command watches a gzipped access log and surfaces top status classes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let klass = ((e.status / 100) * 100).to_string(); track_count(klass)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">0</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>400          = 1
 </code></pre></div>
 <p>Passing <code>--take 0</code> (or omitting it) keeps processing the entire file. When you run
 Kelora against a stream (<code>tail -f | kelora ...</code>), the metrics snapshot updates when
 you terminate the process.</p>
 <p>Need full histograms instead of counts? Swap in <code>track_bucket()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status_family&quot;, (e.status / 100) * 100)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    let buckets = metrics.status_family.keys();</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    buckets.sort();</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    for bucket in buckets {</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">        let counts = metrics.status_family[bucket];</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">        print(bucket.to_string() + &quot;: &quot; + counts.to_string());</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    }</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span>--take<span class="w"> </span><span class="m">0</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>400: 1
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>status_family = #{&quot;400&quot;: 1}
 </code></pre></div>
 <p><code>track_bucket(key, bucket_value)</code> keeps nested counters so you can emit a
 human-readable histogram once processing finishes.</p>

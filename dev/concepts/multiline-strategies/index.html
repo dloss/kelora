@@ -1583,7 +1583,12 @@ when using <code>--parallel</code>.</p>
 <p>Best for logs where each entry begins with a timestamp. Detection uses Kelora's
 adaptive timestamp parser; you can hint a specific format with
 <code>timestamp:format=&lt;chrono&gt;</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;2024-01-15 10:01:00 ERROR Failed to process request\nTraceback (most recent call last):\n  File \&quot;/app/server.py\&quot;, line 42, in handle_request\n    result = process_data(request.body)\n  File \&quot;/app/processor.py\&quot;, line 15, in process_data\n    return json.loads(data)\nValueError: Invalid JSON format at line 3\n&quot;}
 </code></pre></div>
 <p>The event now contains the full Python traceback until the next timestamped
 header. Pair this strategy with <code>--ts-format</code> if you also need chronological
@@ -1591,7 +1596,12 @@ filtering later in the pipeline.</p>
 <h3 id="2-indentation-continuations-multiline-indent">2. Indentation Continuations (<code>--multiline indent</code>)<a class="headerlink" href="#2-indentation-continuations-multiline-indent" title="Permanent link">&para;</a></h3>
 <p>Combine lines that start with leading whitespace. This matches Java stack traces
 and similar outputs where continuation lines are indented.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;SQLException&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;java.sql.SQLException: Connection timeout\n\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\n\tat com.example.api.UserController.getUser(UserController.java:45)\n\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)\n&quot;}
 </code></pre></div>
 <p>In this example the stack trace block remains an atomic event. If the first line
 of a block is not indented (for example, <code>Traceback ...</code>), combine strategies by
@@ -1600,7 +1610,12 @@ included.</p>
 <h3 id="3-regex-boundaries-multiline-regexmatchend">3. Regex Boundaries (<code>--multiline regex:match=...[:end=...]</code>)<a class="headerlink" href="#3-regex-boundaries-multiline-regexmatchend" title="Permanent link">&para;</a></h3>
 <p>Define explicit start and optional end markers. This is ideal for logs that wrap
 records with guard strings such as <code>BEGIN</code>/<code>END</code> or XML tags.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_boundary.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^BEGIN:end=^END&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;database_backup&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;BEGIN\ntype: database_backup\ntimestamp: 2024-01-15T10:00:00Z\nstatus: started\ntarget: postgresql://production\nEND\n&quot;}
 </code></pre></div>
 <p>If no <code>end=</code> is provided, a new <code>match=</code> line flushes the previous block. Regex
 patterns are Rust regular expressions—the same engine used by <code>--filter</code>.</p>
