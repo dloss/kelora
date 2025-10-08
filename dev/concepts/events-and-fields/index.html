@@ -2404,9 +2404,11 @@
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>e.message    // And so on
 </code></pre></div>
 <h2 id="event-structure">Event Structure<a class="headerlink" href="#event-structure" title="Permanent link">&para;</a></h2>
-<p>Events are maps (key-value pairs) where:
-- <strong>Keys</strong> are field names (strings)
-- <strong>Values</strong> can be any JSON-compatible type</p>
+<p>Events are maps (key-value pairs) where:</p>
+<ul>
+<li><strong>Keys</strong> are field names (strings)</li>
+<li><strong>Values</strong> can be any JSON-compatible type</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span><span class="p">,</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span>
@@ -2419,13 +2421,15 @@
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1234</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
 </code></pre></div>
-<p>After parsing, this becomes an event with fields accessible as:
-- <code>e.timestamp</code> → <code>"2024-01-15T10:30:00Z"</code>
-- <code>e.level</code> → <code>"ERROR"</code>
-- <code>e.service</code> → <code>"api"</code>
-- <code>e.user</code> → Map with <code>id</code> and <code>name</code> fields
-- <code>e.tags</code> → Array <code>["authentication", "security"]</code>
-- <code>e.duration_ms</code> → <code>1234</code></p>
+<p>After parsing, this becomes an event with fields accessible as:</p>
+<ul>
+<li><code>e.timestamp</code> → <code>"2024-01-15T10:30:00Z"</code></li>
+<li><code>e.level</code> → <code>"ERROR"</code></li>
+<li><code>e.service</code> → <code>"api"</code></li>
+<li><code>e.user</code> → Map with <code>id</code> and <code>name</code> fields</li>
+<li><code>e.tags</code> → Array <code>["authentication", "security"]</code></li>
+<li><code>e.duration_ms</code> → <code>1234</code></li>
+</ul>
 <h2 id="field-types">Field Types<a class="headerlink" href="#field-types" title="Permanent link">&para;</a></h2>
 <p>Kelora preserves JSON types after parsing:</p>
 <table>
@@ -2588,34 +2592,54 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <h2 id="field-name-patterns">Field Name Patterns<a class="headerlink" href="#field-name-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="common-field-names">Common Field Names<a class="headerlink" href="#common-field-names" title="Permanent link">&para;</a></h3>
 <p>Kelora recognizes these standard field names across formats:</p>
-<p><strong>Timestamps:</strong>
-- <code>timestamp</code>, <code>ts</code>, <code>time</code>, <code>@timestamp</code></p>
-<p><strong>Log Levels:</strong>
-- <code>level</code>, <code>severity</code>, <code>loglevel</code></p>
-<p><strong>Messages:</strong>
-- <code>message</code>, <code>msg</code>, <code>text</code></p>
-<p><strong>Identifiers:</strong>
-- <code>id</code>, <code>request_id</code>, <code>trace_id</code>, <code>span_id</code></p>
-<p><strong>Metadata:</strong>
-- <code>service</code>, <code>host</code>, <code>hostname</code>, <code>source</code></p>
+<p><strong>Timestamps:</strong></p>
+<ul>
+<li><code>timestamp</code>, <code>ts</code>, <code>time</code>, <code>@timestamp</code></li>
+</ul>
+<p><strong>Log Levels:</strong></p>
+<ul>
+<li><code>level</code>, <code>severity</code>, <code>loglevel</code></li>
+</ul>
+<p><strong>Messages:</strong></p>
+<ul>
+<li><code>message</code>, <code>msg</code>, <code>text</code></li>
+</ul>
+<p><strong>Identifiers:</strong></p>
+<ul>
+<li><code>id</code>, <code>request_id</code>, <code>trace_id</code>, <code>span_id</code></li>
+</ul>
+<p><strong>Metadata:</strong></p>
+<ul>
+<li><code>service</code>, <code>host</code>, <code>hostname</code>, <code>source</code></li>
+</ul>
 <h3 id="format-specific-fields">Format-Specific Fields<a class="headerlink" href="#format-specific-fields" title="Permanent link">&para;</a></h3>
 <p>Different parsers add format-specific fields:</p>
-<p><strong>JSON (<code>-f json</code>):</strong>
-- Preserves all original fields
-- Nested structures maintained</p>
-<p><strong>Syslog (<code>-f syslog</code>):</strong>
-- <code>hostname</code>, <code>appname</code>, <code>procid</code>, <code>msgid</code>
-- <code>facility</code>, <code>severity</code></p>
-<p><strong>Combined/Apache (<code>-f combined</code>):</strong>
-- <code>ip</code>, <code>timestamp</code>, <code>request</code>, <code>status</code>, <code>bytes</code>
-- <code>method</code>, <code>path</code>, <code>protocol</code>
-- <code>referer</code>, <code>user_agent</code>
-- <code>request_time</code> (NGINX only)</p>
-<p><strong>CSV (<code>-f csv</code>):</strong>
-- Column names from header row
-- Or <code>col_0</code>, <code>col_1</code>, <code>col_2</code>, etc. without header</p>
-<p><strong>Logfmt (<code>-f logfmt</code>):</strong>
-- All key-value pairs as top-level fields</p>
+<p><strong>JSON (<code>-f json</code>):</strong></p>
+<ul>
+<li>Preserves all original fields</li>
+<li>Nested structures maintained</li>
+</ul>
+<p><strong>Syslog (<code>-f syslog</code>):</strong></p>
+<ul>
+<li><code>hostname</code>, <code>appname</code>, <code>procid</code>, <code>msgid</code></li>
+<li><code>facility</code>, <code>severity</code></li>
+</ul>
+<p><strong>Combined/Apache (<code>-f combined</code>):</strong></p>
+<ul>
+<li><code>ip</code>, <code>timestamp</code>, <code>request</code>, <code>status</code>, <code>bytes</code></li>
+<li><code>method</code>, <code>path</code>, <code>protocol</code></li>
+<li><code>referer</code>, <code>user_agent</code></li>
+<li><code>request_time</code> (NGINX only)</li>
+</ul>
+<p><strong>CSV (<code>-f csv</code>):</strong></p>
+<ul>
+<li>Column names from header row</li>
+<li>Or <code>col_0</code>, <code>col_1</code>, <code>col_2</code>, etc. without header</li>
+</ul>
+<p><strong>Logfmt (<code>-f logfmt</code>):</strong></p>
+<ul>
+<li>All key-value pairs as top-level fields</li>
+</ul>
 <h2 id="working-with-nested-structures">Working with Nested Structures<a class="headerlink" href="#working-with-nested-structures" title="Permanent link">&para;</a></h2>
 <h3 id="objectsmaps">Objects/Maps<a class="headerlink" href="#objectsmaps" title="Permanent link">&para;</a></h3>
 <p>Access nested maps using dot notation:</p>

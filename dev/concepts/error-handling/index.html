@@ -2623,11 +2623,13 @@
 <p>Errors are recorded but don't stop processing:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span>
 </code></pre></div>
-<p>If <code>e.timestamp</code> is missing or invalid:
-- Filter evaluates to <code>false</code>
-- Event is skipped
-- Error is recorded
-- Processing continues</p>
+<p>If <code>e.timestamp</code> is missing or invalid:</p>
+<ul>
+<li>Filter evaluates to <code>false</code></li>
+<li>Event is skipped</li>
+<li>Error is recorded</li>
+<li>Processing continues</li>
+</ul>
 <h2 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h2>
 <h3 id="overview_1">Overview<a class="headerlink" href="#overview_1" title="Permanent link">&para;</a></h3>
 <p>In strict mode (<code>--strict</code>), Kelora fails immediately on the first error:</p>
@@ -2672,40 +2674,52 @@
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>{invalid json}
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>{&quot;more&quot;: &quot;valid&quot;}
 </code></pre></div></p>
-<p><strong>Resilient behavior:</strong>
-- Line 1: Parsed successfully
-- Line 2: Skipped (parse error recorded)
-- Line 3: Parsed successfully</p>
-<p><strong>Strict behavior:</strong>
-- Line 1: Parsed successfully
-- Line 2: Error shown, processing aborts
-- Line 3: Never processed</p>
+<p><strong>Resilient behavior:</strong></p>
+<ul>
+<li>Line 1: Parsed successfully</li>
+<li>Line 2: Skipped (parse error recorded)</li>
+<li>Line 3: Parsed successfully</li>
+</ul>
+<p><strong>Strict behavior:</strong></p>
+<ul>
+<li>Line 1: Parsed successfully</li>
+<li>Line 2: Error shown, processing aborts</li>
+<li>Line 3: Never processed</li>
+</ul>
 <h3 id="filter-errors">Filter Errors<a class="headerlink" href="#filter-errors" title="Permanent link">&para;</a></h3>
 <p>Occur when <code>--filter</code> expressions fail during evaluation.</p>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>If <code>e.timestamp</code> is missing:</p>
-<p><strong>Resilient behavior:</strong>
-- Filter evaluates to <code>false</code>
-- Event is skipped
-- Error recorded</p>
-<p><strong>Strict behavior:</strong>
-- Error shown immediately
-- Processing aborts</p>
+<p><strong>Resilient behavior:</strong></p>
+<ul>
+<li>Filter evaluates to <code>false</code></li>
+<li>Event is skipped</li>
+<li>Error recorded</li>
+</ul>
+<p><strong>Strict behavior:</strong></p>
+<ul>
+<li>Error shown immediately</li>
+<li>Processing aborts</li>
+</ul>
 <h3 id="transform-errors">Transform Errors<a class="headerlink" href="#transform-errors" title="Permanent link">&para;</a></h3>
 <p>Occur when <code>--exec</code> scripts fail during execution.</p>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>If <code>e.value</code> is not a valid integer:</p>
-<p><strong>Resilient behavior:</strong>
-- Transformation rolled back (atomic)
-- Original event returned unchanged
-- Error recorded</p>
-<p><strong>Strict behavior:</strong>
-- Error shown immediately
-- Processing aborts</p>
+<p><strong>Resilient behavior:</strong></p>
+<ul>
+<li>Transformation rolled back (atomic)</li>
+<li>Original event returned unchanged</li>
+<li>Error recorded</li>
+</ul>
+<p><strong>Strict behavior:</strong></p>
+<ul>
+<li>Error shown immediately</li>
+<li>Processing aborts</li>
+</ul>
 <h2 id="verbose-error-reporting">Verbose Error Reporting<a class="headerlink" href="#verbose-error-reporting" title="Permanent link">&para;</a></h2>
 <h3 id="default-error-reporting">Default Error Reporting<a class="headerlink" href="#default-error-reporting" title="Permanent link">&para;</a></h3>
 <p>By default, errors are collected and summarized at the end:</p>
@@ -2844,11 +2858,13 @@
 <p>In resilient mode, <code>--exec</code> scripts execute <strong>atomically</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1; e.b = e.value.to_int(); e.c = 3&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
-<p>If <code>e.value.to_int()</code> fails:
-- Changes to <code>e.a</code> are <strong>rolled back</strong>
-- <code>e.b</code> is never set
-- <code>e.c</code> is never set
-- <strong>Original event</strong> is returned unchanged</p>
+<p>If <code>e.value.to_int()</code> fails:</p>
+<ul>
+<li>Changes to <code>e.a</code> are <strong>rolled back</strong></li>
+<li><code>e.b</code> is never set</li>
+<li><code>e.c</code> is never set</li>
+<li><strong>Original event</strong> is returned unchanged</li>
+</ul>
 <h3 id="why-atomic">Why Atomic?<a class="headerlink" href="#why-atomic" title="Permanent link">&para;</a></h3>
 <p>Prevents partial transformations from corrupting data:</p>
 <p><strong>Without atomicity:</strong>
@@ -2872,12 +2888,16 @@
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.b = e.y.to_int()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p>If first <code>--exec</code> fails:
-- First transformation rolled back
-- Second <code>--exec</code> <strong>still runs</strong> on original event</p>
-<p>If second <code>--exec</code> fails:
-- First transformation <strong>preserved</strong> (it succeeded)
-- Second transformation rolled back</p>
+<p>If first <code>--exec</code> fails:</p>
+<ul>
+<li>First transformation rolled back</li>
+<li>Second <code>--exec</code> <strong>still runs</strong> on original event</li>
+</ul>
+<p>If second <code>--exec</code> fails:</p>
+<ul>
+<li>First transformation <strong>preserved</strong> (it succeeded)</li>
+<li>Second transformation rolled back</li>
+</ul>
 <h2 id="common-error-scenarios">Common Error Scenarios<a class="headerlink" href="#common-error-scenarios" title="Permanent link">&para;</a></h2>
 <h3 id="missing-fields">Missing Fields<a class="headerlink" href="#missing-fields" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>

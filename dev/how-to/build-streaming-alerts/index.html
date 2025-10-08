@@ -2027,10 +2027,12 @@ event. Combine with <code>-qq</code> if you want the counter but not the event s
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a># Level 3 (-qqq): Complete silence except exit code
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>&gt; tail -f app.log | kelora -j -qqq --filter &#39;e.level == &quot;CRITICAL&quot;&#39;
 </code></pre></div></p>
-<p><strong>Quiet mode behavior:</strong>
-- <code>-q</code>: Suppress error summaries, stats, format detection messages
-- <code>-qq</code>: Additionally suppress event output (automatically enables <code>-F none</code>)
-- <code>-qqq</code>: Additionally suppress <code>print()</code> and <code>eprint()</code> from Rhai scripts</p>
+<p><strong>Quiet mode behavior:</strong></p>
+<ul>
+<li><code>-q</code>: Suppress error summaries, stats, format detection messages</li>
+<li><code>-qq</code>: Additionally suppress event output (automatically enables <code>-F none</code>)</li>
+<li><code>-qqq</code>: Additionally suppress <code>print()</code> and <code>eprint()</code> from Rhai scripts</li>
+</ul>
 <h3 id="exit-codes-for-automation">Exit Codes for Automation<a class="headerlink" href="#exit-codes-for-automation" title="Permanent link">&para;</a></h3>
 <p>Use exit codes to detect processing issues:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Check for errors (exit code 1 if parsing/runtime errors occurred)</span>
@@ -2055,12 +2057,14 @@ event. Combine with <code>-qq</code> if you want the counter but not the event s
 <code>examples/simple_logfmt.log</code> piped through <code>cat</code> so you can stop the command
 easily with Ctrl+C.</p>
 </div>
-<p><strong>Exit codes:</strong>
-- <code>0</code>: Success (no parsing or runtime errors)
-- <code>1</code>: Parse errors or Rhai runtime errors occurred
-- <code>2</code>: Invalid CLI usage or configuration errors
-- <code>130</code>: Interrupted (Ctrl+C)
-- <code>141</code>: Broken pipe (normal in Unix pipelines)</p>
+<p><strong>Exit codes:</strong></p>
+<ul>
+<li><code>0</code>: Success (no parsing or runtime errors)</li>
+<li><code>1</code>: Parse errors or Rhai runtime errors occurred</li>
+<li><code>2</code>: Invalid CLI usage or configuration errors</li>
+<li><code>130</code>: Interrupted (Ctrl+C)</li>
+<li><code>141</code>: Broken pipe (normal in Unix pipelines)</li>
+</ul>
 <h3 id="metrics-with-end-stage-alerting">Metrics with End-Stage Alerting<a class="headerlink" href="#metrics-with-end-stage-alerting" title="Permanent link">&para;</a></h3>
 <p>Collect metrics during processing and alert at the end:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Alert if error rate exceeds threshold</span>
@@ -2332,21 +2336,27 @@ resulting events to downstream tooling (e.g., Slack webhook, SIEM pipeline).</p>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if window_values(&quot;level&quot;).len() == 100 { eprint(&quot;Window full, analyzing...&quot;) }&#39;</span>
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Real-Time Monitoring:</strong>
-- Use <code>tail -f</code> for active logs, <code>tail -F</code> for logs that rotate
-- Use <code>-qq</code> to suppress event output, showing only alerts
-- Use <code>-qqq</code> for complete silence when only exit codes matter
-- Combine with <code>--metrics</code> and <code>--end</code> for batch summaries</p>
-<p><strong>Alert Design:</strong>
-- Use <code>eprint()</code> for alerts (goes to stderr, separate from events)
-- Write structured alerts with context: timestamp, service, severity
-- Consider alert fatigue - use thresholds and deduplication
-- Use <code>track_unique()</code> to count distinct values (IPs, users, etc.)</p>
-<p><strong>Performance:</strong>
-- Use <code>--parallel</code> for high-throughput log streams
-- Adjust <code>--batch-timeout</code> for latency vs throughput balance
-- Lower batch timeout = lower latency, higher CPU usage
-- Use <code>--window</code> carefully - large windows consume memory</p>
+<p><strong>Real-Time Monitoring:</strong></p>
+<ul>
+<li>Use <code>tail -f</code> for active logs, <code>tail -F</code> for logs that rotate</li>
+<li>Use <code>-qq</code> to suppress event output, showing only alerts</li>
+<li>Use <code>-qqq</code> for complete silence when only exit codes matter</li>
+<li>Combine with <code>--metrics</code> and <code>--end</code> for batch summaries</li>
+</ul>
+<p><strong>Alert Design:</strong></p>
+<ul>
+<li>Use <code>eprint()</code> for alerts (goes to stderr, separate from events)</li>
+<li>Write structured alerts with context: timestamp, service, severity</li>
+<li>Consider alert fatigue - use thresholds and deduplication</li>
+<li>Use <code>track_unique()</code> to count distinct values (IPs, users, etc.)</li>
+</ul>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Use <code>--parallel</code> for high-throughput log streams</li>
+<li>Adjust <code>--batch-timeout</code> for latency vs throughput balance</li>
+<li>Lower batch timeout = lower latency, higher CPU usage</li>
+<li>Use <code>--window</code> carefully - large windows consume memory</li>
+</ul>
 <p><strong>Automation:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Test alerts without actual monitoring</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;level&quot;:&quot;CRITICAL&quot;,&quot;message&quot;:&quot;test&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>

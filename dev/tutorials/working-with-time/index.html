@@ -2038,14 +2038,16 @@
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora: Stats:
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Lines processed: 3 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Events created: 3 total, 3 output, 0 filtered (0.0%)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Throughput: 1748 lines/s in 1ms
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Throughput: 1779 lines/s in 1ms
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Time span: 2024-01-15T10:30:00+00:00 to 2024-01-15T10:32:00+00:00 (2m)
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Keys seen: message,time,timestamp,ts
 </code></pre></div>
-<p><strong>Auto-detected field names:</strong>
-- <code>ts</code>, <code>timestamp</code>, <code>time</code>, <code>@timestamp</code>
-- Case-insensitive detection
-- First matching field in the event is used</p>
+<p><strong>Auto-detected field names:</strong></p>
+<ul>
+<li><code>ts</code>, <code>timestamp</code>, <code>time</code>, <code>@timestamp</code></li>
+<li>Case-insensitive detection</li>
+<li>First matching field in the event is used</li>
+</ul>
 <h2 id="step-2-time-range-filtering">Step 2: Time Range Filtering<a class="headerlink" href="#step-2-time-range-filtering" title="Permanent link">&para;</a></h2>
 <p>Use <code>--since</code> and <code>--until</code> to filter logs by time range:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Last hour of logs</span>
@@ -2063,14 +2065,18 @@
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Natural language (yesterday)</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--since<span class="w"> </span>yesterday<span class="w"> </span>app.log
 </code></pre></div>
-<p><strong>Duration syntax:</strong>
-- <code>1h</code> - One hour ago
-- <code>30m</code> - Thirty minutes ago
-- <code>2d</code> - Two days ago
-- <code>1h30m</code> - One hour and thirty minutes ago</p>
-<p><strong>Future filtering:</strong>
-- <code>--since +1h</code> - Events starting one hour from now
-- <code>--until +2d</code> - Events up to two days from now</p>
+<p><strong>Duration syntax:</strong></p>
+<ul>
+<li><code>1h</code> - One hour ago</li>
+<li><code>30m</code> - Thirty minutes ago</li>
+<li><code>2d</code> - Two days ago</li>
+<li><code>1h30m</code> - One hour and thirty minutes ago</li>
+</ul>
+<p><strong>Future filtering:</strong></p>
+<ul>
+<li><code>--since +1h</code> - Events starting one hour from now</li>
+<li><code>--until +2d</code> - Events up to two days from now</li>
+</ul>
 <h2 id="step-3-custom-timestamp-formats">Step 3: Custom Timestamp Formats<a class="headerlink" href="#step-3-custom-timestamp-formats" title="Permanent link">&para;</a></h2>
 <p>When your timestamps don't match standard formats, use <code>--ts-format</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Python logging format with milliseconds</span>
@@ -2089,16 +2095,18 @@
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;Jan 15 10:30:45 webserver nginx: Connection accepted&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%b %d %H:%M:%S&#39;</span>
 </code></pre></div>
-<p><strong>Common format tokens:</strong>
-- <code>%Y</code> - Year with century (2024)
-- <code>%m</code> - Month (01-12)
-- <code>%d</code> - Day (01-31)
-- <code>%H</code> - Hour 24h (00-23)
-- <code>%M</code> - Minute (00-59)
-- <code>%S</code> - Second (00-59)
-- <code>%3f</code> - Milliseconds (000-999)
-- <code>%6f</code> - Microseconds (000000-999999)
-- <code>%z</code> - UTC offset (+0000, -0500)</p>
+<p><strong>Common format tokens:</strong></p>
+<ul>
+<li><code>%Y</code> - Year with century (2024)</li>
+<li><code>%m</code> - Month (01-12)</li>
+<li><code>%d</code> - Day (01-31)</li>
+<li><code>%H</code> - Hour 24h (00-23)</li>
+<li><code>%M</code> - Minute (00-59)</li>
+<li><code>%S</code> - Second (00-59)</li>
+<li><code>%3f</code> - Milliseconds (000-999)</li>
+<li><code>%6f</code> - Microseconds (000000-999999)</li>
+<li><code>%z</code> - UTC offset (+0000, -0500)</li>
+</ul>
 <p>See <code>kelora --help-time</code> for complete format reference.</p>
 <h2 id="step-4-timezone-handling">Step 4: Timezone Handling<a class="headerlink" href="#step-4-timezone-handling" title="Permanent link">&para;</a></h2>
 <p>Handle naive timestamps (without timezone info) using <code>--input-tz</code>:</p>
@@ -2145,10 +2153,12 @@
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;: &quot;2024-01-15T10:30:00Z&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-Z
 </code></pre></div>
-<p><strong>Key differences:</strong>
-- <code>--convert-ts</code> - Changes the event data
-- <code>-z / -Z</code> - Only affects default formatter display
-- JSON/CSV output ignores <code>-z/-Z</code> flags</p>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li><code>--convert-ts</code> - Changes the event data</li>
+<li><code>-z / -Z</code> - Only affects default formatter display</li>
+<li>JSON/CSV output ignores <code>-z/-Z</code> flags</li>
+</ul>
 <h2 id="step-7-working-with-datetime-in-scripts">Step 7: Working with DateTime in Scripts<a class="headerlink" href="#step-7-working-with-datetime-in-scripts" title="Permanent link">&para;</a></h2>
 <p>Use <code>to_datetime()</code> to parse timestamps in Rhai scripts:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Parse timestamp from string</span>
@@ -2192,14 +2202,16 @@
 <a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.berlin = dt.to_timezone(&quot;Europe/Berlin&quot;).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.ny = dt.to_timezone(&quot;America/New_York&quot;).to_iso()&#39;</span>
 </code></pre></div>
-<p><strong>Available methods:</strong>
-- <code>.year()</code>, <code>.month()</code>, <code>.day()</code> - Date components
-- <code>.hour()</code>, <code>.minute()</code>, <code>.second()</code> - Time components
-- <code>.format(fmt)</code> - Custom formatting
-- <code>.to_iso()</code> - ISO 8601 string
-- <code>.to_utc()</code>, <code>.to_local()</code> - Timezone conversion
-- <code>.to_timezone(name)</code> - Named timezone conversion
-- <code>.timezone_name()</code> - Get timezone name</p>
+<p><strong>Available methods:</strong></p>
+<ul>
+<li><code>.year()</code>, <code>.month()</code>, <code>.day()</code> - Date components</li>
+<li><code>.hour()</code>, <code>.minute()</code>, <code>.second()</code> - Time components</li>
+<li><code>.format(fmt)</code> - Custom formatting</li>
+<li><code>.to_iso()</code> - ISO 8601 string</li>
+<li><code>.to_utc()</code>, <code>.to_local()</code> - Timezone conversion</li>
+<li><code>.to_timezone(name)</code> - Named timezone conversion</li>
+<li><code>.timezone_name()</code> - Get timezone name</li>
+</ul>
 <h2 id="step-9-duration-calculations">Step 9: Duration Calculations<a class="headerlink" href="#step-9-duration-calculations" title="Permanent link">&para;</a></h2>
 <p>Calculate time differences between events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Calculate duration between timestamps</span>
@@ -2227,15 +2239,19 @@
 <a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let offset = duration_from_minutes(90)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.plus_90m = (dt + offset).to_iso()&#39;</span>
 </code></pre></div>
-<p><strong>Duration functions:</strong>
-- <code>to_duration("1h30m")</code> - Parse duration string
-- <code>duration_from_seconds(n)</code>, <code>duration_from_minutes(n)</code>
-- <code>duration_from_hours(n)</code>, <code>duration_from_days(n)</code>
-- <code>duration_from_ms(n)</code>, <code>duration_from_ns(n)</code></p>
-<p><strong>Duration methods:</strong>
-- <code>.as_seconds()</code>, <code>.as_milliseconds()</code>, <code>.as_nanoseconds()</code>
-- <code>.as_minutes()</code>, <code>.as_hours()</code>, <code>.as_days()</code>
-- <code>.to_string()</code> - Human-readable format</p>
+<p><strong>Duration functions:</strong></p>
+<ul>
+<li><code>to_duration("1h30m")</code> - Parse duration string</li>
+<li><code>duration_from_seconds(n)</code>, <code>duration_from_minutes(n)</code></li>
+<li><code>duration_from_hours(n)</code>, <code>duration_from_days(n)</code></li>
+<li><code>duration_from_ms(n)</code>, <code>duration_from_ns(n)</code></li>
+</ul>
+<p><strong>Duration methods:</strong></p>
+<ul>
+<li><code>.as_seconds()</code>, <code>.as_milliseconds()</code>, <code>.as_nanoseconds()</code></li>
+<li><code>.as_minutes()</code>, <code>.as_hours()</code>, <code>.as_days()</code></li>
+<li><code>.to_string()</code> - Human-readable format</li>
+</ul>
 <h2 id="step-10-real-world-example-request-duration-analysis">Step 10: Real-World Example - Request Duration Analysis<a class="headerlink" href="#step-10-real-world-example-request-duration-analysis" title="Permanent link">&para;</a></h2>
 <p>Analyze API request durations with proper time handling:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Sample log data</span>
@@ -2289,10 +2305,12 @@
 <a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let end = to_datetime(&quot;2024-01-15T11:00:00Z&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;dt &gt;= start &amp;&amp; dt &lt;= end&#39;</span>
 </code></pre></div>
-<p><strong>Comparison operators:</strong>
-- <code>==</code>, <code>!=</code> - Equality
-- <code>&gt;</code>, <code>&lt;</code> - Greater/less than
-- <code>&gt;=</code>, <code>&lt;=</code> - Greater/less or equal</p>
+<p><strong>Comparison operators:</strong></p>
+<ul>
+<li><code>==</code>, <code>!=</code> - Equality</li>
+<li><code>&gt;</code>, <code>&lt;</code> - Greater/less than</li>
+<li><code>&gt;=</code>, <code>&lt;=</code> - Greater/less or equal</li>
+</ul>
 <h2 id="step-13-current-time-functions">Step 13: Current Time Functions<a class="headerlink" href="#step-13-current-time-functions" title="Permanent link">&para;</a></h2>
 <p>Use <code>now_utc()</code> and <code>now_local()</code> for relative time calculations:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Find events in last 5 minutes using script</span>

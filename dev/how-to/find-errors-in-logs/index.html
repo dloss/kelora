@@ -1771,14 +1771,18 @@
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Performance:</strong>
-- Use <code>--levels</code> instead of <code>--filter</code> when possible (faster)
-- Add <code>--parallel</code> for large files
-- Use <code>--take 100</code> to limit output when exploring</p>
-<p><strong>Debugging:</strong>
-- Use <code>--verbose</code> to see parsing errors
-- Use <code>--stats</code> to see processing summary
-- Use <code>-F json | jq</code> for complex JSON analysis</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Use <code>--levels</code> instead of <code>--filter</code> when possible (faster)</li>
+<li>Add <code>--parallel</code> for large files</li>
+<li>Use <code>--take 100</code> to limit output when exploring</li>
+</ul>
+<p><strong>Debugging:</strong></p>
+<ul>
+<li>Use <code>--verbose</code> to see parsing errors</li>
+<li>Use <code>--stats</code> to see processing summary</li>
+<li>Use <code>-F json | jq</code> for complex JSON analysis</li>
+</ul>
 <p><strong>Automation:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Alert on errors (exit code 0 = no errors, 1 = has errors)</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">if</span><span class="w"> </span>kelora<span class="w"> </span>-q<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;5 minutes ago&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>

@@ -1681,15 +1681,17 @@
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Explicit syslog format</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log
 </code></pre></div>
-<p>Syslog format includes:
-- <code>priority</code> - Combined facility/severity number
-- <code>facility</code> - Facility code (0-23)
-- <code>severity</code> - Severity level (0-7)
-- <code>timestamp</code> - Event timestamp
-- <code>hostname</code> - Source hostname
-- <code>process</code> - Process name
-- <code>pid</code> - Process ID
-- <code>message</code> - Log message</p>
+<p>Syslog format includes:</p>
+<ul>
+<li><code>priority</code> - Combined facility/severity number</li>
+<li><code>facility</code> - Facility code (0-23)</li>
+<li><code>severity</code> - Severity level (0-7)</li>
+<li><code>timestamp</code> - Event timestamp</li>
+<li><code>hostname</code> - Source hostname</li>
+<li><code>process</code> - Process name</li>
+<li><code>pid</code> - Process ID</li>
+<li><code>message</code> - Log message</li>
+</ul>
 <h3 id="filter-by-severity">Filter by Severity<a class="headerlink" href="#filter-by-severity" title="Permanent link">&para;</a></h3>
 <p>Filter logs by severity level (0=emerg, 7=debug):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Critical and below (0-2: emerg, alert, crit)</span>
@@ -1701,15 +1703,17 @@
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Warning and above (0-4)</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 4&#39;</span>
 </code></pre></div>
-<p>Severity levels:
-- 0: Emergency (system unusable)
-- 1: Alert (immediate action required)
-- 2: Critical
-- 3: Error
-- 4: Warning
-- 5: Notice
-- 6: Informational
-- 7: Debug</p>
+<p>Severity levels:</p>
+<ul>
+<li>0: Emergency (system unusable)</li>
+<li>1: Alert (immediate action required)</li>
+<li>2: Critical</li>
+<li>3: Error</li>
+<li>4: Warning</li>
+<li>5: Notice</li>
+<li>6: Informational</li>
+<li>7: Debug</li>
+</ul>
 <h3 id="filter-by-facility">Filter by Facility<a class="headerlink" href="#filter-by-facility" title="Permanent link">&para;</a></h3>
 <p>Filter by facility type:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Kernel messages (facility 0)</span>
@@ -1721,13 +1725,15 @@
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># System daemons (facility 3)</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.facility == 3&#39;</span>
 </code></pre></div>
-<p>Common facilities:
-- 0: Kernel
-- 1: User-level
-- 2: Mail
-- 3: System daemons
-- 4: Security/auth
-- 10: Security/auth (private)</p>
+<p>Common facilities:</p>
+<ul>
+<li>0: Kernel</li>
+<li>1: User-level</li>
+<li>2: Mail</li>
+<li>3: System daemons</li>
+<li>4: Security/auth</li>
+<li>10: Security/auth (private)</li>
+</ul>
 <h3 id="filter-by-process">Filter by Process<a class="headerlink" href="#filter-by-process" title="Permanent link">&para;</a></h3>
 <p>Track specific services or processes:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Specific process name</span>
@@ -1868,29 +1874,39 @@
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Severity Filtering:</strong>
-- Use numeric comparison for severity ranges
-- Lower numbers = higher severity (0 is most critical)
-- Filter <code>&lt;= 3</code> for error-level and above
-- Filter <code>&gt;= 6</code> for debug/info only</p>
-<p><strong>Facility Codes:</strong>
-- Different systems use different facilities
-- Check your syslog.conf for facility mappings
-- Security logs often use facility 4 or 10
-- Custom applications typically use 16-23</p>
-<p><strong>Performance:</strong>
-- Add <code>--parallel</code> for large syslog files
-- Use <code>--since</code>/<code>--until</code> to reduce processing
-- Filter by severity early in pipeline</p>
-<p><strong>Message Parsing:</strong>
-- Message format varies by application
-- Use <code>extract_re()</code> for pattern extraction
-- Use <code>parse_kv()</code> for structured messages
-- Consider <code>--filter</code> before expensive parsing</p>
-<p><strong>Hostname Handling:</strong>
-- Hostname may be IP or FQDN
-- Normalize with <code>.to_lower()</code> for consistency
-- Use <code>extract_domain()</code> for FQDN analysis</p>
+<p><strong>Severity Filtering:</strong></p>
+<ul>
+<li>Use numeric comparison for severity ranges</li>
+<li>Lower numbers = higher severity (0 is most critical)</li>
+<li>Filter <code>&lt;= 3</code> for error-level and above</li>
+<li>Filter <code>&gt;= 6</code> for debug/info only</li>
+</ul>
+<p><strong>Facility Codes:</strong></p>
+<ul>
+<li>Different systems use different facilities</li>
+<li>Check your syslog.conf for facility mappings</li>
+<li>Security logs often use facility 4 or 10</li>
+<li>Custom applications typically use 16-23</li>
+</ul>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Add <code>--parallel</code> for large syslog files</li>
+<li>Use <code>--since</code>/<code>--until</code> to reduce processing</li>
+<li>Filter by severity early in pipeline</li>
+</ul>
+<p><strong>Message Parsing:</strong></p>
+<ul>
+<li>Message format varies by application</li>
+<li>Use <code>extract_re()</code> for pattern extraction</li>
+<li>Use <code>parse_kv()</code> for structured messages</li>
+<li>Consider <code>--filter</code> before expensive parsing</li>
+</ul>
+<p><strong>Hostname Handling:</strong></p>
+<ul>
+<li>Hostname may be IP or FQDN</li>
+<li>Normalize with <code>.to_lower()</code> for consistency</li>
+<li>Use <code>extract_domain()</code> for FQDN analysis</li>
+</ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../find-errors-in-logs/">Find Errors in Logs</a> - General error filtering patterns</li>

@@ -3503,10 +3503,12 @@
 <p>Specify field types for automatic conversion:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int response_time:float&#39;</span><span class="w"> </span>access.csv
 </code></pre></div>
-<p><strong>Supported types:</strong>
-- <code>int</code> - Parse as integer
-- <code>float</code> - Parse as floating-point number
-- <code>bool</code> - Parse as boolean</p>
+<p><strong>Supported types:</strong></p>
+<ul>
+<li><code>int</code> - Parse as integer</li>
+<li><code>float</code> - Parse as floating-point number</li>
+<li><code>bool</code> - Parse as boolean</li>
+</ul>
 <h3 id="notes_3">Notes<a class="headerlink" href="#notes_3" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Quoted fields supported: <code>"value, with, commas"</code></li>
@@ -3527,22 +3529,26 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>&lt;34&gt;Jan 15 10:30:00 myhost myapp[1234]: Connection failed
 </code></pre></div></p>
 <h3 id="output-fields_4">Output Fields<a class="headerlink" href="#output-fields_4" title="Permanent link">&para;</a></h3>
-<p><strong>RFC5424:</strong>
-- <code>facility</code> - Syslog facility code
-- <code>severity</code> - Syslog severity level
-- <code>timestamp</code> - Parsed timestamp
-- <code>hostname</code> - Source hostname
-- <code>appname</code> - Application name
-- <code>procid</code> - Process ID
-- <code>msgid</code> - Message ID
-- <code>message</code> - Log message</p>
-<p><strong>RFC3164:</strong>
-- <code>facility</code> - Syslog facility code
-- <code>severity</code> - Syslog severity level
-- <code>timestamp</code> - Parsed timestamp
-- <code>hostname</code> - Source hostname
-- <code>tag</code> - Syslog tag (usually appname[pid])
-- <code>message</code> - Log message</p>
+<p><strong>RFC5424:</strong></p>
+<ul>
+<li><code>facility</code> - Syslog facility code</li>
+<li><code>severity</code> - Syslog severity level</li>
+<li><code>timestamp</code> - Parsed timestamp</li>
+<li><code>hostname</code> - Source hostname</li>
+<li><code>appname</code> - Application name</li>
+<li><code>procid</code> - Process ID</li>
+<li><code>msgid</code> - Message ID</li>
+<li><code>message</code> - Log message</li>
+</ul>
+<p><strong>RFC3164:</strong></p>
+<ul>
+<li><code>facility</code> - Syslog facility code</li>
+<li><code>severity</code> - Syslog severity level</li>
+<li><code>timestamp</code> - Parsed timestamp</li>
+<li><code>hostname</code> - Source hostname</li>
+<li><code>tag</code> - Syslog tag (usually appname[pid])</li>
+<li><code>message</code> - Log message</li>
+</ul>
 <h3 id="usage_4">Usage<a class="headerlink" href="#usage_4" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>messages.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,hostname,appname,message
@@ -3638,12 +3644,14 @@
 <h3 id="specification-syntax">Specification Syntax<a class="headerlink" href="#specification-syntax" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>cols:field1 field2 field3
 </code></pre></div>
-<p><strong>Token types:</strong>
-- <code>field</code> - Consume one column and assign it to <code>field</code>
-- <code>field(N)</code> - Consume <code>N</code> columns and join them into <code>field</code>
-- <code>-</code> / <code>-(N)</code> - Skip one or <code>N</code> columns
-- <code>*field</code> - Capture every remaining column into <code>field</code> (must be last)
-- <code>field:type</code> - Apply a type annotation (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>)</p>
+<p><strong>Token types:</strong></p>
+<ul>
+<li><code>field</code> - Consume one column and assign it to <code>field</code></li>
+<li><code>field(N)</code> - Consume <code>N</code> columns and join them into <code>field</code></li>
+<li><code>-</code> / <code>-(N)</code> - Skip one or <code>N</code> columns</li>
+<li><code>*field</code> - Capture every remaining column into <code>field</code> (must be last)</li>
+<li><code>field:type</code> - Apply a type annotation (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>)</li>
+</ul>
 <h3 id="input-examples">Input Examples<a class="headerlink" href="#input-examples" title="Permanent link">&para;</a></h3>
 <p><strong>Whitespace-delimited:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>ERROR api &quot;Connection failed&quot;

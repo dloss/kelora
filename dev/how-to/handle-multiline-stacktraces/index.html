@@ -1711,10 +1711,12 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Works for stack traces with indented frames</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>indent<span class="w"> </span>examples/multiline_indent.log
 </code></pre></div>
-<p>Common for:
-- Python/Java stack traces
-- YAML-like logs
-- Indented continuation lines</p>
+<p>Common for:</p>
+<ul>
+<li>Python/Java stack traces</li>
+<li>YAML-like logs</li>
+<li>Indented continuation lines</li>
+</ul>
 <h3 id="regex-based-multiline">Regex-Based Multiline<a class="headerlink" href="#regex-based-multiline" title="Permanent link">&para;</a></h3>
 <p>Define custom start/end patterns:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Match start pattern only</span>
@@ -1801,51 +1803,71 @@
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.trace_length &gt; 5&#39;</span><span class="w">  </span><span class="c1"># Only substantial traces</span>
 </code></pre></div>
 <h2 id="multiline-strategy-selection">Multiline Strategy Selection<a class="headerlink" href="#multiline-strategy-selection" title="Permanent link">&para;</a></h2>
-<p><strong>Use <code>timestamp</code> when:</strong>
-- Logs have consistent timestamp prefixes
-- Each event starts with a timestamp
-- Mixed single-line and multi-line events</p>
-<p><strong>Use <code>indent</code> when:</strong>
-- Stack traces or continuations are indented
-- Clear visual structure with whitespace
-- Python, YAML, or similar formats</p>
-<p><strong>Use <code>regex:match</code> when:</strong>
-- Custom event boundaries
-- Specific start/end markers
-- Complex event detection logic
-- Multiple possible start patterns (use <code>|</code> for alternation)</p>
-<p><strong>Use <code>regex:match:end</code> when:</strong>
-- Events have explicit terminators
-- Need both start and end markers
-- BEGIN/END style blocks</p>
-<p><strong>Use <code>all</code> when:</strong>
-- Processing single document files
-- Need entire input as context
-- Small files only (memory limit)</p>
+<p><strong>Use <code>timestamp</code> when:</strong></p>
+<ul>
+<li>Logs have consistent timestamp prefixes</li>
+<li>Each event starts with a timestamp</li>
+<li>Mixed single-line and multi-line events</li>
+</ul>
+<p><strong>Use <code>indent</code> when:</strong></p>
+<ul>
+<li>Stack traces or continuations are indented</li>
+<li>Clear visual structure with whitespace</li>
+<li>Python, YAML, or similar formats</li>
+</ul>
+<p><strong>Use <code>regex:match</code> when:</strong></p>
+<ul>
+<li>Custom event boundaries</li>
+<li>Specific start/end markers</li>
+<li>Complex event detection logic</li>
+<li>Multiple possible start patterns (use <code>|</code> for alternation)</li>
+</ul>
+<p><strong>Use <code>regex:match:end</code> when:</strong></p>
+<ul>
+<li>Events have explicit terminators</li>
+<li>Need both start and end markers</li>
+<li>BEGIN/END style blocks</li>
+</ul>
+<p><strong>Use <code>all</code> when:</strong></p>
+<ul>
+<li>Processing single document files</li>
+<li>Need entire input as context</li>
+<li>Small files only (memory limit)</li>
+</ul>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Performance:</strong>
-- Multiline buffering increases memory usage
-- Use <code>--batch-size</code> to limit buffer growth with <code>--parallel</code>
-- <code>--batch-timeout</code> controls flush timing for streaming</p>
-<p><strong>Debugging:</strong>
-- Use <code>--take 5</code> to inspect first few events
-- Add <code>--stats</code> to see event counts
-- Use <code>--verbose</code> to see parsing issues
-- Check line count with <code>--exec 'e.lines = e.line.count("\n")'</code></p>
-<p><strong>Pattern Matching:</strong>
-- Test regex patterns carefully
-- Use <code>^</code> for line start anchors
-- Common patterns: <code>^\d{4}-</code> (timestamp), <code>^[A-Z]+:</code> (severity), <code>^\s+</code> (indent)
-- Combine patterns with <code>|</code>: <code>^(ERROR|WARN|Exception)</code></p>
-<p><strong>Edge Cases:</strong>
-- Empty lines may break grouping (filter with <code>--ignore-lines '^$'</code>)
-- Very long events can cause memory issues
-- Incomplete events at EOF are emitted as-is
-- With <code>--parallel</code>, events may be reordered (use <code>--batch-size</code> carefully)</p>
-<p><strong>Format After Grouping:</strong>
-- <code>-f line</code> keeps full multiline text in <code>line</code> field
-- <code>-f json</code> if continuation contains JSON
-- Parse after grouping: <code>--exec 'e.data = e.line.parse_json()'</code></p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Multiline buffering increases memory usage</li>
+<li>Use <code>--batch-size</code> to limit buffer growth with <code>--parallel</code></li>
+<li><code>--batch-timeout</code> controls flush timing for streaming</li>
+</ul>
+<p><strong>Debugging:</strong></p>
+<ul>
+<li>Use <code>--take 5</code> to inspect first few events</li>
+<li>Add <code>--stats</code> to see event counts</li>
+<li>Use <code>--verbose</code> to see parsing issues</li>
+<li>Check line count with <code>--exec 'e.lines = e.line.count("\n")'</code></li>
+</ul>
+<p><strong>Pattern Matching:</strong></p>
+<ul>
+<li>Test regex patterns carefully</li>
+<li>Use <code>^</code> for line start anchors</li>
+<li>Common patterns: <code>^\d{4}-</code> (timestamp), <code>^[A-Z]+:</code> (severity), <code>^\s+</code> (indent)</li>
+<li>Combine patterns with <code>|</code>: <code>^(ERROR|WARN|Exception)</code></li>
+</ul>
+<p><strong>Edge Cases:</strong></p>
+<ul>
+<li>Empty lines may break grouping (filter with <code>--ignore-lines '^$'</code>)</li>
+<li>Very long events can cause memory issues</li>
+<li>Incomplete events at EOF are emitted as-is</li>
+<li>With <code>--parallel</code>, events may be reordered (use <code>--batch-size</code> carefully)</li>
+</ul>
+<p><strong>Format After Grouping:</strong></p>
+<ul>
+<li><code>-f line</code> keeps full multiline text in <code>line</code> field</li>
+<li><code>-f json</code> if continuation contains JSON</li>
+<li>Parse after grouping: <code>--exec 'e.data = e.line.parse_json()'</code></li>
+</ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../find-errors-in-logs/">Find Errors in Logs</a> - Error filtering patterns</li>

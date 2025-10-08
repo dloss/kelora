@@ -2505,19 +2505,23 @@
 </code></pre></div>
 <p>Both return <code>1</code> if any errors occurred.</p>
 <h3 id="resilient-vs-strict">Resilient vs Strict<a class="headerlink" href="#resilient-vs-strict" title="Permanent link">&para;</a></h3>
-<p><strong>Resilient mode (default):</strong>
-- Collects all errors
-- Returns <code>1</code> if any errors occurred
-- Processing completes</p>
+<p><strong>Resilient mode (default):</strong></p>
+<ul>
+<li>Collects all errors</li>
+<li>Returns <code>1</code> if any errors occurred</li>
+<li>Processing completes</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Processes all lines despite errors</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Errors occurred</span>
 </code></pre></div>
-<p><strong>Strict mode:</strong>
-- Aborts on first error
-- Returns <code>1</code> immediately
-- Processing incomplete</p>
+<p><strong>Strict mode:</strong></p>
+<ul>
+<li>Aborts on first error</li>
+<li>Returns <code>1</code> immediately</li>
+<li>Processing incomplete</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># Aborts on first error</span>
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
@@ -2628,20 +2632,24 @@
 </code></pre></div></p>
 <h3 id="exit-code-2-with-valid-syntax">Exit Code 2 with Valid Syntax<a class="headerlink" href="#exit-code-2-with-valid-syntax" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Getting exit code <code>2</code> but command looks correct.</p>
-<p><strong>Check:</strong>
-- File exists and is readable
-- Configuration file is valid
-- Permissions are correct</p>
+<p><strong>Check:</strong></p>
+<ul>
+<li>File exists and is readable</li>
+<li>Configuration file is valid</li>
+<li>Permissions are correct</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>&gt;<span class="w"> </span>ls<span class="w"> </span>-l<span class="w"> </span>app.log
 <a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="different-exit-codes-in-ci-vs-local">Different Exit Codes in CI vs Local<a class="headerlink" href="#different-exit-codes-in-ci-vs-local" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Different exit codes in CI/CD vs local development.</p>
-<p><strong>Possible causes:</strong>
-- Different file permissions
-- Different file paths
-- Different configuration files
-- Different environment variables</p>
+<p><strong>Possible causes:</strong></p>
+<ul>
+<li>Different file permissions</li>
+<li>Different file paths</li>
+<li>Different configuration files</li>
+<li>Different environment variables</li>
+</ul>
 <p><strong>Solution:</strong> Test with same conditions:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ignore-config<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Ignore config files</span>
 </code></pre></div></p>

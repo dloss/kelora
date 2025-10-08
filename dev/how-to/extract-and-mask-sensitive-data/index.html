@@ -1825,10 +1825,12 @@
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.client_ip = e.client_ip.mask_ip(3)&#39;</span>
 </code></pre></div>
-<p><strong>Results:</strong>
-- <code>192.168.1.100</code> with <code>mask_ip(1)</code> becomes <code>192.168.1.0</code>
-- <code>192.168.1.100</code> with <code>mask_ip(2)</code> becomes <code>192.168.0.0</code>
-- <code>192.168.1.100</code> with <code>mask_ip(3)</code> becomes <code>192.0.0.0</code></p>
+<p><strong>Results:</strong></p>
+<ul>
+<li><code>192.168.1.100</code> with <code>mask_ip(1)</code> becomes <code>192.168.1.0</code></li>
+<li><code>192.168.1.100</code> with <code>mask_ip(2)</code> becomes <code>192.168.0.0</code></li>
+<li><code>192.168.1.100</code> with <code>mask_ip(3)</code> becomes <code>192.0.0.0</code></li>
+</ul>
 <h3 id="generate-pseudonyms">Generate Pseudonyms<a class="headerlink" href="#generate-pseudonyms" title="Permanent link">&para;</a></h3>
 <p>Create consistent pseudonyms using domain separation (requires <code>KELORA_SECRET</code> environment variable):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Set secret for pseudonymization</span>
@@ -1846,11 +1848,13 @@
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.session_token = ()&#39;</span>
 </code></pre></div>
-<p><strong>Benefits:</strong>
-- Same input always produces same pseudonym (consistency)
-- Different domains produce different pseudonyms (separation)
-- Cannot reverse back to original (one-way)
-- Requires secret key (security)</p>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>Same input always produces same pseudonym (consistency)</li>
+<li>Different domains produce different pseudonyms (separation)</li>
+<li>Cannot reverse back to original (one-way)</li>
+<li>Requires secret key (security)</li>
+</ul>
 <h3 id="hash-sensitive-fields">Hash Sensitive Fields<a class="headerlink" href="#hash-sensitive-fields" title="Permanent link">&para;</a></h3>
 <p>Hash data for grouping and deduplication without exposing original values:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># SHA-256 hash (default)</span>
@@ -2050,23 +2054,29 @@
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span>-F<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span>secure_logs_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.json.gz
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Security:</strong>
-- Always use strong, random <code>KELORA_SECRET</code> for pseudonymization
-- Store secrets securely (environment variables, secret managers)
-- Use domain separation in <code>pseudonym()</code> to prevent cross-context correlation
-- Prefer <code>pseudonym()</code> over <code>hash()</code> when consistency across datasets is needed
-- Use <code>hash("xxh3")</code> for grouping without cryptographic security needs</p>
-<p><strong>Compliance:</strong>
-- Document your masking strategy for audit purposes
-- Test redaction patterns against sample sensitive data
-- Use <code>--stats</code> to track how many events were processed
-- Consider using <code>--metrics</code> to count redacted fields
-- Validate output before sharing with third parties</p>
-<p><strong>Performance:</strong>
-- Use <code>--parallel</code> for large-scale sanitization
-- Hash with <code>xxh3</code> is faster than cryptographic hashes for grouping
-- Remove fields early in pipeline to reduce processing overhead
-- Use <code>mask_ip()</code> instead of regex for IP address masking</p>
+<p><strong>Security:</strong></p>
+<ul>
+<li>Always use strong, random <code>KELORA_SECRET</code> for pseudonymization</li>
+<li>Store secrets securely (environment variables, secret managers)</li>
+<li>Use domain separation in <code>pseudonym()</code> to prevent cross-context correlation</li>
+<li>Prefer <code>pseudonym()</code> over <code>hash()</code> when consistency across datasets is needed</li>
+<li>Use <code>hash("xxh3")</code> for grouping without cryptographic security needs</li>
+</ul>
+<p><strong>Compliance:</strong></p>
+<ul>
+<li>Document your masking strategy for audit purposes</li>
+<li>Test redaction patterns against sample sensitive data</li>
+<li>Use <code>--stats</code> to track how many events were processed</li>
+<li>Consider using <code>--metrics</code> to count redacted fields</li>
+<li>Validate output before sharing with third parties</li>
+</ul>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Use <code>--parallel</code> for large-scale sanitization</li>
+<li>Hash with <code>xxh3</code> is faster than cryptographic hashes for grouping</li>
+<li>Remove fields early in pipeline to reduce processing overhead</li>
+<li>Use <code>mask_ip()</code> instead of regex for IP address masking</li>
+</ul>
 <p><strong>Validation:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Count events with potential PII</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>output.log<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>

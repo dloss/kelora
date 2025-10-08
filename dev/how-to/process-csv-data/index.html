@@ -1707,10 +1707,12 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Example with typed CSV</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int duration:int&#39;</span><span class="w"> </span>examples/csv_typed.csv<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
-<p>Type annotations enable:
-- Numeric comparisons and arithmetic
-- Sorting by numeric values
-- Proper aggregations (sum, average, etc.)</p>
+<p>Type annotations enable:</p>
+<ul>
+<li>Numeric comparisons and arithmetic</li>
+<li>Sorting by numeric values</li>
+<li>Proper aggregations (sum, average, etc.)</li>
+</ul>
 <h3 id="csv-without-headers">CSV without Headers<a class="headerlink" href="#csv-without-headers" title="Permanent link">&para;</a></h3>
 <p>Process CSV files without header rows:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># No headers - use csvnh (CSV No Header)</span>
@@ -1836,23 +1838,31 @@
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>cleaned.csv
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Type Handling:</strong>
-- Use <code>:int</code> for status codes, counts, IDs
-- Use <code>:float</code> for durations, measurements, rates
-- Use <code>:bool</code> for flags (accepts: true/false, 1/0, yes/no)
-- Untyped fields remain as strings</p>
-<p><strong>Performance:</strong>
-- Add <code>--parallel</code> for large CSV files
-- Use <code>--batch-size</code> to control memory usage
-- Filter early to reduce processing overhead</p>
-<p><strong>Error Handling:</strong>
-- Use <code>--verbose</code> to see parsing errors
-- Use <code>--stats</code> to see skip/error counts
-- Ragged CSV (missing fields) creates partial events</p>
-<p><strong>Field Access:</strong>
-- Headers become field names (spaces → underscores)
-- Without headers, use <code>_1</code>, <code>_2</code>, <code>_3</code> etc.
-- Use <code>to_int_or()</code> / <code>to_float_or()</code> for safe type conversion</p>
+<p><strong>Type Handling:</strong></p>
+<ul>
+<li>Use <code>:int</code> for status codes, counts, IDs</li>
+<li>Use <code>:float</code> for durations, measurements, rates</li>
+<li>Use <code>:bool</code> for flags (accepts: true/false, 1/0, yes/no)</li>
+<li>Untyped fields remain as strings</li>
+</ul>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Add <code>--parallel</code> for large CSV files</li>
+<li>Use <code>--batch-size</code> to control memory usage</li>
+<li>Filter early to reduce processing overhead</li>
+</ul>
+<p><strong>Error Handling:</strong></p>
+<ul>
+<li>Use <code>--verbose</code> to see parsing errors</li>
+<li>Use <code>--stats</code> to see skip/error counts</li>
+<li>Ragged CSV (missing fields) creates partial events</li>
+</ul>
+<p><strong>Field Access:</strong></p>
+<ul>
+<li>Headers become field names (spaces → underscores)</li>
+<li>Without headers, use <code>_1</code>, <code>_2</code>, <code>_3</code> etc.</li>
+<li>Use <code>to_int_or()</code> / <code>to_float_or()</code> for safe type conversion</li>
+</ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../fan-out-nested-structures/">Fan Out Nested Structures</a> - Process nested CSV data</li>

@@ -1941,16 +1941,20 @@
 </code></pre></div>
 <h3 id="1-input-stage">1. Input Stage<a class="headerlink" href="#1-input-stage" title="Permanent link">&para;</a></h3>
 <p><strong>Purpose:</strong> Read and preprocess log lines from files or stdin.</p>
-<p><strong>Operations:</strong>
-- Read files (including <code>.gz</code> compressed)
-- Handle stdin from pipes
-- Split into lines
-- Skip empty lines (except <code>-f line</code> format)
-- Apply <code>--extract-prefix</code> if configured</p>
-<p><strong>Key Flags:</strong>
-- Files specified as positional arguments
-- <code>--extract-prefix</code> - Extract prefixed text before parsing
-- <code>--prefix-sep</code> - Separator for prefix extraction</p>
+<p><strong>Operations:</strong></p>
+<ul>
+<li>Read files (including <code>.gz</code> compressed)</li>
+<li>Handle stdin from pipes</li>
+<li>Split into lines</li>
+<li>Skip empty lines (except <code>-f line</code> format)</li>
+<li>Apply <code>--extract-prefix</code> if configured</li>
+</ul>
+<p><strong>Key Flags:</strong></p>
+<ul>
+<li>Files specified as positional arguments</li>
+<li><code>--extract-prefix</code> - Extract prefixed text before parsing</li>
+<li><code>--prefix-sep</code> - Separator for prefix extraction</li>
+</ul>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>file1.log<span class="w"> </span>file2.log.gz
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j
@@ -1958,16 +1962,20 @@
 </code></pre></div></p>
 <h3 id="2-parse-stage">2. Parse Stage<a class="headerlink" href="#2-parse-stage" title="Permanent link">&para;</a></h3>
 <p><strong>Purpose:</strong> Convert raw log lines into structured events (maps/objects).</p>
-<p><strong>Operations:</strong>
-- Detect or apply format (<code>-f json</code>, <code>-f logfmt</code>, etc.)
-- Parse line into fields
-- Handle parse errors (skip in resilient mode, abort in strict mode)
-- Apply <code>--ts-format</code> and <code>--input-tz</code> for timestamps</p>
-<p><strong>Key Flags:</strong>
-- <code>-f, --input-format</code> - Specify format (json, logfmt, syslog, combined, etc.)
-- <code>--ts-format</code> - Custom timestamp format
-- <code>--input-tz</code> - Timezone for naive timestamps
-- <code>--strict</code> - Fail on parse errors</p>
+<p><strong>Operations:</strong></p>
+<ul>
+<li>Detect or apply format (<code>-f json</code>, <code>-f logfmt</code>, etc.)</li>
+<li>Parse line into fields</li>
+<li>Handle parse errors (skip in resilient mode, abort in strict mode)</li>
+<li>Apply <code>--ts-format</code> and <code>--input-tz</code> for timestamps</li>
+</ul>
+<p><strong>Key Flags:</strong></p>
+<ul>
+<li><code>-f, --input-format</code> - Specify format (json, logfmt, syslog, combined, etc.)</li>
+<li><code>--ts-format</code> - Custom timestamp format</li>
+<li><code>--input-tz</code> - Timezone for naive timestamps</li>
+<li><code>--strict</code> - Fail on parse errors</li>
+</ul>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log
@@ -1976,16 +1984,20 @@
 <p><strong>Output:</strong> Structured event (map) with fields accessible as <code>e.field</code>.</p>
 <h3 id="3-filter-stage">3. Filter Stage<a class="headerlink" href="#3-filter-stage" title="Permanent link">&para;</a></h3>
 <p><strong>Purpose:</strong> Select which events to process further.</p>
-<p><strong>Operations:</strong>
-- Level filtering (<code>--levels</code>)
-- Time filtering (<code>--since</code>, <code>--until</code>)
-- Custom Rhai expressions (<code>--filter</code>)
-- Context lines (<code>--before-context</code>, <code>--after-context</code>)</p>
-<p><strong>Key Flags:</strong>
-- <code>--levels</code> - Filter by log level
-- <code>--since</code> / <code>--until</code> - Time-based filtering
-- <code>--filter</code> - Custom Rhai expression (must return true/false)
-- <code>--before-context</code> / <code>--after-context</code> - Include surrounding events</p>
+<p><strong>Operations:</strong></p>
+<ul>
+<li>Level filtering (<code>--levels</code>)</li>
+<li>Time filtering (<code>--since</code>, <code>--until</code>)</li>
+<li>Custom Rhai expressions (<code>--filter</code>)</li>
+<li>Context lines (<code>--before-context</code>, <code>--after-context</code>)</li>
+</ul>
+<p><strong>Key Flags:</strong></p>
+<ul>
+<li><code>--levels</code> - Filter by log level</li>
+<li><code>--since</code> / <code>--until</code> - Time-based filtering</li>
+<li><code>--filter</code> - Custom Rhai expression (must return true/false)</li>
+<li><code>--before-context</code> / <code>--after-context</code> - Include surrounding events</li>
+</ul>
 <p><strong>Execution Order:</strong>
 1. Level filtering
 2. Time filtering
@@ -1996,25 +2008,31 @@
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;database&quot;&#39;</span>
 </code></pre></div></p>
-<p><strong>Behavior:</strong>
-- Filters return <code>true</code> (keep) or <code>false</code> (skip)
-- In resilient mode: filter errors return <code>false</code>
-- In strict mode: filter errors abort processing</p>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Filters return <code>true</code> (keep) or <code>false</code> (skip)</li>
+<li>In resilient mode: filter errors return <code>false</code></li>
+<li>In strict mode: filter errors abort processing</li>
+</ul>
 <h3 id="4-transform-stage">4. Transform Stage<a class="headerlink" href="#4-transform-stage" title="Permanent link">&para;</a></h3>
 <p><strong>Purpose:</strong> Modify, enrich, or aggregate event data.</p>
-<p><strong>Operations:</strong>
-- Execute Rhai scripts (<code>--exec</code>)
-- Run <code>--begin</code> scripts once at start
-- Run <code>--end</code> scripts once at finish
-- Track metrics (<code>track_count()</code>, etc.)
-- Fan-out arrays (<code>emit_each()</code>)
-- Remove fields (<code>e.field = ()</code>)</p>
-<p><strong>Key Flags:</strong>
-- <code>--begin</code> - Run once before processing
-- <code>--exec</code> - Run for each event (multiple allowed)
-- <code>--end</code> - Run once after processing
-- <code>--metrics</code> - Display tracked metrics at end
-- <code>--window</code> - Enable windowed analysis</p>
+<p><strong>Operations:</strong></p>
+<ul>
+<li>Execute Rhai scripts (<code>--exec</code>)</li>
+<li>Run <code>--begin</code> scripts once at start</li>
+<li>Run <code>--end</code> scripts once at finish</li>
+<li>Track metrics (<code>track_count()</code>, etc.)</li>
+<li>Fan-out arrays (<code>emit_each()</code>)</li>
+<li>Remove fields (<code>e.field = ()</code>)</li>
+</ul>
+<p><strong>Key Flags:</strong></p>
+<ul>
+<li><code>--begin</code> - Run once before processing</li>
+<li><code>--exec</code> - Run for each event (multiple allowed)</li>
+<li><code>--end</code> - Run once after processing</li>
+<li><code>--metrics</code> - Display tracked metrics at end</li>
+<li><code>--window</code> - Enable windowed analysis</li>
+</ul>
 <p><strong>Execution Order:</strong>
 1. <code>--begin</code> (once, before any events)
 2. For each event:
@@ -2030,25 +2048,31 @@
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Complete&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
-<p><strong>Behavior:</strong>
-- Transformations modify events in place
-- In resilient mode: errors return original event unchanged
-- In strict mode: transformation errors abort processing
-- Empty events (<code>e = ()</code>) are filtered out before output</p>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Transformations modify events in place</li>
+<li>In resilient mode: errors return original event unchanged</li>
+<li>In strict mode: transformation errors abort processing</li>
+<li>Empty events (<code>e = ()</code>) are filtered out before output</li>
+</ul>
 <h3 id="5-output-stage">5. Output Stage<a class="headerlink" href="#5-output-stage" title="Permanent link">&para;</a></h3>
 <p><strong>Purpose:</strong> Format and emit events.</p>
-<p><strong>Operations:</strong>
-- Apply <code>--keys</code> field selection
-- Convert timestamps (<code>--convert-ts</code>, <code>--show-ts-local</code>, <code>--show-ts-utc</code>)
-- Format events (default, JSON, CSV, etc.)
-- Apply <code>--take</code> limit
-- Write to stdout or files</p>
-<p><strong>Key Flags:</strong>
-- <code>--keys</code> - Select top-level fields to output
-- <code>-F, --output-format</code> - Output format (default, json, csv, etc.)
-- <code>--convert-ts</code> - Convert timestamp fields to RFC3339
-- <code>--show-ts-local</code> / <code>--show-ts-utc</code> - Display timestamp format
-- <code>--take</code> - Limit output to N events</p>
+<p><strong>Operations:</strong></p>
+<ul>
+<li>Apply <code>--keys</code> field selection</li>
+<li>Convert timestamps (<code>--convert-ts</code>, <code>--show-ts-local</code>, <code>--show-ts-utc</code>)</li>
+<li>Format events (default, JSON, CSV, etc.)</li>
+<li>Apply <code>--take</code> limit</li>
+<li>Write to stdout or files</li>
+</ul>
+<p><strong>Key Flags:</strong></p>
+<ul>
+<li><code>--keys</code> - Select top-level fields to output</li>
+<li><code>-F, --output-format</code> - Output format (default, json, csv, etc.)</li>
+<li><code>--convert-ts</code> - Convert timestamp fields to RFC3339</li>
+<li><code>--show-ts-local</code> / <code>--show-ts-utc</code> - Display timestamp format</li>
+<li><code>--take</code> - Limit output to N events</li>
+</ul>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,service,message
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
@@ -2063,16 +2087,20 @@
 <li><strong>No lookahead</strong> - Can't access future events (except with <code>--window</code>)</li>
 </ul>
 <h3 id="sequential-vs-parallel">Sequential vs Parallel<a class="headerlink" href="#sequential-vs-parallel" title="Permanent link">&para;</a></h3>
-<p><strong>Sequential (default):</strong>
-- Events processed in order
-- Lower memory usage
-- Predictable output order
-- Simpler debugging</p>
-<p><strong>Parallel (<code>--parallel</code>):</strong>
-- Events processed in batches across cores
-- Higher throughput
-- Keeps output order by default; add <code>--unordered</code> to trade ordering for throughput
-- Higher memory usage</p>
+<p><strong>Sequential (default):</strong></p>
+<ul>
+<li>Events processed in order</li>
+<li>Lower memory usage</li>
+<li>Predictable output order</li>
+<li>Simpler debugging</li>
+</ul>
+<p><strong>Parallel (<code>--parallel</code>):</strong></p>
+<ul>
+<li>Events processed in batches across cores</li>
+<li>Higher throughput</li>
+<li>Keeps output order by default; add <code>--unordered</code> to trade ordering for throughput</li>
+<li>Higher memory usage</li>
+</ul>
 <h3 id="event-lifecycle">Event Lifecycle<a class="headerlink" href="#event-lifecycle" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>1. Line read from input
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>2. Line parsed into event map
@@ -2141,10 +2169,12 @@
 </ul>
 <h2 id="pipeline-state">Pipeline State<a class="headerlink" href="#pipeline-state" title="Permanent link">&para;</a></h2>
 <h3 id="stateless-processing">Stateless Processing<a class="headerlink" href="#stateless-processing" title="Permanent link">&para;</a></h3>
-<p>Most operations are stateless:
-- Each event processed independently
-- No memory of previous events
-- Can process infinite streams</p>
+<p>Most operations are stateless:</p>
+<ul>
+<li>Each event processed independently</li>
+<li>No memory of previous events</li>
+<li>Can process infinite streams</li>
+</ul>
 <h3 id="stateful-features">Stateful Features<a class="headerlink" href="#stateful-features" title="Permanent link">&para;</a></h3>
 <p>Some features maintain state:</p>
 <p><strong>Metrics Tracking:</strong>

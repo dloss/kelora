@@ -1999,12 +1999,14 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>-f &#39;cols:field1 field2 *rest&#39;
 </code></pre></div>
 <p>Each token in the specification describes how many delimited columns to consume and which field name to assign.</p>
-<p><strong>Token types:</strong>
-- <code>field</code> - Consume a single column into <code>field</code>
-- <code>field(N)</code> - Consume <code>N</code> columns (joined with spaces or the provided separator)
-- <code>-</code> / <code>-(N)</code> - Skip one or <code>N</code> columns entirely
-- <code>*field</code> - Capture every remaining column into <code>field</code> (must be last)
-- <code>field:type</code> - Apply a type annotation (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>) after extraction</p>
+<p><strong>Token types:</strong></p>
+<ul>
+<li><code>field</code> - Consume a single column into <code>field</code></li>
+<li><code>field(N)</code> - Consume <code>N</code> columns (joined with spaces or the provided separator)</li>
+<li><code>-</code> / <code>-(N)</code> - Skip one or <code>N</code> columns entirely</li>
+<li><code>*field</code> - Capture every remaining column into <code>field</code> (must be last)</li>
+<li><code>field:type</code> - Apply a type annotation (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>) after extraction</li>
+</ul>
 <p>Combine these building blocks to describe almost any column-based log format.</p>
 <h3 id="example-log-format">Example Log Format<a class="headerlink" href="#example-log-format" title="Permanent link">&para;</a></h3>
 <p>Let's start with a simple application log:</p>
@@ -2023,19 +2025,23 @@
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>level=&#39;INFO&#39; message=&#39;Query&#39; service=&#39;db&#39;
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>level=&#39;WARN&#39; message=&#39;Slow&#39; service=&#39;api&#39;
 </code></pre></div>
-<p><strong>How it works:</strong>
-- <code>level</code> - First whitespace-delimited column
-- <code>service</code> - Second column
-- <code>message</code> - Third column</p>
+<p><strong>How it works:</strong></p>
+<ul>
+<li><code>level</code> - First whitespace-delimited column</li>
+<li><code>service</code> - Second column</li>
+<li><code>message</code> - Third column</li>
+</ul>
 <h2 id="step-3-combining-multiple-columns">Step 3: Combining Multiple Columns<a class="headerlink" href="#step-3-combining-multiple-columns" title="Permanent link">&para;</a></h2>
 <p>Sometimes a field spans more than one column. Use the <code>(N)</code> suffix to join multiple tokens.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;2024-01-15 10:30:00 INFO Connection failed&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span>
 </code></pre></div>
-<p><strong>How it works:</strong>
-- <code>timestamp(2)</code> - Consumes the first two columns (<code>2024-01-15</code> and <code>10:30:00</code>)
-- <code>level</code> - Third column
-- <code>*message</code> - Everything else in the line</p>
+<p><strong>How it works:</strong></p>
+<ul>
+<li><code>timestamp(2)</code> - Consumes the first two columns (<code>2024-01-15</code> and <code>10:30:00</code>)</li>
+<li><code>level</code> - Third column</li>
+<li><code>*message</code> - Everything else in the line</li>
+</ul>
 <h2 id="step-4-adding-type-annotations">Step 4: Adding Type Annotations<a class="headerlink" href="#step-4-adding-type-annotations" title="Permanent link">&para;</a></h2>
 <p>Convert fields to specific types using annotations:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;200 1234 0.123</span>
@@ -2043,11 +2049,13 @@
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s2">500 9012 0.789&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status:int bytes:int response_time:float&#39;</span>
 </code></pre></div>
-<p><strong>Supported types:</strong>
-- <code>int</code> - Integer (<code>i64</code>) conversion
-- <code>float</code> - Floating-point (<code>f64</code>) conversion
-- <code>bool</code> - Boolean conversion (<code>true/false</code>, <code>yes/no</code>, <code>1/0</code>)
-- <code>string</code> - Explicitly keep as string (useful when mixing annotations)</p>
+<p><strong>Supported types:</strong></p>
+<ul>
+<li><code>int</code> - Integer (<code>i64</code>) conversion</li>
+<li><code>float</code> - Floating-point (<code>f64</code>) conversion</li>
+<li><code>bool</code> - Boolean conversion (<code>true/false</code>, <code>yes/no</code>, <code>1/0</code>)</li>
+<li><code>string</code> - Explicitly keep as string (useful when mixing annotations)</li>
+</ul>
 <p>After type conversion, you can use numeric operations immediately:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;200 1234 0.123&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status:int bytes:int response_time:float&#39;</span><span class="w"> </span><span class="se">\</span>

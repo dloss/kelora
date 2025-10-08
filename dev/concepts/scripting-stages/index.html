@@ -2698,10 +2698,12 @@
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int() * 2&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p>If <code>e.value</code> is not a valid integer:
-- Error is recorded
-- Event passes through unchanged
-- No partial modifications</p>
+<p>If <code>e.value</code> is not a valid integer:</p>
+<ul>
+<li>Error is recorded</li>
+<li>Event passes through unchanged</li>
+<li>No partial modifications</li>
+</ul>
 <p>In strict mode (<code>--strict</code>), errors abort immediately.</p>
 <h3 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h3>
 <h4 id="transform-fields">Transform Fields<a class="headerlink" href="#transform-fields" title="Permanent link">&para;</a></h4>

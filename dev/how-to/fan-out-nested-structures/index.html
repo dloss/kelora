@@ -1923,32 +1923,44 @@
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(if e.count == 0 { &quot;empty&quot; } else { &quot;has_items&quot; })&#39;</span>
 </code></pre></div>
 <h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
-<p><strong>Resilient mode (default):</strong>
-- Invalid arrays are skipped
-- Original event is suppressed
-- Processing continues</p>
-<p><strong>Strict mode:</strong>
-- Errors abort processing
-- Use <code>--strict</code> for fail-fast behavior</p>
+<p><strong>Resilient mode (default):</strong></p>
+<ul>
+<li>Invalid arrays are skipped</li>
+<li>Original event is suppressed</li>
+<li>Processing continues</li>
+</ul>
+<p><strong>Strict mode:</strong></p>
+<ul>
+<li>Errors abort processing</li>
+<li>Use <code>--strict</code> for fail-fast behavior</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># See errors if fan-out fails</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span>--verbose
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Performance:</strong>
-- Fan-out increases event count significantly
-- Use <code>--parallel</code> for large datasets
-- Filter before fan-out when possible to reduce processing</p>
-<p><strong>Memory:</strong>
-- Each fanned-out event is a separate allocation
-- Large arrays can increase memory usage
-- Consider batch processing with <code>--take</code> for testing</p>
-<p><strong>Field Access:</strong>
-- After fan-out, access element fields directly: <code>e.name</code> not <code>e.users[0].name</code>
-- Base fields are merged: <code>e.batch_id</code> available after fan-out with base map</p>
-<p><strong>Metrics:</strong>
-- Track fan-out count: <code>e.count = emit_each(...)</code>
-- Aggregate after fan-out: <code>track_sum()</code>, <code>track_count()</code>, etc.
-- Use <code>--metrics</code> to see tracked values</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Fan-out increases event count significantly</li>
+<li>Use <code>--parallel</code> for large datasets</li>
+<li>Filter before fan-out when possible to reduce processing</li>
+</ul>
+<p><strong>Memory:</strong></p>
+<ul>
+<li>Each fanned-out event is a separate allocation</li>
+<li>Large arrays can increase memory usage</li>
+<li>Consider batch processing with <code>--take</code> for testing</li>
+</ul>
+<p><strong>Field Access:</strong></p>
+<ul>
+<li>After fan-out, access element fields directly: <code>e.name</code> not <code>e.users[0].name</code></li>
+<li>Base fields are merged: <code>e.batch_id</code> available after fan-out with base map</li>
+</ul>
+<p><strong>Metrics:</strong></p>
+<ul>
+<li>Track fan-out count: <code>e.count = emit_each(...)</code></li>
+<li>Aggregate after fan-out: <code>track_sum()</code>, <code>track_count()</code>, etc.</li>
+<li>Use <code>--metrics</code> to see tracked values</li>
+</ul>
 <p><strong>Common Patterns:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Preserve parent ID</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nb">let</span><span class="w"> </span><span class="nv">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="c1">#{parent_id: e.id}; emit_each(e.children, ctx)</span>

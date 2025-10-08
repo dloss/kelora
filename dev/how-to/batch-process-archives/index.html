@@ -1946,11 +1946,13 @@
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span>--metrics
 </code></pre></div>
-<p><strong>Parallel processing:</strong>
-- Automatically uses available CPU cores (<code>--threads 0</code>)
-- Higher throughput than sequential mode
-- May reorder output (use <code>--unordered</code> for maximum speed)
-- Higher memory usage due to batching</p>
+<p><strong>Parallel processing:</strong></p>
+<ul>
+<li>Automatically uses available CPU cores (<code>--threads 0</code>)</li>
+<li>Higher throughput than sequential mode</li>
+<li>May reorder output (use <code>--unordered</code> for maximum speed)</li>
+<li>Higher memory usage due to batching</li>
+</ul>
 <h3 id="process-compressed-archives">Process Compressed Archives<a class="headerlink" href="#process-compressed-archives" title="Permanent link">&para;</a></h3>
 <p>Kelora automatically handles gzip compression:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Single compressed file</span>
@@ -1981,12 +1983,14 @@
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="c1"># Very large files with memory constraints</span>
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>huge.log<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">100</span>
 </code></pre></div>
-<p><strong>Batch size guidelines:</strong>
-- Default: 1000 (good balance)
-- High memory available: 5000-10000
-- Memory constrained: 100-500
-- Complex transformations: Lower batch size
-- Simple filters: Higher batch size</p>
+<p><strong>Batch size guidelines:</strong></p>
+<ul>
+<li>Default: 1000 (good balance)</li>
+<li>High memory available: 5000-10000</li>
+<li>Memory constrained: 100-500</li>
+<li>Complex transformations: Lower batch size</li>
+<li>Simple filters: Higher batch size</li>
+</ul>
 <h3 id="unordered-output-for-maximum-speed">Unordered Output for Maximum Speed<a class="headerlink" href="#unordered-output-for-maximum-speed" title="Permanent link">&para;</a></h3>
 <p>Disable output ordering for best performance:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Unordered output (fastest)</span>
@@ -2002,11 +2006,13 @@
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs/*.json<span class="w"> </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span>--stats-only
 </code></pre></div>
-<p><strong>When to use <code>--unordered</code>:</strong>
-- Processing for metrics/stats only
-- Order doesn't matter for analysis
-- Maximum throughput is priority
-- Large-scale batch processing</p>
+<p><strong>When to use <code>--unordered</code>:</strong></p>
+<ul>
+<li>Processing for metrics/stats only</li>
+<li>Order doesn't matter for analysis</li>
+<li>Maximum throughput is priority</li>
+<li>Large-scale batch processing</li>
+</ul>
 <h3 id="file-processing-order">File Processing Order<a class="headerlink" href="#file-processing-order" title="Permanent link">&para;</a></h3>
 <p>Control which order files are processed:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># CLI order (default) - as specified on command line</span>
@@ -2021,10 +2027,12 @@
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># Process newest logs first (reverse mtime)</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs/*.json<span class="w"> </span>--file-order<span class="w"> </span>mtime<span class="w"> </span>--parallel
 </code></pre></div>
-<p><strong>File order options:</strong>
-- <code>cli</code>: Command-line order (default)
-- <code>name</code>: Alphabetical by filename
-- <code>mtime</code>: Modification time (oldest first)</p>
+<p><strong>File order options:</strong></p>
+<ul>
+<li><code>cli</code>: Command-line order (default)</li>
+<li><code>name</code>: Alphabetical by filename</li>
+<li><code>mtime</code>: Modification time (oldest first)</li>
+</ul>
 <h3 id="multiple-archive-processing">Multiple Archive Processing<a class="headerlink" href="#multiple-archive-processing" title="Permanent link">&para;</a></h3>
 <p>Process many archives efficiently:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Process all archives in directory</span>
@@ -2230,24 +2238,30 @@
 <a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="w">  </span><span class="k">done</span>
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Performance:</strong>
-- Use <code>--parallel</code> for files &gt; 100MB
-- Use <code>--unordered</code> when order doesn't matter (20-30% faster)
-- Increase <code>--batch-size</code> for simple operations (5000-10000)
-- Decrease <code>--batch-size</code> for complex transformations (200-500)
-- Use <code>--threads 0</code> to auto-detect CPU cores
-- I/O-bound tasks benefit from more threads than cores</p>
-<p><strong>Memory Management:</strong>
-- Default batch size (1000) uses ~10-50MB per thread
-- Large batch sizes can use significant memory with many threads
-- Reduce batch size if you see OOM errors
-- Sequential mode uses minimal memory (single-threaded)
-- Window functions increase memory proportionally</p>
-<p><strong>File Processing:</strong>
-- <code>.gz</code> files are automatically decompressed
-- Use <code>--file-order mtime</code> to process chronologically
-- Use <code>--file-order name</code> for predictable ordering
-- Combine with shell globbing for flexible file selection</p>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Use <code>--parallel</code> for files &gt; 100MB</li>
+<li>Use <code>--unordered</code> when order doesn't matter (20-30% faster)</li>
+<li>Increase <code>--batch-size</code> for simple operations (5000-10000)</li>
+<li>Decrease <code>--batch-size</code> for complex transformations (200-500)</li>
+<li>Use <code>--threads 0</code> to auto-detect CPU cores</li>
+<li>I/O-bound tasks benefit from more threads than cores</li>
+</ul>
+<p><strong>Memory Management:</strong></p>
+<ul>
+<li>Default batch size (1000) uses ~10-50MB per thread</li>
+<li>Large batch sizes can use significant memory with many threads</li>
+<li>Reduce batch size if you see OOM errors</li>
+<li>Sequential mode uses minimal memory (single-threaded)</li>
+<li>Window functions increase memory proportionally</li>
+</ul>
+<p><strong>File Processing:</strong></p>
+<ul>
+<li><code>.gz</code> files are automatically decompressed</li>
+<li>Use <code>--file-order mtime</code> to process chronologically</li>
+<li>Use <code>--file-order name</code> for predictable ordering</li>
+<li>Combine with shell globbing for flexible file selection</li>
+</ul>
 <p><strong>Automation:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Scheduled archive processing</span>
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="m">0</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>/var/log/archives/<span class="k">$(</span>date<span class="w"> </span>-d<span class="w"> </span>yesterday<span class="w"> </span>+<span class="se">\%</span>Y-<span class="se">\%</span>m-<span class="se">\%</span>d<span class="k">)</span>*.gz<span class="w"> </span><span class="se">\</span>

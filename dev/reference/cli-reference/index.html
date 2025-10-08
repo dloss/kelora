@@ -4329,17 +4329,19 @@
 <h3 id="format-selection">Format Selection<a class="headerlink" href="#format-selection" title="Permanent link">&para;</a></h3>
 <h4 id="-f-input-format-format"><code>-f, --input-format &lt;FORMAT&gt;</code><a class="headerlink" href="#-f-input-format-format" title="Permanent link">&para;</a></h4>
 <p>Specify input format. Supports standard formats, column parsing, and CSV with type annotations.</p>
-<p><strong>Standard Formats:</strong>
-- <code>json</code> - JSON lines (one JSON object per line)
-- <code>line</code> - Plain text (default, one line per event)
-- <code>csv</code> - CSV with header row
-- <code>tsv</code> - Tab-separated values with header
-- <code>logfmt</code> - Key-value pairs (logfmt format)
-- <code>syslog</code> - Syslog RFC5424 and RFC3164
-- <code>combined</code> - Apache/Nginx combined log format
-- <code>cef</code> - ArcSight Common Event Format
-- <code>clf</code> - Apache Common Log Format
-- <code>auto</code> - Auto-detect format</p>
+<p><strong>Standard Formats:</strong></p>
+<ul>
+<li><code>json</code> - JSON lines (one JSON object per line)</li>
+<li><code>line</code> - Plain text (default, one line per event)</li>
+<li><code>csv</code> - CSV with header row</li>
+<li><code>tsv</code> - Tab-separated values with header</li>
+<li><code>logfmt</code> - Key-value pairs (logfmt format)</li>
+<li><code>syslog</code> - Syslog RFC5424 and RFC3164</li>
+<li><code>combined</code> - Apache/Nginx combined log format</li>
+<li><code>cef</code> - ArcSight Common Event Format</li>
+<li><code>clf</code> - Apache Common Log Format</li>
+<li><code>auto</code> - Auto-detect format</li>
+</ul>
 <p><strong>Column Parsing:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span>
 </code></pre></div></p>
@@ -4359,10 +4361,12 @@
 <h3 id="file-processing">File Processing<a class="headerlink" href="#file-processing" title="Permanent link">&para;</a></h3>
 <h4 id="-file-order-file_order"><code>--file-order &lt;FILE_ORDER&gt;</code><a class="headerlink" href="#-file-order-file_order" title="Permanent link">&para;</a></h4>
 <p>Control file processing order.</p>
-<p><strong>Values:</strong>
-- <code>cli</code> - Process files in command-line order (default)
-- <code>name</code> - Sort files alphabetically by name
-- <code>mtime</code> - Sort files by modification time (oldest first)</p>
+<p><strong>Values:</strong></p>
+<ul>
+<li><code>cli</code> - Process files in command-line order (default)</li>
+<li><code>name</code> - Sort files alphabetically by name</li>
+<li><code>mtime</code> - Sort files by modification time (oldest first)</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--file-order<span class="w"> </span>mtime<span class="w"> </span>logs/*.log
 </code></pre></div>
 <h3 id="line-filtering">Line Filtering<a class="headerlink" href="#line-filtering" title="Permanent link">&para;</a></h3>
@@ -4390,10 +4394,12 @@
 </code></pre></div>
 <h4 id="-input-tz-timezone"><code>--input-tz &lt;TIMEZONE&gt;</code><a class="headerlink" href="#-input-tz-timezone" title="Permanent link">&para;</a></h4>
 <p>Timezone for naive input timestamps (without timezone info). Default: UTC.</p>
-<p><strong>Values:</strong>
-- <code>UTC</code> - Coordinated Universal Time
-- <code>local</code> - System local time
-- Named timezones: <code>Europe/Berlin</code>, <code>America/New_York</code>, etc.</p>
+<p><strong>Values:</strong></p>
+<ul>
+<li><code>UTC</code> - Coordinated Universal Time</li>
+<li><code>local</code> - System local time</li>
+<li>Named timezones: <code>Europe/Berlin</code>, <code>America/New_York</code>, etc.</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--input-tz<span class="w"> </span><span class="nb">local</span><span class="w"> </span>app.log
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--input-tz<span class="w"> </span>Europe/Berlin<span class="w"> </span>app.log
 </code></pre></div>
@@ -4421,9 +4427,11 @@
 <h3 id="scripting-stages">Scripting Stages<a class="headerlink" href="#scripting-stages" title="Permanent link">&para;</a></h3>
 <h4 id="-begin-script"><code>--begin &lt;SCRIPT&gt;</code><a class="headerlink" href="#-begin-script" title="Permanent link">&para;</a></h4>
 <p>Run Rhai script once before processing any events. Typical use: initialize lookup tables or shared context in the global <code>conf</code> map.</p>
-<p><strong>Available helpers:</strong>
-- <code>read_lines(path)</code> - Read file as array of lines
-- <code>read_file(path)</code> - Read file as string</p>
+<p><strong>Available helpers:</strong></p>
+<ul>
+<li><code>read_lines(path)</code> - Read file as array of lines</li>
+<li><code>read_file(path)</code> - Read file as string</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--begin<span class="w"> </span><span class="s1">&#39;conf.users = read_json(&quot;users.json&quot;)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-filter-expression"><code>--filter &lt;EXPRESSION&gt;</code><a class="headerlink" href="#-filter-expression" title="Permanent link">&para;</a></h4>
@@ -4530,18 +4538,22 @@
 <h3 id="time-range-filtering">Time Range Filtering<a class="headerlink" href="#time-range-filtering" title="Permanent link">&para;</a></h3>
 <h4 id="-since-time"><code>--since &lt;TIME&gt;</code><a class="headerlink" href="#-since-time" title="Permanent link">&para;</a></h4>
 <p>Include events from this time onward. Accepts journalctl-style timestamps.</p>
-<p><strong>Formats:</strong>
-- Absolute: <code>2024-01-15T12:00:00Z</code>, <code>2024-01-15 12:00</code>
-- Relative: <code>1h</code>, <code>-30m</code>, <code>yesterday</code></p>
+<p><strong>Formats:</strong></p>
+<ul>
+<li>Absolute: <code>2024-01-15T12:00:00Z</code>, <code>2024-01-15 12:00</code></li>
+<li>Relative: <code>1h</code>, <code>-30m</code>, <code>yesterday</code></li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;1 hour ago&#39;</span><span class="w"> </span>app.log
 <a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>yesterday<span class="w"> </span>app.log
 <a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="m">2024</span>-01-15T10:00:00Z<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-until-time"><code>--until &lt;TIME&gt;</code><a class="headerlink" href="#-until-time" title="Permanent link">&para;</a></h4>
 <p>Include events until this time. Accepts journalctl-style timestamps.</p>
-<p><strong>Formats:</strong>
-- Absolute: <code>2024-01-15T12:00:00Z</code>, <code>2024-01-15 12:00</code>
-- Relative: <code>1h</code>, <code>+30m</code>, <code>tomorrow</code></p>
+<p><strong>Formats:</strong></p>
+<ul>
+<li>Absolute: <code>2024-01-15T12:00:00Z</code>, <code>2024-01-15 12:00</code></li>
+<li>Relative: <code>1h</code>, <code>+30m</code>, <code>tomorrow</code></li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span><span class="s1">&#39;30 minutes ago&#39;</span><span class="w"> </span>app.log
 <a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span>tomorrow<span class="w"> </span>app.log
 <a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span><span class="m">2024</span>-01-15T18:00:00Z<span class="w"> </span>app.log
@@ -4569,17 +4581,19 @@
 <h3 id="output-format">Output Format<a class="headerlink" href="#output-format" title="Permanent link">&para;</a></h3>
 <h4 id="-f-output-format-format"><code>-F, --output-format &lt;FORMAT&gt;</code><a class="headerlink" href="#-f-output-format-format" title="Permanent link">&para;</a></h4>
 <p>Output format. Default: <code>default</code></p>
-<p><strong>Values:</strong>
-- <code>default</code> - Key-value format with colors
-- <code>json</code> - JSON lines (one object per line)
-- <code>logfmt</code> - Key-value pairs (logfmt format)
-- <code>inspect</code> - Debug format with type information
-- <code>levelmap</code> - Grouped by log level
-- <code>csv</code> - CSV with header
-- <code>tsv</code> - Tab-separated values with header
-- <code>csvnh</code> - CSV without header
-- <code>tsvnh</code> - TSV without header
-- <code>none</code> - No event output (only metrics/stats)</p>
+<p><strong>Values:</strong></p>
+<ul>
+<li><code>default</code> - Key-value format with colors</li>
+<li><code>json</code> - JSON lines (one object per line)</li>
+<li><code>logfmt</code> - Key-value pairs (logfmt format)</li>
+<li><code>inspect</code> - Debug format with type information</li>
+<li><code>levelmap</code> - Grouped by log level</li>
+<li><code>csv</code> - CSV with header</li>
+<li><code>tsv</code> - Tab-separated values with header</li>
+<li><code>csvnh</code> - CSV without header</li>
+<li><code>tsvnh</code> - TSV without header</li>
+<li><code>none</code> - No event output (only metrics/stats)</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>app.log
 <a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>app.log
 <a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w"> </span>app.log
