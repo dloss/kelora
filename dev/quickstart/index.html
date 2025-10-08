@@ -1740,7 +1740,7 @@
 <p>Let's start with a simple JSON log file. Parse it and see all events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
 </code></pre></div>
-<p>The <code>-f json</code> flag tells Kelora to parse each line as JSON. By default, Kelora outputs events in <code>key=value</code> format.</p>
+<p>The <code>-f json</code> flag tells Kelora to parse each line as JSON. By default, Kelora outputs events in <code>key=value</code> format. The <code>--take 3</code> flag limits output to the first 3 events.</p>
 <h2 id="step-2-filter-by-log-level">Step 2: Filter by Log Level<a class="headerlink" href="#step-2-filter-by-log-level" title="Permanent link">&para;</a></h2>
 <p>Show only error-level events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
@@ -1762,10 +1762,10 @@
 </code></pre></div>
 <p>The <code>--exec</code> flag runs Rhai code to modify events. Here we convert milliseconds to seconds.</p>
 <h2 id="step-6-track-metrics">Step 6: Track Metrics<a class="headerlink" href="#step-6-track-metrics" title="Permanent link">&para;</a></h2>
-<p>Count events by service and show statistics:</p>
+<p>Count events by service and show metrics:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bash:<span class="w"> </span>line<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>kelora:<span class="w"> </span><span class="nb">command</span><span class="w"> </span>not<span class="w"> </span>found
 </code></pre></div>
-<p>The <code>track_count()</code> function increments a counter. The <code>--stats</code> flag shows accumulated metrics at the end.</p>
+<p>The <code>track_count()</code> function increments a counter. The <code>--metrics</code> flag shows accumulated metrics at the end.</p>
 <h2 id="step-7-parse-other-formats">Step 7: Parse Other Formats<a class="headerlink" href="#step-7-parse-other-formats" title="Permanent link">&para;</a></h2>
 <p>Kelora supports many formats out of the box:</p>
 <h3 id="logfmt">Logfmt<a class="headerlink" href="#logfmt" title="Permanent link">&para;</a></h3>
@@ -1843,11 +1843,12 @@ you can rehearse common tasks quickly. Run them from the repository root so the
 <a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1"># Transformation</span>
 <a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>--exec<span class="w"> </span><span class="s1">&#39;expression&#39;</span><span class="w">       </span><span class="c1"># Transform events</span>
 <a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>--keys<span class="w"> </span>field1,field2<span class="w">      </span><span class="c1"># Select fields</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>--stats<span class="w">                   </span><span class="c1"># Show statistics</span>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="c1"># Performance</span>
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>--parallel<span class="w">                </span><span class="c1"># Use multiple cores</span>
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>--take<span class="w"> </span><span class="m">100</span><span class="w">                </span><span class="c1"># Limit to first 100 events</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>--stats<span class="w">                   </span><span class="c1"># Show processing statistics</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>--metrics<span class="w">                 </span><span class="c1"># Show tracked metrics</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="c1"># Performance</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>--parallel<span class="w">                </span><span class="c1"># Use multiple cores</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>--take<span class="w"> </span><span class="m">100</span><span class="w">                </span><span class="c1"># Limit to first 100 events</span>
 </code></pre></div>
 
 
