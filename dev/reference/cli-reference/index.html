@@ -4341,7 +4341,7 @@
 - <code>clf</code> - Apache Common Log Format
 - <code>auto</code> - Auto-detect format</p>
 <p><strong>Column Parsing:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level:5 message:*&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span>
 </code></pre></div></p>
 <p><strong>CSV with Types:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int response_time:float&#39;</span>
@@ -4349,7 +4349,7 @@
 <p><strong>Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>nginx.log
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level:5 *msg&#39;</span><span class="w"> </span>custom.log
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>custom.log<span class="w">  </span><span class="c1"># `ts` is auto-detected as a timestamp</span>
 </code></pre></div></p>
 <h4 id="-j"><code>-j</code><a class="headerlink" href="#-j" title="Permanent link">&para;</a></h4>
 <p>Shortcut for <code>-f json</code>.</p>

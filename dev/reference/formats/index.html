@@ -1592,9 +1592,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#input-example_8" class="md-nav__link">
+  <a href="#input-examples" class="md-nav__link">
     <span class="md-ellipsis">
-      Input Example
+      Input Examples
     </span>
   </a>
   
@@ -2899,9 +2899,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#input-example_8" class="md-nav__link">
+  <a href="#input-examples" class="md-nav__link">
     <span class="md-ellipsis">
-      Input Example
+      Input Examples
     </span>
   </a>
   
@@ -3392,7 +3392,7 @@
 <tr>
 <td><code>cols:&lt;spec&gt;</code></td>
 <td>Custom column parsing</td>
-<td>Fixed-width or delimited logs</td>
+<td>Column-based logs (whitespace or custom separators)</td>
 </tr>
 <tr>
 <td><code>auto</code></td>
@@ -3634,45 +3634,47 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:&lt;spec&gt;&#39;</span>
 </code></pre></div>
 <h3 id="description_8">Description<a class="headerlink" href="#description_8" title="Permanent link">&para;</a></h3>
-<p>Parse custom column-based formats with field specifications.</p>
+<p>Parse custom column-based formats with field specifications. The parser splits each line by whitespace by default (or a custom separator) and applies the tokens you provide.</p>
 <h3 id="specification-syntax">Specification Syntax<a class="headerlink" href="#specification-syntax" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>cols:field1:width field2:width field3:*
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>cols:field1 field2 field3
 </code></pre></div>
-<p><strong>Width types:</strong>
-- <code>N</code> - Fixed width of N characters
-- <code>:ts</code> - Timestamp field (special handling)
-- <code>*</code> - Remainder of line (greedy)</p>
-<h3 id="input-example_8">Input Example<a class="headerlink" href="#input-example_8" title="Permanent link">&para;</a></h3>
-<p><strong>Fixed-width:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>2024-01-15T10:30:00Z ERROR Connection failed
-</code></pre></div></p>
-<p><strong>Spec:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level:5 message:*&#39;</span>
-</code></pre></div></p>
+<p><strong>Token types:</strong>
+- <code>field</code> - Consume one column and assign it to <code>field</code>
+- <code>field(N)</code> - Consume <code>N</code> columns and join them into <code>field</code>
+- <code>-</code> / <code>-(N)</code> - Skip one or <code>N</code> columns
+- <code>*field</code> - Capture every remaining column into <code>field</code> (must be last)
+- <code>field:type</code> - Apply a type annotation (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>)</p>
+<h3 id="input-examples">Input Examples<a class="headerlink" href="#input-examples" title="Permanent link">&para;</a></h3>
 <p><strong>Whitespace-delimited:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>ERROR api &quot;Connection failed&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>ERROR api &quot;Connection failed&quot;
 </code></pre></div></p>
 <p><strong>Spec:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:level service message&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span>
+</code></pre></div></p>
+<p><strong>Timestamp spread across columns:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>2024-01-15 10:30:00 INFO Connection failed
+</code></pre></div></p>
+<p><strong>Spec:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span>
 </code></pre></div></p>
 <h3 id="output-fields_8">Output Fields<a class="headerlink" href="#output-fields_8" title="Permanent link">&para;</a></h3>
-<p>Field names from specification.</p>
+<p>Field names come from the specification. Type annotations convert values after extraction.</p>
 <h3 id="usage_8">Usage<a class="headerlink" href="#usage_8" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Fixed-width columns</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level:5 message:*&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Whitespace-delimited</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span><span class="w"> </span>app.log
 <a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
-<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># Whitespace-delimited</span>
-<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service message&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># Multi-token timestamp with type annotations</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level status:int *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>timestamp
 <a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>
 <a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="c1"># Custom separator</span>
-<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span>data.txt
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span>data.txt
 </code></pre></div>
 <h3 id="notes_6">Notes<a class="headerlink" href="#notes_6" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Default separator: whitespace</li>
-<li>Use <code>--cols-sep</code> to specify custom separator</li>
-<li><code>:ts</code> extracts timestamp field automatically</li>
-<li><code>*</code> must be last field (consumes remainder)</li>
+<li>Use <code>--cols-sep</code> to specify a custom separator</li>
+<li>Give timestamps recognizable names (<code>timestamp</code>, <code>ts</code>, <code>time</code>) or set <code>--ts-field</code></li>
+<li><code>*field</code> must be the final token because it consumes the remainder of the line</li>
 </ul>
 <h2 id="auto-detection">Auto-Detection<a class="headerlink" href="#auto-detection" title="Permanent link">&para;</a></h2>
 <h3 id="syntax_9">Syntax<a class="headerlink" href="#syntax_9" title="Permanent link">&para;</a></h3>
@@ -3829,8 +3831,9 @@
 <a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
 </code></pre></div>
 <h3 id="parse-custom-format">Parse Custom Format<a class="headerlink" href="#parse-custom-format" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp:ts level:5 service:10 message:*&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="w">    </span>--levels<span class="w"> </span>error
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp level service *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="w">    </span>--ts-field<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a><span class="w">    </span>--levels<span class="w"> </span>error
 </code></pre></div>
 <h3 id="parse-syslog-and-extract">Parse Syslog and Extract<a class="headerlink" href="#parse-syslog-and-extract" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>

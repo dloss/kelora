@@ -1971,7 +1971,7 @@
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;cols:timestamp:ts level:5 message:*&quot;</span><span class="w"> </span>custom.log
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;cols:timestamp level *message&quot;</span><span class="w"> </span>custom.log<span class="w"> </span>--ts-field<span class="w"> </span>timestamp
 </code></pre></div></p>
 <p><strong>Output:</strong> Structured event (map) with fields accessible as <code>e.field</code>.</p>
 <h3 id="3-filter-stage">3. Filter Stage<a class="headerlink" href="#3-filter-stage" title="Permanent link">&para;</a></h3>
@@ -2071,7 +2071,7 @@
 <p><strong>Parallel (<code>--parallel</code>):</strong>
 - Events processed in batches across cores
 - Higher throughput
-- May reorder output (use <code>--ordered</code> to preserve)
+- Keeps output order by default; add <code>--unordered</code> to trade ordering for throughput
 - Higher memory usage</p>
 <h3 id="event-lifecycle">Event Lifecycle<a class="headerlink" href="#event-lifecycle" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>1. Line read from input
