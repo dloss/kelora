@@ -1,0 +1,2488 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v0.6.0/how-to/build-streaming-alerts/">
+      
+      
+        <link rel="prev" href="../fan-out-nested-structures/">
+      
+      
+        <link rel="next" href="../batch-process-archives/">
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.21">
+    
+    
+      
+        <title>Build Streaming Alerts - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2a3383ac.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#build-streaming-alerts" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Build Streaming Alerts
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/parsing-custom-formats/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../find-errors-in-logs/" class="md-tabs__link">
+          
+  
+  
+  How-To Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/functions/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/pipeline-model/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parsing Custom Formats
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working With Time
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics and Tracking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/scripting-transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scripting Transforms
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    How-To Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            How-To Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Find Errors in Logs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Analyze Web Traffic
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitor Application Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parse Syslog Files
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Handle Multiline Stacktraces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Extract and Mask Sensitive Data
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Process CSV Data
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fan Out Nested Structures
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Build Streaming Alerts
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Build Streaming Alerts
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Solutions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-real-time-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Real-Time Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alert-on-critical-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alert on Critical Events
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-codes-for-automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Codes for Automation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-with-end-stage-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics with End-Stage Alerting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sliding-window-anomaly-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sliding-Window Anomaly Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-alerts-to-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Write Alerts to File
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-World Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-World Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-server-error-monitor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Server Error Monitor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-deadlock-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Deadlock Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-health-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Health Dashboard
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failed-login-monitor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failed Login Monitor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-leak-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Leak Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-rate-limit-violations" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Rate Limit Violations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-error-spike-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment Error Spike Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disk-space-warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Disk Space Warning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-event-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Event Aggregation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#email-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Email Alerts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slackdiscord-webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Slack/Discord Webhooks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagerduty-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      PagerDuty Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prometheus-metrics-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prometheus Metrics Export
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#systemd-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Systemd Service
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cron-based-periodic-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cron-Based Periodic Alerts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-and-reliability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance and Reliability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance and Reliability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-timeout-for-low-latency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Batch Timeout for Low-Latency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-log-rotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handle Log Rotation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reliability-with-restart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reliability with Restart
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#buffer-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Buffer Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Batch Process Archives
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Function Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Format Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Exit Codes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rhai Cheatsheet
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/pipeline-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pipeline Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/events-and-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Events and Fields
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/scripting-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scripting Stages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/multiline-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multiline Strategies
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/performance-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/configuration-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problem
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Solutions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-real-time-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Real-Time Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alert-on-critical-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alert on Critical Events
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-codes-for-automation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Exit Codes for Automation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-with-end-stage-alerting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics with End-Stage Alerting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sliding-window-anomaly-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sliding-Window Anomaly Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-alerts-to-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Write Alerts to File
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-world-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-World Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-World Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#web-server-error-monitor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Server Error Monitor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#database-deadlock-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Deadlock Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-health-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Application Health Dashboard
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failed-login-monitor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Failed Login Monitor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-leak-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Leak Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-rate-limit-violations" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Rate Limit Violations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployment-error-spike-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment Error Spike Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disk-space-warning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Disk Space Warning
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-event-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Event Aggregation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#email-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Email Alerts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slackdiscord-webhooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Slack/Discord Webhooks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagerduty-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      PagerDuty Integration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prometheus-metrics-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prometheus Metrics Export
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#systemd-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Systemd Service
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cron-based-periodic-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cron-Based Periodic Alerts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-and-reliability" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance and Reliability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance and Reliability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#batch-timeout-for-low-latency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Batch Timeout for Low-Latency
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-log-rotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handle Log Rotation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reliability-with-restart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reliability with Restart
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#buffer-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Buffer Management
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="build-streaming-alerts">Build Streaming Alerts<a class="headerlink" href="#build-streaming-alerts" title="Permanent link">&para;</a></h1>
+<p>Monitor logs in real-time and trigger alerts based on conditions, metrics, and thresholds.</p>
+<h2 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h2>
+<p>You need to monitor logs as they're written, detect critical events, and trigger alerts or take action when conditions are met. Traditional batch processing is too slow for real-time alerting.</p>
+<h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
+<h3 id="basic-real-time-monitoring">Basic Real-Time Monitoring<a class="headerlink" href="#basic-real-time-monitoring" title="Permanent link">&para;</a></h3>
+<p>Monitor logs as they're written using <code>tail -f</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Monitor JSON logs for errors</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--levels<span class="w"> </span>error,critical
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Monitor with custom filter</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time &gt; 1000&#39;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Monitor multiple log levels</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span>--levels<span class="w"> </span>warn,error,critical<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,level,service,message
+</code></pre></div>
+<h3 id="alert-on-critical-events">Alert on Critical Events<a class="headerlink" href="#alert-on-critical-events" title="Permanent link">&para;</a></h3>
+<p>Use <code>eprint()</code> to write alerts to stderr while suppressing normal output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Alert on critical level</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;CRITICAL&quot; { eprint(&quot;ALERT: &quot; + e.service + &quot; - &quot; + e.message) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span>-qq
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Alert on high error rate</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { eprint(&quot;Error in &quot; + e.service) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span>-q
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1"># Alert on slow requests</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() &gt; 2.0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;SLOW: &quot; + e.path + &quot; took &quot; + e.request_time + &quot;s&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span>-qq
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1">### Count Incidents While Streaming</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="sb">```</span>bash
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>examples/simple_logfmt.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">      </span>--filter<span class="w"> </span><span class="s1">&#39;&quot;duration&quot; in e &amp;&amp; e.duration.to_int_or(0) &gt;= 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">      </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;slow_requests&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">      </span>--metrics
+</code></pre></div>
+<p>Aggregating with <code>track_count()</code> keeps a running tally without printing each
+event. Combine with <code>-qq</code> if you want the counter but not the event stream.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>### Quiet Modes for Automation
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Use graduated quiet levels to control output:
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>```bash
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a># Level 1 (-q): Suppress diagnostics, show events
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>&gt; tail -f app.log | kelora -j -q --filter &#39;e.level == &quot;ERROR&quot;&#39;
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a># Level 2 (-qq): Suppress events too, show only script output
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>&gt; tail -f app.log | kelora -j -qq \
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    --exec &#39;if e.level == &quot;CRITICAL&quot; { eprint(&quot;CRITICAL: &quot; + e.message) }&#39;
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a># Level 3 (-qqq): Complete silence except exit code
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>&gt; tail -f app.log | kelora -j -qqq --filter &#39;e.level == &quot;CRITICAL&quot;&#39;
+</code></pre></div></p>
+<p><strong>Quiet mode behavior:</strong></p>
+<ul>
+<li><code>-q</code>: Suppress error summaries, stats, format detection messages</li>
+<li><code>-qq</code>: Additionally suppress event output (automatically enables <code>-F none</code>)</li>
+<li><code>-qqq</code>: Additionally suppress <code>print()</code> and <code>eprint()</code> from Rhai scripts</li>
+</ul>
+<h3 id="exit-codes-for-automation">Exit Codes for Automation<a class="headerlink" href="#exit-codes-for-automation" title="Permanent link">&para;</a></h3>
+<p>Use exit codes to detect processing issues:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Check for errors (exit code 1 if parsing/runtime errors occurred)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Exit code: </span><span class="nv">$?</span><span class="s2">&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Alert based on exit code</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>&gt;<span class="w"> </span><span class="k">if</span><span class="w"> </span>tail<span class="w"> </span>-100<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qqq<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;CRITICAL&quot;&#39;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No critical errors&quot;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="k">else</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Critical errors detected!&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>mail<span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;Alert&quot;</span><span class="w"> </span>ops@company.com
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="k">fi</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1"># CI/CD pipeline integration</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-qq<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs/*.json<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ No errors&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="o">||</span><span class="w"> </span><span class="o">(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Errors found&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="o">)</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Practicing locally? Swap <code>tail -f</code> for a short fixture like
+<code>examples/simple_logfmt.log</code> piped through <code>cat</code> so you can stop the command
+easily with Ctrl+C.</p>
+</div>
+<p><strong>Exit codes:</strong></p>
+<ul>
+<li><code>0</code>: Success (no parsing or runtime errors)</li>
+<li><code>1</code>: Parse errors or Rhai runtime errors occurred</li>
+<li><code>2</code>: Invalid CLI usage or configuration errors</li>
+<li><code>130</code>: Interrupted (Ctrl+C)</li>
+<li><code>141</code>: Broken pipe (normal in Unix pipelines)</li>
+</ul>
+<h3 id="metrics-with-end-stage-alerting">Metrics with End-Stage Alerting<a class="headerlink" href="#metrics-with-end-stage-alerting" title="Permanent link">&para;</a></h3>
+<p>Collect metrics during processing and alert at the end:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Alert if error rate exceeds threshold</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-100<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">      let total = metrics.get_path(&quot;total&quot;, 0);</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">      let errors = metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s1">      if total &gt; 0 {</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">        let error_rate = errors.to_float() / total.to_float() * 100;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">        if error_rate &gt; 5.0 {</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">          eprint(&quot;HIGH ERROR RATE: &quot; + error_rate + &quot;%&quot;)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">        }</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s1">      }</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s1">    &#39;</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="c1"># Alert on memory threshold breaches</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.get_path(&quot;memory_percent&quot;, 0) &gt; 90 { track_count(&quot;high_memory&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;if metrics.contains(&quot;high_memory&quot;) &amp;&amp; metrics.high_memory &gt; 10 { eprint(&quot;Memory warnings: &quot; + metrics.high_memory) }&#39;</span>
+</code></pre></div>
+<h3 id="sliding-window-anomaly-detection">Sliding-Window Anomaly Detection<a class="headerlink" href="#sliding-window-anomaly-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;&quot;msg&quot; in e &amp;&amp; e.msg.contains(&quot;Failed login&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let hits = window_values(&quot;msg&quot;).filter(|m| m.contains(&quot;Failed login&quot;));\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">             if hits.len() &gt;= 3 { e.alert = true; }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.alert == true&#39;</span>
+</code></pre></div>
+<p>Use a short sliding window to spot bursts of suspicious activity and feed the
+resulting events to downstream tooling (e.g., Slack webhook, SIEM pipeline).</p>
+<h3 id="write-alerts-to-file">Write Alerts to File<a class="headerlink" href="#write-alerts-to-file" title="Permanent link">&para;</a></h3>
+<p>Use <code>--allow-fs-writes</code> to persist alerts:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Write critical events to alert file</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;CRITICAL&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;/var/log/alerts.log&quot;, e.timestamp + &quot; &quot; + e.service + &quot; &quot; + e.message)&#39;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># JSON alert log</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &gt;= 8&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;/var/log/alerts.json&quot;, e.to_json())&#39;</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Separate files by severity</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { append_file(&quot;/tmp/errors.log&quot;, e.to_json()) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;CRITICAL&quot; { append_file(&quot;/tmp/critical.log&quot;, e.to_json()) }&#39;</span>
+</code></pre></div>
+<h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
+<h3 id="web-server-error-monitor">Web Server Error Monitor<a class="headerlink" href="#web-server-error-monitor" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;5xx_errors&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;5xx Error: &quot; + e.status + &quot; &quot; + e.path + &quot; from &quot; + e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;if metrics.get_path(&quot;5xx_errors&quot;, 0) &gt; 10 { eprint(&quot;ALERT: &quot; + metrics[&quot;5xx_errors&quot;] + &quot; server errors&quot;) }&#39;</span>
+</code></pre></div>
+<h3 id="database-deadlock-detection">Database Deadlock Detection<a class="headerlink" href="#database-deadlock-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/postgresql/postgresql.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;deadlock&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;DEADLOCK DETECTED: &quot; + e.line)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;/var/log/deadlocks.log&quot;, now_utc().to_iso() + &quot;: &quot; + e.line)&#39;</span>
+</code></pre></div>
+<h3 id="application-health-dashboard">Application Health Dashboard<a class="headerlink" href="#application-health-dashboard" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service + &quot;_&quot; + e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;duration_ms&quot;) { track_avg(e.service + &quot;_latency&quot;, e.duration_ms) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="s1">      print(&quot;=== Service Health ===&quot;);</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s1">      for (key, value) in metrics {</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s1">        if key.contains(&quot;ERROR&quot;) &amp;&amp; value &gt; 5 {</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s1">          eprint(&quot;⚠️  &quot; + key + &quot;: &quot; + value)</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="s1">        } else {</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="s1">          print(&quot;✓ &quot; + key + &quot;: &quot; + value)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="s1">        }</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="s1">      }</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="s1">    &#39;</span>
+</code></pre></div>
+<h3 id="failed-login-monitor">Failed Login Monitor<a class="headerlink" href="#failed-login-monitor" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;Failed password&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let ip = e.message.extract_ip(); track_count(ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s1">      for (ip, count) in metrics {</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s1">        if count &gt; 3 {</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s1">          eprint(&quot;ALERT: &quot; + count + &quot; failed logins from &quot; + ip)</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s1">        }</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="s1">      }</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="s1">    &#39;</span>
+</code></pre></div>
+<h3 id="memory-leak-detection">Memory Leak Detection<a class="headerlink" href="#memory-leak-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">100</span><span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;memory_mb&quot;) {</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="s1">      let recent_mem = window_numbers(&quot;memory_mb&quot;);</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="s1">      if recent_mem.len() &gt;= 10 {</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="s1">        let trend = recent_mem[-1] - recent_mem[0];</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="s1">        if trend &gt; 100 {</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="s1">          eprint(&quot;MEMORY LEAK: +&quot; + trend + &quot;MB over last &quot; + recent_mem.len() + &quot; events&quot;)</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="s1">        }</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="s1">      }</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s1">    }&#39;</span>
+</code></pre></div>
+<h3 id="api-rate-limit-violations">API Rate Limit Violations<a class="headerlink" href="#api-rate-limit-violations" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/api.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 429&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.client_id)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;Rate limit hit: &quot; + e.client_id + &quot; on &quot; + e.path)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="s1">      for (client, count) in metrics {</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="s1">        if count &gt; 10 {</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="s1">          eprint(&quot;ALERT: Client &quot; + client + &quot; hit rate limits &quot; + count + &quot; times&quot;)</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="s1">        }</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="s1">      }</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="s1">    &#39;</span>
+</code></pre></div>
+<h3 id="deployment-error-spike-detection">Deployment Error Spike Detection<a class="headerlink" href="#deployment-error-spike-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">50</span><span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; {</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="s1">      let recent_errors = window_values(&quot;level&quot;).filter(|l| l == &quot;ERROR&quot;);</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="s1">      let error_rate = recent_errors.len().to_float() / 50 * 100;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="s1">      if error_rate &gt; 20 {</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="s1">        eprint(&quot;ERROR SPIKE: &quot; + error_rate + &quot;% error rate - possible bad deployment&quot;)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="s1">      }</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="s1">    }&#39;</span>
+</code></pre></div>
+<h3 id="disk-space-warning">Disk Space Warning<a class="headerlink" href="#disk-space-warning" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;disk&quot;) &amp;&amp; e.message.contains(&quot;full&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;DISK ALERT: &quot; + e.hostname + &quot; - &quot; + e.message)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;/var/log/disk_alerts.log&quot;, e.to_json())&#39;</span>
+</code></pre></div>
+<h3 id="security-event-aggregation">Security Event Aggregation<a class="headerlink" href="#security-event-aggregation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/security.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.severity == &quot;high&quot; || e.severity == &quot;critical&quot; { track_count(e.event_type) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.severity == &quot;critical&quot; { eprint(&quot;SECURITY: &quot; + e.event_type + &quot; from &quot; + e.source_ip) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="s1">      let total = 0;</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="s1">      for (event, count) in metrics { total += count };</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="s1">      if total &gt; 0 {</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="s1">        eprint(&quot;Security events in last batch: &quot; + total)</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="s1">      }</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="s1">    &#39;</span>
+</code></pre></div>
+<h2 id="integration-patterns">Integration Patterns<a class="headerlink" href="#integration-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="email-alerts">Email Alerts<a class="headerlink" href="#email-alerts" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Alert via email when critical events occur</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qqq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;CRITICAL&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No critical events&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Critical events detected&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>mail<span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;Alert&quot;</span><span class="w"> </span>ops@company.com
+</code></pre></div>
+<h3 id="slackdiscord-webhooks">Slack/Discord Webhooks<a class="headerlink" href="#slackdiscord-webhooks" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Post to Slack when errors exceed threshold</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-100<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="s1">      let errors = metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="s1">      if errors &gt; 10 {</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="s1">        let msg = &quot;High error count: &quot; + errors;</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="s1">        print(msg)</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="s1">      }</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="s1">    &#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>msg<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="w">      </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s1">&#39;Content-type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">        </span>--data<span class="w"> </span><span class="s1">&#39;{&quot;text&quot;:&quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$msg</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">        </span>https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">    </span><span class="k">done</span>
+</code></pre></div>
+<h3 id="pagerduty-integration">PagerDuty Integration<a class="headerlink" href="#pagerduty-integration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qqq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;CRITICAL&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;/tmp/critical_event.json&quot;, e.to_json())&#39;</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Check for new critical events every minute</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="k">while</span><span class="w"> </span>true<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-s<span class="w"> </span>/tmp/critical_event.json<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">    </span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://events.pagerduty.com/v2/enqueue<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">      </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">      </span>-d<span class="w"> </span>@/tmp/critical_event.json
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">    </span>&gt;<span class="w"> </span>/tmp/critical_event.json<span class="w">  </span><span class="c1"># Truncate after sending</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">  </span><span class="k">fi</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">  </span>sleep<span class="w"> </span><span class="m">60</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="k">done</span>
+</code></pre></div>
+<h3 id="prometheus-metrics-export">Prometheus Metrics Export<a class="headerlink" href="#prometheus-metrics-export" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Generate Prometheus metrics from streaming logs</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;http_requests_total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.status &gt;= 500 { track_count(&quot;http_errors_total&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;duration_ms&quot;) { track_avg(&quot;http_duration_ms&quot;, e.duration_ms) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">    </span>--metrics-file<span class="w"> </span>/var/lib/prometheus/kelora_metrics.json
+</code></pre></div>
+<h3 id="systemd-service">Systemd Service<a class="headerlink" href="#systemd-service" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># /etc/systemd/system/kelora-monitor.service</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="k">[Unit]</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="na">Description</span><span class="o">=</span><span class="s">Kelora Log Monitor</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="na">After</span><span class="o">=</span><span class="s">network.target</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="k">[Service]</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="na">Type</span><span class="o">=</span><span class="s">simple</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="na">ExecStart</span><span class="o">=</span><span class="s">/usr/bin/tail -f /var/log/app.log | /usr/local/bin/kelora -j -qq </span>\
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="w">  </span><span class="s">--filter &#39;e.level == &quot;CRITICAL&quot;&#39; </span>\
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="w">  </span><span class="s">--exec &#39;eprint(&quot;CRITICAL: &quot; + e.message)&#39;</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="na">Restart</span><span class="o">=</span><span class="s">always</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="na">StandardOutput</span><span class="o">=</span><span class="s">journal</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="na">StandardError</span><span class="o">=</span><span class="s">journal</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="k">[Install]</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="na">WantedBy</span><span class="o">=</span><span class="s">multi-tier.target</span>
+</code></pre></div>
+<h3 id="cron-based-periodic-alerts">Cron-Based Periodic Alerts<a class="headerlink" href="#cron-based-periodic-alerts" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Check last 5 minutes of logs every 5 minutes</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># Add to crontab: */5 * * * * /path/to/alert_script.sh</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1">#!/bin/bash</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;5 minutes ago&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">  </span>--levels<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="w">  </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;errors&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="s1">    let errors = metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="s1">    if errors &gt; 10 {</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="s1">      eprint(&quot;Last 5min: &quot; + errors + &quot; errors&quot;)</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="s1">    }</span>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;errors&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">{</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;High error rate detected&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>mail<span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;Alert&quot;</span><span class="w"> </span>ops@company.com
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a><span class="w">  </span><span class="o">}</span>
+</code></pre></div>
+<h2 id="performance-and-reliability">Performance and Reliability<a class="headerlink" href="#performance-and-reliability" title="Permanent link">&para;</a></h2>
+<h3 id="batch-timeout-for-low-latency">Batch Timeout for Low-Latency<a class="headerlink" href="#batch-timeout-for-low-latency" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Reduce latency in parallel mode with batch timeout</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>--batch-size<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>--batch-timeout<span class="w"> </span><span class="m">50</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+</code></pre></div>
+<h3 id="handle-log-rotation">Handle Log Rotation<a class="headerlink" href="#handle-log-rotation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Use tail -F to follow through log rotation</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Monitor with logrotate awareness</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span>/var/log/app.log.1<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error
+</code></pre></div>
+<h3 id="reliability-with-restart">Reliability with Restart<a class="headerlink" href="#reliability-with-restart" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Auto-restart monitoring on failure</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>&gt;<span class="w"> </span><span class="k">while</span><span class="w"> </span>true<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">      </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;CRITICAL&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">      </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;CRITICAL: &quot; + e.message)&#39;</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">    </span>sleep<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">  </span><span class="k">done</span>
+</code></pre></div>
+<h3 id="buffer-management">Buffer Management<a class="headerlink" href="#buffer-management" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Prevent memory bloat with take limit on window functions</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if window_values(&quot;level&quot;).len() == 100 { eprint(&quot;Window full, analyzing...&quot;) }&#39;</span>
+</code></pre></div>
+<h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
+<p><strong>Real-Time Monitoring:</strong></p>
+<ul>
+<li>Use <code>tail -f</code> for active logs, <code>tail -F</code> for logs that rotate</li>
+<li>Use <code>-qq</code> to suppress event output, showing only alerts</li>
+<li>Use <code>-qqq</code> for complete silence when only exit codes matter</li>
+<li>Combine with <code>--metrics</code> and <code>--end</code> for batch summaries</li>
+</ul>
+<p><strong>Alert Design:</strong></p>
+<ul>
+<li>Use <code>eprint()</code> for alerts (goes to stderr, separate from events)</li>
+<li>Write structured alerts with context: timestamp, service, severity</li>
+<li>Consider alert fatigue - use thresholds and deduplication</li>
+<li>Use <code>track_unique()</code> to count distinct values (IPs, users, etc.)</li>
+</ul>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Use <code>--parallel</code> for high-throughput log streams</li>
+<li>Adjust <code>--batch-timeout</code> for latency vs throughput balance</li>
+<li>Lower batch timeout = lower latency, higher CPU usage</li>
+<li>Use <code>--window</code> carefully - large windows consume memory</li>
+</ul>
+<p><strong>Automation:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Test alerts without actual monitoring</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;level&quot;:&quot;CRITICAL&quot;,&quot;message&quot;:&quot;test&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;CRITICAL&quot; { eprint(&quot;Alert triggered&quot;) }&#39;</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="c1"># Validate alert logic with recent logs</span>
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-100<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;CRITICAL&quot; { eprint(e.message) }&#39;</span>
+</code></pre></div></p>
+<p><strong>Exit Code Patterns:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Alert only if processing errors occurred (not just filtered events)</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>kelora<span class="w"> </span>-qqq<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span><span class="o">||</span><span class="w"> </span>send_alert<span class="w"> </span><span class="s2">&quot;Processing errors detected&quot;</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Combine filtering with exit code checking</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>input.log<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Clean&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Has errors&quot;</span>
+</code></pre></div></p>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<p><strong>Alerts not triggering:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Test filter logic</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;test&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="c1"># Verify eprint output</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>&gt;<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;level&quot;:&quot;ERROR&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;Test alert: &quot; + e.level)&#39;</span>
+</code></pre></div></p>
+<p><strong>High memory usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Reduce window size</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">50</span><span class="w">  </span><span class="c1"># Instead of 1000</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1"># Disable metrics if not needed</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w">  </span><span class="c1"># No --metrics</span>
+</code></pre></div></p>
+<p><strong>Missing events:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Check if logs are being written</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--stats
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="c1"># Verify parsing</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-10<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j
+</code></pre></div></p>
+<p><strong>Tail behavior:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Tail stops after log rotation - use -F</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w">  </span><span class="c1"># Follows through rotation</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># Start from current position (no history)</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span><span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w">  </span><span class="c1"># Only new lines</span>
+</code></pre></div></p>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../monitor-application-health/">Monitor Application Health</a> - Health metrics and monitoring patterns</li>
+<li><a href="../find-errors-in-logs/">Find Errors in Logs</a> - Error detection techniques</li>
+<li><a href="../../reference/functions/">Function Reference</a> - Complete function list</li>
+<li><a href="../../reference/cli-reference/">CLI Reference</a> - All command-line options</li>
+<li><a href="../../reference/exit-codes/">Exit Codes Reference</a> - Exit code documentation</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>

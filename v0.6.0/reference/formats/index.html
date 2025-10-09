@@ -1,0 +1,3962 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v0.6.0/reference/formats/">
+      
+      
+        <link rel="prev" href="../cli-reference/">
+      
+      
+        <link rel="next" href="../exit-codes/">
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.21">
+    
+    
+      
+        <title>Format Reference - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.2a3383ac.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#format-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Format Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/parsing-custom-formats/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/find-errors-in-logs/" class="md-tabs__link">
+          
+  
+  
+  How-To Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../functions/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/pipeline-model/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parsing Custom Formats
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working With Time
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics and Tracking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/scripting-transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scripting Transforms
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    How-To Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            How-To Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Find Errors in Logs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Analyze Web Traffic
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Monitor Application Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parse Syslog Files
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Handle Multiline Stacktraces
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Extract and Mask Sensitive Data
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Process CSV Data
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Fan Out Nested Structures
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/build-streaming-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Build Streaming Alerts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Batch Process Archives
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Function Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Format Reference
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Format Reference
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#json-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      JSON Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="JSON Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#line-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Line Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Line Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logfmt-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logfmt Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logfmt Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csv-tsv-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV / TSV Formats
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSV / TSV Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Annotations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syslog-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syslog Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syslog Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combined-log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combined Log Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Combined Log Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-log-format-clf" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Log Format (CLF)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Log Format (CLF)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cef-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      CEF Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CEF Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#column-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Column Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specification-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specification Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Examples
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Detection
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detection-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detection Order
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#format-specific-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Format-Specific Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Format-Specific Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timestamp Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Timestamp Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-ts-field-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      --ts-field &lt;field&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-ts-format-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      --ts-format &lt;format&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-input-tz-timezone" class="md-nav__link">
+    <span class="md-ellipsis">
+      --input-tz &lt;timezone&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#column-format-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Format Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Column Format Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-cols-sep-separator" class="md-nav__link">
+    <span class="md-ellipsis">
+      --cols-sep &lt;separator&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prefix Extraction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prefix Extraction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-extract-prefix-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      --extract-prefix &lt;field&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-prefix-sep-separator" class="md-nav__link">
+    <span class="md-ellipsis">
+      --prefix-sep &lt;separator&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-line-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-line Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multi-line Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-m-multiline-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      -M, --multiline &lt;strategy&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Formats
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-f-output-format-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      -F, --output-format &lt;format&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#format-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Format Conversion
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parse-json-with-auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse JSON with Auto-Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-web-logs-and-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Web Logs and Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-csv-with-type-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse CSV with Type Conversion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-custom-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Custom Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-syslog-and-extract" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Syslog and Extract
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-with-prefix-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse with Prefix Extraction
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#format-not-detected" class="md-nav__link">
+    <span class="md-ellipsis">
+      Format Not Detected
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-not-parsed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timestamp Not Parsed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-parsing-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV Parsing Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-line-events_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-line Events
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixed-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mixed Formats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Exit Codes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rhai Cheatsheet
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/pipeline-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pipeline Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/events-and-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Events and Fields
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/scripting-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scripting Stages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/multiline-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multiline Strategies
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/performance-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/configuration-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#json-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      JSON Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="JSON Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#line-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Line Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Line Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logfmt-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logfmt Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logfmt Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#csv-tsv-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV / TSV Formats
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CSV / TSV Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-annotations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Type Annotations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syslog-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syslog Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syslog Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combined-log-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combined Log Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Combined Log Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-log-format-clf" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Log Format (CLF)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Log Format (CLF)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cef-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      CEF Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CEF Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-example_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#column-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Format
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Column Format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specification-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specification Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input Examples
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-fields_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Auto-Detection
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#syntax_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Syntax
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#description_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detection-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detection Order
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notes_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Notes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#format-specific-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Format-Specific Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Format-Specific Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timestamp Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Timestamp Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-ts-field-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      --ts-field &lt;field&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-ts-format-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      --ts-format &lt;format&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-input-tz-timezone" class="md-nav__link">
+    <span class="md-ellipsis">
+      --input-tz &lt;timezone&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#column-format-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Column Format Options
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Column Format Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-cols-sep-separator" class="md-nav__link">
+    <span class="md-ellipsis">
+      --cols-sep &lt;separator&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prefix Extraction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prefix Extraction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-extract-prefix-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      --extract-prefix &lt;field&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-prefix-sep-separator" class="md-nav__link">
+    <span class="md-ellipsis">
+      --prefix-sep &lt;separator&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-line-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-line Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Multi-line Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-m-multiline-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      -M, --multiline &lt;strategy&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Formats
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output Formats">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-f-output-format-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      -F, --output-format &lt;format&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#format-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Format Conversion
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Patterns
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parse-json-with-auto-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse JSON with Auto-Detection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-web-logs-and-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Web Logs and Filter
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-csv-with-type-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse CSV with Type Conversion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-custom-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Custom Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-syslog-and-extract" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse Syslog and Extract
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-with-prefix-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parse with Prefix Extraction
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#format-not-detected" class="md-nav__link">
+    <span class="md-ellipsis">
+      Format Not Detected
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-not-parsed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timestamp Not Parsed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#csv-parsing-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSV Parsing Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-line-events_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-line Events
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixed-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mixed Formats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="format-reference">Format Reference<a class="headerlink" href="#format-reference" title="Permanent link">&para;</a></h1>
+<p>Complete reference for all input formats supported by Kelora.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Kelora supports multiple input formats for parsing log files:</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Description</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>json</code></td>
+<td>JSON lines (one object per line)</td>
+<td>Application logs, structured data</td>
+</tr>
+<tr>
+<td><code>line</code></td>
+<td>Plain text (default)</td>
+<td>Unstructured logs, raw text</td>
+</tr>
+<tr>
+<td><code>logfmt</code></td>
+<td>Key-value pairs</td>
+<td>Heroku-style logs, simple structured logs</td>
+</tr>
+<tr>
+<td><code>csv</code> / <code>tsv</code></td>
+<td>Comma/tab-separated values</td>
+<td>Spreadsheet data, exports</td>
+</tr>
+<tr>
+<td><code>syslog</code></td>
+<td>Syslog RFC5424 and RFC3164</td>
+<td>System logs, network devices</td>
+</tr>
+<tr>
+<td><code>combined</code></td>
+<td>Apache/Nginx combined format</td>
+<td>Web server access logs</td>
+</tr>
+<tr>
+<td><code>clf</code></td>
+<td>Apache Common Log Format</td>
+<td>Web server access logs</td>
+</tr>
+<tr>
+<td><code>cef</code></td>
+<td>ArcSight Common Event Format</td>
+<td>Security logs, SIEM data</td>
+</tr>
+<tr>
+<td><code>cols:&lt;spec&gt;</code></td>
+<td>Custom column parsing</td>
+<td>Column-based logs (whitespace or custom separators)</td>
+</tr>
+<tr>
+<td><code>auto</code></td>
+<td>Auto-detect format</td>
+<td>Mixed or unknown formats</td>
+</tr>
+</tbody>
+</table>
+<h2 id="json-format">JSON Format<a class="headerlink" href="#json-format" title="Permanent link">&para;</a></h2>
+<h3 id="syntax">Syntax<a class="headerlink" href="#syntax" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>-f<span class="w"> </span>json
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># or shorthand:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>-j
+</code></pre></div>
+<h3 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h3>
+<p>Parse each line as a JSON object. Nested structures are preserved.</p>
+<h3 id="input-example">Input Example<a class="headerlink" href="#input-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Connection failed&quot;</span><span class="p">}</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:01Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;db&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Query executed&quot;</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="output-fields">Output Fields<a class="headerlink" href="#output-fields" title="Permanent link">&para;</a></h3>
+<p>All JSON fields become event fields with their original names and types.</p>
+<h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message
+</code></pre></div>
+<h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>One JSON object per line (JSON Lines format)</li>
+<li>Supports nested objects and arrays</li>
+<li>Preserves field types (strings, numbers, booleans, null)</li>
+<li>Use with <code>-M json</code> for multi-line JSON objects</li>
+</ul>
+<h2 id="line-format">Line Format<a class="headerlink" href="#line-format" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_1">Syntax<a class="headerlink" href="#syntax_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>-f<span class="w"> </span>line
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># (default if no format specified)</span>
+</code></pre></div>
+<h3 id="description_1">Description<a class="headerlink" href="#description_1" title="Permanent link">&para;</a></h3>
+<p>Parse each line as plain text. Each line becomes an event with a single <code>line</code> field.</p>
+<h3 id="input-example_1">Input Example<a class="headerlink" href="#input-example_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>2024-01-15 10:30:00 ERROR Connection failed
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>2024-01-15 10:30:01 INFO Query executed
+</code></pre></div>
+<h3 id="output-fields_1">Output Fields<a class="headerlink" href="#output-fields_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>line</code> - The complete line as a string</li>
+</ul>
+<h3 id="usage_1">Usage<a class="headerlink" href="#usage_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.line.extract_re(r&quot;(ERROR|INFO|WARN)&quot;)&#39;</span>
+</code></pre></div>
+<h3 id="notes_1">Notes<a class="headerlink" href="#notes_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Default format when no <code>-f</code> is specified</li>
+<li>Empty lines are skipped</li>
+<li>Useful for unstructured logs or custom parsing</li>
+</ul>
+<h2 id="logfmt-format">Logfmt Format<a class="headerlink" href="#logfmt-format" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_2">Syntax<a class="headerlink" href="#syntax_2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>-f<span class="w"> </span>logfmt
+</code></pre></div>
+<h3 id="description_2">Description<a class="headerlink" href="#description_2" title="Permanent link">&para;</a></h3>
+<p>Parse Heroku-style key-value pairs (logfmt format).</p>
+<h3 id="input-example_2">Input Example<a class="headerlink" href="#input-example_2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>timestamp=2024-01-15T10:30:00Z level=ERROR service=api message=&quot;Connection failed&quot;
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>timestamp=2024-01-15T10:30:01Z level=INFO service=db message=&quot;Query executed&quot;
+</code></pre></div>
+<h3 id="output-fields_2">Output Fields<a class="headerlink" href="#output-fields_2" title="Permanent link">&para;</a></h3>
+<p>All key-value pairs become top-level fields.</p>
+<h3 id="usage_2">Usage<a class="headerlink" href="#usage_2" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,service,message
+</code></pre></div>
+<h3 id="notes_2">Notes<a class="headerlink" href="#notes_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Supports quoted values with spaces: <code>key="value with spaces"</code></li>
+<li>Unquoted values end at whitespace</li>
+<li>Keys must be alphanumeric (with underscores/hyphens)</li>
+</ul>
+<h2 id="csv-tsv-formats">CSV / TSV Formats<a class="headerlink" href="#csv-tsv-formats" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_3">Syntax<a class="headerlink" href="#syntax_3" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>-f<span class="w"> </span>csv<span class="w">        </span><span class="c1"># Comma-separated with header</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>-f<span class="w"> </span>tsv<span class="w">        </span><span class="c1"># Tab-separated with header</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>-f<span class="w"> </span>csvnh<span class="w">      </span><span class="c1"># CSV without header</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>-f<span class="w"> </span>tsvnh<span class="w">      </span><span class="c1"># TSV without header</span>
+</code></pre></div>
+<h3 id="description_3">Description<a class="headerlink" href="#description_3" title="Permanent link">&para;</a></h3>
+<p>Parse comma-separated or tab-separated values. First line is used as header (unless <code>nh</code> variant).</p>
+<h3 id="input-example_3">Input Example<a class="headerlink" href="#input-example_3" title="Permanent link">&para;</a></h3>
+<p><strong>With header:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>timestamp,level,service,message
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>2024-01-15T10:30:00Z,ERROR,api,Connection failed
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>2024-01-15T10:30:01Z,INFO,db,Query executed
+</code></pre></div></p>
+<p><strong>Without header:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>2024-01-15T10:30:00Z,ERROR,api,Connection failed
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2024-01-15T10:30:01Z,INFO,db,Query executed
+</code></pre></div></p>
+<h3 id="output-fields_3">Output Fields<a class="headerlink" href="#output-fields_3" title="Permanent link">&para;</a></h3>
+<p><strong>With header:</strong> Field names from header row
+<strong>Without header:</strong> <code>col_0</code>, <code>col_1</code>, <code>col_2</code>, etc.</p>
+<h3 id="usage_3">Usage<a class="headerlink" href="#usage_3" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>csvnh<span class="w"> </span>data.csv<span class="w"> </span>--keys<span class="w"> </span>col_0,col_1,col_2
+</code></pre></div>
+<h3 id="type-annotations">Type Annotations<a class="headerlink" href="#type-annotations" title="Permanent link">&para;</a></h3>
+<p>Specify field types for automatic conversion:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int response_time:float&#39;</span><span class="w"> </span>access.csv
+</code></pre></div>
+<p><strong>Supported types:</strong></p>
+<ul>
+<li><code>int</code> - Parse as integer</li>
+<li><code>float</code> - Parse as floating-point number</li>
+<li><code>bool</code> - Parse as boolean</li>
+</ul>
+<h3 id="notes_3">Notes<a class="headerlink" href="#notes_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Quoted fields supported: <code>"value, with, commas"</code></li>
+<li>Escaped quotes: <code>"value with ""quotes"""</code></li>
+<li>Empty fields become empty strings</li>
+</ul>
+<h2 id="syslog-format">Syslog Format<a class="headerlink" href="#syslog-format" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_4">Syntax<a class="headerlink" href="#syntax_4" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>-f<span class="w"> </span>syslog
+</code></pre></div>
+<h3 id="description_4">Description<a class="headerlink" href="#description_4" title="Permanent link">&para;</a></h3>
+<p>Parse syslog messages (RFC5424 and RFC3164).</p>
+<h3 id="input-example_4">Input Example<a class="headerlink" href="#input-example_4" title="Permanent link">&para;</a></h3>
+<p><strong>RFC5424:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>&lt;165&gt;1 2024-01-15T10:30:00.000Z myhost myapp 1234 ID47 - Connection failed
+</code></pre></div></p>
+<p><strong>RFC3164:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>&lt;34&gt;Jan 15 10:30:00 myhost myapp[1234]: Connection failed
+</code></pre></div></p>
+<h3 id="output-fields_4">Output Fields<a class="headerlink" href="#output-fields_4" title="Permanent link">&para;</a></h3>
+<p><strong>RFC5424:</strong></p>
+<ul>
+<li><code>facility</code> - Syslog facility code</li>
+<li><code>severity</code> - Syslog severity level</li>
+<li><code>timestamp</code> - Parsed timestamp</li>
+<li><code>hostname</code> - Source hostname</li>
+<li><code>appname</code> - Application name</li>
+<li><code>procid</code> - Process ID</li>
+<li><code>msgid</code> - Message ID</li>
+<li><code>message</code> - Log message</li>
+</ul>
+<p><strong>RFC3164:</strong></p>
+<ul>
+<li><code>facility</code> - Syslog facility code</li>
+<li><code>severity</code> - Syslog severity level</li>
+<li><code>timestamp</code> - Parsed timestamp</li>
+<li><code>hostname</code> - Source hostname</li>
+<li><code>tag</code> - Syslog tag (usually appname[pid])</li>
+<li><code>message</code> - Log message</li>
+</ul>
+<h3 id="usage_4">Usage<a class="headerlink" href="#usage_4" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>messages.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,hostname,appname,message
+</code></pre></div>
+<h3 id="notes_4">Notes<a class="headerlink" href="#notes_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Auto-detects RFC5424 vs RFC3164</li>
+<li>Severity levels: 0=emerg, 1=alert, 2=crit, 3=err, 4=warn, 5=notice, 6=info, 7=debug</li>
+</ul>
+<h2 id="combined-log-format">Combined Log Format<a class="headerlink" href="#combined-log-format" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_5">Syntax<a class="headerlink" href="#syntax_5" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>-f<span class="w"> </span>combined
+</code></pre></div>
+<h3 id="description_5">Description<a class="headerlink" href="#description_5" title="Permanent link">&para;</a></h3>
+<p>Parse Apache/Nginx combined log format (web server access logs).</p>
+<h3 id="input-example_5">Input Example<a class="headerlink" href="#input-example_5" title="Permanent link">&para;</a></h3>
+<p><strong>Apache Combined:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] &quot;GET /api/data HTTP/1.1&quot; 200 1234 &quot;http://example.com/&quot; &quot;Mozilla/5.0&quot;
+</code></pre></div></p>
+<p><strong>Nginx with request_time:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] &quot;GET /api/data HTTP/1.1&quot; 200 1234 &quot;-&quot; &quot;curl/7.68.0&quot; &quot;0.123&quot;
+</code></pre></div></p>
+<h3 id="output-fields_5">Output Fields<a class="headerlink" href="#output-fields_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>ip</code> - Client IP address</li>
+<li><code>identity</code> - RFC 1413 identity (usually <code>-</code>)</li>
+<li><code>user</code> - HTTP authenticated username (or <code>-</code>)</li>
+<li><code>timestamp</code> - Request timestamp</li>
+<li><code>request</code> - Full HTTP request line</li>
+<li><code>method</code> - HTTP method (extracted from request)</li>
+<li><code>path</code> - Request path (extracted from request)</li>
+<li><code>protocol</code> - HTTP protocol version (extracted from request)</li>
+<li><code>status</code> - HTTP status code</li>
+<li><code>bytes</code> - Response size in bytes (or <code>-</code>)</li>
+<li><code>referer</code> - HTTP referer header (or <code>-</code>)</li>
+<li><code>user_agent</code> - HTTP user agent header</li>
+<li><code>request_time</code> - Request processing time in seconds (Nginx only, or <code>-</code>)</li>
+</ul>
+<h3 id="usage_5">Usage<a class="headerlink" href="#usage_5" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--keys<span class="w"> </span>ip,status,request,request_time
+</code></pre></div>
+<h3 id="notes_5">Notes<a class="headerlink" href="#notes_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Supports Apache Common Log Format (subset of combined)</li>
+<li>Auto-extracts method, path, protocol from request line</li>
+<li><code>request_time</code> only available in Nginx logs with custom format</li>
+</ul>
+<h2 id="common-log-format-clf">Common Log Format (CLF)<a class="headerlink" href="#common-log-format-clf" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_6">Syntax<a class="headerlink" href="#syntax_6" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>-f<span class="w"> </span>clf
+</code></pre></div>
+<h3 id="description_6">Description<a class="headerlink" href="#description_6" title="Permanent link">&para;</a></h3>
+<p>Parse Apache Common Log Format (older format without referer/user-agent).</p>
+<h3 id="input-example_6">Input Example<a class="headerlink" href="#input-example_6" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] &quot;GET /index.html HTTP/1.0&quot; 200 1234
+</code></pre></div>
+<h3 id="output-fields_6">Output Fields<a class="headerlink" href="#output-fields_6" title="Permanent link">&para;</a></h3>
+<p>Same as combined format, but without <code>referer</code>, <code>user_agent</code>, <code>request_time</code>.</p>
+<h3 id="usage_6">Usage<a class="headerlink" href="#usage_6" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>clf<span class="w"> </span>/var/log/apache2/access.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 404&#39;</span>
+</code></pre></div>
+<h2 id="cef-format">CEF Format<a class="headerlink" href="#cef-format" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_7">Syntax<a class="headerlink" href="#syntax_7" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>-f<span class="w"> </span>cef
+</code></pre></div>
+<h3 id="description_7">Description<a class="headerlink" href="#description_7" title="Permanent link">&para;</a></h3>
+<p>Parse ArcSight Common Event Format (security logs).</p>
+<h3 id="input-example_7">Input Example<a class="headerlink" href="#input-example_7" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>CEF:0|Security|threatmanager|1.0|100|worm successfully stopped|10|src=10.0.0.1 dst=2.1.2.2 spt=1232
+</code></pre></div>
+<h3 id="output-fields_7">Output Fields<a class="headerlink" href="#output-fields_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>cef_version</code> - CEF format version</li>
+<li><code>device_vendor</code> - Device vendor name</li>
+<li><code>device_product</code> - Device product name</li>
+<li><code>device_version</code> - Device version</li>
+<li><code>signature_id</code> - Event signature ID</li>
+<li><code>name</code> - Event name</li>
+<li><code>severity</code> - Event severity</li>
+<li>Plus all extension fields as top-level fields</li>
+</ul>
+<h3 id="usage_7">Usage<a class="headerlink" href="#usage_7" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>cef<span class="w"> </span>security.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &gt; 5&#39;</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>cef<span class="w"> </span>security.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,name,src,dst
+</code></pre></div>
+<h2 id="column-format">Column Format<a class="headerlink" href="#column-format" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_8">Syntax<a class="headerlink" href="#syntax_8" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:&lt;spec&gt;&#39;</span>
+</code></pre></div>
+<h3 id="description_8">Description<a class="headerlink" href="#description_8" title="Permanent link">&para;</a></h3>
+<p>Parse custom column-based formats with field specifications. The parser splits each line by whitespace by default (or a custom separator) and applies the tokens you provide.</p>
+<h3 id="specification-syntax">Specification Syntax<a class="headerlink" href="#specification-syntax" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>cols:field1 field2 field3
+</code></pre></div>
+<p><strong>Token types:</strong></p>
+<ul>
+<li><code>field</code> - Consume one column and assign it to <code>field</code></li>
+<li><code>field(N)</code> - Consume <code>N</code> columns and join them into <code>field</code></li>
+<li><code>-</code> / <code>-(N)</code> - Skip one or <code>N</code> columns</li>
+<li><code>*field</code> - Capture every remaining column into <code>field</code> (must be last)</li>
+<li><code>field:type</code> - Apply a type annotation (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>)</li>
+</ul>
+<h3 id="input-examples">Input Examples<a class="headerlink" href="#input-examples" title="Permanent link">&para;</a></h3>
+<p><strong>Whitespace-delimited:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>ERROR api &quot;Connection failed&quot;
+</code></pre></div></p>
+<p><strong>Spec:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span>
+</code></pre></div></p>
+<p><strong>Timestamp spread across columns:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>2024-01-15 10:30:00 INFO Connection failed
+</code></pre></div></p>
+<p><strong>Spec:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span>
+</code></pre></div></p>
+<h3 id="output-fields_8">Output Fields<a class="headerlink" href="#output-fields_8" title="Permanent link">&para;</a></h3>
+<p>Field names come from the specification. Type annotations convert values after extraction.</p>
+<h3 id="usage_8">Usage<a class="headerlink" href="#usage_8" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Whitespace-delimited</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># Multi-token timestamp with type annotations</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level status:int *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>timestamp
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="c1"># Custom separator</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span>data.txt
+</code></pre></div>
+<h3 id="notes_6">Notes<a class="headerlink" href="#notes_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Default separator: whitespace</li>
+<li>Use <code>--cols-sep</code> to specify a custom separator</li>
+<li>Give timestamps recognizable names (<code>timestamp</code>, <code>ts</code>, <code>time</code>) or set <code>--ts-field</code></li>
+<li><code>*field</code> must be the final token because it consumes the remainder of the line</li>
+</ul>
+<h2 id="auto-detection">Auto-Detection<a class="headerlink" href="#auto-detection" title="Permanent link">&para;</a></h2>
+<h3 id="syntax_9">Syntax<a class="headerlink" href="#syntax_9" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>-f<span class="w"> </span>auto
+</code></pre></div>
+<h3 id="description_9">Description<a class="headerlink" href="#description_9" title="Permanent link">&para;</a></h3>
+<p>Automatically detect input format from first line.</p>
+<h3 id="detection-order">Detection Order<a class="headerlink" href="#detection-order" title="Permanent link">&para;</a></h3>
+<ol>
+<li>JSON (if line starts with <code>{</code>)</li>
+<li>Syslog (if line starts with <code>&lt;NNN&gt;</code>)</li>
+<li>CEF (if line starts with <code>CEF:</code>)</li>
+<li>Combined/CLF (if matches Apache/Nginx pattern)</li>
+<li>Logfmt (if contains <code>key=value</code> pairs)</li>
+<li>CSV (if contains commas with consistent pattern)</li>
+<li>Line (fallback)</li>
+</ol>
+<h3 id="usage_9">Usage<a class="headerlink" href="#usage_9" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>--levels<span class="w"> </span>error
+</code></pre></div>
+<h3 id="notes_7">Notes<a class="headerlink" href="#notes_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Detects format from first non-empty line</li>
+<li>Uses same format for all subsequent lines</li>
+<li>Not suitable for files with mixed formats</li>
+</ul>
+<h2 id="format-specific-options">Format-Specific Options<a class="headerlink" href="#format-specific-options" title="Permanent link">&para;</a></h2>
+<h3 id="timestamp-configuration">Timestamp Configuration<a class="headerlink" href="#timestamp-configuration" title="Permanent link">&para;</a></h3>
+<h4 id="-ts-field-field"><code>--ts-field &lt;field&gt;</code><a class="headerlink" href="#-ts-field-field" title="Permanent link">&para;</a></h4>
+<p>Specify custom timestamp field name:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at<span class="w"> </span>app.log
+</code></pre></div>
+<h4 id="-ts-format-format"><code>--ts-format &lt;format&gt;</code><a class="headerlink" href="#-ts-format-format" title="Permanent link">&para;</a></h4>
+<p>Specify custom timestamp format (chrono format strings):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%d/%b/%Y:%H:%M:%S %z&#39;</span><span class="w"> </span>access.log
+</code></pre></div>
+<p>See <code>--help-time</code> for format reference.</p>
+<h4 id="-input-tz-timezone"><code>--input-tz &lt;timezone&gt;</code><a class="headerlink" href="#-input-tz-timezone" title="Permanent link">&para;</a></h4>
+<p>Timezone for naive timestamps:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--input-tz<span class="w"> </span><span class="nb">local</span><span class="w"> </span>app.log
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--input-tz<span class="w"> </span>Europe/Berlin<span class="w"> </span>app.log
+</code></pre></div>
+<h3 id="column-format-options">Column Format Options<a class="headerlink" href="#column-format-options" title="Permanent link">&para;</a></h3>
+<h4 id="-cols-sep-separator"><code>--cols-sep &lt;separator&gt;</code><a class="headerlink" href="#-cols-sep-separator" title="Permanent link">&para;</a></h4>
+<p>Column separator for <code>cols:&lt;spec&gt;</code> format:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>data.txt
+</code></pre></div>
+<h3 id="prefix-extraction">Prefix Extraction<a class="headerlink" href="#prefix-extraction" title="Permanent link">&para;</a></h3>
+<h4 id="-extract-prefix-field"><code>--extract-prefix &lt;field&gt;</code><a class="headerlink" href="#-extract-prefix-field" title="Permanent link">&para;</a></h4>
+<p>Extract text before separator into field (before parsing):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>&gt;<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>service<span class="w"> </span>-j
+</code></pre></div>
+<h4 id="-prefix-sep-separator"><code>--prefix-sep &lt;separator&gt;</code><a class="headerlink" href="#-prefix-sep-separator" title="Permanent link">&para;</a></h4>
+<p>Prefix separator (default: <code>|</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>node<span class="w"> </span>--prefix-sep<span class="w"> </span><span class="s1">&#39; :: &#39;</span><span class="w"> </span>cluster.log
+</code></pre></div>
+<h3 id="multi-line-events">Multi-line Events<a class="headerlink" href="#multi-line-events" title="Permanent link">&para;</a></h3>
+<h4 id="-m-multiline-strategy"><code>-M, --multiline &lt;strategy&gt;</code><a class="headerlink" href="#-m-multiline-strategy" title="Permanent link">&para;</a></h4>
+<p>Multi-line event detection:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log<span class="w">              </span><span class="c1"># Multi-line JSON objects</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Events start with year</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\S&#39;</span><span class="w"> </span>app.log<span class="w">            </span><span class="c1"># Events start with non-whitespace</span>
+</code></pre></div>
+<p>See <code>--help-multiline</code> for strategy reference.</p>
+<h2 id="output-formats">Output Formats<a class="headerlink" href="#output-formats" title="Permanent link">&para;</a></h2>
+<p>Control how Kelora outputs events:</p>
+<h3 id="-f-output-format-format"><code>-F, --output-format &lt;format&gt;</code><a class="headerlink" href="#-f-output-format-format" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default</code></td>
+<td>Key-value format with colors (default)</td>
+</tr>
+<tr>
+<td><code>json</code></td>
+<td>JSON lines (one object per line)</td>
+</tr>
+<tr>
+<td><code>logfmt</code></td>
+<td>Key-value pairs (logfmt format)</td>
+</tr>
+<tr>
+<td><code>inspect</code></td>
+<td>Debug format with type information</td>
+</tr>
+<tr>
+<td><code>levelmap</code></td>
+<td>Grouped by log level</td>
+</tr>
+<tr>
+<td><code>csv</code></td>
+<td>CSV with header</td>
+</tr>
+<tr>
+<td><code>tsv</code></td>
+<td>Tab-separated values with header</td>
+</tr>
+<tr>
+<td><code>csvnh</code></td>
+<td>CSV without header</td>
+</tr>
+<tr>
+<td><code>tsvnh</code></td>
+<td>TSV without header</td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>No output (useful with <code>--stats</code> or <code>--metrics</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># Output as JSON</span>
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
+<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>
+<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># Output as CSV</span>
+<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message
+<a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a>
+<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="c1"># No event output, only stats</span>
+<a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats
+</code></pre></div>
+<h2 id="format-conversion">Format Conversion<a class="headerlink" href="#format-conversion" title="Permanent link">&para;</a></h2>
+<p>Convert between formats by combining input and output formats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="c1"># JSON to CSV</span>
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message<span class="w"> </span>&gt;<span class="w"> </span>output.csv
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>
+<a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a><span class="c1"># Logfmt to JSON</span>
+<a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>output.jsonl
+<a id="__codelineno-45-6" name="__codelineno-45-6" href="#__codelineno-45-6"></a>
+<a id="__codelineno-45-7" name="__codelineno-45-7" href="#__codelineno-45-7"></a><span class="c1"># CSV to Logfmt</span>
+<a id="__codelineno-45-8" name="__codelineno-45-8" href="#__codelineno-45-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>-F<span class="w"> </span>logfmt<span class="w"> </span>&gt;<span class="w"> </span>output.log
+<a id="__codelineno-45-9" name="__codelineno-45-9" href="#__codelineno-45-9"></a>
+<a id="__codelineno-45-10" name="__codelineno-45-10" href="#__codelineno-45-10"></a><span class="c1"># Combined log to JSON</span>
+<a id="__codelineno-45-11" name="__codelineno-45-11" href="#__codelineno-45-11"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>access.jsonl
+</code></pre></div>
+<h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="parse-json-with-auto-detection">Parse JSON with Auto-Detection<a class="headerlink" href="#parse-json-with-auto-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
+</code></pre></div>
+<h3 id="parse-web-logs-and-filter">Parse Web Logs and Filter<a class="headerlink" href="#parse-web-logs-and-filter" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="w">    </span>--keys<span class="w"> </span>ip,status,request
+</code></pre></div>
+<h3 id="parse-csv-with-type-conversion">Parse CSV with Type Conversion<a class="headerlink" href="#parse-csv-with-type-conversion" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
+</code></pre></div>
+<h3 id="parse-custom-format">Parse Custom Format<a class="headerlink" href="#parse-custom-format" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp level service *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="w">    </span>--ts-field<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a><span class="w">    </span>--levels<span class="w"> </span>error
+</code></pre></div>
+<h3 id="parse-syslog-and-extract">Parse Syslog and Extract<a class="headerlink" href="#parse-syslog-and-extract" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,hostname,message
+</code></pre></div>
+<h3 id="parse-with-prefix-extraction">Parse with Prefix Extraction<a class="headerlink" href="#parse-with-prefix-extraction" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>&gt;<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.container == &quot;web_1&quot;&#39;</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="format-not-detected">Format Not Detected<a class="headerlink" href="#format-not-detected" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Auto-detection picks wrong format.</p>
+<p><strong>Solution:</strong> Specify format explicitly:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log
+</code></pre></div></p>
+<h3 id="timestamp-not-parsed">Timestamp Not Parsed<a class="headerlink" href="#timestamp-not-parsed" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Timestamps not recognized.</p>
+<p><strong>Solution:</strong> Specify timestamp format:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
+</code></pre></div></p>
+<h3 id="csv-parsing-issues">CSV Parsing Issues<a class="headerlink" href="#csv-parsing-issues" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Quoted fields not handled correctly.</p>
+<p><strong>Solution:</strong> Ensure CSV is properly formatted with standard quoting:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>&quot;field with, comma&quot;,&quot;another field&quot;
+</code></pre></div></p>
+<h3 id="multi-line-events_1">Multi-line Events<a class="headerlink" href="#multi-line-events_1" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Single event spans multiple lines.</p>
+<p><strong>Solution:</strong> Use multi-line mode:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log
+</code></pre></div></p>
+<h3 id="mixed-formats">Mixed Formats<a class="headerlink" href="#mixed-formats" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Log file contains multiple formats.</p>
+<p><strong>Solution:</strong> Use preprocessing or separate files:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>&gt;<span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>mixed.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>&gt;<span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>mixed.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line
+</code></pre></div></p>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../cli-reference/">CLI Reference</a> - Complete flag documentation</li>
+<li><a href="../../quickstart/">Quickstart</a> - Format examples</li>
+<li><a href="../../tutorials/parsing-custom-formats/">Parsing Custom Formats Tutorial</a> - Step-by-step guide</li>
+<li><a href="../../how-to/process-csv-data/">Process CSV Data How-To</a> - CSV-specific tips</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
