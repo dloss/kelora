@@ -1542,12 +1542,13 @@
 </ul>
 <p>Run <code>kelora --help</code> for comprehensive CLI docs, or <code>kelora --help-functions</code> for all built-in Rhai functions.</p>
 <h2 id="works-well-with">Works Well With<a class="headerlink" href="#works-well-with" title="Permanent link">&para;</a></h2>
-<p>Kelora focuses on normalising noisy logs. Pair it with complementary CLI tools when you need deeper analysis:</p>
+<p>Kelora focuses on normalising noisy logs into structured data. Pipe or export Kelora's output to complementary tools for deeper analysis:</p>
 <ul>
-<li><strong><a href="https://jqlang.github.io/jq/">jq</a></strong> — slice JSONL output for downstream scripts or human-readable TSV</li>
-<li><strong><a href="https://github.com/jqnatividad/qsv">qsv</a></strong> — crunch CSV exports with lightning-fast aggregations</li>
-<li><strong><a href="https://www.sqlite.org/">SQLite</a>/<a href="https://duckdb.org/">DuckDB</a></strong> — query exported data with SQL for complex analysis</li>
-<li><strong><a href="https://github.com/johnkerl/miller">miller</a></strong> — reshape and aggregate tabular data</li>
+<li><strong><a href="https://jqlang.github.io/jq/">jq</a></strong> — process Kelora's JSON output for complex transformations, filtering, or reformatting</li>
+<li><strong><a href="https://lnav.org/">lnav</a></strong> — explore Kelora's output in an interactive TUI with live filtering, histograms, and ad-hoc SQL queries</li>
+<li><strong><a href="https://github.com/jqnatividad/qsv">qsv</a></strong> — analyze Kelora's CSV output with statistical operations, joins, and aggregations</li>
+<li><strong><a href="https://www.sqlite.org/">SQLite</a>/<a href="https://duckdb.org/">DuckDB</a></strong> — load Kelora's CSV/JSON output into a database for SQL queries and reporting</li>
+<li><strong><a href="https://github.com/johnkerl/miller">miller</a></strong> — transform Kelora's CSV output for reshaping, aggregating, and format conversion</li>
 </ul>
 <h2 id="need-help">Need Help?<a class="headerlink" href="#need-help" title="Permanent link">&para;</a></h2>
 <ul>
