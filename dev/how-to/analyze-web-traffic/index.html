@@ -1831,58 +1831,58 @@
 <h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
 <h3 id="basic-combined-log-parsing">Basic Combined Log Parsing<a class="headerlink" href="#basic-combined-log-parsing" title="Permanent link">&para;</a></h3>
 <p>Parse Apache/Nginx combined format logs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span>--take<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
 <p>The combined format includes: <code>ip</code>, <code>timestamp</code>, <code>request</code>, <code>method</code>, <code>path</code>, <code>protocol</code>, <code>status</code>, <code>bytes</code>, <code>referer</code>, <code>user_agent</code>, and optionally <code>request_time</code>.</p>
 <h3 id="find-server-errors-5xx">Find Server Errors (5xx)<a class="headerlink" href="#find-server-errors-5xx" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>--keys<span class="w"> </span>ip,timestamp,status,request
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>-k<span class="w"> </span>ip,timestamp,status,request
 </code></pre></div>
 <h3 id="find-client-errors-4xx">Find Client Errors (4xx)<a class="headerlink" href="#find-client-errors-4xx" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400 &amp;&amp; e.status &lt; 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--keys<span class="w"> </span>ip,timestamp,status,request
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-k<span class="w"> </span>ip,timestamp,status,request
 </code></pre></div>
 <h3 id="find-slow-requests">Find Slow Requests<a class="headerlink" href="#find-slow-requests" title="Permanent link">&para;</a></h3>
 <p>For Nginx logs with <code>request_time</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>--keys<span class="w"> </span>ip,request,request_time,status
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>-k<span class="w"> </span>ip,request,request_time,status
 </code></pre></div>
 <h3 id="traffic-by-status-code">Traffic by Status Code<a class="headerlink" href="#traffic-by-status-code" title="Permanent link">&para;</a></h3>
 <p>Count requests by status code:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="top-ips-by-request-count">Top IPs by Request Count<a class="headerlink" href="#top-ips-by-request-count" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="analyze-specific-endpoints">Analyze Specific Endpoints<a class="headerlink" href="#analyze-specific-endpoints" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.path.contains(&quot;/api/&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="find-suspicious-activity">Find Suspicious Activity<a class="headerlink" href="#find-suspicious-activity" title="Permanent link">&para;</a></h3>
 <p>Look for unusual patterns:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># High request rates from single IP</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>--metrics
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># POST requests to unusual paths</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.method == &quot;POST&quot; &amp;&amp; !e.path.starts_with(&quot;/api/&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span>--keys<span class="w"> </span>ip,timestamp,method,path
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span>-k<span class="w"> </span>ip,timestamp,method,path
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Large response sizes</span>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;bytes&quot;, &quot;0&quot;).to_int() &gt; 10000000&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span>--keys<span class="w"> </span>ip,path,bytes,timestamp
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span>-k<span class="w"> </span>ip,path,bytes,timestamp
 </code></pre></div>
 <h3 id="time-based-analysis">Time-Based Analysis<a class="headerlink" href="#time-based-analysis" title="Permanent link">&para;</a></h3>
 <p>Analyze traffic in specific time windows:</p>
@@ -1895,70 +1895,70 @@
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15 09:00:00&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span>--until<span class="w"> </span><span class="s2">&quot;2024-01-15 17:00:00&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="response-time-percentiles">Response Time Percentiles<a class="headerlink" href="#response-time-percentiles" title="Permanent link">&para;</a></h3>
 <p>Calculate performance metrics for Nginx logs with <code>request_time</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;latency&quot;, floor(e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() * 1000 / 100) * 100)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;latency&quot;, floor(e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() * 1000 / 100) * 100)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
 <h3 id="daily-error-report">Daily Error Report<a class="headerlink" href="#daily-error-report" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log*<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.extract_re(r&quot;(\d{2}):\d{2}:\d{2}&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.extract_re(r&quot;(\d{2}):\d{2}:\d{2}&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="api-endpoint-performance">API Endpoint Performance<a class="headerlink" href="#api-endpoint-performance" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.path.starts_with(&quot;/api/&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.endpoint = e.path.extract_re(r&quot;(/api/[^/]+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.endpoint)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(e.endpoint, e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.endpoint = e.path.extract_re(r&quot;(/api/[^/]+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.endpoint)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(e.endpoint, e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="bot-detection">Bot Detection<a class="headerlink" href="#bot-detection" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.user_agent.contains(&quot;bot&quot;) || e.user_agent.contains(&quot;crawler&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.user_agent)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>--keys<span class="w"> </span>ip,user_agent,path<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.user_agent)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>-k<span class="w"> </span>ip,user_agent,path<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="referer-analysis">Referer Analysis<a class="headerlink" href="#referer-analysis" title="Permanent link">&para;</a></h3>
 <p>Find where traffic is coming from:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.referer != &quot;-&quot; &amp;&amp; !e.referer.contains(&quot;yourdomain.com&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.domain = e.referer.extract_domain()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.domain)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.domain = e.referer.extract_domain()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.domain)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="failed-authentication-attempts">Failed Authentication Attempts<a class="headerlink" href="#failed-authentication-attempts" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.path.contains(&quot;/login&quot;) &amp;&amp; e.status == 401&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,ip,path,status<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,ip,path,status<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="response-size-distribution">Response Size Distribution<a class="headerlink" href="#response-size-distribution" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.size_kb = floor(e.get_path(&quot;bytes&quot;, &quot;0&quot;).to_int() / 1024)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;response_size_kb&quot;, e.size_kb)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.size_kb = floor(e.get_path(&quot;bytes&quot;, &quot;0&quot;).to_int() / 1024)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;response_size_kb&quot;, e.size_kb)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h2 id="export-for-analysis">Export for Analysis<a class="headerlink" href="#export-for-analysis" title="Permanent link">&para;</a></h2>
 <h3 id="export-to-csv">Export to CSV<a class="headerlink" href="#export-to-csv" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span>--keys<span class="w"> </span>ip,timestamp,status,bytes,request<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span>-k<span class="w"> </span>ip,timestamp,status,bytes,request<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>access.csv
 </code></pre></div>
 <h3 id="export-to-json">Export to JSON<a class="headerlink" href="#export-to-json" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>errors.json
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>-J<span class="w"> </span>&gt;<span class="w"> </span>errors.json
 </code></pre></div>
 <h2 id="performance-tips">Performance Tips<a class="headerlink" href="#performance-tips" title="Permanent link">&para;</a></h2>
 <p><strong>Large Files:</strong>
@@ -1968,7 +1968,7 @@
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span>
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1"># Limit output</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--take<span class="w"> </span><span class="m">1000</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1000</span>
 </code></pre></div></p>
 <p><strong>Gzipped Archives:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Kelora handles .gz automatically</span>
@@ -1978,31 +1978,31 @@
 <p><strong>Multiple Files:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Process all access logs</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log*<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <p><strong>Find top N IPs by error count:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Hourly request distribution:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.extract_re(r&quot;(\d{2}):\d{2}:\d{2}&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.extract_re(r&quot;(\d{2}):\d{2}:\d{2}&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Method distribution:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.method)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.method)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Status code summary:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.status_class = floor(e.status / 100) + &quot;xx&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.status_class)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.status_class = floor(e.status / 100) + &quot;xx&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status_class)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>

@@ -1778,17 +1778,17 @@
 <h3 id="basic-array-fan-out">Basic Array Fan-Out<a class="headerlink" href="#basic-array-fan-out" title="Permanent link">&para;</a></h3>
 <p>Convert array elements to individual events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Fan out users array</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Example with actual data</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/json_arrays.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span>--take<span class="w"> </span><span class="m">5</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/json_arrays.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
 <p>The original event is suppressed; each array element becomes a new event.</p>
 <h3 id="fan-out-with-base-fields">Fan-Out with Base Fields<a class="headerlink" href="#fan-out-with-base-fields" title="Permanent link">&para;</a></h3>
 <p>Preserve context from parent event:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Add batch_id to each user event</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let base = #{batch_id: e.batch_id, timestamp: e.timestamp};</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let base = #{batch_id: e.batch_id, timestamp: e.timestamp};</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s1">          emit_each(e.users, base)&#39;</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Result: Each user event includes batch_id and timestamp fields</span>
@@ -1796,121 +1796,121 @@
 <h3 id="multi-level-fan-out">Multi-Level Fan-Out<a class="headerlink" href="#multi-level-fan-out" title="Permanent link">&para;</a></h3>
 <p>Fan out nested structures in stages:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Orders → Items (two-level fan-out)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/fan_out_batches.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let ctx = #{batch_id: e.batch_id}; emit_each(e.orders, ctx)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let order_ctx = #{batch_id: e.batch_id, order_id: e.order_id}; emit_each(e.items, order_ctx)&#39;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/fan_out_batches.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let ctx = #{batch_id: e.batch_id}; emit_each(e.orders, ctx)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let order_ctx = #{batch_id: e.batch_id, order_id: e.order_id}; emit_each(e.items, order_ctx)&#39;</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Now each item is a separate event with batch_id and order_id</span>
 </code></pre></div>
 <h3 id="filter-after-fan-out">Filter After Fan-Out<a class="headerlink" href="#filter-after-fan-out" title="Permanent link">&para;</a></h3>
 <p>Process specific elements only:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Fan out users, then filter by score</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.score &gt; 90&#39;</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Fan out and filter in one pipeline</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.score &gt; 90&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--keys<span class="w"> </span>id,name,score
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>-k<span class="w"> </span>id,name,score
 </code></pre></div>
 <h3 id="count-emitted-events">Count Emitted Events<a class="headerlink" href="#count-emitted-events" title="Permanent link">&para;</a></h3>
 <p>Track how many events were created:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># emit_each returns count of emitted events</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_count = emit_each(e.users)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_users&quot;, e.user_count)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_count = emit_each(e.users)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_users&quot;, e.user_count)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="conditional-fan-out">Conditional Fan-Out<a class="headerlink" href="#conditional-fan-out" title="Permanent link">&para;</a></h3>
 <p>Fan out only when conditions are met:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Only fan out batches with more than 2 items</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.users.len() &gt; 2&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Fan out high-priority items only</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let high_priority = e.items.filter(|item| item.priority == &quot;high&quot;);</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let high_priority = e.items.filter(|item| item.priority == &quot;high&quot;);</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s1">          emit_each(high_priority)&#39;</span>
 </code></pre></div>
 <h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
 <h3 id="process-e-commerce-orders">Process E-Commerce Orders<a class="headerlink" href="#process-e-commerce-orders" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Batch → Orders → Items (3-level fan-out)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>orders.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let batch = #{batch_id: e.batch_id, created: e.created};</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>orders.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let batch = #{batch_id: e.batch_id, created: e.created};</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s1">          emit_each(e.orders, batch)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let order = #{batch_id: e.batch_id, order_id: e.order_id};</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let order = #{batch_id: e.batch_id, order_id: e.order_id};</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s1">          emit_each(e.items, order)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.total = e.qty * e.price&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.total = e.qty * e.price&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.total &gt; 100&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>--keys<span class="w"> </span>batch_id,order_id,sku,qty,price,total
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>-k<span class="w"> </span>batch_id,order_id,sku,qty,price,total
 </code></pre></div>
 <h3 id="analyze-user-activity">Analyze User Activity<a class="headerlink" href="#analyze-user-activity" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Fan out user events and track activity types</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>activity.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.events)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.event_type)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>activity.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.events)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.event_type)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="extract-email-domains">Extract Email Domains<a class="headerlink" href="#extract-email-domains" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Fan out email list and extract domains</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.emails)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.email = e.line&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.domain = e.email.extract_domain()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;domains&quot;, e.domain)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.emails)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.email = e.line&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.domain = e.email.extract_domain()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;domains&quot;, e.domain)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="process-log-batches">Process Log Batches<a class="headerlink" href="#process-log-batches" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Fan out log arrays with severity filtering</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let ctx = #{source: e.source, timestamp: e.timestamp};</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let ctx = #{source: e.source, timestamp: e.timestamp};</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="s1">          emit_each(e.logs, ctx)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;error&quot; || e.level == &quot;warn&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,source,level,msg
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,source,level,msg
 </code></pre></div>
 <h3 id="transaction-analysis">Transaction Analysis<a class="headerlink" href="#transaction-analysis" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Fan out purchases and calculate totals</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>transactions.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let tx = #{transaction_id: e.id, user: e.user};</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>transactions.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let tx = #{transaction_id: e.id, user: e.user};</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">          emit_each(e.purchases, tx)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.line_total = e.price * e.qty&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;revenue&quot;, e.line_total)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.item)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.line_total = e.price * e.qty&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;revenue&quot;, e.line_total)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.item)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="filter-active-items-from-nested-batches">Filter Active Items from Nested Batches<a class="headerlink" href="#filter-active-items-from-nested-batches" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Multi-level with filtering at each stage</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/fan_out_batches.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.batches)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let batch_ctx = #{batch_name: e.name}; emit_each(e.items, batch_ctx)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/fan_out_batches.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.batches)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let batch_ctx = #{batch_name: e.name}; emit_each(e.items, batch_ctx)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == &quot;active&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.priority == &quot;high&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span>--keys<span class="w"> </span>batch_name,id,status,priority
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span>-k<span class="w"> </span>batch_name,id,status,priority
 </code></pre></div>
 <h3 id="aggregate-nested-statistics">Aggregate Nested Statistics<a class="headerlink" href="#aggregate-nested-statistics" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Fan out and calculate per-item statistics</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_quantity&quot;, e.qty)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_revenue&quot;, e.price * e.qty)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;skus&quot;, e.sku)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_quantity&quot;, e.qty)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_revenue&quot;, e.price * e.qty)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;skus&quot;, e.sku)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="export-flattened-data">Export Flattened Data<a class="headerlink" href="#export-flattened-data" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Fan out nested data and export as CSV</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>nested.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let parent = #{parent_id: e.id, created: e.timestamp};</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>nested.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let parent = #{parent_id: e.id, created: e.timestamp};</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="s1">          emit_each(e.children, parent)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>--keys<span class="w"> </span>parent_id,created,child_id,name,value<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>-k<span class="w"> </span>parent_id,created,child_id,name,value<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>flattened.csv
 </code></pre></div>
 <h2 id="fan-out-behavior">Fan-Out Behavior<a class="headerlink" href="#fan-out-behavior" title="Permanent link">&para;</a></h2>
 <h3 id="original-event-handling">Original Event Handling<a class="headerlink" href="#original-event-handling" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Original event is suppressed after emit_each</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1"># Output: Only user events, not the original batch event</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="c1"># To keep original + fanned out events, emit before fan-out</span>
@@ -1918,9 +1918,9 @@
 </code></pre></div>
 <h3 id="empty-arrays">Empty Arrays<a class="headerlink" href="#empty-arrays" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Empty arrays emit 0 events</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.count = emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(if e.count == 0 { &quot;empty&quot; } else { &quot;has_items&quot; })&#39;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.count = emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(if e.count == 0 { &quot;empty&quot; } else { &quot;has_items&quot; })&#39;</span>
 </code></pre></div>
 <h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
 <p><strong>Resilient mode (default):</strong></p>
@@ -1935,7 +1935,7 @@
 <li>Use <code>--strict</code> for fail-fast behavior</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># See errors if fan-out fails</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span>--verbose
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;emit_each(e.users)&#39;</span><span class="w"> </span>--verbose
 </code></pre></div>
 <h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
 <p><strong>Performance:</strong></p>

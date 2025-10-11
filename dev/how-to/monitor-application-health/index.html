@@ -1999,153 +1999,153 @@
 <h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
 <h3 id="basic-health-check">Basic Health Check<a class="headerlink" href="#basic-health-check" title="Permanent link">&para;</a></h3>
 <p>Monitor overall service health:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="error-rate-monitoring">Error Rate Monitoring<a class="headerlink" href="#error-rate-monitoring" title="Permanent link">&para;</a></h3>
 <p>Track error rates over time:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; || e.level == &quot;CRITICAL&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; || e.level == &quot;CRITICAL&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <p>Calculate error percentage from metrics output.</p>
 <h3 id="service-specific-health">Service-Specific Health<a class="headerlink" href="#service-specific-health" title="Permanent link">&para;</a></h3>
 <p>Monitor individual service health:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;database&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;duration&quot;, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(&quot;duration&quot;, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="response-time-monitoring">Response Time Monitoring<a class="headerlink" href="#response-time-monitoring" title="Permanent link">&para;</a></h3>
 <p>Track performance metrics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;duration_ms&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_min(&quot;fastest&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_max(&quot;slowest&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_min(&quot;fastest&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_max(&quot;slowest&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="memory-usage-tracking">Memory Usage Tracking<a class="headerlink" href="#memory-usage-tracking" title="Permanent link">&para;</a></h3>
 <p>Monitor memory consumption:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;memory_percent&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;memory&quot;, e.memory_percent)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_max(&quot;peak_memory&quot;, e.memory_percent)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(&quot;memory&quot;, e.memory_percent)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_max(&quot;peak_memory&quot;, e.memory_percent)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="endpoint-performance">Endpoint Performance<a class="headerlink" href="#endpoint-performance" title="Permanent link">&para;</a></h3>
 <p>Analyze API endpoint health:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;path&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(e.path, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(e.path, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
 <h3 id="service-status-dashboard">Service Status Dashboard<a class="headerlink" href="#service-status-dashboard" title="Permanent link">&para;</a></h3>
 <p>Generate a comprehensive health report:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(e.service + &quot;_errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;duration_ms&quot;) { track_avg(&quot;avg_duration&quot;, e.duration_ms) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(e.service + &quot;_errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;duration_ms&quot;) { track_avg(&quot;avg_duration&quot;, e.duration_ms) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="failed-operations">Failed Operations<a class="headerlink" href="#failed-operations" title="Permanent link">&para;</a></h3>
 <p>Track operations that fail:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;status&quot;, &quot;success&quot;) != &quot;success&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.operation = e.get_path(&quot;operation&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.operation)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,service,operation,message<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.operation = e.get_path(&quot;operation&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.operation)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,service,operation,message<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="database-query-health">Database Query Health<a class="headerlink" href="#database-query-health" title="Permanent link">&para;</a></h3>
 <p>Monitor database performance:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;database&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.get_path(&quot;duration_ms&quot;, 0) &gt; 1000 { e.slow = true }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;queries&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.slow { track_count(&quot;slow_queries&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;query_time&quot;, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.get_path(&quot;duration_ms&quot;, 0) &gt; 1000 { e.slow = true }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;queries&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.slow { track_count(&quot;slow_queries&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(&quot;query_time&quot;, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="authentication-failures">Authentication Failures<a class="headerlink" href="#authentication-failures" title="Permanent link">&para;</a></h3>
 <p>Track login and auth issues:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;failed&quot;) || e.message.contains(&quot;locked&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.username)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.get_path(&quot;ip&quot;, &quot;unknown&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,username,ip,message<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.username)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.get_path(&quot;ip&quot;, &quot;unknown&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,username,ip,message<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="cache-performance">Cache Performance<a class="headerlink" href="#cache-performance" title="Permanent link">&para;</a></h3>
 <p>Monitor cache hit rates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;cache&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;hit&quot;) { track_count(&quot;cache_hits&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;miss&quot;) { track_count(&quot;cache_misses&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;cache_total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;hit&quot;) { track_count(&quot;cache_hits&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;miss&quot;) { track_count(&quot;cache_misses&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;cache_total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="service-dependencies">Service Dependencies<a class="headerlink" href="#service-dependencies" title="Permanent link">&para;</a></h3>
 <p>Track which services are interacting:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;downstream_service&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.call = e.service + &quot; -&gt; &quot; + e.downstream_service&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.call)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.call = e.service + &quot; -&gt; &quot; + e.downstream_service&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.call)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="hourly-health-report">Hourly Health Report<a class="headerlink" href="#hourly-health-report" title="Permanent link">&para;</a></h3>
 <p>Break down health by time:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(e.hour + &quot;_errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(e.hour + &quot;_errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="resource-exhaustion-detection">Resource Exhaustion Detection<a class="headerlink" href="#resource-exhaustion-detection" title="Permanent link">&para;</a></h3>
 <p>Find resource pressure points:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;WARN&quot; || e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;memory&quot;) || e.message.contains(&quot;disk&quot;) || e.message.contains(&quot;connection&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,service,level,message
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,service,level,message
 </code></pre></div>
 <h3 id="user-activity-tracking">User Activity Tracking<a class="headerlink" href="#user-activity-tracking" title="Permanent link">&para;</a></h3>
 <p>Monitor user-facing operations:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;user_id&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;active_users&quot;, e.user_id)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.get_path(&quot;operation&quot;, &quot;unknown&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;active_users&quot;, e.user_id)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.get_path(&quot;operation&quot;, &quot;unknown&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h2 id="time-based-monitoring">Time-Based Monitoring<a class="headerlink" href="#time-based-monitoring" title="Permanent link">&para;</a></h2>
 <h3 id="last-hours-health">Last Hour's Health<a class="headerlink" href="#last-hours-health" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="compare-time-periods">Compare Time Periods<a class="headerlink" href="#compare-time-periods" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Morning traffic</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15 06:00:00&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span>--until<span class="w"> </span><span class="s2">&quot;2024-01-15 12:00:00&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">    </span>--metrics
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># Afternoon traffic</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15 12:00:00&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span>--until<span class="w"> </span><span class="s2">&quot;2024-01-15 18:00:00&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="real-time-monitoring">Real-Time Monitoring<a class="headerlink" href="#real-time-monitoring" title="Permanent link">&para;</a></h3>
@@ -2153,15 +2153,15 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>&gt;<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { eprint(&quot;⚠️  ERROR in &quot; + e.service) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { eprint(&quot;⚠️  ERROR in &quot; + e.service) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>--metrics
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">&gt;</span> <span class="nb">Get-Content</span> <span class="n">-Wait</span> <span class="n">app</span><span class="p">.</span><span class="n">log</span> <span class="p">|</span> <span class="n">kelora</span> <span class="n">-j</span> <span class="p">\</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="p">-</span><span class="n">-exec</span> <span class="s1">&#39;track_count(e.level)&#39;</span> <span class="p">\</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="p">-</span><span class="n">-exec</span> <span class="s1">&#39;if e.level == &quot;ERROR&quot; { eprint(&quot;⚠️  ERROR in &quot; + e.service) }&#39;</span> <span class="p">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">-e</span> <span class="s1">&#39;track_count(e.level)&#39;</span> <span class="p">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">-e</span> <span class="s1">&#39;if e.level == &quot;ERROR&quot; { eprint(&quot;⚠️  ERROR in &quot; + e.service) }&#39;</span> <span class="p">\</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="p">-</span><span class="n">-metrics</span>
 </code></pre></div>
 </div>
@@ -2169,85 +2169,85 @@
 </div>
 <h2 id="alerting-patterns">Alerting Patterns<a class="headerlink" href="#alerting-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="critical-error-detection">Critical Error Detection<a class="headerlink" href="#critical-error-detection" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;CRITICAL&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;🚨 CRITICAL: &quot; + e.service + &quot; - &quot; + e.message)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;🚨 CRITICAL: &quot; + e.service + &quot; - &quot; + e.message)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>-qq
 </code></pre></div>
 <p>The <code>-qq</code> flag suppresses event output, showing only alerts.</p>
 <h3 id="threshold-alerts">Threshold Alerts<a class="headerlink" href="#threshold-alerts" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.get_path(&quot;memory_percent&quot;, 0) &gt; 90 { eprint(&quot;⚠️  High memory: &quot; + e.service + &quot; at &quot; + e.memory_percent + &quot;%&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.get_path(&quot;duration_ms&quot;, 0) &gt; 5000 { eprint(&quot;⚠️  Slow request: &quot; + e.get_path(&quot;path&quot;, &quot;unknown&quot;) + &quot; took &quot; + e.duration_ms + &quot;ms&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.get_path(&quot;memory_percent&quot;, 0) &gt; 90 { eprint(&quot;⚠️  High memory: &quot; + e.service + &quot; at &quot; + e.memory_percent + &quot;%&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.get_path(&quot;duration_ms&quot;, 0) &gt; 5000 { eprint(&quot;⚠️  Slow request: &quot; + e.get_path(&quot;path&quot;, &quot;unknown&quot;) + &quot; took &quot; + e.duration_ms + &quot;ms&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>-qq
 </code></pre></div>
 <h3 id="service-down-detection">Service Down Detection<a class="headerlink" href="#service-down-detection" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;unavailable&quot;) || e.message.contains(&quot;timeout&quot;) || e.message.contains(&quot;unreachable&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;🔴 Service issue: &quot; + e.service + &quot; - &quot; + e.message)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,service,message
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;🔴 Service issue: &quot; + e.service + &quot; - &quot; + e.message)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,service,message
 </code></pre></div>
 <h2 id="export-for-monitoring-tools">Export for Monitoring Tools<a class="headerlink" href="#export-for-monitoring-tools" title="Permanent link">&para;</a></h2>
 <h3 id="prometheus-style-metrics">Prometheus-Style Metrics<a class="headerlink" href="#prometheus-style-metrics" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;http_requests_total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.status &gt;= 500 { track_count(&quot;http_requests_errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;http_request_duration_ms&quot;, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;http_requests_total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.status &gt;= 500 { track_count(&quot;http_requests_errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(&quot;http_request_duration_ms&quot;, e.get_path(&quot;duration_ms&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="json-export-for-dashboards">JSON Export for Dashboards<a class="headerlink" href="#json-export-for-dashboards" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.error_type = e.get_path(&quot;error.type&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,service,error_type,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>errors.json
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.error_type = e.get_path(&quot;error.type&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,service,error_type,message<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span>-J<span class="w"> </span>&gt;<span class="w"> </span>errors.json
 </code></pre></div>
 <h3 id="csv-for-spreadsheets">CSV for Spreadsheets<a class="headerlink" href="#csv-for-spreadsheets" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--keys<span class="w"> </span>hour,service,level,message<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = e.timestamp.format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>-k<span class="w"> </span>hour,service,level,message<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>health_report.csv
 </code></pre></div>
 <h2 id="performance-tips">Performance Tips<a class="headerlink" href="#performance-tips" title="Permanent link">&para;</a></h2>
 <p><strong>Large Log Files:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>large-app.log.gz<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>large-app.log.gz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Sampling for Quick Analysis:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.user_id.bucket() % 10 == 0 { track_count(&quot;sampled&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.user_id.bucket() % 10 == 0 { track_count(&quot;sampled&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Focus on Recent Events:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span>--since<span class="w"> </span><span class="s2">&quot;30 minutes ago&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <p><strong>Service health summary:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service + &quot;_&quot; + e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service + &quot;_&quot; + e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Error rate calculation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span>--metrics
 <a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="c1"># Calculate: errors / total * 100</span>
 </code></pre></div></p>
 <p><strong>Unique users:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user_id)&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user_id)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Service call patterns:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;operation&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service + &quot;::&quot; + e.operation)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service + &quot;::&quot; + e.operation)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
