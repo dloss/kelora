@@ -2227,70 +2227,85 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;csv status:int&quot;</span><span class="w"> </span>--strict<span class="w"> </span>examples/errors_csv_ragged.csv
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; method=&#39;GET&#39; path=&#39;/&#39; status=200 bytes=1234 duration_ms=45
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:00:05Z&#39; method=&#39;GET&#39; path=&#39;/api/users&#39; status=200 bytes=5678 duration_ms=120
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; method=&#39;POST&#39; path=&#39;/api/login&#39; status=200 bytes=234 duration_ms=67
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:00:15Z&#39; method=&#39;GET&#39; path=&#39;/api/users/123&#39; status=200 bytes=890 duration_ms=34
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; method=&#39;PUT&#39; path=&#39;/api/users/123&#39; status=200 bytes=456 duration_ms=89
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=&#39;2024-01-15T10:00:25Z&#39; method=&#39;GET&#39; path=&#39;/static/logo.png&#39; status=200 bytes=12345 duration_ms=12
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; method=&#39;GET&#39; path=&#39;/api/posts&#39; status=200 bytes=9876 duration_ms=156
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2024-01-15T10:00:35Z&#39; method=&#39;GET&#39; path=&#39;/favicon.ico&#39; status=404 bytes=0 duration_ms=5
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:00:40Z&#39; method=&#39;POST&#39; path=&#39;/api/posts&#39; status=201 bytes=567 duration_ms=234
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2024-01-15T10:00:45Z&#39; method=&#39;GET&#39; path=&#39;/api/comments&#39; status=200 bytes=4321 duration_ms=98
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:00:50Z&#39; method=&#39;DELETE&#39; path=&#39;/api/posts/456&#39; status=204 bytes=0 duration_ms=45
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>timestamp=&#39;2024-01-15T10:00:55Z&#39; method=&#39;GET&#39; path=&#39;/admin&#39; status=401 bytes=123 duration_ms=12
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; method=&#39;GET&#39; path=&#39;/api/search&#39; status=200 bytes=7890 duration_ms=345
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>timestamp=&#39;2024-01-15T10:01:05Z&#39; method=&#39;POST&#39; path=&#39;/api/upload&#39; status=413 bytes=0 duration_ms=5
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>timestamp=&#39;2024-01-15T10:01:10Z&#39; method=&#39;GET&#39; path=&#39;/api/stats&#39; status=200 bytes=2345 duration_ms=234
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>timestamp=&#39;2024-01-15T10:01:15Z&#39; method=&#39;GET&#39; path=&#39;/api/health&#39; status=200 bytes=89 duration_ms=8
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>timestamp=&#39;2024-01-15T10:01:20Z&#39; method=&#39;GET&#39; path=&#39;/api/users&#39; status=500 bytes=567 duration_ms=1234
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>timestamp=&#39;2024-01-15T10:01:25Z&#39; method=&#39;GET&#39; path=&#39;/api/retry&#39; status=200 bytes=890 duration_ms=89
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; method=&#39;PATCH&#39; path=&#39;/api/users/789&#39; status=200 bytes=345 duration_ms=123
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp=&#39;2024-01-15T10:01:35Z&#39; method=&#39;GET&#39; path=&#39;/robots.txt&#39; status=200 bytes=234 duration_ms=4
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>timestamp=&#39;2024-01-15T10:01:40Z&#39; method=&#39;GET&#39; path=&#39;/api/feed&#39; status=200 bytes=15678 duration_ms=456
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>timestamp=&#39;2024-01-15T10:01:45Z&#39; method=&#39;POST&#39; path=&#39;/api/logout&#39; status=200 bytes=123 duration_ms=34
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>timestamp=&#39;2024-01-15T10:01:50Z&#39; method=&#39;GET&#39; path=&#39;/nonexistent&#39; status=404 bytes=567 duration_ms=7
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>timestamp=&#39;2024-01-15T10:01:55Z&#39; method=&#39;GET&#39; path=&#39;/api/metrics&#39; status=200 bytes=3456 duration_ms=67
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; method=&#39;GET&#39; path=&#39;/api/version&#39; status=200 bytes=89 duration_ms=12
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;login&#39; success=true
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; user_id=102 username=&#39;bob&#39; action=&#39;login&#39; success=true
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;login&#39; success=false
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;view_profile&#39; success=true
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; user_id=104 username=&#39;diana&#39; action=&#39;login&#39; success=true
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; user_id=102 username=&#39;bob&#39; action=&#39;edit_post&#39; success=true
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>timestamp=&#39;2024-01-15T10:02:30Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;upload_file&#39; success=false
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; user_id=105 username=&#39;eve&#39; action=&#39;login&#39; success=true
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>timestamp=&#39;2024-01-15T10:03:30Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;reset_password&#39; success=true
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>timestamp=&#39;2024-01-15T10:04:00Z&#39; user_id=104 username=&#39;diana&#39; action=&#39;delete_account&#39; success=true
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>timestamp=&#39;2024-01-15T10:05:00Z&#39; user_id=102 username=&#39;bob&#39; action=&#39;logout&#39; success=true
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>timestamp=&#39;2024-01-15T10:05:30Z&#39; user_id=105 username=&#39;eve&#39; action=&#39;view_dashboard&#39; success=true
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>timestamp=&#39;2024-01-15T10:06:00Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;logout&#39; success=true
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>timestamp=&#39;2024-01-15T10:07:00Z&#39; user_id=106 username=&#39;frank&#39; action=&#39;login&#39; success=false
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>timestamp=&#39;2024-01-15T10:07:30Z&#39; user_id=106 username=&#39;frank&#39; action=&#39;login&#39; success=false
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>timestamp=&#39;2024-01-15T10:08:00Z&#39; user_id=106 username=&#39;frank&#39; action=&#39;login&#39; success=false
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>timestamp=&#39;2024-01-15T10:09:00Z&#39; user_id=105 username=&#39;eve&#39; action=&#39;change_settings&#39; success=true
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>timestamp=&#39;2024-01-15T10:10:00Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;login&#39; success=true
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>timestamp=&#39;2024-01-15T10:11:00Z&#39; user_id=107 username=&#39;grace&#39; action=&#39;login&#39; success=true
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>timestamp=&#39;2024-01-15T10:12:00Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;logout&#39; success=true
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>ts=&#39;2024-01-15 10:00:00&#39; level=&#39;INFO&#39; msg=&#39;server  Application started successfully\n&#39;
-<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>ts=&#39;2024-01-15 10:00:05&#39; level=&#39;DEBUG&#39; msg=&#39;config  Loading configuration from file\n&#39;
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>ts=&#39;2024-01-15 10:00:10&#39; level=&#39;WARN&#39; msg=&#39;memory  Memory usage at 85% threshold\n&#39;
-<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>ts=&#39;2024-01-15 10:00:15&#39; level=&#39;ERROR&#39; msg=&#39;network Connection timeout after 5000ms\n&#39;
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>ts=&#39;2024-01-15 10:00:20&#39; level=&#39;INFO&#39; msg=&#39;api     Received GET request for /users\n&#39;
-<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>ts=&#39;2024-01-15 10:00:25&#39; level=&#39;DEBUG&#39; msg=&#39;cache   Cache hit for key user:123\n&#39;
-<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>ts=&#39;2024-01-15 10:00:30&#39; level=&#39;INFO&#39; msg=&#39;api     Response sent with status 200\n&#39;
-<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>ts=&#39;2024-01-15 10:00:35&#39; level=&#39;CRITICAL&#39; msg=&#39;disk    Disk space below 1GB on /var\n&#39;
-<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>ts=&#39;2024-01-15 10:00:40&#39; level=&#39;ERROR&#39; msg=&#39;auth    Invalid credentials for admin\n&#39;
-<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>ts=&#39;2024-01-15 10:00:45&#39; level=&#39;WARN&#39; msg=&#39;rate    Rate limit approaching for IP\n&#39;
-<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; level=&#39;INFO&#39; message=&#39;Valid 4-column row&#39; extra=&#39;data&#39;
-<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>timestamp=&#39;2024-01-15T10:00:05Z&#39; level=&#39;WARN&#39; message=&#39;Missing extra column&#39;
-<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; level=&#39;ERROR&#39; message=&#39;Extra&#39; extra=&#39;column&#39;
-<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>timestamp=&#39;2024-01-15T10:00:15Z&#39; level=&#39;INFO&#39; message=&#39;Valid row&#39; extra=&#39;more_data&#39;
-<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; level=&#39;DEBUG&#39;
-<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>timestamp=&#39;2024-01-15T10:00:25Z&#39; level=&#39;INFO&#39; message=&#39;Another valid&#39; extra=&#39;row&#39;
-<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; level=&#39;WARN&#39; message=&#39;Quoted &quot;comma&#39; extra=&#39; inside&quot;&#39;
-<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>timestamp=&#39;2024-01-15T10:00:35Z&#39; level=&#39;ERROR&#39; message=&#39;Missing&#39; extra=&#39;&#39;
-<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>timestamp=&#39;2024-01-15T10:00:40Z&#39; level=&#39;INFO&#39; message=&#39;Valid&#39; extra=&#39;data&#39;
-<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>timestamp=&#39;2024-01-15T10:00:45Z&#39; level=&#39;CRITICAL&#39; message=&#39;Final&#39; extra=&#39;row&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:00:05Z&#39; method=&#39;GET&#39; path=&#39;/api/users&#39; status=200 bytes=5678
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  duration_ms=120
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; method=&#39;POST&#39; path=&#39;/api/login&#39; status=200 bytes=234 duration_ms=67
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:00:15Z&#39; method=&#39;GET&#39; path=&#39;/api/users/123&#39; status=200 bytes=890
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  duration_ms=34
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; method=&#39;PUT&#39; path=&#39;/api/users/123&#39; status=200 bytes=456
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  duration_ms=89
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:00:25Z&#39; method=&#39;GET&#39; path=&#39;/static/logo.png&#39; status=200 bytes=12345
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  duration_ms=12
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; method=&#39;GET&#39; path=&#39;/api/posts&#39; status=200 bytes=9876
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  duration_ms=156
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2024-01-15T10:00:35Z&#39; method=&#39;GET&#39; path=&#39;/favicon.ico&#39; status=404 bytes=0 duration_ms=5
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>timestamp=&#39;2024-01-15T10:00:40Z&#39; method=&#39;POST&#39; path=&#39;/api/posts&#39; status=201 bytes=567
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  duration_ms=234
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>timestamp=&#39;2024-01-15T10:00:45Z&#39; method=&#39;GET&#39; path=&#39;/api/comments&#39; status=200 bytes=4321
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  duration_ms=98
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>timestamp=&#39;2024-01-15T10:00:50Z&#39; method=&#39;DELETE&#39; path=&#39;/api/posts/456&#39; status=204 bytes=0
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  duration_ms=45
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp=&#39;2024-01-15T10:00:55Z&#39; method=&#39;GET&#39; path=&#39;/admin&#39; status=401 bytes=123 duration_ms=12
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; method=&#39;GET&#39; path=&#39;/api/search&#39; status=200 bytes=7890
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  duration_ms=345
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>timestamp=&#39;2024-01-15T10:01:05Z&#39; method=&#39;POST&#39; path=&#39;/api/upload&#39; status=413 bytes=0 duration_ms=5
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>timestamp=&#39;2024-01-15T10:01:10Z&#39; method=&#39;GET&#39; path=&#39;/api/stats&#39; status=200 bytes=2345
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>  duration_ms=234
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>timestamp=&#39;2024-01-15T10:01:15Z&#39; method=&#39;GET&#39; path=&#39;/api/health&#39; status=200 bytes=89 duration_ms=8
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>timestamp=&#39;2024-01-15T10:01:20Z&#39; method=&#39;GET&#39; path=&#39;/api/users&#39; status=500 bytes=567
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>  duration_ms=1234
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>timestamp=&#39;2024-01-15T10:01:25Z&#39; method=&#39;GET&#39; path=&#39;/api/retry&#39; status=200 bytes=890 duration_ms=89
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; method=&#39;PATCH&#39; path=&#39;/api/users/789&#39; status=200 bytes=345
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>  duration_ms=123
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>timestamp=&#39;2024-01-15T10:01:35Z&#39; method=&#39;GET&#39; path=&#39;/robots.txt&#39; status=200 bytes=234 duration_ms=4
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>timestamp=&#39;2024-01-15T10:01:40Z&#39; method=&#39;GET&#39; path=&#39;/api/feed&#39; status=200 bytes=15678
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>  duration_ms=456
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>timestamp=&#39;2024-01-15T10:01:45Z&#39; method=&#39;POST&#39; path=&#39;/api/logout&#39; status=200 bytes=123
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>  duration_ms=34
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>timestamp=&#39;2024-01-15T10:01:50Z&#39; method=&#39;GET&#39; path=&#39;/nonexistent&#39; status=404 bytes=567 duration_ms=7
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>timestamp=&#39;2024-01-15T10:01:55Z&#39; method=&#39;GET&#39; path=&#39;/api/metrics&#39; status=200 bytes=3456
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>  duration_ms=67
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; method=&#39;GET&#39; path=&#39;/api/version&#39; status=200 bytes=89 duration_ms=12
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;login&#39; success=true
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; user_id=102 username=&#39;bob&#39; action=&#39;login&#39; success=true
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;login&#39; success=false
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;view_profile&#39; success=true
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; user_id=104 username=&#39;diana&#39; action=&#39;login&#39; success=true
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; user_id=102 username=&#39;bob&#39; action=&#39;edit_post&#39; success=true
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>timestamp=&#39;2024-01-15T10:02:30Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;upload_file&#39; success=false
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; user_id=105 username=&#39;eve&#39; action=&#39;login&#39; success=true
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>timestamp=&#39;2024-01-15T10:03:30Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;reset_password&#39; success=true
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>timestamp=&#39;2024-01-15T10:04:00Z&#39; user_id=104 username=&#39;diana&#39; action=&#39;delete_account&#39; success=true
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>timestamp=&#39;2024-01-15T10:05:00Z&#39; user_id=102 username=&#39;bob&#39; action=&#39;logout&#39; success=true
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>timestamp=&#39;2024-01-15T10:05:30Z&#39; user_id=105 username=&#39;eve&#39; action=&#39;view_dashboard&#39; success=true
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>timestamp=&#39;2024-01-15T10:06:00Z&#39; user_id=101 username=&#39;alice&#39; action=&#39;logout&#39; success=true
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>timestamp=&#39;2024-01-15T10:07:00Z&#39; user_id=106 username=&#39;frank&#39; action=&#39;login&#39; success=false
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>timestamp=&#39;2024-01-15T10:07:30Z&#39; user_id=106 username=&#39;frank&#39; action=&#39;login&#39; success=false
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>timestamp=&#39;2024-01-15T10:08:00Z&#39; user_id=106 username=&#39;frank&#39; action=&#39;login&#39; success=false
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>timestamp=&#39;2024-01-15T10:09:00Z&#39; user_id=105 username=&#39;eve&#39; action=&#39;change_settings&#39; success=true
+<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>timestamp=&#39;2024-01-15T10:10:00Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;login&#39; success=true
+<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>timestamp=&#39;2024-01-15T10:11:00Z&#39; user_id=107 username=&#39;grace&#39; action=&#39;login&#39; success=true
+<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>timestamp=&#39;2024-01-15T10:12:00Z&#39; user_id=103 username=&#39;charlie&#39; action=&#39;logout&#39; success=true
+<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>ts=&#39;2024-01-15 10:00:00&#39; level=&#39;INFO&#39; msg=&#39;server  Application started successfully\n&#39;
+<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>ts=&#39;2024-01-15 10:00:05&#39; level=&#39;DEBUG&#39; msg=&#39;config  Loading configuration from file\n&#39;
+<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>ts=&#39;2024-01-15 10:00:10&#39; level=&#39;WARN&#39; msg=&#39;memory  Memory usage at 85% threshold\n&#39;
+<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>ts=&#39;2024-01-15 10:00:15&#39; level=&#39;ERROR&#39; msg=&#39;network Connection timeout after 5000ms\n&#39;
+<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>ts=&#39;2024-01-15 10:00:20&#39; level=&#39;INFO&#39; msg=&#39;api     Received GET request for /users\n&#39;
+<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>ts=&#39;2024-01-15 10:00:25&#39; level=&#39;DEBUG&#39; msg=&#39;cache   Cache hit for key user:123\n&#39;
+<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a>ts=&#39;2024-01-15 10:00:30&#39; level=&#39;INFO&#39; msg=&#39;api     Response sent with status 200\n&#39;
+<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>ts=&#39;2024-01-15 10:00:35&#39; level=&#39;CRITICAL&#39; msg=&#39;disk    Disk space below 1GB on /var\n&#39;
+<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>ts=&#39;2024-01-15 10:00:40&#39; level=&#39;ERROR&#39; msg=&#39;auth    Invalid credentials for admin\n&#39;
+<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>ts=&#39;2024-01-15 10:00:45&#39; level=&#39;WARN&#39; msg=&#39;rate    Rate limit approaching for IP\n&#39;
+<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; level=&#39;INFO&#39; message=&#39;Valid 4-column row&#39; extra=&#39;data&#39;
+<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a>timestamp=&#39;2024-01-15T10:00:05Z&#39; level=&#39;WARN&#39; message=&#39;Missing extra column&#39;
+<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; level=&#39;ERROR&#39; message=&#39;Extra&#39; extra=&#39;column&#39;
+<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a>timestamp=&#39;2024-01-15T10:00:15Z&#39; level=&#39;INFO&#39; message=&#39;Valid row&#39; extra=&#39;more_data&#39;
+<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; level=&#39;DEBUG&#39;
+<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a>timestamp=&#39;2024-01-15T10:00:25Z&#39; level=&#39;INFO&#39; message=&#39;Another valid&#39; extra=&#39;row&#39;
+<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; level=&#39;WARN&#39; message=&#39;Quoted &quot;comma&#39; extra=&#39; inside&quot;&#39;
+<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a>timestamp=&#39;2024-01-15T10:00:35Z&#39; level=&#39;ERROR&#39; message=&#39;Missing&#39; extra=&#39;&#39;
+<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a>timestamp=&#39;2024-01-15T10:00:40Z&#39; level=&#39;INFO&#39; message=&#39;Valid&#39; extra=&#39;data&#39;
+<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a>timestamp=&#39;2024-01-15T10:00:45Z&#39; level=&#39;CRITICAL&#39; message=&#39;Final&#39; extra=&#39;row&#39;
 </code></pre></div>
 <p>Inline type annotations and strict mode are perfect for catching malformed rows during ingestion before they reach downstream systems.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
