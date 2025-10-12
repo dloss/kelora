@@ -1363,15 +1363,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#kelora-pipeline-stages" class="md-nav__link">
-    <span class="md-ellipsis">
-      Kelora Pipeline Stages
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#common-patterns" class="md-nav__link">
     <span class="md-ellipsis">
       Common Patterns
@@ -1618,15 +1609,6 @@
   <a href="#type-conversions" class="md-nav__link">
     <span class="md-ellipsis">
       Type Conversions
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#kelora-pipeline-stages" class="md-nav__link">
-    <span class="md-ellipsis">
-      Kelora Pipeline Stages
     </span>
   </a>
   
@@ -1953,113 +1935,87 @@
 <a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>type_of(e.field)                      // Get type as string
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>type_of(e.field) != &quot;()&quot;              // Check if field has value
 </code></pre></div>
-<h2 id="kelora-pipeline-stages">Kelora Pipeline Stages<a class="headerlink" href="#kelora-pipeline-stages" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>--begin         // Pre-run once before parsing
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>                // Populate global `conf` map (becomes read-only)
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>--filter        // Boolean gate per event
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>                // true = keep, false = drop
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>                // Repeatable, executed in order
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>--exec / -e     // Transform per event
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>                // Modify event fields
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>                // Repeatable, executed in order
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>--exec-file     // Same as --exec, reads script from file
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>--end           // Post-run once after all processing
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>                // Access global `metrics` map for reports
-</code></pre></div>
-<p><strong>Example pipeline:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--begin<span class="w"> </span><span class="s1">&#39;conf.threshold = 100&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.count &gt; conf.threshold&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.category = if e.count &gt; 1000 { &quot;high&quot; } else { &quot;medium&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total&quot;, e.count)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total: &quot; + metrics.total)&#39;</span>
-</code></pre></div>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="safe-nested-access">Safe Nested Access<a class="headerlink" href="#safe-nested-access" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>// With default fallback
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;);
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>let port = to_int_or(e.port, 8080);
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>// With existence check
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>if e.has_path(&quot;user.profile.avatar&quot;) {
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    e.avatar = e.user.profile.avatar;
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>}
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>// Safe array access
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>if e.items.len() &gt; 0 {
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>    e.first_item = e.items[0];
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>// With default fallback
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>let role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;);
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>let port = to_int_or(e.port, 8080);
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>// With existence check
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>if e.has_path(&quot;user.profile.avatar&quot;) {
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    e.avatar = e.user.profile.avatar;
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>}
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>// Safe array access
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>if e.items.len() &gt; 0 {
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>    e.first_item = e.items[0];
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>}
 </code></pre></div>
 <h3 id="conditional-field-removal">Conditional Field Removal<a class="headerlink" href="#conditional-field-removal" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Remove debug fields in production
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>if e.level != &quot;DEBUG&quot; {
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    e.stack_trace = ();
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    e.debug_info = ();
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>}
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>// Remove entire event conditionally
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>if e.status &lt; 400 { e = (); }         // Only keep errors
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>// Remove debug fields in production
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>if e.level != &quot;DEBUG&quot; {
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    e.stack_trace = ();
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    e.debug_info = ();
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>}
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>// Remove entire event conditionally
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>if e.status &lt; 400 { e = (); }         // Only keep errors
 </code></pre></div>
 <h3 id="method-chaining">Method Chaining<a class="headerlink" href="#method-chaining" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>// Extract and normalize domain
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>e.domain = e.url
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    .extract_domain()
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    .to_lower()
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    .strip();
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>// Parse and extract from structured text
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>e.error_line = e.stack_trace
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    .extract_re(r&quot;line (\d+)&quot;, 1)
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    .to_int_or(0);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>// Extract and normalize domain
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>e.domain = e.url
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    .extract_domain()
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    .to_lower()
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    .strip();
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>// Parse and extract from structured text
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>e.error_line = e.stack_trace
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    .extract_re(r&quot;line (\d+)&quot;, 1)
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    .to_int_or(0);
 </code></pre></div>
 <h3 id="array-processing">Array Processing<a class="headerlink" href="#array-processing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Get top N scores
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.top_3 = sorted(e.scores)[-3:];
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>// Extract names from sorted users
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.winners = sorted_by(e.users, &quot;score&quot;)
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    .reverse()
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    .map(|u| u.name);
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>// Filter and count
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>e.active_items = e.items.filter(|i| i.status == &quot;active&quot;);
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>e.active_count = e.active_items.len();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Get top N scores
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>e.top_3 = sorted(e.scores)[-3:];
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>// Extract names from sorted users
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>e.winners = sorted_by(e.users, &quot;score&quot;)
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    .reverse()
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    .map(|u| u.name);
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>// Filter and count
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>e.active_items = e.items.filter(|i| i.status == &quot;active&quot;);
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>e.active_count = e.active_items.len();
 </code></pre></div>
 <h3 id="multi-level-fan-out">Multi-Level Fan-Out<a class="headerlink" href="#multi-level-fan-out" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a># First exec: batches → separate events
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>--exec &#39;emit_each(e.batches)&#39;
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a># Second exec: items → separate events with context
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>--exec &#39;let ctx = #{batch_id: e.id}; emit_each(e.items, ctx)&#39;
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a># Filter the final events
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>--filter &#39;e.status == &quot;active&quot;&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a># First exec: batches → separate events
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>--exec &#39;emit_each(e.batches)&#39;
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a># Second exec: items → separate events with context
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>--exec &#39;let ctx = #{batch_id: e.id}; emit_each(e.items, ctx)&#39;
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a># Filter the final events
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>--filter &#39;e.status == &quot;active&quot;&#39;
 </code></pre></div>
 <h2 id="global-context">Global Context<a class="headerlink" href="#global-context" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>conf                                  // Global config map (read-only after --begin)
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>metrics                               // Global metrics map (from track_* calls)
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>meta                                  // Event metadata (filename, line numbers, raw line)
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Environment variable access
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>// meta attributes:
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>meta.line                             // Original raw line (always available)
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>meta.line_num                         // Line number, 1-based (available with files)
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>meta.filename                         // Source filename (multi-file processing)
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>// Example usage:
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>--begin &#39;conf.env = get_env(&quot;ENVIRONMENT&quot;, &quot;dev&quot;)&#39;
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>// Multi-file tracking
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>// Debugging with line numbers
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>--exec &#39;eprint(&quot;Error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>conf                                  // Global config map (read-only after --begin)
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>metrics                               // Global metrics map (from track_* calls)
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>meta                                  // Event metadata (filename, line numbers, raw line)
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Environment variable access
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>// meta attributes:
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>meta.line                             // Original raw line (always available)
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>meta.line_num                         // Line number, 1-based (available with files)
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>meta.filename                         // Source filename (multi-file processing)
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>// Example usage:
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>--begin &#39;conf.env = get_env(&quot;ENVIRONMENT&quot;, &quot;dev&quot;)&#39;
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>// Multi-file tracking
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>
+<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>// Debugging with line numbers
+<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>--exec &#39;eprint(&quot;Error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;
 </code></pre></div>
 <h2 id="error-handling-modes">Error Handling Modes<a class="headerlink" href="#error-handling-modes" title="Permanent link">&para;</a></h2>
 <p><strong>Default (resilient):</strong></p>
@@ -2096,17 +2052,17 @@
 </tbody>
 </table>
 <p><strong>Common mistakes:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>// ❌ Wrong
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>x = 1                                 // Error: x not declared
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>let name = &#39;alice&#39;;                   // Error: single quotes not allowed
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>if x &gt; 5: print(&quot;big&quot;)                // Error: colon not allowed, braces required
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>&quot;5&quot; + 3                               // Error: no implicit conversion
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>// ✅ Correct
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>let x = 1;                            // Declare with let
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>let name = &quot;alice&quot;;                   // Double quotes
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>if x &gt; 5 { print(&quot;big&quot;); }            // Braces required
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>&quot;5&quot;.to_int() + 3                      // Explicit conversion
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// ❌ Wrong
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>x = 1                                 // Error: x not declared
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>let name = &#39;alice&#39;;                   // Error: single quotes not allowed
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>if x &gt; 5: print(&quot;big&quot;)                // Error: colon not allowed, braces required
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>&quot;5&quot; + 3                               // Error: no implicit conversion
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>// ✅ Correct
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>let x = 1;                            // Declare with let
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>let name = &quot;alice&quot;;                   // Double quotes
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>if x &gt; 5 { print(&quot;big&quot;); }            // Braces required
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>&quot;5&quot;.to_int() + 3                      // Explicit conversion
 </code></pre></div>
 <p><strong>Special behaviors:</strong></p>
 <ul>
@@ -2116,45 +2072,45 @@
 <li>No implicit type conversion (use <code>to_int()</code>, <code>to_float()</code>, etc.)</li>
 </ul>
 <h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>// Event manipulation
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>e.field = value                       // Set field
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>e.field = ()                          // Remove field
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>e = ()                                // Remove event
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>// Type checking
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>type_of(e.field)                      // Get type
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>&quot;field&quot; in e                          // Field exists
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>// Safe access
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>e.get_path(&quot;a.b.c&quot;, default)          // Nested with fallback
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>e.has_path(&quot;a.b.c&quot;)                   // Check nested exists
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>
-<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>// Conversions
-<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>to_int_or(val, 0)                     // Safe int conversion
-<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>to_float_or(val, 0.0)                 // Safe float conversion
-<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>to_bool_or(val, false)                // Safe bool conversion
-<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>
-<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>// Arrays
-<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>e.items.len()                         // Length
-<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a>e.items.is_empty()                    // Check empty
-<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a>sorted(e.items)                       // Sort
-<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a>unique(e.items)                       // Deduplicate
-<a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a>emit_each(e.items)                    // Fan out to events
-<a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a>
-<a id="__codelineno-19-26" name="__codelineno-19-26" href="#__codelineno-19-26"></a>// Strings
-<a id="__codelineno-19-27" name="__codelineno-19-27" href="#__codelineno-19-27"></a>e.text.to_lower()                     // Lowercase
-<a id="__codelineno-19-28" name="__codelineno-19-28" href="#__codelineno-19-28"></a>e.text.to_upper()                     // Uppercase
-<a id="__codelineno-19-29" name="__codelineno-19-29" href="#__codelineno-19-29"></a>e.text.strip()                        // Trim whitespace
-<a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a>e.text.contains(&quot;word&quot;)               // Substring check
-<a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>e.text.extract_re(r&quot;(\d+)&quot;, 1)        // Regex extraction
-<a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>
-<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>// Environment &amp; Context
-<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var
-<a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a>conf.key                              // Read config (from --begin)
-<a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>metrics.key                           // Read metrics (in --end)
-<a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>meta.filename                         // Current source filename
-<a id="__codelineno-19-38" name="__codelineno-19-38" href="#__codelineno-19-38"></a>meta.line_num                         // Current line number (1-based)
-<a id="__codelineno-19-39" name="__codelineno-19-39" href="#__codelineno-19-39"></a>meta.line                             // Original raw line
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Event manipulation
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>e.field = value                       // Set field
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>e.field = ()                          // Remove field
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>e = ()                                // Remove event
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>// Type checking
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>type_of(e.field)                      // Get type
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>&quot;field&quot; in e                          // Field exists
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>// Safe access
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>e.get_path(&quot;a.b.c&quot;, default)          // Nested with fallback
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>e.has_path(&quot;a.b.c&quot;)                   // Check nested exists
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>// Conversions
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>to_int_or(val, 0)                     // Safe int conversion
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>to_float_or(val, 0.0)                 // Safe float conversion
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>to_bool_or(val, false)                // Safe bool conversion
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>// Arrays
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>e.items.len()                         // Length
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>e.items.is_empty()                    // Check empty
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>sorted(e.items)                       // Sort
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>unique(e.items)                       // Deduplicate
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a>emit_each(e.items)                    // Fan out to events
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>// Strings
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>e.text.to_lower()                     // Lowercase
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a>e.text.to_upper()                     // Uppercase
+<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>e.text.strip()                        // Trim whitespace
+<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a>e.text.contains(&quot;word&quot;)               // Substring check
+<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a>e.text.extract_re(r&quot;(\d+)&quot;, 1)        // Regex extraction
+<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a>
+<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a>// Environment &amp; Context
+<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var
+<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a>conf.key                              // Read config (from --begin)
+<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a>metrics.key                           // Read metrics (in --end)
+<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a>meta.filename                         // Current source filename
+<a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a>meta.line_num                         // Current line number (1-based)
+<a id="__codelineno-17-39" name="__codelineno-17-39" href="#__codelineno-17-39"></a>meta.line                             // Original raw line
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
