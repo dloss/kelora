@@ -3291,8 +3291,8 @@
 <h3 id="output-fields">Output Fields<a class="headerlink" href="#output-fields" title="Permanent link">&para;</a></h3>
 <p>All JSON fields become event fields with their original names and types.</p>
 <h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message
 </code></pre></div>
 <h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3317,8 +3317,8 @@
 <li><code>line</code> - The complete line as a string</li>
 </ul>
 <h3 id="usage_1">Usage<a class="headerlink" href="#usage_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.line.extract_re(r&quot;(ERROR|INFO|WARN)&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.line.extract_re(r&quot;(ERROR|INFO|WARN)&quot;)&#39;</span>
 </code></pre></div>
 <h3 id="notes_1">Notes<a class="headerlink" href="#notes_1" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3339,8 +3339,8 @@
 <h3 id="output-fields_2">Output Fields<a class="headerlink" href="#output-fields_2" title="Permanent link">&para;</a></h3>
 <p>All key-value pairs become top-level fields.</p>
 <h3 id="usage_2">Usage<a class="headerlink" href="#usage_2" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,service,message
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,service,message
 </code></pre></div>
 <h3 id="notes_2">Notes<a class="headerlink" href="#notes_2" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3371,12 +3371,12 @@
 <p><strong>With header:</strong> Field names from header row
 <strong>Without header:</strong> <code>col_0</code>, <code>col_1</code>, <code>col_2</code>, etc.</p>
 <h3 id="usage_3">Usage<a class="headerlink" href="#usage_3" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--levels<span class="w"> </span>error
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>csvnh<span class="w"> </span>data.csv<span class="w"> </span>--keys<span class="w"> </span>col_0,col_1,col_2
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csvnh<span class="w"> </span>data.csv<span class="w"> </span>--keys<span class="w"> </span>col_0,col_1,col_2
 </code></pre></div>
 <h3 id="type-annotations">Type Annotations<a class="headerlink" href="#type-annotations" title="Permanent link">&para;</a></h3>
 <p>Specify field types for automatic conversion:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int response_time:float&#39;</span><span class="w"> </span>access.csv
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int response_time:float&#39;</span><span class="w"> </span>access.csv
 </code></pre></div>
 <p><strong>Supported types:</strong></p>
 <ul>
@@ -3425,8 +3425,8 @@
 <li><code>message</code> - Log message</li>
 </ul>
 <h3 id="usage_4">Usage<a class="headerlink" href="#usage_4" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>messages.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,hostname,appname,message
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>messages.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,hostname,appname,message
 </code></pre></div>
 <h3 id="notes_4">Notes<a class="headerlink" href="#notes_4" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3471,9 +3471,9 @@
 - <code>request_time</code> - Request processing time in seconds (omitted when <code>-</code>)</p>
 <h3 id="usage_5">Usage<a class="headerlink" href="#usage_5" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Works with all three format variants</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/apache2/access.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 404&#39;</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--keys<span class="w"> </span>ip,status,request,request_time
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/apache2/access.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 404&#39;</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--keys<span class="w"> </span>ip,status,request,request_time
 </code></pre></div>
 <h3 id="notes_5">Notes<a class="headerlink" href="#notes_5" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3503,8 +3503,8 @@
 <li>Plus all extension fields as top-level fields</li>
 </ul>
 <h3 id="usage_6">Usage<a class="headerlink" href="#usage_6" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>cef<span class="w"> </span>security.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &gt; 5&#39;</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>cef<span class="w"> </span>security.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,name,src,dst
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>cef<span class="w"> </span>security.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &gt; 5&#39;</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>cef<span class="w"> </span>security.log<span class="w"> </span>--keys<span class="w"> </span>timestamp,name,src,dst
 </code></pre></div>
 <h2 id="column-format">Column Format<a class="headerlink" href="#column-format" title="Permanent link">&para;</a></h2>
 <h3 id="syntax_7">Syntax<a class="headerlink" href="#syntax_7" title="Permanent link">&para;</a></h3>
@@ -3540,13 +3540,13 @@
 <p>Field names come from the specification. Type annotations convert values after extraction.</p>
 <h3 id="usage_7">Usage<a class="headerlink" href="#usage_7" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Whitespace-delimited</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span><span class="w"> </span>app.log
 <a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
 <a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Multi-token timestamp with type annotations</span>
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level status:int *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>timestamp
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level status:int *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>timestamp
 <a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
 <a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># Custom separator</span>
-<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span>data.txt
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span>data.txt
 </code></pre></div>
 <h3 id="notes_6">Notes<a class="headerlink" href="#notes_6" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3572,7 +3572,7 @@
 <li>Line (fallback)</li>
 </ol>
 <h3 id="usage_8">Usage<a class="headerlink" href="#usage_8" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>--levels<span class="w"> </span>error
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>--levels<span class="w"> </span>error
 </code></pre></div>
 <h3 id="notes_7">Notes<a class="headerlink" href="#notes_7" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3584,39 +3584,39 @@
 <h3 id="timestamp-configuration">Timestamp Configuration<a class="headerlink" href="#timestamp-configuration" title="Permanent link">&para;</a></h3>
 <h4 id="-ts-field-field"><code>--ts-field &lt;field&gt;</code><a class="headerlink" href="#-ts-field-field" title="Permanent link">&para;</a></h4>
 <p>Specify custom timestamp field name:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-ts-format-format"><code>--ts-format &lt;format&gt;</code><a class="headerlink" href="#-ts-format-format" title="Permanent link">&para;</a></h4>
 <p>Specify custom timestamp format (chrono format strings):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%d/%b/%Y:%H:%M:%S %z&#39;</span><span class="w"> </span>access.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%d/%b/%Y:%H:%M:%S %z&#39;</span><span class="w"> </span>access.log
 </code></pre></div>
 <p>See <code>--help-time</code> for format reference.</p>
 <h4 id="-input-tz-timezone"><code>--input-tz &lt;timezone&gt;</code><a class="headerlink" href="#-input-tz-timezone" title="Permanent link">&para;</a></h4>
 <p>Timezone for naive timestamps:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--input-tz<span class="w"> </span><span class="nb">local</span><span class="w"> </span>app.log
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--input-tz<span class="w"> </span>Europe/Berlin<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>--input-tz<span class="w"> </span><span class="nb">local</span><span class="w"> </span>app.log
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kelora<span class="w"> </span>--input-tz<span class="w"> </span>Europe/Berlin<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="column-format-options">Column Format Options<a class="headerlink" href="#column-format-options" title="Permanent link">&para;</a></h3>
 <h4 id="-cols-sep-separator"><code>--cols-sep &lt;separator&gt;</code><a class="headerlink" href="#-cols-sep-separator" title="Permanent link">&para;</a></h4>
 <p>Column separator for <code>cols:&lt;spec&gt;</code> format:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>data.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>data.txt
 </code></pre></div>
 <h3 id="prefix-extraction">Prefix Extraction<a class="headerlink" href="#prefix-extraction" title="Permanent link">&para;</a></h3>
 <h4 id="-extract-prefix-field"><code>--extract-prefix &lt;field&gt;</code><a class="headerlink" href="#-extract-prefix-field" title="Permanent link">&para;</a></h4>
 <p>Extract text before separator into field (before parsing):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>&gt;<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>service<span class="w"> </span>-j
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>service<span class="w"> </span>-j
 </code></pre></div>
 <h4 id="-prefix-sep-separator"><code>--prefix-sep &lt;separator&gt;</code><a class="headerlink" href="#-prefix-sep-separator" title="Permanent link">&para;</a></h4>
 <p>Prefix separator (default: <code>|</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>node<span class="w"> </span>--prefix-sep<span class="w"> </span><span class="s1">&#39; :: &#39;</span><span class="w"> </span>cluster.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>node<span class="w"> </span>--prefix-sep<span class="w"> </span><span class="s1">&#39; :: &#39;</span><span class="w"> </span>cluster.log
 </code></pre></div>
 <h3 id="multi-line-events">Multi-line Events<a class="headerlink" href="#multi-line-events" title="Permanent link">&para;</a></h3>
 <h4 id="-m-multiline-strategy"><code>-M, --multiline &lt;strategy&gt;</code><a class="headerlink" href="#-m-multiline-strategy" title="Permanent link">&para;</a></h4>
 <p>Multi-line event detection:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log<span class="w">              </span><span class="c1"># Multi-line JSON objects</span>
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Events start with year</span>
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\S&#39;</span><span class="w"> </span>app.log<span class="w">            </span><span class="c1"># Events start with non-whitespace</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log<span class="w">              </span><span class="c1"># Multi-line JSON objects</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Events start with year</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\S&#39;</span><span class="w"> </span>app.log<span class="w">            </span><span class="c1"># Events start with non-whitespace</span>
 </code></pre></div>
 <p>See <code>--help-multiline</code> for strategy reference.</p>
 <h2 id="output-formats">Output Formats<a class="headerlink" href="#output-formats" title="Permanent link">&para;</a></h2>
@@ -3674,65 +3674,65 @@
 </table>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># Output as JSON</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
 <a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
 <a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># Output as CSV</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message
 <a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>
 <a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="c1"># No event output, only stats</span>
-<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats
+<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats
 </code></pre></div>
 <h2 id="format-conversion">Format Conversion<a class="headerlink" href="#format-conversion" title="Permanent link">&para;</a></h2>
 <p>Convert between formats by combining input and output formats:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># JSON to CSV</span>
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message<span class="w"> </span>&gt;<span class="w"> </span>output.csv
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message<span class="w"> </span>&gt;<span class="w"> </span>output.csv
 <a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
 <a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1"># Logfmt to JSON</span>
-<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>output.jsonl
+<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>output.jsonl
 <a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>
 <a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># CSV to Logfmt</span>
-<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>-F<span class="w"> </span>logfmt<span class="w"> </span>&gt;<span class="w"> </span>output.log
+<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>data.csv<span class="w"> </span>-F<span class="w"> </span>logfmt<span class="w"> </span>&gt;<span class="w"> </span>output.log
 <a id="__codelineno-43-9" name="__codelineno-43-9" href="#__codelineno-43-9"></a>
 <a id="__codelineno-43-10" name="__codelineno-43-10" href="#__codelineno-43-10"></a><span class="c1"># Combined log to JSON</span>
-<a id="__codelineno-43-11" name="__codelineno-43-11" href="#__codelineno-43-11"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>access.jsonl
+<a id="__codelineno-43-11" name="__codelineno-43-11" href="#__codelineno-43-11"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>access.jsonl
 </code></pre></div>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="parse-json-with-auto-detection">Parse JSON with Auto-Detection<a class="headerlink" href="#parse-json-with-auto-detection" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error
 </code></pre></div>
 <h3 id="parse-web-logs-and-filter">Parse Web Logs and Filter<a class="headerlink" href="#parse-web-logs-and-filter" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="w">    </span>--keys<span class="w"> </span>ip,status,request
 </code></pre></div>
 <h3 id="parse-csv-with-type-conversion">Parse CSV with Type Conversion<a class="headerlink" href="#parse-csv-with-type-conversion" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int&#39;</span><span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span>
 </code></pre></div>
 <h3 id="parse-custom-format">Parse Custom Format<a class="headerlink" href="#parse-custom-format" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp level service *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp level service *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="w">    </span>--ts-field<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="w">    </span>--levels<span class="w"> </span>error
 </code></pre></div>
 <h3 id="parse-syslog-and-extract">Parse Syslog and Extract<a class="headerlink" href="#parse-syslog-and-extract" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,hostname,message
 </code></pre></div>
 <h3 id="parse-with-prefix-extraction">Parse with Prefix Extraction<a class="headerlink" href="#parse-with-prefix-extraction" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>&gt;<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.container == &quot;web_1&quot;&#39;</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="format-not-detected">Format Not Detected<a class="headerlink" href="#format-not-detected" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Auto-detection picks wrong format.</p>
 <p><strong>Solution:</strong> Specify format explicitly:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="timestamp-not-parsed">Timestamp Not Parsed<a class="headerlink" href="#timestamp-not-parsed" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Timestamps not recognized.</p>
 <p><strong>Solution:</strong> Specify timestamp format:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="csv-parsing-issues">CSV Parsing Issues<a class="headerlink" href="#csv-parsing-issues" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Quoted fields not handled correctly.</p>
@@ -3742,13 +3742,13 @@
 <h3 id="multi-line-events_1">Multi-line Events<a class="headerlink" href="#multi-line-events_1" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Single event spans multiple lines.</p>
 <p><strong>Solution:</strong> Use multi-line mode:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="mixed-formats">Mixed Formats<a class="headerlink" href="#mixed-formats" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Log file contains multiple formats.</p>
 <p><strong>Solution:</strong> Use preprocessing or separate files:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>&gt;<span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>mixed.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error
-<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>&gt;<span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>mixed.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>grep<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>mixed.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error
+<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>mixed.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

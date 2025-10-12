@@ -2604,7 +2604,7 @@
 <li>Mixed format log files</li>
 </ul>
 <h3 id="example-behavior">Example Behavior<a class="headerlink" href="#example-behavior" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int() * 2&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int() * 2&#39;</span>
 </code></pre></div>
 <p><strong>Input:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;123&quot;</span><span class="p">}</span>
@@ -2621,7 +2621,7 @@
 </code></pre></div></p>
 <h3 id="error-recording">Error Recording<a class="headerlink" href="#error-recording" title="Permanent link">&para;</a></h3>
 <p>Errors are recorded but don't stop processing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span>
 </code></pre></div>
 <p>If <code>e.timestamp</code> is missing or invalid:</p>
 <ul>
@@ -2647,7 +2647,7 @@
 <li>Debugging log parsing issues</li>
 </ul>
 <h3 id="example-behavior_1">Example Behavior<a class="headerlink" href="#example-behavior_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int() * 2&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int() * 2&#39;</span>
 </code></pre></div>
 <p><strong>Input:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;123&quot;</span><span class="p">}</span>
@@ -2661,13 +2661,13 @@
 <p><strong>Exit code:</strong> <code>1</code></p>
 <p>Processing stops at the first error. Line 3 is never processed.</p>
 <h3 id="enabling-strict-mode">Enabling Strict Mode<a class="headerlink" href="#enabling-strict-mode" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="error-types">Error Types<a class="headerlink" href="#error-types" title="Permanent link">&para;</a></h2>
 <h3 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h3>
 <p>Occur when input lines can't be parsed in the specified format.</p>
 <p><strong>JSON parse error:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
 </code></pre></div></p>
 <p><strong>Input:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>{&quot;valid&quot;: &quot;json&quot;}
@@ -2689,7 +2689,7 @@
 <h3 id="filter-errors">Filter Errors<a class="headerlink" href="#filter-errors" title="Permanent link">&para;</a></h3>
 <p>Occur when <code>--filter</code> expressions fail during evaluation.</p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>If <code>e.timestamp</code> is missing:</p>
 <p><strong>Resilient behavior:</strong></p>
@@ -2706,7 +2706,7 @@
 <h3 id="transform-errors">Transform Errors<a class="headerlink" href="#transform-errors" title="Permanent link">&para;</a></h3>
 <p>Occur when <code>--exec</code> scripts fail during execution.</p>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>If <code>e.value</code> is not a valid integer:</p>
 <p><strong>Resilient behavior:</strong></p>
@@ -2723,14 +2723,14 @@
 <h2 id="verbose-error-reporting">Verbose Error Reporting<a class="headerlink" href="#verbose-error-reporting" title="Permanent link">&para;</a></h2>
 <h3 id="default-error-reporting">Default Error Reporting<a class="headerlink" href="#default-error-reporting" title="Permanent link">&para;</a></h3>
 <p>By default, errors are collected and summarized at the end:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
 </code></pre></div>
 <p><strong>Summary:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>🔹 Processed 100 lines, 95 events output, 5 errors
 </code></pre></div></p>
 <h3 id="verbose-mode-verbose">Verbose Mode (<code>--verbose</code>)<a class="headerlink" href="#verbose-mode-verbose" title="Permanent link">&para;</a></h3>
 <p>Show each error immediately as it occurs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
 </code></pre></div>
 <p><strong>Output:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>⚠️  kelora: line 5: exec error - cannot convert &#39;abc&#39; to integer
@@ -2750,7 +2750,7 @@
 </code></pre></div>
 <h3 id="verbose-with-strict">Verbose with Strict<a class="headerlink" href="#verbose-with-strict" title="Permanent link">&para;</a></h3>
 <p>Combine for immediate errors and fail-fast:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--verbose<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--verbose<span class="w"> </span>app.log
 </code></pre></div>
 <p>Errors are shown immediately, then processing aborts.</p>
 <h2 id="quiet-modes">Quiet Modes<a class="headerlink" href="#quiet-modes" title="Permanent link">&para;</a></h2>
@@ -2779,7 +2779,7 @@
 </tbody>
 </table>
 <h3 id="level-1-suppress-diagnostics">Level 1: Suppress Diagnostics<a class="headerlink" href="#level-1-suppress-diagnostics" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats
 </code></pre></div>
 <ul>
 <li>Errors not shown</li>
@@ -2788,7 +2788,7 @@
 <li>Exit code indicates success/failure</li>
 </ul>
 <h3 id="level-2-suppress-events">Level 2: Suppress Events<a class="headerlink" href="#level-2-suppress-events" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics
 </code></pre></div>
 <ul>
 <li>Errors not shown</li>
@@ -2797,14 +2797,14 @@
 <li>Exit code indicates success/failure</li>
 </ul>
 <h3 id="level-3-complete-silence">Level 3: Complete Silence<a class="headerlink" href="#level-3-complete-silence" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-qqq<span class="w"> </span>-j<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>-qqq<span class="w"> </span>-j<span class="w"> </span>app.log
 </code></pre></div>
 <ul>
 <li>No output at all</li>
 <li>Exit code is only indicator</li>
 <li>Useful for validation pipelines</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-qqq<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Clean&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Has errors&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>-qqq<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Clean&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Has errors&quot;</span>
 </code></pre></div>
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <p>Kelora uses standard Unix exit codes:</p>
@@ -2856,7 +2856,7 @@
 <h2 id="atomic-transformations">Atomic Transformations<a class="headerlink" href="#atomic-transformations" title="Permanent link">&para;</a></h2>
 <h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
 <p>In resilient mode, <code>--exec</code> scripts execute <strong>atomically</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1; e.b = e.value.to_int(); e.c = 3&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1; e.b = e.value.to_int(); e.c = 3&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <p>If <code>e.value.to_int()</code> fails:</p>
 <ul>
@@ -2883,7 +2883,7 @@
 </code></pre></div></p>
 <h3 id="multiple-exec-scripts">Multiple --exec Scripts<a class="headerlink" href="#multiple-exec-scripts" title="Permanent link">&para;</a></h3>
 <p>Each <code>--exec</code> script is atomic independently:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = e.x.to_int()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.b = e.y.to_int()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>app.log
@@ -2901,69 +2901,69 @@
 <h2 id="common-error-scenarios">Common Error Scenarios<a class="headerlink" href="#common-error-scenarios" title="Permanent link">&para;</a></h2>
 <h3 id="missing-fields">Missing Fields<a class="headerlink" href="#missing-fields" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp &gt; &quot;2024-01-01&quot;&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp &gt; &quot;2024-01-01&quot;&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Some events missing <code>timestamp</code> field.</p>
 <p><strong>Solution:</strong> Use safe access:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;timestamp&quot;) &amp;&amp; e.timestamp &gt; &quot;2024-01-01&quot;&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;timestamp&quot;) &amp;&amp; e.timestamp &gt; &quot;2024-01-01&quot;&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="type-mismatches">Type Mismatches<a class="headerlink" href="#type-mismatches" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value * 2&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value * 2&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p><code>e.value</code> is a string, not a number.</p>
 <p><strong>Solution:</strong> Use type conversion with defaults:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = to_int_or(e.value, 0) * 2&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = to_int_or(e.value, 0) * 2&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="invalid-timestamps">Invalid Timestamps<a class="headerlink" href="#invalid-timestamps" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.timestamp.to_unix() &gt; 1000000&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p><code>e.timestamp</code> is not a valid timestamp.</p>
 <p><strong>Solution:</strong> Use safe access:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;timestamp&quot;) &amp;&amp; e.timestamp.to_unix() &gt; 1000000&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_path(&quot;timestamp&quot;) &amp;&amp; e.timestamp.to_unix() &gt; 1000000&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="array-index-out-of-bounds">Array Index Out of Bounds<a class="headerlink" href="#array-index-out-of-bounds" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.first = e.items[0]&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.first = e.items[0]&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p><code>e.items</code> is empty or missing.</p>
 <p><strong>Solution:</strong> Check array length:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;items&quot;) &amp;&amp; e.items.len() &gt; 0 { e.first = e.items[0] }&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;items&quot;) &amp;&amp; e.items.len() &gt; 0 { e.first = e.items[0] }&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="division-by-zero">Division by Zero<a class="headerlink" href="#division-by-zero" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.ratio = e.success / e.total&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.ratio = e.success / e.total&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p><code>e.total</code> is zero.</p>
 <p><strong>Solution:</strong> Add guard:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if e.total &gt; 0 { e.ratio = e.success / e.total } else { e.ratio = 0.0 }&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if e.total &gt; 0 { e.ratio = e.success / e.total } else { e.ratio = 0.0 }&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h2 id="debugging-strategies">Debugging Strategies<a class="headerlink" href="#debugging-strategies" title="Permanent link">&para;</a></h2>
 <h3 id="use-verbose-mode">Use Verbose Mode<a class="headerlink" href="#use-verbose-mode" title="Permanent link">&para;</a></h3>
 <p>See errors as they happen:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
 </code></pre></div>
 <h3 id="enable-strict-mode">Enable Strict Mode<a class="headerlink" href="#enable-strict-mode" title="Permanent link">&para;</a></h3>
 <p>Find first error quickly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="inspect-problematic-lines">Inspect Problematic Lines<a class="headerlink" href="#inspect-problematic-lines" title="Permanent link">&para;</a></h3>
 <p>Use <code>--take</code> to limit processing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--take<span class="w"> </span><span class="m">100</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--take<span class="w"> </span><span class="m">100</span><span class="w"> </span>app.log
 </code></pre></div>
 <p>Process only first 100 lines to find issues faster.</p>
 <h3 id="check-field-existence">Check Field Existence<a class="headerlink" href="#check-field-existence" title="Permanent link">&para;</a></h3>
 <p>Verify fields exist before accessing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if !e.has_path(&quot;value&quot;) { eprint(&quot;Line missing value: &quot; + e) }&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if !e.has_path(&quot;value&quot;) { eprint(&quot;Line missing value: &quot; + e) }&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="use-type-checking">Use Type Checking<a class="headerlink" href="#use-type-checking" title="Permanent link">&para;</a></h3>
 <p>Verify field types before operations:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if type_of(e.value) != &quot;i64&quot; { eprint(&quot;Value is not integer: &quot; + e.value) }&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if type_of(e.value) != &quot;i64&quot; { eprint(&quot;Value is not integer: &quot; + e.value) }&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="validate-input-format">Validate Input Format<a class="headerlink" href="#validate-input-format" title="Permanent link">&para;</a></h3>
 <p>Test parsing with strict mode:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--stats-only<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--stats-only<span class="w"> </span>app.log
 </code></pre></div>
 <p>No output, but exits with error if parsing fails.</p>
 <h2 id="error-messages">Error Messages<a class="headerlink" href="#error-messages" title="Permanent link">&para;</a></h2>
@@ -2993,15 +2993,15 @@
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="use-resilient-mode-for-production">Use Resilient Mode for Production<a class="headerlink" href="#use-resilient-mode-for-production" title="Permanent link">&para;</a></h3>
 <p>Production logs are messy - resilient mode handles gracefully:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--keys<span class="w"> </span>timestamp,message
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--keys<span class="w"> </span>timestamp,message
 </code></pre></div>
 <h3 id="use-strict-mode-for-validation">Use Strict Mode for Validation<a class="headerlink" href="#use-strict-mode-for-validation" title="Permanent link">&para;</a></h3>
 <p>Validate data quality in pipelines:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Valid&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Valid&quot;</span>
 </code></pre></div>
 <h3 id="combine-quiet-and-exit-codes">Combine Quiet and Exit Codes<a class="headerlink" href="#combine-quiet-and-exit-codes" title="Permanent link">&para;</a></h3>
 <p>For automation, use exit codes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-qq<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>app.log
 <a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No errors&quot;</span>
 <a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a><span class="k">else</span>
@@ -3010,21 +3010,21 @@
 </code></pre></div>
 <h3 id="add-defensive-checks">Add Defensive Checks<a class="headerlink" href="#add-defensive-checks" title="Permanent link">&para;</a></h3>
 <p>Use safe field access patterns:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.get_path(&quot;nested.value&quot;, 0) * 2&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.get_path(&quot;nested.value&quot;, 0) * 2&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="log-errors-to-file">Log Errors to File<a class="headerlink" href="#log-errors-to-file" title="Permanent link">&para;</a></h3>
 <p>Capture errors for later analysis:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log<span class="w"> </span><span class="m">2</span>&gt;<span class="w"> </span>errors.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log<span class="w"> </span><span class="m">2</span>&gt;<span class="w"> </span>errors.log
 </code></pre></div>
 <h3 id="use-stats-for-summary">Use Stats for Summary<a class="headerlink" href="#use-stats-for-summary" title="Permanent link">&para;</a></h3>
 <p>Get error counts without verbose output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
 </code></pre></div>
 <p>Shows error count in summary.</p>
 <h2 id="parallel-processing">Parallel Processing<a class="headerlink" href="#parallel-processing" title="Permanent link">&para;</a></h2>
 <h3 id="error-handling-in-parallel-mode">Error Handling in Parallel Mode<a class="headerlink" href="#error-handling-in-parallel-mode" title="Permanent link">&para;</a></h3>
 <p>When using <code>--parallel</code>, error handling works the same:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>app.log
 </code></pre></div>
 <ul>
 <li>Errors still recorded per event</li>
@@ -3033,12 +3033,12 @@
 </ul>
 <h3 id="verbose-with-parallel">Verbose with Parallel<a class="headerlink" href="#verbose-with-parallel" title="Permanent link">&para;</a></h3>
 <p>Verbose errors are shown immediately, but may be interleaved:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--verbose<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--verbose<span class="w"> </span>app.log
 </code></pre></div>
 <p>Errors from different threads may appear out of order.</p>
 <h3 id="strict-with-parallel">Strict with Parallel<a class="headerlink" href="#strict-with-parallel" title="Permanent link">&para;</a></h3>
 <p>First error from any thread aborts all processing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>&gt;<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--strict<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--strict<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
