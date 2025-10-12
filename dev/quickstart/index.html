@@ -1617,20 +1617,21 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Stream processing (tail -f, kubectl logs, etc.)</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>deployment/api<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-l<span class="w"> </span>error
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Multiple files and gzipped archives</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>logs/*.log<span class="w"> </span>logs/*.log.gz<span class="w"> </span>-l<span class="w"> </span>error
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Time-based filtering</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;10 minutes ago&quot;</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Extract prefixes (Docker Compose, systemd, etc.)</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-f<span class="w"> </span>json
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># Auto-detect format and output brief values only</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>-k<span class="w"> </span>timestamp,level,message<span class="w"> </span>-b
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="c1"># Custom timestamp formats</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--ts-format<span class="w"> </span><span class="s2">&quot;%d/%b/%Y:%H:%M:%S&quot;</span><span class="w"> </span>--ts-field<span class="w"> </span>timestamp
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Multiple files - track which files have errors</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs/*.log<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Time-based filtering</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;10 minutes ago&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># Extract prefixes (Docker Compose, systemd, etc.)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-f<span class="w"> </span>json
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># Auto-detect format and output brief values only</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>-k<span class="w"> </span>timestamp,level,message<span class="w"> </span>-b
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="c1"># Custom timestamp formats</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--ts-format<span class="w"> </span><span class="s2">&quot;%d/%b/%Y:%H:%M:%S&quot;</span><span class="w"> </span>--ts-field<span class="w"> </span>timestamp
 </code></pre></div>
 <h2 id="get-help">Get Help<a class="headerlink" href="#get-help" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>

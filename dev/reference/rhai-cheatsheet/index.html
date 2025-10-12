@@ -2045,11 +2045,23 @@
 <h2 id="global-context">Global Context<a class="headerlink" href="#global-context" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>conf                                  // Global config map (read-only after --begin)
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>metrics                               // Global metrics map (from track_* calls)
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Environment variable access
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>// Example usage:
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>--begin &#39;conf.env = get_env(&quot;ENVIRONMENT&quot;, &quot;dev&quot;)&#39;
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>meta                                  // Event metadata (filename, line numbers, raw line)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Environment variable access
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>// meta attributes:
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>meta.line                             // Original raw line (always available)
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>meta.line_num                         // Line number, 1-based (available with files)
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>meta.filename                         // Source filename (multi-file processing)
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>// Example usage:
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>--begin &#39;conf.env = get_env(&quot;ENVIRONMENT&quot;, &quot;dev&quot;)&#39;
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>// Multi-file tracking
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>// Debugging with line numbers
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>--exec &#39;eprint(&quot;Error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;
 </code></pre></div>
 <h2 id="error-handling-modes">Error Handling Modes<a class="headerlink" href="#error-handling-modes" title="Permanent link">&para;</a></h2>
 <p><strong>Default (resilient):</strong></p>
@@ -2138,10 +2150,13 @@
 <a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a>e.text.contains(&quot;word&quot;)               // Substring check
 <a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>e.text.extract_re(r&quot;(\d+)&quot;, 1)        // Regex extraction
 <a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>
-<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>// Environment
+<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>// Environment &amp; Context
 <a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var
 <a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a>conf.key                              // Read config (from --begin)
 <a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>metrics.key                           // Read metrics (in --end)
+<a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>meta.filename                         // Current source filename
+<a id="__codelineno-19-38" name="__codelineno-19-38" href="#__codelineno-19-38"></a>meta.line_num                         // Current line number (1-based)
+<a id="__codelineno-19-39" name="__codelineno-19-39" href="#__codelineno-19-39"></a>meta.line                             // Original raw line
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
