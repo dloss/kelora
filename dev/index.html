@@ -1465,24 +1465,34 @@
 <p>Kelora is a <a href="https://en.wikipedia.org/wiki/Vibe_coding">vibe-coded</a> experimental tool under active development. APIs and behaviour may change without notice.</p>
 </div>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Parse multi-line stacktraces - keeps errors with their full traces</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Fan out nested arrays - turn one event with 3 users into 3 separate events</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/json_arrays.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;users&quot;) { emit_each(e.users) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--keys<span class="w"> </span>id,name,score
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Parse mixed formats - handles JSON, logfmt, and syslog in one file</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>kelora<span class="w"> </span>examples/nightmare_mixed_formats.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.line.starts_with(&quot;{&quot;) { e = e.line.parse_json() }</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">          else if e.line.contains(&quot;=&quot;) { e = e.line.parse_logfmt() }</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">          else { e = e.line.parse_syslog() }&#39;</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Track errors by service - parses Docker container prefixes, counts by source</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>kelora<span class="w"> </span>examples/prefix_docker.log<span class="w"> </span>--extract-prefix<span class="w"> </span>service<span class="w"> </span>--prefix-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span>--metrics<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if e.line.contains(&quot;ERROR&quot;) { track_count(e.service) }&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Parse embedded formats - extract logfmt from within syslog messages</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;=&quot;) { e += e.message.parse_logfmt() }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,host,message,user,action<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-F<span class="w"> </span>json
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Keep full stacktraces together with case-insensitive search</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.lower().contains(&quot;valueerror&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span>--before-context<span class="w"> </span><span class="m">1</span><span class="w"> </span>--after-context<span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Extract container prefixes, track log volume by source</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>kelora<span class="w"> </span>examples/prefix_docker.log<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.line.between(&quot;[&quot;, &quot;]&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.container); track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span>-F<span class="w"> </span>csv
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># Parse JWT tokens, mask IPs for privacy-safe log sharing</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;token&quot;) {</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="s1">            let jwt = e.token.parse_jwt();</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="s1">            e.role = jwt.get_path(&quot;claims.role&quot;, &quot;guest&quot;)</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,event,role,ip<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
 <p>See the <a href="quickstart/">Quickstart</a> for a step-by-step tour with full output.</p>
 <h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
