@@ -845,6 +845,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/span-aggregation-cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Span Aggregation Cookbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1580,6 +1603,39 @@
   <a href="#-end-script" class="md-nav__link">
     <span class="md-ellipsis">
       --end &lt;SCRIPT&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Span Aggregation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span Aggregation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-span-n-duration" class="md-nav__link">
+    <span class="md-ellipsis">
+      --span &lt;N | DURATION&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-span-close-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      --span-close &lt;SCRIPT&gt;
     </span>
   </a>
   
@@ -3154,6 +3210,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#span-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Span Aggregation
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span Aggregation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-span-n-duration" class="md-nav__link">
+    <span class="md-ellipsis">
+      --span &lt;N | DURATION&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-span-close-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      --span-close &lt;SCRIPT&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#file-system-access" class="md-nav__link">
     <span class="md-ellipsis">
       File System Access
@@ -4458,6 +4547,37 @@
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>app.log
 </code></pre></div>
+<h3 id="span-aggregation">Span Aggregation<a class="headerlink" href="#span-aggregation" title="Permanent link">&para;</a></h3>
+<h4 id="-span-n-duration"><code>--span &lt;N | DURATION&gt;</code><a class="headerlink" href="#-span-n-duration" title="Permanent link">&para;</a></h4>
+<p>Group events into non-overlapping spans before running a span-close hook. Sequential mode is required (Kelora prints a warning and falls back to sequential if <code>--parallel</code> is also supplied).</p>
+<ul>
+<li><code>--span &lt;N&gt;</code> – Count-based spans. Close after every <strong>N</strong> events that survive all filters. Example: <code>--span 500</code>.</li>
+<li><code>--span &lt;DURATION&gt;</code> – Time-based spans aligned to the events' canonical timestamp (<code>ts</code>). The first event with a valid <code>ts</code> anchors fixed windows such as <code>1m</code>, <code>5m</code>, <code>30s</code>, <code>1h</code>.</li>
+</ul>
+<p>How it works:</p>
+<ul>
+<li>Per-event scripts still run for every event.</li>
+<li>Events missing a timestamp (time mode) are marked <code>meta.span_status == "unassigned"</code> and excluded from the span buffer.</li>
+<li>Events with timestamps that fall into an already-closed window are emitted immediately with <code>meta.span_status == "late"</code>. Closed spans are never reopened.</li>
+<li>Count spans keep buffered events in memory until the span closes. Kelora warns when <code>N &gt; 100_000</code>.</li>
+</ul>
+<h4 id="-span-close-script"><code>--span-close &lt;SCRIPT&gt;</code><a class="headerlink" href="#-span-close-script" title="Permanent link">&para;</a></h4>
+<p>Run a Rhai snippet once whenever a span closes. Use it to emit per-span summaries, metrics, or rollups. The script runs after the event that triggered the close finishes all per-event stages (filters, execs, etc.).</p>
+<p><strong>Span-only helpers available inside <code>--span-close</code>:</strong></p>
+<ul>
+<li><code>span_id()</code> – Unique span identifier (<code>#0</code>, <code>2024-05-19T12:00:00Z/5m</code>, etc.)</li>
+<li><code>span_start()</code> / <code>span_end()</code> – Half-open window bounds for time-based spans (count spans return <code>()</code>)</li>
+<li><code>span_size()</code> – Number of events that survived filters and were included in this span</li>
+<li><code>span_events()</code> – Array of events in arrival order (each map includes <code>span_status</code>, <code>span_start</code>, etc.)</li>
+<li><code>span_metrics()</code> – Map of per-span deltas from <code>track_*</code> calls (automatically reset after each span)</li>
+</ul>
+<p><strong>Metadata added to <code>meta</code> during per-event stages:</strong></p>
+<ul>
+<li><code>meta.span_status</code> – <code>"included"</code>, <code>"late"</code>, <code>"unassigned"</code>, or <code>"filtered"</code></li>
+<li><code>meta.span_id</code> – Span identifier (<code>null</code> for unassigned events)</li>
+<li><code>meta.span_start</code>, <code>meta.span_end</code> – Boundaries as DateTime values (or <code>()</code> when not applicable)</li>
+</ul>
+<p>Kelora cleans up span state automatically when processing completes or on graceful shutdown.</p>
 <h3 id="file-system-access">File System Access<a class="headerlink" href="#file-system-access" title="Permanent link">&para;</a></h3>
 <h4 id="-allow-fs-writes"><code>--allow-fs-writes</code><a class="headerlink" href="#-allow-fs-writes" title="Permanent link">&para;</a></h4>
 <p>Allow Rhai scripts to create directories and write files. Required for file helpers like <code>append_file()</code> or <code>mkdir()</code>.</p>
