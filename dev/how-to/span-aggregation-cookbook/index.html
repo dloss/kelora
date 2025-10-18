@@ -971,6 +971,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#use-span-metadata-without-a-close-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Span Metadata Without a Close Hook
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tips" class="md-nav__link">
     <span class="md-ellipsis">
       Tips
@@ -1467,6 +1476,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#use-span-metadata-without-a-close-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use Span Metadata Without a Close Hook
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tips" class="md-nav__link">
     <span class="md-ellipsis">
       Tips
@@ -1589,6 +1607,21 @@
 <li>Late events still pass through filters/exec but do not reopen closed spans.</li>
 <li>For strict timestamp enforcement, add <code>--strict</code> (events without valid <code>ts</code> become hard errors).</li>
 </ul>
+<h3 id="use-span-metadata-without-a-close-hook">Use Span Metadata Without a Close Hook<a class="headerlink" href="#use-span-metadata-without-a-close-hook" title="Permanent link">&para;</a></h3>
+<p>Skip <code>--span-close</code> when you only need Kelora to tag events; the span processor stays lightweight but emits per-event metadata you can forward downstream.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>access.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.window = #{id: meta.span_id, start: meta.span_start, end: meta.span_end};&#39;</span>
+</code></pre></div>
+<p>Every event now carries its tumbling window so tools like <code>jq</code>, DuckDB, or spreadsheets can group by <code>e.window.id</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>errors.log<span class="w"> </span>--span<span class="w"> </span>2m<span class="w"> </span>--output<span class="w"> </span>jsonl<span class="w"> </span><span class="p">|</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>jq<span class="w"> </span>-sc<span class="w"> </span><span class="s1">&#39;group_by(.meta.span_id)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s1">          | map({span: .[0].meta.span_id, errors: length})&#39;</span>
+</code></pre></div>
+<p>Or filter in-line by span status while still emitting the rest:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>access.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;meta.span_status != &quot;late&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if meta.span_status == &quot;late&quot; { eprint(&quot;Late: &quot; + e.ts + &quot; → &quot; + meta.span_id); }&#39;</span>
+</code></pre></div>
 <h3 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Time spans align to the first valid timestamp in the stream; ensure ordering or use upstream sort.</li>
