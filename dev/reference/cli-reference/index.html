@@ -4563,13 +4563,13 @@
 </ul>
 <h4 id="-span-close-script"><code>--span-close &lt;SCRIPT&gt;</code><a class="headerlink" href="#-span-close-script" title="Permanent link">&para;</a></h4>
 <p>Run a Rhai snippet once whenever a span closes. Use it to emit per-span summaries, metrics, or rollups. The script runs after the event that triggered the close finishes all per-event stages (filters, execs, etc.).</p>
-<p><strong>Span-only helpers available inside <code>--span-close</code>:</strong></p>
+<p><strong>Read-only span object available inside <code>--span-close</code>:</strong></p>
 <ul>
-<li><code>span_id()</code> – Unique span identifier (<code>#0</code>, <code>2024-05-19T12:00:00Z/5m</code>, etc.)</li>
-<li><code>span_start()</code> / <code>span_end()</code> – Half-open window bounds for time-based spans (count spans return <code>()</code>)</li>
-<li><code>span_size()</code> – Number of events that survived filters and were included in this span</li>
-<li><code>span_events()</code> – Array of events in arrival order (each map includes <code>span_status</code>, <code>span_start</code>, etc.)</li>
-<li><code>span_metrics()</code> – Map of per-span deltas from <code>track_*</code> calls (automatically reset after each span)</li>
+<li><code>span.id</code> – Unique span identifier (<code>#0</code>, <code>2024-05-19T12:00:00Z/5m</code>, etc.)</li>
+<li><code>span.start</code> / <code>span.end</code> – Half-open window bounds for time-based spans (count spans return <code>()</code>)</li>
+<li><code>span.size</code> – Number of events that survived filters and were included in this span</li>
+<li><code>span.events</code> – Array of events in arrival order (each map includes <code>span_status</code>, <code>span_start</code>, etc.)</li>
+<li><code>span.metrics</code> – Map of per-span deltas from <code>track_*</code> calls (automatically reset after each span)</li>
 </ul>
 <p><strong>Metadata added to <code>meta</code> during per-event stages:</strong></p>
 <ul>

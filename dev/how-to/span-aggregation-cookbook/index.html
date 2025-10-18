@@ -1510,27 +1510,27 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    let errors = span_size();</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    print(span_id() + &quot;,errors=&quot; + errors.to_string());</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    let errors = span.size;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    print(span.id + &quot;,errors=&quot; + errors.to_string());</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 <ul>
 <li>Works in arrival order; no late-event concept.</li>
-<li><code>span_size()</code> reflects post-filter events, so remove empty spans if needed:</li>
+<li><code>span.size</code> reflects post-filter events, so remove empty spans if needed:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>if span_size() &gt; 0 {
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    print(span_id() + &quot;:&quot; + span_size());
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>if span.size &gt; 0 {
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    print(span.id + &quot;:&quot; + span.size);
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>}
 </code></pre></div>
 <h3 id="time-based-windows">Time-Based Windows<a class="headerlink" href="#time-based-windows" title="Permanent link">&para;</a></h3>
 <p>Emit metrics aligned to fixed wall-clock windows by duration.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="s1">    let metrics = span_metrics();</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="s1">    let metrics = span.metrics;</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    let hits = metrics.get_path(&quot;hits&quot;, 0);</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">    let slow = metrics.get_path(&quot;slow&quot;, 0);</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">    let rate = if hits &gt; 0 { slow * 100 / hits } else { 0 };</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    print(span_id() + &quot;,&quot; +</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    print(span.id + &quot;,&quot; +</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">          &quot;hits=&quot; + hits.to_string() + &quot;,&quot; +</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">          &quot;slow_pct=&quot; + rate.to_string());</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
@@ -1542,33 +1542,33 @@
 <p>Best practices:</p>
 <ul>
 <li>Sort or pre-group logs by timestamp for accurate window assignment.</li>
-<li>Events lacking <code>ts</code> appear with <code>meta.span_status == "unassigned"</code> and do not enter <code>span_events()</code>.</li>
+<li>Events lacking <code>ts</code> appear with <code>meta.span_status == "unassigned"</code> and do not enter <code>span.events</code>.</li>
 <li>Late arrivals keep <code>meta.span_status == "late"</code> and include the window they missed.</li>
 </ul>
 <h3 id="inspect-span-events">Inspect Span Events<a class="headerlink" href="#inspect-span-events" title="Permanent link">&para;</a></h3>
-<p><code>span_events()</code> gives the surviving events so you can generate rollups or trace context.</p>
+<p><code>span.events</code> gives the surviving events so you can generate rollups or trace context.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--span<span class="w"> </span><span class="m">100</span><span class="w"> </span>requests.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s1">    let events = span_events();</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s1">    let events = span.events;</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">    let ids = events.map(|evt| evt.request_id).join(&quot;,&quot;);</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    print(span_id() + &quot;: &quot; + ids);</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    print(span.id + &quot;: &quot; + ids);</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">  &#39;</span>
 </code></pre></div>
-<p>The maps inside <code>span_events()</code> include all original fields plus span metadata (<code>span_status</code>, <code>span_start</code>, <code>span_end</code>).</p>
+<p>The maps inside <code>span.events</code> include all original fields plus span metadata (<code>span_status</code>, <code>span_start</code>, <code>span_end</code>).</p>
 <h3 id="track-metrics-automatically">Track Metrics Automatically<a class="headerlink" href="#track-metrics-automatically" title="Permanent link">&para;</a></h3>
-<p><code>span_metrics()</code> isolates the deltas for <code>track_*</code> calls inside the span.</p>
+<p><code>span.metrics</code> isolates the deltas for <code>track_*</code> calls inside the span.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--span<span class="w"> </span>1m<span class="w"> </span>api.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s1">    track_count(&quot;total&quot;);</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">    if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    let metrics = span_metrics();</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    let metrics = span.metrics;</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    let total = metrics.get_path(&quot;total&quot;, 0);</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s1">    let errors = metrics.get_path(&quot;errors&quot;, 0);</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    if total &gt; 0 {</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">      let err_rate = errors * 100 / total;</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">      print(span_id() + &quot;,error_rate=&quot; + err_rate.to_string());</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">      print(span.id + &quot;,error_rate=&quot; + err_rate.to_string());</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">    }</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s1">  &#39;</span>
 </code></pre></div>
@@ -1582,7 +1582,7 @@
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">      eprint(&quot;Missing ts: line &quot; + meta.line_num.to_string());</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">    }</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(span_id() + &quot;:&quot; + span_size())&#39;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(span.id + &quot;:&quot; + span.size)&#39;</span>
 </code></pre></div>
 <ul>
 <li><code>meta.span_status</code> is visible in <code>--exec</code> stages, so you can branch on late/unassigned events.</li>
@@ -1592,7 +1592,7 @@
 <h3 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Time spans align to the first valid timestamp in the stream; ensure ordering or use upstream sort.</li>
-<li>Count spans retain all events in memory until <code>span_size</code> is reached. Watch for large values.</li>
+<li>Count spans retain all events in memory until <code>span.size</code> is reached. Watch for large values.</li>
 <li><code>--span</code> disables parallel mode automatically—sequential processing is required for deterministic batching.</li>
 </ul>
 
