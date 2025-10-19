@@ -9,6 +9,10 @@
          <lastmod>2025-10-19</lastmod>
     </url>
     <url>
+         <loc>https://dloss.github.io/kelora/dev/concepts/</loc>
+         <lastmod>2025-10-19</lastmod>
+    </url>
+    <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/configuration-system/</loc>
          <lastmod>2025-10-19</lastmod>
     </url>
@@ -34,6 +38,10 @@
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/scripting-stages/</loc>
+         <lastmod>2025-10-19</lastmod>
+    </url>
+    <url>
+         <loc>https://dloss.github.io/kelora/dev/how-to/</loc>
          <lastmod>2025-10-19</lastmod>
     </url>
     <url>
@@ -81,6 +89,10 @@
          <lastmod>2025-10-19</lastmod>
     </url>
     <url>
+         <loc>https://dloss.github.io/kelora/dev/reference/</loc>
+         <lastmod>2025-10-19</lastmod>
+    </url>
+    <url>
          <loc>https://dloss.github.io/kelora/dev/reference/cli-reference/</loc>
          <lastmod>2025-10-19</lastmod>
     </url>
@@ -98,6 +110,10 @@
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/rhai-cheatsheet/</loc>
+         <lastmod>2025-10-19</lastmod>
+    </url>
+    <url>
+         <loc>https://dloss.github.io/kelora/dev/tutorials/</loc>
          <lastmod>2025-10-19</lastmod>
     </url>
     <url>
