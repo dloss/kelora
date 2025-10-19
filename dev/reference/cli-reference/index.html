@@ -4472,7 +4472,7 @@
 </code></pre></div>
 <h3 id="timestamp-options">Timestamp Configuration<a class="headerlink" href="#timestamp-options" title="Permanent link">&para;</a></h3>
 <h4 id="-ts-field-field"><code>--ts-field &lt;FIELD&gt;</code><a class="headerlink" href="#-ts-field-field" title="Permanent link">&para;</a></h4>
-<p>Custom timestamp field name for parsing.</p>
+<p>Custom timestamp field name for parsing. When set, Kelora only inspects that field; the built-in fallbacks are disabled so missing or malformed values stay visible in stats and diagnostics.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-ts-format-format"><code>--ts-format &lt;FORMAT&gt;</code><a class="headerlink" href="#-ts-format-format" title="Permanent link">&para;</a></h4>
