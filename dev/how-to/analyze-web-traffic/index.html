@@ -2310,8 +2310,10 @@
 </code></pre></div></p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <p><strong>Timestamp parsing issues:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># If timestamps aren&#39;t parsed, try explicit format</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>--ts-format<span class="w"> </span><span class="s2">&quot;%d/%b/%Y:%H:%M:%S %z&quot;</span><span class="w"> </span>access.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># If auto-detect misses, inspect the stats line:</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># Timestamp: auto-detected timestamp — parsed 0 of 100 detected events (0.0%). Hint: Try --ts-field or --ts-format.</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="c1"># Then supply an explicit format:</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>--ts-format<span class="w"> </span><span class="s2">&quot;%d/%b/%Y:%H:%M:%S %z&quot;</span><span class="w"> </span>access.log
 </code></pre></div></p>
 <p><strong>Missing request_time field:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Apache combined format doesn&#39;t include request_time</span>
