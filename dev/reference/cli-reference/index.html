@@ -52,6 +52,8 @@
     
       <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
     
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -1488,6 +1490,48 @@
   <a href="#-ignore-lines-regex" class="md-nav__link">
     <span class="md-ellipsis">
       --ignore-lines &lt;REGEX&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section Selection
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section Selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-section-start-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      --section-start &lt;REGEX&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-section-end-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      --section-end &lt;REGEX&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-max-sections-n" class="md-nav__link">
+    <span class="md-ellipsis">
+      --max-sections &lt;N&gt;
     </span>
   </a>
   
@@ -3095,6 +3139,48 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#section-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Section Selection
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section Selection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-section-start-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      --section-start &lt;REGEX&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-section-end-regex" class="md-nav__link">
+    <span class="md-ellipsis">
+      --section-end &lt;REGEX&gt;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-max-sections-n" class="md-nav__link">
+    <span class="md-ellipsis">
+      --max-sections &lt;N&gt;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#timestamp-options" class="md-nav__link">
     <span class="md-ellipsis">
       Timestamp Configuration
@@ -4562,15 +4648,60 @@
 <p>Ignore input lines matching regex pattern.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>--ignore-lines<span class="w"> </span><span class="s1">&#39;^#&#39;</span><span class="w"> </span>app.log<span class="w">    </span><span class="c1"># Skip comments</span>
 </code></pre></div>
+<h3 id="section-selection">Section Selection<a class="headerlink" href="#section-selection" title="Permanent link">&para;</a></h3>
+<p>Process specific sections of log files with multiple logical sections.</p>
+<h4 id="-section-start-regex"><code>--section-start &lt;REGEX&gt;</code><a class="headerlink" href="#-section-start-regex" title="Permanent link">&para;</a></h4>
+<p>Start including lines when this regex matches (inclusive). Without <code>--section-end</code>, processes from the first match until EOF or the start of the next section.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>--section-start<span class="w"> </span><span class="s1">&#39;^== iked Logs&#39;</span><span class="w"> </span>system.log
+</code></pre></div>
+<h4 id="-section-end-regex"><code>--section-end &lt;REGEX&gt;</code><a class="headerlink" href="#-section-end-regex" title="Permanent link">&para;</a></h4>
+<p>Stop including lines when this regex matches (exclusive). Only applies to lines within sections started by <code>--section-start</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>--section-start<span class="w"> </span><span class="s1">&#39;^== iked Logs&#39;</span><span class="w"> </span>--section-end<span class="w"> </span><span class="s1">&#39;^==&#39;</span><span class="w"> </span>system.log
+</code></pre></div>
+<h4 id="-max-sections-n"><code>--max-sections &lt;N&gt;</code><a class="headerlink" href="#-max-sections-n" title="Permanent link">&para;</a></h4>
+<p>Maximum number of sections to process. Default: -1 (unlimited).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Process first 2 sections</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>--section-start<span class="w"> </span><span class="s1">&#39;^== &#39;</span><span class="w"> </span>--max-sections<span class="w"> </span><span class="m">2</span><span class="w"> </span>system.log
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Process only first section</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>kelora<span class="w"> </span>--section-start<span class="w"> </span><span class="s1">&#39;^Session&#39;</span><span class="w"> </span>--section-end<span class="w"> </span><span class="s1">&#39;^End&#39;</span><span class="w"> </span>--max-sections<span class="w"> </span><span class="m">1</span><span class="w"> </span>app.log
+</code></pre></div>
+<p><strong>Processing Order:</strong></p>
+<p>Section selection runs early in the pipeline, before <code>--keep-lines</code> and <code>--ignore-lines</code>:</p>
+<ol>
+<li><code>--skip-lines</code> - Skip first N lines</li>
+<li><strong><code>--section-start/end</code></strong> - Select sections</li>
+<li><code>--keep-lines</code> - Keep matching lines within sections</li>
+<li><code>--ignore-lines</code> - Ignore matching lines within sections</li>
+<li><code>-M/--multiline</code> - Group lines into events</li>
+<li>Parsing - Parse into structured events</li>
+</ol>
+<p><strong>Use Cases:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Extract specific service logs from docker-compose output</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--section-start<span class="w"> </span><span class="s1">&#39;^web_1&#39;</span><span class="w"> </span>--section-end<span class="w"> </span><span class="s1">&#39;^(db_1|api_1)&#39;</span><span class="w"> </span>-f<span class="w"> </span>line
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Process first 3 user sessions</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kelora<span class="w"> </span>--section-start<span class="w"> </span><span class="s1">&#39;User .* logged in&#39;</span><span class="w"> </span>--section-end<span class="w"> </span><span class="s1">&#39;logged out&#39;</span><span class="w"> </span>--max-sections<span class="w"> </span><span class="m">3</span><span class="w"> </span>app.log
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Extract iked section, then filter for errors</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>kelora<span class="w"> </span>--section-start<span class="w"> </span><span class="s1">&#39;^== iked&#39;</span><span class="w"> </span>--section-end<span class="w"> </span><span class="s1">&#39;^==&#39;</span><span class="w"> </span>--keep-lines<span class="w"> </span><span class="s1">&#39;ERROR&#39;</span><span class="w"> </span>system.log
+</code></pre></div>
+<p><strong>Performance:</strong></p>
+<ul>
+<li>Section selection is single-threaded (even with <code>--parallel</code>)</li>
+<li>Minimal overhead - just regex matching per line</li>
+<li>Heavy processing (parsing, filtering, Rhai) still parallelizes</li>
+<li>No full-file buffering - processes line-by-line</li>
+</ul>
 <h3 id="timestamp-options">Timestamp Configuration<a class="headerlink" href="#timestamp-options" title="Permanent link">&para;</a></h3>
 <h4 id="-ts-field-field"><code>--ts-field &lt;FIELD&gt;</code><a class="headerlink" href="#-ts-field-field" title="Permanent link">&para;</a></h4>
 <p>Custom timestamp field name for parsing. When set, Kelora only inspects that field; the built-in fallbacks are disabled so missing or malformed values stay visible in stats and diagnostics.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-ts-format-format"><code>--ts-format &lt;FORMAT&gt;</code><a class="headerlink" href="#-ts-format-format" title="Permanent link">&para;</a></h4>
 <p>Custom timestamp format using chrono format strings. See <code>--help-time</code> for format reference.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%d/%b/%Y:%H:%M:%S %z&#39;</span><span class="w"> </span>access.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%d/%b/%Y:%H:%M:%S %z&#39;</span><span class="w"> </span>access.log
 </code></pre></div>
 <h4 id="-input-tz-timezone"><code>--input-tz &lt;TIMEZONE&gt;</code><a class="headerlink" href="#-input-tz-timezone" title="Permanent link">&para;</a></h4>
 <p>Timezone for naive input timestamps (without timezone info). Default: UTC.</p>
@@ -4580,28 +4711,28 @@
 <li><code>local</code> - System local time</li>
 <li>Named timezones: <code>Europe/Berlin</code>, <code>America/New_York</code>, etc.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>--input-tz<span class="w"> </span><span class="nb">local</span><span class="w"> </span>app.log
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>--input-tz<span class="w"> </span>Europe/Berlin<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>--input-tz<span class="w"> </span><span class="nb">local</span><span class="w"> </span>app.log
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kelora<span class="w"> </span>--input-tz<span class="w"> </span>Europe/Berlin<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="multi-line-events">Multi-line Events<a class="headerlink" href="#multi-line-events" title="Permanent link">&para;</a></h3>
 <h4 id="-m-multiline-strategy"><code>-M, --multiline &lt;STRATEGY&gt;</code><a class="headerlink" href="#-m-multiline-strategy" title="Permanent link">&para;</a></h4>
 <p>Multi-line event detection strategy. See <code>--help-multiline</code> for details.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log<span class="w">              </span><span class="c1"># JSON events across lines</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Events start with date</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log<span class="w">              </span><span class="c1"># JSON events across lines</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Events start with date</span>
 </code></pre></div>
 <h3 id="prefix-extraction">Prefix Extraction<a class="headerlink" href="#prefix-extraction" title="Permanent link">&para;</a></h3>
 <h4 id="-extract-prefix-field"><code>--extract-prefix &lt;FIELD&gt;</code><a class="headerlink" href="#-extract-prefix-field" title="Permanent link">&para;</a></h4>
 <p>Extract text before separator to specified field (runs before parsing).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>service
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>service
 </code></pre></div>
 <h4 id="-prefix-sep-string"><code>--prefix-sep &lt;STRING&gt;</code><a class="headerlink" href="#-prefix-sep-string" title="Permanent link">&para;</a></h4>
 <p>Separator string for prefix extraction. Default: <code>|</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>node<span class="w"> </span>--prefix-sep<span class="w"> </span><span class="s1">&#39; :: &#39;</span><span class="w"> </span>cluster.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>node<span class="w"> </span>--prefix-sep<span class="w"> </span><span class="s1">&#39; :: &#39;</span><span class="w"> </span>cluster.log
 </code></pre></div>
 <h3 id="column-format-options">Column Format Options<a class="headerlink" href="#column-format-options" title="Permanent link">&para;</a></h3>
 <h4 id="-cols-sep-separator"><code>--cols-sep &lt;SEPARATOR&gt;</code><a class="headerlink" href="#-cols-sep-separator" title="Permanent link">&para;</a></h4>
 <p>Column separator for <code>cols:&lt;spec&gt;</code> format. Default: whitespace.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span>data.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span>data.txt
 </code></pre></div>
 <h2 id="processing-options">Processing Options<a class="headerlink" href="#processing-options" title="Permanent link">&para;</a></h2>
 <h3 id="scripting-stages">Scripting Stages<a class="headerlink" href="#scripting-stages" title="Permanent link">&para;</a></h3>
@@ -4612,32 +4743,32 @@
 <li><code>read_lines(path)</code> - Read file as array of lines</li>
 <li><code>read_file(path)</code> - Read file as string</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--begin<span class="w"> </span><span class="s1">&#39;conf.users = read_json(&quot;users.json&quot;)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--begin<span class="w"> </span><span class="s1">&#39;conf.users = read_json(&quot;users.json&quot;)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-filter-expression"><code>--filter &lt;EXPRESSION&gt;</code><a class="headerlink" href="#-filter-expression" title="Permanent link">&para;</a></h4>
 <p>Boolean filter expression. Events where expression returns <code>true</code> are kept. Multiple filters are combined with AND logic.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-e-exec-script"><code>-e, --exec &lt;SCRIPT&gt;</code><a class="headerlink" href="#-e-exec-script" title="Permanent link">&para;</a></h4>
 <p>Transform/process script evaluated on each event. Multiple <code>--exec</code> scripts run in order.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-e-exec-file-file"><code>-E, --exec-file &lt;FILE&gt;</code><a class="headerlink" href="#-e-exec-file-file" title="Permanent link">&para;</a></h4>
 <p>Execute Rhai script from file (runs in exec stage).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-E<span class="w"> </span>transform.rhai<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-E<span class="w"> </span>transform.rhai<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-i-include-file"><code>-I, --include &lt;FILE&gt;</code><a class="headerlink" href="#-i-include-file" title="Permanent link">&para;</a></h4>
 <p>Include Rhai files before script stages (library imports).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.custom = my_helper(e)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.custom = my_helper(e)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-end-script"><code>--end &lt;SCRIPT&gt;</code><a class="headerlink" href="#-end-script" title="Permanent link">&para;</a></h4>
 <p>Run once after processing completes (post-processing stage). Access global <code>metrics</code> map from <code>track_*()</code> calls here.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="span-aggregation">Span Aggregation<a class="headerlink" href="#span-aggregation" title="Permanent link">&para;</a></h3>
 <h4 id="-span-n-duration"><code>--span &lt;N | DURATION&gt;</code><a class="headerlink" href="#-span-n-duration" title="Permanent link">&para;</a></h4>
@@ -4673,30 +4804,30 @@
 <h3 id="file-system-access">File System Access<a class="headerlink" href="#file-system-access" title="Permanent link">&para;</a></h3>
 <h4 id="-allow-fs-writes"><code>--allow-fs-writes</code><a class="headerlink" href="#-allow-fs-writes" title="Permanent link">&para;</a></h4>
 <p>Allow Rhai scripts to create directories and write files. Required for file helpers like <code>append_file()</code> or <code>mkdir()</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;errors.txt&quot;, e.message)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;errors.txt&quot;, e.message)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="window-functions">Window Functions<a class="headerlink" href="#window-functions" title="Permanent link">&para;</a></h3>
 <h4 id="-window-size"><code>--window &lt;SIZE&gt;</code><a class="headerlink" href="#-window-size" title="Permanent link">&para;</a></h4>
 <p>Enable sliding window of N+1 recent events. Required for <code>window_*()</code> functions.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.recent_statuses = window_values(&quot;status&quot;)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.recent_statuses = window_values(&quot;status&quot;)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="timestamp-conversion">Timestamp Conversion<a class="headerlink" href="#timestamp-conversion" title="Permanent link">&para;</a></h3>
 <h4 id="-convert-ts-fields"><code>--convert-ts &lt;FIELDS&gt;</code><a class="headerlink" href="#-convert-ts-fields" title="Permanent link">&para;</a></h4>
 <p>Convert timestamp fields to RFC3339 format (ISO 8601 compatible). Modifies event data - affects all output formats.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--convert-ts<span class="w"> </span>timestamp,created_at<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--convert-ts<span class="w"> </span>timestamp,created_at<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="error-handling-options">Error Handling Options<a class="headerlink" href="#error-handling-options" title="Permanent link">&para;</a></h2>
 <h3 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h3>
 <h4 id="-strict"><code>--strict</code><a class="headerlink" href="#-strict" title="Permanent link">&para;</a></h4>
 <p>Exit on first error (fail-fast behavior). Parsing errors, filter errors, or exec errors will immediately abort processing.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-no-strict"><code>--no-strict</code><a class="headerlink" href="#-no-strict" title="Permanent link">&para;</a></h4>
 <p>Disable strict mode explicitly (resilient mode is default).</p>
 <h3 id="verbosity">Verbosity<a class="headerlink" href="#verbosity" title="Permanent link">&para;</a></h3>
 <h4 id="-v-verbose"><code>-v, --verbose</code><a class="headerlink" href="#-v-verbose" title="Permanent link">&para;</a></h4>
 <p>Show detailed error information. Use multiple times for more verbosity: <code>-v</code>, <code>-vv</code>, <code>-vvv</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="quiet-mode">Quiet Mode<a class="headerlink" href="#quiet-mode" title="Permanent link">&para;</a></h3>
 <h4 id="-q-quiet"><code>-q, --quiet</code><a class="headerlink" href="#-q-quiet" title="Permanent link">&para;</a></h4>
@@ -4723,28 +4854,28 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;errors&quot;)&#39;</span><span class="w"> </span>app.log<span class="w">     </span><span class="c1"># Only metrics</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kelora<span class="w"> </span>-qqq<span class="w"> </span>app.log<span class="p">;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Exit: </span><span class="nv">$?</span><span class="s2">&quot;</span><span class="w">                  </span><span class="c1"># Exit code only</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;errors&quot;)&#39;</span><span class="w"> </span>app.log<span class="w">     </span><span class="c1"># Only metrics</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>kelora<span class="w"> </span>-qqq<span class="w"> </span>app.log<span class="p">;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Exit: </span><span class="nv">$?</span><span class="s2">&quot;</span><span class="w">                  </span><span class="c1"># Exit code only</span>
 </code></pre></div>
 <h2 id="filtering-options">Filtering Options<a class="headerlink" href="#filtering-options" title="Permanent link">&para;</a></h2>
 <h3 id="level-filtering">Level Filtering<a class="headerlink" href="#level-filtering" title="Permanent link">&para;</a></h3>
 <h4 id="-l-levels-levels"><code>-l, --levels &lt;LEVELS&gt;</code><a class="headerlink" href="#-l-levels-levels" title="Permanent link">&para;</a></h4>
 <p>Include only events with specified log levels (comma-separated, case-insensitive).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>app.log
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,warn,critical<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>app.log
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,warn,critical<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-l-exclude-levels-levels"><code>-L, --exclude-levels &lt;LEVELS&gt;</code><a class="headerlink" href="#-l-exclude-levels-levels" title="Permanent link">&para;</a></h4>
 <p>Exclude events with specified log levels (comma-separated, case-insensitive).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exclude-levels<span class="w"> </span>debug,trace<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exclude-levels<span class="w"> </span>debug,trace<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="field-selection">Field Selection<a class="headerlink" href="#field-selection" title="Permanent link">&para;</a></h3>
 <h4 id="-k-keys-fields"><code>-k, --keys &lt;FIELDS&gt;</code><a class="headerlink" href="#-k-keys-fields" title="Permanent link">&para;</a></h4>
 <p>Output only specified top-level fields (comma-separated list).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-k-exclude-keys-fields"><code>-K, --exclude-keys &lt;FIELDS&gt;</code><a class="headerlink" href="#-k-exclude-keys-fields" title="Permanent link">&para;</a></h4>
 <p>Exclude specified fields from output (comma-separated list).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exclude-keys<span class="w"> </span>password,token,secret<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exclude-keys<span class="w"> </span>password,token,secret<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="time-range-filtering">Time Range Filtering<a class="headerlink" href="#time-range-filtering" title="Permanent link">&para;</a></h3>
 <h4 id="-since-time"><code>--since &lt;TIME&gt;</code><a class="headerlink" href="#-since-time" title="Permanent link">&para;</a></h4>
@@ -4754,9 +4885,9 @@
 <li>Absolute: <code>2024-01-15T12:00:00Z</code>, <code>2024-01-15 12:00</code></li>
 <li>Relative: <code>1h</code>, <code>-30m</code>, <code>yesterday</code></li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;1 hour ago&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>yesterday<span class="w"> </span>app.log
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="m">2024</span>-01-15T10:00:00Z<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;1 hour ago&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>yesterday<span class="w"> </span>app.log
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="m">2024</span>-01-15T10:00:00Z<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-until-time"><code>--until &lt;TIME&gt;</code><a class="headerlink" href="#-until-time" title="Permanent link">&para;</a></h4>
 <p>Include events until this time. Accepts journalctl-style timestamps.</p>
@@ -4765,28 +4896,28 @@
 <li>Absolute: <code>2024-01-15T12:00:00Z</code>, <code>2024-01-15 12:00</code></li>
 <li>Relative: <code>1h</code>, <code>+30m</code>, <code>tomorrow</code></li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span><span class="s1">&#39;30 minutes ago&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span>tomorrow<span class="w"> </span>app.log
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span><span class="m">2024</span>-01-15T18:00:00Z<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span><span class="s1">&#39;30 minutes ago&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span>tomorrow<span class="w"> </span>app.log
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--until<span class="w"> </span><span class="m">2024</span>-01-15T18:00:00Z<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="output-limiting">Output Limiting<a class="headerlink" href="#output-limiting" title="Permanent link">&para;</a></h3>
 <h4 id="-n-take-n"><code>-n, --take &lt;N&gt;</code><a class="headerlink" href="#-n-take-n" title="Permanent link">&para;</a></h4>
 <p>Limit output to the first N events (after filtering).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--take<span class="w"> </span><span class="m">100</span><span class="w"> </span>app.log
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--take<span class="w"> </span><span class="m">10</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--take<span class="w"> </span><span class="m">100</span><span class="w"> </span>app.log
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--take<span class="w"> </span><span class="m">10</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="context-lines">Context Lines<a class="headerlink" href="#context-lines" title="Permanent link">&para;</a></h3>
 <h4 id="-b-before-context-n"><code>-B, --before-context &lt;N&gt;</code><a class="headerlink" href="#-b-before-context-n" title="Permanent link">&para;</a></h4>
 <p>Show N lines before each match (requires filtering with <code>--filter</code> or <code>--levels</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--before-context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--before-context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-a-after-context-n"><code>-A, --after-context &lt;N&gt;</code><a class="headerlink" href="#-a-after-context-n" title="Permanent link">&para;</a></h4>
 <p>Show N lines after each match (requires filtering).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--after-context<span class="w"> </span><span class="m">3</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--after-context<span class="w"> </span><span class="m">3</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-c-context-n"><code>-C, --context &lt;N&gt;</code><a class="headerlink" href="#-c-context-n" title="Permanent link">&para;</a></h4>
 <p>Show N lines before and after each match (requires filtering).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="output-options">Output Options<a class="headerlink" href="#output-options" title="Permanent link">&para;</a></h2>
 <h3 id="output-format">Output Format<a class="headerlink" href="#output-format" title="Permanent link">&para;</a></h3>
@@ -4805,151 +4936,151 @@
 <li><code>tsvnh</code> - TSV without header</li>
 <li><code>none</code> - No event output (only metrics/stats)</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>app.log
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>app.log
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>app.log
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>app.log
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-j_1"><code>-J</code><a class="headerlink" href="#-j_1" title="Permanent link">&para;</a></h4>
 <p>Shortcut for <code>-F json</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-J<span class="w"> </span>app.log
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="c1"># Equivalent to: kelora -f json -F json app.log</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-J<span class="w"> </span>app.log
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a><span class="c1"># Equivalent to: kelora -f json -F json app.log</span>
 </code></pre></div>
 <h3 id="output-destination">Output Destination<a class="headerlink" href="#output-destination" title="Permanent link">&para;</a></h3>
 <h4 id="-o-output-file-file"><code>-o, --output-file &lt;FILE&gt;</code><a class="headerlink" href="#-o-output-file-file" title="Permanent link">&para;</a></h4>
 <p>Write formatted events to file instead of stdout.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-o<span class="w"> </span>output.json<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-o<span class="w"> </span>output.json<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="core-fields">Core Fields<a class="headerlink" href="#core-fields" title="Permanent link">&para;</a></h3>
 <h4 id="-c-core"><code>-c, --core</code><a class="headerlink" href="#-c-core" title="Permanent link">&para;</a></h4>
 <p>Output only core fields (timestamp, level, message).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--core<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--core<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="default-format-options">Default Format Options<a class="headerlink" href="#default-format-options" title="Permanent link">&para;</a></h2>
 <p>These options only affect the default formatter (<code>-F default</code>).</p>
 <h3 id="brief-mode">Brief Mode<a class="headerlink" href="#brief-mode" title="Permanent link">&para;</a></h3>
 <h4 id="-b-brief"><code>-b, --brief</code><a class="headerlink" href="#-b-brief" title="Permanent link">&para;</a></h4>
 <p>Output only field values (omit field names).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--brief<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--brief<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="nested-structures">Nested Structures<a class="headerlink" href="#nested-structures" title="Permanent link">&para;</a></h3>
 <h4 id="-expand-nested"><code>--expand-nested</code><a class="headerlink" href="#-expand-nested" title="Permanent link">&para;</a></h4>
 <p>Expand nested structures (maps/arrays) with indentation.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--expand-nested<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--expand-nested<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="word-wrapping">Word Wrapping<a class="headerlink" href="#word-wrapping" title="Permanent link">&para;</a></h3>
 <h4 id="-wrap"><code>--wrap</code><a class="headerlink" href="#-wrap" title="Permanent link">&para;</a></h4>
 <p>Enable word-wrapping (default: on).</p>
 <h4 id="-no-wrap"><code>--no-wrap</code><a class="headerlink" href="#-no-wrap" title="Permanent link">&para;</a></h4>
 <p>Disable word-wrapping (overrides <code>--wrap</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--no-wrap<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--no-wrap<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="timestamp-display">Timestamp Display<a class="headerlink" href="#timestamp-display" title="Permanent link">&para;</a></h3>
 <h4 id="-z-show-ts-local"><code>-z, --show-ts-local</code><a class="headerlink" href="#-z-show-ts-local" title="Permanent link">&para;</a></h4>
 <p>Display timestamps as local RFC3339 (ISO 8601 compatible). Display-only - only affects default formatter output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-z<span class="w"> </span>app.log
-<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="c1"># Output: 2024-01-15T10:30:00+01:00</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-z<span class="w"> </span>app.log
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a><span class="c1"># Output: 2024-01-15T10:30:00+01:00</span>
 </code></pre></div>
 <h4 id="-z-show-ts-utc"><code>-Z, --show-ts-utc</code><a class="headerlink" href="#-z-show-ts-utc" title="Permanent link">&para;</a></h4>
 <p>Display timestamps as UTC RFC3339 (ISO 8601 compatible). Display-only - only affects default formatter output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-Z<span class="w"> </span>app.log
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="c1"># Output: 2024-01-15T09:30:00Z</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-Z<span class="w"> </span>app.log
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a><span class="c1"># Output: 2024-01-15T09:30:00Z</span>
 </code></pre></div>
 <h2 id="display-options">Display Options<a class="headerlink" href="#display-options" title="Permanent link">&para;</a></h2>
 <h3 id="colors">Colors<a class="headerlink" href="#colors" title="Permanent link">&para;</a></h3>
 <h4 id="-force-color"><code>--force-color</code><a class="headerlink" href="#-force-color" title="Permanent link">&para;</a></h4>
 <p>Force colored output (even when piping to file).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--force-color<span class="w"> </span>app.log<span class="w"> </span>&gt;<span class="w"> </span>output.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--force-color<span class="w"> </span>app.log<span class="w"> </span>&gt;<span class="w"> </span>output.txt
 </code></pre></div>
 <h4 id="-no-color"><code>--no-color</code><a class="headerlink" href="#-no-color" title="Permanent link">&para;</a></h4>
 <p>Disable colored output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--no-color<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--no-color<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="gap-markers">Gap Markers<a class="headerlink" href="#gap-markers" title="Permanent link">&para;</a></h3>
 <h4 id="-mark-gaps-duration"><code>--mark-gaps &lt;DURATION&gt;</code><a class="headerlink" href="#-mark-gaps-duration" title="Permanent link">&para;</a></h4>
 <p>Insert centered marker when time delta between events exceeds duration.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>30s<span class="w"> </span>app.log<span class="w">    </span><span class="c1"># Mark 30+ second gaps</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>5m<span class="w"> </span>app.log<span class="w">     </span><span class="c1"># Mark 5+ minute gaps</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>30s<span class="w"> </span>app.log<span class="w">    </span><span class="c1"># Mark 30+ second gaps</span>
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>5m<span class="w"> </span>app.log<span class="w">     </span><span class="c1"># Mark 5+ minute gaps</span>
 </code></pre></div>
 <h3 id="emoji">Emoji<a class="headerlink" href="#emoji" title="Permanent link">&para;</a></h3>
 <h4 id="-no-emoji"><code>--no-emoji</code><a class="headerlink" href="#-no-emoji" title="Permanent link">&para;</a></h4>
 <p>Disable emoji prefixes in output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--no-emoji<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--no-emoji<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="performance-options">Performance Options<a class="headerlink" href="#performance-options" title="Permanent link">&para;</a></h2>
 <h3 id="parallel-processing">Parallel Processing<a class="headerlink" href="#parallel-processing" title="Permanent link">&para;</a></h3>
 <h4 id="-parallel"><code>--parallel</code><a class="headerlink" href="#-parallel" title="Permanent link">&para;</a></h4>
 <p>Enable parallel processing across multiple cores. Higher throughput, may reorder output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-no-parallel"><code>--no-parallel</code><a class="headerlink" href="#-no-parallel" title="Permanent link">&para;</a></h4>
 <p>Disable parallel processing explicitly (sequential mode is default).</p>
 <h4 id="-threads-n"><code>--threads &lt;N&gt;</code><a class="headerlink" href="#-threads-n" title="Permanent link">&para;</a></h4>
 <p>Number of worker threads for parallel processing. Default: 0 (auto-detect cores).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-batch-size-n"><code>--batch-size &lt;N&gt;</code><a class="headerlink" href="#-batch-size-n" title="Permanent link">&para;</a></h4>
 <p>Batch size for parallel processing. Larger batches improve throughput but increase memory usage.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-batch-timeout-ms"><code>--batch-timeout &lt;MS&gt;</code><a class="headerlink" href="#-batch-timeout-ms" title="Permanent link">&para;</a></h4>
 <p>Flush partially full batches after idle period (milliseconds). Lower values reduce latency; higher values improve throughput.</p>
 <p>Default: 200ms</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-timeout<span class="w"> </span><span class="m">100</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-timeout<span class="w"> </span><span class="m">100</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-unordered"><code>--unordered</code><a class="headerlink" href="#-unordered" title="Permanent link">&para;</a></h4>
 <p>Disable ordered output for maximum parallel performance.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="metrics-and-statistics">Metrics and Statistics<a class="headerlink" href="#metrics-and-statistics" title="Permanent link">&para;</a></h2>
 <h3 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h3>
 <h4 id="-s-stats"><code>-s, --stats</code><a class="headerlink" href="#-s-stats" title="Permanent link">&para;</a></h4>
 <p>Show processing statistics at end (default: off).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-no-stats"><code>--no-stats</code><a class="headerlink" href="#-no-stats" title="Permanent link">&para;</a></h4>
 <p>Disable processing statistics explicitly (default: off).</p>
 <h4 id="-s-stats-only"><code>-S, --stats-only</code><a class="headerlink" href="#-s-stats-only" title="Permanent link">&para;</a></h4>
 <p>Print processing statistics only (implies <code>-F none</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats-only<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats-only<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="tracked-metrics">Tracked Metrics<a class="headerlink" href="#tracked-metrics" title="Permanent link">&para;</a></h3>
 <h4 id="-m-metrics"><code>-m, --metrics</code><a class="headerlink" href="#-m-metrics" title="Permanent link">&para;</a></h4>
 <p>Show metrics recorded via <code>track_*()</code> functions in Rhai scripts.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-no-metrics"><code>--no-metrics</code><a class="headerlink" href="#-no-metrics" title="Permanent link">&para;</a></h4>
 <p>Disable tracked metrics explicitly (default: off).</p>
 <h4 id="-metrics-file-file"><code>--metrics-file &lt;FILE&gt;</code><a class="headerlink" href="#-metrics-file-file" title="Permanent link">&para;</a></h4>
 <p>Persist metrics map to disk as JSON.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <h3 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h3>
 <p>Kelora uses a configuration file for defaults and aliases. See <a href="../../concepts/configuration-system/">Configuration System</a> for details.</p>
 <h4 id="-a-alias-alias"><code>-a, --alias &lt;ALIAS&gt;</code><a class="headerlink" href="#-a-alias-alias" title="Permanent link">&para;</a></h4>
 <p>Use alias from configuration file.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kelora<span class="w"> </span>-a<span class="w"> </span>errors<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>kelora<span class="w"> </span>-a<span class="w"> </span>errors<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-config-file-file"><code>--config-file &lt;FILE&gt;</code><a class="headerlink" href="#-config-file-file" title="Permanent link">&para;</a></h4>
 <p>Specify custom configuration file path.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kelora<span class="w"> </span>--config-file<span class="w"> </span>/path/to/custom.ini<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>kelora<span class="w"> </span>--config-file<span class="w"> </span>/path/to/custom.ini<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-show-config"><code>--show-config</code><a class="headerlink" href="#-show-config" title="Permanent link">&para;</a></h4>
 <p>Show current configuration with precedence information and exit.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kelora<span class="w"> </span>--show-config
+<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>kelora<span class="w"> </span>--show-config
 </code></pre></div>
 <h4 id="-edit-config"><code>--edit-config</code><a class="headerlink" href="#-edit-config" title="Permanent link">&para;</a></h4>
 <p>Edit configuration file in default editor and exit.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>kelora<span class="w"> </span>--edit-config
+<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>kelora<span class="w"> </span>--edit-config
 </code></pre></div>
 <h4 id="-ignore-config"><code>--ignore-config</code><a class="headerlink" href="#-ignore-config" title="Permanent link">&para;</a></h4>
 <p>Ignore configuration file (use built-in defaults only).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>kelora<span class="w"> </span>--ignore-config<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>kelora<span class="w"> </span>--ignore-config<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-save-alias-name"><code>--save-alias &lt;NAME&gt;</code><a class="headerlink" href="#-save-alias-name" title="Permanent link">&para;</a></h4>
 <p>Save current command as alias to configuration file.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--keys<span class="w"> </span>timestamp,message<span class="w"> </span>--save-alias<span class="w"> </span>errors
-<a id="__codelineno-68-2" name="__codelineno-68-2" href="#__codelineno-68-2"></a><span class="c1"># Later use: kelora -a errors app.log</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--keys<span class="w"> </span>timestamp,message<span class="w"> </span>--save-alias<span class="w"> </span>errors
+<a id="__codelineno-72-2" name="__codelineno-72-2" href="#__codelineno-72-2"></a><span class="c1"># Later use: kelora -a errors app.log</span>
 </code></pre></div>
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <p>Kelora uses standard Unix exit codes to indicate success or failure:</p>
@@ -4995,51 +5126,51 @@
 </ul>
 <h3 id="rhai-scripts">Rhai Scripts<a class="headerlink" href="#rhai-scripts" title="Permanent link">&para;</a></h3>
 <p>Access environment variables in scripts using <code>get_env()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.build = get_env(&quot;BUILD_ID&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.build = get_env(&quot;BUILD_ID&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="common-option-combinations">Common Option Combinations<a class="headerlink" href="#common-option-combinations" title="Permanent link">&para;</a></h2>
 <h3 id="error-analysis">Error Analysis<a class="headerlink" href="#error-analysis" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a><span class="c1"># Find errors with context</span>
-<a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
-<a id="__codelineno-70-3" name="__codelineno-70-3" href="#__codelineno-70-3"></a>
-<a id="__codelineno-70-4" name="__codelineno-70-4" href="#__codelineno-70-4"></a><span class="c1"># Count errors by service</span>
-<a id="__codelineno-70-5" name="__codelineno-70-5" href="#__codelineno-70-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a><span class="c1"># Find errors with context</span>
+<a id="__codelineno-74-2" name="__codelineno-74-2" href="#__codelineno-74-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
+<a id="__codelineno-74-3" name="__codelineno-74-3" href="#__codelineno-74-3"></a>
+<a id="__codelineno-74-4" name="__codelineno-74-4" href="#__codelineno-74-4"></a><span class="c1"># Count errors by service</span>
+<a id="__codelineno-74-5" name="__codelineno-74-5" href="#__codelineno-74-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="performance-analysis">Performance Analysis<a class="headerlink" href="#performance-analysis" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a><span class="c1"># Find slow requests</span>
-<a id="__codelineno-71-2" name="__codelineno-71-2" href="#__codelineno-71-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_time.to_float() &gt; 1.0&#39;</span><span class="w"> </span>nginx.log
-<a id="__codelineno-71-3" name="__codelineno-71-3" href="#__codelineno-71-3"></a>
-<a id="__codelineno-71-4" name="__codelineno-71-4" href="#__codelineno-71-4"></a><span class="c1"># Track response time percentiles</span>
-<a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-71-6" name="__codelineno-71-6" href="#__codelineno-71-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;latency&quot;, e.request_time.to_float() * 1000)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-71-7" name="__codelineno-71-7" href="#__codelineno-71-7"></a><span class="w">    </span>--metrics<span class="w"> </span>nginx.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a><span class="c1"># Find slow requests</span>
+<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_time.to_float() &gt; 1.0&#39;</span><span class="w"> </span>nginx.log
+<a id="__codelineno-75-3" name="__codelineno-75-3" href="#__codelineno-75-3"></a>
+<a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a><span class="c1"># Track response time percentiles</span>
+<a id="__codelineno-75-5" name="__codelineno-75-5" href="#__codelineno-75-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-75-6" name="__codelineno-75-6" href="#__codelineno-75-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;latency&quot;, e.request_time.to_float() * 1000)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-75-7" name="__codelineno-75-7" href="#__codelineno-75-7"></a><span class="w">    </span>--metrics<span class="w"> </span>nginx.log
 </code></pre></div>
 <h3 id="data-export">Data Export<a class="headerlink" href="#data-export" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a><span class="c1"># Export to JSON</span>
-<a id="__codelineno-72-2" name="__codelineno-72-2" href="#__codelineno-72-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-o<span class="w"> </span>output.json<span class="w"> </span>app.log
-<a id="__codelineno-72-3" name="__codelineno-72-3" href="#__codelineno-72-3"></a>
-<a id="__codelineno-72-4" name="__codelineno-72-4" href="#__codelineno-72-4"></a><span class="c1"># Export to CSV</span>
-<a id="__codelineno-72-5" name="__codelineno-72-5" href="#__codelineno-72-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,service,message<span class="w"> </span>-o<span class="w"> </span>report.csv<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a><span class="c1"># Export to JSON</span>
+<a id="__codelineno-76-2" name="__codelineno-76-2" href="#__codelineno-76-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-o<span class="w"> </span>output.json<span class="w"> </span>app.log
+<a id="__codelineno-76-3" name="__codelineno-76-3" href="#__codelineno-76-3"></a>
+<a id="__codelineno-76-4" name="__codelineno-76-4" href="#__codelineno-76-4"></a><span class="c1"># Export to CSV</span>
+<a id="__codelineno-76-5" name="__codelineno-76-5" href="#__codelineno-76-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,service,message<span class="w"> </span>-o<span class="w"> </span>report.csv<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="real-time-monitoring">Real-Time Monitoring<a class="headerlink" href="#real-time-monitoring" title="Permanent link">&para;</a></h3>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Linux/macOS</label><label for="__tabbed_1_2">Windows</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,warn
+<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,warn
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a><span class="nb">Get-Content</span> <span class="n">-Wait</span> <span class="n">app</span><span class="p">.</span><span class="n">log</span> <span class="p">|</span> <span class="n">kelora</span> <span class="n">-j</span> <span class="p">-</span><span class="n">-levels</span> <span class="n">error</span><span class="p">,</span><span class="n">warn</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a><span class="nb">Get-Content</span> <span class="n">-Wait</span> <span class="n">app</span><span class="p">.</span><span class="n">log</span> <span class="p">|</span> <span class="n">kelora</span> <span class="n">-j</span> <span class="p">-</span><span class="n">-levels</span> <span class="n">error</span><span class="p">,</span><span class="n">warn</span>
 </code></pre></div>
 </div>
 </div>
 </div>
 <h3 id="high-performance-batch-processing">High-Performance Batch Processing<a class="headerlink" href="#high-performance-batch-processing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a><span class="c1"># Parallel processing with optimal batch size</span>
-<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--unordered<span class="w"> </span>large.log
-<a id="__codelineno-75-3" name="__codelineno-75-3" href="#__codelineno-75-3"></a>
-<a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a><span class="c1"># Compressed archives</span>
-<a id="__codelineno-75-5" name="__codelineno-75-5" href="#__codelineno-75-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>logs/*.log.gz
+<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a><span class="c1"># Parallel processing with optimal batch size</span>
+<a id="__codelineno-79-2" name="__codelineno-79-2" href="#__codelineno-79-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--unordered<span class="w"> </span>large.log
+<a id="__codelineno-79-3" name="__codelineno-79-3" href="#__codelineno-79-3"></a>
+<a id="__codelineno-79-4" name="__codelineno-79-4" href="#__codelineno-79-4"></a><span class="c1"># Compressed archives</span>
+<a id="__codelineno-79-5" name="__codelineno-79-5" href="#__codelineno-79-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>logs/*.log.gz
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
