@@ -3181,7 +3181,7 @@
 <h4 id="using-conf-for-dynamic-filtering">Using conf for Dynamic Filtering<a class="headerlink" href="#using-conf-for-dynamic-filtering" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.blocked_ips = [&quot;192.168.1.100&quot;, &quot;10.0.0.50&quot;]&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;(e.ip in conf.blocked_ips) == false&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;!(e.ip in conf.blocked_ips)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h4 id="filtering-with-metadata">Filtering with Metadata<a class="headerlink" href="#filtering-with-metadata" title="Permanent link">&para;</a></h4>
