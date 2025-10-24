@@ -16,7 +16,7 @@
         <link rel="prev" href="../working-with-time/">
       
       
-        <link rel="next" href="../scripting-transforms/">
+        <link rel="next" href="../pipeline-stages/">
       
       
       <link rel="icon" href="../../kelora-logo.svg">
@@ -510,12 +510,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../parsing-custom-formats/" class="md-nav__link">
+      <a href="../basics/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Parsing Custom Formats
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction to Rhai
     
   </span>
   
@@ -538,7 +561,7 @@
   
   
   <span class="md-ellipsis">
-    Working With Time
+    Working with Time
     
   </span>
   
@@ -657,9 +680,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-summaries-with-sums-buckets-and-averages" class="md-nav__link">
+  <a href="#step-2-summaries-with-sums-and-averages" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 2 – Summaries with Sums, Buckets, and Averages
+      Step 2 – Summaries with Sums and Averages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-25-histograms-with-track_bucket" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2.5 – Histograms with track_bucket()
     </span>
   </a>
   
@@ -735,6 +767,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-reference-all-tracking-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Reference: All Tracking Functions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       Next Steps
@@ -759,12 +809,104 @@
   
   
     <li class="md-nav__item">
+      <a href="../pipeline-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pipeline Stages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../scripting-transforms/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     Scripting Transforms
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parsing Custom Formats
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../span-aggregation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Span Aggregation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration-and-reusability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration and Reusability
     
   </span>
   
@@ -1608,9 +1750,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-summaries-with-sums-buckets-and-averages" class="md-nav__link">
+  <a href="#step-2-summaries-with-sums-and-averages" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 2 – Summaries with Sums, Buckets, and Averages
+      Step 2 – Summaries with Sums and Averages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-25-histograms-with-track_bucket" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2.5 – Histograms with track_bucket()
     </span>
   </a>
   
@@ -1686,6 +1837,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-reference-all-tracking-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Reference: All Tracking Functions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      Summary
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       Next Steps
@@ -1726,8 +1895,9 @@ feed into dashboards.</p>
 </ul>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Completed the <a href="../../quickstart/">Quickstart</a></li>
-<li>Familiarity with basic Rhai scripting (<code>--filter</code>, <code>--exec</code>)</li>
+<li><a href="../basics/">Getting Started: Input, Display &amp; Filtering</a> - Basic CLI usage</li>
+<li><a href="../intro-to-rhai/">Introduction to Rhai Scripting</a> - Rhai fundamentals</li>
+<li><strong>Time:</strong> ~25 minutes</li>
 </ul>
 <h2 id="sample-data">Sample Data<a class="headerlink" href="#sample-data" title="Permanent link">&para;</a></h2>
 <p>Commands below use fixtures from the repository. If you cloned the project, the
@@ -1803,7 +1973,7 @@ any time you want a quick histogram after a batch run.</p>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>kelora: Stats:
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Throughput: 11466 lines/s in 1ms
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Throughput: 11480 lines/s in 1ms
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Timestamp: auto-detected timestamp — parsed 20 of 20 detected events (100.0%).
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN
@@ -1814,7 +1984,7 @@ any time you want a quick histogram after a batch run.</p>
 </div>
 <p><code>--stats</code> adds processing totals, time span, and field inventory without touching
 your metrics map.</p>
-<h2 id="step-2-summaries-with-sums-buckets-and-averages">Step 2 – Summaries with Sums, Buckets, and Averages<a class="headerlink" href="#step-2-summaries-with-sums-buckets-and-averages" title="Permanent link">&para;</a></h2>
+<h2 id="step-2-summaries-with-sums-and-averages">Step 2 – Summaries with Sums and Averages<a class="headerlink" href="#step-2-summaries-with-sums-and-averages" title="Permanent link">&para;</a></h2>
 <p>Kelora ships several helpers for numeric metrics. The following example treats
 response sizes and latency as rolling aggregates.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command</label><label for="__tabbed_3_2">Output</label></div>
@@ -1822,44 +1992,93 @@ response sizes and latency as rolling aggregates.</p>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;response_bytes&quot;, to_int_or(e.get_path(&quot;bytes&quot;), 0))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time_ms&quot;, to_int_or(e.get_path(&quot;duration_ms&quot;), 0))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;duration_ms&quot;) { track_bucket(&quot;slow_requests&quot;, clamp(to_int_or(e.duration_ms, 0) / 250 * 250, 0, 2000)) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>--metrics
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;duration_ms&quot;) {</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">          track_sum(&quot;total_duration&quot;, e.duration_ms);</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">          track_count(&quot;duration_count&quot;);</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">          track_min(&quot;min_duration&quot;, e.duration_ms);</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">          track_max(&quot;max_duration&quot;, e.duration_ms)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">      }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span>--metrics
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;response_bytes&quot;, to_int_or(e.get_path(&quot;bytes&quot;), 0))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time_ms&quot;, to_int_or(e.get_path(&quot;duration_ms&quot;), 0))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has_path(&quot;duration_ms&quot;) { track_bucket(&quot;slow_requests&quot;, clamp(to_int_or(e.duration_ms, 0) / 250 * 250, 0, 2000)) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--metrics
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;duration_ms&quot;) { track_sum(&quot;total_duration&quot;, e.duration_ms); track_count(&quot;duration_count&quot;); track_min(&quot;min_duration&quot;, e.duration_ms); track_max(&quot;max_duration&quot;, e.duration_ms) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>response_bytes = 0
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>slow_requests = #{&quot;0&quot;: 1, &quot;2000&quot;: 2}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>duration_count = 3
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>max_duration = 300000
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>min_duration = 45
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>total_duration = 305045
 </code></pre></div>
 </div>
 </div>
 </div>
+<p><strong>Available aggregation functions:</strong></p>
 <ul>
-<li><code>track_sum</code> accumulates totals (suitable for throughput or volume).</li>
-<li><code>track_avg</code> automatically maintains a running average per key.</li>
-<li><code>track_bucket</code> groups values into ranges so you can build histograms.</li>
+<li><code>track_sum(key, value)</code> - Accumulates totals (throughput, volume)</li>
+<li><code>track_min(key, value)</code> - Tracks minimum value seen</li>
+<li><code>track_max(key, value)</code> - Tracks maximum value seen</li>
+<li><code>track_count(key)</code> - Counts occurrences of key</li>
+<li><code>track_inc(key, amount)</code> - Increment counter by amount (not shown above)</li>
 </ul>
-<p>Buckets show up as nested maps where each bucket value keeps its own count.</p>
-<h2 id="step-3-unique-values-and-cardinality">Step 3 – Unique Values and Cardinality<a class="headerlink" href="#step-3-unique-values-and-cardinality" title="Permanent link">&para;</a></h2>
-<p><code>track_unique()</code> stores distinct values for a key—handy for unique user counts or
-cardinality analysis.</p>
+<p><strong>Note:</strong> There's no <code>track_avg()</code> function. Calculate averages in <code>--end</code> stage:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>--end &#39;let avg = metrics.total_duration / metrics.duration_count; print(&quot;Average: &quot; + avg)&#39;
+</code></pre></div></p>
+<h2 id="step-25-histograms-with-track_bucket">Step 2.5 – Histograms with track_bucket()<a class="headerlink" href="#step-25-histograms-with-track_bucket" title="Permanent link">&para;</a></h2>
+<p>Build histograms by grouping values into buckets—perfect for latency distributions.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command</label><label for="__tabbed_4_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_unique(&quot;error_messages&quot;, e.message) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--metrics
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;duration_ms&quot;) {</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">          let bucket = (e.duration_ms / 1000) * 1000;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">          track_bucket(&quot;latency_histogram&quot;, bucket)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">      }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>--metrics
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;duration_ms&quot;) { let bucket = (e.duration_ms / 1000) * 1000; track_bucket(&quot;latency_histogram&quot;, bucket) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>latency_histogram = #{&quot;0&quot;: 1, &quot;300000&quot;: 1, &quot;5000&quot;: 1}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><code>track_bucket(key, bucket_value)</code> creates nested counters where each unique bucket
+value maintains its own count. Perfect for building histograms.</p>
+<p><strong>Common bucketing patterns:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>// Round to nearest 100ms
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>track_bucket(&quot;latency&quot;, (duration_ms / 100) * 100)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>// HTTP status code families
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>track_bucket(&quot;status_family&quot;, (status / 100) * 100)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>// File size buckets (KB)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>track_bucket(&quot;file_sizes&quot;, (bytes / 1024))
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>// Hour of day
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>track_bucket(&quot;hour_of_day&quot;, timestamp.hour())
+</code></pre></div>
+<h2 id="step-3-unique-values-and-cardinality">Step 3 – Unique Values and Cardinality<a class="headerlink" href="#step-3-unique-values-and-cardinality" title="Permanent link">&para;</a></h2>
+<p><code>track_unique()</code> stores distinct values for a key—handy for unique user counts or
+cardinality analysis.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Command</label><label for="__tabbed_5_2">Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_unique(&quot;error_messages&quot;, e.message) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -1880,20 +2099,20 @@ cardinality analysis.</p>
 <h3 id="viewing-full-metrics">Viewing Full Metrics<a class="headerlink" href="#viewing-full-metrics" title="Permanent link">&para;</a></h3>
 <p>When <code>track_unique()</code> collects many items, <code>-m</code> shows only the first 5 with a
 hint. Use <code>-mm</code> for the complete list or <code>--metrics-json</code> for JSON format:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Full table with -mm</label><label for="__tabbed_5_2">JSON format with --metrics-json</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Full table with -mm</label><label for="__tabbed_6_2">JSON format with --metrics-json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-mm
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-mm
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--metrics-json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics-json
 </code></pre></div>
 </div>
 </div>
@@ -1905,22 +2124,22 @@ both table output and a JSON file.</p>
 <h2 id="step-4-sliding-windows-and-percentiles">Step 4 – Sliding Windows and Percentiles<a class="headerlink" href="#step-4-sliding-windows-and-percentiles" title="Permanent link">&para;</a></h2>
 <p>Enable the window buffer to examine recent events. The example below tracks a
 five-event moving average and P95 latency for CPU metrics.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Command</label><label for="__tabbed_6_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Command</label><label for="__tabbed_7_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/window_metrics.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.metric == &quot;cpu&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">$&#39;let values = window_numbers(window, &quot;value&quot;);</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s1">if values.len() &gt; 0 {</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s1">    let sum = values.reduce(|s, x| s + x, 0.0);</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s1">    let avg = sum / values.len();</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s1">    e.avg_last_5 = round(avg * 100.0) / 100.0;</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="s1">    if values.len() &gt;= 3 {</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s1">        e.p95_last_5 = round(values.percentile(95.0) * 100.0) / 100.0;</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="s1">    }</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s1">}&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/window_metrics.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.metric == &quot;cpu&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">$&#39;let values = window_numbers(window, &quot;value&quot;);</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="s1">if values.len() &gt; 0 {</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="s1">    let sum = values.reduce(|s, x| s + x, 0.0);</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s1">    let avg = sum / values.len();</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s1">    e.avg_last_5 = round(avg * 100.0) / 100.0;</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s1">    if values.len() &gt;= 3 {</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="s1">        e.p95_last_5 = round(values.percentile(95.0) * 100.0) / 100.0;</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="s1">    }</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="s1">}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -1957,28 +2176,28 @@ for raw strings.</p>
 <p>Sometimes you need a formatted report instead of raw maps. Store a short Rhai
 script and include it with <code>-I</code> so the same layout works across platforms, then
 call the helper from <code>--end</code>.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Command</label><label for="__tabbed_7_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Command</label><label for="__tabbed_8_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt;&#39;RHAI&#39; &gt; metrics_summary.rhai</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s">fn summarize_metrics() {</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s">    let keys = metrics.keys();</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s">    keys.sort();</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s">    for key in keys {</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s">        print(key + &quot;: &quot; + metrics[key].to_string());</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s">    }</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s">}</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="s">RHAI</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span>-m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span>-I<span class="w"> </span>metrics_summary.rhai<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;summarize_metrics()&#39;</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>rm<span class="w"> </span>metrics_summary.rhai
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt;&#39;RHAI&#39; &gt; metrics_summary.rhai</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="s">fn summarize_metrics() {</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="s">    let keys = metrics.keys();</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s">    keys.sort();</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="s">    for key in keys {</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s">        print(key + &quot;: &quot; + metrics[key].to_string());</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s">    }</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s">}</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s">RHAI</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">  </span>-m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">  </span>-I<span class="w"> </span>metrics_summary.rhai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;summarize_metrics()&#39;</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>rm<span class="w"> </span>metrics_summary.rhai
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2011,17 +2230,17 @@ call the helper from <code>--end</code>.</p>
 clean text summary that you can redirect or feed into alerts.</p>
 <h2 id="step-6-persist-metrics-to-disk">Step 6 – Persist Metrics to Disk<a class="headerlink" href="#step-6-persist-metrics-to-disk" title="Permanent link">&para;</a></h2>
 <p>Use <code>--metrics-file</code> to serialize the metrics map as JSON for other tools.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Command</label><label for="__tabbed_8_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Command</label><label for="__tabbed_9_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>-m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>--metrics-file<span class="w"> </span>metrics.json
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>cat<span class="w"> </span>metrics.json
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>rm<span class="w"> </span>metrics.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>-m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>--metrics-file<span class="w"> </span>metrics.json
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>cat<span class="w"> </span>metrics.json
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>rm<span class="w"> </span>metrics.json
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2045,15 +2264,15 @@ clean text summary that you can redirect or feed into alerts.</p>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>{
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;cache&quot;: 1,
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;api&quot;: 7,
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;scheduler&quot;: 3,
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;disk&quot;: 1,
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;auth&quot;: 2,
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;admin&quot;: 2,
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;health&quot;: 1,
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;monitoring&quot;: 1,
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;database&quot;: 2
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;database&quot;: 2,
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;cache&quot;: 1,
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;auth&quot;: 2,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;api&quot;: 7,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;scheduler&quot;: 3,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;disk&quot;: 1,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;health&quot;: 1,
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;admin&quot;: 2
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>}
 </code></pre></div>
 </div>
@@ -2064,13 +2283,13 @@ dashboard agent, or any scripting language.</p>
 <h2 id="step-7-streaming-scoreboards">Step 7 – Streaming Scoreboards<a class="headerlink" href="#step-7-streaming-scoreboards" title="Permanent link">&para;</a></h2>
 <p>Kelora keeps metrics up to date even when tailing files or processing archives.
 This command watches a gzipped access log and surfaces top status classes.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Command</label><label for="__tabbed_9_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Command</label><label for="__tabbed_10_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let klass = ((e.status / 100) * 100).to_string(); track_count(klass)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>-m<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">0</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let klass = ((e.status / 100) * 100).to_string(); track_count(klass)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>-m<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2089,21 +2308,21 @@ This command watches a gzipped access log and surfaces top status classes.</p>
 Kelora against a stream (<code>tail -f | kelora ...</code>), the metrics snapshot updates when
 you terminate the process.</p>
 <p>Need full histograms instead of counts? Swap in <code>track_bucket()</code>:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Command</label><label for="__tabbed_10_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:2"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Command</label><label for="__tabbed_11_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>-m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status_family&quot;, (e.status / 100) * 100)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="s1">    let buckets = metrics.status_family.keys();</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s1">    buckets.sort();</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s1">    for bucket in buckets {</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s1">        let counts = metrics.status_family[bucket];</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s1">        print(bucket.to_string() + &quot;: &quot; + counts.to_string());</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="s1">    }</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>-m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status_family&quot;, (e.status / 100) * 100)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="s1">    let buckets = metrics.status_family.keys();</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="s1">    buckets.sort();</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="s1">    for bucket in buckets {</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="s1">        let counts = metrics.status_family[bucket];</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="s1">        print(bucket.to_string() + &quot;: &quot; + counts.to_string());</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="s1">    }</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2147,15 +2366,78 @@ human-readable histogram once processing finishes.</p>
   only works after you enable <code>--window</code> and the requested field exists in the
   buffered events.</li>
 </ul>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<h2 id="quick-reference-all-tracking-functions">Quick Reference: All Tracking Functions<a class="headerlink" href="#quick-reference-all-tracking-functions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Purpose</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>track_count(key)</code></td>
+<td>Count events by key</td>
+<td><code>track_count(e.service)</code></td>
+</tr>
+<tr>
+<td><code>track_inc(key, amount)</code></td>
+<td>Increment by amount</td>
+<td><code>track_inc("total_bytes", e.size)</code></td>
+</tr>
+<tr>
+<td><code>track_sum(key, value)</code></td>
+<td>Sum numeric values</td>
+<td><code>track_sum("bandwidth", e.bytes)</code></td>
+</tr>
+<tr>
+<td><code>track_min(key, value)</code></td>
+<td>Minimum value</td>
+<td><code>track_min("fastest", e.duration)</code></td>
+</tr>
+<tr>
+<td><code>track_max(key, value)</code></td>
+<td>Maximum value</td>
+<td><code>track_max("slowest", e.duration)</code></td>
+</tr>
+<tr>
+<td><code>track_bucket(key, bucket)</code></td>
+<td>Histogram buckets</td>
+<td><code>track_bucket("status", (e.status/100)*100)</code></td>
+</tr>
+<tr>
+<td><code>track_unique(key, value)</code></td>
+<td>Unique values</td>
+<td><code>track_unique("users", e.user_id)</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> Calculate averages using <code>sum / count</code> in the <code>--end</code> stage.</p>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<p>You've learned:</p>
 <ul>
-<li>Dive into the <a href="../scripting-transforms/">Scripting Transforms tutorial</a> for more
-  transformation patterns.</li>
-<li>Read the <a href="../../concepts/scripting-stages/">Concepts: Scripting Stages</a> page to
-  understand how <code>--begin</code>, <code>--exec</code>, and <code>--end</code> interact.</li>
-<li>Explore the <a href="../../reference/functions/#tracking-functions">Function Reference</a>
-  for the complete list of tracking helpers and their signatures.</li>
+<li>✅ Track counts with <code>track_count()</code> and increment with <code>track_inc()</code></li>
+<li>✅ Aggregate numbers with <code>track_sum()</code>, <code>track_min()</code>, <code>track_max()</code></li>
+<li>✅ Calculate averages in <code>--end</code> stage from sum and count</li>
+<li>✅ Build histograms with <code>track_bucket()</code></li>
+<li>✅ Count unique values with <code>track_unique()</code></li>
+<li>✅ View metrics with <code>-m</code>, <code>-mm</code>, and <code>--metrics-json</code></li>
+<li>✅ Persist metrics with <code>--metrics-file</code></li>
+<li>✅ Generate custom reports in <code>--end</code> stage</li>
+<li>✅ Use sliding windows for percentile analysis</li>
 </ul>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>Now that you can track and aggregate data, continue to:</p>
+<ul>
+<li><strong><a href="../pipeline-stages/">Pipeline Stages</a></strong> - Use <code>--begin</code> and <code>--end</code> for advanced workflows</li>
+<li><strong><a href="../scripting-transforms/">Scripting Transforms</a></strong> - Advanced transformation patterns</li>
+<li><strong><a href="../configuration-and-reusability/">Configuration and Reusability</a></strong> - Save common patterns as aliases</li>
+</ul>
+<p><strong>Related guides:</strong>
+- <a href="../../concepts/scripting-stages/">Concepts: Scripting Stages</a> - Deep dive into stage execution
+- <a href="../../reference/functions/#tracking-functions">Function Reference</a> - Complete function signatures
+- <a href="../../how-to/monitor-application-health/">How-To: Monitor Application Health</a> - Real-world examples</p>
 
 
 

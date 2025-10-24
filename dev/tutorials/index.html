@@ -16,7 +16,7 @@
         <link rel="prev" href="../quickstart/">
       
       
-        <link rel="next" href="parsing-custom-formats/">
+        <link rel="next" href="basics/">
       
       
       <link rel="icon" href="../kelora-logo.svg">
@@ -496,6 +496,19 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -507,6 +520,52 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Foundation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#intermediate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intermediate
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -520,12 +579,35 @@
   
   
     <li class="md-nav__item">
-      <a href="parsing-custom-formats/" class="md-nav__link">
+      <a href="basics/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Parsing Custom Formats
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction to Rhai
     
   </span>
   
@@ -548,7 +630,7 @@
   
   
   <span class="md-ellipsis">
-    Working With Time
+    Working with Time
     
   </span>
   
@@ -589,12 +671,104 @@
   
   
     <li class="md-nav__item">
+      <a href="pipeline-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pipeline Stages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="scripting-transforms/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     Scripting Transforms
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Parsing Custom Formats
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="span-aggregation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Span Aggregation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="configuration-and-reusability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration and Reusability
     
   </span>
   
@@ -1380,6 +1554,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Foundation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#intermediate" class="md-nav__link">
+    <span class="md-ellipsis">
+      Intermediate
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1399,11 +1608,23 @@
 
 <h1 id="tutorials">Tutorials<a class="headerlink" href="#tutorials" title="Permanent link">&para;</a></h1>
 <p>Step-by-step walkthroughs for building Kelora pipelines from scratch. Start here when you want a deeper tour with annotated output.</p>
+<h2 id="foundation">Foundation<a class="headerlink" href="#foundation" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="parsing-custom-formats/">Parsing Custom Formats</a></li>
-<li><a href="working-with-time/">Working with Time</a></li>
-<li><a href="metrics-and-tracking/">Metrics and Tracking</a></li>
-<li><a href="scripting-transforms/">Scripting Transforms</a></li>
+<li><a href="basics/">Getting Started: Input, Display &amp; Filtering</a> - Essential commands for reading logs and controlling output</li>
+<li><a href="intro-to-rhai/">Introduction to Rhai Scripting</a> - Learn to write simple filters and transforms</li>
+</ul>
+<h2 id="intermediate">Intermediate<a class="headerlink" href="#intermediate" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="working-with-time/">Working with Time</a> - Timestamp parsing, filtering, and timezone handling</li>
+<li><a href="metrics-and-tracking/">Metrics and Tracking</a> - Aggregate data with track_*() functions</li>
+<li><a href="pipeline-stages/">Pipeline Stages: Begin, Filter, Exec, and End</a> - Complete pipeline lifecycle</li>
+<li><a href="scripting-transforms/">Scripting Transforms</a> - Advanced transformation patterns</li>
+</ul>
+<h2 id="advanced">Advanced<a class="headerlink" href="#advanced" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="parsing-custom-formats/">Parsing Custom Formats</a> - Handle non-standard log formats</li>
+<li><a href="span-aggregation/">Span Aggregation: Time-Based and Count-Based Windows</a> - Windowed rollups and time-series</li>
+<li><a href="configuration-and-reusability/">Configuration and Reusability</a> - Aliases, includes, and shared workflows</li>
 </ul>
 
 

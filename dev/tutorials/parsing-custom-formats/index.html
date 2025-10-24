@@ -13,10 +13,10 @@
         <link rel="canonical" href="https://dloss.github.io/kelora/dev/tutorials/parsing-custom-formats/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../scripting-transforms/">
       
       
-        <link rel="next" href="../working-with-time/">
+        <link rel="next" href="../span-aggregation/">
       
       
       <link rel="icon" href="../../kelora-logo.svg">
@@ -507,6 +507,144 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction to Rhai
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Working with Time
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics and Tracking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pipeline Stages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scripting-transforms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scripting Transforms
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -902,12 +1040,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../working-with-time/" class="md-nav__link">
+      <a href="../span-aggregation/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Working With Time
+    Span Aggregation
     
   </span>
   
@@ -925,35 +1063,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../metrics-and-tracking/" class="md-nav__link">
+      <a href="../configuration-and-reusability/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Metrics and Tracking
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../scripting-transforms/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Scripting Transforms
+    Configuration and Reusability
     
   </span>
   
@@ -2520,7 +2635,7 @@
 <h3 id="type-conversion-failures">Type Conversion Failures<a class="headerlink" href="#type-conversion-failures" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Integer/float conversions failing.</p>
 <p><strong>Solution:</strong> Use <code>get_path</code> with defaults in resilient mode:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status bytes&#39;</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.status_int = to_int_or(e.status, 0)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status bytes&#39;</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.status_int = e.status.to_int_or(0)&#39;</span>
 </code></pre></div></p>
 <h3 id="greedy-field-capturing-too-much">Greedy Field Capturing Too Much<a class="headerlink" href="#greedy-field-capturing-too-much" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Last field includes separators.</p>
