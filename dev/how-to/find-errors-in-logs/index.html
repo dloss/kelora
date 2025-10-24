@@ -1773,12 +1773,13 @@
 <p>Decide which files and time ranges matter for the investigation. Use level filtering for the fastest coarse grained scan.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-l<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-04-01 09:00:00&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-04-01 12:00:00&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--until<span class="w"> </span>30m
 </code></pre></div>
 <ul>
-<li><code>-l</code> (or <code>--levels</code>) is faster than <code>--filter</code> because it runs during parsing.</li>
-<li>Prefer explicit formats (<code>-j</code>, <code>-f logfmt</code>, <code>-f combined</code>) over auto detection to avoid surprises.</li>
+<li><code>-l</code> (or <code>--levels</code>) executes as soon as it appears, so place it before heavier stages to prune work early.</li>
+<li>You can mix absolute ISO timestamps with relative offsets to anchor investigations (as shown above).</li>
+<li>Prefer explicit formats (<code>-j</code>, <code>-f logfmt</code>, <code>-f combined</code>) over <code>-f auto</code> detection to avoid surprises.</li>
 <li>For a directory of files, pass a glob (<code>logs/app/*.jsonl</code>) or feed a file list via <code>find … -print0 | xargs -0 kelora …</code>.</li>
 </ul>
 <h2 id="step-2-narrow-to-relevant-signals">Step 2: Narrow to Relevant Signals<a class="headerlink" href="#step-2-narrow-to-relevant-signals" title="Permanent link">&para;</a></h2>
@@ -1796,11 +1797,11 @@
 <p>Show surrounding events to understand what happened before and after each error. Combine context flags with multiline handling when stack traces are present.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-l<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--before-context<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--after-context<span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-B<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-A<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 <ul>
-<li><code>--before-context</code> and <code>--after-context</code> mimic <code>grep</code>’s <code>-B/-A</code>. Use them sparingly to avoid flooding output.</li>
+<li><code>-B</code>/<code>-A</code> (short for <code>--before-context</code>/<code>--after-context</code>) mimic <code>grep</code>’s context flags. Use them sparingly to avoid flooding output.</li>
 <li>If the log contains multi-line traces, run the relevant strategy from <a href="../handle-multiline-stacktraces/">Choose a Multiline Strategy</a> first, then apply level/context filtering.</li>
 </ul>
 <h2 id="step-4-summarise-severity-and-ownership">Step 4: Summarise Severity and Ownership<a class="headerlink" href="#step-4-summarise-severity-and-ownership" title="Permanent link">&para;</a></h2>
@@ -1822,7 +1823,8 @@
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-l<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.error_code = e.get_path(&quot;error.code&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,error_code,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>errors.csv
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>-o<span class="w"> </span>errors.csv
 </code></pre></div>
 <p>Alternatives:
 - <code>-J</code> (or <code>-F json</code>) for structured archives.

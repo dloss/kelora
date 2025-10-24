@@ -3318,6 +3318,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level in [&quot;ERROR&quot;, &quot;WARN&quot;]&#39;</span>
 </code></pre></div></p>
 <p>However, <code>--filter</code> provides more flexibility for complex conditions.</p>
+<p>Level flags behave like script stages: you can place <code>--levels</code> or <code>--exclude-levels</code> anywhere in the CLI sequence, and Kelora runs them immediately at that point. Repeat the flag when you want different level rules before and after a transformation (for example, derive a level in <code>--exec</code>, then add another <code>--levels</code> to act on the new field).</p>
 <h3 id="filter-output">Filter Output<a class="headerlink" href="#filter-output" title="Permanent link">&para;</a></h3>
 <p>Filters don't modify events - they only decide pass/skip:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># This works - filter just checks level</span>

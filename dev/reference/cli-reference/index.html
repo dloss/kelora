@@ -5042,13 +5042,16 @@
 <h2 id="filtering-options">Filtering Options<a class="headerlink" href="#filtering-options" title="Permanent link">&para;</a></h2>
 <h3 id="level-filtering">Level Filtering<a class="headerlink" href="#level-filtering" title="Permanent link">&para;</a></h3>
 <h4 id="-l-levels-levels"><code>-l, --levels &lt;LEVELS&gt;</code><a class="headerlink" href="#-l-levels-levels" title="Permanent link">&para;</a></h4>
-<p>Include only events with specified log levels (comma-separated, case-insensitive).</p>
+<p>Include only events with specified log levels (case-insensitive). Every occurrence runs exactly where it appears in the CLI, so you can place <code>-l</code> before heavy <code>--exec</code> stages (to prune work early) or repeat it later after you derive a new level.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>app.log
 <a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,warn,critical<span class="w"> </span>app.log
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.fallback_level = &quot;WARN&quot;&#39;</span><span class="w"> </span>--levels<span class="w"> </span>warn<span class="w"> </span>log.txt<span class="w">  </span><span class="c1"># second levels runs after exec</span>
 </code></pre></div>
 <h4 id="-l-exclude-levels-levels"><code>-L, --exclude-levels &lt;LEVELS&gt;</code><a class="headerlink" href="#-l-exclude-levels-levels" title="Permanent link">&para;</a></h4>
-<p>Exclude events with specified log levels (comma-separated, case-insensitive).</p>
+<p>Exclude events with specified log levels (case-insensitive). Like <code>--levels</code>, you may repeat this flag to drop different levels at multiple points in the pipeline.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exclude-levels<span class="w"> </span>debug,trace<span class="w"> </span>app.log
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if e.service == &quot;chat&quot; { e.level = &quot;WARN&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="w">    </span>--exclude-levels<span class="w"> </span>warn<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="field-selection">Field Selection<a class="headerlink" href="#field-selection" title="Permanent link">&para;</a></h3>
 <h4 id="-k-keys-fields"><code>-k, --keys &lt;FIELDS&gt;</code><a class="headerlink" href="#-k-keys-fields" title="Permanent link">&para;</a></h4>

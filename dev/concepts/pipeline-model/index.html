@@ -2459,30 +2459,30 @@ Buffers entire input as single event (use for structured files).</p>
 </code></pre></div>
 <p>Parsers: <code>json</code>, <code>logfmt</code>, <code>syslog</code>, <code>combined</code>, <code>csv</code>, <code>tsv</code>, <code>cols</code>, etc.</p>
 <h3 id="script-stages-pipeline-core">Script Stages (Pipeline Core)<a class="headerlink" href="#script-stages-pipeline-core" title="Permanent link">&para;</a></h3>
-<p><strong>User script stages execute in exact CLI order:</strong></p>
+<p><strong>User-controlled stages execute exactly where you place them on the CLI:</strong></p>
 <ul>
-<li><code>--filter &lt;EXPR&gt;</code> - Boolean filter (true = keep, false = skip)</li>
-<li><code>--exec &lt;SCRIPT&gt;</code> - Transform/process event</li>
-<li><code>--exec-file &lt;PATH&gt;</code> - Execute script from file (alias: <code>-E</code>)</li>
+<li><code>--filter &lt;EXPR&gt;</code> – Boolean filter (true = keep, false = skip)</li>
+<li><code>--levels/-L &lt;LIST&gt;</code> – Include or exclude log levels (case-insensitive, repeatable)</li>
+<li><code>--exec &lt;SCRIPT&gt;</code> – Transform/process event</li>
+<li><code>--exec-file &lt;PATH&gt;</code> – Execute script from file (alias: <code>-E</code>)</li>
 </ul>
-<p><strong>Multiple instances allowed, intermixed in any order.</strong></p>
+<p>You can mix and repeat these flags; each stage sees the output of the previous one.</p>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">   </span><span class="c1"># Stage 1: Filter</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.alert = true&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">       </span><span class="c1"># Stage 2: Exec (only 4xx/5xx)</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &lt; 500&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">     </span><span class="c1"># Stage 3: Filter (only 4xx)</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w">     </span><span class="c1"># Stage 4: Exec (track 4xx paths)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--levels<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\ </span><span class="w">       </span><span class="c1"># Stage 1: Level filter</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">    </span><span class="c1"># Stage 2: Filter</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.alert = true&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">       </span><span class="c1"># Stage 3: Exec (only 4xx/5xx errors)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--exclude-levels<span class="w"> </span>debug<span class="w"> </span><span class="se">\ </span><span class="w">        </span><span class="c1"># Stage 4: Remove any downgraded events</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w">     </span><span class="c1"># Stage 5: Exec (track surviving paths)</span>
 </code></pre></div></p>
 <p>Each stage processes the output of the previous stage sequentially.</p>
 <h3 id="complete-stage-ordering">Complete Stage Ordering<a class="headerlink" href="#complete-stage-ordering" title="Permanent link">&para;</a></h3>
-<p>After user script stages, built-in filters execute:</p>
 <ol>
-<li><strong>User script stages</strong> (--filter, --exec in CLI order)</li>
-<li><strong>Timestamp filtering</strong> (--since, --until)</li>
-<li><strong>Level filtering</strong> (--levels, --exclude-levels)</li>
-<li><strong>Key filtering</strong> (--keys, --exclude-keys)</li>
+<li><strong>CLI-ordered stages</strong> – <code>--filter</code>, <code>--levels</code>/<code>--exclude-levels</code>, <code>--exec</code>, <code>--exec-file</code></li>
+<li><strong>Timestamp filtering</strong> – <code>--since</code>, <code>--until</code></li>
+<li><strong>Key filtering</strong> – <code>--keys</code>, <code>--exclude-keys</code></li>
 </ol>
-<p><strong>Note:</strong> User filters execute <strong>before</strong> built-in filtering like <code>--levels</code>.</p>
+<p>Place <code>--levels</code> before heavy transforms to prune work early, or add another <code>--levels</code> after a script if you synthesise a level field there.</p>
 <h3 id="span-processing">Span Processing<a class="headerlink" href="#span-processing" title="Permanent link">&para;</a></h3>
 <p>Groups events into spans for aggregation:</p>
 <p><strong>Count-based Spans:</strong>
