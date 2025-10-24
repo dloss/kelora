@@ -776,6 +776,19 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -787,6 +800,61 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#operational-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operational Response
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traffic-ingress" class="md-nav__link">
+    <span class="md-ellipsis">
+      Traffic &amp; Ingress
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-preparation-hygiene" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Preparation &amp; Hygiene
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance &amp; Aggregation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -805,7 +873,7 @@
   
   
   <span class="md-ellipsis">
-    Find Errors in Logs
+    Triage Production Errors
     
   </span>
   
@@ -851,7 +919,7 @@
   
   
   <span class="md-ellipsis">
-    Monitor Application Health
+    Build a Service Health Snapshot
     
   </span>
   
@@ -874,7 +942,7 @@
   
   
   <span class="md-ellipsis">
-    Parse Syslog Files
+    Investigate Syslog Sources
     
   </span>
   
@@ -897,7 +965,7 @@
   
   
   <span class="md-ellipsis">
-    Handle Multiline Stacktraces
+    Choose a Multiline Strategy
     
   </span>
   
@@ -920,7 +988,30 @@
   
   
   <span class="md-ellipsis">
-    Extract and Mask Sensitive Data
+    Sanitize Logs Before Sharing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pseudonymize Identifiers for Analytics
     
   </span>
   
@@ -943,7 +1034,7 @@
   
   
   <span class="md-ellipsis">
-    Process CSV Data
+    Prepare CSV Exports for Analytics
     
   </span>
   
@@ -966,7 +1057,7 @@
   
   
   <span class="md-ellipsis">
-    Fan Out Nested Structures
+    Flatten Nested JSON for Analysis
     
   </span>
   
@@ -989,7 +1080,7 @@
   
   
   <span class="md-ellipsis">
-    Build Streaming Alerts
+    Design Streaming Alerts
     
   </span>
   
@@ -1012,7 +1103,7 @@
   
   
   <span class="md-ellipsis">
-    Batch Process Archives
+    Process Archives at Scale
     
   </span>
   
@@ -1035,7 +1126,7 @@
   
   
   <span class="md-ellipsis">
-    Span Aggregation Cookbook
+    Roll Up Logs with Span Windows
     
   </span>
   
@@ -1495,6 +1586,50 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#operational-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operational Response
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traffic-ingress" class="md-nav__link">
+    <span class="md-ellipsis">
+      Traffic &amp; Ingress
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-preparation-hygiene" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Preparation &amp; Hygiene
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance &amp; Aggregation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1513,19 +1648,30 @@
 
 
 <h1 id="how-to-guides">How-To Guides<a class="headerlink" href="#how-to-guides" title="Permanent link">&para;</a></h1>
-<p>Solutions for common Kelora tasks. Each guide walks through a typical workflow with ready-to-run commands and scripts.</p>
+<p>Pick the scenario that matches your job-to-be-done and follow the playbook. Each guide links to deeper concepts and tutorials when you want more background.</p>
+<h2 id="operational-response">Operational Response<a class="headerlink" href="#operational-response" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="find-errors-in-logs/">Find Errors in Logs</a></li>
+<li><a href="find-errors-in-logs/">Triage Production Errors</a></li>
+<li><a href="monitor-application-health/">Build a Service Health Snapshot</a></li>
+<li><a href="build-streaming-alerts/">Design Streaming Alerts</a></li>
+</ul>
+<h2 id="traffic-ingress">Traffic &amp; Ingress<a class="headerlink" href="#traffic-ingress" title="Permanent link">&para;</a></h2>
+<ul>
 <li><a href="analyze-web-traffic/">Analyze Web Traffic</a></li>
-<li><a href="monitor-application-health/">Monitor Application Health</a></li>
-<li><a href="parse-syslog-files/">Parse Syslog Files</a></li>
-<li><a href="handle-multiline-stacktraces/">Handle Multiline Stacktraces</a></li>
-<li><a href="extract-and-mask-sensitive-data/">Extract and Mask Sensitive Data</a></li>
-<li><a href="process-csv-data/">Process CSV Data</a></li>
-<li><a href="fan-out-nested-structures/">Fan Out Nested Structures</a></li>
-<li><a href="build-streaming-alerts/">Build Streaming Alerts</a></li>
-<li><a href="batch-process-archives/">Batch Process Archives</a></li>
-<li><a href="span-aggregation-cookbook/">Span Aggregation Cookbook</a></li>
+<li><a href="parse-syslog-files/">Investigate Syslog Sources</a></li>
+<li><a href="handle-multiline-stacktraces/">Choose a Multiline Strategy</a></li>
+</ul>
+<h2 id="data-preparation-hygiene">Data Preparation &amp; Hygiene<a class="headerlink" href="#data-preparation-hygiene" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="extract-and-mask-sensitive-data/">Sanitize Logs Before Sharing</a></li>
+<li><a href="pseudonymize-identifiers-for-analytics/">Pseudonymize Identifiers for Analytics</a></li>
+<li><a href="process-csv-data/">Prepare CSV Exports for Analytics</a></li>
+<li><a href="fan-out-nested-structures/">Flatten Nested JSON for Analysis</a></li>
+</ul>
+<h2 id="performance-aggregation">Performance &amp; Aggregation<a class="headerlink" href="#performance-aggregation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="batch-process-archives/">Process Archives at Scale</a></li>
+<li><a href="span-aggregation-cookbook/">Roll Up Logs with Span Windows</a></li>
 </ul>
 
 

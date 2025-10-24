@@ -16,7 +16,7 @@
         <link rel="prev" href="../handle-multiline-stacktraces/">
       
       
-        <link rel="next" href="../process-csv-data/">
+        <link rel="next" href="../pseudonymize-identifiers-for-analytics/">
       
       
       <link rel="icon" href="../../kelora-logo.svg">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Extract and Mask Sensitive Data - Kelora</title>
+        <title>Sanitize Logs Before Sharing - Kelora</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#extract-and-mask-sensitive-data" class="md-skip">
+        <a href="#sanitize-logs-before-sharing" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Extract and Mask Sensitive Data
+              Sanitize Logs Before Sharing
             
           </span>
         </div>
@@ -795,7 +795,7 @@
   
   
   <span class="md-ellipsis">
-    Find Errors in Logs
+    Triage Production Errors
     
   </span>
   
@@ -841,7 +841,7 @@
   
   
   <span class="md-ellipsis">
-    Monitor Application Health
+    Build a Service Health Snapshot
     
   </span>
   
@@ -864,7 +864,7 @@
   
   
   <span class="md-ellipsis">
-    Parse Syslog Files
+    Investigate Syslog Sources
     
   </span>
   
@@ -887,7 +887,7 @@
   
   
   <span class="md-ellipsis">
-    Handle Multiline Stacktraces
+    Choose a Multiline Strategy
     
   </span>
   
@@ -919,7 +919,7 @@
   
   
   <span class="md-ellipsis">
-    Extract and Mask Sensitive Data
+    Sanitize Logs Before Sharing
     
   </span>
   
@@ -932,7 +932,7 @@
   
   
   <span class="md-ellipsis">
-    Extract and Mask Sensitive Data
+    Sanitize Logs Before Sharing
     
   </span>
   
@@ -955,234 +955,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#typical-use-cases" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      Typical Use Cases
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#before-you-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mask-ip-addresses" class="md-nav__link">
-    <span class="md-ellipsis">
-      Mask IP Addresses
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate-pseudonyms" class="md-nav__link">
-    <span class="md-ellipsis">
-      Generate Pseudonyms
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hash-sensitive-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      Hash Sensitive Fields
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove-sensitive-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      Remove Sensitive Fields
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-and-redact-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract and Redact Pattern
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mask-within-text-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      Mask Within Text Fields
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#real-world-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Real-World Examples
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Real-World Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#gdpr-compliant-log-processing" class="md-nav__link">
-    <span class="md-ellipsis">
-      GDPR-Compliant Log Processing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#security-audit-log-sanitization" class="md-nav__link">
-    <span class="md-ellipsis">
-      Security Audit Log Sanitization
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#payment-log-redaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Payment Log Redaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multi-tenant-data-isolation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Multi-Tenant Data Isolation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#database-query-sanitization" class="md-nav__link">
-    <span class="md-ellipsis">
-      Database Query Sanitization
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-key-and-token-redaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Key and Token Redaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#healthcare-data-de-identification" class="md-nav__link">
-    <span class="md-ellipsis">
-      Healthcare Data De-identification
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#session-tracking-without-pii" class="md-nav__link">
-    <span class="md-ellipsis">
-      Session Tracking Without PII
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-urls-without-query-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract URLs Without Query Parameters
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#automation-and-export" class="md-nav__link">
-    <span class="md-ellipsis">
-      Automation and Export
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Automation and Export">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#automated-daily-sanitization" class="md-nav__link">
-    <span class="md-ellipsis">
-      Automated Daily Sanitization
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#validate-redaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validate Redaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#export-to-secure-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Export to Secure Storage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tips
+      Before You Start
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#step-1-catalogue-sensitive-fields" class="md-nav__link">
     <span class="md-ellipsis">
-      Troubleshooting
+      Step 1: Catalogue Sensitive Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-drop-or-whitelist-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Drop or Whitelist Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-mask-direct-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Mask Direct Identifiers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-scrub-free-form-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Scrub Free-Form Text
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-validate-the-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Validate the Result
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#good-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Good Practices
     </span>
   </a>
   
@@ -1213,12 +1060,35 @@
   
   
     <li class="md-nav__item">
+      <a href="../pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pseudonymize Identifiers for Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../process-csv-data/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Process CSV Data
+    Prepare CSV Exports for Analytics
     
   </span>
   
@@ -1241,7 +1111,7 @@
   
   
   <span class="md-ellipsis">
-    Fan Out Nested Structures
+    Flatten Nested JSON for Analysis
     
   </span>
   
@@ -1264,7 +1134,7 @@
   
   
   <span class="md-ellipsis">
-    Build Streaming Alerts
+    Design Streaming Alerts
     
   </span>
   
@@ -1287,7 +1157,7 @@
   
   
   <span class="md-ellipsis">
-    Batch Process Archives
+    Process Archives at Scale
     
   </span>
   
@@ -1310,7 +1180,7 @@
   
   
   <span class="md-ellipsis">
-    Span Aggregation Cookbook
+    Roll Up Logs with Span Windows
     
   </span>
   
@@ -1777,234 +1647,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#typical-use-cases" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      Typical Use Cases
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#before-you-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mask-ip-addresses" class="md-nav__link">
-    <span class="md-ellipsis">
-      Mask IP Addresses
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate-pseudonyms" class="md-nav__link">
-    <span class="md-ellipsis">
-      Generate Pseudonyms
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hash-sensitive-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      Hash Sensitive Fields
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#remove-sensitive-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      Remove Sensitive Fields
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-and-redact-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract and Redact Pattern
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mask-within-text-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      Mask Within Text Fields
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#real-world-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Real-World Examples
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Real-World Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#gdpr-compliant-log-processing" class="md-nav__link">
-    <span class="md-ellipsis">
-      GDPR-Compliant Log Processing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#security-audit-log-sanitization" class="md-nav__link">
-    <span class="md-ellipsis">
-      Security Audit Log Sanitization
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#payment-log-redaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Payment Log Redaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multi-tenant-data-isolation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Multi-Tenant Data Isolation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#database-query-sanitization" class="md-nav__link">
-    <span class="md-ellipsis">
-      Database Query Sanitization
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#api-key-and-token-redaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      API Key and Token Redaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#healthcare-data-de-identification" class="md-nav__link">
-    <span class="md-ellipsis">
-      Healthcare Data De-identification
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#session-tracking-without-pii" class="md-nav__link">
-    <span class="md-ellipsis">
-      Session Tracking Without PII
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-urls-without-query-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract URLs Without Query Parameters
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#automation-and-export" class="md-nav__link">
-    <span class="md-ellipsis">
-      Automation and Export
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Automation and Export">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#automated-daily-sanitization" class="md-nav__link">
-    <span class="md-ellipsis">
-      Automated Daily Sanitization
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#validate-redaction" class="md-nav__link">
-    <span class="md-ellipsis">
-      Validate Redaction
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#export-to-secure-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      Export to Secure Storage
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tips
+      Before You Start
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#step-1-catalogue-sensitive-fields" class="md-nav__link">
     <span class="md-ellipsis">
-      Troubleshooting
+      Step 1: Catalogue Sensitive Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-drop-or-whitelist-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Drop or Whitelist Fields
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-mask-direct-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Mask Direct Identifiers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-scrub-free-form-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Scrub Free-Form Text
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-validate-the-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Validate the Result
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#good-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Good Practices
     </span>
   </a>
   
@@ -2038,333 +1755,104 @@
   
 
 
-<h1 id="extract-and-mask-sensitive-data">Extract and Mask Sensitive Data<a class="headerlink" href="#extract-and-mask-sensitive-data" title="Permanent link">&para;</a></h1>
-<p>Safely process logs containing PII, credentials, and sensitive information using masking, pseudonymization, and redaction techniques.</p>
-<h2 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h2>
-<p>Your logs contain sensitive data like IP addresses, emails, credit card numbers, or personally identifiable information (PII). You need to analyze the logs while protecting sensitive information or comply with privacy regulations.</p>
-<h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
-<h3 id="mask-ip-addresses">Mask IP Addresses<a class="headerlink" href="#mask-ip-addresses" title="Permanent link">&para;</a></h3>
-<p>Mask IP addresses to protect privacy while maintaining network analysis capabilities:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Mask last octet (default)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.client_ip = e.client_ip.mask_ip()&#39;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Mask last 2 octets for stronger anonymization</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.client_ip = e.client_ip.mask_ip(2)&#39;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Mask last 3 octets</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.client_ip = e.client_ip.mask_ip(3)&#39;</span>
-</code></pre></div>
-<p><strong>Results:</strong></p>
+<h1 id="sanitize-logs-before-sharing">Sanitize Logs Before Sharing<a class="headerlink" href="#sanitize-logs-before-sharing" title="Permanent link">&para;</a></h1>
+<p>Remove personally identifiable information (PII), secrets, and other sensitive values from log streams so they can be reviewed or archived safely.</p>
+<h2 id="typical-use-cases">Typical Use Cases<a class="headerlink" href="#typical-use-cases" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>192.168.1.100</code> with <code>mask_ip(1)</code> becomes <code>192.168.1.0</code></li>
-<li><code>192.168.1.100</code> with <code>mask_ip(2)</code> becomes <code>192.168.0.0</code></li>
-<li><code>192.168.1.100</code> with <code>mask_ip(3)</code> becomes <code>192.0.0.0</code></li>
+<li>Preparing logs for customer support, vendors, or public issue trackers.</li>
+<li>Creating test fixtures or reproductions without exposing production data.</li>
+<li>Complying with privacy regulations before storing logs long term.</li>
 </ul>
-<h3 id="generate-pseudonyms">Generate Pseudonyms<a class="headerlink" href="#generate-pseudonyms" title="Permanent link">&para;</a></h3>
-<p>Create consistent pseudonyms using domain separation (requires <code>KELORA_SECRET</code> environment variable):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Set secret for pseudonymization</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;your-secret-key-here&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Pseudonymize user emails</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>users.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_pseudo = pseudonym(e.email, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.email = ()&#39;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Pseudonymize with different domains</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_id = pseudonym(e.user_email, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.session_id = pseudonym(e.session_token, &quot;sessions&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.session_token = ()&#39;</span>
-</code></pre></div>
-<p><strong>Benefits:</strong></p>
+<h2 id="before-you-start">Before You Start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Same input always produces same pseudonym (consistency)</li>
-<li>Different domains produce different pseudonyms (separation)</li>
-<li>Cannot reverse back to original (one-way)</li>
-<li>Requires secret key (security)</li>
+<li>Examples use <code>examples/security_audit.jsonl</code>; swap in your own files.</li>
+<li>Decide what must be removed (e.g., IPs, emails, tokens, stack traces). Document these requirements before implementation.</li>
+<li>Sanitisation often reduces context. Keep an untampered copy in a protected location for security responders.</li>
 </ul>
-<h3 id="hash-sensitive-fields">Hash Sensitive Fields<a class="headerlink" href="#hash-sensitive-fields" title="Permanent link">&para;</a></h3>
-<p>Hash data for grouping and deduplication without exposing original values:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># SHA-256 hash (default)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_hash = e.username.hash()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.username = ()&#39;</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Fast hash for grouping (xxh3)</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.session_hash = e.session_id.hash(&quot;xxh3&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.session_id = ()&#39;</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># MD5 for legacy compatibility</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.email_hash = e.email.hash(&quot;md5&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.email = ()&#39;</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># BLAKE3 for high-speed cryptographic hashing</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.api_key_hash = e.api_key.hash(&quot;blake3&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.api_key = ()&#39;</span>
+<h2 id="step-1-catalogue-sensitive-fields">Step 1: Catalogue Sensitive Fields<a class="headerlink" href="#step-1-catalogue-sensitive-fields" title="Permanent link">&para;</a></h2>
+<p>Inspect a small sample to confirm field names and formats.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span>--take<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
-<p><strong>Available algorithms:</strong> <code>sha256</code> (default), <code>sha1</code>, <code>md5</code>, <code>xxh3</code>, <code>blake3</code></p>
-<h3 id="remove-sensitive-fields">Remove Sensitive Fields<a class="headerlink" href="#remove-sensitive-fields" title="Permanent link">&para;</a></h3>
-<p>Delete fields entirely from events:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Remove single field</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.password = ()&#39;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Remove multiple sensitive fields</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.password = (); e.api_key = (); e.ssn = (); e.credit_card = ()&#39;</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># Conditional removal based on level</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.level != &quot;DEBUG&quot; { e.stack_trace = (); e.locals = () }&#39;</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Remove all except specific fields</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let timestamp = e.timestamp; let level = e.level; let message = e.message&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.timestamp = timestamp; e.level = level; e.message = message&#39;</span>
+<p>List the columns that require masking (<code>user_email</code>, <code>ip_address</code>, <code>token</code>, etc.) and note whether the data appears as discrete fields or inside messages.</p>
+<h2 id="step-2-drop-or-whitelist-fields">Step 2: Drop or Whitelist Fields<a class="headerlink" href="#step-2-drop-or-whitelist-fields" title="Permanent link">&para;</a></h2>
+<p>Remove fields you definitely do not need, or rebuild each event with only the essentials.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.password = (); e.token = (); e.session = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let keep = #{timestamp: e.timestamp, service: e.service, message: e.message}; e = keep&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
-<h3 id="extract-and-redact-pattern">Extract and Redact Pattern<a class="headerlink" href="#extract-and-redact-pattern" title="Permanent link">&para;</a></h3>
-<p>Extract sensitive data for analysis, then redact from output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Extract credit card type, then redact number</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>transactions.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.card_type = e.card_number.extract_re(r&quot;^(\\d{4})&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.card_last4 = e.card_number.extract_re(r&quot;(\\d{4})$&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.card_number = &quot;REDACTED&quot;&#39;</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Extract email domain, remove local part</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>users.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let email = e.email.parse_email()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.email_domain = email.domain&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.email = ()&#39;</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># Extract URL domain, remove path/query</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>requests.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let url = e.request_url.parse_url()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.domain = url.host&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.has_query = url.query != &quot;&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.request_url = ()&#39;</span>
+<p>Tips:
+- Assigning <code>()</code> deletes a field.
+- Rebuilding the event (as above) ensures no unexpected data leaks.
+- <code>--exclude-keys field1,field2</code> works when the data is already flat.</p>
+<h2 id="step-3-mask-direct-identifiers">Step 3: Mask Direct Identifiers<a class="headerlink" href="#step-3-mask-direct-identifiers" title="Permanent link">&para;</a></h2>
+<p>Use helper functions for IPs and structured values.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;ip_address&quot;) { e.ip_address = e.ip_address.mask_ip(2) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;email&quot;) {</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">        let parts = e.email.parse_email();</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">        e.email_domain = parts.domain;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">        e.email = ()</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">      }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
-<h3 id="mask-within-text-fields">Mask Within Text Fields<a class="headerlink" href="#mask-within-text-fields" title="Permanent link">&para;</a></h3>
-<p>Find and mask sensitive patterns in log messages:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Mask credit card numbers in message</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.message = e.message.replace(r&quot;\\b\\d{16}\\b&quot;, &quot;[CARD_REDACTED]&quot;)&#39;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Mask email addresses</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.message = e.message.replace(r&quot;[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}&quot;, &quot;[EMAIL_REDACTED]&quot;)&#39;</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Mask API keys (various formats)</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.message = e.message.replace(r&quot;api[_-]?key[=:]\\s*[a-zA-Z0-9]{20,}&quot;, &quot;api_key=[REDACTED]&quot;)&#39;</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># Mask IP addresses in text</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let ip = e.message.extract_ip()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if ip != &quot;&quot; { e.message = e.message.replace(ip, ip.mask_ip(2)) }&#39;</span>
-</code></pre></div>
-<h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
-<h3 id="gdpr-compliant-log-processing">GDPR-Compliant Log Processing<a class="headerlink" href="#gdpr-compliant-log-processing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;gdpr-compliance-secret&quot;</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>user_activity.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_pseudo = pseudonym(e.user_email, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.ip_masked = e.ip_address.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_email = (); e.ip_address = (); e.full_name = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,user_pseudo,ip_masked,action<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span>-J<span class="w"> </span>&gt;<span class="w"> </span>anonymized.json
-</code></pre></div>
-<h3 id="security-audit-log-sanitization">Security Audit Log Sanitization<a class="headerlink" href="#security-audit-log-sanitization" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>security.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.username_hash = e.username.hash(&quot;sha256&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.source_ip = e.source_ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.session_hash = e.session_id.hash(&quot;xxh3&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.username = (); e.session_id = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.event_type != &quot;login_success&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span>-J<span class="w"> </span>&gt;<span class="w"> </span>sanitized_audit.json
-</code></pre></div>
-<h3 id="payment-log-redaction">Payment Log Redaction<a class="headerlink" href="#payment-log-redaction" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>payments.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.card_last4 = e.card_number.extract_re(r&quot;(\\d{4})$&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.card_bin = e.card_number.extract_re(r&quot;^(\\d{6})&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.amount_bucket = floor(e.amount / 100) * 100&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.card_number = (); e.cvv = (); e.expiry = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,card_bin,card_last4,amount_bucket,status
-</code></pre></div>
-<h3 id="multi-tenant-data-isolation">Multi-Tenant Data Isolation<a class="headerlink" href="#multi-tenant-data-isolation" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;tenant-separation-key&quot;</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>multi_tenant.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.tenant_id = pseudonym(e.tenant_name, &quot;tenants&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_id = pseudonym(e.user_email, e.tenant_name)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.tenant_name = (); e.user_email = (); e.user_name = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span>-J<span class="w"> </span>&gt;<span class="w"> </span>isolated_logs.json
-</code></pre></div>
-<h3 id="database-query-sanitization">Database Query Sanitization<a class="headerlink" href="#database-query-sanitization" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>db_queries.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.query_hash = e.query.hash(&quot;xxh3&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.table = e.query.extract_re(r&quot;FROM\\s+(\\w+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.has_where = e.query.contains(&quot;WHERE&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.query = &quot;REDACTED&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,user,table,duration_ms,rows,query_hash
-</code></pre></div>
-<h3 id="api-key-and-token-redaction">API Key and Token Redaction<a class="headerlink" href="#api-key-and-token-redaction" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.path.contains(&quot;key=&quot;) || e.path.contains(&quot;token=&quot;) {</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="s1">      let params = e.path.after(&quot;?&quot;).parse_query_params();</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="s1">      if params.contains(&quot;key&quot;) { e.has_api_key = true };</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="s1">      if params.contains(&quot;token&quot;) { e.has_token = true };</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="s1">      e.path = e.path.before(&quot;?&quot;) + &quot;?[PARAMS_REDACTED]&quot;</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="s1">    }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,ip,method,path,status
-</code></pre></div>
-<h3 id="healthcare-data-de-identification">Healthcare Data De-identification<a class="headerlink" href="#healthcare-data-de-identification" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;hipaa-compliance-secret&quot;</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>health_records.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.patient_id = pseudonym(e.patient_ssn, &quot;patients&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.provider_id = pseudonym(e.doctor_name, &quot;providers&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.age_bracket = floor(e.age / 10) * 10&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.zip_prefix = e.zip_code.slice(&quot;:3&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.patient_ssn = (); e.patient_name = (); e.doctor_name = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.age = (); e.zip_code = (); e.phone = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span>-J<span class="w"> </span>&gt;<span class="w"> </span>deidentified.json
-</code></pre></div>
-<h3 id="session-tracking-without-pii">Session Tracking Without PII<a class="headerlink" href="#session-tracking-without-pii" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;session-tracking-secret&quot;</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.session_hash = pseudonym(e.session_id, &quot;sessions&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_hash = pseudonym(e.user_id, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.ip_network = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.session_id = (); e.user_id = (); e.ip = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;sessions&quot;, e.session_hash)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">    </span>--metrics
-</code></pre></div>
-<h3 id="extract-urls-without-query-parameters">Extract URLs Without Query Parameters<a class="headerlink" href="#extract-urls-without-query-parameters" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>web_requests.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let url = e.full_url.parse_url()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.base_url = url.scheme + &quot;://&quot; + url.host + url.path&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.has_params = url.query != &quot;&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.param_count = url.query.split(&quot;&amp;&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.full_url = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,base_url,has_params,param_count
-</code></pre></div>
-<h2 id="automation-and-export">Automation and Export<a class="headerlink" href="#automation-and-export" title="Permanent link">&para;</a></h2>
-<h3 id="automated-daily-sanitization">Automated Daily Sanitization<a class="headerlink" href="#automated-daily-sanitization" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="ch">#!/bin/bash</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>cat<span class="w"> </span>/secure/kelora.secret<span class="k">)</span><span class="s2">&quot;</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span>/var/log/app-<span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span>.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_id = pseudonym(e.email, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.email = (); e.phone = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">    </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span>-J<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;/archive/sanitized-</span><span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span><span class="s2">.json&quot;</span>
-</code></pre></div>
-<h3 id="validate-redaction">Validate Redaction<a class="headerlink" href="#validate-redaction" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Check for common sensitive patterns in output</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>sanitized.log<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.has_matches(&quot;\\b\\d{3}-\\d{2}-\\d{4}\\b&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;WARNING: SSN pattern found!&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No SSN patterns detected&quot;</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Check for email addresses</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>sanitized.log<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.has_matches(&quot;[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;WARNING: Email addresses found!&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;No email addresses detected&quot;</span>
-</code></pre></div>
-<h3 id="export-to-secure-storage">Export to Secure Storage<a class="headerlink" href="#export-to-secure-storage" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>sensitive.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.user_hash = e.email.hash(&quot;sha256&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span>-J<span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span>secure_logs_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.json.gz
-</code></pre></div>
-<h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Security:</strong></p>
 <ul>
-<li>Always use strong, random <code>KELORA_SECRET</code> for pseudonymization</li>
-<li>Store secrets securely (environment variables, secret managers)</li>
-<li>Use domain separation in <code>pseudonym()</code> to prevent cross-context correlation</li>
-<li>Prefer <code>pseudonym()</code> over <code>hash()</code> when consistency across datasets is needed</li>
-<li>Use <code>hash("xxh3")</code> for grouping without cryptographic security needs</li>
+<li><code>mask_ip()</code> anonymises IPv4 and IPv6 addresses while preserving network information.</li>
+<li>Extract domains or other aggregates before dropping the original field if analysts still need grouped statistics.</li>
 </ul>
-<p><strong>Compliance:</strong></p>
+<h2 id="step-4-scrub-free-form-text">Step 4: Scrub Free-Form Text<a class="headerlink" href="#step-4-scrub-free-form-text" title="Permanent link">&para;</a></h2>
+<p>Sanitise values embedded in log messages using regex replacement.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.message = e.message.replace(r&quot;[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}&quot;, &quot;[EMAIL]&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.message = e.message.replace(r&quot;(?i)api[_-]?key=\\w+&quot;, &quot;api_key=[REDACTED]&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-F<span class="w"> </span>json
+</code></pre></div>
+<p>Consider building a short library of patterns that match your organisation’s identifiers (customer numbers, ticket IDs, etc.).</p>
+<h2 id="step-5-validate-the-result">Step 5: Validate the Result<a class="headerlink" href="#step-5-validate-the-result" title="Permanent link">&para;</a></h2>
+<p>Run automated checks to ensure sensitive patterns no longer appear.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>sanitized.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.has_matches(&quot;\\b\\d{3}-\\d{2}-\\d{4}\\b&quot;) || e.message.has_matches(&quot;@&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;WARNING: potential PII found&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Sanitisation checks passed&quot;</span>
+</code></pre></div>
 <ul>
-<li>Document your masking strategy for audit purposes</li>
-<li>Test redaction patterns against sample sensitive data</li>
-<li>Use <code>--stats</code> to track how many events were processed</li>
-<li>Consider using <code>--metrics</code> to count redacted fields</li>
-<li>Validate output before sharing with third parties</li>
+<li>Build explicit checks for each high-risk pattern (credit cards, SSNs, phone numbers).</li>
+<li>Add <code>--stats</code> when sharing the data so recipients can see how many events were processed and whether any parsing errors occurred.</li>
 </ul>
-<p><strong>Performance:</strong></p>
+<h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Use <code>--parallel</code> for large-scale sanitization</li>
-<li>Hash with <code>xxh3</code> is faster than cryptographic hashes for grouping</li>
-<li>Remove fields early in pipeline to reduce processing overhead</li>
-<li>Use <code>mask_ip()</code> instead of regex for IP address masking</li>
+<li><strong>Automated daily scrub</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OUTPUT</span><span class="o">=</span>/secure/sanitized-<span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span>.json
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>/var/log/app/app-<span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span>.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.card = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>-J<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUTPUT</span><span class="s2">&quot;</span>
+</code></pre></div></li>
+<li><strong>Redact stack traces for non-engineers</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.level != &quot;DEBUG&quot; { e.stack_trace = () }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-F<span class="w"> </span>json
+</code></pre></div></li>
+<li><strong>Metrics to confirm coverage</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;ip&quot;) { track_count(&quot;ip_fields&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;token&quot;) { track_count(&quot;token_fields&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--metrics
+</code></pre></div></li>
 </ul>
-<p><strong>Validation:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Count events with potential PII</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>output.log<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.message.has_matches(&quot;\\b\\d{16}\\b&quot;) { track_count(&quot;cards&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.message.has_matches(&quot;@&quot;) { track_count(&quot;emails&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span>--metrics
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Sample output for manual inspection</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>sanitized.log<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>less
-</code></pre></div></p>
-<p><strong>Common Patterns:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Mask all IPs in event</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="k">for</span><span class="w"> </span>field<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">[</span><span class="s2">&quot;client_ip&quot;</span>,<span class="w"> </span><span class="s2">&quot;server_ip&quot;</span>,<span class="w"> </span><span class="s2">&quot;source_ip&quot;</span><span class="o">]</span><span class="w"> </span><span class="o">{</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span>e.contains<span class="o">(</span>field<span class="o">)</span><span class="w"> </span><span class="o">{</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">        </span>e<span class="o">[</span>field<span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>e<span class="o">[</span>field<span class="o">]</span>.mask_ip<span class="o">(</span><span class="m">2</span><span class="o">)</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span><span class="o">}</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="o">}</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="c1"># Remove all fields containing &quot;password&quot; or &quot;secret&quot;</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="k">for</span><span class="w"> </span><span class="o">(</span>field,<span class="w"> </span>value<span class="o">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>e<span class="w"> </span><span class="o">{</span>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span>field.to_lower<span class="o">()</span>.contains<span class="o">(</span><span class="s2">&quot;password&quot;</span><span class="o">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>field.to_lower<span class="o">()</span>.contains<span class="o">(</span><span class="s2">&quot;secret&quot;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">        </span>e<span class="o">[</span>field<span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">()</span>
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">    </span><span class="o">}</span>
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="o">}</span>
-</code></pre></div></p>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p><strong>Pseudonym consistency issues:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Ensure KELORA_SECRET is set and consistent</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$KELORA_SECRET</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="c1"># Must be the same across runs for consistent pseudonyms</span>
-</code></pre></div></p>
-<p><strong>IP masking not working:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Validate IP format first</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.ip.is_ipv4()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip()&#39;</span>
-</code></pre></div></p>
-<p><strong>Pattern not matching:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Test regex patterns</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.test_match = e.field.has_matches(&quot;your_pattern&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.test_match&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span>-n<span class="w"> </span><span class="m">10</span>
-</code></pre></div></p>
-<p><strong>Hashing performance:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Use faster algorithms for non-cryptographic needs</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>e.group_id<span class="w"> </span><span class="o">=</span><span class="w"> </span>e.user_id.hash<span class="o">(</span><span class="s2">&quot;xxh3&quot;</span><span class="o">)</span><span class="w">  </span><span class="c1"># Fast</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>e.secure_id<span class="w"> </span><span class="o">=</span><span class="w"> </span>e.user_id.hash<span class="o">(</span><span class="s2">&quot;blake3&quot;</span><span class="o">)</span><span class="w">  </span><span class="c1"># Cryptographic + Fast</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>e.legacy_id<span class="w"> </span><span class="o">=</span><span class="w"> </span>e.user_id.hash<span class="o">(</span><span class="s2">&quot;sha256&quot;</span><span class="o">)</span><span class="w">  </span><span class="c1"># Cryptographic</span>
-</code></pre></div></p>
+<h2 id="good-practices">Good Practices<a class="headerlink" href="#good-practices" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Keep the sanitisation script in version control and review it whenever log formats change.</li>
+<li>Run sanity checks on both raw and sanitised logs to confirm volume and error counts match.</li>
+<li>Document what was removed so downstream teams know whether they must contact the security team for raw data.</li>
+</ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../reference/functions/">Function Reference</a> - Complete list of masking and hashing functions</li>
-<li><a href="../../concepts/configuration-system/">Configuration System</a> - Centralize redaction defaults</li>
-<li><a href="../monitor-application-health/">Monitor Application Health</a> - Health metrics without exposing PII</li>
-<li><a href="../analyze-web-traffic/">Analyze Web Traffic</a> - Web log analysis with IP masking</li>
+<li><a href="../pseudonymize-identifiers-for-analytics/">Pseudonymize Identifiers for Analytics</a> when you need consistent but anonymised identifiers.</li>
+<li><a href="../process-csv-data/">Prepare CSV Exports for Analytics</a> to share structured subsets.</li>
+<li><a href="../build-streaming-alerts/">Design Streaming Alerts</a> for live monitoring of sanitised pipelines.</li>
 </ul>
 
 

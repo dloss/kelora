@@ -24,7 +24,7 @@
     
     
       
-        <title>Handle Multiline Stacktraces - Kelora</title>
+        <title>Choose a Multiline Strategy - Kelora</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#handle-multiline-stacktraces" class="md-skip">
+        <a href="#choose-a-multiline-strategy" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Handle Multiline Stacktraces
+              Choose a Multiline Strategy
             
           </span>
         </div>
@@ -795,7 +795,7 @@
   
   
   <span class="md-ellipsis">
-    Find Errors in Logs
+    Triage Production Errors
     
   </span>
   
@@ -841,7 +841,7 @@
   
   
   <span class="md-ellipsis">
-    Monitor Application Health
+    Build a Service Health Snapshot
     
   </span>
   
@@ -864,7 +864,7 @@
   
   
   <span class="md-ellipsis">
-    Parse Syslog Files
+    Investigate Syslog Sources
     
   </span>
   
@@ -896,7 +896,7 @@
   
   
   <span class="md-ellipsis">
-    Handle Multiline Stacktraces
+    Choose a Multiline Strategy
     
   </span>
   
@@ -909,7 +909,7 @@
   
   
   <span class="md-ellipsis">
-    Handle Multiline Stacktraces
+    Choose a Multiline Strategy
     
   </span>
   
@@ -932,174 +932,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#when-to-use-this" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      When to Use This
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#decision-quick-reference" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#timestamp-based-multiline" class="md-nav__link">
-    <span class="md-ellipsis">
-      Timestamp-Based Multiline
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#indent-based-multiline" class="md-nav__link">
-    <span class="md-ellipsis">
-      Indent-Based Multiline
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#regex-based-multiline" class="md-nav__link">
-    <span class="md-ellipsis">
-      Regex-Based Multiline
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#buffer-entire-input" class="md-nav__link">
-    <span class="md-ellipsis">
-      Buffer Entire Input
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#real-world-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Real-World Examples
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Real-World Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#python-stack-traces" class="md-nav__link">
-    <span class="md-ellipsis">
-      Python Stack Traces
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#java-exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Java Exceptions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#http-requestresponse-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      HTTP Request/Response Logs
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json-arrays-in-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      JSON Arrays in Logs
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#continuation-lines" class="md-nav__link">
-    <span class="md-ellipsis">
-      Continuation Lines
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-stack-trace-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract Stack Trace Details
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-complete-stack-traces" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter Complete Stack Traces
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#count-exception-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Count Exception Types
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-error-context" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract Error Context
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#multiline-strategy-selection" class="md-nav__link">
-    <span class="md-ellipsis">
-      Multiline Strategy Selection
+      Decision Quick Reference
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
+  <a href="#step-1-inspect-the-raw-log" class="md-nav__link">
     <span class="md-ellipsis">
-      Tips
+      Step 1: Inspect the Raw Log
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-timestamp-based-grouping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Timestamp-Based Grouping
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-indentation-based-grouping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Indentation-Based Grouping
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-regex-based-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Regex-Based Boundaries
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-buffer-entire-inputs-last-resort" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Buffer Entire Inputs (Last Resort)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-the-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validate the Result
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
     </span>
   </a>
   
@@ -1135,7 +1042,30 @@
   
   
   <span class="md-ellipsis">
-    Extract and Mask Sensitive Data
+    Sanitize Logs Before Sharing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pseudonymize Identifiers for Analytics
     
   </span>
   
@@ -1158,7 +1088,7 @@
   
   
   <span class="md-ellipsis">
-    Process CSV Data
+    Prepare CSV Exports for Analytics
     
   </span>
   
@@ -1181,7 +1111,7 @@
   
   
   <span class="md-ellipsis">
-    Fan Out Nested Structures
+    Flatten Nested JSON for Analysis
     
   </span>
   
@@ -1204,7 +1134,7 @@
   
   
   <span class="md-ellipsis">
-    Build Streaming Alerts
+    Design Streaming Alerts
     
   </span>
   
@@ -1227,7 +1157,7 @@
   
   
   <span class="md-ellipsis">
-    Batch Process Archives
+    Process Archives at Scale
     
   </span>
   
@@ -1250,7 +1180,7 @@
   
   
   <span class="md-ellipsis">
-    Span Aggregation Cookbook
+    Roll Up Logs with Span Windows
     
   </span>
   
@@ -1717,174 +1647,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#when-to-use-this" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      When to Use This
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#decision-quick-reference" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#timestamp-based-multiline" class="md-nav__link">
-    <span class="md-ellipsis">
-      Timestamp-Based Multiline
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#indent-based-multiline" class="md-nav__link">
-    <span class="md-ellipsis">
-      Indent-Based Multiline
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#regex-based-multiline" class="md-nav__link">
-    <span class="md-ellipsis">
-      Regex-Based Multiline
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#buffer-entire-input" class="md-nav__link">
-    <span class="md-ellipsis">
-      Buffer Entire Input
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#real-world-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Real-World Examples
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Real-World Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#python-stack-traces" class="md-nav__link">
-    <span class="md-ellipsis">
-      Python Stack Traces
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#java-exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Java Exceptions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#http-requestresponse-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      HTTP Request/Response Logs
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json-arrays-in-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      JSON Arrays in Logs
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#continuation-lines" class="md-nav__link">
-    <span class="md-ellipsis">
-      Continuation Lines
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-stack-trace-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract Stack Trace Details
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-complete-stack-traces" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter Complete Stack Traces
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#count-exception-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Count Exception Types
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-error-context" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract Error Context
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#multiline-strategy-selection" class="md-nav__link">
-    <span class="md-ellipsis">
-      Multiline Strategy Selection
+      Decision Quick Reference
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
+  <a href="#step-1-inspect-the-raw-log" class="md-nav__link">
     <span class="md-ellipsis">
-      Tips
+      Step 1: Inspect the Raw Log
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-timestamp-based-grouping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Timestamp-Based Grouping
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-indentation-based-grouping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Indentation-Based Grouping
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-regex-based-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Regex-Based Boundaries
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-buffer-entire-inputs-last-resort" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Buffer Entire Inputs (Last Resort)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-the-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validate the Result
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
     </span>
   </a>
   
@@ -1918,195 +1755,93 @@
   
 
 
-<h1 id="handle-multiline-stacktraces">Handle Multiline Stacktraces<a class="headerlink" href="#handle-multiline-stacktraces" title="Permanent link">&para;</a></h1>
-<p>Process logs with multiline stack traces, exceptions, and continuation patterns.</p>
-<h2 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h2>
-<p>You have log files where single events span multiple lines (stack traces, JSON arrays, continued messages), and you need to group them into complete events before parsing and analysis.</p>
-<h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
-<h3 id="timestamp-based-multiline">Timestamp-Based Multiline<a class="headerlink" href="#timestamp-based-multiline" title="Permanent link">&para;</a></h3>
-<p>Detect new events by timestamp prefix:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Auto-detect timestamps</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>app.log
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># With custom timestamp format</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;timestamp:format=%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Example: Process stack traces as single events</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span>
-</code></pre></div>
-<p>When a line starts with a timestamp, it begins a new event. Lines without timestamps are continuation lines that belong to the previous event.</p>
-<h3 id="indent-based-multiline">Indent-Based Multiline<a class="headerlink" href="#indent-based-multiline" title="Permanent link">&para;</a></h3>
-<p>Group lines based on indentation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Lines starting with whitespace continue previous event</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>indent<span class="w"> </span>app.log
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Works for stack traces with indented frames</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>indent<span class="w"> </span>examples/multiline_indent.log
-</code></pre></div>
-<p>Common for:</p>
+<h1 id="choose-a-multiline-strategy">Choose a Multiline Strategy<a class="headerlink" href="#choose-a-multiline-strategy" title="Permanent link">&para;</a></h1>
+<p>Group multi-line events (stack traces, continuation lines, JSON blocks) into single records before parsing or filtering.</p>
+<h2 id="when-to-use-this">When to Use This<a class="headerlink" href="#when-to-use-this" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Python/Java stack traces</li>
-<li>YAML-like logs</li>
-<li>Indented continuation lines</li>
+<li>Application logs include stack traces or exceptions that span multiple lines.</li>
+<li>Text logs hold multi-line JSON payloads or request/response pairs.</li>
+<li>You need grep-like context without losing event boundaries.</li>
 </ul>
-<h3 id="regex-based-multiline">Regex-Based Multiline<a class="headerlink" href="#regex-based-multiline" title="Permanent link">&para;</a></h3>
-<p>Define custom start/end patterns:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Match start pattern only</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^ERROR&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Match start and end patterns</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^BEGIN:end=^END&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Match exception start</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^(ERROR|Exception|Traceback)&#39;</span><span class="w"> </span>app.log
-</code></pre></div>
-<h3 id="buffer-entire-input">Buffer Entire Input<a class="headerlink" href="#buffer-entire-input" title="Permanent link">&para;</a></h3>
-<p>Process entire file as one event:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Read all content as single event</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>config.json
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Useful for:</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># - Single JSON document spanning multiple lines</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># - Small config files</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># - Aggregating entire input for summary</span>
-</code></pre></div>
-<p>⚠️ Warning: Loads entire input into memory</p>
-<h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
-<h3 id="python-stack-traces">Python Stack Traces<a class="headerlink" href="#python-stack-traces" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Group Python exceptions</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^Traceback|^Exception|^\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.error_type = e.line.extract_re(r&quot;^(\w+Error|Exception)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.error_type)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<h3 id="java-exceptions">Java Exceptions<a class="headerlink" href="#java-exceptions" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Group Java stack traces (look for timestamps or exception class names)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^\d{4}-\d{2}-\d{2}|^[a-z]+\.\w+\.Exception&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;Exception&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.exception = e.line.extract_re(r&quot;(\w+Exception)&quot;, 1)&#39;</span>
-</code></pre></div>
-<h3 id="http-requestresponse-logs">HTTP Request/Response Logs<a class="headerlink" href="#http-requestresponse-logs" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Group multi-line HTTP logs</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^&gt; Request|^&lt; Response&#39;</span><span class="w"> </span>http.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.is_request = e.line.starts_with(&quot;&gt; Request&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.status = e.line.extract_re(r&quot;HTTP/\d\.\d (\d+)&quot;, 1)&#39;</span>
-</code></pre></div>
-<h3 id="json-arrays-in-logs">JSON Arrays in Logs<a class="headerlink" href="#json-arrays-in-logs" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Process logs with embedded multi-line JSON</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>examples/multiline_json_arrays.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let json_match = e.line.extract_re(r&quot;\{.*\}&quot;, 0);</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s1">          if json_match != &quot;&quot; {</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s1">            e.data = json_match.parse_json()</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s1">          }&#39;</span>
-</code></pre></div>
-<h3 id="continuation-lines">Continuation Lines<a class="headerlink" href="#continuation-lines" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Lines starting with specific marker continue previous</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[^\s]&#39;</span><span class="w"> </span>app.log<span class="w">  </span><span class="c1"># New event if NOT starting with space</span>
-</code></pre></div>
-<h3 id="extract-stack-trace-details">Extract Stack Trace Details<a class="headerlink" href="#extract-stack-trace-details" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;Traceback&quot;) || e.line.contains(&quot;Exception&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.file = e.line.extract_re(r&quot;File \&quot;([^\&quot;]+)\&quot;&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.line_no = e.line.extract_re(r&quot;line (\d+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.function = e.line.extract_re(r&quot;in (\w+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;error_files&quot;, e.file)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,file,line_no,function<span class="w"> </span>--metrics
-</code></pre></div>
-<h3 id="filter-complete-stack-traces">Filter Complete Stack Traces<a class="headerlink" href="#filter-complete-stack-traces" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Find errors with specific patterns in full trace</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;DatabaseError&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.has_timeout = e.line.contains(&quot;timeout&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_timeout&#39;</span>
-</code></pre></div>
-<h3 id="count-exception-types">Count Exception Types<a class="headerlink" href="#count-exception-types" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^\d{4}-|\w+Error:|Exception:&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.exception_type = e.line.extract_re(r&quot;(\w+(?:Error|Exception))&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.exception_type != &quot;&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.exception_type)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<h3 id="extract-error-context">Extract Error Context<a class="headerlink" href="#extract-error-context" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Get timestamp and full stack trace</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.timestamp = e.line.extract_re(r&quot;^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.trace_length = e.line.split(&quot;\n&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.trace_length &gt; 5&#39;</span><span class="w">  </span><span class="c1"># Only substantial traces</span>
-</code></pre></div>
-<h2 id="multiline-strategy-selection">Multiline Strategy Selection<a class="headerlink" href="#multiline-strategy-selection" title="Permanent link">&para;</a></h2>
-<p><strong>Use <code>timestamp</code> when:</strong></p>
+<h2 id="decision-quick-reference">Decision Quick Reference<a class="headerlink" href="#decision-quick-reference" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Logs have consistent timestamp prefixes</li>
-<li>Each event starts with a timestamp</li>
-<li>Mixed single-line and multi-line events</li>
+<li><strong>Timestamp at the start of every event?</strong> Use <code>--multiline timestamp</code>.</li>
+<li><strong>Continuation lines start with whitespace?</strong> Use <code>--multiline indent</code>.</li>
+<li><strong>Events start with specific keywords?</strong> Use <code>--multiline 'regex:match=^PATTERN'</code>.</li>
+<li><strong>Events have explicit end markers?</strong> Use <code>--multiline 'regex:match=^BEGIN:end=^END'</code>.</li>
+<li><strong>Single event per file?</strong> Use <code>--multiline all</code> (rare; loads full file in memory).</li>
 </ul>
-<p><strong>Use <code>indent</code> when:</strong></p>
+<h2 id="step-1-inspect-the-raw-log">Step 1: Inspect the Raw Log<a class="headerlink" href="#step-1-inspect-the-raw-log" title="Permanent link">&para;</a></h2>
+<p>Confirm line prefixes and indentation before choosing a strategy.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>head<span class="w"> </span>-n<span class="w"> </span><span class="m">20</span><span class="w"> </span>examples/multiline_stacktrace.log
+</code></pre></div>
+<p>Look for:
+- Consistent timestamps (e.g., <code>2024-05-03 12:10:45 ERROR …</code>).
+- Indentation on continuation lines.
+- Unique keywords or start/end markers.</p>
+<h2 id="step-2-timestamp-based-grouping">Step 2: Timestamp-Based Grouping<a class="headerlink" href="#step-2-timestamp-based-grouping" title="Permanent link">&para;</a></h2>
+<p>Best for logs where each event starts with a timestamp.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<p>Customization:
+- Specify a format if auto-detect fails: <code>--multiline 'timestamp:format=%Y-%m-%d %H:%M:%S'</code>.
+- Combine with parsing flags (e.g., <code>-f logfmt</code>) after multiline grouping.</p>
+<h2 id="step-3-indentation-based-grouping">Step 3: Indentation-Based Grouping<a class="headerlink" href="#step-3-indentation-based-grouping" title="Permanent link">&para;</a></h2>
+<p>Ideal for Python/Java stack traces and YAML-style continuations.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>examples/multiline_indent.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
 <ul>
-<li>Stack traces or continuations are indented</li>
-<li>Clear visual structure with whitespace</li>
-<li>Python, YAML, or similar formats</li>
+<li>Lines beginning with whitespace attach to the previous event.</li>
+<li>Works even when timestamps are missing.</li>
 </ul>
-<p><strong>Use <code>regex:match</code> when:</strong></p>
+<h2 id="step-4-regex-based-boundaries">Step 4: Regex-Based Boundaries<a class="headerlink" href="#step-4-regex-based-boundaries" title="Permanent link">&para;</a></h2>
+<p>Use custom patterns when timestamps or indentation are unreliable.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^(ERROR|Exception|Traceback)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">2</span>
+</code></pre></div>
+<p>Variants:
+- Start and end markers: <code>--multiline 'regex:match=^BEGIN:end=^END'</code>.
+- Negated starts: treat lines that <strong>do not</strong> match as continuations with <code>--multiline 'regex:match=^[^\\s]'</code>.</p>
+<h2 id="step-5-buffer-entire-inputs-last-resort">Step 5: Buffer Entire Inputs (Last Resort)<a class="headerlink" href="#step-5-buffer-entire-inputs-last-resort" title="Permanent link">&para;</a></h2>
+<p><code>--multiline all</code> reads the full file into one event. Use sparingly for small JSON documents or configuration files.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>config.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>-J
+</code></pre></div>
 <ul>
-<li>Custom event boundaries</li>
-<li>Specific start/end markers</li>
-<li>Complex event detection logic</li>
-<li>Multiple possible start patterns (use <code>|</code> for alternation)</li>
+<li>Avoid on large files; it consumes memory proportional to file size.</li>
+<li>Combine with <code>--filter</code> or <code>--end</code> logic to summarise the whole document.</li>
 </ul>
-<p><strong>Use <code>regex:match:end</code> when:</strong></p>
+<h2 id="validate-the-result">Validate the Result<a class="headerlink" href="#validate-the-result" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Events have explicit terminators</li>
-<li>Need both start and end markers</li>
-<li>BEGIN/END style blocks</li>
+<li>Run <code>-n 3</code> or <code>--take 3</code> to verify event boundaries before adding filters.</li>
+<li>Use <code>--stats</code> to confirm Kelora parsed the expected number of events.</li>
+<li>When debugging, add <code>--debug-multiline</code> to see how patterns match (see <code>kelora --help-multiline</code>).</li>
 </ul>
-<p><strong>Use <code>all</code> when:</strong></p>
+<h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Processing single document files</li>
-<li>Need entire input as context</li>
-<li>Small files only (memory limit)</li>
-</ul>
-<h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Performance:</strong></p>
-<ul>
-<li>Multiline buffering increases memory usage</li>
-<li>Use <code>--batch-size</code> to limit buffer growth with <code>--parallel</code></li>
-<li><code>--batch-timeout</code> controls flush timing for streaming</li>
-</ul>
-<p><strong>Debugging:</strong></p>
-<ul>
-<li>Use <code>--take 5</code> to inspect first few events</li>
-<li>Add <code>--stats</code> to see event counts</li>
-<li>Use <code>--verbose</code> to see parsing issues</li>
-<li>Check line count with <code>--exec 'e.lines = e.line.count("\n")'</code></li>
-</ul>
-<p><strong>Pattern Matching:</strong></p>
-<ul>
-<li>Test regex patterns carefully</li>
-<li>Use <code>^</code> for line start anchors</li>
-<li>Common patterns: <code>^\d{4}-</code> (timestamp), <code>^[A-Z]+:</code> (severity), <code>^\s+</code> (indent)</li>
-<li>Combine patterns with <code>|</code>: <code>^(ERROR|WARN|Exception)</code></li>
-</ul>
-<p><strong>Edge Cases:</strong></p>
-<ul>
-<li>Empty lines may break grouping (filter with <code>--ignore-lines '^$'</code>)</li>
-<li>Very long events can cause memory issues</li>
-<li>Incomplete events at EOF are emitted as-is</li>
-<li>With <code>--parallel</code>, events may be reordered (use <code>--batch-size</code> carefully)</li>
-</ul>
-<p><strong>Format After Grouping:</strong></p>
-<ul>
-<li><code>-f line</code> keeps full multiline text in <code>line</code> field</li>
-<li><code>-f json</code> if continuation contains JSON</li>
-<li>Parse after grouping: <code>--exec 'e.data = e.line.parse_json()'</code></li>
+<li><strong>Chain with format parsing</strong><br />
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+</code></pre></div></li>
+<li><strong>Extract stack trace metadata</strong><br />
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.frames = e.line.split(&quot;\\n&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,frames,line
+</code></pre></div></li>
+<li><strong>Combine with context flags</strong><br />
+  After grouping, use <code>--before-context</code> / <code>--after-context</code> to include neighbouring events.</li>
 </ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../find-errors-in-logs/">Find Errors in Logs</a> - Error filtering patterns</li>
-<li><a href="../build-streaming-alerts/">Build Streaming Alerts</a> - Real-time multiline processing</li>
-<li><a href="../../reference/cli-reference/">CLI Reference</a> - All multiline options</li>
-<li><a href="../../concepts/multiline-strategies/">Concepts: Multiline Strategies</a> - Deep dive into multiline modes</li>
-<li>Run <code>kelora --help-multiline</code> for quick reference</li>
+<li><a href="../../concepts/multiline-strategies/">Concept: Multiline Strategies</a> for deeper explanations and debugging tips.</li>
+<li><a href="../find-errors-in-logs/">Triage Production Errors</a> to apply the results during incident response.</li>
+<li><code>kelora --help-multiline</code> for full syntax and additional examples.</li>
 </ul>
 
 

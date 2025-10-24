@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://dloss.github.io/kelora/dev/reference/formats/">
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/how-to/pseudonymize-identifiers-for-analytics/">
       
       
-        <link rel="prev" href="../cli-reference/">
+        <link rel="prev" href="../extract-and-mask-sensitive-data/">
       
       
-        <link rel="next" href="../exit-codes/">
+        <link rel="next" href="../process-csv-data/">
       
       
       <link rel="icon" href="../../kelora-logo.svg">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Format Reference - Kelora</title>
+        <title>Pseudonymize Identifiers for Analytics - Kelora</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#format-reference" class="md-skip">
+        <a href="#pseudonymize-identifiers-for-analytics" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Format Reference
+              Pseudonymize Identifiers for Analytics
             
           </span>
         </div>
@@ -286,11 +286,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../how-to/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -326,13 +328,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
           
   
   
@@ -716,26 +716,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -748,7 +753,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             How-To Guides
@@ -762,7 +767,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -785,7 +790,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/find-errors-in-logs/" class="md-nav__link">
+      <a href="../find-errors-in-logs/" class="md-nav__link">
         
   
   
@@ -808,7 +813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/analyze-web-traffic/" class="md-nav__link">
+      <a href="../analyze-web-traffic/" class="md-nav__link">
         
   
   
@@ -831,7 +836,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/monitor-application-health/" class="md-nav__link">
+      <a href="../monitor-application-health/" class="md-nav__link">
         
   
   
@@ -854,7 +859,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/parse-syslog-files/" class="md-nav__link">
+      <a href="../parse-syslog-files/" class="md-nav__link">
         
   
   
@@ -877,7 +882,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/handle-multiline-stacktraces/" class="md-nav__link">
+      <a href="../handle-multiline-stacktraces/" class="md-nav__link">
         
   
   
@@ -900,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/extract-and-mask-sensitive-data/" class="md-nav__link">
+      <a href="../extract-and-mask-sensitive-data/" class="md-nav__link">
         
   
   
@@ -920,10 +925,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../how-to/pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Pseudonymize Identifiers for Analytics
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -934,6 +961,116 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-use-this-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Use This Approach
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#before-you-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Before You Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-configure-the-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Configure the Secret
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-generate-pseudonyms-for-primary-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Generate Pseudonyms for Primary Identifiers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-preserve-useful-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Preserve Useful Context
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-compare-against-hashing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Compare Against Hashing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-validate-consistency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Validate Consistency
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operational-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operational Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -946,7 +1083,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/process-csv-data/" class="md-nav__link">
+      <a href="../process-csv-data/" class="md-nav__link">
         
   
   
@@ -969,7 +1106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/fan-out-nested-structures/" class="md-nav__link">
+      <a href="../fan-out-nested-structures/" class="md-nav__link">
         
   
   
@@ -992,7 +1129,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/build-streaming-alerts/" class="md-nav__link">
+      <a href="../build-streaming-alerts/" class="md-nav__link">
         
   
   
@@ -1015,7 +1152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/batch-process-archives/" class="md-nav__link">
+      <a href="../batch-process-archives/" class="md-nav__link">
         
   
   
@@ -1038,7 +1175,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/span-aggregation-cookbook/" class="md-nav__link">
+      <a href="../span-aggregation-cookbook/" class="md-nav__link">
         
   
   
@@ -1299,31 +1436,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -1336,7 +1468,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Reference
@@ -1350,7 +1482,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -1373,7 +1505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../functions/" class="md-nav__link">
+      <a href="../../reference/functions/" class="md-nav__link">
         
   
   
@@ -1396,7 +1528,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli-reference/" class="md-nav__link">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
         
   
   
@@ -1416,32 +1548,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Format Reference
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../reference/formats/" class="md-nav__link">
         
   
   
@@ -1452,149 +1562,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#input-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      Input Formats
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Input Formats">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      JSON Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#line-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Line Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#logfmt-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Logfmt Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#csv-tsv-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      CSV / TSV Formats
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#syslog-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Syslog Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#combined-log-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Combined Log Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cef-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      CEF Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#column-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Column Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#auto-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      Auto-Detection
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#output-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      Output Formats
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      See Also
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1607,7 +1574,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../exit-codes/" class="md-nav__link">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
         
   
   
@@ -1630,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../rhai-cheatsheet/" class="md-nav__link">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
         
   
   
@@ -1680,114 +1647,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#input-formats" class="md-nav__link">
+  <a href="#why-use-this-approach" class="md-nav__link">
     <span class="md-ellipsis">
-      Input Formats
+      Why Use This Approach
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Input Formats">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      JSON Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#line-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Line Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#logfmt-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Logfmt Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#csv-tsv-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      CSV / TSV Formats
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#syslog-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Syslog Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#combined-log-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Combined Log Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cef-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      CEF Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#column-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Column Format
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#auto-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      Auto-Detection
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#output-formats" class="md-nav__link">
+  <a href="#before-you-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Output Formats
+      Before You Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-configure-the-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Configure the Secret
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-generate-pseudonyms-for-primary-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 2: Generate Pseudonyms for Primary Identifiers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-preserve-useful-context" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Preserve Useful Context
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-compare-against-hashing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Compare Against Hashing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-validate-consistency" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Validate Consistency
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operational-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Operational Tips
     </span>
   </a>
   
@@ -1821,533 +1755,112 @@
   
 
 
-<h1 id="format-reference">Format Reference<a class="headerlink" href="#format-reference" title="Permanent link">&para;</a></h1>
-<p>Quick reference for all formats supported by Kelora.</p>
-<h2 id="input-formats">Input Formats<a class="headerlink" href="#input-formats" title="Permanent link">&para;</a></h2>
-<p>Specify input format with <code>-f, --input-format &lt;format&gt;</code>.</p>
-<h3 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Format</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>json</code></td>
-<td>Application logs, structured data (shorthand: <code>-j</code>)</td>
-</tr>
-<tr>
-<td><code>line</code></td>
-<td>Unstructured logs, raw text (default)</td>
-</tr>
-<tr>
-<td><code>logfmt</code></td>
-<td>Heroku-style logs, simple structured logs</td>
-</tr>
-<tr>
-<td><code>csv</code> / <code>tsv</code></td>
-<td>Spreadsheet data, exports</td>
-</tr>
-<tr>
-<td><code>syslog</code></td>
-<td>System logs, network devices</td>
-</tr>
-<tr>
-<td><code>combined</code></td>
-<td>Apache/Nginx web server access logs</td>
-</tr>
-<tr>
-<td><code>cef</code></td>
-<td>ArcSight Common Event Format, SIEM data</td>
-</tr>
-<tr>
-<td><code>cols:&lt;spec&gt;</code></td>
-<td>Custom column-based logs</td>
-</tr>
-<tr>
-<td><code>auto</code></td>
-<td>Auto-detect from first line</td>
-</tr>
-</tbody>
-</table>
-<h3 id="json-format">JSON Format<a class="headerlink" href="#json-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f json</code> or <code>-j</code></p>
-<p><strong>Description:</strong> JSON Lines format (one object per line). Nested structures preserved.</p>
-<p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Connection failed&quot;</span><span class="p">}</span>
-</code></pre></div></p>
-<p><strong>Output Fields:</strong> All JSON fields become event fields with original names and types.</p>
-<p><strong>Notes:</strong></p>
+<h1 id="pseudonymize-identifiers-for-analytics">Pseudonymize Identifiers for Analytics<a class="headerlink" href="#pseudonymize-identifiers-for-analytics" title="Permanent link">&para;</a></h1>
+<p>Replace user identifiers with consistent, non-reversible tokens so you can analyse behaviour without exposing raw PII.</p>
+<h2 id="why-use-this-approach">Why Use This Approach<a class="headerlink" href="#why-use-this-approach" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Use <code>-M json</code> for multi-line JSON objects</li>
-<li>Preserves field types (strings, numbers, booleans, null)</li>
-<li>Supports nested objects and arrays</li>
+<li>Analysts need to count or group by user, tenant, or device while respecting privacy.</li>
+<li>Logs must be exported outside the production boundary (vendors, BI tools).</li>
+<li>You want deterministic transformations that do not require a central mapping database.</li>
 </ul>
-<h3 id="line-format">Line Format<a class="headerlink" href="#line-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f line</code> (default)</p>
-<p><strong>Description:</strong> Plain text, one line per event.</p>
-<p><strong>Output Fields:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>line</code></td>
-<td>String</td>
-<td>Complete line content</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Notes:</strong></p>
+<h2 id="before-you-start">Before You Start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Default format when no <code>-f</code> specified</li>
-<li>Empty lines are skipped</li>
-<li>Useful for unstructured logs or custom parsing with <code>--exec</code></li>
+<li>Set the <code>KELORA_SECRET</code> environment variable to a strong, random string. Kelora derives pseudonyms from this secret.</li>
+<li>Plan domain separation keys (<code>"users"</code>, <code>"sessions"</code>, <code>"tenants"</code>). Different domains prevent correlating identities across datasets.</li>
+<li>Decide how you will rotate the secret. Rotating changes all generated tokens; coordinate with downstream consumers.</li>
 </ul>
-<h3 id="logfmt-format">Logfmt Format<a class="headerlink" href="#logfmt-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f logfmt</code></p>
-<p><strong>Description:</strong> Heroku-style key-value pairs.</p>
-<p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-01-15T10:30:00Z level=ERROR service=api message=&quot;Connection failed&quot;
-</code></pre></div></p>
-<p><strong>Output Fields:</strong> All key-value pairs become top-level fields.</p>
-<p><strong>Notes:</strong></p>
+<h2 id="step-1-configure-the-secret">Step 1: Configure the Secret<a class="headerlink" href="#step-1-configure-the-secret" title="Permanent link">&para;</a></h2>
+<p>Export the secret in the shell or set it within your scheduler/service definition.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span><span class="k">)</span><span class="s2">&quot;</span>
+</code></pre></div>
 <ul>
-<li>Supports quoted values: <code>key="value with spaces"</code></li>
-<li>Keys must be alphanumeric (with underscores/hyphens)</li>
+<li>Keep the value in a secret manager or environment configuration, not in source control.</li>
+<li>All Kelora invocations must share the same secret to maintain consistency.</li>
 </ul>
-<h3 id="csv-tsv-formats">CSV / TSV Formats<a class="headerlink" href="#csv-tsv-formats" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong></p>
+<h2 id="step-2-generate-pseudonyms-for-primary-identifiers">Step 2: Generate Pseudonyms for Primary Identifiers<a class="headerlink" href="#step-2-generate-pseudonyms-for-primary-identifiers" title="Permanent link">&para;</a></h2>
+<p>Use the <code>pseudonym()</code> function to create consistent tokens per domain.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_id = pseudonym(e.user_email, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.session_id = pseudonym(e.session_token, &quot;sessions&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_email = (); e.session_token = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>-F<span class="w"> </span>json
+</code></pre></div>
 <ul>
-<li><code>-f csv</code> - Comma-separated with header</li>
-<li><code>-f tsv</code> - Tab-separated with header</li>
-<li><code>-f csvnh</code> - CSV without header</li>
-<li><code>-f tsvnh</code> - TSV without header</li>
+<li>Passing different domains (<code>"users"</code>, <code>"sessions"</code>) ensures tokens cannot be matched across contexts.</li>
+<li>Drop the original fields immediately after generating pseudonyms.</li>
 </ul>
-<p><strong>Output Fields:</strong></p>
+<h2 id="step-3-preserve-useful-context">Step 3: Preserve Useful Context<a class="headerlink" href="#step-3-preserve-useful-context" title="Permanent link">&para;</a></h2>
+<p>Extract secondary attributes (domains, regions) before removing raw data so analysts retain dimensional information.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let email = e.user_email.parse_email();</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="s1">        e.user_domain = email.domain;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">        e.user_id = pseudonym(e.user_email, &quot;users&quot;);</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">        e.user_email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>-F<span class="w"> </span>json
+</code></pre></div>
 <ul>
-<li><strong>With header:</strong> Field names from header row</li>
-<li><strong>Without header:</strong> <code>col_0</code>, <code>col_1</code>, <code>col_2</code>, etc.</li>
+<li>Combine with masking (<code>mask_ip</code>) when you also need approximate locations or network groupings.</li>
+<li>Track counts of pseudonyms (<code>track_unique</code>) to estimate active user bases without storing clear text identifiers.</li>
 </ul>
-<p><strong>Type Annotations:</strong></p>
-<p>Specify field types for automatic conversion:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int response_time:float&#39;</span><span class="w"> </span>access.csv
-</code></pre></div></p>
-<p>Supported types: <code>int</code>, <code>float</code>, <code>bool</code></p>
-<p><strong>Notes:</strong></p>
+<h2 id="step-4-compare-against-hashing">Step 4: Compare Against Hashing<a class="headerlink" href="#step-4-compare-against-hashing" title="Permanent link">&para;</a></h2>
+<p>When you only need grouping (and not reversibility), hashing may suffice. Benchmark both approaches so downstream tools understand collision risks.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_hash = e.user_id.hash(&quot;xxh3&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_anon = pseudonym(e.user_id, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;hashes&quot;, e.user_hash)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;pseudonyms&quot;, e.user_anon)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>--metrics
+</code></pre></div>
 <ul>
-<li>Quoted fields supported: <code>"value, with, commas"</code></li>
-<li>Escaped quotes: <code>"value with ""quotes"""</code></li>
+<li><code>hash("xxh3")</code> is fast but not secret; use <code>pseudonym()</code> whenever anonymity guarantees matter.</li>
+<li>Cryptographic hashes (<code>sha256</code>, <code>blake3</code>) avoid collisions but still leak the same input if the attacker knows it. Pseudonyms resist this by requiring the secret.</li>
 </ul>
-<h3 id="syslog-format">Syslog Format<a class="headerlink" href="#syslog-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f syslog</code></p>
-<p><strong>Description:</strong> RFC5424 and RFC3164 syslog messages. Auto-detects format.</p>
-<p><strong>Input Examples:</strong></p>
-<p>RFC5424:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&lt;165&gt;1 2024-01-15T10:30:00.000Z myhost myapp 1234 ID47 - Connection failed
-</code></pre></div></p>
-<p>RFC3164:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&lt;34&gt;Jan 15 10:30:00 myhost myapp[1234]: Connection failed
-</code></pre></div></p>
-<p><strong>Output Fields:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>RFC5424</th>
-<th>RFC3164</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>facility</code></td>
-<td>Integer</td>
-<td>✓</td>
-<td>✓</td>
-<td>Syslog facility code</td>
-</tr>
-<tr>
-<td><code>severity</code></td>
-<td>Integer</td>
-<td>✓</td>
-<td>✓</td>
-<td>Severity level (0-7)</td>
-</tr>
-<tr>
-<td><code>timestamp</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>Parsed timestamp</td>
-</tr>
-<tr>
-<td><code>hostname</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>Source hostname</td>
-</tr>
-<tr>
-<td><code>appname</code></td>
-<td>String</td>
-<td>✓</td>
-<td>-</td>
-<td>Application name</td>
-</tr>
-<tr>
-<td><code>procid</code></td>
-<td>String</td>
-<td>✓</td>
-<td>-</td>
-<td>Process ID</td>
-</tr>
-<tr>
-<td><code>msgid</code></td>
-<td>String</td>
-<td>✓</td>
-<td>-</td>
-<td>Message ID</td>
-</tr>
-<tr>
-<td><code>tag</code></td>
-<td>String</td>
-<td>-</td>
-<td>✓</td>
-<td>Syslog tag (appname[pid])</td>
-</tr>
-<tr>
-<td><code>message</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>Log message</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Notes:</strong></p>
+<h2 id="step-5-validate-consistency">Step 5: Validate Consistency<a class="headerlink" href="#step-5-validate-consistency" title="Permanent link">&para;</a></h2>
+<p>Confirm that the same inputs produce identical pseudonyms across runs and that expected fields are gone.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>pseudonymized.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;!e.contains(&quot;user_email&quot;) &amp;&amp; !e.contains(&quot;session_token&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--stats
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let token = pseudonym(e.user_email, &quot;users&quot;);&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;tokens&quot;, token)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--metrics
+</code></pre></div>
 <ul>
-<li>Severity levels: 0=emerg, 1=alert, 2=crit, 3=err, 4=warn, 5=notice, 6=info, 7=debug</li>
+<li>Use small fixture files in tests to guard against accidental changes to the pseudonym rules.</li>
+<li>When rotating secrets, run both the old and new pipeline on a sample and confirm the change is expected.</li>
 </ul>
-<h3 id="combined-log-format">Combined Log Format<a class="headerlink" href="#combined-log-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f combined</code></p>
-<p><strong>Description:</strong> Apache/Nginx web server logs. Auto-handles three variants:</p>
+<h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Apache Common Log Format (CLF)</li>
-<li>Apache Combined Log Format</li>
-<li>Nginx Combined with request_time</li>
+<li><strong>Tenant isolation</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>multi_tenant.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let tenant = e.tenant_name;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s1">        e.tenant_id = pseudonym(tenant, &quot;tenants&quot;);</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="s1">        e.user_id = pseudonym(e.user_email, tenant);</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">        e.tenant_name = (); e.user_email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>-F<span class="w"> </span>json
+</code></pre></div>
+  Tokens cannot be correlated between tenants while remaining consistent inside each tenant.</li>
+<li><strong>Selective reversibility</strong></li>
+<li>Keep a secure mapping of <code>(original_id, pseudonym)</code> when legal/compliance teams need an escalation path.</li>
+<li>Store the mapping in an encrypted datastore; never in the output log files themselves.</li>
+<li><strong>Secret rotation checklist</strong></li>
+<li>Deploy new secret value.</li>
+<li>Run both old and new pipelines in parallel for validation.</li>
+<li>Notify downstream teams that historical comparisons may require dual ingestion.</li>
 </ul>
-<p><strong>Input Examples:</strong></p>
-<p>Common:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] &quot;GET /index.html HTTP/1.0&quot; 200 1234
-</code></pre></div></p>
-<p>Combined:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] &quot;GET /api/data HTTP/1.1&quot; 200 1234 &quot;http://example.com/&quot; &quot;Mozilla/5.0&quot;
-</code></pre></div></p>
-<p>Nginx with request_time:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] &quot;GET /api/data HTTP/1.1&quot; 200 1234 &quot;-&quot; &quot;curl/7.68.0&quot; &quot;0.123&quot;
-</code></pre></div></p>
-<p><strong>Output Fields:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Common</th>
-<th>Combined</th>
-<th>Nginx</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ip</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>Client IP address</td>
-</tr>
-<tr>
-<td><code>identity</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>RFC 1413 identity (omit if <code>-</code>)</td>
-</tr>
-<tr>
-<td><code>user</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>HTTP auth username (omit if <code>-</code>)</td>
-</tr>
-<tr>
-<td><code>timestamp</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>Request timestamp</td>
-</tr>
-<tr>
-<td><code>request</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>Full HTTP request line</td>
-</tr>
-<tr>
-<td><code>method</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>HTTP method (auto-extracted)</td>
-</tr>
-<tr>
-<td><code>path</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>Request path (auto-extracted)</td>
-</tr>
-<tr>
-<td><code>protocol</code></td>
-<td>String</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>HTTP protocol (auto-extracted)</td>
-</tr>
-<tr>
-<td><code>status</code></td>
-<td>Integer</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>HTTP status code</td>
-</tr>
-<tr>
-<td><code>bytes</code></td>
-<td>Integer</td>
-<td>✓</td>
-<td>✓</td>
-<td>✓</td>
-<td>Response size (omit if <code>-</code>, keep if <code>0</code>)</td>
-</tr>
-<tr>
-<td><code>referer</code></td>
-<td>String</td>
-<td>-</td>
-<td>✓</td>
-<td>✓</td>
-<td>HTTP referer (omit if <code>-</code>)</td>
-</tr>
-<tr>
-<td><code>user_agent</code></td>
-<td>String</td>
-<td>-</td>
-<td>✓</td>
-<td>✓</td>
-<td>HTTP user agent (omit if <code>-</code>)</td>
-</tr>
-<tr>
-<td><code>request_time</code></td>
-<td>Float</td>
-<td>-</td>
-<td>-</td>
-<td>✓</td>
-<td>Request time in seconds (omit if <code>-</code>)</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Notes:</strong></p>
+<h2 id="operational-tips">Operational Tips<a class="headerlink" href="#operational-tips" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Parser auto-detects variant per line</li>
-<li>Fields with <code>-</code> values omitted (except <code>bytes</code> includes <code>0</code>)</li>
+<li>Do not log the secret or intermediate values in <code>--verbose</code> output.</li>
+<li>Combine with <a href="../extract-and-mask-sensitive-data/">Sanitize Logs Before Sharing</a> to remove residual text-based identifiers.</li>
+<li>Review legal requirements around pseudonymisation; some jurisdictions treat pseudonyms as personal data if the secret is accessible.</li>
 </ul>
-<h3 id="cef-format">CEF Format<a class="headerlink" href="#cef-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f cef</code></p>
-<p><strong>Description:</strong> ArcSight Common Event Format for security logs.</p>
-<p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>CEF:0|Security|threatmanager|1.0|100|worm successfully stopped|10|src=10.0.0.1 dst=2.1.2.2 spt=1232
-</code></pre></div></p>
-<p><strong>Output Fields:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cef_version</code></td>
-<td>String</td>
-<td>CEF format version</td>
-</tr>
-<tr>
-<td><code>device_vendor</code></td>
-<td>String</td>
-<td>Device vendor name</td>
-</tr>
-<tr>
-<td><code>device_product</code></td>
-<td>String</td>
-<td>Device product name</td>
-</tr>
-<tr>
-<td><code>device_version</code></td>
-<td>String</td>
-<td>Device version</td>
-</tr>
-<tr>
-<td><code>signature_id</code></td>
-<td>String</td>
-<td>Event signature ID</td>
-</tr>
-<tr>
-<td><code>name</code></td>
-<td>String</td>
-<td>Event name</td>
-</tr>
-<tr>
-<td><code>severity</code></td>
-<td>Integer</td>
-<td>Event severity</td>
-</tr>
-<tr>
-<td><em>(extensions)</em></td>
-<td>Various</td>
-<td>All extension fields as top-level fields</td>
-</tr>
-</tbody>
-</table>
-<h3 id="column-format">Column Format<a class="headerlink" href="#column-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f 'cols:&lt;spec&gt;'</code></p>
-<p><strong>Description:</strong> Custom column-based parsing with whitespace (or custom separator) splitting.</p>
-<p><strong>Separator:</strong> Use <code>--cols-sep &lt;separator&gt;</code> for custom separators (default: whitespace)</p>
-<p><strong>Specification Syntax:</strong></p>
-<ul>
-<li><code>field</code> - Consume one column</li>
-<li><code>field(N)</code> - Consume N columns and join</li>
-<li><code>-</code> or <code>-(N)</code> - Skip one or N columns</li>
-<li><code>*field</code> - Capture remaining columns (must be last)</li>
-<li><code>field:type</code> - Apply type annotation (<code>int</code>, <code>float</code>, <code>bool</code>, <code>string</code>)</li>
-</ul>
-<p><strong>Examples:</strong></p>
-<p>Simple fields:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Input: ERROR api &quot;Connection failed&quot;</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span><span class="w"> </span>app.log
-</code></pre></div></p>
-<p>Multi-token timestamp:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Input: 2024-01-15 10:30:00 INFO Connection failed</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>timestamp
-</code></pre></div></p>
-<p>Custom separator:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Input: name|age|city</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>data.txt
-</code></pre></div></p>
-<p><strong>Output Fields:</strong> Field names from specification with applied type conversions.</p>
-<p><strong>Notes:</strong></p>
-<ul>
-<li><code>*field</code> must be the final token</li>
-</ul>
-<h3 id="auto-detection">Auto-Detection<a class="headerlink" href="#auto-detection" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f auto</code></p>
-<p><strong>Description:</strong> Automatically detect format from first non-empty line.</p>
-<p><strong>Detection Order:</strong></p>
-<ol>
-<li>JSON (starts with <code>{</code>)</li>
-<li>Syslog (starts with <code>&lt;NNN&gt;</code>)</li>
-<li>CEF (starts with <code>CEF:</code>)</li>
-<li>Combined (matches Apache/Nginx pattern)</li>
-<li>Logfmt (contains <code>key=value</code> pairs)</li>
-<li>CSV (contains commas with consistent pattern)</li>
-<li>Line (fallback)</li>
-</ol>
-<p><strong>Notes:</strong></p>
-<ul>
-<li>Detects once, applies to all lines</li>
-<li>Not suitable for mixed-format files</li>
-</ul>
-<h2 id="output-formats">Output Formats<a class="headerlink" href="#output-formats" title="Permanent link">&para;</a></h2>
-<p>Specify output format with <code>-F, --output-format &lt;format&gt;</code>.</p>
-<table>
-<thead>
-<tr>
-<th>Format</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>default</code></td>
-<td>Key-value format with colors</td>
-</tr>
-<tr>
-<td><code>json</code></td>
-<td>JSON lines (one object per line)</td>
-</tr>
-<tr>
-<td><code>logfmt</code></td>
-<td>Key-value pairs (logfmt format)</td>
-</tr>
-<tr>
-<td><code>inspect</code></td>
-<td>Debug format with type information</td>
-</tr>
-<tr>
-<td><code>levelmap</code></td>
-<td>Events grouped by log level</td>
-</tr>
-<tr>
-<td><code>csv</code></td>
-<td>CSV with header row</td>
-</tr>
-<tr>
-<td><code>tsv</code></td>
-<td>Tab-separated values with header row</td>
-</tr>
-<tr>
-<td><code>csvnh</code></td>
-<td>CSV without header</td>
-</tr>
-<tr>
-<td><code>tsvnh</code></td>
-<td>TSV without header</td>
-</tr>
-<tr>
-<td><code>none</code></td>
-<td>No output (useful with <code>--stats</code> or <code>--metrics</code>)</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                               </span><span class="c1"># Output as JSON</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message<span class="w"> </span><span class="c1"># Output as CSV</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w">                       </span><span class="c1"># Only stats</span>
-</code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../cli-reference/">CLI Reference</a> - Complete flag documentation including timestamp parsing, multiline strategies, and prefix extraction</li>
-<li><a href="../../quickstart/">Quickstart</a> - Format examples with annotated output</li>
-<li><a href="../../tutorials/parsing-custom-formats/">Parsing Custom Formats Tutorial</a> - Step-by-step guide</li>
-<li><a href="../../how-to/process-csv-data/">Prepare CSV Exports for Analytics</a> - CSV-specific tips</li>
+<li><a href="../extract-and-mask-sensitive-data/">Sanitize Logs Before Sharing</a> for masking and redaction patterns.</li>
+<li><a href="../process-csv-data/">Prepare CSV Exports for Analytics</a> to package pseudonymised data for downstream tools.</li>
+<li><a href="../../concepts/configuration-system/">Concept: Configuration System</a> if you want to store secrets in Kelora config files rather than shell exports.</li>
 </ul>
 
 

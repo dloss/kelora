@@ -24,7 +24,7 @@
     
     
       
-        <title>Span Aggregation Cookbook - Kelora</title>
+        <title>Roll Up Logs with Span Windows - Kelora</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#span-aggregation-cookbook" class="md-skip">
+        <a href="#roll-up-logs-with-span-windows" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Span Aggregation Cookbook
+              Roll Up Logs with Span Windows
             
           </span>
         </div>
@@ -795,7 +795,7 @@
   
   
   <span class="md-ellipsis">
-    Find Errors in Logs
+    Triage Production Errors
     
   </span>
   
@@ -841,7 +841,7 @@
   
   
   <span class="md-ellipsis">
-    Monitor Application Health
+    Build a Service Health Snapshot
     
   </span>
   
@@ -864,7 +864,7 @@
   
   
   <span class="md-ellipsis">
-    Parse Syslog Files
+    Investigate Syslog Sources
     
   </span>
   
@@ -887,7 +887,7 @@
   
   
   <span class="md-ellipsis">
-    Handle Multiline Stacktraces
+    Choose a Multiline Strategy
     
   </span>
   
@@ -910,7 +910,30 @@
   
   
   <span class="md-ellipsis">
-    Extract and Mask Sensitive Data
+    Sanitize Logs Before Sharing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pseudonymize Identifiers for Analytics
     
   </span>
   
@@ -933,7 +956,7 @@
   
   
   <span class="md-ellipsis">
-    Process CSV Data
+    Prepare CSV Exports for Analytics
     
   </span>
   
@@ -956,7 +979,7 @@
   
   
   <span class="md-ellipsis">
-    Fan Out Nested Structures
+    Flatten Nested JSON for Analysis
     
   </span>
   
@@ -979,7 +1002,7 @@
   
   
   <span class="md-ellipsis">
-    Build Streaming Alerts
+    Design Streaming Alerts
     
   </span>
   
@@ -1002,7 +1025,7 @@
   
   
   <span class="md-ellipsis">
-    Batch Process Archives
+    Process Archives at Scale
     
   </span>
   
@@ -1034,7 +1057,7 @@
   
   
   <span class="md-ellipsis">
-    Span Aggregation Cookbook
+    Roll Up Logs with Span Windows
     
   </span>
   
@@ -1047,7 +1070,7 @@
   
   
   <span class="md-ellipsis">
-    Span Aggregation Cookbook
+    Roll Up Logs with Span Windows
     
   </span>
   
@@ -1070,89 +1093,92 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#when-to-use-spans" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      When to Use Spans
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#before-you-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#count-based-batches" class="md-nav__link">
-    <span class="md-ellipsis">
-      Count-Based Batches
+      Before You Start
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#time-based-windows" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-1-select-a-window-strategy" class="md-nav__link">
     <span class="md-ellipsis">
-      Time-Based Windows
+      Step 1: Select a Window Strategy
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#inspect-span-events" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-2-count-based-example" class="md-nav__link">
     <span class="md-ellipsis">
-      Inspect Span Events
+      Step 2: Count-Based Example
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#track-metrics-automatically" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-3-time-based-example" class="md-nav__link">
     <span class="md-ellipsis">
-      Track Metrics Automatically
+      Step 3: Time-Based Example
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#handle-late-or-missing-timestamps" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-4-handle-late-or-missing-timestamps" class="md-nav__link">
     <span class="md-ellipsis">
-      Handle Late or Missing Timestamps
+      Step 4: Handle Late or Missing Timestamps
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#use-span-metadata-without-a-close-hook" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-5-export-or-chain-spans" class="md-nav__link">
     <span class="md-ellipsis">
-      Use Span Metadata Without a Close Hook
+      Step 5: Export or Chain Spans
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
     <span class="md-ellipsis">
-      Tips
+      Variations
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
   
 </li>
       
@@ -1621,89 +1647,92 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#when-to-use-spans" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      When to Use Spans
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#before-you-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#count-based-batches" class="md-nav__link">
-    <span class="md-ellipsis">
-      Count-Based Batches
+      Before You Start
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#time-based-windows" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-1-select-a-window-strategy" class="md-nav__link">
     <span class="md-ellipsis">
-      Time-Based Windows
+      Step 1: Select a Window Strategy
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#inspect-span-events" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-2-count-based-example" class="md-nav__link">
     <span class="md-ellipsis">
-      Inspect Span Events
+      Step 2: Count-Based Example
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#track-metrics-automatically" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-3-time-based-example" class="md-nav__link">
     <span class="md-ellipsis">
-      Track Metrics Automatically
+      Step 3: Time-Based Example
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#handle-late-or-missing-timestamps" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-4-handle-late-or-missing-timestamps" class="md-nav__link">
     <span class="md-ellipsis">
-      Handle Late or Missing Timestamps
+      Step 4: Handle Late or Missing Timestamps
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#use-span-metadata-without-a-close-hook" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-5-export-or-chain-spans" class="md-nav__link">
     <span class="md-ellipsis">
-      Use Span Metadata Without a Close Hook
+      Step 5: Export or Chain Spans
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
     <span class="md-ellipsis">
-      Tips
+      Variations
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      See Also
+    </span>
+  </a>
   
 </li>
       
@@ -1726,116 +1755,128 @@
   
 
 
-<h1 id="span-aggregation-cookbook">Span Aggregation Cookbook<a class="headerlink" href="#span-aggregation-cookbook" title="Permanent link">&para;</a></h1>
-<p>Use <code>--span</code> and <code>--span-close</code> to batch events for summaries, dashboards, and incident analyses.</p>
-<h2 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h2>
-<p>You need periodic rollups (per N events or per time window) without losing the per-event pipeline logic. You also want late or malformed timestamps handled gracefully.</p>
-<h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
-<h3 id="count-based-batches">Count-Based Batches<a class="headerlink" href="#count-based-batches" title="Permanent link">&para;</a></h3>
-<p>Split the stream every <em>N</em> events that survive filters and emit a summary per batch.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    let errors = span.size;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    print(span.id + &quot;,errors=&quot; + errors.to_string());</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  &#39;</span>
-</code></pre></div>
+<h1 id="roll-up-logs-with-span-windows">Roll Up Logs with Span Windows<a class="headerlink" href="#roll-up-logs-with-span-windows" title="Permanent link">&para;</a></h1>
+<p>Batch events into fixed-size or time-based windows using <code>--span</code> so you can compute summaries without losing streaming behavior.</p>
+<h2 id="when-to-use-spans">When to Use Spans<a class="headerlink" href="#when-to-use-spans" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Works in arrival order; no late-event concept.</li>
-<li><code>span.size</code> reflects post-filter events, so remove empty spans if needed:</li>
+<li>Produce per-minute or per-N-event digests during incident reviews.</li>
+<li>Generate lightweight dashboards straight from log streams.</li>
+<li>Detect bursts or trends without shipping data into another analytics system.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>if span.size &gt; 0 {
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    print(span.id + &quot;:&quot; + span.size);
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>}
-</code></pre></div>
-<h3 id="time-based-windows">Time-Based Windows<a class="headerlink" href="#time-based-windows" title="Permanent link">&para;</a></h3>
-<p>Emit metrics aligned to fixed wall-clock windows by duration.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="s1">    let metrics = span.metrics;</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    let hits = metrics.get_path(&quot;hits&quot;, 0);</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">    let slow = metrics.get_path(&quot;slow&quot;, 0);</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">    let rate = if hits &gt; 0 { slow * 100 / hits } else { 0 };</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    print(span.id + &quot;,&quot; +</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">          &quot;hits=&quot; + hits.to_string() + &quot;,&quot; +</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">          &quot;slow_pct=&quot; + rate.to_string());</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s1">    track_count(&quot;hits&quot;);</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="s1">    if e.duration_ms &gt; 2000 { track_count(&quot;slow&quot;); }</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="s1">  &#39;</span>
-</code></pre></div>
-<p>Best practices:</p>
+<h2 id="before-you-start">Before You Start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Sort or pre-group logs by timestamp for accurate window assignment.</li>
-<li>Events lacking <code>ts</code> appear with <code>meta.span_status == "unassigned"</code> and do not enter <code>span.events</code>.</li>
-<li>Late arrivals keep <code>meta.span_status == "late"</code> and include the window they missed.</li>
+<li>Examples use <code>examples/simple_json.jsonl</code> and assume a parsed timestamp (<code>timestamp</code> field). Adapt field names as needed.</li>
+<li><code>--span</code> disables parallel mode; span processing requires ordered input.</li>
+<li>Late or timestamp-free events require special handling (see Step 4).</li>
 </ul>
-<h3 id="inspect-span-events">Inspect Span Events<a class="headerlink" href="#inspect-span-events" title="Permanent link">&para;</a></h3>
-<p><code>span.events</code> gives the surviving events so you can generate rollups or trace context.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--span<span class="w"> </span><span class="m">100</span><span class="w"> </span>requests.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s1">    let events = span.events;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">    let ids = events.map(|evt| evt.request_id).join(&quot;,&quot;);</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    print(span.id + &quot;: &quot; + ids);</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">  &#39;</span>
-</code></pre></div>
-<p>The maps inside <code>span.events</code> include all original fields plus span metadata (<code>span_status</code>, <code>span_start</code>, <code>span_end</code>).</p>
-<h3 id="track-metrics-automatically">Track Metrics Automatically<a class="headerlink" href="#track-metrics-automatically" title="Permanent link">&para;</a></h3>
-<p><code>span.metrics</code> isolates the deltas for <code>track_*</code> calls inside the span.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--span<span class="w"> </span>1m<span class="w"> </span>api.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s1">    track_count(&quot;total&quot;);</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">    if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    let metrics = span.metrics;</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    let total = metrics.get_path(&quot;total&quot;, 0);</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s1">    let errors = metrics.get_path(&quot;errors&quot;, 0);</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    if total &gt; 0 {</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">      let err_rate = errors * 100 / total;</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">      print(span.id + &quot;,error_rate=&quot; + err_rate.to_string());</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">    }</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s1">  &#39;</span>
-</code></pre></div>
-<p>No manual resets required—Kelora snapshots and clears span metrics after each close.</p>
-<h3 id="handle-late-or-missing-timestamps">Handle Late or Missing Timestamps<a class="headerlink" href="#handle-late-or-missing-timestamps" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--span<span class="w"> </span>10m<span class="w"> </span>logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s1">    if meta.span_status == &quot;late&quot; {</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="s1">      eprint(&quot;Late: &quot; + meta.span_id + &quot; ← &quot; + e.ts);</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">    } else if meta.span_status == &quot;unassigned&quot; {</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">      eprint(&quot;Missing ts: line &quot; + meta.line_num.to_string());</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">    }</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(span.id + &quot;:&quot; + span.size)&#39;</span>
-</code></pre></div>
+<h2 id="step-1-select-a-window-strategy">Step 1: Select a Window Strategy<a class="headerlink" href="#step-1-select-a-window-strategy" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>meta.span_status</code> is visible in <code>--exec</code> stages, so you can branch on late/unassigned events.</li>
-<li>Late events still pass through filters/exec but do not reopen closed spans.</li>
-<li>For strict timestamp enforcement, add <code>--strict</code> (events without valid <code>ts</code> become hard errors).</li>
+<li><strong>Count-based</strong>: <code>--span 500</code> closes the window every 500 events that pass all filters.</li>
+<li><strong>Time-based</strong>: <code>--span 5m</code> groups events by wall-clock duration (supports <code>s</code>, <code>m</code>, <code>h</code>).</li>
+<li>Optional <code>--span-close '...Rhai script...'</code> runs when the window closes. Use it for custom summaries or output.</li>
 </ul>
-<h3 id="use-span-metadata-without-a-close-hook">Use Span Metadata Without a Close Hook<a class="headerlink" href="#use-span-metadata-without-a-close-hook" title="Permanent link">&para;</a></h3>
-<p>Skip <code>--span-close</code> when you only need Kelora to tag events; the span processor stays lightweight but emits per-event metadata you can forward downstream.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>access.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.window = #{id: meta.span_id, start: meta.span_start, end: meta.span_end};&#39;</span>
+<h2 id="step-2-count-based-example">Step 2: Count-Based Example<a class="headerlink" href="#step-2-count-based-example" title="Permanent link">&para;</a></h2>
+<p>Summarise every 200 events for quick batch metrics.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    let metrics = span.metrics;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    print(span.id + &quot;,events=&quot; + span.size.to_string() +</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">          &quot;,errors=&quot; + metrics.get_path(&quot;errors&quot;, 0).to_string());</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    track_count(&quot;total&quot;);</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">  &#39;</span>
 </code></pre></div>
-<p>Every event now carries its tumbling window so tools like <code>jq</code>, DuckDB, or spreadsheets can group by <code>e.window.id</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>errors.log<span class="w"> </span>--span<span class="w"> </span>2m<span class="w"> </span>--output<span class="w"> </span>jsonl<span class="w"> </span><span class="p">|</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>jq<span class="w"> </span>-sc<span class="w"> </span><span class="s1">&#39;group_by(.meta.span_id)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s1">          | map({span: .[0].meta.span_id, errors: length})&#39;</span>
-</code></pre></div>
-<p>Or filter in-line by span status while still emitting the rest:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>access.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;meta.span_status != &quot;late&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if meta.span_status == &quot;late&quot; { eprint(&quot;Late: &quot; + e.ts + &quot; → &quot; + meta.span_id); }&#39;</span>
-</code></pre></div>
-<h3 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Time spans align to the first valid timestamp in the stream; ensure ordering or use upstream sort.</li>
-<li>Count spans retain all events in memory until <code>span.size</code> is reached. Watch for large values.</li>
-<li><code>--span</code> disables parallel mode automatically—sequential processing is required for deterministic batching.</li>
+<li><code>span.id</code> is an incrementing identifier (<code>span-000001</code>, ...).</li>
+<li><code>span.metrics</code> exposes only the deltas collected within that window.</li>
+<li>Because the original events are still streamed, you can attach more <code>--exec</code> or <code>--filter</code> stages before or after the span logic.</li>
+</ul>
+<h2 id="step-3-time-based-example">Step 3: Time-Based Example<a class="headerlink" href="#step-3-time-based-example" title="Permanent link">&para;</a></h2>
+<p>Roll up five-minute error summaries aligned to timestamps.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--span<span class="w"> </span>5m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s1">    track_count(&quot;total&quot;);</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s1">    if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="s1">    let total = span.metrics.get_path(&quot;total&quot;, 0);</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="s1">    let errors = span.metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="s1">    if total &gt; 0 {</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="s1">      let rate = (errors.to_float() / total.to_float()) * 100.0;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="s1">      print(span.start.to_string() + &quot;,&quot; +</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="s1">            &quot;total=&quot; + total.to_string() + &quot;,&quot; +</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="s1">            &quot;errors=&quot; + errors.to_string() + &quot;,&quot; +</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="s1">            &quot;error_rate=&quot; + rate.to_string());</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="s1">    }</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="s1">  &#39;</span>
+</code></pre></div>
+<ul>
+<li><code>span.start</code> and <code>span.end</code> use <code>DateTime</code> values from event timestamps.</li>
+<li>Windows are tumbling; events fall into the window that matches their timestamp.</li>
+<li>Ensure input is chronologically sorted to avoid unnecessary late events.</li>
+</ul>
+<h2 id="step-4-handle-late-or-missing-timestamps">Step 4: Handle Late or Missing Timestamps<a class="headerlink" href="#step-4-handle-late-or-missing-timestamps" title="Permanent link">&para;</a></h2>
+<p>Inspect span metadata to see how events were classified.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    if meta.span_status == &quot;late&quot; {</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">      eprint(&quot;Late event: &quot; + e.timestamp.to_string());</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">    } else if meta.span_status == &quot;unassigned&quot; {</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">      eprint(&quot;Missing timestamp on line &quot; + meta.line_num.to_string());</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">    }</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(span.id + &quot;: &quot; + span.size.to_string())&#39;</span>
+</code></pre></div>
+<ul>
+<li><code>meta.span_status</code> is one of <code>active</code>, <code>late</code>, or <code>unassigned</code>.</li>
+<li>Use <code>--strict</code> if missing timestamps should abort the run instead of being skipped.</li>
+</ul>
+<h2 id="step-5-export-or-chain-spans">Step 5: Export or Chain Spans<a class="headerlink" href="#step-5-export-or-chain-spans" title="Permanent link">&para;</a></h2>
+<p>Write per-span summaries to files or feed them into downstream commands.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--span<span class="w"> </span>10m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    let path = &quot;/tmp/span-&quot; + span.id + &quot;.csv&quot;;</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">    for (service, count) in span.metrics {</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">      append_file(path, span.start.to_string() + &quot;,&quot; + service + &quot;,&quot; + count.to_string() + &quot;\n&quot;);</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">    }</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--allow-fs-writes
+</code></pre></div>
+<ul>
+<li>Remember to enable <code>--allow-fs-writes</code> when using <code>append_file()</code>.</li>
+<li>Alternatively, pipe Kelora output into <code>jq</code>, DuckDB, or spreadsheets for visualisation.</li>
+</ul>
+<h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Per-service spans</strong><br />
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;payments&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(span.id + &quot;,payments=&quot; + span.size.to_string())&#39;</span>
+</code></pre></div></li>
+<li><strong>Sliding error thresholds</strong><br />
+  Combine <code>--span</code> with <a href="../build-streaming-alerts/">Design Streaming Alerts</a> to trigger notifications when span metrics cross a threshold.</li>
+<li><strong>Hybrid reporting</strong><br />
+  Run two spans simultaneously by invoking Kelora twice: one count-based for rapid feedback, another time-based for dashboards.</li>
+</ul>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Sort archives by timestamp before running time-based spans to minimise late events.</li>
+<li>Keep span window sizes reasonable; extremely large spans consume more memory.</li>
+<li>Capture <code>--stats</code> output alongside span summaries for auditing.</li>
+</ul>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../batch-process-archives/">Process Archives at Scale</a> to prepare large datasets before spanning.</li>
+<li><a href="../monitor-application-health/">Build a Service Health Snapshot</a> for metric examples you can embed in span logic.</li>
+<li><code>kelora --help-time</code> and <code>kelora --help-functions</code> for timestamp parsing and metric helper references.</li>
 </ul>
 
 

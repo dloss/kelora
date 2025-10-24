@@ -24,7 +24,7 @@
     
     
       
-        <title>Parse Syslog Files - Kelora</title>
+        <title>Investigate Syslog Sources - Kelora</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#parse-syslog-files" class="md-skip">
+        <a href="#investigate-syslog-sources" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Parse Syslog Files
+              Investigate Syslog Sources
             
           </span>
         </div>
@@ -795,7 +795,7 @@
   
   
   <span class="md-ellipsis">
-    Find Errors in Logs
+    Triage Production Errors
     
   </span>
   
@@ -841,7 +841,7 @@
   
   
   <span class="md-ellipsis">
-    Monitor Application Health
+    Build a Service Health Snapshot
     
   </span>
   
@@ -873,7 +873,7 @@
   
   
   <span class="md-ellipsis">
-    Parse Syslog Files
+    Investigate Syslog Sources
     
   </span>
   
@@ -886,7 +886,7 @@
   
   
   <span class="md-ellipsis">
-    Parse Syslog Files
+    Investigate Syslog Sources
     
   </span>
   
@@ -909,165 +909,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#when-to-use-this-guide" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      When to Use This Guide
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#before-you-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
+      Before You Start
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-syslog-parsing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Syslog Parsing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-by-severity" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter by Severity
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-by-facility" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter by Facility
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-by-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter by Process
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#monitor-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      Monitor Authentication
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-message-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract Message Details
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#aggregate-by-hostname" class="md-nav__link">
-    <span class="md-ellipsis">
-      Aggregate by Hostname
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#time-based-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Time-Based Analysis
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convert-to-json" class="md-nav__link">
-    <span class="md-ellipsis">
-      Convert to JSON
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#real-world-examples" class="md-nav__link">
+  <a href="#step-1-inspect-the-stream" class="md-nav__link">
     <span class="md-ellipsis">
-      Real-World Examples
+      Step 1: Inspect the Stream
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Real-World Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#security-monitoring" class="md-nav__link">
-    <span class="md-ellipsis">
-      Security Monitoring
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#service-health-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      Service Health Check
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#disk-space-warnings" class="md-nav__link">
-    <span class="md-ellipsis">
-      Disk Space Warnings
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#network-device-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Network Device Logs
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
+  <a href="#step-2-filter-by-severity-or-facility" class="md-nav__link">
     <span class="md-ellipsis">
-      Tips
+      Step 2: Filter by Severity or Facility
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-target-specific-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Target Specific Services
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-add-enrichment-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Add Enrichment and Metrics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-export-for-stakeholders" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Export for Stakeholders
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
     </span>
   </a>
   
@@ -1103,7 +1019,7 @@
   
   
   <span class="md-ellipsis">
-    Handle Multiline Stacktraces
+    Choose a Multiline Strategy
     
   </span>
   
@@ -1126,7 +1042,30 @@
   
   
   <span class="md-ellipsis">
-    Extract and Mask Sensitive Data
+    Sanitize Logs Before Sharing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pseudonymize Identifiers for Analytics
     
   </span>
   
@@ -1149,7 +1088,7 @@
   
   
   <span class="md-ellipsis">
-    Process CSV Data
+    Prepare CSV Exports for Analytics
     
   </span>
   
@@ -1172,7 +1111,7 @@
   
   
   <span class="md-ellipsis">
-    Fan Out Nested Structures
+    Flatten Nested JSON for Analysis
     
   </span>
   
@@ -1195,7 +1134,7 @@
   
   
   <span class="md-ellipsis">
-    Build Streaming Alerts
+    Design Streaming Alerts
     
   </span>
   
@@ -1218,7 +1157,7 @@
   
   
   <span class="md-ellipsis">
-    Batch Process Archives
+    Process Archives at Scale
     
   </span>
   
@@ -1241,7 +1180,7 @@
   
   
   <span class="md-ellipsis">
-    Span Aggregation Cookbook
+    Roll Up Logs with Span Windows
     
   </span>
   
@@ -1708,165 +1647,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#problem" class="md-nav__link">
+  <a href="#when-to-use-this-guide" class="md-nav__link">
     <span class="md-ellipsis">
-      Problem
+      When to Use This Guide
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#solutions" class="md-nav__link">
+  <a href="#before-you-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Solutions
+      Before You Start
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-syslog-parsing" class="md-nav__link">
-    <span class="md-ellipsis">
-      Basic Syslog Parsing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-by-severity" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter by Severity
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-by-facility" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter by Facility
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-by-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter by Process
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#monitor-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      Monitor Authentication
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#extract-message-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extract Message Details
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#aggregate-by-hostname" class="md-nav__link">
-    <span class="md-ellipsis">
-      Aggregate by Hostname
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#time-based-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      Time-Based Analysis
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convert-to-json" class="md-nav__link">
-    <span class="md-ellipsis">
-      Convert to JSON
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#real-world-examples" class="md-nav__link">
+  <a href="#step-1-inspect-the-stream" class="md-nav__link">
     <span class="md-ellipsis">
-      Real-World Examples
+      Step 1: Inspect the Stream
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Real-World Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#security-monitoring" class="md-nav__link">
-    <span class="md-ellipsis">
-      Security Monitoring
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#service-health-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      Service Health Check
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#disk-space-warnings" class="md-nav__link">
-    <span class="md-ellipsis">
-      Disk Space Warnings
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#network-device-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Network Device Logs
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#tips" class="md-nav__link">
+  <a href="#step-2-filter-by-severity-or-facility" class="md-nav__link">
     <span class="md-ellipsis">
-      Tips
+      Step 2: Filter by Severity or Facility
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-target-specific-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 3: Target Specific Services
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-add-enrichment-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Add Enrichment and Metrics
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-export-for-stakeholders" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 5: Export for Stakeholders
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
     </span>
   </a>
   
@@ -1900,251 +1755,106 @@
   
 
 
-<h1 id="parse-syslog-files">Parse Syslog Files<a class="headerlink" href="#parse-syslog-files" title="Permanent link">&para;</a></h1>
-<p>Parse and analyze syslog format files from system logs, application logs, and network devices.</p>
-<h2 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h2>
-<p>You need to parse syslog-formatted logs (RFC 3164/RFC 5424) to extract facility, severity, hostname, process information, and messages for monitoring, troubleshooting, or security analysis.</p>
-<h2 id="solutions">Solutions<a class="headerlink" href="#solutions" title="Permanent link">&para;</a></h2>
-<h3 id="basic-syslog-parsing">Basic Syslog Parsing<a class="headerlink" href="#basic-syslog-parsing" title="Permanent link">&para;</a></h3>
-<p>Parse standard syslog format:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Auto-detect and parse syslog</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Explicit syslog format</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log
-</code></pre></div>
-<p>Syslog format includes:</p>
+<h1 id="investigate-syslog-sources">Investigate Syslog Sources<a class="headerlink" href="#investigate-syslog-sources" title="Permanent link">&para;</a></h1>
+<p>Parse syslog-formatted logs (RFC 3164 / RFC 5424) to surface security events, infrastructure issues, and service-level anomalies.</p>
+<h2 id="when-to-use-this-guide">When to Use This Guide<a class="headerlink" href="#when-to-use-this-guide" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>priority</code> - Combined facility/severity number</li>
-<li><code>facility</code> - Facility code (0-23)</li>
-<li><code>severity</code> - Severity level (0-7)</li>
-<li><code>timestamp</code> - Event timestamp</li>
-<li><code>hostname</code> - Source hostname</li>
-<li><code>process</code> - Process name</li>
-<li><code>pid</code> - Process ID</li>
-<li><code>message</code> - Log message</li>
+<li>Auditing authentication activity (<code>sshd</code>, <code>sudo</code>, VPN) on Linux systems.</li>
+<li>Monitoring routers, firewalls, or load balancers that emit syslog.</li>
+<li>Building quick, scriptable reports without standing up a SIEM.</li>
 </ul>
-<h3 id="filter-by-severity">Filter by Severity<a class="headerlink" href="#filter-by-severity" title="Permanent link">&para;</a></h3>
-<p>Filter logs by severity level (0=emerg, 7=debug):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Critical and below (0-2: emerg, alert, crit)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 2&#39;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Errors only (severity 3)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity == 3&#39;</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Warning and above (0-4)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 4&#39;</span>
-</code></pre></div>
-<p>Severity levels:</p>
+<h2 id="before-you-start">Before You Start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
 <ul>
-<li>0: Emergency (system unusable)</li>
-<li>1: Alert (immediate action required)</li>
-<li>2: Critical</li>
-<li>3: Error</li>
-<li>4: Warning</li>
-<li>5: Notice</li>
-<li>6: Informational</li>
-<li>7: Debug</li>
+<li>Examples use <code>examples/simple_syslog.log</code>. Replace it with <code>/var/log/syslog</code>, <code>/var/log/auth.log</code>, or device exports.</li>
+<li>Syslog encodes both severity (0–7) and facility (0–23). Keep a cheat sheet nearby for your environment.</li>
+<li>If timestamps appear with unusual formats, consult <code>kelora --help-time</code> and be ready to specify <code>--ts-format</code>.</li>
 </ul>
-<h3 id="filter-by-facility">Filter by Facility<a class="headerlink" href="#filter-by-facility" title="Permanent link">&para;</a></h3>
-<p>Filter by facility type:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Kernel messages (facility 0)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.facility == 0&#39;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Auth/security messages (facility 4 or 10)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/auth.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.facility == 4 || e.facility == 10&#39;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># System daemons (facility 3)</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.facility == 3&#39;</span>
+<h2 id="step-1-inspect-the-stream">Step 1: Inspect the Stream<a class="headerlink" href="#step-1-inspect-the-stream" title="Permanent link">&para;</a></h2>
+<p>Confirm parsing works and note which fields are available.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
-<p>Common facilities:</p>
+<p>Common fields:
+- <code>timestamp</code>, <code>hostname</code>, <code>process</code>, <code>pid</code>, <code>message</code>
+- <code>facility</code> (integer code) and <code>severity</code> (0 = emergency, 7 = debug)
+- Some devices include structured data in <code>message</code>; plan to parse it with Rhai helpers.</p>
+<h2 id="step-2-filter-by-severity-or-facility">Step 2: Filter by Severity or Facility<a class="headerlink" href="#step-2-filter-by-severity-or-facility" title="Permanent link">&para;</a></h2>
+<p>Focus on critical events first, then expand scope.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,process,message
+</code></pre></div>
+<p>Helpful ranges:
+- <code>&lt;= 2</code> for emergencies/alerts/critical.
+- <code>== 4</code> for warnings.
+- Facility codes: <code>0</code> Kernel, <code>3</code> System daemons, <code>4</code> Auth/Security, <code>10</code> Auth (private), <code>16+</code> Local use.</p>
+<h2 id="step-3-target-specific-services">Step 3: Target Specific Services<a class="headerlink" href="#step-3-target-specific-services" title="Permanent link">&para;</a></h2>
+<p>Investigate authentication flows or infrastructure components.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.process == &quot;sshd&quot; &amp;&amp; e.message.contains(&quot;Failed password&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.username = e.message.extract_re(r&quot;for ([^ ]+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,username,message
+</code></pre></div>
 <ul>
-<li>0: Kernel</li>
-<li>1: User-level</li>
-<li>2: Mail</li>
-<li>3: System daemons</li>
-<li>4: Security/auth</li>
-<li>10: Security/auth (private)</li>
+<li>Combine multiple processes: <code>--filter 'e.process == "sudo" || e.process == "su"'</code>.</li>
+<li>Use <code>extract_re()</code> or <code>parse_kv()</code> to decode structured messages (firewalls, network gear).</li>
 </ul>
-<h3 id="filter-by-process">Filter by Process<a class="headerlink" href="#filter-by-process" title="Permanent link">&para;</a></h3>
-<p>Track specific services or processes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Specific process name</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.process == &quot;sshd&quot;&#39;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Multiple processes</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.process == &quot;sshd&quot; || e.process == &quot;sudo&quot;&#39;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Process name pattern</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.process.contains(&quot;systemd&quot;)&#39;</span>
+<h2 id="step-4-add-enrichment-and-metrics">Step 4: Add Enrichment and Metrics<a class="headerlink" href="#step-4-add-enrichment-and-metrics" title="Permanent link">&para;</a></h2>
+<p>Capture per-host or per-IP trends while reviewing raw events.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let ip = e.message.extract_ip(); if ip != &quot;&quot; { track_count(ip) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<h3 id="monitor-authentication">Monitor Authentication<a class="headerlink" href="#monitor-authentication" title="Permanent link">&para;</a></h3>
-<p>Track authentication events:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Failed SSH logins</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.process == &quot;sshd&quot; &amp;&amp; e.message.contains(&quot;Failed password&quot;)&#39;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># Sudo usage</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.process == &quot;sudo&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,message
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># Track unique users attempting auth</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;Failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user = e.message.extract_re(r&quot;for ([^ ]+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;failed_users&quot;, e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<h3 id="extract-message-details">Extract Message Details<a class="headerlink" href="#extract-message-details" title="Permanent link">&para;</a></h3>
-<p>Parse structured information from messages:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Extract IP addresses from messages</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.ip = e.message.extract_ip()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.ip != &quot;&quot;&#39;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Extract error codes</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.error_code = e.message.extract_re(r&quot;error[: ](\d+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.error_code != &quot;&quot;&#39;</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># Parse key-value pairs in message</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.details = e.message.parse_kv(&quot; &quot;, &quot;=&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.status = e.get_path(&quot;details.status&quot;, &quot;&quot;)&#39;</span>
-</code></pre></div>
-<h3 id="aggregate-by-hostname">Aggregate by Hostname<a class="headerlink" href="#aggregate-by-hostname" title="Permanent link">&para;</a></h3>
-<p>Track activity across multiple hosts:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Count messages per host</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hostname)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--metrics
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Track errors per host</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hostname)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span>--metrics
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1"># Find most active hosts</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hostname)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;processes&quot;, e.hostname + &quot;:&quot; + e.process)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<h3 id="time-based-analysis">Time-Based Analysis<a class="headerlink" href="#time-based-analysis" title="Permanent link">&para;</a></h3>
-<p>Filter and analyze by time:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Last hour&#39;s errors</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># Events in specific time range</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15 09:00&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-01-15 17:00&quot;</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Group errors by hour</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = to_datetime(e.timestamp).format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<h3 id="convert-to-json">Convert to JSON<a class="headerlink" href="#convert-to-json" title="Permanent link">&para;</a></h3>
-<p>Export syslog to JSON for further processing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Convert to JSON</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span>-J<span class="w"> </span>&gt;<span class="w"> </span>syslog.json
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Convert with selected fields</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,process,severity,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span>-J<span class="w"> </span>&gt;<span class="w"> </span>syslog.json
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1"># Add enrichment before export</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.severity_name = switch e.severity {</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="s1">    0 =&gt; &quot;EMERG&quot;, 1 =&gt; &quot;ALERT&quot;, 2 =&gt; &quot;CRIT&quot;,</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="s1">    3 =&gt; &quot;ERROR&quot;, 4 =&gt; &quot;WARN&quot;, 5 =&gt; &quot;NOTICE&quot;,</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="s1">    6 =&gt; &quot;INFO&quot;, _ =&gt; &quot;DEBUG&quot;</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">  </span>-F<span class="w"> </span>json
-</code></pre></div>
-<h2 id="real-world-examples">Real-World Examples<a class="headerlink" href="#real-world-examples" title="Permanent link">&para;</a></h2>
-<h3 id="security-monitoring">Security Monitoring<a class="headerlink" href="#security-monitoring" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Monitor failed SSH attempts from external IPs</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.process == &quot;sshd&quot; &amp;&amp; e.message.contains(&quot;Failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.ip = e.message.extract_ip()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.external = !e.ip.is_private_ip()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.external&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,ip,message<span class="w"> </span>--metrics
-</code></pre></div>
-<h3 id="service-health-check">Service Health Check<a class="headerlink" href="#service-health-check" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Track service starts/stops</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;Started&quot;) || e.message.contains(&quot;Stopped&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.action = if e.message.contains(&quot;Started&quot;) { &quot;start&quot; } else { &quot;stop&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.process + &quot;:&quot; + e.action)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<h3 id="disk-space-warnings">Disk Space Warnings<a class="headerlink" href="#disk-space-warnings" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Track disk space warnings</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;disk&quot;) &amp;&amp; e.message.contains(&quot;full&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.disk = e.message.extract_re(r&quot;(/[^ ]+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,disk,message
-</code></pre></div>
-<h3 id="network-device-logs">Network Device Logs<a class="headerlink" href="#network-device-logs" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Parse router/switch logs</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>network.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.facility == 16&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.interface = e.message.extract_re(r&quot;interface ([^ ]+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.interface)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<h2 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h2>
-<p><strong>Severity Filtering:</strong></p>
 <ul>
-<li>Use numeric comparison for severity ranges</li>
-<li>Lower numbers = higher severity (0 is most critical)</li>
-<li>Filter <code>&lt;= 3</code> for error-level and above</li>
-<li>Filter <code>&gt;= 6</code> for debug/info only</li>
+<li><code>track_count(e.hostname)</code> surfaces noisy machines.</li>
+<li>Record severity names for reporting:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-e<span class="w"> </span><span class="s1">&#39;e.severity_name = [&quot;EMERG&quot;,&quot;ALERT&quot;,&quot;CRIT&quot;,&quot;ERROR&quot;,&quot;WARN&quot;,&quot;NOTICE&quot;,&quot;INFO&quot;,&quot;DEBUG&quot;][e.severity]&#39;</span>
+</code></pre></div></li>
 </ul>
-<p><strong>Facility Codes:</strong></p>
+<h2 id="step-5-export-for-stakeholders">Step 5: Export for Stakeholders<a class="headerlink" href="#step-5-export-for-stakeholders" title="Permanent link">&para;</a></h2>
+<p>Hand off filtered events to incident responders or auditors.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;today 00:00&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,process,severity,message<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>syslog-critical.csv
+</code></pre></div>
+<p>Alternatives:
+- <code>-J</code> for JSON exports consumed by log analytics tools.
+- Use <code>-q</code> when running inside scripts that only care about exit codes or metrics.</p>
+<h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Different systems use different facilities</li>
-<li>Check your syslog.conf for facility mappings</li>
-<li>Security logs often use facility 4 or 10</li>
-<li>Custom applications typically use 16-23</li>
+<li><strong>RFC 5424 structured data</strong><br />
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>app-5424.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let kv = e.message.parse_kv(&quot; &quot;, &quot;=&quot;); e += kv&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,app_id,msgid,message
+</code></pre></div></li>
+<li><strong>Network device monitoring</strong><br />
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>firewall.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.facility == 4&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.src_ip = e.message.extract_re(r&quot;SRC=([^ ]+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.src_ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--metrics
+</code></pre></div></li>
+<li><strong>Time-boxed reporting</strong><br />
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = to_datetime(e.timestamp).format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>--metrics
+</code></pre></div></li>
 </ul>
-<p><strong>Performance:</strong></p>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Add <code>--parallel</code> for large syslog files</li>
-<li>Use <code>--since</code>/<code>--until</code> to reduce processing</li>
-<li>Filter by severity early in pipeline</li>
-</ul>
-<p><strong>Message Parsing:</strong></p>
-<ul>
-<li>Message format varies by application</li>
-<li>Use <code>extract_re()</code> for pattern extraction</li>
-<li>Use <code>parse_kv()</code> for structured messages</li>
-<li>Consider <code>--filter</code> before expensive parsing</li>
-</ul>
-<p><strong>Hostname Handling:</strong></p>
-<ul>
-<li>Hostname may be IP or FQDN</li>
-<li>Normalize with <code>.to_lower()</code> for consistency</li>
-<li>Use <code>extract_domain()</code> for FQDN analysis</li>
+<li><strong>Timestamps not recognised</strong>: specify <code>--ts-format</code> matching the source (e.g., <code>%b %e %H:%M:%S</code> for classic syslog).</li>
+<li><strong>Facility/severity seems wrong</strong>: some appliances offset the code; inspect <code>e.priority</code> and decode manually with <code>e.priority / 8</code> (facility) and <code>e.priority % 8</code> (severity).</li>
+<li><strong>Parsing stops</strong>: enable <code>--verbose</code> to view problematic lines; consider <code>--strict</code> once the pipeline is stable.</li>
 </ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../find-errors-in-logs/">Find Errors in Logs</a> - General error filtering patterns</li>
-<li><a href="../build-streaming-alerts/">Build Streaming Alerts</a> - Real-time syslog monitoring</li>
-<li><a href="../monitor-application-health/">Monitor Application Health</a> - Service monitoring patterns</li>
-<li><a href="../../reference/functions/">Function Reference</a> - String extraction functions</li>
+<li><a href="../analyze-web-traffic/">Analyze Web Traffic</a> for HTTP access logs that complement syslog-level insights.</li>
+<li><a href="../find-errors-in-logs/">Triage Production Errors</a> when application logs, not syslog, contain the signal.</li>
+<li><a href="../../concepts/performance-model/">Concept: Performance Model</a> if you need to process multi-GB syslog archives quickly.</li>
 </ul>
 
 
