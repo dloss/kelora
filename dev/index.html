@@ -1722,248 +1722,158 @@
 <p><img alt="Error detection with context highlighting" src="screenshots/context-highlighting.gif" />
 <em>Parsing syslog with multiline stacktraces, filtering for errors, and showing context with <code>-C 1</code></em></p>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<p><strong>Parse embedded formats inside syslog</strong></p>
+<p><strong>Spot slow or failing requests</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Output</label><label for="__tabbed_1_3">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.msg.contains(&quot;=&quot;) { e += e.msg.parse_logfmt() }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_field(&quot;user&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,host,user,action,detail,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-F<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-07-17T12:00:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status.to_int() &gt;= 500 || e.latency_ms.to_int() &gt; 1200&#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.msg.contains(&quot;=&quot;) { e += e.msg.parse_logfmt() }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_field(&quot;user&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,host,user,action,detail,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-F<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-07-17T12:00:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status.to_int() &gt;= 500 || e.latency_ms.to_int() &gt; 1200&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;host&quot;:&quot;bernier5641&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;action&quot;:&quot;login&quot;,&quot;detail&quot;:&quot;Authenticated via SSO&quot;,&quot;message&quot;:&quot;User login accepted&quot;}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;host&quot;:&quot;gusikowski6748&quot;,&quot;user&quot;:&quot;service-bot&quot;,&quot;action&quot;:&quot;restart&quot;,&quot;detail&quot;:&quot;Process restarted automatically&quot;,&quot;message&quot;:&quot;Service restarted&quot;}
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{&quot;host&quot;:&quot;gerlach2033&quot;,&quot;user&quot;:&quot;pager-duty&quot;,&quot;action&quot;:&quot;acknowledge&quot;,&quot;detail&quot;:&quot;Acknowledged incident #4242&quot;,&quot;message&quot;:&quot;Change request processed&quot;}
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{&quot;host&quot;:&quot;emard3831&quot;,&quot;user&quot;:&quot;carol&quot;,&quot;action&quot;:&quot;deploy&quot;,&quot;detail&quot;:&quot;Pushed release v2024.10&quot;,&quot;message&quot;:&quot;Deployment triggered&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ts=&#39;2024-07-17T12:00:04Z&#39; level=&#39;INFO&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=200 latency_ms=1450
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ts=&#39;2024-07-17T12:00:05Z&#39; level=&#39;ERROR&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=502 latency_ms=2100
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&lt;96&gt;Oct 04 10:27:22 bernier5641 dolore[7276]: user=alice action=login detail=&quot;Authenticated via SSO&quot; message=&quot;User login accepted&quot;
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>&lt;131&gt;Oct 04 10:27:22 gusikowski6748 eaque[4669]: user=service-bot action=restart detail=&quot;Process restarted automatically&quot; message=&quot;Service restarted&quot;
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>&lt;132&gt;Oct 04 10:27:22 gerlach2033 non[4398]: user=pager-duty action=acknowledge detail=&quot;Acknowledged incident #4242&quot; message=&quot;Change request processed&quot;
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>&lt;30&gt;Oct 04 10:27:22 emard3831 assumenda[4110]: user=carol action=deploy detail=&quot;Pushed release v2024.10&quot; message=&quot;Deployment triggered&quot;
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>&lt;169&gt;Oct 04 10:27:22 gibson6546 est[9787]: If we compress the program, we can get to the AI interface through the digital HTTP system!
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>&lt;96&gt;Oct 04 10:27:22 kunde1506 ipsa[7859]: You can&#39;t reboot the card without connecting the multi-byte PCI program!
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>&lt;179&gt;Oct 04 10:27:22 stamm6021 ipsum[4729]: I&#39;Ll index the redundant PNG bus, that should program the IB driver!
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>&lt;134&gt;Oct 04 10:27:22 ward8280 corporis[5923]: Use the optical SMTP firewall, then you can program the bluetooth circuit!
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>&lt;132&gt;Oct 04 10:27:22 fadel7435 voluptates[8145]: If we calculate the circuit, we can get to the RAM array through the back-end HDD protocol!
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>&lt;8&gt;Oct 04 10:27:22 greenholt1125 amet[5061]: Try to copy the USB port, maybe it will synthesize the redundant driver!
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>&lt;13&gt;Oct 04 10:27:22 wilkinson7356 atque[7503]: We need to compress the open-source SMTP driver!
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>&lt;32&gt;Oct 04 10:27:22 schamberger8301 nulla[34]: If we override the bus, we can get to the JBOD monitor through the auxiliary JSON card!
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>&lt;168&gt;Oct 04 10:27:22 leuschke5412 ab[3807]: Try to back up the AGP feed, maybe it will back up the wireless application!
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>&lt;99&gt;Oct 04 10:27:22 heaney4231 quia[4833]: The SSL system is down, program the cross-platform sensor so we can hack the SSL microchip!
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>&lt;76&gt;Oct 04 10:27:22 wintheiser2248 earum[863]: The IB sensor is down, reboot the optical sensor so we can generate the RAM system!
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>&lt;99&gt;Oct 04 10:27:22 stokes8116 minima[2942]: The PCI port is down, connect the primary interface so we can copy the IB program!
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>&lt;161&gt;Oct 04 10:27:22 sauer1505 ut[465]: Use the online XML driver, then you can transmit the auxiliary port!
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>&lt;147&gt;Oct 04 10:27:22 lockman6842 illo[981]: You can&#39;t input the bandwidth without hacking the solid state SMS pixel!
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>&lt;33&gt;Oct 04 10:27:22 kunde2345 velit[7658]: Use the digital PNG capacitor, then you can hack the wireless program!
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>&lt;68&gt;Oct 04 10:27:22 medhurst3836 in[1617]: If we connect the alarm, we can get to the GB alarm through the optical THX application!
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>&lt;98&gt;Oct 04 10:27:22 keebler3487 aspernatur[4587]: Try to override the AGP firewall, maybe it will reboot the primary feed!
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>&lt;31&gt;Oct 04 10:27:22 bartell8525 qui[9098]: Synthesizing the circuit won&#39;t do anything, we need to calculate the primary SMS sensor!
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>&lt;7&gt;Oct 04 10:27:22 oreilly3006 iste[1827]: You can&#39;t parse the matrix without parsing the open-source CSS firewall!
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>&lt;70&gt;Oct 04 10:27:22 kutch3057 eos[1488]: Transmitting the sensor won&#39;t do anything, we need to copy the online SAS program!
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>&lt;47&gt;Oct 04 10:27:22 borer2101 dolore[7206]: The ADP firewall is down, bypass the optical bus so we can parse the SDD feed!
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ts=2024-07-17T11:59:40Z level=INFO method=GET path=/docs status=200 latency_ms=280
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ts=2024-07-17T11:59:55Z level=INFO method=POST path=/checkout status=200 latency_ms=950
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ts=2024-07-17T12:00:01Z level=INFO method=GET path=/docs status=200 latency_ms=320
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>ts=2024-07-17T12:00:04Z level=INFO method=POST path=/checkout status=200 latency_ms=1450
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>ts=2024-07-17T12:00:05Z level=ERROR method=POST path=/checkout status=502 latency_ms=2100
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>ts=2024-07-17T12:00:07Z level=WARN method=GET path=/billing status=200 latency_ms=900
 </code></pre></div>
 </div>
 </div>
 </div>
-<p><strong>Keep stacktraces together</strong></p>
+<p><strong>Parse custom rollout logs instantly</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command</label><label for="__tabbed_2_2">Output</label><label for="__tabbed_2_3">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.lower().contains(&quot;valueerror&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--before-context<span class="w"> </span><span class="m">1</span><span class="w"> </span>--after-context<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level service request_id *message&#39;</span><span class="w"> </span>examples/release_pipe.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--levels<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.lower().contains(&quot;valueerror&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--before-context<span class="w"> </span><span class="m">1</span><span class="w"> </span>--after-context<span class="w"> </span><span class="m">1</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level service request_id *message&#39;</span><span class="w"> </span>examples/release_pipe.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--levels<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/ line=&#39;2024-01-15 10:00:05 DEBUG Initializing database connection &#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>* line=&#39;2024-01-15 10:01:00 ERROR Failed to process request Traceback (most recent call last):   File &quot;/app/server.py&quot;, line 42, in handle_request     result = process_data(request.body)   File &quot;/app/processor.py&quot;, line 15, in process_data     return json.loads(data) ValueError: Invalid JSON format at line 3 &#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>\ line=&#39;2024-01-15 10:01:30 WARN Retrying with default configuration &#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:02&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;message&quot;:&quot;retrying payment status=SOFT_FAIL duration=890ms&quot;,&quot;request_id&quot;:&quot;req-92&quot;,&quot;service&quot;:&quot;checkout&quot;}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:06&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;final failure status=HARD_FAIL duration=1480ms cause=db_deadlock&quot;,&quot;request_id&quot;:&quot;req-93&quot;,&quot;service&quot;:&quot;checkout&quot;}
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>2024-01-15 10:00:00 INFO Starting application
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2024-01-15 10:00:05 DEBUG Initializing database connection
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>2024-01-15 10:01:00 ERROR Failed to process request
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Traceback (most recent call last):
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  File &quot;/app/server.py&quot;, line 42, in handle_request
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    result = process_data(request.body)
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  File &quot;/app/processor.py&quot;, line 15, in process_data
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    return json.loads(data)
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>ValueError: Invalid JSON format at line 3
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>2024-01-15 10:01:30 WARN Retrying with default configuration
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>2024-01-15 10:02:00 ERROR Database connection failed
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>java.sql.SQLException: Connection timeout
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    at com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    at com.example.api.UserController.getUser(UserController.java:45)
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    at com.example.api.RequestHandler.handle(RequestHandler.java:89)
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>Caused by: java.net.SocketTimeoutException: Read timed out
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    at java.net.SocketInputStream.socketRead0(Native Method)
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    at java.net.SocketInputStream.read(SocketInputStream.java:150)
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>2024-01-15 10:02:30 INFO Switching to backup database
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>2024-01-15 10:03:00 ERROR Unhandled exception in worker thread
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>RuntimeError: Maximum retry attempts exceeded
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  File &quot;/app/worker.py&quot;, line 67, in run
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    self.process_job(job)
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  File &quot;/app/worker.py&quot;, line 98, in process_job
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    raise RuntimeError(&quot;Maximum retry attempts exceeded&quot;)
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>2024-01-15 10:03:30 CRITICAL System shutting down due to errors
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>2024-07-17 12:10:02|WARN|checkout|req-92|retrying payment status=SOFT_FAIL duration=890ms
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2024-07-17 12:10:06|ERROR|checkout|req-93|final failure status=HARD_FAIL duration=1480ms cause=db_deadlock
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>2024-07-17 12:10:09|INFO|checkout|req-94|completed status=OK duration=640ms
 </code></pre></div>
 </div>
 </div>
 </div>
-<p><strong>Track container activity with metrics</strong></p>
+<p><strong>Enrich JSON logs and mask secrets</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command</label><label for="__tabbed_3_2">Output</label><label for="__tabbed_3_3">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>examples/prefix_docker.log<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.line.between(&quot;[&quot;, &quot;]&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.container); track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--keys<span class="w"> </span>container,level,line<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>-F<span class="w"> </span>csv
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/tenant_api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.tenant = e.path.between(&quot;/tenants/&quot;, &quot;/&quot;); e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,tenant,ip,event<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--brief
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/prefix_docker.log<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.line.between(&quot;[&quot;, &quot;]&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.container); track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--keys<span class="w"> </span>container,level,line<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>-F<span class="w"> </span>csv
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/tenant_api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.tenant = e.path.between(&quot;/tenants/&quot;, &quot;/&quot;); e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,tenant,ip,event<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--brief
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>container,level,line
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>web_1,INFO,2024-01-15 10:00:00 [INFO] Starting web server on port 8080
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>web_1,INFO,2024-01-15 10:00:05 [INFO] Listening for connections
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>db_1,INFO,2024-01-15 10:00:10 [INFO] PostgreSQL starting up
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>db_1,INFO,2024-01-15 10:00:15 [INFO] Database system is ready
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>redis_1,INFO,2024-01-15 10:00:20 [INFO] Redis server starting
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>redis_1,INFO,2024-01-15 10:00:25 [INFO] Ready to accept connections
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>web_1,INFO,2024-01-15 10:00:30 [INFO] Connected to database
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>web_1,DEBUG,2024-01-15 10:00:35 [DEBUG] Cache connection established
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>nginx_1,INFO,2024-01-15 10:00:40 [INFO] Nginx starting
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>nginx_1,INFO,2024-01-15 10:00:45 [INFO] Ready to serve traffic
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>web_1,INFO,2024-01-15 10:01:00 [INFO] Received request GET /api/health
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>web_1,INFO,2024-01-15 10:01:05 [INFO] Health check passed
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>db_1,WARN,2024-01-15 10:01:10 [WARN] Connection pool 80% utilized
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>redis_1,WARN,2024-01-15 10:01:15 [WARN] Memory usage at 75%
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>worker_1,INFO,2024-01-15 10:01:20 [INFO] Background worker starting
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>worker_1,INFO,2024-01-15 10:01:25 [INFO] Processing job queue
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>web_1,ERROR,2024-01-15 10:01:30 [ERROR] Request timeout after 5s
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>nginx_1,ERROR,2024-01-15 10:01:35 [ERROR] Upstream server timeout
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>worker_1,INFO,2024-01-15 10:01:40 [INFO] Job completed: send_email
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>db_1,INFO,2024-01-15 10:01:45 [INFO] Checkpoint completed
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>DEBUG        = 1
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>ERROR        = 2
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>INFO         = 15
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>WARN         = 2
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>db_1         = 4
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>nginx_1      = 3
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>redis_1      = 3
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>web_1        = 7
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>worker_1     = 3
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2024-07-17T12:15:01Z alpha 203.0.X.X login
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2024-07-17T12:15:05Z alpha 203.0.X.X heartbeat
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>2024-07-17T12:15:10Z bravo 198.51.X.X charge_failed
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>web_1        | 2024-01-15 10:00:00 [INFO] Starting web server on port 8080
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>web_1        | 2024-01-15 10:00:05 [INFO] Listening for connections
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>db_1         | 2024-01-15 10:00:10 [INFO] PostgreSQL starting up
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>db_1         | 2024-01-15 10:00:15 [INFO] Database system is ready
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>redis_1      | 2024-01-15 10:00:20 [INFO] Redis server starting
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>redis_1      | 2024-01-15 10:00:25 [INFO] Ready to accept connections
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>web_1        | 2024-01-15 10:00:30 [INFO] Connected to database
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>web_1        | 2024-01-15 10:00:35 [DEBUG] Cache connection established
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>nginx_1      | 2024-01-15 10:00:40 [INFO] Nginx starting
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>nginx_1      | 2024-01-15 10:00:45 [INFO] Ready to serve traffic
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>web_1        | 2024-01-15 10:01:00 [INFO] Received request GET /api/health
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>web_1        | 2024-01-15 10:01:05 [INFO] Health check passed
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>db_1         | 2024-01-15 10:01:10 [WARN] Connection pool 80% utilized
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>redis_1      | 2024-01-15 10:01:15 [WARN] Memory usage at 75%
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>worker_1     | 2024-01-15 10:01:20 [INFO] Background worker starting
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>worker_1     | 2024-01-15 10:01:25 [INFO] Processing job queue
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>web_1        | 2024-01-15 10:01:30 [ERROR] Request timeout after 5s
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>nginx_1      | 2024-01-15 10:01:35 [ERROR] Upstream server timeout
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>worker_1     | 2024-01-15 10:01:40 [INFO] Job completed: send_email
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>db_1         | 2024-01-15 10:01:45 [INFO] Checkpoint completed
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:15:01Z&quot;,&quot;path&quot;:&quot;/tenants/alpha/sessions/42&quot;,&quot;event&quot;:&quot;login&quot;,&quot;ip&quot;:&quot;203.0.113.10&quot;}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:15:05Z&quot;,&quot;path&quot;:&quot;/tenants/alpha/sessions/42&quot;,&quot;event&quot;:&quot;heartbeat&quot;,&quot;ip&quot;:&quot;203.0.113.10&quot;}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:15:10Z&quot;,&quot;path&quot;:&quot;/tenants/bravo/payments&quot;,&quot;event&quot;:&quot;charge_failed&quot;,&quot;ip&quot;:&quot;198.51.100.24&quot;}
 </code></pre></div>
 </div>
 </div>
 </div>
-<p><strong>Mask sensitive fields in JSON logs</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command</label><label for="__tabbed_4_2">Output</label><label for="__tabbed_4_3">Logs Data</label></div>
+<p><strong>Count services in a stream</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command</label><label for="__tabbed_4_2">Output</label><label for="__tabbed_4_3">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;token&quot;) {</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s1">            let jwt = e.token.parse_jwt();</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">            e.role = jwt.get_path(&quot;claims.role&quot;, &quot;guest&quot;)</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,event,role,ip<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>-F<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/services.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--metrics
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;token&quot;) {</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">            let jwt = e.token.parse_jwt();</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">            e.role = jwt.get_path(&quot;claims.role&quot;, &quot;guest&quot;)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,event,role,ip<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>-F<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/services.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:00Z&quot;,&quot;event&quot;:&quot;login&quot;,&quot;role&quot;:&quot;user&quot;,&quot;ip&quot;:&quot;192.168.X.X&quot;}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:10Z&quot;,&quot;event&quot;:&quot;login&quot;,&quot;ip&quot;:&quot;203.0.X.X&quot;}
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:20Z&quot;,&quot;event&quot;:&quot;api_call&quot;,&quot;role&quot;:&quot;admin&quot;,&quot;ip&quot;:&quot;10.0.X.X&quot;}
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:30Z&quot;,&quot;event&quot;:&quot;file_upload&quot;,&quot;ip&quot;:&quot;172.16.X.X&quot;}
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:40Z&quot;,&quot;event&quot;:&quot;suspicious_activity&quot;,&quot;ip&quot;:&quot;198.51.X.X&quot;}
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:50Z&quot;,&quot;event&quot;:&quot;login&quot;,&quot;ip&quot;:&quot;2001:db8::1&quot;}
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:00Z&quot;,&quot;event&quot;:&quot;password_change&quot;,&quot;ip&quot;:&quot;192.168.X.X&quot;}
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:10Z&quot;,&quot;event&quot;:&quot;api_call&quot;,&quot;ip&quot;:&quot;10.255.X.X&quot;}
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:20Z&quot;,&quot;event&quot;:&quot;vpn_connect&quot;}
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:30Z&quot;,&quot;event&quot;:&quot;data_export&quot;,&quot;ip&quot;:&quot;192.168.X.X&quot;}
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:40Z&quot;,&quot;event&quot;:&quot;firewall_block&quot;}
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:50Z&quot;,&quot;event&quot;:&quot;certificate_renewal&quot;}
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:02:00Z&quot;,&quot;event&quot;:&quot;malware_scan&quot;}
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:02:10Z&quot;,&quot;event&quot;:&quot;ddos_attempt&quot;}
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:02:20Z&quot;,&quot;event&quot;:&quot;ssh_login&quot;,&quot;ip&quot;:&quot;192.168.X.X&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-07-17T12:00:00Z&#39; level=&#39;INFO&#39; service=&#39;checkout&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-07-17T12:00:01Z&#39; level=&#39;ERROR&#39; service=&#39;checkout&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-07-17T12:00:01Z&#39; level=&#39;INFO&#39; service=&#39;billing&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-07-17T12:00:02Z&#39; level=&#39;WARN&#39; service=&#39;search&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>billing      = 1
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>checkout     = 2
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>search       = 1
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:00Z&quot;,&quot;event&quot;:&quot;login&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;ip&quot;:&quot;192.168.1.10&quot;,&quot;success&quot;:true,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFsaWNlIiwicm9sZSI6InVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c&quot;}
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:10Z&quot;,&quot;event&quot;:&quot;login&quot;,&quot;user&quot;:&quot;admin&quot;,&quot;ip&quot;:&quot;203.0.113.42&quot;,&quot;success&quot;:false,&quot;reason&quot;:&quot;invalid_password&quot;,&quot;attempts&quot;:3}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:20Z&quot;,&quot;event&quot;:&quot;api_call&quot;,&quot;ip&quot;:&quot;10.0.0.5&quot;,&quot;endpoint&quot;:&quot;/api/users&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ODc2NTQzMjEiLCJuYW1lIjoiQm9iIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNTE2MjM5MDIyfQ.dQw4w9WgXcQ&quot;}
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:30Z&quot;,&quot;event&quot;:&quot;file_upload&quot;,&quot;user&quot;:&quot;charlie&quot;,&quot;ip&quot;:&quot;172.16.0.10&quot;,&quot;file&quot;:&quot;document.pdf&quot;,&quot;hash&quot;:&quot;5d41402abc4b2a76b9719d911017c592&quot;,&quot;size&quot;:1048576}
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:40Z&quot;,&quot;event&quot;:&quot;suspicious_activity&quot;,&quot;ip&quot;:&quot;198.51.100.50&quot;,&quot;type&quot;:&quot;port_scan&quot;,&quot;ports&quot;:[22,23,80,443,3306,5432,8080],&quot;blocked&quot;:true}
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:50Z&quot;,&quot;event&quot;:&quot;login&quot;,&quot;user&quot;:&quot;diana&quot;,&quot;ip&quot;:&quot;2001:db8::1&quot;,&quot;success&quot;:true,&quot;ipv6&quot;:true}
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:00Z&quot;,&quot;event&quot;:&quot;password_change&quot;,&quot;user&quot;:&quot;eve&quot;,&quot;ip&quot;:&quot;192.168.1.20&quot;,&quot;old_hash&quot;:&quot;5f4dcc3b5aa765d61d8327deb882cf99&quot;,&quot;new_hash&quot;:&quot;098f6bcd4621d373cade4e832627b4f6&quot;}
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:10Z&quot;,&quot;event&quot;:&quot;api_call&quot;,&quot;ip&quot;:&quot;10.255.255.1&quot;,&quot;endpoint&quot;:&quot;/api/admin/users&quot;,&quot;method&quot;:&quot;DELETE&quot;,&quot;user&quot;:&quot;frank&quot;,&quot;blocked&quot;:true,&quot;reason&quot;:&quot;insufficient_privileges&quot;}
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:20Z&quot;,&quot;event&quot;:&quot;vpn_connect&quot;,&quot;user&quot;:&quot;grace&quot;,&quot;client_ip&quot;:&quot;203.0.113.100&quot;,&quot;vpn_ip&quot;:&quot;10.8.0.5&quot;,&quot;protocol&quot;:&quot;openvpn&quot;}
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:30Z&quot;,&quot;event&quot;:&quot;data_export&quot;,&quot;user&quot;:&quot;henry&quot;,&quot;ip&quot;:&quot;192.168.2.30&quot;,&quot;records&quot;:10000,&quot;hash&quot;:&quot;e4d909c290d0fb1ca068ffaddf22cbd0&quot;,&quot;approved&quot;:true}
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:40Z&quot;,&quot;event&quot;:&quot;firewall_block&quot;,&quot;src_ip&quot;:&quot;185.220.101.42&quot;,&quot;dst_ip&quot;:&quot;192.168.1.1&quot;,&quot;dst_port&quot;:22,&quot;reason&quot;:&quot;blacklist&quot;,&quot;country&quot;:&quot;unknown&quot;}
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:50Z&quot;,&quot;event&quot;:&quot;certificate_renewal&quot;,&quot;domain&quot;:&quot;api.example.com&quot;,&quot;issuer&quot;:&quot;Let&#39;s Encrypt&quot;,&quot;fingerprint&quot;:&quot;sha256:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2&quot;}
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:02:00Z&quot;,&quot;event&quot;:&quot;malware_scan&quot;,&quot;file&quot;:&quot;/uploads/suspicious.exe&quot;,&quot;hash&quot;:&quot;44d88612fea8a8f36de82e1278abb02f&quot;,&quot;threat&quot;:&quot;trojan.generic&quot;,&quot;quarantined&quot;:true}
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:02:10Z&quot;,&quot;event&quot;:&quot;ddos_attempt&quot;,&quot;src_ips&quot;:[&quot;203.0.113.1&quot;,&quot;203.0.113.2&quot;,&quot;203.0.113.3&quot;],&quot;requests_per_second&quot;:5000,&quot;mitigated&quot;:true}
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:02:20Z&quot;,&quot;event&quot;:&quot;ssh_login&quot;,&quot;user&quot;:&quot;root&quot;,&quot;ip&quot;:&quot;192.168.1.100&quot;,&quot;key_fingerprint&quot;:&quot;SHA256:abcd1234efgh5678ijkl9012mnop3456&quot;,&quot;success&quot;:true}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:00Z&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;level&quot;:&quot;INFO&quot;}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:01Z&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;level&quot;:&quot;ERROR&quot;}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:01Z&quot;,&quot;service&quot;:&quot;billing&quot;,&quot;level&quot;:&quot;INFO&quot;}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:02Z&quot;,&quot;service&quot;:&quot;search&quot;,&quot;level&quot;:&quot;WARN&quot;}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>Detect error bursts with a sliding window</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:3"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><input id="__tabbed_5_3" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Command</label><label for="__tabbed_5_2">Output</label><label for="__tabbed_5_3">Log Data</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/deploy_tail.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let recent = window_values(window, &quot;level&quot;);</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">          if recent.filter(|lvl| lvl == &quot;ERROR&quot;).len() &gt;= 3 {</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">            eprint(&quot;burst detected at &quot; + e.timestamp);</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>-F<span class="w"> </span>none
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/deploy_tail.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let recent = window_values(window, &quot;level&quot;);</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          if recent.filter(|lvl| lvl == &quot;ERROR&quot;).len() &gt;= 3 {</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">            eprint(&quot;burst detected at &quot; + e.timestamp);</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>-F<span class="w"> </span>none
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>burst detected at 2024-07-17T12:20:03Z
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>burst detected at 2024-07-17T12:20:05Z
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:00Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;timeout&quot;,&quot;latency_ms&quot;:2100}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:01Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;message&quot;:&quot;ok&quot;,&quot;latency_ms&quot;:600}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:02Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;timeout&quot;,&quot;latency_ms&quot;:2150}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:03Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;timeout&quot;,&quot;latency_ms&quot;:2200}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:05Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;message&quot;:&quot;retrying&quot;,&quot;latency_ms&quot;:1400}
 </code></pre></div>
 </div>
 </div>
@@ -1979,11 +1889,11 @@
 </ul>
 <h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>Kelora processes logs through a streaming pipeline with composable stages:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Input → Parse → --exec → --filter → --exec → --filter → ... → Output
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  ↓       ↓         ↓         ↓         ↓         ↓              ↓
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Files   JSON   transform  narrow   enrich    narrow        logfmt
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>stdin   syslog                                              JSON
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>.gz     custom                                              CSV
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Input → Parse → --exec → --filter → --exec → --filter → ... → Output
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  ↓       ↓         ↓         ↓         ↓         ↓              ↓
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Files   JSON   transform  narrow   enrich    narrow        logfmt
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>stdin   syslog                                              JSON
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>.gz     custom                                              CSV
 </code></pre></div>
 <p>Each <code>--filter</code> and <code>--exec</code> runs in the order specified, passing events forward. Chain them in any sequence to build multi-stage processing logic. Read the <a href="concepts/pipeline-model/">Pipeline Model</a> for details.</p>
 <h2 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h2>
@@ -1997,7 +1907,7 @@
 </ul>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <p>Download from <strong><a href="https://github.com/dloss/kelora/releases">GitHub Releases</a></strong> (macOS, Linux, Windows) or:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
 </code></pre></div>
 <h2 id="learn-more">Learn More<a class="headerlink" href="#learn-more" title="Permanent link">&para;</a></h2>
 <ul>
