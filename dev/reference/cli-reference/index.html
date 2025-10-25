@@ -5104,6 +5104,9 @@
 <p>Show N lines before and after each match (requires filtering).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
 </code></pre></div>
+<p><strong>Visual Example:</strong></p>
+<p><img alt="Context highlighting in action" src="../../screenshots/error-triage.gif" /></p>
+<p>Context lines are highlighted with colored symbols: <code>/</code> for before-context, <code>*</code> for matching lines, <code>\</code> for after-context, and <code>|</code> for separator lines.</p>
 <h2 id="output-options">Output Options<a class="headerlink" href="#output-options" title="Permanent link">&para;</a></h2>
 <h3 id="output-format">Output Format<a class="headerlink" href="#output-format" title="Permanent link">&para;</a></h3>
 <h4 id="-f-output-format-format"><code>-F, --output-format &lt;FORMAT&gt;</code><a class="headerlink" href="#-f-output-format-format" title="Permanent link">&para;</a></h4>
@@ -5186,6 +5189,9 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>30s<span class="w"> </span>app.log<span class="w">    </span><span class="c1"># Mark 30+ second gaps</span>
 <a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>5m<span class="w"> </span>app.log<span class="w">     </span><span class="c1"># Mark 5+ minute gaps</span>
 </code></pre></div>
+<p><strong>Visual Example:</strong></p>
+<p><img alt="Gap markers showing time discontinuities" src="../../screenshots/mark-gaps.gif" /></p>
+<p>Gap markers help identify time discontinuities in your logs, making it easier to spot service restarts, network issues, or other temporal anomalies.</p>
 <h3 id="emoji">Emoji<a class="headerlink" href="#emoji" title="Permanent link">&para;</a></h3>
 <h4 id="-no-emoji"><code>--no-emoji</code><a class="headerlink" href="#-no-emoji" title="Permanent link">&para;</a></h4>
 <p>Disable emoji prefixes in output.</p>

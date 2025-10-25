@@ -1969,46 +1969,60 @@
 </thead>
 <tbody>
 <tr>
+<td><code>pri</code></td>
+<td>Integer</td>
+<td>✓</td>
+<td>✓*</td>
+<td>Priority value (facility * 8 + severity)</td>
+</tr>
+<tr>
 <td><code>facility</code></td>
 <td>Integer</td>
 <td>✓</td>
-<td>✓</td>
+<td>✓*</td>
 <td>Syslog facility code</td>
 </tr>
 <tr>
 <td><code>severity</code></td>
 <td>Integer</td>
 <td>✓</td>
-<td>✓</td>
+<td>✓*</td>
 <td>Severity level (0-7)</td>
 </tr>
 <tr>
-<td><code>timestamp</code></td>
+<td><code>level</code></td>
+<td>String</td>
+<td>✓</td>
+<td>✓*</td>
+<td>Log level (EMERG, ALERT, CRIT, ERROR, WARN, NOTICE, INFO, DEBUG)</td>
+</tr>
+<tr>
+<td><code>ts</code></td>
 <td>String</td>
 <td>✓</td>
 <td>✓</td>
 <td>Parsed timestamp</td>
 </tr>
 <tr>
-<td><code>hostname</code></td>
+<td><code>host</code></td>
 <td>String</td>
 <td>✓</td>
 <td>✓</td>
 <td>Source hostname</td>
 </tr>
 <tr>
-<td><code>appname</code></td>
+<td><code>prog</code></td>
 <td>String</td>
 <td>✓</td>
-<td>-</td>
-<td>Application name</td>
+<td>✓</td>
+<td>Application/program name</td>
 </tr>
 <tr>
-<td><code>procid</code></td>
-<td>String</td>
+<td><code>pid</code></td>
+<td>Integer/String</td>
 <td>✓</td>
-<td>-</td>
-<td>Process ID</td>
+<td>✓</td>
+<td>Process ID (parsed as integer if numeric)</td>
 </tr>
 <tr>
 <td><code>msgid</code></td>
@@ -2018,14 +2032,14 @@
 <td>Message ID</td>
 </tr>
 <tr>
-<td><code>tag</code></td>
-<td>String</td>
-<td>-</td>
+<td><code>version</code></td>
+<td>Integer</td>
 <td>✓</td>
-<td>Syslog tag (appname[pid])</td>
+<td>-</td>
+<td>Syslog protocol version</td>
 </tr>
 <tr>
-<td><code>message</code></td>
+<td><code>msg</code></td>
 <td>String</td>
 <td>✓</td>
 <td>✓</td>
@@ -2033,6 +2047,7 @@
 </tr>
 </tbody>
 </table>
+<p>*RFC3164: Only present if priority prefix <code>&lt;NNN&gt;</code> is included</p>
 <p><strong>Notes:</strong></p>
 <ul>
 <li>Severity levels: 0=emerg, 1=alert, 2=crit, 3=err, 4=warn, 5=notice, 6=info, 7=debug</li>
@@ -2093,7 +2108,7 @@
 <td>HTTP auth username (omit if <code>-</code>)</td>
 </tr>
 <tr>
-<td><code>timestamp</code></td>
+<td><code>ts</code></td>
 <td>String</td>
 <td>✓</td>
 <td>✓</td>
@@ -2186,6 +2201,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>CEF:0|Security|threatmanager|1.0|100|worm successfully stopped|10|src=10.0.0.1 dst=2.1.2.2 spt=1232
 </code></pre></div></p>
 <p><strong>Output Fields:</strong></p>
+<p><strong>Syslog prefix (optional):</strong></p>
 <table>
 <thead>
 <tr>
@@ -2196,47 +2212,65 @@
 </thead>
 <tbody>
 <tr>
-<td><code>cef_version</code></td>
+<td><code>ts</code></td>
+<td>String</td>
+<td>Timestamp from syslog prefix</td>
+</tr>
+<tr>
+<td><code>host</code></td>
+<td>String</td>
+<td>Hostname from syslog prefix</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CEF header:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cefver</code></td>
 <td>String</td>
 <td>CEF format version</td>
 </tr>
 <tr>
-<td><code>device_vendor</code></td>
+<td><code>vendor</code></td>
 <td>String</td>
 <td>Device vendor name</td>
 </tr>
 <tr>
-<td><code>device_product</code></td>
+<td><code>product</code></td>
 <td>String</td>
 <td>Device product name</td>
 </tr>
 <tr>
-<td><code>device_version</code></td>
+<td><code>version</code></td>
 <td>String</td>
 <td>Device version</td>
 </tr>
 <tr>
-<td><code>signature_id</code></td>
+<td><code>eventid</code></td>
 <td>String</td>
 <td>Event signature ID</td>
 </tr>
 <tr>
-<td><code>name</code></td>
+<td><code>event</code></td>
 <td>String</td>
-<td>Event name</td>
+<td>Event name/classification</td>
 </tr>
 <tr>
 <td><code>severity</code></td>
-<td>Integer</td>
-<td>Event severity</td>
-</tr>
-<tr>
-<td><em>(extensions)</em></td>
-<td>Various</td>
-<td>All extension fields as top-level fields</td>
+<td>String</td>
+<td>Event severity (0-10)</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Extensions:</strong> All extension key=value pairs become top-level fields with automatic type conversion (integers, floats, booleans)</p>
 <h3 id="column-format">Column Format<a class="headerlink" href="#column-format" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong> <code>-f 'cols:&lt;spec&gt;'</code></p>
 <p><strong>Description:</strong> Custom column-based parsing with whitespace (or custom separator) splitting.</p>
@@ -2252,11 +2286,11 @@
 <p><strong>Examples:</strong></p>
 <p>Simple fields:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Input: ERROR api &quot;Connection failed&quot;</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *message&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *msg&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Multi-token timestamp:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Input: 2024-01-15 10:30:00 INFO Connection failed</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>timestamp
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>ts
 </code></pre></div></p>
 <p>Custom separator:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Input: name|age|city</span>
@@ -2337,10 +2371,13 @@
 </tr>
 </tbody>
 </table>
+<p><strong>Levelmap Visual Example:</strong></p>
+<p><img alt="Levelmap output format showing compact log visualization" src="../../screenshots/levelmap.gif" /></p>
+<p>The <code>levelmap</code> format provides a compact visual representation of logs, showing timestamps and level indicators in a condensed format ideal for quick scanning.</p>
 <p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                               </span><span class="c1"># Output as JSON</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,message<span class="w"> </span><span class="c1"># Output as CSV</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w">                       </span><span class="c1"># Only stats</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w">              </span><span class="c1"># Only stats</span>
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
