@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://dloss.github.io/kelora/dev/how-to/batch-process-archives/">
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/concepts/benchmark-results/">
       
       
-        <link rel="prev" href="../build-streaming-alerts/">
+        <link rel="prev" href="../performance-comparisons/">
       
       
-        <link rel="next" href="../span-aggregation-cookbook/">
+        <link rel="next" href="../configuration-system/">
       
       
       <link rel="icon" href="../../kelora-logo.svg">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Process Archives at Scale - Kelora</title>
+        <title>Benchmark Results - Kelora</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#process-archives-at-scale" class="md-skip">
+        <a href="#benchmark-results" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Process Archives at Scale
+              Benchmark Results
             
           </span>
         </div>
@@ -286,13 +286,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../how-to/" class="md-tabs__link">
           
   
   
@@ -308,11 +306,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../concepts/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -716,6 +716,355 @@
       
   
   
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    How-To Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            How-To Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Triage Production Errors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Analyze Web Traffic
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Build a Service Health Snapshot
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Investigate Syslog Sources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Choose a Multiline Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Sanitize Logs Before Sharing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pseudonymize Identifiers for Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Prepare CSV Exports for Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Flatten Nested JSON for Analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/build-streaming-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design Streaming Alerts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Process Archives at Scale
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/span-aggregation-cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Roll Up Logs with Span Windows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -737,15 +1086,15 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
   <span class="md-ellipsis">
-    How-To Guides
+    Concepts
     
   </span>
   
@@ -753,10 +1102,10 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            How-To Guides
+            Concepts
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -790,12 +1139,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../find-errors-in-logs/" class="md-nav__link">
+      <a href="../pipeline-model/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Triage Production Errors
+    Processing Architecture
     
   </span>
   
@@ -813,12 +1162,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../analyze-web-traffic/" class="md-nav__link">
+      <a href="../events-and-fields/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Analyze Web Traffic
+    Events and Fields
     
   </span>
   
@@ -836,12 +1185,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../monitor-application-health/" class="md-nav__link">
+      <a href="../scripting-stages/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Build a Service Health Snapshot
+    Scripting Stages
     
   </span>
   
@@ -859,12 +1208,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../parse-syslog-files/" class="md-nav__link">
+      <a href="../error-handling/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Investigate Syslog Sources
+    Error Handling
     
   </span>
   
@@ -882,12 +1231,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../handle-multiline-stacktraces/" class="md-nav__link">
+      <a href="../multiline-strategies/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Choose a Multiline Strategy
+    Multiline Strategies
     
   </span>
   
@@ -905,12 +1254,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../extract-and-mask-sensitive-data/" class="md-nav__link">
+      <a href="../performance-model/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Sanitize Logs Before Sharing
+    Performance Model
     
   </span>
   
@@ -928,81 +1277,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+      <a href="../performance-comparisons/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Pseudonymize Identifiers for Analytics
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../process-csv-data/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Prepare CSV Exports for Analytics
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../fan-out-nested-structures/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Flatten Nested JSON for Analysis
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../build-streaming-alerts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Design Streaming Alerts
+    Performance Comparisons
     
   </span>
   
@@ -1034,7 +1314,7 @@
   
   
   <span class="md-ellipsis">
-    Process Archives at Scale
+    Benchmark Results
     
   </span>
   
@@ -1047,7 +1327,7 @@
   
   
   <span class="md-ellipsis">
-    Process Archives at Scale
+    Benchmark Results
     
   </span>
   
@@ -1070,92 +1350,185 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#when-this-guide-helps" class="md-nav__link">
+  <a href="#test-system-apple-m1-2024-10-26" class="md-nav__link">
     <span class="md-ellipsis">
-      When This Guide Helps
+      Test System: Apple M1 (2024-10-26)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test System: Apple M1 (2024-10-26)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-simple-text-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Simple Text Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-field-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Field Extraction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-json-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. JSON Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-json-transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. JSON Transformation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-complex-multi-stage-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Complex Multi-Stage Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-parallel-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Parallel Processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-csv-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. CSV Processing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing Results
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
+  <a href="#historical-results" class="md-nav__link">
     <span class="md-ellipsis">
-      Before You Start
+      Historical Results
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-measure-a-sequential-baseline" class="md-nav__link">
+  <a href="#test-system-intel-core-i5-2025-10-26" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 1: Measure a Sequential Baseline
+      Test System: Intel Core i5 (2025-10-26)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test System: Intel Core i5 (2025-10-26)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-simple-text-filtering_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Simple Text Filtering
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-enable-parallel-processing" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-field-extraction_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 2: Enable Parallel Processing
+      2. Field Extraction
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-3-tune-batch-size-and-ordering" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#3-json-filtering_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 3: Tune Batch Size and Ordering
+      3. JSON Filtering
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-drop-ordering-when-safe" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#4-json-transformation_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 4: Drop Ordering When Safe
+      4. JSON Transformation
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-5-automate-and-monitor" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#5-complex-multi-stage-pipeline_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 5: Automate and Monitor
+      5. Complex Multi-Stage Pipeline
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#variations" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#6-parallel-processing_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Variations
+      6. Parallel Processing
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-checklist" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#7-csv-processing_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Checklist
+      7. CSV Processing
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#raw-files" class="md-nav__link">
     <span class="md-ellipsis">
-      See Also
+      Raw Files
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1175,287 +1548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../span-aggregation-cookbook/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Roll Up Logs with Span Windows
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Concepts
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
-            Concepts
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Overview
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/pipeline-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Processing Architecture
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/events-and-fields/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Events and Fields
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/scripting-stages/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Scripting Stages
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/error-handling/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Error Handling
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/multiline-strategies/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Multiline Strategies
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/performance-model/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Performance Model
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/performance-comparisons/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Performance Comparisons
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/benchmark-results/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Benchmark Results
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/configuration-system/" class="md-nav__link">
+      <a href="../configuration-system/" class="md-nav__link">
         
   
   
@@ -1693,92 +1786,185 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#when-this-guide-helps" class="md-nav__link">
+  <a href="#test-system-apple-m1-2024-10-26" class="md-nav__link">
     <span class="md-ellipsis">
-      When This Guide Helps
+      Test System: Apple M1 (2024-10-26)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test System: Apple M1 (2024-10-26)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-simple-text-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Simple Text Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-field-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Field Extraction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-json-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. JSON Filtering
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-json-transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. JSON Transformation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-complex-multi-stage-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Complex Multi-Stage Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-parallel-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Parallel Processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-csv-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. CSV Processing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing Results
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
+  <a href="#historical-results" class="md-nav__link">
     <span class="md-ellipsis">
-      Before You Start
+      Historical Results
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-measure-a-sequential-baseline" class="md-nav__link">
+  <a href="#test-system-intel-core-i5-2025-10-26" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 1: Measure a Sequential Baseline
+      Test System: Intel Core i5 (2025-10-26)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Test System: Intel Core i5 (2025-10-26)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-simple-text-filtering_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Simple Text Filtering
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-enable-parallel-processing" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-field-extraction_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 2: Enable Parallel Processing
+      2. Field Extraction
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-3-tune-batch-size-and-ordering" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#3-json-filtering_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 3: Tune Batch Size and Ordering
+      3. JSON Filtering
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-drop-ordering-when-safe" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#4-json-transformation_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 4: Drop Ordering When Safe
+      4. JSON Transformation
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-5-automate-and-monitor" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#5-complex-multi-stage-pipeline_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 5: Automate and Monitor
+      5. Complex Multi-Stage Pipeline
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#variations" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#6-parallel-processing_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Variations
+      6. Parallel Processing
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-checklist" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#7-csv-processing_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Performance Checklist
+      7. CSV Processing
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#raw-files" class="md-nav__link">
     <span class="md-ellipsis">
-      See Also
+      Raw Files
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1801,123 +1987,609 @@
   
 
 
-<h1 id="process-archives-at-scale">Process Archives at Scale<a class="headerlink" href="#process-archives-at-scale" title="Permanent link">&para;</a></h1>
-<p>Crunch large log archives—compressed or not—while balancing throughput, ordering, and resource usage.</p>
-<h2 id="when-this-guide-helps">When This Guide Helps<a class="headerlink" href="#when-this-guide-helps" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Daily or monthly log archives need to be scanned for regressions or security events.</li>
-<li>You want to benchmark <code>--parallel</code> vs sequential performance on your hardware.</li>
-<li>Pipelines must stay reliable while processing tens of gigabytes of data.</li>
-</ul>
-<h2 id="before-you-start">Before You Start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Examples use <code>logs/2024-*.jsonl.gz</code> as a placeholder. Replace with your archive paths.</li>
-<li>Verify disk bandwidth and CPU capacity; the fastest settings differ between laptops and servers.</li>
-<li>Have a small sample ready for functional testing before running across huge datasets.</li>
-</ul>
-<h2 id="step-1-measure-a-sequential-baseline">Step 1: Measure a Sequential Baseline<a class="headerlink" href="#step-1-measure-a-sequential-baseline" title="Permanent link">&para;</a></h2>
-<p>Start simple to confirm filters, transformations, and outputs are correct.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-01.jsonl.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-J<span class="w"> </span>&gt;<span class="w"> </span>errors-sample.json
-</code></pre></div>
-<ul>
-<li>Record elapsed time, CPU usage, and memory footprint (<code>/usr/bin/time -v</code> can help).</li>
-<li>Keep this script for future regression checks.</li>
-</ul>
-<h2 id="step-2-enable-parallel-processing">Step 2: Enable Parallel Processing<a class="headerlink" href="#step-2-enable-parallel-processing" title="Permanent link">&para;</a></h2>
-<p>Use <code>--parallel</code> to leverage multiple cores. Let Kelora auto-detect thread count first.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<ul>
-<li>Default threads = number of logical CPU cores.</li>
-<li>On heavily I/O-bound workloads, try more threads with <code>--threads 2x</code> the core count; for CPU-heavy transforms, use equal or fewer threads.</li>
-</ul>
-<h2 id="step-3-tune-batch-size-and-ordering">Step 3: Tune Batch Size and Ordering<a class="headerlink" href="#step-3-tune-batch-size-and-ordering" title="Permanent link">&para;</a></h2>
-<p>Batch size controls how many events each worker processes before flushing.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--stats
-</code></pre></div>
-<p>Guidelines:
-- 1000 (default) balances throughput and memory.
-- Increase to 5000–10000 for simple filters on machines with ample RAM.
-- Decrease to 200–500 when transformations are heavy or memory is constrained.</p>
-<p>Ordering options:
-- <code>--file-order name</code> for deterministic alphabetical processing.
-- <code>--file-order mtime</code> to scan oldest/newest archives first.</p>
-<h2 id="step-4-drop-ordering-when-safe">Step 4: Drop Ordering When Safe<a class="headerlink" href="#step-4-drop-ordering-when-safe" title="Permanent link">&para;</a></h2>
-<p>If output order is irrelevant (metrics only, exports to sorted files), add <code>--unordered</code> for higher throughput.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;errors&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<ul>
-<li><code>--unordered</code> flushes worker buffers immediately; expect non-deterministic ordering in the output stream.</li>
-<li>Combine with <code>--metrics</code> or <code>--stats-only</code> when you only care about aggregates.</li>
-</ul>
-<h2 id="step-5-automate-and-monitor">Step 5: Automate and Monitor<a class="headerlink" href="#step-5-automate-and-monitor" title="Permanent link">&para;</a></h2>
-<p>Wrap the tuned command in a script so you can schedule it via cron or CI.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="ch">#!/usr/bin/env bash</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nv">ARCHIVE_GLOB</span><span class="o">=</span><span class="s2">&quot;/var/log/app/app-</span><span class="k">$(</span>date<span class="w"> </span>+%Y-%m<span class="k">)</span><span class="s2">-*.jsonl.gz&quot;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nv">OUTPUT</span><span class="o">=</span><span class="s2">&quot;reports/errors-</span><span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span><span class="s2">.json&quot;</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="nv">$ARCHIVE_GLOB</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>-J<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUTPUT</span><span class="s2">&quot;</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUTPUT</span><span class="s2">&quot;</span><span class="w"> </span>--stats
-</code></pre></div>
-<ul>
-<li>Log <code>--stats</code> output for traceability (processed lines, parse errors, throughput).</li>
-<li>Capture timing with <code>/usr/bin/time</code> or <code>hyperfine</code> to detect future regressions.</li>
-</ul>
-<h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Mixed compression</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--threads<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-l<span class="w"> </span>critical<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--stats
-</code></pre></div></li>
-<li><strong>Recursive discovery</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>find<span class="w"> </span>/archives/app<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.jsonl.gz&quot;</span><span class="w"> </span>-print0<span class="w"> </span><span class="p">|</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>xargs<span class="w"> </span>-0<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>--metrics
-</code></pre></div></li>
-<li><strong>Performance sweep</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">for</span><span class="w"> </span>size<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="m">5000</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Batch size </span><span class="nv">$size</span><span class="s2">&quot;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="nv">$size</span><span class="w"> </span>-qq
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">done</span>
-</code></pre></div></li>
-</ul>
-<h2 id="performance-checklist">Performance Checklist<a class="headerlink" href="#performance-checklist" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>CPU-bound?</strong> Lower thread count or batch size to reduce contention.</li>
-<li><strong>I/O-bound?</strong> Increase threads, run from fast storage, or pre-uncompress archives.</li>
-<li><strong>Memory spikes?</strong> Reduce batch size, avoid large <code>window_*</code> or <code>emit_each()</code> operations, or process archives sequentially.</li>
-<li><strong>Need reproducible results?</strong> Avoid <code>--unordered</code>, process files in a consistent order, and archive the command used.</li>
-</ul>
-<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../span-aggregation-cookbook/">Roll Up Logs with Span Windows</a> for time-based summaries after processing archives.</li>
-<li><a href="../process-csv-data/">Prepare CSV Exports for Analytics</a> to clean flattened outputs before sharing.</li>
-<li><a href="../../concepts/performance-model/">Concept: Performance Model</a> for a deeper explanation of Kelora’s execution modes.</li>
-</ul>
+<h1 id="benchmark-results">Benchmark Results<a class="headerlink" href="#benchmark-results" title="Permanent link">&para;</a></h1>
+<p>Raw performance benchmarks comparing Kelora against common command-line tools across different hardware. Throughput values are inferred directly from dataset size ÷ mean runtime (100k events per test unless noted; 500k for the parallel scenario).</p>
+<div class="admonition abstract">
+<p class="admonition-title">Looking for Guidance?</p>
+<p>This page shows <strong>raw benchmark data</strong>. For interpretation, decision matrices, and honest performance guidance, see <a href="../performance-comparisons/">Performance Comparisons</a>.</p>
+</div>
+<hr />
+<h2 id="test-system-apple-m1-2024-10-26">Test System: Apple M1 (2024-10-26)<a class="headerlink" href="#test-system-apple-m1-2024-10-26" title="Permanent link">&para;</a></h2>
+<p><strong>Hardware:</strong>
+- <strong>CPU:</strong> Apple M1
+- <strong>Cores:</strong> 8 (4 performance + 4 efficiency)
+- <strong>OS:</strong> macOS (Darwin)
+- <strong>RAM:</strong> 16GB</p>
+<p><strong>Software Versions:</strong>
+- kelora: (current development build)
+- jq: 1.7.1
+- ripgrep: 14.1.0
+- awk: BSD awk (macOS built-in)
+- miller: 6.12.0
+- qsv: 0.131.0</p>
+<hr />
+<h3 id="1-simple-text-filtering">1. Simple Text Filtering<a class="headerlink" href="#1-simple-text-filtering" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Find all ERROR lines in 100,000-line log file</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>grep</td>
+<td>0.048s</td>
+<td>~2.08 M/s</td>
+<td>Baseline - fastest text search</td>
+</tr>
+<tr>
+<td>ripgrep (rg)</td>
+<td>0.014s</td>
+<td>~7.14 M/s</td>
+<td>Modern grep alternative</td>
+</tr>
+<tr>
+<td>kelora (line)</td>
+<td>0.381s</td>
+<td>~0.26 M/s</td>
+<td>Full log parsing + structured output</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> grep/ripgrep are 8-27x faster for simple text matching.</p>
+<hr />
+<h3 id="2-field-extraction">2. Field Extraction<a class="headerlink" href="#2-field-extraction" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Extract timestamp, level, component from 100,000 log lines</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>awk</td>
+<td>0.374s</td>
+<td>~0.27 M/s</td>
+<td>Field splitting by whitespace</td>
+</tr>
+<tr>
+<td>kelora (cols)</td>
+<td>4.723s</td>
+<td>~0.02 M/s</td>
+<td>Structured parsing + type awareness</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> awk is 12.6x faster for simple field extraction.</p>
+<hr />
+<h3 id="3-json-filtering">3. JSON Filtering<a class="headerlink" href="#3-json-filtering" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter 100,000 JSON logs where level == 'ERROR' (25,256 matches)</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jq</td>
+<td>1.056s</td>
+<td>~0.09 M/s</td>
+<td>Standard JSON processor</td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>6.157s</td>
+<td>~0.02 M/s</td>
+<td>JSON parsing with level filter</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> jq is 5.8x faster for JSON filtering.</p>
+<hr />
+<h3 id="4-json-transformation">4. JSON Transformation<a class="headerlink" href="#4-json-transformation" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter API logs, extract status code, add is_error field</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jq</td>
+<td>0.763s</td>
+<td>~0.13 M/s</td>
+<td>Complex jq query</td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>9.009s</td>
+<td>~0.01 M/s</td>
+<td>Multi-stage pipeline</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> jq is 11.8x faster for JSON transformations.</p>
+<hr />
+<h3 id="5-complex-multi-stage-pipeline">5. Complex Multi-Stage Pipeline<a class="headerlink" href="#5-complex-multi-stage-pipeline" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter errors, count by component, sort by frequency</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Command Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bash + jq + sort + uniq</td>
+<td>0.722s</td>
+<td>~0.14 M/s</td>
+<td><code>jq ... \| sort \| uniq -c \| sort -rn</code></td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>6.786s</td>
+<td>~0.01 M/s</td>
+<td><code>kelora -l error --exec 'track_count(...)' --metrics</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> Multi-tool bash pipeline is 9.4x faster, but Kelora uses a single command with built-in aggregation.</p>
+<hr />
+<h3 id="6-parallel-processing">6. Parallel Processing<a class="headerlink" href="#6-parallel-processing" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Process 500,000 JSON logs, filter by component</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jq (sequential)</td>
+<td>4.426s</td>
+<td>~0.11 M/s</td>
+<td>Single-threaded processing</td>
+</tr>
+<tr>
+<td>kelora (sequential)</td>
+<td>42.717s</td>
+<td>~0.01 M/s</td>
+<td>Single-threaded baseline</td>
+</tr>
+<tr>
+<td>kelora (--parallel)</td>
+<td>8.143s</td>
+<td>~0.06 M/s</td>
+<td>Multi-core processing (8 cores)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong>
+- Kelora sequential is 9.7x slower than jq
+- Kelora <code>--parallel</code> provides 5.2x speedup over sequential
+- Still 1.8x slower than jq overall</p>
+<hr />
+<h3 id="7-csv-processing">7. CSV Processing<a class="headerlink" href="#7-csv-processing" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter CSV by level, select columns</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>miller</td>
+<td>0.147s</td>
+<td>~0.68 M/s</td>
+<td>CSV swiss army knife</td>
+</tr>
+<tr>
+<td>qsv</td>
+<td>0.050s</td>
+<td>~2.00 M/s</td>
+<td>High-performance CSV tool</td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>5.787s</td>
+<td>~0.02 M/s</td>
+<td>CSV + level filtering</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> qsv is 115x faster, miller is 39x faster. Use specialized CSV tools for pure CSV work.</p>
+<hr />
+<h2 id="contributing-results">Contributing Results<a class="headerlink" href="#contributing-results" title="Permanent link">&para;</a></h2>
+<p>Have different hardware? Want to add Linux/Windows results? Contributions welcome!</p>
+<p><strong>To add your results:</strong></p>
+<ol>
+<li>
+<p>Run benchmarks on your system:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>just<span class="w"> </span>bench-compare
+</code></pre></div></p>
+</li>
+<li>
+<p>Add a new section above with your system specs:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gu">## Test System: [Your System Name] (YYYY-MM-DD)</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>Submit a PR with your results</p>
+</li>
+</ol>
+<p><strong>Especially interested in:</strong>
+- Linux (x86_64, ARM)
+- Windows (WSL, native)
+- Different CPU architectures
+- Older vs newer hardware comparisons</p>
+<hr />
+<h2 id="historical-results">Historical Results<a class="headerlink" href="#historical-results" title="Permanent link">&para;</a></h2>
+<p>Track performance improvements across Kelora versions:</p>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Test</th>
+<th>M1 Result</th>
+<th>Intel Mac Result</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.x.x</td>
+<td>JSON Filter</td>
+<td>6.157s</td>
+<td>6.434s</td>
+<td>Initial benchmark</td>
+</tr>
+<tr>
+<td>(future)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="test-system-intel-core-i5-2025-10-26">Test System: Intel Core i5 (2025-10-26)<a class="headerlink" href="#test-system-intel-core-i5-2025-10-26" title="Permanent link">&para;</a></h2>
+<p><strong>Hardware:</strong>
+- <strong>CPU:</strong> Intel Core i5 (3.0 GHz, 6 cores)
+- <strong>Cores:</strong> 6
+- <strong>OS:</strong> macOS 15.6.1 (24G90) · <code>x86_64</code>
+- <strong>RAM:</strong> 16 GB</p>
+<p><strong>Software Versions:</strong>
+- Kelora: <code>target/release/kelora</code> @ <code>09faf43</code>
+- Rust: 1.90.0
+- grep: 2.6.0 (BSD)
+- ripgrep: 15.1.0
+- jq: 1.6
+- mlr: 6.15.0
+- qsv: 8.1.1
+- angle-grinder: 0.19.5
+- klp: 0.77.0</p>
+<hr />
+<h3 id="1-simple-text-filtering_1">1. Simple Text Filtering<a class="headerlink" href="#1-simple-text-filtering_1" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Find all ERROR lines in 100,000-line log file</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ripgrep (rg)</td>
+<td>0.021s</td>
+<td>~4.76 M/s</td>
+<td>Modern grep alternative</td>
+</tr>
+<tr>
+<td>grep</td>
+<td>0.049s</td>
+<td>~2.04 M/s</td>
+<td>Baseline - fastest text search</td>
+</tr>
+<tr>
+<td>angle-grinder</td>
+<td>0.327s</td>
+<td>~0.31 M/s</td>
+<td><code>parse "* * *[*]: *"</code> + <code>where level == "ERROR"</code></td>
+</tr>
+<tr>
+<td>kelora (line)</td>
+<td>0.405s</td>
+<td>~0.25 M/s</td>
+<td>Full log parsing + structured output</td>
+</tr>
+<tr>
+<td>klp</td>
+<td>1.952s</td>
+<td>~0.05 M/s</td>
+<td><code>klp --input-format line -l error</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> Kelora runs ~19× slower than ripgrep (and ~8× slower than BSD <code>grep</code>) because it builds structured events; angle-grinder lands in the middle thanks to its lightweight parser, while klp’s Python runtime lags well behind. Reach for Kelora only when you need the structured output for follow-up scripting.</p>
+<hr />
+<h3 id="2-field-extraction_1">2. Field Extraction<a class="headerlink" href="#2-field-extraction_1" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Extract timestamp, level, component from 100,000 log lines</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angle-grinder</td>
+<td>0.368s</td>
+<td>~0.27 M/s</td>
+<td><code>parse</code> + <code>fields</code></td>
+</tr>
+<tr>
+<td>awk</td>
+<td>0.389s</td>
+<td>~0.26 M/s</td>
+<td>Field splitting by whitespace</td>
+</tr>
+<tr>
+<td>kelora (cols)</td>
+<td>4.744s</td>
+<td>~0.02 M/s</td>
+<td>Structured parsing + type awareness</td>
+</tr>
+<tr>
+<td>klp</td>
+<td>6.898s</td>
+<td>~0.01 M/s</td>
+<td>regex via <code>--input-exec</code>, output via <code>--keys</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> Kelora is ≈12× slower than awk/agrind because it validates and types every field; klp’s Python pipeline is slower still. Choose Kelora when that extra structure matters for downstream processing.</p>
+<hr />
+<h3 id="3-json-filtering_1">3. JSON Filtering<a class="headerlink" href="#3-json-filtering_1" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter 100,000 JSON logs where level == 'ERROR'</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angle-grinder</td>
+<td>0.367s</td>
+<td>~0.27 M/s</td>
+<td><code>json</code> + <code>where level == "ERROR"</code></td>
+</tr>
+<tr>
+<td>jq</td>
+<td>1.104s</td>
+<td>~0.09 M/s</td>
+<td>Standard JSON processor</td>
+</tr>
+<tr>
+<td>klp</td>
+<td>4.695s</td>
+<td>~0.02 M/s</td>
+<td><code>klp --input-format jsonl -l error</code></td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>6.434s</td>
+<td>~0.02 M/s</td>
+<td>JSON parsing with Rhai filter</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> Kelora lags jq by ~6× (and angle-grinder by ~17×) because it executes the filter inside Rhai; klp trails for similar reasons in Python. Use Kelora when the flexibility of multi-stage filters or metrics hooks outweighs the speed hit.</p>
+<hr />
+<h3 id="4-json-transformation_1">4. JSON Transformation<a class="headerlink" href="#4-json-transformation_1" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter API logs, extract status code, add is_error field</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angle-grinder</td>
+<td>0.232s</td>
+<td>~0.43 M/s</td>
+<td><code>json</code> + computed <code>is_error</code></td>
+</tr>
+<tr>
+<td>jq</td>
+<td>0.822s</td>
+<td>~0.12 M/s</td>
+<td>Complex jq query</td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>9.383s</td>
+<td>~0.01 M/s</td>
+<td>Multi-stage pipeline</td>
+</tr>
+<tr>
+<td>klp</td>
+<td>11.082s</td>
+<td>~0.01 M/s</td>
+<td>jsonl + <code>-l error</code> + computed key</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> Kelora (and klp) are 11–40× slower than jq/agrind on this tight transform, trading raw speed for the ability to express multi-stage, scriptable pipelines.</p>
+<hr />
+<h3 id="5-complex-multi-stage-pipeline_1">5. Complex Multi-Stage Pipeline<a class="headerlink" href="#5-complex-multi-stage-pipeline_1" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter errors, count by component, sort by frequency</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Command Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angle-grinder</td>
+<td>0.220s</td>
+<td>~0.45 M/s</td>
+<td><code>agrind '* | json | where level == "ERROR" | count by component'</code></td>
+</tr>
+<tr>
+<td>bash + jq + sort + uniq</td>
+<td>0.753s</td>
+<td>~0.13 M/s</td>
+<td><code>jq ... \| sort \| uniq -c \| sort -rn</code></td>
+</tr>
+<tr>
+<td>klp + sort + uniq</td>
+<td>3.851s</td>
+<td>~0.03 M/s</td>
+<td><code>klp -l error --output-template '{component}' \| sort \| uniq -c \| sort -rn</code></td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>7.086s</td>
+<td>~0.01 M/s</td>
+<td><code>kelora -l error --exec 'track_count(...)' --metrics</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> Kelora is 10–30× slower than the Unix/agrind pipelines, but it keeps the whole aggregation in one command that’s easier to evolve. klp sits between those extremes when coupled with <code>sort | uniq</code>.</p>
+<hr />
+<h3 id="6-parallel-processing_1">6. Parallel Processing<a class="headerlink" href="#6-parallel-processing_1" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Process 500,000 JSON logs, filter by component</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angle-grinder</td>
+<td>0.979s</td>
+<td>~0.51 M/s</td>
+<td><code>json</code> + <code>where component == "api"</code></td>
+</tr>
+<tr>
+<td>jq (sequential)</td>
+<td>4.665s</td>
+<td>~0.11 M/s</td>
+<td>Single-threaded processing</td>
+</tr>
+<tr>
+<td>kelora (--parallel)</td>
+<td>8.832s</td>
+<td>~0.06 M/s</td>
+<td>Multi-core processing</td>
+</tr>
+<tr>
+<td>klp (--parallel 0)</td>
+<td>12.108s</td>
+<td>~0.04 M/s</td>
+<td>Multiprocess (--parallel 0)</td>
+</tr>
+<tr>
+<td>klp (sequential)</td>
+<td>27.122s</td>
+<td>~0.02 M/s</td>
+<td><code>klp --input-format jsonl --where 'component == \"api\"'</code></td>
+</tr>
+<tr>
+<td>kelora (sequential)</td>
+<td>44.266s</td>
+<td>~0.01 M/s</td>
+<td>Single-threaded baseline</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> Kelora is the slowest sequential option (≈9× behind jq and far behind angle-grinder), but <code>--parallel</code> cuts runtime to 8.8 s and keeps the scripting model; klp sees a similar gain with <code>--parallel 0</code>.</p>
+<hr />
+<h3 id="7-csv-processing_1">7. CSV Processing<a class="headerlink" href="#7-csv-processing_1" title="Permanent link">&para;</a></h3>
+<p><strong>Task:</strong> Filter CSV by level, select columns</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Time</th>
+<th>Throughput</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>qsv</td>
+<td>0.073s</td>
+<td>~1.37 M/s</td>
+<td>High-performance CSV tool</td>
+</tr>
+<tr>
+<td>miller</td>
+<td>0.228s</td>
+<td>~0.44 M/s</td>
+<td>CSV swiss army knife</td>
+</tr>
+<tr>
+<td>kelora</td>
+<td>6.808s</td>
+<td>~0.01 M/s</td>
+<td>CSV + Rhai scripting</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation:</strong> CSV-specialized tools dominate (Kelora is 95× slower than qsv). Use Kelora when you need to mix CSV with other formats or invoke Rhai logic inline.</p>
+<hr />
+<h3 id="raw-files">Raw Files<a class="headerlink" href="#raw-files" title="Permanent link">&para;</a></h3>
+<p>Source measurements live in <code>benchmarks/comparison_results/01_simple_filter.md</code> through <code>07_csv.md</code> from the same commit/date for full reproducibility.</p>
 
 
 

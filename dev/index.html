@@ -1384,6 +1384,52 @@
   
   
     <li class="md-nav__item">
+      <a href="concepts/performance-comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance Comparisons
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/benchmark-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Benchmark Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="concepts/configuration-system/" class="md-nav__link">
         
   
@@ -1879,6 +1925,10 @@
 </div>
 </div>
 <p>See the <a href="quickstart/">Quickstart</a> for a step-by-step tour with full output.</p>
+<div class="admonition info">
+<p class="admonition-title">Performance Philosophy</p>
+<p>Kelora trades raw speed for simplicity—specialized tools like grep, jq, and qsv are often 5-100x faster for single tasks. <strong>Kelora shines</strong> for multi-format pipelines, complex transforms with 100+ built-in functions, and windowed analysis. See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for honest benchmarks.</p>
+</div>
 <h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Parse</strong> JSON, logfmt, syslog, CSV/TSV, Apache/Nginx logs, or custom formats</li>
@@ -1927,6 +1977,10 @@
 <li><strong><a href="https://www.sqlite.org/">SQLite</a>/<a href="https://duckdb.org/">DuckDB</a></strong> — load Kelora's CSV/JSON output into a database for SQL queries and reporting</li>
 <li><strong><a href="https://github.com/johnkerl/miller">miller</a></strong> — transform Kelora's CSV output for reshaping, aggregating, and format conversion</li>
 </ul>
+<div class="admonition tip">
+<p class="admonition-title">Tool Selection Guide</p>
+<p>Not sure which tool to use for your task? See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for honest benchmarks and a decision matrix comparing Kelora with grep, jq, awk, miller, and qsv.</p>
+</div>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>Kelora is open source software licensed under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>.</p>
 
