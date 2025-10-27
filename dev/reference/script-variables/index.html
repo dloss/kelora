@@ -1911,6 +1911,7 @@
 <ul>
 <li>Type: <code>String</code></li>
 <li>Snapshot of the text the parser captured for the current record. Structured formats strip trailing newlines before storing it, <code>-f raw</code> preserves every byte (including terminators), and <code>--multiline</code> reflects the chunk assembled by the multiline stage. Present in every stage and read-only.</li>
+<li>You’ll also see the same text at <code>meta.line</code>; that copy travels with saved metadata (window snapshots, span hooks, cloned <code>meta</code> values) so the original record is still available later on.</li>
 </ul>
 <h3 id="e"><code>e</code><a class="headerlink" href="#e" title="Permanent link">&para;</a></h3>
 <ul>
