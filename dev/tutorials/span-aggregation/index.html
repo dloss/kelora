@@ -853,13 +853,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-late-events-and-missing-timestamps" class="md-nav__link">
+  <a href="#step-5-global-metrics-compare-spans-to-cumulative-totals" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 5: Late Events and Missing Timestamps
+      Step 5: Global Metrics – Compare Spans to Cumulative Totals
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Step 5: Late Events and Missing Timestamps">
+    <nav class="md-nav" aria-label="Step 5: Global Metrics – Compare Spans to Cumulative Totals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spike-detection-compare-to-average" class="md-nav__link">
+    <span class="md-ellipsis">
+      Spike Detection – Compare to Average
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-late-events-and-missing-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 6: Late Events and Missing Timestamps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 6: Late Events and Missing Timestamps">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -886,18 +910,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-6-tagging-events-without-span-close" class="md-nav__link">
+  <a href="#step-7-tagging-events-without-span-close" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 6: Tagging Events Without --span-close
+      Step 7: Tagging Events Without --span-close
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-7-combining-filters-execs-and-spans" class="md-nav__link">
+  <a href="#step-8-combining-filters-execs-and-spans" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 7: Combining Filters, Execs, and Spans
+      Step 8: Combining Filters, Execs, and Spans
     </span>
   </a>
   
@@ -953,6 +977,15 @@
   <a href="#sorting-recommendations" class="md-nav__link">
     <span class="md-ellipsis">
       Sorting Recommendations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-both-metrics-maps-effectively" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Both Metrics Maps Effectively
     </span>
   </a>
   
@@ -2019,13 +2052,37 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-late-events-and-missing-timestamps" class="md-nav__link">
+  <a href="#step-5-global-metrics-compare-spans-to-cumulative-totals" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 5: Late Events and Missing Timestamps
+      Step 5: Global Metrics – Compare Spans to Cumulative Totals
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Step 5: Late Events and Missing Timestamps">
+    <nav class="md-nav" aria-label="Step 5: Global Metrics – Compare Spans to Cumulative Totals">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spike-detection-compare-to-average" class="md-nav__link">
+    <span class="md-ellipsis">
+      Spike Detection – Compare to Average
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-late-events-and-missing-timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 6: Late Events and Missing Timestamps
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 6: Late Events and Missing Timestamps">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2052,18 +2109,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-6-tagging-events-without-span-close" class="md-nav__link">
+  <a href="#step-7-tagging-events-without-span-close" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 6: Tagging Events Without --span-close
+      Step 7: Tagging Events Without --span-close
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-7-combining-filters-execs-and-spans" class="md-nav__link">
+  <a href="#step-8-combining-filters-execs-and-spans" class="md-nav__link">
     <span class="md-ellipsis">
-      Step 7: Combining Filters, Execs, and Spans
+      Step 8: Combining Filters, Execs, and Spans
     </span>
   </a>
   
@@ -2119,6 +2176,15 @@
   <a href="#sorting-recommendations" class="md-nav__link">
     <span class="md-ellipsis">
       Sorting Recommendations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-both-metrics-maps-effectively" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Both Metrics Maps Effectively
     </span>
   </a>
   
@@ -2581,25 +2647,137 @@
 </div>
 </div>
 <hr />
-<h2 id="step-5-late-events-and-missing-timestamps">Step 5: Late Events and Missing Timestamps<a class="headerlink" href="#step-5-late-events-and-missing-timestamps" title="Permanent link">&para;</a></h2>
-<p>Time-based spans track event status for better handling of out-of-order or missing data.</p>
-<h3 id="detecting-late-events">Detecting Late Events<a class="headerlink" href="#detecting-late-events" title="Permanent link">&para;</a></h3>
-<p>Events arriving earlier than the current span window are marked as "late":</p>
+<h2 id="step-5-global-metrics-compare-spans-to-cumulative-totals">Step 5: Global Metrics – Compare Spans to Cumulative Totals<a class="headerlink" href="#step-5-global-metrics-compare-spans-to-cumulative-totals" title="Permanent link">&para;</a></h2>
+<p>Inside <code>--span-close</code> you have access to <strong>two</strong> metrics maps:</p>
+<ul>
+<li><strong><code>span.metrics</code></strong> – Delta for this span only (resets after each span)</li>
+<li><strong><code>metrics</code></strong> – Cumulative totals across the entire run</li>
+</ul>
+<p>This lets you compare per-window activity against overall trends:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Command</label><label for="__tabbed_9_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;:&quot;2024-01-15T10:05:00Z&quot;,&quot;msg&quot;:&quot;Event 1&quot;}</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:06:00Z&quot;,&quot;msg&quot;:&quot;Event 2&quot;}</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:04:00Z&quot;,&quot;msg&quot;:&quot;Late event&quot;}</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:07:00Z&quot;,&quot;msg&quot;:&quot;Event 3&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="s1">    if meta.span_status == &quot;late&quot; {</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="s1">      eprint(&quot;⚠️  Late event: &quot; + e.msg + &quot; at &quot; + e.ts);</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="s1">    }</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(&quot;Window &quot; + span.id + &quot;: &quot; + span.size.to_string() + &quot; events&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="s1">    let span_err = span.metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="s1">    let total_err = metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="s1">    eprint(&quot;Span &quot; + span.id + &quot;: +&quot; + span_err.to_string() +</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="s1">           &quot; errors (total: &quot; + total_err.to_string() + &quot;)&quot;);</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="s1">  &#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    let span_err = span.metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    let total_err = metrics.get_path(&quot;errors&quot;, 0);</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    eprint(&quot;Span &quot; + span.id + &quot;: +&quot; + span_err.to_string() +</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">           &quot; errors (total: &quot; + total_err.to_string() + &quot;)&quot;);</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">  &#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Span #0: +1 errors (total: 1)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Span #1: +1 errors (total: 2)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Span #2: +1 errors (total: 3)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Span #3: +0 errors (total: 3)
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>Key differences:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th><code>span.metrics</code></th>
+<th><code>metrics</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scope</td>
+<td>Current span only</td>
+<td>Entire run</td>
+</tr>
+<tr>
+<td>Values</td>
+<td>Deltas (what changed)</td>
+<td>Cumulative totals</td>
+</tr>
+<tr>
+<td>Reset</td>
+<td>After each span</td>
+<td>Never</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spike-detection-compare-to-average">Spike Detection – Compare to Average<a class="headerlink" href="#spike-detection-compare-to-average" title="Permanent link">&para;</a></h3>
+<p>Detect anomalies by comparing span activity to overall rates:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Command</label><label for="__tabbed_10_2">Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;requests&quot;); if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="s1">    let span_rate = span.metrics.get_path(&quot;errors&quot;, 0) * 100 / span.size;</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s1">    let total_rate = metrics.get_path(&quot;errors&quot;, 0) * 100 /</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s1">                     metrics.get_path(&quot;requests&quot;, 1);</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s1">    if span_rate &gt; total_rate * 2 {</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="s1">      eprint(&quot;🚨 Spike in &quot; + span.id + &quot;: &quot; + span_rate.to_string() +</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="s1">             &quot;% (avg: &quot; + total_rate.to_string() + &quot;%)&quot;);</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="s1">    }</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="s1">  &#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;requests&quot;); if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;); }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    let span_rate = span.metrics.get_path(&quot;errors&quot;, 0) * 100 / span.size;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    let total_rate = metrics.get_path(&quot;errors&quot;, 0) * 100 /</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">                     metrics.get_path(&quot;requests&quot;, 1);</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    if span_rate &gt; total_rate * 2 {</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      eprint(&quot;🚨 Spike in &quot; + span.id + &quot;: &quot; + span_rate.to_string() +</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">             &quot;% (avg: &quot; + total_rate.to_string() + &quot;%)&quot;);</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    }</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">  &#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>🚨 Spike in #1: 33% (avg: 16%)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>🚨 Spike in #3: 33% (avg: 16%)
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>Use case:</strong> Detect sudden increases in error rates, latency spikes, or unusual traffic patterns relative to baseline.</p>
+<hr />
+<h2 id="step-6-late-events-and-missing-timestamps">Step 6: Late Events and Missing Timestamps<a class="headerlink" href="#step-6-late-events-and-missing-timestamps" title="Permanent link">&para;</a></h2>
+<p>Time-based spans track event status for better handling of out-of-order or missing data.</p>
+<h3 id="detecting-late-events">Detecting Late Events<a class="headerlink" href="#detecting-late-events" title="Permanent link">&para;</a></h3>
+<p>Events arriving earlier than the current span window are marked as "late":</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:2"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Command</label><label for="__tabbed_11_2">Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;:&quot;2024-01-15T10:05:00Z&quot;,&quot;msg&quot;:&quot;Event 1&quot;}</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:06:00Z&quot;,&quot;msg&quot;:&quot;Event 2&quot;}</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:04:00Z&quot;,&quot;msg&quot;:&quot;Late event&quot;}</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:07:00Z&quot;,&quot;msg&quot;:&quot;Event 3&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s1">    if meta.span_status == &quot;late&quot; {</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s1">      eprint(&quot;⚠️  Late event: &quot; + e.msg + &quot; at &quot; + e.ts);</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="s1">    }</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(&quot;Window &quot; + span.id + &quot;: &quot; + span.size.to_string() + &quot; events&quot;)&#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2638,20 +2816,20 @@
 <p><strong>Best practice:</strong> Pre-sort logs by timestamp if you need accurate time windows. Or use late event detection to emit warnings/corrections.</p>
 <h3 id="handling-missing-timestamps">Handling Missing Timestamps<a class="headerlink" href="#handling-missing-timestamps" title="Permanent link">&para;</a></h3>
 <p>Events without timestamps are marked as "unassigned":</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Command</label><label for="__tabbed_10_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Command</label><label for="__tabbed_12_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;:&quot;2024-01-15T10:05:00Z&quot;,&quot;msg&quot;:&quot;Has timestamp&quot;}</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="s1">{&quot;msg&quot;:&quot;No timestamp&quot;}</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:06:00Z&quot;,&quot;msg&quot;:&quot;Has timestamp 2&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s1">    if meta.span_status == &quot;unassigned&quot; {</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s1">      eprint(&quot;⚠️  No timestamp: &quot; + e.msg);</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s1">    }</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(&quot;Window &quot; + span.id + &quot;: &quot; + span.size.to_string() + &quot; events&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;:&quot;2024-01-15T10:05:00Z&quot;,&quot;msg&quot;:&quot;Has timestamp&quot;}</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="s1">{&quot;msg&quot;:&quot;No timestamp&quot;}</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="s1">{&quot;ts&quot;:&quot;2024-01-15T10:06:00Z&quot;,&quot;msg&quot;:&quot;Has timestamp 2&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="s1">    if meta.span_status == &quot;unassigned&quot; {</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="s1">      eprint(&quot;⚠️  No timestamp: &quot; + e.msg);</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="s1">    }</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(&quot;Window &quot; + span.id + &quot;: &quot; + span.size.to_string() + &quot; events&quot;)&#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2685,20 +2863,20 @@
 <li>Do NOT appear in <code>span.events</code></li>
 </ul>
 <p><strong>Strict mode:</strong> Use <code>--strict</code> to abort on missing timestamps instead of continuing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--strict<span class="w"> </span>app.log
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Error: event missing required timestamp for --span</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--strict<span class="w"> </span>app.log
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Error: event missing required timestamp for --span</span>
 </code></pre></div>
 <hr />
-<h2 id="step-6-tagging-events-without-span-close">Step 6: Tagging Events Without --span-close<a class="headerlink" href="#step-6-tagging-events-without-span-close" title="Permanent link">&para;</a></h2>
+<h2 id="step-7-tagging-events-without-span-close">Step 7: Tagging Events Without --span-close<a class="headerlink" href="#step-7-tagging-events-without-span-close" title="Permanent link">&para;</a></h2>
 <p>You can use <code>--span</code> to tag events with window metadata without writing a close hook:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="11:2"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Command</label><label for="__tabbed_11_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Command</label><label for="__tabbed_13_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.window_id = meta.span_id&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,window_id
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.window_id = meta.span_id&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,window_id
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2718,29 +2896,29 @@
 </div>
 </div>
 <p><strong>Use case:</strong> Forward events to external tools (DuckDB, jq, spreadsheets) that will do their own grouping:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.jsonl<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.window = meta.span_id&#39;</span><span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span><span class="p">|</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>jq<span class="w"> </span>-sc<span class="w"> </span><span class="s1">&#39;group_by(.window) | map({window: .[0].window, count: length})&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.jsonl<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.window = meta.span_id&#39;</span><span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span><span class="p">|</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>jq<span class="w"> </span>-sc<span class="w"> </span><span class="s1">&#39;group_by(.window) | map({window: .[0].window, count: length})&#39;</span>
 </code></pre></div>
 <p>This is <strong>lightweight</strong> – Kelora doesn't buffer events or compute metrics, just tags them with span IDs.</p>
 <hr />
-<h2 id="step-7-combining-filters-execs-and-spans">Step 7: Combining Filters, Execs, and Spans<a class="headerlink" href="#step-7-combining-filters-execs-and-spans" title="Permanent link">&para;</a></h2>
+<h2 id="step-8-combining-filters-execs-and-spans">Step 8: Combining Filters, Execs, and Spans<a class="headerlink" href="#step-8-combining-filters-execs-and-spans" title="Permanent link">&para;</a></h2>
 <p>Spans work seamlessly with multi-stage pipelines:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Command</label><label for="__tabbed_12_2">Output</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="14:2"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">Command</label><label for="__tabbed_14_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_error = (e.level == &quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.is_error&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="s1">    print(&quot;Error batch &quot; + span.id + &quot;:&quot;);</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="s1">    let m = span.metrics;</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="s1">    for key in m.keys() {</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="s1">      print(&quot;  &quot; + key + &quot;: &quot; + m[key].to_string());</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="s1">    }</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="s1">  &#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_error = (e.level == &quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.is_error&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="s1">    print(&quot;Error batch &quot; + span.id + &quot;:&quot;);</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="s1">    let m = span.metrics;</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="s1">    for key in m.keys() {</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="s1">      print(&quot;  &quot; + key + &quot;: &quot; + m[key].to_string());</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="s1">    }</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2786,6 +2964,7 @@
 <li>✅ <strong>span.size</strong> counts events that survived</li>
 <li>✅ <strong>span.events</strong> provides full event arrays for detailed analysis</li>
 <li>✅ <strong>span.metrics</strong> gives automatic per-span metric deltas</li>
+<li>✅ <strong>metrics</strong> provides cumulative totals across all spans</li>
 <li>✅ <strong>meta.span_status</strong> detects late/unassigned/filtered events</li>
 <li>✅ Spans work seamlessly with filters, execs, and tracking functions</li>
 </ul>
@@ -2829,48 +3008,53 @@
 <td>Per-span deltas</td>
 <td>Per-span deltas</td>
 </tr>
+<tr>
+<td>metrics</td>
+<td>Global cumulative totals</td>
+<td>Global cumulative totals</td>
+</tr>
 </tbody>
 </table>
 <h2 id="common-mistakes">Common Mistakes<a class="headerlink" href="#common-mistakes" title="Permanent link">&para;</a></h2>
 <p><strong>❌ Problem:</strong> Trying to use spans with <code>--parallel</code>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span><span class="m">5</span><span class="w"> </span>--parallel<span class="w"> </span>app.log
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># Error: --span incompatible with --parallel</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span><span class="m">5</span><span class="w"> </span>--parallel<span class="w"> </span>app.log
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># Error: --span incompatible with --parallel</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Spans require sequential mode. Remove <code>--parallel</code>.</p>
 <hr />
 <p><strong>❌ Problem:</strong> Accessing span metrics in <code>--exec</code>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span><span class="m">5</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(span.metrics)&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1"># Error: span not available in exec stage</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span><span class="m">5</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(span.metrics)&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="c1"># Error: span not available in exec stage</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> <code>span.metrics</code> is only available in <code>--span-close</code>.</p>
 <hr />
 <p><strong>❌ Problem:</strong> Late events with unsorted logs
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Logs are not sorted by timestamp</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>random-order.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># Many events marked as &quot;late&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Logs are not sorted by timestamp</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>random-order.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="c1"># Many events marked as &quot;late&quot;</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Pre-sort logs by timestamp:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>random-order.log<span class="w"> </span>--output<span class="w"> </span>jsonl<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-t<span class="s1">&#39;&quot;&#39;</span><span class="w"> </span>-k4<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>random-order.log<span class="w"> </span>--output<span class="w"> </span>jsonl<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-t<span class="s1">&#39;&quot;&#39;</span><span class="w"> </span>-k4<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
 </code></pre></div></p>
 <hr />
 <p><strong>❌ Problem:</strong> Missing timestamps in time spans
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--span<span class="w"> </span>5m
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1"># Events without timestamps are &quot;unassigned&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>--span<span class="w"> </span>5m
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Events without timestamps are &quot;unassigned&quot;</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Ensure logs have timestamp fields, or use <code>--span N</code> (count-based) instead.</p>
 <hr />
 <p><strong>❌ Problem:</strong> Large count spans consuming memory
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>huge.log<span class="w"> </span>--span<span class="w"> </span><span class="m">1000000</span><span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;for evt in span.events { ... }&#39;</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="c1"># High memory usage</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>huge.log<span class="w"> </span>--span<span class="w"> </span><span class="m">1000000</span><span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;for evt in span.events { ... }&#39;</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># High memory usage</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Use smaller spans, or switch to time-based spans which naturally limit buffering. If you don't need <code>span.events</code>, omit <code>--span-close</code> to avoid buffering.</p>
 <hr />
 <p><strong>❌ Problem:</strong> Forgetting to use <code>.get_path()</code> with span.metrics
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>--span-close<span class="w"> </span><span class="s1">&#39;let errors = span.metrics[&quot;errors&quot;]&#39;</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Crashes if &quot;errors&quot; key doesn&#39;t exist (zero delta omitted)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>--span-close<span class="w"> </span><span class="s1">&#39;let errors = span.metrics[&quot;errors&quot;]&#39;</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1"># Crashes if &quot;errors&quot; key doesn&#39;t exist (zero delta omitted)</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Always use <code>.get_path()</code> with a default:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>--span-close<span class="w"> </span><span class="s1">&#39;let errors = span.metrics.get_path(&quot;errors&quot;, 0)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>--span-close<span class="w"> </span><span class="s1">&#39;let errors = span.metrics.get_path(&quot;errors&quot;, 0)&#39;</span>
 </code></pre></div></p>
 <h2 id="tips-best-practices">Tips &amp; Best Practices<a class="headerlink" href="#tips-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="choosing-count-vs-time-spans">Choosing Count vs Time Spans<a class="headerlink" href="#choosing-count-vs-time-spans" title="Permanent link">&para;</a></h3>
@@ -2893,12 +3077,29 @@
 </ul>
 <h3 id="sorting-recommendations">Sorting Recommendations<a class="headerlink" href="#sorting-recommendations" title="Permanent link">&para;</a></h3>
 <p>For time-based spans with out-of-order logs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Sort upstream before span processing</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>cat<span class="w"> </span>*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Or use GNU sort with large files</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>sort<span class="w"> </span>-S<span class="w"> </span>2G<span class="w"> </span>--parallel<span class="o">=</span><span class="m">4</span><span class="w"> </span>huge.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>1h<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Sort upstream before span processing</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>cat<span class="w"> </span>*.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Or use GNU sort with large files</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>sort<span class="w"> </span>-S<span class="w"> </span>2G<span class="w"> </span>--parallel<span class="o">=</span><span class="m">4</span><span class="w"> </span>huge.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>1h<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
 </code></pre></div>
+<h3 id="using-both-metrics-maps-effectively">Using Both Metrics Maps Effectively<a class="headerlink" href="#using-both-metrics-maps-effectively" title="Permanent link">&para;</a></h3>
+<p>Combine <code>span.metrics</code> and <code>metrics</code> for context-aware reporting:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>// Pattern 1: Running commentary with context
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>let span_errors = span.metrics.get_path(&quot;errors&quot;, 0);
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>let total_errors = metrics.get_path(&quot;errors&quot;, 0);
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>eprint(&quot;+&quot; + span_errors.to_string() + &quot; errors (total: &quot; + total_errors.to_string() + &quot;)&quot;);
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>// Pattern 2: Threshold alerts after warmup
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>let total_processed = metrics.get_path(&quot;total&quot;, 0);
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>if total_processed &gt; 1000 {  // Only alert after warmup
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>  let span_rate = span.metrics.get_path(&quot;errors&quot;, 0) / span.size;
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>  if span_rate &gt; 0.10 { eprint(&quot;⚠️  Error rate exceeds 10%&quot;); }
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>}
+</code></pre></div>
+<p><strong>When to use each:</strong>
+- <code>span.metrics</code>: "What changed in this window?"
+- <code>metrics</code>: "What's the big picture?"</p>
 <h3 id="signal-handling">Signal Handling<a class="headerlink" href="#signal-handling" title="Permanent link">&para;</a></h3>
 <p>If you press Ctrl+C during span processing, Kelora waits for the current <code>--span-close</code> hook to finish before exiting (press Ctrl+C twice to force quit). This prevents incomplete span reports.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
