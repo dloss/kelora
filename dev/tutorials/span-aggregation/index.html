@@ -782,6 +782,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#span-script-variable-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Span Script Variable Reference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#extract-specific-fields-from-events" class="md-nav__link">
     <span class="md-ellipsis">
       Extract Specific Fields from Events
@@ -1821,6 +1830,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Script Variables Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1914,6 +1946,15 @@
   
     <nav class="md-nav" aria-label="Step 2: Accessing Span Events – Iterate Over the Batch">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-script-variable-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Span Script Variable Reference
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#extract-specific-fields-from-events" class="md-nav__link">
@@ -2270,6 +2311,11 @@
 <li>Includes original fields plus <code>line</code>, <code>line_num</code>, <code>filename</code> (if applicable)</li>
 <li>Includes span metadata: <code>span_status</code>, <code>span_id</code>, <code>span_start</code>, <code>span_end</code></li>
 </ul>
+<h3 id="span-script-variable-reference">Span Script Variable Reference<a class="headerlink" href="#span-script-variable-reference" title="Permanent link">&para;</a></h3>
+<p>Inside <code>--span-close</code> the important bindings are <code>span.id</code>, <code>span.start</code>, <code>span.end</code>, <code>span.size</code>, <code>span.events</code>, <code>span.metrics</code>, and the global <code>metrics</code> map. Use <code>span.metrics</code> for per-span deltas and <code>metrics</code> for cumulative totals. See the <a href="../../reference/script-variables/">Script Variables reference</a> for the full scope matrix, including helpers such as <code>meta.span_status</code>, <code>meta.span_id</code>, and when <code>window</code> is available.</p>
+<blockquote>
+<p><code>--span-close</code> executes outside the per-event pipeline, so treat it as a summary hook: rely on <code>span.*</code> and <code>metrics</code> for aggregates, and loop over <code>span.events</code> when you need per-event details.</p>
+</blockquote>
 <p><strong>Use case:</strong> Collect request IDs for correlation, extract specific fields for detailed reports, or forward events to external systems.</p>
 <h3 id="extract-specific-fields-from-events">Extract Specific Fields from Events<a class="headerlink" href="#extract-specific-fields-from-events" title="Permanent link">&para;</a></h3>
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command</label><label for="__tabbed_4_2">Output</label></div>
