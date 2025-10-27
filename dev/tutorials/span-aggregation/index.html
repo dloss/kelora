@@ -2549,9 +2549,8 @@
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="s1">    let total = m.get_path(&quot;total&quot;, 0);</span>
 <a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s1">    let errors = m.get_path(&quot;errors&quot;, 0);</span>
 <a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="s1">    let warnings = m.get_path(&quot;warnings&quot;, 0);</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="s1">    print(&quot;Span &quot; + span.id + &quot;: &quot; + total.to_string() + &quot; total, &quot; +</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="s1">          errors.to_string() + &quot; errors, &quot; + warnings.to_string() + &quot; warnings&quot;);</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="s1">    print(`Span ${span.id}: ${total} total, ${errors} errors, ${warnings} warnings`);</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2568,9 +2567,8 @@
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    let total = m.get_path(&quot;total&quot;, 0);</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    let errors = m.get_path(&quot;errors&quot;, 0);</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">    let warnings = m.get_path(&quot;warnings&quot;, 0);</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    print(&quot;Span &quot; + span.id + &quot;: &quot; + total.to_string() + &quot; total, &quot; +</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">          errors.to_string() + &quot; errors, &quot; + warnings.to_string() + &quot; warnings&quot;);</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    print(`Span ${span.id}: ${total} total, ${errors} errors, ${warnings} warnings`);</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Span #0: 5 total, 1 errors, 1 warnings
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Span #1: 5 total, 1 errors, 1 warnings
@@ -2606,9 +2604,8 @@
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="s1">    let requests = m.get_path(&quot;requests&quot;, 0);</span>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="s1">    let errors = m.get_path(&quot;errors&quot;, 0);</span>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="s1">    let rate = if requests &gt; 0 { (errors * 100) / requests } else { 0 };</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="s1">    print(span.start.to_iso() + &quot;: &quot; + errors.to_string() + &quot;/&quot; +</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="s1">          requests.to_string() + &quot; errors (&quot; + rate.to_string() + &quot;%)&quot;);</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="s1">    print(`${span.start.to_iso()}: ${errors}/${requests} errors (${rate}%)`);</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2624,9 +2621,8 @@
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    let requests = m.get_path(&quot;requests&quot;, 0);</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    let errors = m.get_path(&quot;errors&quot;, 0);</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    let rate = if requests &gt; 0 { (errors * 100) / requests } else { 0 };</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">    print(span.start.to_iso() + &quot;: &quot; + errors.to_string() + &quot;/&quot; +</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">          requests.to_string() + &quot; errors (&quot; + rate.to_string() + &quot;%)&quot;);</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">    print(`${span.start.to_iso()}: ${errors}/${requests} errors (${rate}%)`);</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2024-01-15T10:00:00+00:00: 0/3 errors (0%)
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2024-01-15T10:01:00+00:00: 1/2 errors (50%)
@@ -2664,9 +2660,8 @@
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="s1">    let span_err = span.metrics.get_path(&quot;errors&quot;, 0);</span>
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="s1">    let total_err = metrics.get_path(&quot;errors&quot;, 0);</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="s1">    eprint(&quot;Span &quot; + span.id + &quot;: +&quot; + span_err.to_string() +</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="s1">           &quot; errors (total: &quot; + total_err.to_string() + &quot;)&quot;);</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="s1">    eprint(`Span ${span.id}: +${span_err} errors (total: ${total_err})`);</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2677,9 +2672,8 @@
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    let span_err = span.metrics.get_path(&quot;errors&quot;, 0);</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    let total_err = metrics.get_path(&quot;errors&quot;, 0);</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    eprint(&quot;Span &quot; + span.id + &quot;: +&quot; + span_err.to_string() +</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">           &quot; errors (total: &quot; + total_err.to_string() + &quot;)&quot;);</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    eprint(`Span ${span.id}: +${span_err} errors (total: ${total_err})`);</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Span #0: +1 errors (total: 1)
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Span #1: +1 errors (total: 2)
@@ -2730,10 +2724,9 @@
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s1">    let total_rate = metrics.get_path(&quot;errors&quot;, 0) * 100 /</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s1">                     metrics.get_path(&quot;requests&quot;, 1);</span>
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s1">    if span_rate &gt; total_rate * 2 {</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="s1">      eprint(&quot;🚨 Spike in &quot; + span.id + &quot;: &quot; + span_rate.to_string() +</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="s1">             &quot;% (avg: &quot; + total_rate.to_string() + &quot;%)&quot;);</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="s1">    }</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="s1">      eprint(`🚨 Spike in ${span.id}: ${span_rate}% (avg: ${total_rate}%)`);</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="s1">    }</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2746,10 +2739,9 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    let total_rate = metrics.get_path(&quot;errors&quot;, 0) * 100 /</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">                     metrics.get_path(&quot;requests&quot;, 1);</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    if span_rate &gt; total_rate * 2 {</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      eprint(&quot;🚨 Spike in &quot; + span.id + &quot;: &quot; + span_rate.to_string() +</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">             &quot;% (avg: &quot; + total_rate.to_string() + &quot;%)&quot;);</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    }</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      eprint(`🚨 Spike in ${span.id}: ${span_rate}% (avg: ${total_rate}%)`);</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    }</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>🚨 Spike in #1: 33% (avg: 16%)
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>🚨 Spike in #3: 33% (avg: 16%)
@@ -2774,7 +2766,7 @@
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s1">    if meta.span_status == &quot;late&quot; {</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s1">      eprint(&quot;⚠️  Late event: &quot; + e.msg + &quot; at &quot; + e.ts);</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s1">      eprint(`⚠️  Late event: ${e.msg} at ${e.ts}`);</span>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="s1">    }</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(&quot;Window &quot; + span.id + &quot;: &quot; + span.size.to_string() + &quot; events&quot;)&#39;</span>
@@ -2789,7 +2781,7 @@
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    if meta.span_status == &quot;late&quot; {</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">      eprint(&quot;⚠️  Late event: &quot; + e.msg + &quot; at &quot; + e.ts);</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">      eprint(`⚠️  Late event: ${e.msg} at ${e.ts}`);</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    }</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(&quot;Window &quot; + span.id + &quot;: &quot; + span.size.to_string() + &quot; events&quot;)&#39;</span>
@@ -3088,7 +3080,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>// Pattern 1: Running commentary with context
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>let span_errors = span.metrics.get_path(&quot;errors&quot;, 0);
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>let total_errors = metrics.get_path(&quot;errors&quot;, 0);
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>eprint(&quot;+&quot; + span_errors.to_string() + &quot; errors (total: &quot; + total_errors.to_string() + &quot;)&quot;);
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>eprint(`+${span_errors} errors (total: ${total_errors})`);
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>// Pattern 2: Threshold alerts after warmup
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>let total_processed = metrics.get_path(&quot;total&quot;, 0);

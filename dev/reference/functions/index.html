@@ -5770,7 +5770,7 @@
 <h3 id="span-boundaries">Span Boundaries<a class="headerlink" href="#span-boundaries" title="Permanent link">&para;</a></h3>
 <p><code>span.start</code> and <code>span.end</code> expose the half-open window bounds as <code>DateTime</code> values. Count-based spans return <code>()</code> for both fields.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-127-1" name="__codelineno-127-1" href="#__codelineno-127-1"></a>if span.start != () {
-<a id="__codelineno-127-2" name="__codelineno-127-2" href="#__codelineno-127-2"></a>    print(&quot;Window: &quot; + span.start.to_string() + &quot; → &quot; + span.end.to_string());
+<a id="__codelineno-127-2" name="__codelineno-127-2" href="#__codelineno-127-2"></a>    print(`Window: ${span.start} → ${span.end}`);
 <a id="__codelineno-127-3" name="__codelineno-127-3" href="#__codelineno-127-3"></a>}
 </code></pre></div>
 <h3 id="span-size-and-events">Span Size and Events<a class="headerlink" href="#span-size-and-events" title="Permanent link">&para;</a></h3>

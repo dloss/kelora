@@ -1851,7 +1851,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-l<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;payments&quot; || e.message.contains(&quot;timeout&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(e.level + &quot;: &quot; + e.service + &quot; &quot; + e.message)&#39;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(`${e.level}: ${e.service} ${e.message}`)&#39;</span>
 </code></pre></div>
 <ul>
 <li>Use <code>-l warn,error,critical</code> when log levels are reliable and you want broad coverage.</li>
@@ -1868,7 +1868,7 @@
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">    let total = metrics.get_path(&quot;total&quot;, 0);</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    let errors = metrics.get_path(&quot;level|ERROR&quot;, 0);</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">    if total &gt; 0 &amp;&amp; errors * 100 / total &gt; 5 {</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">      eprint(&quot;ALERT: error rate &quot; + errors.to_string() + &quot;/&quot; + total.to_string());</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">      eprint(`ALERT: error rate ${errors}/${total}`);</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s1">      exit(1);</span>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s1">    }</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s1">  &#39;</span>
@@ -1882,7 +1882,7 @@
 <p>Direct alerts to stderr for on-call use, files for dashboards, or downstream commands.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-l<span class="w"> </span>critical<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;append_file(&quot;/tmp/critical.log&quot;, e.timestamp.to_string() + &quot; &quot; + e.service + &quot; &quot; + e.message + &quot;\n&quot;)&#39;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;append_file(&quot;/tmp/critical.log&quot;, `${e.timestamp} ${e.service} ${e.message}\n`)&#39;</span>
 </code></pre></div>
 <ul>
 <li>Use <code>append_file()</code> sparingly; it requires <code>--allow-fs-writes</code> and should point to writable locations.</li>
@@ -1919,7 +1919,7 @@
 <li><strong>Access log latency guard</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() &gt; 1.5&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;SLOW: &quot; + e.method + &quot; &quot; + e.path + &quot; &quot; + e.request_time + &quot;s&quot;)&#39;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(`SLOW: ${e.method} ${e.path} ${e.request_time}s`)&#39;</span>
 </code></pre></div></li>
 </ul>
 <h2 id="validate-before-paging-people">Validate Before Paging People<a class="headerlink" href="#validate-before-paging-people" title="Permanent link">&para;</a></h2>
