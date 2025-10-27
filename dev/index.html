@@ -1925,10 +1925,6 @@
 </div>
 </div>
 <p>See the <a href="quickstart/">Quickstart</a> for a step-by-step tour with full output.</p>
-<div class="admonition info">
-<p class="admonition-title">Performance Philosophy</p>
-<p>Kelora trades raw speed for simplicity—specialized tools like grep, jq, and qsv are often 5-100x faster for single tasks. <strong>Kelora shines</strong> for multi-format pipelines, complex transforms with 100+ built-in functions, and windowed analysis. See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for honest benchmarks.</p>
-</div>
 <h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Parse</strong> JSON, logfmt, syslog, CSV/TSV, Apache/Nginx logs, or custom formats</li>
@@ -1937,6 +1933,10 @@
 <li><strong>Analyze</strong> with built-in metrics - track counts, sums, averages, distributions</li>
 <li><strong>Output</strong> as logfmt, JSON, or CSV</li>
 </ul>
+<div class="admonition info">
+<p class="admonition-title">Performance Philosophy</p>
+<p>Kelora is quite slow. It's designed for development logs, debugging sessions, and incident investigations—not production archives. Specialized tools are often 5-100× faster. Kelora trades speed for convenience: one readable command instead of complex pipelines or custom scripts. See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for benchmarks.</p>
+</div>
 <h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
 <p>Kelora processes logs through a streaming pipeline with composable stages:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Input → Parse → --exec → --filter → --exec → --filter → ... → Output
