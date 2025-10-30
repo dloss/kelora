@@ -443,15 +443,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Examples
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#what-it-does" class="md-nav__link">
     <span class="md-ellipsis">
       What It Does
@@ -461,45 +452,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#get-started" class="md-nav__link">
     <span class="md-ellipsis">
-      How It Works
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Features
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      Install
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#learn-more" class="md-nav__link">
-    <span class="md-ellipsis">
-      Learn More
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#works-well-with" class="md-nav__link">
-    <span class="md-ellipsis">
-      Works Well With
+      Get Started
     </span>
   </a>
   
@@ -1691,15 +1646,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Examples
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#what-it-does" class="md-nav__link">
     <span class="md-ellipsis">
       What It Does
@@ -1709,45 +1655,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#get-started" class="md-nav__link">
     <span class="md-ellipsis">
-      How It Works
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Features
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      Install
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#learn-more" class="md-nav__link">
-    <span class="md-ellipsis">
-      Learn More
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#works-well-with" class="md-nav__link">
-    <span class="md-ellipsis">
-      Works Well With
+      Get Started
     </span>
   </a>
   
@@ -1790,54 +1700,20 @@
 </div>
 <p><img alt="Kelora hero demo" src="screenshots/hero.gif" />
 <em>Filtering noisy logs, parsing custom formats, and visualizing log levels</em></p>
-<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<p><strong>Spot slow or failing requests</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Output</label><label for="__tabbed_1_3">Log Data</label></div>
+<h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
+<p>Parse any log format, filter with expressions, transform with 100+ functions, track metrics, analyze in context with sliding windows.</p>
+<p><strong>Parse custom formats and extract structured data</strong> - No regex wrestling:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label><label for="__tabbed_1_2">Log Data</label></div>
 <div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-07-17T12:00:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status.to_int() &gt;= 500 || e.latency_ms.to_int() &gt; 1200&#39;</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-07-17T12:00:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status.to_int() &gt;= 500 || e.latency_ms.to_int() &gt; 1200&#39;</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ts=&#39;2024-07-17T12:00:04Z&#39; level=&#39;INFO&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=200 latency_ms=1450
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ts=&#39;2024-07-17T12:00:05Z&#39; level=&#39;ERROR&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=502 latency_ms=2100
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ts=2024-07-17T11:59:40Z level=INFO method=GET path=/docs status=200 latency_ms=280
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ts=2024-07-17T11:59:55Z level=INFO method=POST path=/checkout status=200 latency_ms=950
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ts=2024-07-17T12:00:01Z level=INFO method=GET path=/docs status=200 latency_ms=320
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>ts=2024-07-17T12:00:04Z level=INFO method=POST path=/checkout status=200 latency_ms=1450
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>ts=2024-07-17T12:00:05Z level=ERROR method=POST path=/checkout status=502 latency_ms=2100
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>ts=2024-07-17T12:00:07Z level=WARN method=GET path=/billing status=200 latency_ms=900
-</code></pre></div>
-</div>
-</div>
-</div>
-<p><strong>Parse custom rollout logs instantly</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command</label><label for="__tabbed_2_2">Output</label><label for="__tabbed_2_3">Log Data</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level service request_id *message&#39;</span><span class="w"> </span>examples/release_pipe.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--levels<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-F<span class="w"> </span>json
-</code></pre></div>
-</div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level service request_id *message&#39;</span><span class="w"> </span>examples/release_pipe.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--levels<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.merge(e.message.parse_kv())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:02&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;message&quot;:&quot;retrying payment status=SOFT_FAIL duration=890ms&quot;,&quot;request_id&quot;:&quot;req-92&quot;,&quot;service&quot;:&quot;checkout&quot;}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:06&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;final failure status=HARD_FAIL duration=1480ms cause=db_deadlock&quot;,&quot;request_id&quot;:&quot;req-93&quot;,&quot;service&quot;:&quot;checkout&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:02&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;message&quot;:&quot;retrying payment status=SOFT_FAIL duration=890ms&quot;,&quot;request_id&quot;:&quot;req-92&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;duration&quot;:&quot;890ms&quot;,&quot;payment&quot;:&quot;&quot;,&quot;retrying&quot;:&quot;&quot;,&quot;status&quot;:&quot;SOFT_FAIL&quot;}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:06&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;final failure status=HARD_FAIL duration=1480ms cause=db_deadlock&quot;,&quot;request_id&quot;:&quot;req-93&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;cause&quot;:&quot;db_deadlock&quot;,&quot;duration&quot;:&quot;1480ms&quot;,&quot;failure&quot;:&quot;&quot;,&quot;final&quot;:&quot;&quot;,&quot;status&quot;:&quot;HARD_FAIL&quot;}
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -1848,84 +1724,11 @@
 </div>
 </div>
 </div>
-<p><strong>Enrich JSON logs and mask secrets</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command</label><label for="__tabbed_3_2">Output</label><label for="__tabbed_3_3">Log Data</label></div>
+<p><strong>Detect error bursts with sliding windows</strong> - Analyze events in context:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/tenant_api.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.tenant = e.path.between(&quot;/tenants/&quot;, &quot;/&quot;); e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,tenant,ip,event<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--brief
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/tenant_api.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.tenant = e.path.between(&quot;/tenants/&quot;, &quot;/&quot;); e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,tenant,ip,event<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--brief
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2024-07-17T12:15:01Z alpha 203.0.X.X login
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2024-07-17T12:15:05Z alpha 203.0.X.X heartbeat
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>2024-07-17T12:15:10Z bravo 198.51.X.X charge_failed
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:15:01Z&quot;,&quot;path&quot;:&quot;/tenants/alpha/sessions/42&quot;,&quot;event&quot;:&quot;login&quot;,&quot;ip&quot;:&quot;203.0.113.10&quot;}
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:15:05Z&quot;,&quot;path&quot;:&quot;/tenants/alpha/sessions/42&quot;,&quot;event&quot;:&quot;heartbeat&quot;,&quot;ip&quot;:&quot;203.0.113.10&quot;}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:15:10Z&quot;,&quot;path&quot;:&quot;/tenants/bravo/payments&quot;,&quot;event&quot;:&quot;charge_failed&quot;,&quot;ip&quot;:&quot;198.51.100.24&quot;}
-</code></pre></div>
-</div>
-</div>
-</div>
-<p><strong>Count services in a stream</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command</label><label for="__tabbed_4_2">Output</label><label for="__tabbed_4_3">Log Data</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/services.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--metrics
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/services.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-07-17T12:00:00Z&#39; level=&#39;INFO&#39; service=&#39;checkout&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-07-17T12:00:01Z&#39; level=&#39;ERROR&#39; service=&#39;checkout&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-07-17T12:00:01Z&#39; level=&#39;INFO&#39; service=&#39;billing&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-07-17T12:00:02Z&#39; level=&#39;WARN&#39; service=&#39;search&#39;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>billing      = 1
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>checkout     = 2
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>search       = 1
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:00Z&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;level&quot;:&quot;INFO&quot;}
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:01Z&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;level&quot;:&quot;ERROR&quot;}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:01Z&quot;,&quot;service&quot;:&quot;billing&quot;,&quot;level&quot;:&quot;INFO&quot;}
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:02Z&quot;,&quot;service&quot;:&quot;search&quot;,&quot;level&quot;:&quot;WARN&quot;}
-</code></pre></div>
-</div>
-</div>
-</div>
-<p><strong>Detect error bursts with a sliding window</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="5:3"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><input id="__tabbed_5_3" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Command</label><label for="__tabbed_5_2">Output</label><label for="__tabbed_5_3">Log Data</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/deploy_tail.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let recent = window_values(window, &quot;level&quot;);</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">          if recent.filter(|lvl| lvl == &quot;ERROR&quot;).len() &gt;= 3 {</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">            eprint(&quot;burst detected at &quot; + e.timestamp);</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>-F<span class="w"> </span>none
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/deploy_tail.jsonl<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/deploy_tail.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let recent = window_values(window, &quot;level&quot;);</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          if recent.filter(|lvl| lvl == &quot;ERROR&quot;).len() &gt;= 3 {</span>
@@ -1947,63 +1750,11 @@
 </div>
 </div>
 </div>
-<p>See the <a href="quickstart/">Quickstart</a> for a step-by-step tour with full output.</p>
-<h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Parse</strong> JSON, logfmt, syslog, CSV/TSV, Apache/Nginx logs, or custom formats</li>
-<li><strong>Filter</strong> with Rhai expressions - keep events matching your conditions</li>
-<li><strong>Transform</strong> with 100+ built-in functions - enrich, redact, extract, restructure</li>
-<li><strong>Analyze</strong> with built-in metrics - track counts, sums, averages, distributions</li>
-<li><strong>Output</strong> as logfmt, JSON, or CSV</li>
-</ul>
-<div class="admonition info">
-<p class="admonition-title">Performance Philosophy</p>
-<p>Kelora is quite slow. It's designed for development logs, debugging sessions, and incident investigations—not production archives. Specialized tools are often 5-100× faster. Kelora trades speed for convenience: one readable command instead of complex pipelines or custom scripts. See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for benchmarks.</p>
-</div>
-<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
-<p>Kelora processes logs through a streaming pipeline with composable stages:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Input → Parse → --exec → --filter → --exec → --filter → ... → Output
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  ↓       ↓         ↓         ↓         ↓         ↓              ↓
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Files   JSON   transform  narrow   enrich    narrow        logfmt
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>stdin   syslog                                              JSON
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>.gz     custom                                              CSV
-</code></pre></div>
-<p>Each <code>--filter</code> and <code>--exec</code> runs in the order specified, passing events forward. Chain them in any sequence to build multi-stage processing logic. Read the <a href="concepts/pipeline-model/">Pipeline Model</a> for details.</p>
-<h2 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Resilient Processing</strong> - Skip bad lines automatically, continue processing</li>
-<li><strong>Parallel Mode</strong> - Process large archives using all CPU cores with <code>--parallel</code></li>
-<li><strong>Sliding Windows</strong> - Analyze events in context with <code>--window</code></li>
-<li><strong>100+ Functions</strong> - Rich built-in library for transformation and analysis</li>
-<li><strong>Format Conversion</strong> - Read any format, write any format</li>
-<li><strong>Metrics Tracking</strong> - Built-in counters, sums, averages, distributions</li>
-</ul>
-<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<p>Download from <strong><a href="https://github.com/dloss/kelora/releases">GitHub Releases</a></strong> (macOS, Linux, Windows) or:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
-</code></pre></div>
-<h2 id="learn-more">Learn More<a class="headerlink" href="#learn-more" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong><a href="quickstart/">Quickstart</a></strong> - 5-minute tour</li>
-<li><strong><a href="tutorials/">Tutorials</a></strong> - Step-by-step guides starting with <a href="tutorials/basics/">the basics</a></li>
-<li><strong><a href="how-to/find-errors-in-logs/">How-To</a></strong> - Solve specific problems</li>
-<li><strong><a href="concepts/pipeline-model/">Concepts</a></strong> - Understanding how Kelora works</li>
-<li><strong><a href="reference/functions/">Reference</a></strong> - Functions, formats, CLI options</li>
-</ul>
-<p>Run <code>kelora --help</code> for comprehensive command-line help screens, or browse the <a href="https://github.com/dloss/kelora/tree/main/examples">example files on GitHub</a>.</p>
-<h2 id="works-well-with">Works Well With<a class="headerlink" href="#works-well-with" title="Permanent link">&para;</a></h2>
-<p>Kelora focuses on normalising noisy logs into structured data. Reach for it when you need programmable filtering, enrichment, or windowed analytics in one streaming pipeline—and pair it with the tools below when you need deeper visualisation or post-processing:</p>
-<ul>
-<li><strong><a href="https://jqlang.github.io/jq/">jq</a></strong> — process Kelora's JSON output for complex transformations, filtering, or reformatting</li>
-<li><strong><a href="https://lnav.org/">lnav</a></strong> — explore Kelora's output in an interactive TUI with live filtering, histograms, and ad-hoc SQL queries</li>
-<li><strong><a href="https://github.com/jqnatividad/qsv">qsv</a></strong> — analyze Kelora's CSV output with statistical operations, joins, and aggregations</li>
-<li><strong><a href="https://www.sqlite.org/">SQLite</a>/<a href="https://duckdb.org/">DuckDB</a></strong> — load Kelora's CSV/JSON output into a database for SQL queries and reporting</li>
-<li><strong><a href="https://github.com/johnkerl/miller">miller</a></strong> — transform Kelora's CSV output for reshaping, aggregating, and format conversion</li>
-</ul>
-<div class="admonition tip">
-<p class="admonition-title">Tool Selection Guide</p>
-<p>Not sure which tool to use for your task? See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for honest benchmarks and a decision matrix comparing Kelora with grep, jq, awk, miller, and qsv.</p>
-</div>
+<h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
+<p><strong><a href="quickstart/">→ Quickstart (5 minutes)</a></strong> - Install and run your first commands</p>
+<p><strong><a href="tutorials/basics/">→ Tutorial: Basics (30 minutes)</a></strong> - Learn input formats, filtering, and output</p>
+<p><strong><a href="how-to/find-errors-in-logs/">→ How-To Guides</a></strong> - Solve specific problems</p>
+<p>For deeper understanding, see <a href="concepts/pipeline-model/">Concepts</a>. For complete reference, see <a href="reference/functions/">Functions</a>, <a href="reference/formats/">Formats</a>, and <a href="reference/cli-reference/">CLI options</a>.</p>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>Kelora is open source software licensed under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>.</p>
 

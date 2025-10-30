@@ -476,56 +476,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-the-examples" class="md-nav__link">
+  <a href="#three-essential-commands" class="md-nav__link">
     <span class="md-ellipsis">
-      Get the Examples
+      Three Essential Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three Essential Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-parse-and-display-structured-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Parse and display structured logs
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#parse-unstructured-logs" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-filter-events-and-select-fields" class="md-nav__link">
     <span class="md-ellipsis">
-      Parse Unstructured Logs
+      2. Filter events and select fields
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#filter-and-transform" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#3-track-metrics-across-events" class="md-nav__link">
     <span class="md-ellipsis">
-      Filter and Transform
+      3. Track metrics across events
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#track-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      Track Metrics
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#convert-between-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      Convert Between Formats
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      Common Patterns
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1711,56 +1699,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-the-examples" class="md-nav__link">
+  <a href="#three-essential-commands" class="md-nav__link">
     <span class="md-ellipsis">
-      Get the Examples
+      Three Essential Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Three Essential Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-parse-and-display-structured-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Parse and display structured logs
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#parse-unstructured-logs" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-filter-events-and-select-fields" class="md-nav__link">
     <span class="md-ellipsis">
-      Parse Unstructured Logs
+      2. Filter events and select fields
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#filter-and-transform" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#3-track-metrics-across-events" class="md-nav__link">
     <span class="md-ellipsis">
-      Filter and Transform
+      3. Track metrics across events
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#track-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      Track Metrics
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#convert-between-formats" class="md-nav__link">
-    <span class="md-ellipsis">
-      Convert Between Formats
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      Common Patterns
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1802,183 +1778,159 @@
 
 
 <h1 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h1>
-<p>Get started with Kelora in minutes. This guide shows real examples from parsing to advanced transformations.</p>
+<p>Get Kelora running in 5 minutes with three commands.</p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<p>Download the latest release from <a href="https://github.com/dloss/kelora/releases">GitHub Releases</a> or install via Cargo:</p>
+<p><a href="https://github.com/dloss/kelora/releases"><strong>Download</strong></a> the latest release from <a href="https://github.com/dloss/kelora">GitHub</a>, extract it and put it on your PATH. Or install via Cargo:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
 </code></pre></div>
-<h2 id="get-the-examples">Get the Examples<a class="headerlink" href="#get-the-examples" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># With git</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/dloss/kelora<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>kelora
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Without git</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>curl<span class="w"> </span>-L<span class="w"> </span>https://github.com/dloss/kelora/archive/refs/heads/main.zip<span class="w"> </span>-o<span class="w"> </span>kelora.zip<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>unzip<span class="w"> </span>kelora.zip<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nb">cd</span><span class="w"> </span>kelora-main
-</code></pre></div>
-<h2 id="parse-unstructured-logs">Parse Unstructured Logs<a class="headerlink" href="#parse-unstructured-logs" title="Permanent link">&para;</a></h2>
-<p>Turn raw web server logs into structured, queryable data:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Output</label></div>
+<h2 id="three-essential-commands">Three Essential Commands<a class="headerlink" href="#three-essential-commands" title="Permanent link">&para;</a></h2>
+<h3 id="1-parse-and-display-structured-logs">1. Parse and display structured logs<a class="headerlink" href="#1-parse-and-display-structured-logs" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span>-k<span class="w"> </span>ip,status,method,path<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>--take<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; level=&#39;INFO&#39; message=&#39;Application started&#39; service=&#39;api&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  version=&#39;1.2.3&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:05Z&#39; level=&#39;DEBUG&#39; message=&#39;Loading configuration&#39; service=&#39;api&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  config_file=&#39;/etc/app/config.yml&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; level=&#39;INFO&#39; message=&#39;Connection pool initialized&#39;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  service=&#39;database&#39; max_connections=50
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; level=&#39;WARN&#39; message=&#39;High memory usage detected&#39; service=&#39;api&#39;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  memory_percent=85
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span>-k<span class="w"> </span>ip,status,method,path<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Application started&quot;</span><span class="p">,</span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="s2">&quot;1.2.3&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:05Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Loading configuration&quot;</span><span class="p">,</span><span class="nt">&quot;config_file&quot;</span><span class="p">:</span><span class="s2">&quot;/etc/app/config.yml&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:10Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Connection pool initialized&quot;</span><span class="p">,</span><span class="nt">&quot;max_connections&quot;</span><span class="p">:</span><span class="mi">50</span><span class="p">}</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:01:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;High memory usage detected&quot;</span><span class="p">,</span><span class="nt">&quot;memory_percent&quot;</span><span class="p">:</span><span class="mi">85</span><span class="p">}</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:01:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Query timeout&quot;</span><span class="p">,</span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">5000</span><span class="p">}</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Request received&quot;</span><span class="p">,</span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="s2">&quot;/api/users&quot;</span><span class="p">,</span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="mi">123</span><span class="p">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:15Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;cache&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cache hit&quot;</span><span class="p">,</span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="s2">&quot;user:123&quot;</span><span class="p">,</span><span class="nt">&quot;ttl&quot;</span><span class="p">:</span><span class="mi">3600</span><span class="p">}</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Response sent&quot;</span><span class="p">,</span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">45</span><span class="p">}</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:03:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;auth&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Failed login attempt&quot;</span><span class="p">,</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;ip&quot;</span><span class="p">:</span><span class="s2">&quot;192.168.1.100&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:03:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;auth&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Account locked&quot;</span><span class="p">,</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;attempts&quot;</span><span class="p">:</span><span class="mi">5</span><span class="p">}</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:04:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cron job started&quot;</span><span class="p">,</span><span class="nt">&quot;job&quot;</span><span class="p">:</span><span class="s2">&quot;backup&quot;</span><span class="p">,</span><span class="nt">&quot;schedule&quot;</span><span class="p">:</span><span class="s2">&quot;0 2 * * *&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:05:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Running backup script&quot;</span><span class="p">,</span><span class="nt">&quot;script&quot;</span><span class="p">:</span><span class="s2">&quot;/usr/local/bin/backup.sh&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:10:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Backup completed&quot;</span><span class="p">,</span><span class="nt">&quot;size_mb&quot;</span><span class="p">:</span><span class="mi">1024</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">300000</span><span class="p">}</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:15:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;CRITICAL&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;disk&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Disk space critical&quot;</span><span class="p">,</span><span class="nt">&quot;partition&quot;</span><span class="p">:</span><span class="s2">&quot;/var&quot;</span><span class="p">,</span><span class="nt">&quot;free_gb&quot;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:16:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Service unavailable&quot;</span><span class="p">,</span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="s2">&quot;disk space&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:17:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;monitoring&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Alert sent&quot;</span><span class="p">,</span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="s2">&quot;slack&quot;</span><span class="p">,</span><span class="nt">&quot;severity&quot;</span><span class="p">:</span><span class="s2">&quot;high&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:20:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Disk cleanup initiated&quot;</span><span class="p">,</span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="s2">&quot;/var/log&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:25:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cleanup completed&quot;</span><span class="p">,</span><span class="nt">&quot;freed_gb&quot;</span><span class="p">:</span><span class="mi">10</span><span class="p">}</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:26:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Service resumed&quot;</span><span class="p">,</span><span class="nt">&quot;downtime_seconds&quot;</span><span class="p">:</span><span class="mi">600</span><span class="p">}</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;health&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Health check passed&quot;</span><span class="p">,</span><span class="nt">&quot;endpoints&quot;</span><span class="p">:[</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="s2">&quot;cache&quot;</span><span class="p">]}</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ip=&#39;52.127.35.227&#39; status=403 method=&#39;HEAD&#39; path=&#39;/harness/methodologies/unleash/methodologies&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ip=&#39;166.86.165.21&#39; status=201 method=&#39;PUT&#39; path=&#39;/channels/out-of-the-box/implement&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ip=&#39;24.83.53.204&#39; status=204 method=&#39;PATCH&#39; path=&#39;/markets&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ip=&#39;37.144.168.216&#39; status=201 method=&#39;PATCH&#39; path=&#39;/evolve/orchestrate&#39;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>ip=&#39;24.44.139.136&#39; status=400 method=&#39;GET&#39; path=&#39;/rich&#39;
-</code></pre></div>
 </div>
 </div>
 </div>
-<p>The <code>-f combined</code> parses Apache/NGINX access logs into fields. The <code>-k</code> flag selects which fields to display, and <code>-n</code> limits output. Kelora automatically extracts <code>ip</code>, <code>timestamp</code>, <code>method</code>, <code>path</code>, <code>status</code>, <code>user_agent</code>, and more from each line.</p>
-<h2 id="filter-and-transform">Filter and Transform<a class="headerlink" href="#filter-and-transform" title="Permanent link">&para;</a></h2>
-<p>Filter by HTTP status codes and add computed fields:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command</label><label for="__tabbed_2_2">Output</label></div>
+<p>Parse JSON logs and display them in a readable format.</p>
+<h3 id="2-filter-events-and-select-fields">2. Filter events and select fields<a class="headerlink" href="#2-filter-events-and-select-fields" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command</label><label for="__tabbed_2_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.error_type = if e.status &gt;= 500 { &quot;server&quot; } else { &quot;client&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-k<span class="w"> </span>ip,status,error_type,path<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-k<span class="w"> </span>timestamp,service,message
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; message=&#39;Query timeout&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:03:30Z&#39; service=&#39;auth&#39; message=&#39;Account locked&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:16:00Z&#39; service=&#39;api&#39; message=&#39;Service unavailable&#39;
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.error_type = if e.status &gt;= 500 { &quot;server&quot; } else { &quot;client&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-k<span class="w"> </span>ip,status,error_type,path<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Application started&quot;</span><span class="p">,</span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="s2">&quot;1.2.3&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:05Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Loading configuration&quot;</span><span class="p">,</span><span class="nt">&quot;config_file&quot;</span><span class="p">:</span><span class="s2">&quot;/etc/app/config.yml&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:10Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Connection pool initialized&quot;</span><span class="p">,</span><span class="nt">&quot;max_connections&quot;</span><span class="p">:</span><span class="mi">50</span><span class="p">}</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:01:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;High memory usage detected&quot;</span><span class="p">,</span><span class="nt">&quot;memory_percent&quot;</span><span class="p">:</span><span class="mi">85</span><span class="p">}</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:01:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Query timeout&quot;</span><span class="p">,</span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">5000</span><span class="p">}</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Request received&quot;</span><span class="p">,</span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="s2">&quot;/api/users&quot;</span><span class="p">,</span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="mi">123</span><span class="p">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:15Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;cache&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cache hit&quot;</span><span class="p">,</span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="s2">&quot;user:123&quot;</span><span class="p">,</span><span class="nt">&quot;ttl&quot;</span><span class="p">:</span><span class="mi">3600</span><span class="p">}</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Response sent&quot;</span><span class="p">,</span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">45</span><span class="p">}</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:03:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;auth&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Failed login attempt&quot;</span><span class="p">,</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;ip&quot;</span><span class="p">:</span><span class="s2">&quot;192.168.1.100&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:03:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;auth&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Account locked&quot;</span><span class="p">,</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;attempts&quot;</span><span class="p">:</span><span class="mi">5</span><span class="p">}</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:04:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cron job started&quot;</span><span class="p">,</span><span class="nt">&quot;job&quot;</span><span class="p">:</span><span class="s2">&quot;backup&quot;</span><span class="p">,</span><span class="nt">&quot;schedule&quot;</span><span class="p">:</span><span class="s2">&quot;0 2 * * *&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:05:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Running backup script&quot;</span><span class="p">,</span><span class="nt">&quot;script&quot;</span><span class="p">:</span><span class="s2">&quot;/usr/local/bin/backup.sh&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:10:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Backup completed&quot;</span><span class="p">,</span><span class="nt">&quot;size_mb&quot;</span><span class="p">:</span><span class="mi">1024</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">300000</span><span class="p">}</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:15:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;CRITICAL&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;disk&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Disk space critical&quot;</span><span class="p">,</span><span class="nt">&quot;partition&quot;</span><span class="p">:</span><span class="s2">&quot;/var&quot;</span><span class="p">,</span><span class="nt">&quot;free_gb&quot;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:16:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Service unavailable&quot;</span><span class="p">,</span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="s2">&quot;disk space&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:17:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;monitoring&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Alert sent&quot;</span><span class="p">,</span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="s2">&quot;slack&quot;</span><span class="p">,</span><span class="nt">&quot;severity&quot;</span><span class="p">:</span><span class="s2">&quot;high&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:20:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Disk cleanup initiated&quot;</span><span class="p">,</span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="s2">&quot;/var/log&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:25:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cleanup completed&quot;</span><span class="p">,</span><span class="nt">&quot;freed_gb&quot;</span><span class="p">:</span><span class="mi">10</span><span class="p">}</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:26:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Service resumed&quot;</span><span class="p">,</span><span class="nt">&quot;downtime_seconds&quot;</span><span class="p">:</span><span class="mi">600</span><span class="p">}</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;health&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Health check passed&quot;</span><span class="p">,</span><span class="nt">&quot;endpoints&quot;</span><span class="p">:[</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="s2">&quot;cache&quot;</span><span class="p">]}</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ip=&#39;52.127.35.227&#39; status=403 error_type=&#39;client&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  path=&#39;/harness/methodologies/unleash/methodologies&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ip=&#39;24.44.139.136&#39; status=400 error_type=&#39;client&#39; path=&#39;/rich&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ip=&#39;67.19.236.47&#39; status=404 error_type=&#39;client&#39; path=&#39;/next-generation/drive/turn-key/metrics&#39;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>ip=&#39;94.224.49.21&#39; status=406 error_type=&#39;client&#39; path=&#39;/vertical&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>ip=&#39;152.252.182.35&#39; status=502 error_type=&#39;server&#39; path=&#39;/experiences/action-items/best-of-breed&#39;
-</code></pre></div>
 </div>
 </div>
 </div>
-<p>The <code>--filter</code> expression keeps only error responses (4xx and 5xx). The <code>-e</code> flag adds a computed <code>error_type</code> field based on the status code.</p>
-<h2 id="track-metrics">Track Metrics<a class="headerlink" href="#track-metrics" title="Permanent link">&para;</a></h2>
-<p>Count requests by status code and track response sizes:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command</label><label for="__tabbed_3_2">Output</label></div>
+<p>Show only errors with specific fields.</p>
+<h3 id="3-track-metrics-across-events">3. Track metrics across events<a class="headerlink" href="#3-track-metrics-across-events" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command</label><label for="__tabbed_3_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status.to_string()); track_sum(&quot;total_bytes&quot;, e.bytes)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span>-m
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status.to_string()); track_sum(&quot;total_bytes&quot;, e.bytes)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span>-m
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--stats-only<span class="w"> </span>--metrics
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>100          = 1
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>200          = 3
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>201          = 4
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>203          = 2
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>204          = 3
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>205          = 2
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>301          = 3
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>304          = 2
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>400          = 3
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>403          = 5
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>404          = 2
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>406          = 2
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>416          = 2
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>500          = 1
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>501          = 1
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>502          = 1
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>503          = 2
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>504          = 1
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>total_bytes  = 1945341
-</code></pre></div>
-</div>
-</div>
-</div>
-<p>Use <code>track_count()</code>, <code>track_sum()</code>, <code>track_min()</code>, and <code>track_max()</code> to collect metrics. The <code>-F none</code> suppresses event output, <code>-m</code> displays metrics at the end.</p>
-<h2 id="convert-between-formats">Convert Between Formats<a class="headerlink" href="#convert-between-formats" title="Permanent link">&para;</a></h2>
-<p>Kelora converts between all supported formats. Some examples:</p>
-<p>Convert syslog to JSON:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command</label><label for="__tabbed_4_2">Output</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>CRITICAL     = 1
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>DEBUG        = 4
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ERROR        = 3
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>INFO         = 9
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>WARN         = 3
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora: Stats:
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Throughput: 11476 lines/s in 1ms
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Timestamp: auto-detected timestamp — parsed 20 of 20 detected events (100.0%).
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Keys seen: attempts,channel,config_file,downtime_seconds,duration_ms,endpoints,free_gb,freed_gb,ip,job,key,level,max_connections,memory_percent,message,method,partition,path,query,reason,schedule,script,service,severity,size_mb,status,target,timestamp,ttl,user_id,username,version
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/simple_syslog.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;ts&quot;:&quot;Oct 04 10:27:22&quot;,&quot;level&quot;:&quot;EMERG&quot;,&quot;severity&quot;:0,&quot;msg&quot;:&quot;user=alice action=login detail=\&quot;Authenticated via SSO\&quot; message=\&quot;User login accepted\&quot;&quot;,&quot;pri&quot;:96,&quot;facility&quot;:12,&quot;host&quot;:&quot;bernier5641&quot;,&quot;prog&quot;:&quot;dolore&quot;,&quot;pid&quot;:7276}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;ts&quot;:&quot;Oct 04 10:27:22&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;severity&quot;:3,&quot;msg&quot;:&quot;user=service-bot action=restart detail=\&quot;Process restarted automatically\&quot; message=\&quot;Service restarted\&quot;&quot;,&quot;pri&quot;:131,&quot;facility&quot;:16,&quot;host&quot;:&quot;gusikowski6748&quot;,&quot;prog&quot;:&quot;eaque&quot;,&quot;pid&quot;:4669}
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{&quot;ts&quot;:&quot;Oct 04 10:27:22&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;severity&quot;:4,&quot;msg&quot;:&quot;user=pager-duty action=acknowledge detail=\&quot;Acknowledged incident #4242\&quot; message=\&quot;Change request processed\&quot;&quot;,&quot;pri&quot;:132,&quot;facility&quot;:16,&quot;host&quot;:&quot;gerlach2033&quot;,&quot;prog&quot;:&quot;non&quot;,&quot;pid&quot;:4398}
-</code></pre></div>
-</div>
-</div>
-</div>
-<p>Convert web logs to CSV:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Command</label><label for="__tabbed_5_2">Output</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>-k<span class="w"> </span>ip,status,request<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>-k<span class="w"> </span>ip,status,request<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ip,status,request
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>120.180.198.77,403,GET /reintermediate/e-commerce/cross-platform HTTP/1.0
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>83.14.202.89,500,PUT /infrastructures/customized/portals/enhance HTTP/1.1
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>233.208.89.13,301,PUT /enterprise/iterate/integrate/exploit HTTP/2.0
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Application started&quot;</span><span class="p">,</span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="s2">&quot;1.2.3&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:05Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Loading configuration&quot;</span><span class="p">,</span><span class="nt">&quot;config_file&quot;</span><span class="p">:</span><span class="s2">&quot;/etc/app/config.yml&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:00:10Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Connection pool initialized&quot;</span><span class="p">,</span><span class="nt">&quot;max_connections&quot;</span><span class="p">:</span><span class="mi">50</span><span class="p">}</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:01:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;High memory usage detected&quot;</span><span class="p">,</span><span class="nt">&quot;memory_percent&quot;</span><span class="p">:</span><span class="mi">85</span><span class="p">}</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:01:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Query timeout&quot;</span><span class="p">,</span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="s2">&quot;SELECT * FROM users&quot;</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">5000</span><span class="p">}</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Request received&quot;</span><span class="p">,</span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="s2">&quot;/api/users&quot;</span><span class="p">,</span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="mi">123</span><span class="p">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:15Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;cache&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cache hit&quot;</span><span class="p">,</span><span class="nt">&quot;key&quot;</span><span class="p">:</span><span class="s2">&quot;user:123&quot;</span><span class="p">,</span><span class="nt">&quot;ttl&quot;</span><span class="p">:</span><span class="mi">3600</span><span class="p">}</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:02:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Response sent&quot;</span><span class="p">,</span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="mi">200</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">45</span><span class="p">}</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:03:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;auth&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Failed login attempt&quot;</span><span class="p">,</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;ip&quot;</span><span class="p">:</span><span class="s2">&quot;192.168.1.100&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:03:30Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;auth&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Account locked&quot;</span><span class="p">,</span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;attempts&quot;</span><span class="p">:</span><span class="mi">5</span><span class="p">}</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:04:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cron job started&quot;</span><span class="p">,</span><span class="nt">&quot;job&quot;</span><span class="p">:</span><span class="s2">&quot;backup&quot;</span><span class="p">,</span><span class="nt">&quot;schedule&quot;</span><span class="p">:</span><span class="s2">&quot;0 2 * * *&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:05:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Running backup script&quot;</span><span class="p">,</span><span class="nt">&quot;script&quot;</span><span class="p">:</span><span class="s2">&quot;/usr/local/bin/backup.sh&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:10:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;scheduler&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Backup completed&quot;</span><span class="p">,</span><span class="nt">&quot;size_mb&quot;</span><span class="p">:</span><span class="mi">1024</span><span class="p">,</span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="mi">300000</span><span class="p">}</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:15:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;CRITICAL&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;disk&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Disk space critical&quot;</span><span class="p">,</span><span class="nt">&quot;partition&quot;</span><span class="p">:</span><span class="s2">&quot;/var&quot;</span><span class="p">,</span><span class="nt">&quot;free_gb&quot;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">}</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:16:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Service unavailable&quot;</span><span class="p">,</span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="s2">&quot;disk space&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:17:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;WARN&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;monitoring&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Alert sent&quot;</span><span class="p">,</span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="s2">&quot;slack&quot;</span><span class="p">,</span><span class="nt">&quot;severity&quot;</span><span class="p">:</span><span class="s2">&quot;high&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:20:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Disk cleanup initiated&quot;</span><span class="p">,</span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="s2">&quot;/var/log&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:25:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;admin&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Cleanup completed&quot;</span><span class="p">,</span><span class="nt">&quot;freed_gb&quot;</span><span class="p">:</span><span class="mi">10</span><span class="p">}</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:26:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Service resumed&quot;</span><span class="p">,</span><span class="nt">&quot;downtime_seconds&quot;</span><span class="p">:</span><span class="mi">600</span><span class="p">}</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span><span class="p">,</span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="s2">&quot;health&quot;</span><span class="p">,</span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="s2">&quot;Health check passed&quot;</span><span class="p">,</span><span class="nt">&quot;endpoints&quot;</span><span class="p">:[</span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="s2">&quot;database&quot;</span><span class="p">,</span><span class="s2">&quot;cache&quot;</span><span class="p">]}</span>
 </code></pre></div>
 </div>
 </div>
 </div>
-<p>The <code>-f</code> flag specifies input format, <code>-F</code> specifies output format (we could have used <code>-J</code> as a shortcut for JSON). Gzipped files are automatically decompressed.</p>
-<h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Stream processing (tail -f, kubectl logs, etc.)</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>deployment/api<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-l<span class="w"> </span>error
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Multiple files - track which files have errors</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs/*.log<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Time-based filtering</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;10 minutes ago&quot;</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># Extract prefixes (Docker Compose, systemd, etc.)</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-f<span class="w"> </span>json
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># Auto-detect format and output brief values only</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>-k<span class="w"> </span>timestamp,level,message<span class="w"> </span>-b
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="c1"># Custom timestamp formats</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--ts-format<span class="w"> </span><span class="s2">&quot;%d/%b/%Y:%H:%M:%S&quot;</span><span class="w"> </span>--ts-field<span class="w"> </span>timestamp
-</code></pre></div>
+<p>Count events by log level.</p>
 <h2 id="get-help">Get Help<a class="headerlink" href="#get-help" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># More usage patterns</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai scripting guide</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># All built-in Rhai functions</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kelora<span class="w"> </span>--help-time<span class="w">         </span><span class="c1"># Timestamp format reference</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># More usage patterns</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai scripting guide</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># All built-in Rhai functions</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>--help-time<span class="w">         </span><span class="c1"># Timestamp format reference</span>
 </code></pre></div>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>You've seen Kelora in action. Now <strong>learn how it actually works</strong>:</p>
 <ul>
-<li><strong>Start with events</strong> — Practice accessing and mutating <code>e.field</code> values on JSON or logfmt samples. Then branch into <a href="../how-to/find-errors-in-logs/">How-To: Triage Production Errors</a>.</li>
-<li><strong>Explore parsers</strong> — Try <code>-f json</code>, <code>-f combined</code>, and <code>-f 'cols:...'</code>, then dig into the <a href="../reference/formats/">Input Formats reference</a>.</li>
-<li><strong>Layer scripts</strong> — Combine <code>--filter</code>, <code>--exec</code>, and <code>--keys</code> for enrichment. Deepen your skills with the <a href="../tutorials/scripting-transforms/">Scripting Transforms tutorial</a>.</li>
-<li><strong>Add metrics</strong> — Introduce <code>track_count</code>, <code>track_sum</code>, and <code>--metrics</code>, then read the <a href="../tutorials/metrics-and-tracking/">Metrics &amp; Tracking tutorial</a>.</li>
-<li><strong>Tune pipelines</strong> — Experiment with multi-stage workflows, <code>--begin</code>/<code>--end</code>, and configs; the <a href="../concepts/pipeline-model/">Pipeline Model concept</a> and <a href="../concepts/configuration-system/">Configuration System guide</a> explain the moving pieces.</li>
-<li><strong>Control output</strong> — Swap <code>-F</code> formats, use <code>-k</code>/<code>-K</code>, and convert timestamps. Reference the <a href="../reference/cli-reference/">CLI options</a> when you need exact flag behaviour.</li>
+<li><strong><a href="../tutorials/basics/">Tutorial: Basics</a></strong> - Comprehensive 30-minute guide explaining input formats (<code>-f</code>, <code>-j</code>), display options (<code>-k</code>, <code>-b</code>, <code>-c</code>), level filtering (<code>-l</code>, <code>-L</code>), output formats (<code>-F</code>, <code>-J</code>), and common workflows</li>
+<li><strong><a href="../tutorials/scripting-transforms/">Tutorial: Scripting Transforms</a></strong> - Write custom filters and transformations with Rhai</li>
+<li><strong><a href="../how-to/find-errors-in-logs/">How-To Guides</a></strong> - Solve specific problems like finding errors, parsing custom formats, and tracking metrics</li>
 </ul>
+<p>For format conversion, time filtering, metrics tracking, and more advanced features, start with the <a href="../tutorials/basics/">Tutorial: Basics</a>.</p>
 
 
 
