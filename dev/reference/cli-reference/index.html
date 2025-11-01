@@ -4863,7 +4863,7 @@
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>custom.log<span class="w">  </span><span class="c1"># `ts` is auto-detected as a timestamp</span>
 </code></pre></div></p>
 <h4 id="-j"><code>-j</code><a class="headerlink" href="#-j" title="Permanent link">&para;</a></h4>
-<p>Shortcut for <code>-f json</code>.</p>
+<p>Shortcut for <code>-f json</code>. Only affects input parsing. For JSON output, use <code>-J</code> or <code>-F json</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.jsonl
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># Equivalent to: kelora -f json app.jsonl</span>
 </code></pre></div>
@@ -4967,9 +4967,19 @@
 </code></pre></div>
 <h3 id="multi-line-events">Multi-line Events<a class="headerlink" href="#multi-line-events" title="Permanent link">&para;</a></h3>
 <h4 id="-m-multiline-strategy"><code>-M, --multiline &lt;STRATEGY&gt;</code><a class="headerlink" href="#-m-multiline-strategy" title="Permanent link">&para;</a></h4>
-<p>Multi-line event detection strategy. See <code>--help-multiline</code> for details.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-M<span class="w"> </span>json<span class="w"> </span>app.log<span class="w">              </span><span class="c1"># JSON events across lines</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;^\\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Events start with date</span>
+<p>Multi-line event detection strategy. Value format: <code>&lt;strategy&gt;[:key=value[:key=value...]]</code>. Supported strategies:</p>
+<ul>
+<li><code>timestamp</code> — optional <code>format=</code> hint (e.g., <code>timestamp:format=%Y-%m-%d %H-%M-%S</code>)<br />
+<em>(Literal <code>:</code> characters in the format string are not supported yet.)</em></li>
+<li><code>indent</code></li>
+<li><code>regex</code> — requires <code>match=REGEX</code>, optional <code>end=REGEX</code></li>
+<li><code>all</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-M<span class="w"> </span>all<span class="w"> </span>config.json<span class="w">                        </span><span class="c1"># Entire input as one event</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kelora<span class="w"> </span>-M<span class="w"> </span>timestamp<span class="w"> </span>app.log<span class="w">                      </span><span class="c1"># Auto-detect timestamp headers</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;timestamp:format=%Y-%m-%d %H-%M-%S&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;regex:match=^\\d{4}-&#39;</span><span class="w"> </span>app.log<span class="w">         </span><span class="c1"># Start pattern only</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>kelora<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;regex:match=^START:end=^END$&#39;</span><span class="w"> </span>app.log<span class="w"> </span><span class="c1"># Start + end patterns</span>
 </code></pre></div>
 <h3 id="prefix-extraction">Prefix Extraction<a class="headerlink" href="#prefix-extraction" title="Permanent link">&para;</a></h3>
 <h4 id="-extract-prefix-field"><code>--extract-prefix &lt;FIELD&gt;</code><a class="headerlink" href="#-extract-prefix-field" title="Permanent link">&para;</a></h4>
@@ -5114,7 +5124,7 @@
 <p>Include only events with specified log levels (case-insensitive). Every occurrence runs exactly where it appears in the CLI, so you can place <code>-l</code> before heavy <code>--exec</code> stages (to prune work early) or repeat it later after you derive a new level.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>app.log
 <a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,warn,critical<span class="w"> </span>app.log
-<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.fallback_level = &quot;WARN&quot;&#39;</span><span class="w"> </span>--levels<span class="w"> </span>warn<span class="w"> </span>log.txt<span class="w">  </span><span class="c1"># second levels runs after exec</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;if !e.has_field(&quot;level&quot;) { e.level = &quot;WARN&quot; }&#39;</span><span class="w"> </span>--levels<span class="w"> </span>warn<span class="w"> </span>log.txt<span class="w">  </span><span class="c1"># Add level, then filter</span>
 </code></pre></div>
 <h4 id="-l-exclude-levels-levels"><code>-L, --exclude-levels &lt;LEVELS&gt;</code><a class="headerlink" href="#-l-exclude-levels-levels" title="Permanent link">&para;</a></h4>
 <p>Exclude events with specified log levels (case-insensitive). Like <code>--levels</code>, you may repeat this flag to drop different levels at multiple points in the pipeline.</p>

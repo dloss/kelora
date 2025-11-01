@@ -2479,10 +2479,10 @@
 <h3 id="section-selection">Section Selection<a class="headerlink" href="#section-selection" title="Permanent link">&para;</a></h3>
 <p>Extract specific sections from logs based on start/end markers:</p>
 <p><strong>Flags:</strong>
-- <code>--section-start &lt;REGEX&gt;</code> - Begin section (default: exclude marker)
-- <code>--section-from &lt;REGEX&gt;</code> - Begin section (include marker)
-- <code>--section-through &lt;REGEX&gt;</code> - End section (include marker)
-- <code>--section-before &lt;REGEX&gt;</code> - End section (exclude marker)
+- <code>--section-after &lt;REGEX&gt;</code> - Begin section (exclude marker line)
+- <code>--section-from &lt;REGEX&gt;</code> - Begin section (include marker line)
+- <code>--section-through &lt;REGEX&gt;</code> - End section (include marker line)
+- <code>--section-before &lt;REGEX&gt;</code> - End section (exclude marker line)
 - <code>--max-sections &lt;N&gt;</code> - Limit number of sections</p>
 <p><strong>State Machine:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>NotStarted → (match start) → InSection → (match end) → BetweenSections → ...
@@ -2497,24 +2497,24 @@
 <p>Detects event boundaries to combine multiple lines into single events <strong>before parsing</strong>.</p>
 <p><strong>Four Strategies:</strong></p>
 <p><strong>1. Timestamp Strategy</strong> (auto-detect timestamp headers)
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--multiline<span class="w"> </span>timestamp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-M<span class="w"> </span>timestamp
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;timestamp:format=%Y-%m-%d %H-%M-%S&#39;</span>
 </code></pre></div>
 Detects lines starting with timestamps as new events. Continuation lines (stack traces, wrapped messages) are appended to current event.</p>
 <p><strong>2. Indent Strategy</strong> (whitespace continuation)
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--multiline<span class="w"> </span>indent
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-M<span class="w"> </span>indent
 </code></pre></div>
 Lines starting with whitespace are continuations of previous event.</p>
 <p><strong>3. Regex Strategy</strong> (custom patterns)
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>--multiline<span class="w"> </span>regex<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>--multiline-start<span class="w"> </span><span class="s1">&#39;^\[&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span>--multiline-end<span class="w"> </span><span class="s1">&#39;^\[&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;regex:match=^\[&#39;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;regex:match=^\[:end=^\[&#39;</span>
 </code></pre></div>
-Define custom start/end patterns for event boundaries.</p>
+Define custom start/end patterns for event boundaries using <code>match=</code> (required) and <code>end=</code> (optional) segments within the <code>-M</code> argument.</p>
 <p><strong>4. All Strategy</strong> (entire input as one event)
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>config.json<span class="w"> </span>--multiline<span class="w"> </span>all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>config.json<span class="w"> </span>-M<span class="w"> </span>all
 </code></pre></div>
 Buffers entire input as single event (use for structured files).</p>
+<p><em>Note:</em> The current CLI treats <code>:</code> as an option separator inside the <code>-M</code> value. For regex patterns, encode literal colons (for example <code>\x3A</code>). Timestamp hints that require <code>:</code> currently need pre-normalised input or a regex-based strategy.</p>
 <p><strong>Multiline Timeout:</strong>
 - Sequential mode: Flush incomplete events after timeout (default: 200ms)
 - Parallel mode: Flush at batch boundaries (no timeout)</p>
@@ -2531,7 +2531,8 @@ Buffers entire input as single event (use for structured files).</p>
 <p><strong>User-controlled stages execute exactly where you place them on the CLI:</strong></p>
 <ul>
 <li><code>--filter &lt;EXPR&gt;</code> – Boolean filter (true = keep, false = skip)</li>
-<li><code>--levels/-L &lt;LIST&gt;</code> – Include or exclude log levels (case-insensitive, repeatable)</li>
+<li><code>--levels/-l &lt;LIST&gt;</code> – Include log levels (case-insensitive, repeatable)</li>
+<li><code>--exclude-levels/-L &lt;LIST&gt;</code> – Exclude log levels (case-insensitive, repeatable)</li>
 <li><code>--exec &lt;SCRIPT&gt;</code> – Transform/process event</li>
 <li><code>--exec-file &lt;PATH&gt;</code> – Execute script from file (alias: <code>-E</code>)</li>
 </ul>
@@ -2546,11 +2547,11 @@ Buffers entire input as single event (use for structured files).</p>
 </code></pre></div></p>
 <p>Each stage processes the output of the previous stage sequentially.</p>
 <h3 id="complete-stage-ordering">Complete Stage Ordering<a class="headerlink" href="#complete-stage-ordering" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>CLI-ordered stages</strong> – <code>--filter</code>, <code>--levels</code>/<code>--exclude-levels</code>, <code>--exec</code>, <code>--exec-file</code></li>
-<li><strong>Timestamp filtering</strong> – <code>--since</code>, <code>--until</code></li>
-<li><strong>Key filtering</strong> – <code>--keys</code>, <code>--exclude-keys</code></li>
-</ol>
+<p><strong>User-controlled stages</strong> (run in the order you specify them on the CLI):
+1. <code>--filter</code>, <code>--levels</code>, <code>--exclude-levels</code>, <code>--exec</code>, <code>--exec-file</code></p>
+<p><strong>Fixed-position filters</strong> (always run after user-controlled stages, regardless of CLI order):
+2. <strong>Timestamp filtering</strong> – <code>--since</code>, <code>--until</code>
+3. <strong>Key filtering</strong> – <code>--keys</code>, <code>--exclude-keys</code></p>
 <p>Place <code>--levels</code> before heavy transforms to prune work early, or add another <code>--levels</code> after a script if you synthesise a level field there.</p>
 <h3 id="span-processing">Span Processing<a class="headerlink" href="#span-processing" title="Permanent link">&para;</a></h3>
 <p>Groups events into spans for aggregation:</p>
@@ -2561,7 +2562,7 @@ Buffers entire input as single event (use for structured files).</p>
 Closes span every N events that pass filters.</p>
 <p><strong>Time-based Spans:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--span-close<span class="w"> </span><span class="s1">&#39;track_sum(&quot;requests&quot;, meta.span_event_count)&#39;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--span-close<span class="w"> </span><span class="s1">&#39;track_sum(&quot;requests&quot;, span.size)&#39;</span>
 </code></pre></div>
 Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <p><strong>Span Processing Flow:</strong>
@@ -2579,7 +2580,7 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;print(&quot;Starting analysis&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Services seen: &quot; + metrics.count.len())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Services seen: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <p>In parallel mode:
@@ -2669,20 +2670,20 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_bytes&quot;, e.bytes)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user_id)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">    </span>--metrics
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user_id)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <p><strong>Available Functions:</strong>
 - <code>track_count(key)</code> - Increment counter
-- <code>track_inc(key, value)</code> - Add to counter
 - <code>track_sum(key, value)</code> - Sum values
-- <code>track_avg(key, value)</code> - Calculate average
-- <code>track_unique(key, value)</code> - Collect unique values</p>
+- <code>track_min(key, value)</code> - Track minimum value
+- <code>track_max(key, value)</code> - Track maximum value
+- <code>track_unique(key, value)</code> - Collect unique values
+- <code>track_bucket(key, bucket)</code> - Track values in buckets</p>
 <p><strong>Access in --end stage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.count.len())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 <p><strong>Output:</strong>
@@ -2808,11 +2809,11 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Good: Cheap filters first</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span>--levels<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.has_matches(r&quot;expensive.*regex&quot;)&#39;</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.matches(r&quot;expensive.*regex&quot;)&#39;</span>
 <a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>
 <a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="c1"># Less efficient: Expensive filter on all events</span>
 <a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.has_matches(r&quot;expensive.*regex&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.matches(r&quot;expensive.*regex&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="w">    </span>--levels<span class="w"> </span>error
 </code></pre></div></p>
 <p><strong>Use --keys to reduce output processing:</strong>

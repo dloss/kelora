@@ -2844,7 +2844,7 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <li>Assigning <code>()</code> to a field removes it from the event</li>
 <li>Missing fields return <code>()</code> when accessed</li>
 <li><code>track_*()</code> functions silently skip <code>()</code> values</li>
-<li>Use <code>.or_unit()</code> to convert empty values (strings, arrays, maps) to <code>()</code> for conditional field assignment</li>
+<li>Use <code>.or_empty()</code> to convert empty values (strings, arrays, maps) to <code>()</code> for conditional field assignment</li>
 </ul>
 <h2 id="field-access-patterns">Field Access Patterns<a class="headerlink" href="#field-access-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="direct-access">Direct Access<a class="headerlink" href="#direct-access" title="Permanent link">&para;</a></h3>
@@ -2965,47 +2965,47 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 </code></pre></div>
 <p>Removed fields won't appear in output.</p>
 <h3 id="conditional-field-assignment">Conditional Field Assignment<a class="headerlink" href="#conditional-field-assignment" title="Permanent link">&para;</a></h3>
-<p>Use <code>.or_unit()</code> to conditionally assign fields based on empty values. It works with strings, arrays, and maps:</p>
+<p>Use <code>.or_empty()</code> to conditionally assign fields based on empty values. It works with strings, arrays, and maps:</p>
 <p><strong>String extraction:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Only assign field if extraction succeeds
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.user = e.message.after(&quot;User:&quot;).or_unit()
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.user = e.message.after(&quot;User:&quot;).or_empty()
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>// If &quot;User:&quot; not found → empty string → Unit → field removed
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.code = e.error.extract_re(r&quot;ERR-(\d+)&quot;, 1).or_unit()
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.code = e.error.extract_re(r&quot;ERR-(\d+)&quot;, 1).or_empty()
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>// If regex doesn&#39;t match → empty string → Unit → field removed
 </code></pre></div></p>
 <p><strong>Array filtering:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Remove field if array is empty
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>e.tags = e.tags.or_unit()
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>e.tags = e.tags.or_empty()
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>// If tags is [] → Unit → field removed
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>// Only track events with items
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>track_unique(&quot;has_items&quot;, e.items.or_unit())
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>track_unique(&quot;has_items&quot;, e.items.or_empty())
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>// Skips events where items is [] or ()
 </code></pre></div></p>
 <p><strong>Map/object filtering:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Remove field if map is empty
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>e.metadata = e.parse_json().or_unit()
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>e.metadata = e.parse_json().or_empty()
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>// If parsed JSON is {} → Unit → field removed
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>// Only assign config if it has values
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>e.config = e.settings.or_unit()
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>e.config = e.settings.or_empty()
 <a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>// If settings is #{} → Unit → field removed
 </code></pre></div></p>
 <p><strong>Combined with tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>e.extracted = e.text.after(&quot;prefix:&quot;).or_unit()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>e.extracted = e.text.after(&quot;prefix:&quot;).or_empty()
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>track_unique(&quot;values&quot;, e.extracted)  // Only tracks non-empty values
 </code></pre></div></p>
-<p>The <code>.or_unit()</code> method converts empty values (<code>""</code>, <code>[]</code>, <code>#{}</code>) to <code>()</code>, enabling clean conditional field creation without explicit <code>if</code> statements.</p>
+<p>The <code>.or_empty()</code> method converts empty values (<code>""</code>, <code>[]</code>, <code>#{}</code>) to <code>()</code>, enabling clean conditional field creation without explicit <code>if</code> statements.</p>
 <p><strong>Pattern comparison:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>// Without .or_unit() - verbose
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>// Without .or_empty() - verbose
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>let extracted = e.message.after(&quot;User:&quot;)
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>if extracted != &quot;&quot; {
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    e.user = extracted
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>}
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>// With .or_unit() - concise
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>e.user = e.message.after(&quot;User:&quot;).or_unit()
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>// With .or_empty() - concise
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>e.user = e.message.after(&quot;User:&quot;).or_empty()
 </code></pre></div>
 <h3 id="remove-entire-event">Remove Entire Event<a class="headerlink" href="#remove-entire-event" title="Permanent link">&para;</a></h3>
 <p>Clear all fields to filter out the event:</p>
@@ -3170,8 +3170,8 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <h3 id="conditional-extraction-and-tracking">Conditional Extraction and Tracking<a class="headerlink" href="#conditional-extraction-and-tracking" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Extract and track only when pattern exists</span>
 <a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user = e.message.after(&quot;User:&quot;).or_unit()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1).or_unit()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user = e.message.after(&quot;User:&quot;).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;error_codes&quot;, e.code)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="w">    </span>--metrics

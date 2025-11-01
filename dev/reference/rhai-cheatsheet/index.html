@@ -2249,16 +2249,17 @@
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>// Field existence checking
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>&quot;field&quot; in e                          // Check top-level field exists
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>e.has_path(&quot;user.role&quot;)               // Check nested path exists
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>// Safe field access with defaults
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>e.get_path(&quot;user.role&quot;, &quot;guest&quot;)      // Get nested with fallback
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>e.get_path(&quot;scores[0]&quot;, 0)            // Works with array paths
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>// Field removal
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>e.password = ()                       // Remove field (unit assignment)
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>e.ssn = ()                            // Remove another field
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>e = ()                                // Remove entire event (filtered out)
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>e.has(&quot;field&quot;)                        // True only if value not ()
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>e.has_path(&quot;user.role&quot;)               // Check nested path exists
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>// Safe field access with defaults
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>e.get_path(&quot;user.role&quot;, &quot;guest&quot;)      // Get nested with fallback
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>e.get_path(&quot;scores[0]&quot;, 0)            // Works with array paths
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>// Field removal
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>e.password = ()                       // Remove field (unit assignment)
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>e.ssn = ()                            // Remove another field
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>e = ()                                // Remove entire event (filtered out)
 </code></pre></div>
 <h2 id="array-map-operations">Array &amp; Map Operations<a class="headerlink" href="#array-map-operations" title="Permanent link">&para;</a></h2>
 <p>JSON arrays become native Rhai arrays with full functionality:</p>
