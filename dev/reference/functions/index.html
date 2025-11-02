@@ -2981,9 +2981,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#window_valuesfield-window_numbersfield" class="md-nav__link">
+  <a href="#windowpluckfield-windowpluck_as_numsfield" class="md-nav__link">
     <span class="md-ellipsis">
-      window_values(field) / window_numbers(field)
+      window.pluck(field) / window.pluck_as_nums(field)
     </span>
   </a>
   
@@ -4869,9 +4869,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#window_valuesfield-window_numbersfield" class="md-nav__link">
+  <a href="#windowpluckfield-windowpluck_as_numsfield" class="md-nav__link">
     <span class="md-ellipsis">
-      window_values(field) / window_numbers(field)
+      window.pluck(field) / window.pluck_as_nums(field)
     </span>
   </a>
   
@@ -5883,10 +5883,10 @@
 <p>Get type name as string.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-118-1" name="__codelineno-118-1" href="#__codelineno-118-1"></a>e.value_type = type_of(e.value)                       // &quot;string&quot;, &quot;int&quot;, &quot;array&quot;, etc.
 </code></pre></div>
-<h4 id="window_valuesfield-window_numbersfield"><code>window_values(field)</code> / <code>window_numbers(field)</code><a class="headerlink" href="#window_valuesfield-window_numbersfield" title="Permanent link">&para;</a></h4>
-<p>Get field values from current window (requires <code>--window</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-119-1" name="__codelineno-119-1" href="#__codelineno-119-1"></a>let recent_statuses = window_values(&quot;status&quot;)
-<a id="__codelineno-119-2" name="__codelineno-119-2" href="#__codelineno-119-2"></a>let recent_times = window_numbers(&quot;response_time&quot;)
+<h4 id="windowpluckfield-windowpluck_as_numsfield"><code>window.pluck(field)</code> / <code>window.pluck_as_nums(field)</code><a class="headerlink" href="#windowpluckfield-windowpluck_as_numsfield" title="Permanent link">&para;</a></h4>
+<p>Extract field values from the current window array (requires <code>--window</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-119-1" name="__codelineno-119-1" href="#__codelineno-119-1"></a>let recent_statuses = window.pluck(&quot;status&quot;)
+<a id="__codelineno-119-2" name="__codelineno-119-2" href="#__codelineno-119-2"></a>let recent_times = window.pluck_as_nums(&quot;response_time&quot;)
 <a id="__codelineno-119-3" name="__codelineno-119-3" href="#__codelineno-119-3"></a>e.avg_time = recent_times.reduce(|s, x| s + x, 0) / recent_times.len()
 </code></pre></div>
 <hr />

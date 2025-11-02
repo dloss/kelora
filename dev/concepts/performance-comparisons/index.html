@@ -2760,7 +2760,7 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># With Kelora - built-in windows</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.jsonl<span class="w"> </span>--window<span class="w"> </span><span class="m">60</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let errors = window_values(window, &quot;level&quot;)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let errors = window.pluck(&quot;level&quot;)</span>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="s1">            .filter(|x| x == &quot;ERROR&quot;);</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="s1">          if errors.len() &gt;= 3 {</span>
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="s1">            eprint(&quot;Burst at &quot; + e.timestamp)</span>

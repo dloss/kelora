@@ -5092,8 +5092,8 @@
 </code></pre></div>
 <h3 id="window-functions">Window Functions<a class="headerlink" href="#window-functions" title="Permanent link">&para;</a></h3>
 <h4 id="-window-size"><code>--window &lt;SIZE&gt;</code><a class="headerlink" href="#-window-size" title="Permanent link">&para;</a></h4>
-<p>Enable sliding window of N+1 recent events. Required for <code>window_*()</code> functions.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.recent_statuses = window_values(&quot;status&quot;)&#39;</span><span class="w"> </span>app.log
+<p>Enable sliding window of N+1 recent events. The window is exposed as the <code>window</code> array, so you can call helpers like <code>window.pluck()</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.recent_statuses = window.pluck(&quot;status&quot;)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="timestamp-conversion">Timestamp Conversion<a class="headerlink" href="#timestamp-conversion" title="Permanent link">&para;</a></h3>
 <h4 id="-convert-ts-fields"><code>--convert-ts &lt;FIELDS&gt;</code><a class="headerlink" href="#-convert-ts-fields" title="Permanent link">&para;</a></h4>

@@ -2678,7 +2678,7 @@
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Stream logs from previous container with spike detection</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>pod-name<span class="w"> </span>--previous<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.recent_errors = window_values(&quot;level&quot;).filter(|x| x == &quot;ERROR&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.recent_errors = window.pluck(&quot;level&quot;).filter(|x| x == &quot;ERROR&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.recent_errors &gt; 5&#39;</span><span class="w">  </span><span class="c1"># Alert on error spikes</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Multi-pod log aggregation with pod name extraction</span>
@@ -3119,7 +3119,7 @@
 <a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a><span class="c1"># Spike detection with window functions</span>
 <a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.recent_500s = window_values(&quot;status&quot;).filter(|x| x &gt;= 500).len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.recent_500s = window.pluck(&quot;status&quot;).filter(|x| x &gt;= 500).len()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.recent_500s &gt; 5&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-24" name="__codelineno-25-24" href="#__codelineno-25-24"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;🚨 Error spike detected: &quot; + e.recent_500s.to_string() + &quot; 5xx in last 20 requests&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a><span class="w">    </span>-qq
@@ -3134,7 +3134,7 @@
 - Parsing structured formats (<code>parse_url()</code>, <code>parse_kv()</code>, <code>parse_json()</code>, etc.)
 - Aggregation and counting (<code>track_count()</code>, <code>track_sum()</code>, <code>track_bucket()</code>)
 - Array operations (<code>sorted()</code>, <code>filter()</code>, <code>map()</code>, <code>percentile()</code>)
-- Window-based analysis (<code>--window</code> with <code>window_values()</code>)
+- Window-based analysis (<code>--window</code> with <code>window.pluck()</code>)
 - Time-windowed aggregation (<code>--span</code> with <code>--span-close</code>)
 - Multi-line event detection (<code>-M timestamp</code>, <code>-M regex:...</code>)
 - Section extraction (<code>--section-from</code>, <code>--section-before</code>)</p>
