@@ -478,6 +478,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#development-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development Approach
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1713,6 +1722,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#development-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Development Approach
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1737,7 +1755,7 @@
 <p>Parse messy logs into structured events, then filter, transform, and analyze them with embedded <a href="https://rhai.rs">Rhai</a> scripting.</p>
 <div class="admonition note">
 <p class="admonition-title">Development Status</p>
-<p>Pre-1.0 software using AI-generated code. Validated through automated testing, not manual review. Breaking changes may occur without migration paths. Backed by 770+ tests plus cargo-audit/deny; see the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> for details.</p>
+<p>Pre-1.0 tool generated entirely by AI agents. Validated by a large test suite and Rust security tools; see <a href="#development-approach">Development Approach</a> and the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before relying on it in production. APIs might change without notice before v1.0.</p>
 </div>
 <p><img alt="Kelora hero demo" src="screenshots/hero.gif" />
 <em>Filtering noisy logs, parsing custom formats, and visualizing log levels</em></p>
@@ -1765,28 +1783,32 @@
 </div>
 </div>
 </div>
-<p><strong>Detect error bursts with sliding windows</strong> - Analyze events in context:</p>
+<p><strong>Enrich events with recent context</strong> - Add error context from sliding window:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/deploy_tail.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let recent = window_values(window, &quot;level&quot;);</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          if recent.filter(|lvl| lvl == &quot;ERROR&quot;).len() &gt;= 3 {</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">            eprint(&quot;burst detected at &quot; + e.timestamp);</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>-F<span class="w"> </span>none
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_errors.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let err = window.filter(|x| x.level == &quot;ERROR&quot;);</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          if err.len() &gt; 0 { e.ctx = err[0].error; }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,endpoint,ctx<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>-F<span class="w"> </span>logfmt
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>burst detected at 2024-07-17T12:20:03Z
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>burst detected at 2024-07-17T12:20:05Z
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-07-17T12:00:00Z endpoint=/health
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=2024-07-17T12:00:05Z endpoint=/api/data ctx=&quot;database timeout&quot;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=2024-07-17T12:00:10Z endpoint=/api/users ctx=&quot;database timeout&quot;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=2024-07-17T12:00:15Z endpoint=/api/posts ctx=&quot;database timeout&quot;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=2024-07-17T12:00:20Z endpoint=/api/export ctx=&quot;service unavailable&quot;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=2024-07-17T12:00:25Z endpoint=/health ctx=&quot;service unavailable&quot;
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:00Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;timeout&quot;,&quot;latency_ms&quot;:2100}
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:01Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;message&quot;:&quot;ok&quot;,&quot;latency_ms&quot;:600}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:02Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;timeout&quot;,&quot;latency_ms&quot;:2150}
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:03Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;timeout&quot;,&quot;latency_ms&quot;:2200}
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:20:05Z&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;message&quot;:&quot;retrying&quot;,&quot;latency_ms&quot;:1400}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:00Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/health&quot;,&quot;status&quot;:200}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:05Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/data&quot;,&quot;status&quot;:500,&quot;error&quot;:&quot;database timeout&quot;}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:10Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/api/users&quot;,&quot;status&quot;:200}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:15Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/api/posts&quot;,&quot;status&quot;:200}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:20Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/export&quot;,&quot;status&quot;:503,&quot;error&quot;:&quot;service unavailable&quot;}
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:25Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/health&quot;,&quot;status&quot;:200}
 </code></pre></div>
 </div>
 </div>
@@ -1800,6 +1822,8 @@
 <p>For deeper understanding, see <a href="concepts/pipeline-model/">Concepts</a>. For complete reference, see <a href="reference/functions/">Functions</a>, <a href="reference/formats/">Formats</a>, and <a href="reference/cli-reference/">CLI options</a>.</p>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>Kelora is open source software licensed under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>.</p>
+<h2 id="development-approach">Development Approach<a class="headerlink" href="#development-approach" title="Permanent link">&para;</a></h2>
+<p>Kelora is an experiment in agentic AI development. Claude Code (Sonnet 4/4.5) and Codex CLI (<code>gpt-5-codex</code>) generate all implementation and tests; I steer requirements but do not write or review code. Validation relies on the automated test suite plus <code>cargo audit</code> and <code>cargo deny</code>, so please inspect the code yourself before relying on it in production and expect the API to evolve until 1.0. This is a spare-time, single-developer project, so support and updates are best-effort.</p>
 
 
 
