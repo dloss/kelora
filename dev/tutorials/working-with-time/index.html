@@ -2394,9 +2394,9 @@
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora: Stats:
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Lines processed: 3 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Events created: 3 total, 3 output, 0 filtered (0.0%)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Throughput: 2568 lines/s in 1ms
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Throughput: 2396 lines/s in 1ms
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Time span: 2024-01-15T10:30:00+00:00 to 2024-01-15T10:32:00+00:00 (2m)
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Timestamp: auto-detected fields ts, timestamp, time — parsed 3 of 3 detected events (100.0%).
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Timestamp: ts, timestamp, time (auto-detected) - 3/3 parsed (100.0%).
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Keys seen: message,time,timestamp,ts
 </code></pre></div>
 </div>
@@ -2509,24 +2509,25 @@
 3. UTC (default)</p>
 <p><strong>Important:</strong> <code>--input-tz</code> only affects naive timestamps. Timestamps with explicit timezone info (like <code>2024-01-15T10:30:00+01:00</code>) preserve their original timezone.</p>
 <h2 id="step-5-converting-timestamps-in-events">Step 5: Converting Timestamps in Events<a class="headerlink" href="#step-5-converting-timestamps-in-events" title="Permanent link">&para;</a></h2>
-<p>Use <code>--convert-ts</code> to convert timestamp fields to RFC3339 format:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Convert timestamp field to RFC3339</span>
+<p>Use <code>--normalize-ts</code> to normalize the primary timestamp (the same field Kelora uses for filtering and stats) to RFC3339:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Convert the detected timestamp field to RFC3339</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;: &quot;2024-01-15 10:30:00&quot;, &quot;user&quot;: &quot;alice&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>--convert-ts<span class="w"> </span>ts
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>--normalize-ts
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Convert multiple timestamp fields</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;created&quot;: &quot;2024-01-15 10:00:00&quot;, &quot;modified&quot;: &quot;2024-01-15 10:30:00&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span>--convert-ts<span class="w"> </span>created,modified
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Respect a custom timestamp field provided via --ts-field</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;created_at&quot;: &quot;2024-01-15 10:45:00&quot;, &quot;user&quot;: &quot;bob&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>--normalize-ts
 </code></pre></div>
 <p><strong>Output example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ts=&quot;2024-01-15T10:30:00+00:00&quot; user=&quot;alice&quot;
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>created_at=&quot;2024-01-15T10:45:00+00:00&quot; user=&quot;bob&quot;
 </code></pre></div></p>
 <p>This modifies the event data itself, affecting all output formats.</p>
 <h2 id="step-6-display-formatting-vs-data-conversion">Step 6: Display Formatting vs Data Conversion<a class="headerlink" href="#step-6-display-formatting-vs-data-conversion" title="Permanent link">&para;</a></h2>
 <p>Understand the difference between data conversion and display formatting:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># --convert-ts: Modifies event data (affects all formats)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># --normalize-ts: Modifies event data (affects all formats)</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;: &quot;2024-01-15 10:30:00&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span>--convert-ts<span class="w"> </span>ts<span class="w"> </span>-F<span class="w"> </span>json
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>-F<span class="w"> </span>json
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># -z: Display formatting only (default format only)</span>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;ts&quot;: &quot;2024-01-15T10:30:00Z&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
@@ -2538,7 +2539,7 @@
 </code></pre></div>
 <p><strong>Key differences:</strong></p>
 <ul>
-<li><code>--convert-ts</code> - Changes the event data</li>
+<li><code>--normalize-ts</code> - Changes the event data</li>
 <li><code>-z / -Z</code> - Only affects default formatter display</li>
 <li>JSON/CSV output ignores <code>-z/-Z</code> flags</li>
 </ul>
@@ -2813,7 +2814,7 @@
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-z
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Verify timestamp includes timezone info</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--convert-ts<span class="w"> </span>timestamp<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-F<span class="w"> </span>json
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-F<span class="w"> </span>json
 </code></pre></div></p>
 <h3 id="custom-format-not-parsing">Custom Format Not Parsing<a class="headerlink" href="#custom-format-not-parsing" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> <code>--ts-format</code> not working.</p>

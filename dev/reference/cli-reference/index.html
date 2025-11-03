@@ -2066,9 +2066,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#-convert-ts-fields" class="md-nav__link">
+  <a href="#-normalize-ts" class="md-nav__link">
     <span class="md-ellipsis">
-      --convert-ts &lt;FIELDS&gt;
+      --normalize-ts
     </span>
   </a>
   
@@ -3745,9 +3745,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#-convert-ts-fields" class="md-nav__link">
+  <a href="#-normalize-ts" class="md-nav__link">
     <span class="md-ellipsis">
-      --convert-ts &lt;FIELDS&gt;
+      --normalize-ts
     </span>
   </a>
   
@@ -5096,9 +5096,9 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.recent_statuses = window.pluck(&quot;status&quot;)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="timestamp-conversion">Timestamp Conversion<a class="headerlink" href="#timestamp-conversion" title="Permanent link">&para;</a></h3>
-<h4 id="-convert-ts-fields"><code>--convert-ts &lt;FIELDS&gt;</code><a class="headerlink" href="#-convert-ts-fields" title="Permanent link">&para;</a></h4>
-<p>Convert timestamp fields to RFC3339 format (ISO 8601 compatible). Modifies event data - affects all output formats.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--convert-ts<span class="w"> </span>timestamp,created_at<span class="w"> </span>app.log
+<h4 id="-normalize-ts"><code>--normalize-ts</code><a class="headerlink" href="#-normalize-ts" title="Permanent link">&para;</a></h4>
+<p>Normalize the primary timestamp field (the one Kelora uses for filtering and stats) to RFC3339 (ISO 8601). Runs after Rhai scripts and affects every output formatter.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="error-handling-options">Error Handling Options<a class="headerlink" href="#error-handling-options" title="Permanent link">&para;</a></h2>
 <h3 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h3>
