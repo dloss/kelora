@@ -16,8 +16,9 @@ Turn ad-hoc delimited text into structured events, extract latency numbers, and 
 ### Command
 ```bash
 kelora -f 'cols:ts level service request_id *message' examples/release_pipe.log \
+  --cols-sep '|' \
   --normalize-ts \
-  --exec 'e.latency_ms = e.message.extract_re(r"(\\d+)ms", 1).to_int()' \
+  --exec 'e.latency_ms = e.message.extract_re("(\\d+)ms", 1).to_int()' \
   --filter 'e.level == "ERROR" || e.latency_ms > 800' \
   --keys ts,service,request_id,latency_ms,message \
   -F logfmt
@@ -43,7 +44,7 @@ kelora -j examples/k8s_security.jsonl \
   --filter 'e.level == "WARN" || e.level == "ERROR" || e.latency_ms > 1500' \
   --exec 'if e.has_field("token") {
             let jwt = e.token.parse_jwt();
-            e.role = jwt.get_path("payload.role", "guest");
+            e.role = jwt.get_path("claims.role", "guest");
             e.token = e.token.slice(":8") + "…";
           }' \
   --exec 'if e.has_field("ip") { e.ip = e.ip.mask_ip(2) }' \
@@ -158,13 +159,22 @@ Fuse syslog headers with embedded logfmt payloads, keep stacktraces intact, and 
 
 ### Command
 ```bash
-kelora -f syslog examples/incident_story.log \
+kelora -f line examples/incident_story.log \
   --multiline timestamp \
-  --exec 'if e.msg.contains("=") { e += e.msg.parse_logfmt(); }' \
+  --exec '
+    let parts = e.line.split(" ");
+    if parts.len() >= 3 {
+      let logfmt_part = parts.slice("2:").join(" ");
+      if logfmt_part.contains("=") {
+        e += logfmt_part.parse_logfmt();
+        e.timestamp = parts[0];
+        e.process = parts[1];
+      }
+    }
+  ' \
   --filter '["ERROR", "CRITICAL"].contains(e.level) || e.action == "rollout"' \
   --before-context 1 --after-context 1 \
-  --keys timestamp,host,ns,pod,action,message \
-  -F table
+  --keys timestamp,process,level,ns,pod,action
 ```
 
 ### Why it matters
@@ -293,10 +303,10 @@ kelora -j examples/uptime_windows.jsonl \
   --span-close '
     let total = span.metrics.get_path("events", 0);
     let failed = span.metrics.get_path("failures", 0);
-    let rate = if total == 0 { 0.0 } else { (failed as float * 100.0) / total as float };
+    let rate = if total == 0 { 0.0 } else { failed * 100.0 / total };
     emit_each([#{window: span.id, total: total, failures: failed, error_pct: rate}]);
   ' \
-  -F table
+  -F json
 ```
 
 ### Why it matters
