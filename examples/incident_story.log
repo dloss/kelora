@@ -1,0 +1,6 @@
+2024-06-19T12:31:52Z kube-controller host=cp-1 level=INFO action=rollout ns=payments detail="Scaling replicas"
+2024-06-19T12:32:07Z kubelet[worker-2] level=ERROR Back-off restarting failed container
+2024-06-19T12:32:08Z kubelet[worker-2] level=ERROR user=system:node detail="CrashLoopBackOff" pod=checkout-v2
+2024-06-19T12:32:15Z kubelet[worker-3] level=WARN Container image not ready
+2024-06-19T12:32:20Z kube-controller host=cp-1 level=INFO action=deploy ns=payments detail="Rollout progressing"
+2024-06-19T12:32:30Z kubelet[worker-2] level=ERROR detail="Failed to pull image" pod=checkout-v2

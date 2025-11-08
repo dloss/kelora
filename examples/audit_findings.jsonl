@@ -1,0 +1,5 @@
+{"timestamp":"2024-05-01T09:12:00Z","user":"alice","findings":[{"kind":"mfa_disabled","severity":60},{"kind":"stale_token","severity":30}]}
+{"timestamp":"2024-05-01T09:13:10Z","user":"bob","findings":[{"kind":"risky_device","severity":80}]}
+{"timestamp":"2024-05-01T09:14:25Z","user":"charlie","findings":[{"kind":"weak_password","severity":70},{"kind":"no_session_timeout","severity":55}]}
+{"timestamp":"2024-05-01T09:15:40Z","user":"diana","findings":[{"kind":"unencrypted_data","severity":90}]}
+{"timestamp":"2024-05-01T09:16:55Z","user":"eve","findings":[{"kind":"outdated_deps","severity":40}]}

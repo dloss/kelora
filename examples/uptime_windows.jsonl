@@ -1,0 +1,9 @@
+{"timestamp":"2024-07-01T00:00:10Z","status":200,"service":"billing"}
+{"timestamp":"2024-07-01T00:02:11Z","status":503,"service":"billing"}
+{"timestamp":"2024-07-01T00:04:05Z","status":200,"service":"billing"}
+{"timestamp":"2024-07-01T00:06:01Z","status":500,"service":"billing"}
+{"timestamp":"2024-07-01T00:08:15Z","status":200,"service":"billing"}
+{"timestamp":"2024-07-01T00:09:30Z","status":200,"service":"billing"}
+{"timestamp":"2024-07-01T00:11:45Z","status":502,"service":"billing"}
+{"timestamp":"2024-07-01T00:13:20Z","status":200,"service":"billing"}
+{"timestamp":"2024-07-01T00:14:55Z","status":200,"service":"billing"}

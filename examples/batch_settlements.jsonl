@@ -1,0 +1,4 @@
+{"batch_id":"2024-07-17-A","user":"acme","attempts":[{"card":"amex","status":"OK","amount":12900},{"card":"visa","status":"DECLINED","reason":"insufficient"}]}
+{"batch_id":"2024-07-17-B","user":"globex","attempts":[{"card":"mc","status":"DECLINED","reason":"fraud"},{"card":"mc","status":"DECLINED","reason":"fraud"}]}
+{"batch_id":"2024-07-17-C","user":"initech","attempts":[{"card":"visa","status":"OK","amount":45600},{"card":"amex","status":"OK","amount":23400}]}
+{"batch_id":"2024-07-17-D","user":"umbrella","attempts":[{"card":"discover","status":"DECLINED","reason":"expired"}]}
