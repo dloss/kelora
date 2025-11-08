@@ -10,10 +10,10 @@
       
       
       
-        <link rel="canonical" href="https://dloss.github.io/kelora/dev/tutorials/scripting-transforms/">
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/tutorials/advanced-scripting/">
       
       
-        <link rel="prev" href="../pipeline-stages/">
+        <link rel="prev" href="../begin-end-stages/">
       
       
         <link rel="next" href="../parsing-custom-formats/">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Scripting Transforms - Kelora</title>
+        <title>Advanced Scripting - Kelora</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#scripting-transforms" class="md-skip">
+        <a href="#advanced-scripting" class="md-skip">
           Skip to content
         </a>
       
@@ -119,7 +119,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Scripting Transforms
+              Advanced Scripting
             
           </span>
         </div>
@@ -517,7 +517,7 @@
   
   
   <span class="md-ellipsis">
-    Getting Started
+    Basics
     
   </span>
   
@@ -604,12 +604,12 @@
   
   
     <li class="md-nav__item">
-      <a href="../pipeline-stages/" class="md-nav__link">
+      <a href="../begin-end-stages/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Pipeline Stages
+    Begin and End Stages
     
   </span>
   
@@ -641,7 +641,7 @@
   
   
   <span class="md-ellipsis">
-    Scripting Transforms
+    Advanced Scripting
     
   </span>
   
@@ -654,7 +654,7 @@
   
   
   <span class="md-ellipsis">
-    Scripting Transforms
+    Advanced Scripting
     
   </span>
   
@@ -1915,7 +1915,7 @@
   
 
 
-<h1 id="scripting-transforms">Scripting Transforms<a class="headerlink" href="#scripting-transforms" title="Permanent link">&para;</a></h1>
+<h1 id="advanced-scripting">Advanced Scripting<a class="headerlink" href="#advanced-scripting" title="Permanent link">&para;</a></h1>
 <p>Master Kelora's Rhai scripting stages to reshape events, enrich payloads, and
 fan out nested structures. This guide focuses on practical patterns you can drop
 into your own pipelines.</p>
@@ -8642,28 +8642,28 @@ available to later filters or transformations.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_alias = pseudonym(e.user, &quot;users&quot;); e.ip_masked = e.ip.mask_ip(1)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,event,user_alias,ip_masked
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; event=&#39;login&#39; user_alias=&#39;7UeEVx_L4hG5zhdnf7q1qVwo&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; event=&#39;login&#39; user_alias=&#39;apSq6Xi0_1b7_eboCWzImBEV&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  ip_masked=&#39;192.168.1.X&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; event=&#39;login&#39; user_alias=&#39;EOmGOnrKRcO8GQttWCI-_OkF&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; event=&#39;login&#39; user_alias=&#39;VlEgXCQJ9TPIFdisgyaL8B0e&#39;
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  ip_masked=&#39;203.0.113.X&#39;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; event=&#39;api_call&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; event=&#39;file_upload&#39; user_alias=&#39;7uJozax96ruvQ0xsINDv5iDK&#39;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; event=&#39;file_upload&#39; user_alias=&#39;5OayB4PhIU0YlagLMfY3NlRb&#39;
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  ip_masked=&#39;172.16.0.X&#39;
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2024-01-15T10:00:40Z&#39; event=&#39;suspicious_activity&#39;
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:00:50Z&#39; event=&#39;login&#39; user_alias=&#39;gwZpAU5I8iqfLysaD9iA7ALO&#39;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:00:50Z&#39; event=&#39;login&#39; user_alias=&#39;DL4-jZYTRBMZySt6bCYfBZhq&#39;
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  ip_masked=&#39;2001:db8::1&#39;
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; event=&#39;password_change&#39; user_alias=&#39;zJ4_iiKbv4mIAx6ZGIhb8BgG&#39;
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; event=&#39;password_change&#39; user_alias=&#39;qrElbxh3Tse1ts6HuLu3rjUa&#39;
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  ip_masked=&#39;192.168.1.X&#39;
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2024-01-15T10:01:10Z&#39; event=&#39;api_call&#39; user_alias=&#39;g-9_oNM2uBgesTKywxkdF2o9&#39;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2024-01-15T10:01:10Z&#39; event=&#39;api_call&#39; user_alias=&#39;jrq98eBtp7xe4FBMc4jpIZSX&#39;
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  ip_masked=&#39;10.255.255.X&#39;
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>timestamp=&#39;2024-01-15T10:01:20Z&#39; event=&#39;vpn_connect&#39;
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; event=&#39;data_export&#39; user_alias=&#39;tHpNVKsLuFNLQrpgc0pDTiDc&#39;
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; event=&#39;data_export&#39; user_alias=&#39;R7lM3gMWYLT8NiYR2zBq5uV0&#39;
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  ip_masked=&#39;192.168.2.X&#39;
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>timestamp=&#39;2024-01-15T10:01:40Z&#39; event=&#39;firewall_block&#39;
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>timestamp=&#39;2024-01-15T10:01:50Z&#39; event=&#39;certificate_renewal&#39;
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; event=&#39;malware_scan&#39;
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>timestamp=&#39;2024-01-15T10:02:10Z&#39; event=&#39;ddos_attempt&#39;
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>timestamp=&#39;2024-01-15T10:02:20Z&#39; event=&#39;ssh_login&#39; user_alias=&#39;BV7fX6aZkG--yqULYSfDosnO&#39;
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>timestamp=&#39;2024-01-15T10:02:20Z&#39; event=&#39;ssh_login&#39; user_alias=&#39;-XEY6f2ZK1605L7UbQl6wmH2&#39;
 <a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>  ip_masked=&#39;192.168.1.X&#39;
 </code></pre></div>
 </div>
