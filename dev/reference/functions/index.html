@@ -5251,8 +5251,9 @@
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>e.severity = cef[&quot;severity&quot;]
 </code></pre></div>
 <h4 id="textparse_kvsep-kv_sep"><code>text.parse_kv([sep [, kv_sep]])</code><a class="headerlink" href="#textparse_kvsep-kv_sep" title="Permanent link">&para;</a></h4>
-<p>Parse key-value pairs from text.</p>
+<p>Parse key-value pairs from text. Only extracts tokens containing the key-value separator; tokens without the separator are skipped (e.g., prose words or unpaired values).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>e.params = e.query.parse_kv(&quot;&amp;&quot;, &quot;=&quot;)                 // &quot;a=1&amp;b=2&quot; → {a: &quot;1&quot;, b: &quot;2&quot;}
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>e.fields = e.msg.parse_kv()                           // &quot;Payment timeout order=1234&quot; → {order: &quot;1234&quot;}
 </code></pre></div>
 <h4 id="textparse_url"><code>text.parse_url()</code><a class="headerlink" href="#textparse_url" title="Permanent link">&para;</a></h4>
 <p>Parse URL into structured components.</p>
