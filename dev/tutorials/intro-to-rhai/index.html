@@ -2987,14 +2987,14 @@
 <p><strong>Rule:</strong> Fields must exist before you filter on them. Scripts run in CLI order.</p>
 <hr />
 <h2 id="step-8-checking-if-fields-exist">Step 8: Checking if Fields Exist<a class="headerlink" href="#step-8-checking-if-fields-exist" title="Permanent link">&para;</a></h2>
-<p>Not all events have the same fields. Use <code>has_field()</code> to check before accessing.</p>
+<p>Not all events have the same fields. Use <code>has()</code> to check before accessing.</p>
 <h3 id="safe-field-access">Safe Field Access<a class="headerlink" href="#safe-field-access" title="Permanent link">&para;</a></h3>
 <div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Command</label><label for="__tabbed_13_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.has_duration = e.has_field(&quot;duration_ms&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;duration_ms&quot;) {</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.has_duration = e.has(&quot;duration_ms&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has(&quot;duration_ms&quot;) {</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="s1">                e.slow = e.duration_ms &gt; 1000</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="s1">            } else {</span>
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="s1">                e.slow = false</span>
@@ -3005,8 +3005,8 @@
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.has_duration = e.has_field(&quot;duration_ms&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;duration_ms&quot;) { e.slow = e.duration_ms &gt; 1000 } else { e.slow = false }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.has_duration = e.has(&quot;duration_ms&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has(&quot;duration_ms&quot;) { e.slow = e.duration_ms &gt; 1000 } else { e.slow = false }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>-k<span class="w"> </span>service,has_duration,slow,message<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--take<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
@@ -3020,7 +3020,7 @@
 </div>
 </div>
 <p><strong>Pattern:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>if e.has_field(&quot;field_name&quot;) {
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>if e.has(&quot;field_name&quot;) {
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    // Safe to access e.field_name
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>} else {
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    // Provide default behavior
@@ -3094,7 +3094,7 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_error = e.level == &quot;ERROR&quot; || e.level == &quot;CRITICAL&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.has_field(&quot;duration_ms&quot;) &amp;&amp; e.duration_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.has(&quot;duration_ms&quot;) &amp;&amp; e.duration_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.needs_attention = e.is_error || e.is_slow&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.needs_attention&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">    </span>-k<span class="w"> </span>service,level,is_error,is_slow,message
@@ -3103,7 +3103,7 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_error = e.level == &quot;ERROR&quot; || e.level == &quot;CRITICAL&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.has_field(&quot;duration_ms&quot;) &amp;&amp; e.duration_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.has(&quot;duration_ms&quot;) &amp;&amp; e.duration_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.needs_attention = e.is_error || e.is_slow&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.needs_attention&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>-k<span class="w"> </span>service,level,is_error,is_slow,message
@@ -3125,7 +3125,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w">  </span><span class="c1"># Fails if status doesn&#39;t exist</span>
 </code></pre></div></p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_field(&quot;status&quot;) &amp;&amp; e.status &gt;= 400&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;status&quot;) &amp;&amp; e.status &gt;= 400&#39;</span>
 </code></pre></div></p>
 <hr />
 <h3 id="mistake-2-string-vs-number-comparison">❌ Mistake 2: String vs Number Comparison<a class="headerlink" href="#mistake-2-string-vs-number-comparison" title="Permanent link">&para;</a></h3>
@@ -3162,7 +3162,7 @@
 <h3 id="accessing-fields">Accessing Fields<a class="headerlink" href="#accessing-fields" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>e.field_name              # Direct access
 <a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>e[&quot;field_name&quot;]           # Bracket notation
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>e.has_field(&quot;name&quot;)       # Check existence
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>e.has(&quot;name&quot;)       # Check existence
 <a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>e.get(&quot;name&quot;, default)    # Get with fallback
 </code></pre></div>
 <h3 id="filter-operators">Filter Operators<a class="headerlink" href="#filter-operators" title="Permanent link">&para;</a></h3>
@@ -3202,7 +3202,7 @@
 <summary>Solution</summary>
 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;WARN&quot; &amp;&amp; e.has_field(&quot;memory_percent&quot;) &amp;&amp; e.memory_percent &gt; 80&#39;</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;WARN&quot; &amp;&amp; e.has(&quot;memory_percent&quot;) &amp;&amp; e.memory_percent &gt; 80&#39;</span>
 </code></pre></div>
 </details>
 
@@ -3212,7 +3212,7 @@
 <summary>Solution</summary>
 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;duration_ms&quot;) {</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has(&quot;duration_ms&quot;) {</span>
 <a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="s1">                e.speed = if e.duration_ms &lt; 100 { &quot;fast&quot; }</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="s1">                         else if e.duration_ms &lt; 1000 { &quot;normal&quot; }</span>
 <a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="s1">                         else { &quot;slow&quot; }</span>
@@ -3229,10 +3229,10 @@
 <summary>Solution</summary>
 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has_field(&quot;method&quot;) {</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.has(&quot;method&quot;) {</span>
 <a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="s1">                e.is_safe_method = e.method == &quot;GET&quot; || e.method == &quot;HEAD&quot;</span>
 <a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="s1">            }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_field(&quot;is_safe_method&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;is_safe_method&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="w">    </span>-k<span class="w"> </span>method,is_safe_method,path
 </code></pre></div>
 </details>
@@ -3247,7 +3247,7 @@
 <li>✅ Use string methods like <code>.contains()</code>, <code>.split()</code>, <code>.to_upper()</code></li>
 <li>✅ Convert types safely with <code>to_int_or()</code>, <code>to_float_or()</code></li>
 <li>✅ Write conditionals with <code>if/else</code></li>
-<li>✅ Check field existence with <code>has_field()</code></li>
+<li>✅ Check field existence with <code>has()</code></li>
 <li>✅ Debug with <code>-F inspect</code> and <code>--verbose</code></li>
 <li>✅ Understand pipeline order (exec before filter)</li>
 <li>✅ Build multi-stage pipelines</li>

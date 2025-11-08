@@ -2752,7 +2752,7 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.msg.contains(&quot;=&quot;) {</span>
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="s1">            e += e.msg.parse_logfmt()</span>
 <a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="s1">          }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_field(&quot;user&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;user&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,host,user,action
 </code></pre></div>
 <h3 id="2-windowed-analysis">2. Windowed Analysis<a class="headerlink" href="#2-windowed-analysis" title="Permanent link">&para;</a></h3>
@@ -2773,7 +2773,7 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Kelora&#39;s built-in functions make this trivial</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>security.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip(2);</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">          if e.has_field(&quot;token&quot;) {</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">          if e.has(&quot;token&quot;) {</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="s1">            let jwt = e.token.parse_jwt();</span>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s1">            e.role = jwt.get_path(&quot;claims.role&quot;, &quot;guest&quot;)</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s1">          }&#39;</span>

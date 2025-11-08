@@ -3060,7 +3060,7 @@
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>// Check if event is a problem (error or slow)
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>fn is_problem(event) {
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    let is_error = event.level == &quot;ERROR&quot; || event.level == &quot;CRITICAL&quot;;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    let is_slow = event.has_field(&quot;duration_ms&quot;) &amp;&amp; event.duration_ms &gt; 1000;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    let is_slow = event.has(&quot;duration_ms&quot;) &amp;&amp; event.duration_ms &gt; 1000;
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    is_error || is_slow
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>}
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
@@ -3165,7 +3165,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>// This script enriches log events with additional computed fields
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>// Add timestamp metadata
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>if e.has_field(&quot;timestamp&quot;) {
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>if e.has(&quot;timestamp&quot;) {
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    let ts = e.timestamp;
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    if ts.contains(&quot;T&quot;) {
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        let parts = ts.split(&quot;T&quot;);
@@ -3177,7 +3177,7 @@
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>}
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>// Classify by severity
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>if e.has_field(&quot;level&quot;) {
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>if e.has(&quot;level&quot;) {
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    e.severity = if e.level == &quot;ERROR&quot; || e.level == &quot;CRITICAL&quot; {
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        &quot;high&quot;
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    } else if e.level == &quot;WARN&quot; {
@@ -3188,7 +3188,7 @@
 <a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>}
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
 <a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>// Add duration classification if present
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>if e.has_field(&quot;duration_ms&quot;) {
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>if e.has(&quot;duration_ms&quot;) {
 <a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    e.speed = if e.duration_ms &lt; 100 {
 <a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>        &quot;fast&quot;
 <a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>    } else if e.duration_ms &lt; 1000 {
@@ -3199,7 +3199,7 @@
 <a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>}
 <a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>
 <a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>// Track by service and level
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>if e.has_field(&quot;service&quot;) &amp;&amp; e.has_field(&quot;level&quot;) {
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>if e.has(&quot;service&quot;) &amp;&amp; e.has(&quot;level&quot;) {
 <a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>    track_count(e.service + &quot;:&quot; + e.level);
 <a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>}
 </code></pre></div>
@@ -3314,7 +3314,7 @@
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>e.level<span class="w"> </span><span class="o">=</span><span class="w"> </span>e.level.to_upper<span class="o">()</span><span class="p">;</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>e.service<span class="w"> </span><span class="o">=</span><span class="w"> </span>e.service.to_lower<span class="o">()</span><span class="p">;</span>
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="k">if</span><span class="w"> </span>e.has_field<span class="o">(</span><span class="s2">&quot;duration_ms&quot;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="k">if</span><span class="w"> </span>e.has<span class="o">(</span><span class="s2">&quot;duration_ms&quot;</span><span class="o">)</span><span class="w"> </span><span class="o">{</span>
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">    </span>e.duration_s<span class="w"> </span><span class="o">=</span><span class="w"> </span>e.duration_ms<span class="w"> </span>/<span class="w"> </span><span class="m">1000</span><span class="p">;</span>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="o">}</span>
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
@@ -3350,13 +3350,13 @@
 <h3 id="step-3-create-transformation-script">Step 3: Create Transformation Script<a class="headerlink" href="#step-3-create-transformation-script" title="Permanent link">&para;</a></h3>
 <p>Create <code>scripts/enrich.rhai</code>:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>// Add computed fields
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>if e.has_field(&quot;duration_ms&quot;) {
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>if e.has(&quot;duration_ms&quot;) {
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    e.duration_s = e.duration_ms / 1000;
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    e.slow = e.duration_ms &gt; 1000;
 <a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>}
 <a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
 <a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>// Classify severity
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>if e.has_field(&quot;level&quot;) {
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>if e.has(&quot;level&quot;) {
 <a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>    e.severity = if e.level == &quot;CRITICAL&quot; || e.level == &quot;ERROR&quot; {
 <a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>        &quot;high&quot;
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    } else if e.level == &quot;WARN&quot; {
@@ -3514,7 +3514,7 @@
 <a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>// Use it
 <a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>kelora -j app.log \
 <a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>    -I myhelpers.rhai \
-<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>    --filter &#39;e.has_field(&quot;status&quot;) &amp;&amp; is_error_status(e.status)&#39;
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>    --filter &#39;e.has(&quot;status&quot;) &amp;&amp; is_error_status(e.status)&#39;
 </code></pre></div>
 </details>
 

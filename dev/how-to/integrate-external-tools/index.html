@@ -3094,7 +3094,7 @@
 <a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.url_parts = e.message.extract_url().parse_url()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.params = e.url_parts.query.parse_query_params()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.checkout_id = e.params[&quot;id&quot;]&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has_field(&quot;checkout_id&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;checkout_id&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.url_parts.path)&#39;</span><span class="w"> </span>-m
 </code></pre></div>
 <hr />
