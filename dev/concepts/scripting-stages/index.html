@@ -1570,6 +1570,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#variable-scope-between-exec-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Scope Between Exec Stages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#intermixing-filter-and-exec" class="md-nav__link">
     <span class="md-ellipsis">
       Intermixing --filter and --exec
@@ -1582,6 +1591,15 @@
   <a href="#atomic-execution" class="md-nav__link">
     <span class="md-ellipsis">
       Atomic Execution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resilient-mode-and-stage-snapshotting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resilient Mode and Stage Snapshotting
     </span>
   </a>
   
@@ -2735,6 +2753,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#variable-scope-between-exec-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Scope Between Exec Stages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#intermixing-filter-and-exec" class="md-nav__link">
     <span class="md-ellipsis">
       Intermixing --filter and --exec
@@ -2747,6 +2774,15 @@
   <a href="#atomic-execution" class="md-nav__link">
     <span class="md-ellipsis">
       Atomic Execution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resilient-mode-and-stage-snapshotting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resilient Mode and Stage Snapshotting
     </span>
   </a>
   
@@ -3451,14 +3487,45 @@
 1. Convert <code>duration_ms</code> to <code>duration_s</code>
 2. Track average duration
 3. Add <code>alert</code> field for slow requests</p>
+<h3 id="variable-scope-between-exec-stages">Variable Scope Between Exec Stages<a class="headerlink" href="#variable-scope-between-exec-stages" title="Permanent link">&para;</a></h3>
+<p><strong>Important:</strong> Each <code>--exec</code> stage has its own isolated scope. Local variables declared with <code>let</code> do <strong>NOT</strong> persist between stages:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># ❌ WRONG - ctx doesn&#39;t exist in the second stage</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let ctx = e.user_id&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.context = ctx&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># ERROR: ctx undefined!</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span>app.log
+</code></pre></div>
+<p><strong>What persists between stages:</strong>
+- ✅ <strong>Event fields</strong> (<code>e.field = value</code>) - Modifications carry forward
+- ✅ <strong><code>conf</code> map</strong> - Initialized in <code>--begin</code>, read-only in exec stages
+- ✅ <strong><code>metrics</code> map</strong> - Populated by <code>track_*()</code> functions
+- ✅ <strong><code>window</code> array</strong> - When using <code>--window</code></p>
+<p><strong>What does NOT persist:</strong>
+- ❌ <strong>Local variables</strong> (<code>let x = ...</code>) - Scoped to the stage only
+- ❌ <strong>Function definitions</strong> - Unless loaded via <code>--include</code></p>
+<p><strong>Solution - Use semicolons for shared variables:</strong></p>
+<p>When you need local variables to persist across operations, use semicolons within a single <code>--exec</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># ✅ CORRECT - Both operations in one stage</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let ctx = e.user_id; e.context = ctx; emit(e)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>app.log
+</code></pre></div>
+<p><strong>When to use multiple stages vs semicolons:</strong></p>
+<p>Use <strong>multiple <code>-e</code> stages</strong> when you want:
+- Stage-level error isolation (see resilient mode below)
+- Logical separation of transformation steps
+- Progressive validation checkpoints</p>
+<p>Use <strong>semicolons within one <code>-e</code></strong> when you need:
+- Shared local variables across operations
+- All-or-nothing execution (no partial results)</p>
 <h3 id="intermixing-filter-and-exec">Intermixing --filter and --exec<a class="headerlink" href="#intermixing-filter-and-exec" title="Permanent link">&para;</a></h3>
 <p><code>--filter</code> and <code>--exec</code> are both script stages and execute in <strong>exact CLI order</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">   </span><span class="c1"># Stage 1: Transform all events</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration_s &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">                   </span><span class="c1"># Stage 2: Keep only slow events</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;slow&quot;)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">                    </span><span class="c1"># Stage 3: Track (slow only)</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.alert = true&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">                         </span><span class="c1"># Stage 4: Add field (slow only)</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">   </span><span class="c1"># Stage 1: Transform all events</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration_s &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">                   </span><span class="c1"># Stage 2: Keep only slow events</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;slow&quot;)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">                    </span><span class="c1"># Stage 3: Track (slow only)</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.alert = true&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">                         </span><span class="c1"># Stage 4: Add field (slow only)</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p><strong>What happens:</strong>
 1. First <code>--exec</code> adds <code>duration_s</code> field to all events
@@ -3473,9 +3540,9 @@
 <li>Original event is returned unchanged</li>
 <li>Processing continues with next event</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int() * 2&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int() * 2&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p>If <code>e.value</code> is not a valid integer:</p>
 <ul>
@@ -3484,54 +3551,93 @@
 <li>No partial modifications</li>
 </ul>
 <p>In strict mode (<code>--strict</code>), errors abort immediately.</p>
-<h3 id="common-patterns_1">Common Patterns<a class="headerlink" href="#common-patterns_1" title="Permanent link">&para;</a></h3>
-<h4 id="transform-fields">Transform Fields<a class="headerlink" href="#transform-fields" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.level.to_upper()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.message = e.message.trim()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span>app.log
+<h3 id="resilient-mode-and-stage-snapshotting">Resilient Mode and Stage Snapshotting<a class="headerlink" href="#resilient-mode-and-stage-snapshotting" title="Permanent link">&para;</a></h3>
+<p>Resilient mode creates <strong>snapshots after each successful stage</strong>. If a later stage fails, the event <strong>reverts to the last successful snapshot</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.step1 = &quot;processed&quot;&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">       </span><span class="c1"># Snapshot 1</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.step2 = risky_parse(e.raw)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="c1"># Might fail</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.step3 = &quot;complete&quot;&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">        </span><span class="c1"># Snapshot 3 (if step2 succeeds)</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">    </span>app.log
 </code></pre></div>
-<h4 id="add-computed-fields">Add Computed Fields<a class="headerlink" href="#add-computed-fields" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.timestamp_unix = e.timestamp.to_unix()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">    </span>app.log
+<p><strong>Behavior on error:</strong>
+- If <code>step2</code> fails for an event, it <strong>keeps <code>step1</code> but not <code>step2</code></strong>
+- The event continues through the pipeline with fields from the last successful stage
+- Later stages see the rolled-back event</p>
+<p><strong>Why use multiple stages for error handling:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Multiple stages - Graceful degradation</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.safe = &quot;always_set&quot;&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">       </span><span class="c1"># Always succeeds</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.parsed = parse_json(e.raw)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="c1"># Might fail for some events</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.parsed.type)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># Only runs if parsing succeeded</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">    </span>-k<span class="w"> </span>safe,parsed
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1"># Events that fail parsing still have &#39;safe&#39; field and appear in output</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="c1"># Single stage - All-or-nothing</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.safe = &quot;always_set&quot;; e.parsed = parse_json(e.raw); track_count(e.parsed.type)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="w">    </span>-k<span class="w"> </span>safe,parsed
+<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="c1"># If parsing fails, the ENTIRE exec fails - no &#39;safe&#39; field, event unchanged</span>
 </code></pre></div>
-<h4 id="conditional-field-creation">Conditional Field Creation<a class="headerlink" href="#conditional-field-creation" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.status &gt;= 500 { e.severity = &quot;critical&quot; } else if e.status &gt;= 400 { e.severity = &quot;error&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span>app.log
-</code></pre></div>
-<h4 id="remove-events">Remove Events<a class="headerlink" href="#remove-events" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;DEBUG&quot; { e = () }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span>app.log
-</code></pre></div>
-<h4 id="track-metrics">Track Metrics<a class="headerlink" href="#track-metrics" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<p><strong>Design pattern - Progressive risk:</strong></p>
+<p>Place risky operations in later stages so earlier transformations survive:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.normalized = e.status.to_string()&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Safe normalization</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.enriched = lookup_external(e.id)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># Risky external call</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.computed = e.enriched.calculate()&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Depends on risky data</span>
 <a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">    </span>app.log
 </code></pre></div>
-<h4 id="fan-out-arrays">Fan-Out Arrays<a class="headerlink" href="#fan-out-arrays" title="Permanent link">&para;</a></h4>
+<p>Events that fail external lookup still get <code>normalized</code> field.</p>
+<p><strong>Trade-off:</strong>
+- <strong>Multiple stages</strong>: Better error isolation, partial success, but local variables don't persist
+- <strong>Single stage with semicolons</strong>: Shared variables, but all-or-nothing execution</p>
+<h3 id="common-patterns_1">Common Patterns<a class="headerlink" href="#common-patterns_1" title="Permanent link">&para;</a></h3>
+<h4 id="transform-fields">Transform Fields<a class="headerlink" href="#transform-fields" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>app.log
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.level = e.level.to_upper()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.message = e.message.trim()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>app.log
+</code></pre></div>
+<h4 id="add-computed-fields">Add Computed Fields<a class="headerlink" href="#add-computed-fields" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.timestamp_unix = e.timestamp.to_unix()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">    </span>app.log
+</code></pre></div>
+<h4 id="conditional-field-creation">Conditional Field Creation<a class="headerlink" href="#conditional-field-creation" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.status &gt;= 500 { e.severity = &quot;critical&quot; } else if e.status &gt;= 400 { e.severity = &quot;error&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>app.log
+</code></pre></div>
+<h4 id="remove-events">Remove Events<a class="headerlink" href="#remove-events" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;DEBUG&quot; { e = () }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span>app.log
+</code></pre></div>
+<h4 id="track-metrics">Track Metrics<a class="headerlink" href="#track-metrics" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="w">    </span>app.log
+</code></pre></div>
+<h4 id="fan-out-arrays">Fan-Out Arrays<a class="headerlink" href="#fan-out-arrays" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p>Each array element becomes a separate event.</p>
 <h3 id="access-to-conf">Access to conf<a class="headerlink" href="#access-to-conf" title="Permanent link">&para;</a></h3>
 <p>The <code>conf</code> map from <code>--begin</code> is <strong>read-only</strong> in <code>--exec</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.multiplier = 2.5&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.adjusted = e.value * conf.multiplier&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.multiplier = 2.5&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.adjusted = e.value * conf.multiplier&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="access-to-meta">Access to meta<a class="headerlink" href="#access-to-meta" title="Permanent link">&para;</a></h3>
 <p>The <code>meta</code> variable provides event metadata in <code>--exec</code> and <code>--filter</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.source = meta.filename&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>server1.log<span class="w"> </span>server2.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.source = meta.filename&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">    </span>server1.log<span class="w"> </span>server2.log
 </code></pre></div>
 <p><strong>Available metadata attributes:</strong></p>
 <ul>
@@ -3540,19 +3646,19 @@
 <li><code>meta.filename</code> - Source filename (available with multiple files or explicit file arguments)</li>
 </ul>
 <p><strong>Multi-file tracking example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.log<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for file in metrics.keys() { print(file + &quot;: &quot; + metrics[file] + &quot; errors&quot;) }&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.log<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for file in metrics.keys() { print(file + &quot;: &quot; + metrics[file] + &quot; errors&quot;) }&#39;</span>
 </code></pre></div>
 <p><strong>Debugging with line numbers:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;⚠️  Server error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;eprint(&quot;⚠️  Server error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p><strong>Re-parsing with raw line:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;CUSTOM:&quot;) { e.custom = meta.line.after(&quot;CUSTOM:&quot;).parse_json() }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.message.contains(&quot;CUSTOM:&quot;) { e.custom = meta.line.after(&quot;CUSTOM:&quot;).parse_json() }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h2 id="end-stage">End Stage<a class="headerlink" href="#end-stage" title="Permanent link">&para;</a></h2>
 <h3 id="purpose_3">Purpose<a class="headerlink" href="#purpose_3" title="Permanent link">&para;</a></h3>
@@ -3565,10 +3671,10 @@
 </ul>
 <h3 id="the-metrics-map">The metrics Map<a class="headerlink" href="#the-metrics-map" title="Permanent link">&para;</a></h3>
 <p>The global <code>metrics</code> map contains all tracked data from <code>track_*()</code> functions:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for key in metrics.keys() { print(key + &quot;: &quot; + metrics[key]) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for key in metrics.keys() { print(key + &quot;: &quot; + metrics[key]) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="available-data">Available Data<a class="headerlink" href="#available-data" title="Permanent link">&para;</a></h3>
 <p>In <code>--end</code>, you have access to:</p>
@@ -3579,48 +3685,48 @@
 </ul>
 <h3 id="examples_1">Examples<a class="headerlink" href="#examples_1" title="Permanent link">&para;</a></h3>
 <h4 id="print-summary-statistics">Print Summary Statistics<a class="headerlink" href="#print-summary-statistics" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let error_rate = metrics.errors / metrics.total * 100; print(&quot;Error rate: &quot; + error_rate + &quot;%&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let error_rate = metrics.errors / metrics.total * 100; print(&quot;Error rate: &quot; + error_rate + &quot;%&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h4 id="generate-report">Generate Report<a class="headerlink" href="#generate-report" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;=== Service Report ===&quot;); for svc in metrics.keys() { print(svc + &quot;: &quot; + metrics[svc] + &quot; requests&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;=== Service Report ===&quot;); for svc in metrics.keys() { print(svc + &quot;: &quot; + metrics[svc] + &quot; requests&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h4 id="export-metrics-to-file">Export Metrics to File<a class="headerlink" href="#export-metrics-to-file" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;append_file(&quot;report.txt&quot;, &quot;Total services: &quot; + metrics.len().to_string())&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;append_file(&quot;report.txt&quot;, &quot;Total services: &quot; + metrics.len().to_string())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h4 id="calculate-percentages">Calculate Percentages<a class="headerlink" href="#calculate-percentages" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for level in [&quot;INFO&quot;, &quot;WARN&quot;, &quot;ERROR&quot;] { let pct = metrics.get(level, 0) / metrics.total * 100; print(level + &quot;: &quot; + pct + &quot;%&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for level in [&quot;INFO&quot;, &quot;WARN&quot;, &quot;ERROR&quot;] { let pct = metrics.get(level, 0) / metrics.total * 100; print(level + &quot;: &quot; + pct + &quot;%&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h2 id="stage-interaction">Stage Interaction<a class="headerlink" href="#stage-interaction" title="Permanent link">&para;</a></h2>
 <h3 id="data-flow-between-stages">Data Flow Between Stages<a class="headerlink" href="#data-flow-between-stages" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>--begin:  Initialize conf map
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>    ↓
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>    conf (read-only)
-<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a>    ↓
-<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>--exec:   Process events, track metrics
-<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a>    ↓
-<a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a>    metrics + conf (both read-only)
-<a id="__codelineno-41-8" name="__codelineno-41-8" href="#__codelineno-41-8"></a>    ↓
-<a id="__codelineno-41-9" name="__codelineno-41-9" href="#__codelineno-41-9"></a>--end:    Summarize and report
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>--begin:  Initialize conf map
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>    ↓
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>    conf (read-only)
+<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>    ↓
+<a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>--exec:   Process events, track metrics
+<a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>    ↓
+<a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a>    metrics + conf (both read-only)
+<a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>    ↓
+<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>--end:    Summarize and report
 </code></pre></div>
 <h3 id="complete-example">Complete Example<a class="headerlink" href="#complete-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.threshold = 1000; conf.start = now_utc()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.duration_ms &gt; conf.threshold { track_count(&quot;slow&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let elapsed = now_utc() - conf.start; print(&quot;Processed &quot; + metrics.total + &quot; events in &quot; + elapsed + &quot;s&quot;); print(&quot;Slow requests: &quot; + metrics.get(&quot;slow&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.threshold = 1000; conf.start = now_utc()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.duration_ms &gt; conf.threshold { track_count(&quot;slow&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let elapsed = now_utc() - conf.start; print(&quot;Processed &quot; + metrics.total + &quot; events in &quot; + elapsed + &quot;s&quot;); print(&quot;Slow requests: &quot; + metrics.get(&quot;slow&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p><strong>Flow:</strong>
 1. <code>--begin</code>: Set threshold to 1000ms, record start time
@@ -3630,132 +3736,132 @@
 <h3 id="-e-exec-file"><code>-E, --exec-file</code><a class="headerlink" href="#-e-exec-file" title="Permanent link">&para;</a></h3>
 <p>Load Rhai script from file for the exec stage:</p>
 <p><strong>transform.rhai:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>// Convert duration to seconds
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>e.duration_s = e.duration_ms / 1000;
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
-<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a>// Add severity based on status
-<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>if e.status &gt;= 500 {
-<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>    e.severity = &quot;critical&quot;;
-<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a>} else if e.status &gt;= 400 {
-<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>    e.severity = &quot;error&quot;;
-<a id="__codelineno-43-9" name="__codelineno-43-9" href="#__codelineno-43-9"></a>} else {
-<a id="__codelineno-43-10" name="__codelineno-43-10" href="#__codelineno-43-10"></a>    e.severity = &quot;ok&quot;;
-<a id="__codelineno-43-11" name="__codelineno-43-11" href="#__codelineno-43-11"></a>}
-<a id="__codelineno-43-12" name="__codelineno-43-12" href="#__codelineno-43-12"></a>
-<a id="__codelineno-43-13" name="__codelineno-43-13" href="#__codelineno-43-13"></a>// Track metrics
-<a id="__codelineno-43-14" name="__codelineno-43-14" href="#__codelineno-43-14"></a>track_count(e.severity);
-<a id="__codelineno-43-15" name="__codelineno-43-15" href="#__codelineno-43-15"></a>track_avg(&quot;response_time&quot;, e.duration_s);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>// Convert duration to seconds
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>e.duration_s = e.duration_ms / 1000;
+<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>
+<a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a>// Add severity based on status
+<a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a>if e.status &gt;= 500 {
+<a id="__codelineno-48-6" name="__codelineno-48-6" href="#__codelineno-48-6"></a>    e.severity = &quot;critical&quot;;
+<a id="__codelineno-48-7" name="__codelineno-48-7" href="#__codelineno-48-7"></a>} else if e.status &gt;= 400 {
+<a id="__codelineno-48-8" name="__codelineno-48-8" href="#__codelineno-48-8"></a>    e.severity = &quot;error&quot;;
+<a id="__codelineno-48-9" name="__codelineno-48-9" href="#__codelineno-48-9"></a>} else {
+<a id="__codelineno-48-10" name="__codelineno-48-10" href="#__codelineno-48-10"></a>    e.severity = &quot;ok&quot;;
+<a id="__codelineno-48-11" name="__codelineno-48-11" href="#__codelineno-48-11"></a>}
+<a id="__codelineno-48-12" name="__codelineno-48-12" href="#__codelineno-48-12"></a>
+<a id="__codelineno-48-13" name="__codelineno-48-13" href="#__codelineno-48-13"></a>// Track metrics
+<a id="__codelineno-48-14" name="__codelineno-48-14" href="#__codelineno-48-14"></a>track_count(e.severity);
+<a id="__codelineno-48-15" name="__codelineno-48-15" href="#__codelineno-48-15"></a>track_avg(&quot;response_time&quot;, e.duration_s);
 </code></pre></div></p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-E<span class="w"> </span>transform.rhai<span class="w"> </span>--metrics<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-E<span class="w"> </span>transform.rhai<span class="w"> </span>--metrics<span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="-i-include"><code>-I, --include</code><a class="headerlink" href="#-i-include" title="Permanent link">&para;</a></h3>
 <p>Include Rhai library files before script stages:</p>
 <p><strong>helpers.rhai:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>fn classify_status(status) {
-<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>    if status &gt;= 500 {
-<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>        &quot;server_error&quot;
-<a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a>    } else if status &gt;= 400 {
-<a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a>        &quot;client_error&quot;
-<a id="__codelineno-45-6" name="__codelineno-45-6" href="#__codelineno-45-6"></a>    } else if status &gt;= 300 {
-<a id="__codelineno-45-7" name="__codelineno-45-7" href="#__codelineno-45-7"></a>        &quot;redirect&quot;
-<a id="__codelineno-45-8" name="__codelineno-45-8" href="#__codelineno-45-8"></a>    } else if status &gt;= 200 {
-<a id="__codelineno-45-9" name="__codelineno-45-9" href="#__codelineno-45-9"></a>        &quot;success&quot;
-<a id="__codelineno-45-10" name="__codelineno-45-10" href="#__codelineno-45-10"></a>    } else {
-<a id="__codelineno-45-11" name="__codelineno-45-11" href="#__codelineno-45-11"></a>        &quot;other&quot;
-<a id="__codelineno-45-12" name="__codelineno-45-12" href="#__codelineno-45-12"></a>    }
-<a id="__codelineno-45-13" name="__codelineno-45-13" href="#__codelineno-45-13"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>fn classify_status(status) {
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>    if status &gt;= 500 {
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>        &quot;server_error&quot;
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>    } else if status &gt;= 400 {
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>        &quot;client_error&quot;
+<a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a>    } else if status &gt;= 300 {
+<a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a>        &quot;redirect&quot;
+<a id="__codelineno-50-8" name="__codelineno-50-8" href="#__codelineno-50-8"></a>    } else if status &gt;= 200 {
+<a id="__codelineno-50-9" name="__codelineno-50-9" href="#__codelineno-50-9"></a>        &quot;success&quot;
+<a id="__codelineno-50-10" name="__codelineno-50-10" href="#__codelineno-50-10"></a>    } else {
+<a id="__codelineno-50-11" name="__codelineno-50-11" href="#__codelineno-50-11"></a>        &quot;other&quot;
+<a id="__codelineno-50-12" name="__codelineno-50-12" href="#__codelineno-50-12"></a>    }
+<a id="__codelineno-50-13" name="__codelineno-50-13" href="#__codelineno-50-13"></a>}
 </code></pre></div></p>
 <p><strong>Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a><span class="w">    </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.status_class = classify_status(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a><span class="w">    </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.status_class = classify_status(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="use-begin-for-initialization">Use --begin for Initialization<a class="headerlink" href="#use-begin-for-initialization" title="Permanent link">&para;</a></h3>
 <p><strong>Good:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.lookup = read_json(&quot;data.json&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.name = conf.lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.lookup = read_json(&quot;data.json&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.name = conf.lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p><strong>Bad:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let lookup = read_json(&quot;data.json&quot;); e.name = lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let lookup = read_json(&quot;data.json&quot;); e.name = lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p>The bad example reads the file <strong>once per event</strong> (slow and wasteful).</p>
 <h3 id="keep-exec-scripts-simple">Keep --exec Scripts Simple<a class="headerlink" href="#keep-exec-scripts-simple" title="Permanent link">&para;</a></h3>
 <p>Break complex logic into multiple <code>--exec</code> scripts:</p>
 <p><strong>Good:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.duration_s &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-4" name="__codelineno-49-4" href="#__codelineno-49-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.is_slow { track_count(&quot;slow_requests&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-5" name="__codelineno-49-5" href="#__codelineno-49-5"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.duration_s &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.is_slow { track_count(&quot;slow_requests&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-54-5" name="__codelineno-54-5" href="#__codelineno-54-5"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p><strong>Bad:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000; e.is_slow = e.duration_s &gt; 1.0; if e.is_slow { track_count(&quot;slow_requests&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000; e.is_slow = e.duration_s &gt; 1.0; if e.is_slow { track_count(&quot;slow_requests&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p>The good example is easier to read and debug.</p>
 <h3 id="use-end-for-summaries">Use --end for Summaries<a class="headerlink" href="#use-end-for-summaries" title="Permanent link">&para;</a></h3>
 <p><strong>Good:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p><strong>Bad:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service); print(&quot;Processing...&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-57-2" name="__codelineno-57-2" href="#__codelineno-57-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service); print(&quot;Processing...&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-57-3" name="__codelineno-57-3" href="#__codelineno-57-3"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p>The bad example prints on every event (noisy).</p>
 <h3 id="leverage-file-helpers">Leverage File Helpers<a class="headerlink" href="#leverage-file-helpers" title="Permanent link">&para;</a></h3>
 <p>For complex logic, use <code>-E</code> and <code>-I</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span>-E<span class="w"> </span>transform.rhai<span class="w"> </span>--metrics<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span>-E<span class="w"> </span>transform.rhai<span class="w"> </span>--metrics<span class="w"> </span>app.log
 </code></pre></div>
 <p>This keeps command lines clean and logic maintainable.</p>
 <h2 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h2>
 <h3 id="begin-stage-overhead">Begin Stage Overhead<a class="headerlink" href="#begin-stage-overhead" title="Permanent link">&para;</a></h3>
 <p>The <code>--begin</code> stage runs once, so file I/O here is acceptable:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.large_dataset = read_json(&quot;10mb.json&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.enriched = conf.large_dataset.get(e.id, #{})&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-59-2" name="__codelineno-59-2" href="#__codelineno-59-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.large_dataset = read_json(&quot;10mb.json&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-59-3" name="__codelineno-59-3" href="#__codelineno-59-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.enriched = conf.large_dataset.get(e.id, #{})&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-59-4" name="__codelineno-59-4" href="#__codelineno-59-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="exec-stage-optimization">Exec Stage Optimization<a class="headerlink" href="#exec-stage-optimization" title="Permanent link">&para;</a></h3>
 <p>The <code>--exec</code> stage runs per event. Avoid expensive operations:</p>
 <p><strong>Slow:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let lookup = read_json(&quot;data.json&quot;); e.name = lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-60-2" name="__codelineno-60-2" href="#__codelineno-60-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let lookup = read_json(&quot;data.json&quot;); e.name = lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-60-3" name="__codelineno-60-3" href="#__codelineno-60-3"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p><strong>Fast:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.lookup = read_json(&quot;data.json&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.name = conf.lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-61-2" name="__codelineno-61-2" href="#__codelineno-61-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.lookup = read_json(&quot;data.json&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-61-3" name="__codelineno-61-3" href="#__codelineno-61-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.name = conf.lookup.get(e.id, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-61-4" name="__codelineno-61-4" href="#__codelineno-61-4"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <h3 id="end-stage-overhead">End Stage Overhead<a class="headerlink" href="#end-stage-overhead" title="Permanent link">&para;</a></h3>
 <p>The <code>--end</code> stage runs once, so complex calculations are fine:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-57-2" name="__codelineno-57-2" href="#__codelineno-57-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-57-3" name="__codelineno-57-3" href="#__codelineno-57-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let sorted = metrics.keys().sort(); for key in sorted { print(key + &quot;: &quot; + metrics[key]) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-57-4" name="__codelineno-57-4" href="#__codelineno-57-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-62-2" name="__codelineno-62-2" href="#__codelineno-62-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-62-3" name="__codelineno-62-3" href="#__codelineno-62-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let sorted = metrics.keys().sort(); for key in sorted { print(key + &quot;: &quot; + metrics[key]) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-62-4" name="__codelineno-62-4" href="#__codelineno-62-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h2 id="parallel-processing">Parallel Processing<a class="headerlink" href="#parallel-processing" title="Permanent link">&para;</a></h2>
 <p>When using <code>--parallel</code>, scripting stages behave differently:</p>
 <h3 id="begin-and-end">Begin and End<a class="headerlink" href="#begin-and-end" title="Permanent link">&para;</a></h3>
 <p><code>--begin</code> and <code>--end</code> run <strong>once</strong> (not parallelized):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.start = now_utc()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-58-3" name="__codelineno-58-3" href="#__codelineno-58-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-58-4" name="__codelineno-58-4" href="#__codelineno-58-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Duration: &quot; + (now_utc() - conf.start))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-58-5" name="__codelineno-58-5" href="#__codelineno-58-5"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-63-2" name="__codelineno-63-2" href="#__codelineno-63-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.start = now_utc()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-63-3" name="__codelineno-63-3" href="#__codelineno-63-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-63-4" name="__codelineno-63-4" href="#__codelineno-63-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Duration: &quot; + (now_utc() - conf.start))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-63-5" name="__codelineno-63-5" href="#__codelineno-63-5"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="exec-stage_1">Exec Stage<a class="headerlink" href="#exec-stage_1" title="Permanent link">&para;</a></h3>
 <p><code>--exec</code> runs in parallel across worker threads:</p>
@@ -3764,10 +3870,10 @@
 <li>Tracking functions aggregate across threads</li>
 <li>Event modifications are isolated per thread</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-59-2" name="__codelineno-59-2" href="#__codelineno-59-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-59-3" name="__codelineno-59-3" href="#__codelineno-59-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-59-4" name="__codelineno-59-4" href="#__codelineno-59-4"></a><span class="w">    </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-64-2" name="__codelineno-64-2" href="#__codelineno-64-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-64-3" name="__codelineno-64-3" href="#__codelineno-64-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-64-4" name="__codelineno-64-4" href="#__codelineno-64-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="thread-safety">Thread Safety<a class="headerlink" href="#thread-safety" title="Permanent link">&para;</a></h3>
 <p>Kelora handles thread safety automatically:</p>
@@ -3780,35 +3886,35 @@
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="conf-is-read-only-in-exec">conf is Read-Only in --exec<a class="headerlink" href="#conf-is-read-only-in-exec" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;conf.value = 42&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-60-2" name="__codelineno-60-2" href="#__codelineno-60-2"></a><span class="c1"># Error: conf is read-only in exec stage</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;conf.value = 42&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a><span class="c1"># Error: conf is read-only in exec stage</span>
 </code></pre></div></p>
 <p><strong>Solution:</strong> Initialize in <code>--begin</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--begin<span class="w"> </span><span class="s1">&#39;conf.value = 42&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = conf.value * 2&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--begin<span class="w"> </span><span class="s1">&#39;conf.value = 42&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = conf.value * 2&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="metrics-not-available-in-exec">metrics Not Available in --exec<a class="headerlink" href="#metrics-not-available-in-exec" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(metrics[&quot;total&quot;])&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-62-2" name="__codelineno-62-2" href="#__codelineno-62-2"></a><span class="c1"># Error: metrics not available in exec stage</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(metrics[&quot;total&quot;])&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-67-2" name="__codelineno-67-2" href="#__codelineno-67-2"></a><span class="c1"># Error: metrics not available in exec stage</span>
 </code></pre></div></p>
 <p><strong>Solution:</strong> Use <code>--end</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span>--end<span class="w"> </span><span class="s1">&#39;print(metrics[&quot;total&quot;])&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span>--end<span class="w"> </span><span class="s1">&#39;print(metrics[&quot;total&quot;])&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="file-helpers-not-working">File Helpers Not Working<a class="headerlink" href="#file-helpers-not-working" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;out.txt&quot;, e.message)&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-64-2" name="__codelineno-64-2" href="#__codelineno-64-2"></a><span class="c1"># Error: filesystem writes not allowed</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;out.txt&quot;, e.message)&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-69-2" name="__codelineno-69-2" href="#__codelineno-69-2"></a><span class="c1"># Error: filesystem writes not allowed</span>
 </code></pre></div></p>
 <p><strong>Solution:</strong> Add <code>--allow-fs-writes</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;out.txt&quot;, e.message)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;append_file(&quot;out.txt&quot;, e.message)&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="script-stage-ordering">Script Stage Ordering<a class="headerlink" href="#script-stage-ordering" title="Permanent link">&para;</a></h3>
 <p><strong>Understanding:</strong> <code>--filter</code> and <code>--exec</code> execute in <strong>exact CLI order</strong>, intermixed.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a><span class="c1"># Both --exec scripts run on all events</span>
-<a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.b = e.a + 1&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a>
-<a id="__codelineno-66-4" name="__codelineno-66-4" href="#__codelineno-66-4"></a><span class="c1"># Filter runs between execs - second --exec only sees filtered events</span>
-<a id="__codelineno-66-5" name="__codelineno-66-5" href="#__codelineno-66-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.b = e.a + 1&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a><span class="c1"># Both --exec scripts run on all events</span>
+<a id="__codelineno-71-2" name="__codelineno-71-2" href="#__codelineno-71-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.b = e.a + 1&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-71-3" name="__codelineno-71-3" href="#__codelineno-71-3"></a>
+<a id="__codelineno-71-4" name="__codelineno-71-4" href="#__codelineno-71-4"></a><span class="c1"># Filter runs between execs - second --exec only sees filtered events</span>
+<a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.b = e.a + 1&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <p><strong>What happens in the second example:</strong>
 1. First <code>--exec</code> adds field <code>a=1</code> to all events
