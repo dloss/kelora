@@ -2911,15 +2911,15 @@
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>logs/mixed.log<span class="w"> </span>-J<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">  </span>agrind<span class="w"> </span><span class="s1">&#39;* | json | parse &quot;user_id=*&quot; as user | count by user&#39;</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="c1"># Kelora equivalent using extract_re() or parse_kv()</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="c1"># Kelora equivalent using extract_re() or absorb_kv()</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>logs/mixed.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user = e.message.extract_re(r&quot;user_id=(\S+)&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.user)&#39;</span><span class="w"> </span>-m
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="c1"># For complex key-value extraction, use parse_kv()</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="c1"># For mixed prose + key=value tails, absorb them in-place</span>
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>logs/mixed.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let fields = e.message.parse_kv(&quot; &quot;, &quot;=&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user = fields[&quot;user_id&quot;]&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let res = e.absorb_kv(&quot;message&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user = res.data[&quot;user_id&quot;] ?? &quot;&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.user)&#39;</span><span class="w"> </span>-m
 </code></pre></div>
 <p><strong>When to use angle-grinder:</strong> You prefer its query syntax, or need features Kelora doesn't have.

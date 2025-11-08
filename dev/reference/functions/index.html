@@ -3148,6 +3148,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#eabsorb_kvfield-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      e.absorb_kv(field [, options])
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5036,6 +5045,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#eabsorb_kvfield-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      e.absorb_kv(field [, options])
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5972,59 +5990,75 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-130-1" name="__codelineno-130-1" href="#__codelineno-130-1"></a>e.password = ()                                       // Remove sensitive field
 <a id="__codelineno-130-2" name="__codelineno-130-2" href="#__codelineno-130-2"></a>e.temp_data = ()                                      // Clean up temporary field
 </code></pre></div>
+<h4 id="eabsorb_kvfield-options"><code>e.absorb_kv(field [, options])</code><a class="headerlink" href="#eabsorb_kvfield-options" title="Permanent link">&para;</a></h4>
+<p>Parse inline <code>key=value</code> tokens from a string field, merge the pairs into the event, and get a status report back. Returns a map with <code>status</code>, <code>data</code>, <code>written</code>, <code>remainder</code>, <code>removed_source</code>, and <code>error</code> so scripts can branch without guessing.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a>let res = e.absorb_kv(&quot;msg&quot;, #{ sep: &quot;,&quot;, kv_sep: &quot;=&quot;, keep_source: true });
+<a id="__codelineno-131-2" name="__codelineno-131-2" href="#__codelineno-131-2"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-131-3" name="__codelineno-131-3" href="#__codelineno-131-3"></a>    e.cleaned_msg = res.remainder ?? &quot;&quot;;
+<a id="__codelineno-131-4" name="__codelineno-131-4" href="#__codelineno-131-4"></a>    // Parsed keys now live on the event; res.data mirrors the inserted pairs
+<a id="__codelineno-131-5" name="__codelineno-131-5" href="#__codelineno-131-5"></a>}
+</code></pre></div>
+<p>Options:</p>
+<ul>
+<li><code>sep</code>: string or <code>()</code> (default whitespace) – token separator; <code>()</code> normalizes whitespace.</li>
+<li><code>kv_sep</code>: string (default <code>"="</code>) – separator between key and value.</li>
+<li><code>keep_source</code>: bool (default <code>false</code>) – leave the original field untouched; use <code>remainder</code> for cleaned text.</li>
+<li><code>overwrite</code>: bool (default <code>true</code>) – allow parsed keys to overwrite existing event fields; set <code>false</code> to skip conflicts.</li>
+</ul>
+<p>Unknown option keys set <code>status = "invalid_option"</code>; in <code>--strict</code> mode this aborts the pipeline.</p>
 <h2 id="span-context-span-close-only">Span Context – <code>--span-close</code> Only<a class="headerlink" href="#span-context-span-close-only" title="Permanent link">&para;</a></h2>
 <p>A read-only <code>span</code> object is injected into scope whenever a <code>--span-close</code> script runs. Use it to emit per-span rollups after Kelora closes a count- or time-based window.</p>
 <h3 id="span-identity">Span Identity<a class="headerlink" href="#span-identity" title="Permanent link">&para;</a></h3>
 <p><code>span.id</code> returns the current span identifier. Count-based spans use <code>#&lt;index&gt;</code> (zero-based). Time-based spans use <code>ISO_START/DURATION</code> (e.g. <code>2024-05-19T12:00:00Z/5m</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
 </code></pre></div>
 <h3 id="span-boundaries">Span Boundaries<a class="headerlink" href="#span-boundaries" title="Permanent link">&para;</a></h3>
 <p><code>span.start</code> and <code>span.end</code> expose the half-open window bounds as <code>DateTime</code> values. Count-based spans return <code>()</code> for both fields.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>if span.start != () {
-<a id="__codelineno-132-2" name="__codelineno-132-2" href="#__codelineno-132-2"></a>    print(`Window: ${span.start} → ${span.end}`);
-<a id="__codelineno-132-3" name="__codelineno-132-3" href="#__codelineno-132-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>if span.start != () {
+<a id="__codelineno-133-2" name="__codelineno-133-2" href="#__codelineno-133-2"></a>    print(`Window: ${span.start} → ${span.end}`);
+<a id="__codelineno-133-3" name="__codelineno-133-3" href="#__codelineno-133-3"></a>}
 </code></pre></div>
 <h3 id="span-size-and-events">Span Size and Events<a class="headerlink" href="#span-size-and-events" title="Permanent link">&para;</a></h3>
 <p><code>span.size</code> reports how many events survived filters and were buffered in the span. <code>span.events</code> returns those events in arrival order. Each map includes span metadata fields (<code>span_status</code>, <code>span_id</code>, <code>span_start</code>, <code>span_end</code>) alongside the original event data.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>let included = span.events
-<a id="__codelineno-133-2" name="__codelineno-133-2" href="#__codelineno-133-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
-<a id="__codelineno-133-3" name="__codelineno-133-3" href="#__codelineno-133-3"></a>    .len();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>let included = span.events
+<a id="__codelineno-134-2" name="__codelineno-134-2" href="#__codelineno-134-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
+<a id="__codelineno-134-3" name="__codelineno-134-3" href="#__codelineno-134-3"></a>    .len();
 </code></pre></div>
 <h3 id="metrics-snapshot">Metrics Snapshot<a class="headerlink" href="#metrics-snapshot" title="Permanent link">&para;</a></h3>
 <p><code>span.metrics</code> contains per-span deltas from <code>track_*</code> calls. Values reset automatically after each span closes, so you can emit per-span summaries without manual bookkeeping.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>let metrics = span.metrics;
-<a id="__codelineno-134-2" name="__codelineno-134-2" href="#__codelineno-134-2"></a>let hits = metrics[&quot;events&quot;];          // from track_count(&quot;events&quot;)
-<a id="__codelineno-134-3" name="__codelineno-134-3" href="#__codelineno-134-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_count(&quot;failures&quot;)
-<a id="__codelineno-134-4" name="__codelineno-134-4" href="#__codelineno-134-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
-<a id="__codelineno-134-5" name="__codelineno-134-5" href="#__codelineno-134-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>let metrics = span.metrics;
+<a id="__codelineno-135-2" name="__codelineno-135-2" href="#__codelineno-135-2"></a>let hits = metrics[&quot;events&quot;];          // from track_count(&quot;events&quot;)
+<a id="__codelineno-135-3" name="__codelineno-135-3" href="#__codelineno-135-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_count(&quot;failures&quot;)
+<a id="__codelineno-135-4" name="__codelineno-135-4" href="#__codelineno-135-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
+<a id="__codelineno-135-5" name="__codelineno-135-5" href="#__codelineno-135-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
 </code></pre></div>
 <hr />
 <h2 id="quick-reference-by-use-case">Quick Reference by Use Case<a class="headerlink" href="#quick-reference-by-use-case" title="Permanent link">&para;</a></h2>
 <p><strong>Error Extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>e.error_code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>e.error_code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1)
 </code></pre></div></p>
 <p><strong>IP Anonymization:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>e.masked_ip = e.client_ip.mask_ip()
-<a id="__codelineno-136-2" name="__codelineno-136-2" href="#__codelineno-136-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>e.masked_ip = e.client_ip.mask_ip()
+<a id="__codelineno-137-2" name="__codelineno-137-2" href="#__codelineno-137-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
 </code></pre></div></p>
 <p><strong>Time Filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
-<a id="__codelineno-137-2" name="__codelineno-137-2" href="#__codelineno-137-2"></a>    // Process recent events
-<a id="__codelineno-137-3" name="__codelineno-137-3" href="#__codelineno-137-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
+<a id="__codelineno-138-2" name="__codelineno-138-2" href="#__codelineno-138-2"></a>    // Process recent events
+<a id="__codelineno-138-3" name="__codelineno-138-3" href="#__codelineno-138-3"></a>}
 </code></pre></div></p>
 <p><strong>Metrics Tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>track_count(e.service)
-<a id="__codelineno-138-2" name="__codelineno-138-2" href="#__codelineno-138-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
-<a id="__codelineno-138-3" name="__codelineno-138-3" href="#__codelineno-138-3"></a>track_unique(&quot;users&quot;, e.user_id)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>track_count(e.service)
+<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
+<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>track_unique(&quot;users&quot;, e.user_id)
 </code></pre></div></p>
 <p><strong>Array Fan-Out:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
 </code></pre></div></p>
 <p><strong>Safe Field Access:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
-<a id="__codelineno-140-2" name="__codelineno-140-2" href="#__codelineno-140-2"></a>if e.has_path(&quot;error.details.code&quot;) {
-<a id="__codelineno-140-3" name="__codelineno-140-3" href="#__codelineno-140-3"></a>    e.detailed = true
-<a id="__codelineno-140-4" name="__codelineno-140-4" href="#__codelineno-140-4"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
+<a id="__codelineno-141-2" name="__codelineno-141-2" href="#__codelineno-141-2"></a>if e.has_path(&quot;error.details.code&quot;) {
+<a id="__codelineno-141-3" name="__codelineno-141-3" href="#__codelineno-141-3"></a>    e.detailed = true
+<a id="__codelineno-141-4" name="__codelineno-141-4" href="#__codelineno-141-4"></a>}
 </code></pre></div></p>
 <hr />
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
@@ -6035,9 +6069,9 @@
 <li><a href="../../how-to/extract-and-mask-sensitive-data/">How-To: Sanitize Logs Before Sharing</a> - Practical examples</li>
 </ul>
 <p>For more details, run:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># This reference in CLI form</span>
-<a id="__codelineno-141-2" name="__codelineno-141-2" href="#__codelineno-141-2"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai language guide</span>
-<a id="__codelineno-141-3" name="__codelineno-141-3" href="#__codelineno-141-3"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># This reference in CLI form</span>
+<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai language guide</span>
+<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
 </code></pre></div></p>
 
 
