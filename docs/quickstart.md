@@ -58,8 +58,18 @@ kelora --help-time         # Timestamp format reference
 
 You've seen Kelora in action. Now **learn how it actually works**:
 
-- **[Tutorial: Basics](tutorials/basics.md)** - Comprehensive 30-minute guide explaining input formats (`-f`, `-j`), display options (`-k`, `-b`, `-c`), level filtering (`-l`, `-L`), output formats (`-F`, `-J`), and common workflows
-- **[Tutorial: Advanced Scripting](tutorials/advanced-scripting.md)** - Write custom filters and transformations with Rhai
-- **[How-To Guides](how-to/find-errors-in-logs.md)** - Solve specific problems like finding errors, parsing custom formats, and tracking metrics
+### Recommended Learning Path
 
-For format conversion, time filtering, metrics tracking, and more advanced features, start with the [Tutorial: Basics](tutorials/basics.md).
+Follow this sequence to build your Kelora skills systematically:
+
+1. **[Tutorial: Basics](tutorials/basics.md)** (30 min) - Master input formats (`-f`, `-j`), display options (`-k`, `-b`, `-c`), level filtering (`-l`, `-L`), and output formats (`-F`, `-J`). Learn what events are and how to work with them.
+
+2. **[Tutorial: Introduction to Rhai](tutorials/intro-to-rhai.md)** (20 min) - Learn to write filter expressions and simple transforms. Understand how to access event fields, use conditionals, and convert types safely.
+
+3. **[Tutorial: Working with Time](tutorials/working-with-time.md)** (15 min) - Handle timestamps, filter by time ranges, and work with timezones.
+
+4. **[Tutorial: Advanced Scripting](tutorials/advanced-scripting.md)** (30 min) - Master complex transformations, window operations, and advanced patterns.
+
+### Jump to Solutions
+
+Already know what you need? Check the **[How-To Guides](how-to/find-errors-in-logs.md)** for specific solutions like triaging errors, parsing custom formats, and tracking metrics.

@@ -429,9 +429,21 @@ kelora -j app.log -F none --stats
 
 ## Next Steps
 
-Once you're comfortable with these basics, continue to:
+You've mastered the basics of input, display, and filtering. Now **learn to write scripts** for custom logic:
 
-- **[Working with Time](working-with-time.md)** - Time filtering with `--since` and `--until`
-- **[Advanced Scripting](advanced-scripting.md)** - Custom filters and transformations with Rhai
-- **[Metrics and Tracking](metrics-and-tracking.md)** - Aggregate data with `track_*()` functions
-- **[Parsing Custom Formats](parsing-custom-formats.md)** - Handle non-standard log formats
+### Recommended Next: Introduction to Rhai
+
+**[→ Introduction to Rhai Scripting](intro-to-rhai.md)** (20 min) - Learn to write filter expressions and transforms. You'll understand how to use the `e` object you just learned about, write conditionals, convert types, and build multi-stage pipelines. This is essential before tackling advanced features.
+
+### After That: Specialized Topics
+
+Pick based on your needs:
+
+- **[Working with Time](working-with-time.md)** (15 min) - Parse timestamps, filter by time ranges, handle timezones
+- **[Metrics and Tracking](metrics-and-tracking.md)** (20 min) - Aggregate data with `track_*()` functions
+- **[Parsing Custom Formats](parsing-custom-formats.md)** (15 min) - Handle non-standard log formats
+- **[Advanced Scripting](advanced-scripting.md)** (30 min) - Complex transformations and window operations
+
+### Or Jump to Solutions
+
+**[How-To Guides](../how-to/find-errors-in-logs.md)** - Solve specific problems with ready-made solutions
