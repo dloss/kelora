@@ -1777,14 +1777,14 @@
 
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
 <p><strong>Scriptable log processor for the command line.</strong></p>
-<p>Parse messy logs into structured events, then filter, transform, and analyze them with embedded <a href="https://rhai.rs">Rhai</a> scripting.</p>
+<p>Parse messy logs into structured events, then filter, transform, and analyze them with embedded <a href="https://rhai.rs">Rhai</a> scripting (a Rust-based scripting language with JavaScript-like syntax).</p>
 <div class="admonition note">
 <p class="admonition-title">Development Status</p>
 <p>Pre-1.0 tool generated entirely by AI agents. Validated by a large test suite and Rust security tools; see <a href="#development-approach">Development Approach</a> and the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before relying on it in production. APIs might change without notice before v1.0.</p>
 </div>
 <h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
 <p>See what you can do in a few commands:</p>
-<p><strong>Detect problems</strong> - Filter slow and failing requests:</p>
+<p><strong>Detect problems</strong> - Find errors and performance issues by filtering on structured fields. After parsing, each log line becomes an event (a structured object) that you can filter using expressions like <code>e.status &gt;= 500</code> (where <code>e</code> is the event). This example shows finding server errors and slow requests in web traffic logs:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label><label for="__tabbed_1_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -1806,7 +1806,7 @@
 </div>
 </div>
 </div>
-<p><strong>Parse custom formats and extract structured data</strong> - No regex wrestling:</p>
+<p><strong>Parse custom formats and extract structured data</strong> - Many logs use custom formats with delimited columns or key-value pairs buried in messages. Kelora's <code>cols</code> format lets you describe the structure (like <code>ts level service *message</code> for "timestamp, level, service, then the rest as message") instead of writing regex patterns. The <code>absorb_kv()</code> function then extracts hidden key-value pairs from the message field into proper structured fields:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -1828,7 +1828,7 @@
 </div>
 </div>
 </div>
-<p><strong>Enrich events with recent context</strong> - Add error context from sliding window:</p>
+<p><strong>Enrich events with recent context</strong> - Sometimes you need to understand an event in relation to what happened recently. Kelora's sliding window feature (<code>--window 5</code>) keeps the last N events in memory, accessible in scripts via the <code>window</code> array. This example adds error context from recent events to each log line, helping you see patterns and correlations:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
