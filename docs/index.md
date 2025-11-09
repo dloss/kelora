@@ -9,7 +9,7 @@ Parse messy logs into structured events, then filter, transform, and analyze the
 
 ## What It Does
 
-Debug production issues by parsing any log format, filtering with expressions, and enriching events with context. Transform with 100+ functions, track metrics, analyze with sliding windows.
+See what you can do in a few commands:
 
 **Detect problems** - Filter slow and failing requests:
 
