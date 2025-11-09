@@ -83,36 +83,36 @@ nav:
       - Configuration and Reusability: tutorials/configuration-and-reusability.md
   - How-To Guides:
       - Overview: how-to/index.md
-      - how-to/find-errors-in-logs.md
-      - how-to/analyze-web-traffic.md
-      - how-to/monitor-application-health.md
-      - how-to/parse-syslog-files.md
-      - how-to/handle-multiline-stacktraces.md
-      - how-to/extract-and-mask-sensitive-data.md
-      - how-to/pseudonymize-identifiers-for-analytics.md
-      - how-to/process-csv-data.md
-      - how-to/fan-out-nested-structures.md
-      - how-to/build-streaming-alerts.md
-      - how-to/batch-process-archives.md
-      - how-to/span-aggregation-cookbook.md
-      - how-to/integrate-external-tools.md
+      - Triage Production Errors: how-to/find-errors-in-logs.md
+      - Analyze Web Traffic: how-to/analyze-web-traffic.md
+      - Build a Service Health Snapshot: how-to/monitor-application-health.md
+      - Investigate Syslog Sources: how-to/parse-syslog-files.md
+      - Choose a Multiline Strategy: how-to/handle-multiline-stacktraces.md
+      - Sanitize Logs Before Sharing: how-to/extract-and-mask-sensitive-data.md
+      - Pseudonymize Identifiers for Analytics: how-to/pseudonymize-identifiers-for-analytics.md
+      - Prepare CSV Exports for Analytics: how-to/process-csv-data.md
+      - Flatten Nested JSON for Analysis: how-to/fan-out-nested-structures.md
+      - Design Streaming Alerts: how-to/build-streaming-alerts.md
+      - Process Archives at Scale: how-to/batch-process-archives.md
+      - Roll Up Logs with Span Windows: how-to/span-aggregation-cookbook.md
+      - Integrate Kelora with External Tools: how-to/integrate-external-tools.md
   - Concepts:
       - Overview: concepts/index.md
-      - concepts/pipeline-model.md
-      - concepts/events-and-fields.md
-      - concepts/scripting-stages.md
-      - concepts/error-handling.md
-      - concepts/multiline-strategies.md
-      - concepts/performance-model.md
-      - concepts/performance-comparisons.md
-      - concepts/benchmark-results.md
-      - concepts/configuration-system.md
+      - Processing Architecture: concepts/pipeline-model.md
+      - Events and Fields: concepts/events-and-fields.md
+      - Scripting Stages: concepts/scripting-stages.md
+      - Error Handling: concepts/error-handling.md
+      - Multiline Strategies: concepts/multiline-strategies.md
+      - Performance Model: concepts/performance-model.md
+      - Performance Comparisons: concepts/performance-comparisons.md
+      - Benchmark Results: concepts/benchmark-results.md
+      - Configuration System: concepts/configuration-system.md
   - Reference:
       - Overview: reference/index.md
-      - reference/cli-reference.md
-      - reference/formats.md
-      - reference/time-reference.md
-      - reference/functions.md
-      - reference/script-variables.md
-      - reference/rhai-cheatsheet.md
-      - reference/exit-codes.md
+      - CLI Reference: reference/cli-reference.md
+      - Format Reference: reference/formats.md
+      - Time Reference: reference/time-reference.md
+      - Function Reference: reference/functions.md
+      - Script Variables Reference: reference/script-variables.md
+      - Rhai Cheatsheet: reference/rhai-cheatsheet.md
+      - Exit Codes: reference/exit-codes.md
