@@ -2,7 +2,7 @@
 
 **Scriptable log processor for the command line.**
 
-Parse messy logs into structured events, then filter, transform, and analyze them with embedded [Rhai](https://rhai.rs) scripting.
+Parse messy logs into structured events, then filter, transform, and analyze them with embedded [Rhai](https://rhai.rs) scripting (a Rust-based scripting language with JavaScript-like syntax).
 
 !!! note "Development Status"
     Pre-1.0 tool generated entirely by AI agents. Validated by a large test suite and Rust security tools; see [Development Approach](#development-approach) and the [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before relying on it in production. APIs might change without notice before v1.0.
@@ -11,7 +11,7 @@ Parse messy logs into structured events, then filter, transform, and analyze the
 
 Debug production issues by parsing any log format, filtering with expressions, and enriching events with context. Transform with 100+ functions, track metrics, analyze with sliding windows.
 
-**Detect problems** - Filter slow and failing requests:
+**Detect problems** - Find errors and performance issues by filtering on structured fields. After parsing, each log line becomes an event (a structured object) that you can filter using expressions like `e.status >= 500` (where `e` is the event). This example shows finding server errors and slow requests in web traffic logs:
 
 === "Command/Output"
 
@@ -26,7 +26,7 @@ Debug production issues by parsing any log format, filtering with expressions, a
     cat examples/traffic_logfmt.log
     ```
 
-**Parse custom formats and extract structured data** - No regex wrestling:
+**Parse custom formats and extract structured data** - Many logs use custom formats with delimited columns or key-value pairs buried in messages. Kelora's `cols` format lets you describe the structure (like `ts level service *message` for "timestamp, level, service, then the rest as message") instead of writing regex patterns. The `absorb_kv()` function then extracts hidden key-value pairs from the message field into proper structured fields:
 
 === "Command/Output"
 
@@ -44,7 +44,7 @@ Debug production issues by parsing any log format, filtering with expressions, a
     cat examples/release_pipe.log
     ```
 
-**Enrich events with recent context** - Add error context from sliding window:
+**Enrich events with recent context** - Sometimes you need to understand an event in relation to what happened recently. Kelora's sliding window feature (`--window 5`) keeps the last N events in memory, accessible in scripts via the `window` array. This example adds error context from recent events to each log line, helping you see patterns and correlations:
 
 === "Command/Output"
 
