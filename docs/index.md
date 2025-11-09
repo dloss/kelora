@@ -7,12 +7,24 @@ Parse messy logs into structured events, then filter, transform, and analyze the
 !!! note "Development Status"
     Pre-1.0 tool generated entirely by AI agents. Validated by a large test suite and Rust security tools; see [Development Approach](#development-approach) and the [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before relying on it in production. APIs might change without notice before v1.0.
 
-![Kelora hero demo](screenshots/hero.gif)
-*Filtering noisy logs, parsing custom formats, and visualizing log levels*
-
 ## What It Does
 
-Parse any log format, filter with expressions, transform with 100+ functions, track metrics, analyze in context with sliding windows.
+Debug production issues by parsing any log format, filtering with expressions, and enriching events with context. Transform with 100+ functions, track metrics, analyze with sliding windows.
+
+**Detect problems** - Filter slow and failing requests:
+
+=== "Command/Output"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora -f logfmt examples/traffic_logfmt.log \
+      --filter 'e.status.to_int() >= 500 || e.latency_ms.to_int() > 1200'
+    ```
+
+=== "Log Data"
+
+    ```bash exec="on" result="ansi"
+    cat examples/traffic_logfmt.log
+    ```
 
 **Parse custom formats and extract structured data** - No regex wrestling:
 
