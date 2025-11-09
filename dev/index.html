@@ -1782,12 +1782,32 @@
 <p class="admonition-title">Development Status</p>
 <p>Pre-1.0 tool generated entirely by AI agents. Validated by a large test suite and Rust security tools; see <a href="#development-approach">Development Approach</a> and the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before relying on it in production. APIs might change without notice before v1.0.</p>
 </div>
-<p><img alt="Kelora hero demo" src="screenshots/hero.gif" />
-<em>Filtering noisy logs, parsing custom formats, and visualizing log levels</em></p>
 <h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
-<p>Parse any log format, filter with expressions, transform with 100+ functions, track metrics, analyze in context with sliding windows.</p>
-<p><strong>Parse custom formats and extract structured data</strong> - No regex wrestling:</p>
+<p>Debug production issues by parsing any log format, filtering with expressions, and enriching events with context. Transform with 100+ functions, track metrics, analyze with sliding windows.</p>
+<p><strong>Detect problems</strong> - Filter slow and failing requests:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label><label for="__tabbed_1_2">Log Data</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status.to_int() &gt;= 500 || e.latency_ms.to_int() &gt; 1200&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ts=&#39;2024-07-17T12:00:04Z&#39; level=&#39;INFO&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=200 latency_ms=1450
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ts=&#39;2024-07-17T12:00:05Z&#39; level=&#39;ERROR&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=502 latency_ms=2100
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ts=2024-07-17T11:59:40Z level=INFO method=GET path=/docs status=200 latency_ms=280
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ts=2024-07-17T11:59:55Z level=INFO method=POST path=/checkout status=200 latency_ms=950
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ts=2024-07-17T12:00:01Z level=INFO method=GET path=/docs status=200 latency_ms=320
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>ts=2024-07-17T12:00:04Z level=INFO method=POST path=/checkout status=200 latency_ms=1450
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>ts=2024-07-17T12:00:05Z level=ERROR method=POST path=/checkout status=502 latency_ms=2100
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>ts=2024-07-17T12:00:07Z level=WARN method=GET path=/billing status=200 latency_ms=900
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>Parse custom formats and extract structured data</strong> - No regex wrestling:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level service request_id *message&#39;</span><span class="w"> </span>examples/release_pipe.log<span class="w"> </span><span class="se">\</span>
@@ -1809,7 +1829,7 @@
 </div>
 </div>
 <p><strong>Enrich events with recent context</strong> - Add error context from sliding window:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Log Data</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_errors.jsonl<span class="w"> </span><span class="se">\</span>
