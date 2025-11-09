@@ -106,6 +106,51 @@ kelora -j examples/basics.jsonl
 
 ---
 
+## Part 2.5: Understanding Events
+
+Before we dive into display options, let's clarify what an **event** is and how you'll work with it in filters and scripts.
+
+### What is an Event?
+
+After Kelora parses a log line, it becomes an **event** — a structured object (like a map or dictionary) containing fields you can access and manipulate.
+
+Looking at the output above, each block like this is one event:
+
+```
+timestamp='2024-01-15T14:23:45Z' level='INFO' message='Application started'
+    service='api' version='1.2.3'
+```
+
+### The Event Object: `e`
+
+In filter expressions and scripts, you access the current event using the variable **`e`**. Each field becomes a property:
+
+```rhai
+e.timestamp   // Access the timestamp field
+e.level       // Access the level field
+e.service     // Access the service field
+e.message     // Access the message field
+```
+
+**Example:** To filter for ERROR events, you write `--filter 'e.level == "ERROR"'` which means "keep events where the level field equals ERROR."
+
+**Example:** To check if status code is 500 or higher, you write `--filter 'e.status >= 500'` which means "keep events where the status field is 500 or more."
+
+### Why This Matters
+
+Understanding events is crucial because:
+
+- **Filtering** uses event fields: `--filter 'e.service == "database"'`
+- **Scripts** read and modify event fields: `--exec 'e.user_type = "admin"'`
+- **Display options** control which event fields you see: `--keys timestamp,level,message`
+
+You'll encounter `e` throughout the documentation. Remember: `e` = the current event, and `e.field_name` = accessing a field in that event.
+
+!!! tip "Want to learn more?"
+    For complete details on event structure, nested fields, and type handling, see [Events and Fields](../concepts/events-and-fields.md).
+
+---
+
 ## Part 3: Display Modifiers (`-b`, `-c`, `-k`, `-K`)
 
 ### Brief Mode (`-b`) - Values Only
