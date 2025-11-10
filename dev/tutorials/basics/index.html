@@ -640,6 +640,48 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#part-25-understanding-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 2.5: Understanding Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.5: Understanding Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-an-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is an Event?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-event-object-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Event Object: e
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Matters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#part-3-display-modifiers-b-c-k-k" class="md-nav__link">
     <span class="md-ellipsis">
       Part 3: Display Modifiers (-b, -c, -k, -K)
@@ -960,6 +1002,39 @@
       Next Steps
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-next-introduction-to-rhai" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Next: Introduction to Rhai
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-that-specialized-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      After That: Specialized Topics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#or-jump-to-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Or Jump to Solutions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2154,6 +2229,48 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#part-25-understanding-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 2.5: Understanding Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.5: Understanding Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-an-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is an Event?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-event-object-e" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Event Object: e
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why This Matters
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#part-3-display-modifiers-b-c-k-k" class="md-nav__link">
     <span class="md-ellipsis">
       Part 3: Display Modifiers (-b, -c, -k, -K)
@@ -2475,6 +2592,39 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Next Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-next-introduction-to-rhai" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Next: Introduction to Rhai
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#after-that-specialized-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      After That: Specialized Topics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#or-jump-to-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Or Jump to Solutions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -2610,6 +2760,36 @@
 <li>Field names are highlighted in color for better readability</li>
 </ol>
 <hr />
+<h2 id="part-25-understanding-events">Part 2.5: Understanding Events<a class="headerlink" href="#part-25-understanding-events" title="Permanent link">&para;</a></h2>
+<p>Before we dive into display options, let's clarify what an <strong>event</strong> is and how you'll work with it in filters and scripts.</p>
+<h3 id="what-is-an-event">What is an Event?<a class="headerlink" href="#what-is-an-event" title="Permanent link">&para;</a></h3>
+<p>After Kelora parses a log line, it becomes an <strong>event</strong> — a structured object (like a map or dictionary) containing fields you can access and manipulate.</p>
+<p>Looking at the output above, each block like this is one event:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>timestamp=&#39;2024-01-15T14:23:45Z&#39; level=&#39;INFO&#39; message=&#39;Application started&#39;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    service=&#39;api&#39; version=&#39;1.2.3&#39;
+</code></pre></div>
+<h3 id="the-event-object-e">The Event Object: <code>e</code><a class="headerlink" href="#the-event-object-e" title="Permanent link">&para;</a></h3>
+<p>In filter expressions and scripts, you access the current event using the variable <strong><code>e</code></strong>. Each field becomes a property:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>e.timestamp   // Access the timestamp field
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>e.level       // Access the level field
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>e.service     // Access the service field
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>e.message     // Access the message field
+</code></pre></div>
+<p><strong>Example:</strong> To filter for ERROR events, you write <code>--filter 'e.level == "ERROR"'</code> which means "keep events where the level field equals ERROR."</p>
+<p><strong>Example:</strong> To check if status code is 500 or higher, you write <code>--filter 'e.status &gt;= 500'</code> which means "keep events where the status field is 500 or more."</p>
+<h3 id="why-this-matters">Why This Matters<a class="headerlink" href="#why-this-matters" title="Permanent link">&para;</a></h3>
+<p>Understanding events is crucial because:</p>
+<ul>
+<li><strong>Filtering</strong> uses event fields: <code>--filter 'e.service == "database"'</code></li>
+<li><strong>Scripts</strong> read and modify event fields: <code>--exec 'e.user_type = "admin"'</code></li>
+<li><strong>Display options</strong> control which event fields you see: <code>--keys timestamp,level,message</code></li>
+</ul>
+<p>You'll encounter <code>e</code> throughout the documentation. Remember: <code>e</code> = the current event, and <code>e.field_name</code> = accessing a field in that event.</p>
+<div class="admonition tip">
+<p class="admonition-title">Want to learn more?</p>
+<p>For complete details on event structure, nested fields, and type handling, see <a href="../../concepts/events-and-fields/">Events and Fields</a>.</p>
+</div>
+<hr />
 <h2 id="part-3-display-modifiers-b-c-k-k">Part 3: Display Modifiers (<code>-b</code>, <code>-c</code>, <code>-k</code>, <code>-K</code>)<a class="headerlink" href="#part-3-display-modifiers-b-c-k-k" title="Permanent link">&para;</a></h2>
 <h3 id="brief-mode-b-values-only">Brief Mode (<code>-b</code>) - Values Only<a class="headerlink" href="#brief-mode-b-values-only" title="Permanent link">&para;</a></h3>
 <p>Omit field names, show only values for compact output:</p>
@@ -2676,9 +2856,9 @@
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  username=&#39;admin&#39; attempts=5
 </code></pre></div>
 <p><strong>Common patterns:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>error<span class="w">                    </span><span class="c1"># Errors only</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>error,warn,critical<span class="w">      </span><span class="c1"># Problems only (case-insensitive)</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>info<span class="w">                     </span><span class="c1"># Application flow (skip debug noise)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>error<span class="w">                    </span><span class="c1"># Errors only</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>error,warn,critical<span class="w">      </span><span class="c1"># Problems only (case-insensitive)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>info<span class="w">                     </span><span class="c1"># Application flow (skip debug noise)</span>
 </code></pre></div>
 <h3 id="exclude-levels-l-hide-debug-noise">Exclude Levels (<code>-L</code>) - Hide Debug Noise<a class="headerlink" href="#exclude-levels-l-hide-debug-noise" title="Permanent link">&para;</a></h3>
 <p>Remove verbose log levels:</p>
@@ -2780,7 +2960,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Stats:
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 6 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 6 total, 6 output, 0 filtered (0.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 4224 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 4899 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: timestamp (auto-detected) - 6/6 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:03:00+00:00 (3m)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Levels seen: DEBUG,ERROR,INFO,WARN
@@ -2817,62 +2997,62 @@
 </code></pre></div>
 <h3 id="real-world-patterns">Real-World Patterns<a class="headerlink" href="#real-world-patterns" title="Permanent link">&para;</a></h3>
 <p>Here are some patterns you'll use frequently in practice:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Stream processing (tail -f, kubectl logs, etc.)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>deployment/api<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-l<span class="w"> </span>error
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Multiple files - track which files have errors</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs/*.log<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Time-based filtering</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;10 minutes ago&quot;</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># Extract prefixes (Docker Compose, systemd, etc.)</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-f<span class="w"> </span>json
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="c1"># Auto-detect format and output brief values only</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>-k<span class="w"> </span>timestamp,level,message<span class="w"> </span>-b
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># Custom timestamp formats</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--ts-format<span class="w"> </span><span class="s2">&quot;%d/%b/%Y:%H:%M:%S&quot;</span><span class="w"> </span>--ts-field<span class="w"> </span>timestamp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Stream processing (tail -f, kubectl logs, etc.)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>deployment/api<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-l<span class="w"> </span>error
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Multiple files - track which files have errors</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>logs/*.log<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># Time-based filtering</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>access.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;10 minutes ago&quot;</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># Extract prefixes (Docker Compose, systemd, etc.)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>--extract-prefix<span class="w"> </span>container<span class="w"> </span>-f<span class="w"> </span>json
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1"># Auto-detect format and output brief values only</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto<span class="w"> </span>mixed.log<span class="w"> </span>-k<span class="w"> </span>timestamp,level,message<span class="w"> </span>-b
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="c1"># Custom timestamp formats</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--ts-format<span class="w"> </span><span class="s2">&quot;%d/%b/%Y:%H:%M:%S&quot;</span><span class="w"> </span>--ts-field<span class="w"> </span>timestamp
 </code></pre></div>
 <hr />
 <h2 id="quick-reference-cheat-sheet">Quick Reference Cheat Sheet<a class="headerlink" href="#quick-reference-cheat-sheet" title="Permanent link">&para;</a></h2>
 <h3 id="input-formats">Input Formats<a class="headerlink" href="#input-formats" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-f<span class="w"> </span>json<span class="w">         </span><span class="c1"># JSON lines (or use -j shortcut)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>-f<span class="w"> </span>logfmt<span class="w">       </span><span class="c1"># key=value format</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>-f<span class="w"> </span>combined<span class="w">     </span><span class="c1"># Apache/Nginx access logs</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>-f<span class="w"> </span>syslog<span class="w">       </span><span class="c1"># Syslog format</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>-f<span class="w"> </span>csv<span class="w">          </span><span class="c1"># CSV with header</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>-f<span class="w"> </span>line<span class="w">         </span><span class="c1"># Plain text (default)</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>-f<span class="w"> </span>auto<span class="w">         </span><span class="c1"># Auto-detect by content</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>-f<span class="w"> </span>json<span class="w">         </span><span class="c1"># JSON lines (or use -j shortcut)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>-f<span class="w"> </span>logfmt<span class="w">       </span><span class="c1"># key=value format</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>-f<span class="w"> </span>combined<span class="w">     </span><span class="c1"># Apache/Nginx access logs</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>-f<span class="w"> </span>syslog<span class="w">       </span><span class="c1"># Syslog format</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>-f<span class="w"> </span>csv<span class="w">          </span><span class="c1"># CSV with header</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>-f<span class="w"> </span>line<span class="w">         </span><span class="c1"># Plain text (default)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>-f<span class="w"> </span>auto<span class="w">         </span><span class="c1"># Auto-detect by content</span>
 </code></pre></div>
 <h3 id="display-modifiers">Display Modifiers<a class="headerlink" href="#display-modifiers" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>-b<span class="w">              </span><span class="c1"># Brief: values only, no field names</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>-c<span class="w">              </span><span class="c1"># Core: timestamp + level + message only</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>-k<span class="w"> </span>level,msg<span class="w">    </span><span class="c1"># Keys: show only these fields (in this order)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>-K<span class="w"> </span>password,ip<span class="w">  </span><span class="c1"># Exclude: hide these fields</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>-b<span class="w">              </span><span class="c1"># Brief: values only, no field names</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>-c<span class="w">              </span><span class="c1"># Core: timestamp + level + message only</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>-k<span class="w"> </span>level,msg<span class="w">    </span><span class="c1"># Keys: show only these fields (in this order)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>-K<span class="w"> </span>password,ip<span class="w">  </span><span class="c1"># Exclude: hide these fields</span>
 </code></pre></div>
 <h3 id="level-filtering">Level Filtering<a class="headerlink" href="#level-filtering" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>-l<span class="w"> </span>error,warn<span class="w">   </span><span class="c1"># Include: show only these levels</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>-L<span class="w"> </span>debug,trace<span class="w">  </span><span class="c1"># Exclude: hide these levels</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>-l<span class="w"> </span>error,warn<span class="w">   </span><span class="c1"># Include: show only these levels</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>-L<span class="w"> </span>debug,trace<span class="w">  </span><span class="c1"># Exclude: hide these levels</span>
 </code></pre></div>
 <h3 id="output-formats">Output Formats<a class="headerlink" href="#output-formats" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>-F<span class="w"> </span>default<span class="w">      </span><span class="c1"># Pretty key=&#39;value&#39; with colors (default)</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>-F<span class="w"> </span>json<span class="w">         </span><span class="c1"># JSON lines (or use -J shortcut)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>-F<span class="w"> </span>csv<span class="w">          </span><span class="c1"># CSV with header</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>-F<span class="w"> </span>logfmt<span class="w">       </span><span class="c1"># Logfmt key=value</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>-F<span class="w"> </span>inspect<span class="w">      </span><span class="c1"># Debug with types</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>-F<span class="w"> </span>none<span class="w">         </span><span class="c1"># No output (use with --stats)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>-F<span class="w"> </span>default<span class="w">      </span><span class="c1"># Pretty key=&#39;value&#39; with colors (default)</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>-F<span class="w"> </span>json<span class="w">         </span><span class="c1"># JSON lines (or use -J shortcut)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>-F<span class="w"> </span>csv<span class="w">          </span><span class="c1"># CSV with header</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>-F<span class="w"> </span>logfmt<span class="w">       </span><span class="c1"># Logfmt key=value</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>-F<span class="w"> </span>inspect<span class="w">      </span><span class="c1"># Debug with types</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>-F<span class="w"> </span>none<span class="w">         </span><span class="c1"># No output (use with --stats)</span>
 </code></pre></div>
 <hr />
 <h2 id="understanding-the-pipeline-order">Understanding the Pipeline Order<a class="headerlink" href="#understanding-the-pipeline-order" title="Permanent link">&para;</a></h2>
 <p>Kelora processes your options in this order:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>1. Read file      (-f json, -j)
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>2. Filter levels  (-l error, -L debug)
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>3. Select fields  (-k, -K, -c)
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>4. Format output  (-F csv, -J, -b)
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>5. Write output   (stdout or -o file)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>1. Read file      (-f json, -j)
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>2. Filter levels  (-l error, -L debug)
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>3. Select fields  (-k, -K, -c)
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>4. Format output  (-F csv, -J, -b)
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>5. Write output   (stdout or -o file)
 </code></pre></div>
 <p><strong>This means:</strong></p>
 <ul>
@@ -2883,20 +3063,20 @@
 <hr />
 <h2 id="common-workflows">Common Workflows<a class="headerlink" href="#common-workflows" title="Permanent link">&para;</a></h2>
 <h3 id="error-analysis-pipeline">Error Analysis Pipeline<a class="headerlink" href="#error-analysis-pipeline" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-k<span class="w"> </span>timestamp,service,message<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>-o<span class="w"> </span>errors.csv
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># Filter → Select fields → Export to CSV → Save to file</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-k<span class="w"> </span>timestamp,service,message<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>-o<span class="w"> </span>errors.csv
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Filter → Select fields → Export to CSV → Save to file</span>
 </code></pre></div>
 <h3 id="quick-scan-hide-noise">Quick Scan (Hide Noise)<a class="headerlink" href="#quick-scan-hide-noise" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-L<span class="w"> </span>debug,trace<span class="w"> </span>-b<span class="w"> </span>--take<span class="w"> </span><span class="m">20</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># Exclude verbose levels → Brief output → First 20 events</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-L<span class="w"> </span>debug,trace<span class="w"> </span>-b<span class="w"> </span>--take<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Exclude verbose levels → Brief output → First 20 events</span>
 </code></pre></div>
 <h3 id="investigation-mode-full-detail">Investigation Mode (Full Detail)<a class="headerlink" href="#investigation-mode-full-detail" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>warn,error,critical<span class="w"> </span>-K<span class="w"> </span>password,token
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Show problems → Hide sensitive data → Keep all other fields</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>warn,error,critical<span class="w"> </span>-K<span class="w"> </span>password,token
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Show problems → Hide sensitive data → Keep all other fields</span>
 </code></pre></div>
 <h3 id="stats-only-analysis">Stats-Only Analysis<a class="headerlink" href="#stats-only-analysis" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># No event output → Show processing statistics</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># No event output → Show processing statistics</span>
 </code></pre></div>
 <hr />
 <h2 id="when-to-use-what">When to Use What<a class="headerlink" href="#when-to-use-what" title="Permanent link">&para;</a></h2>
@@ -2948,13 +3128,19 @@
 </table>
 <hr />
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>Once you're comfortable with these basics, continue to:</p>
+<p>You've mastered the basics of input, display, and filtering. Now <strong>learn to write scripts</strong> for custom logic:</p>
+<h3 id="recommended-next-introduction-to-rhai">Recommended Next: Introduction to Rhai<a class="headerlink" href="#recommended-next-introduction-to-rhai" title="Permanent link">&para;</a></h3>
+<p><strong><a href="../intro-to-rhai/">→ Introduction to Rhai Scripting</a></strong> (20 min) - Learn to write filter expressions and transforms. You'll understand how to use the <code>e</code> object you just learned about, write conditionals, convert types, and build multi-stage pipelines. This is essential before tackling advanced features.</p>
+<h3 id="after-that-specialized-topics">After That: Specialized Topics<a class="headerlink" href="#after-that-specialized-topics" title="Permanent link">&para;</a></h3>
+<p>Pick based on your needs:</p>
 <ul>
-<li><strong><a href="../working-with-time/">Working with Time</a></strong> - Time filtering with <code>--since</code> and <code>--until</code></li>
-<li><strong><a href="../advanced-scripting/">Advanced Scripting</a></strong> - Custom filters and transformations with Rhai</li>
-<li><strong><a href="../metrics-and-tracking/">Metrics and Tracking</a></strong> - Aggregate data with <code>track_*()</code> functions</li>
-<li><strong><a href="../parsing-custom-formats/">Parsing Custom Formats</a></strong> - Handle non-standard log formats</li>
+<li><strong><a href="../working-with-time/">Working with Time</a></strong> (15 min) - Parse timestamps, filter by time ranges, handle timezones</li>
+<li><strong><a href="../metrics-and-tracking/">Metrics and Tracking</a></strong> (20 min) - Aggregate data with <code>track_*()</code> functions</li>
+<li><strong><a href="../parsing-custom-formats/">Parsing Custom Formats</a></strong> (15 min) - Handle non-standard log formats</li>
+<li><strong><a href="../advanced-scripting/">Advanced Scripting</a></strong> (30 min) - Complex transformations and window operations</li>
 </ul>
+<h3 id="or-jump-to-solutions">Or Jump to Solutions<a class="headerlink" href="#or-jump-to-solutions" title="Permanent link">&para;</a></h3>
+<p><strong><a href="../../how-to/find-errors-in-logs/">How-To Guides</a></strong> - Solve specific problems with ready-made solutions</p>
 
 
 
