@@ -2261,67 +2261,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common Patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Common Patterns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#field-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Field Access
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#type-conversion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Type Conversion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#common-cli-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common CLI Patterns
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3105,67 +3044,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common Patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Common Patterns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#field-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Field Access
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#type-conversion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Type Conversion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filtering" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Filtering
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#common-cli-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common CLI Patterns
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3317,43 +3195,6 @@
 <h2 id="w">W<a class="headerlink" href="#w" title="Permanent link">&para;</a></h2>
 <h3 id="window">Window<a class="headerlink" href="#window" title="Permanent link">&para;</a></h3>
 <p>A sliding window of recent events accessible in scripts via the <code>window</code> array. Configured with <code>--window N</code> to keep the last N events in memory. Useful for contextual analysis. Example: <code>--window 10 --exec 'e.recent_errors = window.filter(|x| x.level == "ERROR").len()'</code>. See <a href="../tutorials/advanced-scripting/">Advanced Scripting Tutorial</a>.</p>
-<hr />
-<h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="field-access">Field Access<a class="headerlink" href="#field-access" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>e.field_name              // Direct access
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>e[&quot;field-with-dashes&quot;]    // Bracket notation
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>e.nested.field            // Nested access
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>e.get_path(&quot;a.b.c&quot;, &quot;&quot;)   // Safe nested access with default
-</code></pre></div>
-<h3 id="type-conversion">Type Conversion<a class="headerlink" href="#type-conversion" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>e.status.to_int()         // Convert to integer (fails on error)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>e.status.to_int_or(0)     // Convert with fallback
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>e.count.to_float_or(0.0)  // Convert to float with fallback
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>e.value.to_string()       // Convert to string
-</code></pre></div>
-<h3 id="filtering">Filtering<a class="headerlink" href="#filtering" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>e.level == &quot;ERROR&quot;                     // String equality
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>e.status &gt;= 500                        // Numeric comparison
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>e.level in [&quot;ERROR&quot;, &quot;CRITICAL&quot;]       // Membership test
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>e.message.contains(&quot;timeout&quot;)          // String search
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>e.has(&quot;optional_field&quot;)                // Field existence
-</code></pre></div>
-<h3 id="common-cli-patterns">Common CLI Patterns<a class="headerlink" href="#common-cli-patterns" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Read JSON, filter errors, show essentials</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-c
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Parse custom format, extract data, export CSV</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level *msg&#39;</span><span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;msg&quot;)&#39;</span><span class="w"> </span>-F<span class="w"> </span>csv
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Parallel processing of compressed archives</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.gz<span class="w"> </span>--parallel<span class="w"> </span>-l<span class="w"> </span>error
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Track metrics across events</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Time-based filtering</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>--until<span class="w"> </span>10m
-</code></pre></div>
 <hr />
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
