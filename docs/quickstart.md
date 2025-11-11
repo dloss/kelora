@@ -74,7 +74,7 @@ Follow this sequence to build your Kelora skills systematically:
 
 ### Jump to Solutions
 
-Already know what you need? Check the **[How-To Guides](how-to/find-errors-in-logs.md)** for specific solutions like triaging errors, parsing custom formats, and tracking metrics.
+Already know what you need? Check the **[How-To Guides](how-to/index.md)** for specific solutions like triaging errors, parsing custom formats, and tracking metrics.
 
 ### Reference
 

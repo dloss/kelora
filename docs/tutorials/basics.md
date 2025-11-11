@@ -446,4 +446,4 @@ Pick based on your needs:
 
 ### Or Jump to Solutions
 
-**[How-To Guides](../how-to/find-errors-in-logs.md)** - Solve specific problems with ready-made solutions
+**[How-To Guides](../how-to/index.md)** - Solve specific problems with ready-made solutions
