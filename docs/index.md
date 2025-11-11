@@ -73,6 +73,8 @@ Kelora thrives in command-line pipelines. Stream logs from kubectl, tail, or jou
 
 **[→ Tutorial: Basics (30 minutes)](tutorials/basics.md)** - Learn input formats, filtering, and output
 
+**[→ Troubleshooting](troubleshooting.md)** - Fix common issues and debug effectively
+
 **[→ How-To Guides](how-to/find-errors-in-logs.md)** - Solve specific problems
 
 For deeper understanding, see [Concepts](concepts/pipeline-model.md). For complete reference, see [Glossary](glossary.md), [Functions](reference/functions.md), [Formats](reference/formats.md), and [CLI options](reference/cli-reference.md).
