@@ -73,3 +73,9 @@ Follow this sequence to build your Kelora skills systematically:
 ### Jump to Solutions
 
 Already know what you need? Check the **[How-To Guides](how-to/find-errors-in-logs.md)** for specific solutions like triaging errors, parsing custom formats, and tracking metrics.
+
+### Reference
+
+- **[Glossary](glossary.md)** - Definitions of terms like "event", "field", "span", and "stage"
+- **[Functions Reference](reference/functions.md)** - Complete catalog of 40+ built-in functions
+- **[CLI Reference](reference/cli-reference.md)** - All command-line flags and options
