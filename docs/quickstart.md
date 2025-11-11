@@ -77,5 +77,5 @@ Already know what you need? Check the **[How-To Guides](how-to/find-errors-in-lo
 ### Reference
 
 - **[Glossary](glossary.md)** - Definitions of terms like "event", "field", "span", and "stage"
-- **[Functions Reference](reference/functions.md)** - Complete catalog of 40+ built-in functions
+- **[Functions Reference](reference/functions.md)** - Complete catalog of 150+ built-in functions
 - **[CLI Reference](reference/cli-reference.md)** - All command-line flags and options

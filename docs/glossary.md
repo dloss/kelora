@@ -126,7 +126,7 @@ The sequence of stages through which events flow: Input → Parse → Filter/Tra
 Default error handling mode where parsing errors and script failures are logged but don't stop processing. Failed events are skipped and processing continues. Opposite of strict mode. See [Error Handling](concepts/error-handling.md).
 
 ### Rhai
-The embedded scripting language used for filters and transforms. Rust-based with JavaScript-like syntax. Provides 40+ built-in functions for log analysis. See [Introduction to Rhai Tutorial](tutorials/intro-to-rhai.md) and [Rhai Cheatsheet](reference/rhai-cheatsheet.md).
+The embedded scripting language used for filters and transforms. Rust-based with JavaScript-like syntax. Provides 150+ built-in functions for log analysis. See [Introduction to Rhai Tutorial](tutorials/intro-to-rhai.md) and [Rhai Cheatsheet](reference/rhai-cheatsheet.md).
 
 ---
 
@@ -239,5 +239,5 @@ kelora -j app.log --since 1h --until 10m
 - [Events and Fields](concepts/events-and-fields.md) - Deep dive on event structure
 - [Processing Architecture](concepts/pipeline-model.md) - Understanding the pipeline
 - [Scripting Stages](concepts/scripting-stages.md) - Filter and transform details
-- [Function Reference](reference/functions.md) - All 40+ built-in functions
+- [Function Reference](reference/functions.md) - All 150+ built-in functions
 - [CLI Reference](reference/cli-reference.md) - Complete command-line reference

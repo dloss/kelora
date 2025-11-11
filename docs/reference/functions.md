@@ -1,6 +1,6 @@
 # Function Reference
 
-Complete reference for all 40+ built-in Rhai functions available in Kelora. Functions are organized by category for easy lookup.
+Complete reference for all 150+ built-in Rhai functions available in Kelora. Functions are organized by category for easy lookup.
 
 !!! tip "Function Call Syntax"
     Rhai allows two styles: `value.method(args)` or `function(value, args)`. Use whichever feels more natural.

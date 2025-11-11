@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/dloss/kelora/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dloss/kelora/actions/workflows/ci.yml) [![Crates.io](https://img.shields.io/crates/v/kelora.svg)](https://crates.io/crates/kelora) [![Documentation](https://img.shields.io/badge/docs-kelora.dev-blue)](https://kelora.dev)
 
-Scriptable log processor for the command line. Treats logs as structured events and lets you filter, transform, and analyze them using embedded [Rhai](https://rhai.rs) scripts with 40+ built-in functions.
+Scriptable log processor for the command line. Treats logs as structured events and lets you filter, transform, and analyze them using embedded [Rhai](https://rhai.rs) scripts with 150+ built-in functions.
 
 Kelora parses log streams into structured events and runs them through a programmable pipeline powered by Rhai scripting.
 
-It turns noisy lines into structured events (`e.field`/`e["field-name"]`), ships with 40+ Rhai helpers, and works with JSON, logfmt, syslog, CSV/TSV, column specs, and gzip. Stream tailing and archive crunching are supported through sequential or `--parallel` execution modes with built-in metrics for live observability.
+It turns noisy lines into structured events (`e.field`/`e["field-name"]`), ships with 150+ Rhai helpers, and works with JSON, logfmt, syslog, CSV/TSV, column specs, and gzip. Stream tailing and archive crunching are supported through sequential or `--parallel` execution modes with built-in metrics for live observability.
 
 ## Installation
 

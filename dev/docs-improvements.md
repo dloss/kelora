@@ -313,12 +313,12 @@ You can filter with `--filter 'e.level == "ERROR"'` where `e` is the event and `
 ### Terminology Consistency
 
 **Current inconsistencies:**
-- "40+ functions" vs "40+ built-in functions" vs "40+ built-in Rhai functions"
+- "150+ functions" vs "150+ built-in functions" vs "150+ built-in Rhai functions"
 - "Pipeline Model" vs "Processing Architecture"
 - Mix of short/long flag notation
 
 **Recommendation:**
-- Use "40+ built-in functions" everywhere
+- Use "150+ built-in functions" everywhere
 - Pick one: "Processing Architecture" (clearer for new users)
 - Short flags in examples, long flags in prose: "Use `-e` (short for `--exec`) to transform events"
 

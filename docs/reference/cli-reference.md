@@ -63,7 +63,7 @@ kelora -                          # Explicitly read stdin
 | Flag | Description |
 |------|-------------|
 | `--help-rhai` | Rhai scripting guide and stage semantics |
-| `--help-functions` | All 40+ built-in Rhai functions |
+| `--help-functions` | All 150+ built-in Rhai functions |
 | `--help-examples` | Practical log analysis patterns |
 | `--help-time` | Timestamp format reference (chrono format strings) |
 | `--help-multiline` | Multi-line event detection strategies |
@@ -1007,6 +1007,6 @@ kelora -j --parallel logs/*.log.gz
 ## See Also
 
 - [Quickstart Guide](../quickstart.md) - Get started in 5 minutes
-- [Function Reference](functions.md) - All 40+ built-in Rhai functions
+- [Function Reference](functions.md) - All 150+ built-in Rhai functions
 - [Pipeline Model](../concepts/pipeline-model.md) - How processing stages work
 - [Configuration System](../concepts/configuration-system.md) - Configuration files and aliases

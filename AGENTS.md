@@ -10,7 +10,7 @@ Kelora is a Rust-based command-line log analysis tool using the Rhai scripting e
 - **Built-in help** - Run `./target/release/kelora --help-*` for detailed references:
   - `--help` - CLI reference
   - `--help-rhai` - Rhai scripting guide
-  - `--help-functions` - All 40+ built-in functions
+  - `--help-functions` - All 150+ built-in functions
   - `--help-examples` - Common patterns
   - `--help-time` - Timestamp formats
   - `--help-multiline` - Multiline strategies
