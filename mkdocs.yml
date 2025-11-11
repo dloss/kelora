@@ -109,6 +109,7 @@ nav:
       - Configuration System: concepts/configuration-system.md
   - Reference:
       - Overview: reference/index.md
+      - Glossary: glossary.md
       - CLI Reference: reference/cli-reference.md
       - Format Reference: reference/formats.md
       - Time Reference: reference/time-reference.md
