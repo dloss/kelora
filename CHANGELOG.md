@@ -4,8 +4,6 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-> **Note:** Git commit history is only available from v0.8.0 onwards. Earlier versions (0.1.0-0.7.2) were released but detailed changelogs are not available.
-
 ## [Unreleased]
 
 ## [0.9.1] - 2025-11-08
@@ -91,120 +89,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [0.8.0] - 2025-10-25
 
-### Added
-
-- Initial release with core functionality
-- **Format support:** JSON, logfmt, syslog, CSV/TSV, column specs
-- **Compression:** gzip and zstd support
-- **40+ Rhai functions** for log analysis:
-  - Parsing: `parse_json()`, `parse_logfmt()`, `parse_kv()`, `parse_jwt()`, `parse_url()`
-  - Text processing: `between()`, `extract()`, `contains()`, `split()`
-  - Cryptography: `hash_md5()`, `hash_sha256()`, `hash_blake3()`, `hmac()`, `pbkdf2()`
-  - Network: `mask_ip()`, `is_private_ip()`, `cidr_match()`
-  - Time: `parse_time()`, `format_time()`, relative time helpers
-  - Metrics: `track_count()`, `track_sum()`, `track_min()`, `track_max()`
-  - Windowing: `window()` for time-based and count-based windows
-- **CLI features:**
-  - Streaming and batch processing modes
-  - `--parallel` execution for multi-core processing
-  - `--multiline` strategies for stacktraces and multi-line logs
-  - `--extract-prefix` for container/service prefixes
-  - Context lines (`--before-context`, `--after-context`)
-  - Field selection with `--keys` and `--exclude-keys`
-  - Multiple output formats (JSON, CSV, logfmt, compact)
-  - Statistics reporting with `--stats`
-  - Resilient mode with `--resilient-*` flags
-- **Pipeline stages:**
-  - `--begin`: Initialize variables and setup
-  - `--filter`: Filter events
-  - `--exec`: Transform events
-  - `--aggregate`: Aggregate results
-  - `--end`: Post-process results
-- **Configuration system:**
-  - INI-based configuration files
-  - Project (`.kelora.ini`) and user (`~/.config/kelora/kelora.ini`) configs
-  - CLI args override config values
-- **Testing infrastructure:**
-  - 770+ tests covering core functionality
-  - Integration tests for all major features
-- **Security:**
-  - Cargo-audit and cargo-deny checks
-  - No unsafe code (zero unsafe blocks)
-  - Sandboxed script execution
-  - See [SECURITY.md](SECURITY.md) for details
-- **Build system:**
-  - Justfile with comprehensive recipes
-  - CI/CD with GitHub Actions
-  - Benchmarking suite with Criterion
-- **Documentation:**
-  - Comprehensive built-in help system:
-    - `--help` - CLI reference
-    - `--help-rhai` - Rhai scripting guide
-    - `--help-functions` - Function reference
-    - `--help-examples` - Usage patterns
-    - `--help-time` - Timestamp formats
-    - `--help-multiline` - Multiline strategies
-  - Full documentation site at kelora.dev
-  - 37 example files demonstrating common patterns
-  - AGENTS.md guide for AI-assisted development
-
-### Notes
-
-- Pre-1.0 software: breaking changes may occur without migration paths
-- Developed with AI assistance (Claude and GPT-4)
-- MIT licensed
+_First release with git history available. See earlier versions on [crates.io](https://crates.io/crates/kelora/versions)._
 
 ## [0.7.2] - 2025-10-22
 
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
-
 ## [0.7.0] - 2025-10-19
-
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
 
 ## [0.6.3] - 2025-10-12
 
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
-
 ## [0.6.1] - 2025-10-08
-
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
 
 ## [0.6.0] - 2025-10-04
 
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
-
 ## [0.5.0] - 2025-10-01
-
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
 
 ## [0.4.0] - 2025-09-23
 
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
-
 ## [0.3.0] - 2025-09-14
-
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
 
 ## [0.2.3] - 2025-08-28
 
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
-
 ## [0.2.2] - 2025-07-27
-
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
 
 ## [0.2.0] - 2025-07-27
 
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
-
 ## [0.1.1] - 2025-05-24
 
-_Git history not available. See [releases on crates.io](https://crates.io/crates/kelora/versions)._
+## [0.1.0] - 2025-05-24
 
-## [0.1.0] - 2025-05-24 (yanked)
-
-Initial release. This version was yanked and replaced by 0.1.1.
+_Initial release (yanked)._
 
 ---
 
