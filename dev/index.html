@@ -476,10 +476,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#quick-examples" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What It Does
+        Quick Examples
       
     </span>
   </a>
@@ -487,10 +487,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#works-well-with" class="md-nav__link">
+  <a href="#why-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Works Well With
+        Why Kelora
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integrate-with" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integrate With
       
     </span>
   </a>
@@ -2059,10 +2070,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#quick-examples" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What It Does
+        Quick Examples
       
     </span>
   </a>
@@ -2070,10 +2081,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#works-well-with" class="md-nav__link">
+  <a href="#why-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Works Well With
+        Why Kelora
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integrate-with" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integrate With
       
     </span>
   </a>
@@ -2140,9 +2162,8 @@
 <p class="admonition-title">Development Status</p>
 <p>Pre-1.0 tool generated entirely by AI agents. Validated by a large test suite and Rust security tools; see <a href="#development-approach">Development Approach</a> and the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before relying on it in production. APIs might change without notice before v1.0.</p>
 </div>
-<h2 id="what-it-does">What It Does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
-<p>See what you can do in a few commands:</p>
-<p><strong>Detect problems</strong> - Find errors and performance issues by filtering on structured fields. After parsing, each log line becomes an event (a structured object) that you can filter using expressions like <code>e.status &gt;= 500</code> (where <code>e</code> is the event). This example shows finding server errors and slow requests in web traffic logs:</p>
+<h2 id="quick-examples">Quick Examples<a class="headerlink" href="#quick-examples" title="Permanent link">&para;</a></h2>
+<p><strong>Detect problems</strong> - Filter server errors and slow requests. Each log line becomes an event (<code>e</code>) you can query with expressions like <code>e.status &gt;= 500</code>:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label><label for="__tabbed_1_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -2164,7 +2185,7 @@
 </div>
 </div>
 </div>
-<p><strong>Parse custom formats and extract structured data</strong> - Many logs use custom formats with delimited columns or key-value pairs buried in messages. Kelora's <code>cols</code> format lets you describe the structure (like <code>ts level service *message</code> for "timestamp, level, service, then the rest as message") instead of writing regex patterns. The <code>absorb_kv()</code> function then extracts hidden key-value pairs from the message field into proper structured fields:</p>
+<p><strong>Parse custom formats and extract structured data</strong> - Name columns by position, with <code>*message</code> capturing everything remaining, then extract nested key-value pairs:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -2186,7 +2207,7 @@
 </div>
 </div>
 </div>
-<p><strong>Enrich events with recent context</strong> - Sometimes you need to understand an event in relation to what happened recently. Kelora's sliding window feature (<code>--window 5</code>) keeps the last N events in memory, accessible in scripts via the <code>window</code> array. This example adds error context from recent events to each log line, helping you see patterns and correlations:</p>
+<p><strong>Enrich events with recent context</strong> - Keep recent events in a sliding window to analyze patterns and add context:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -2216,8 +2237,27 @@
 </div>
 </div>
 </div>
-<h2 id="works-well-with">Works Well With<a class="headerlink" href="#works-well-with" title="Permanent link">&para;</a></h2>
-<p>Kelora thrives in command-line pipelines. Stream logs from kubectl, tail, or journalctl into Kelora, then pipe output to jq, SQLite, qsv, or visualization tools. See <a href="how-to/integrate-external-tools/">Integrate Kelora with External Tools</a> for 18 tools and usage patterns.</p>
+<h2 id="why-kelora">Why Kelora<a class="headerlink" href="#why-kelora" title="Permanent link">&para;</a></h2>
+<p>Choose Kelora when you need <strong>programmable log processing</strong> in one streaming pipeline—filtering, transforming, and analyzing structured events with embedded scripts.</p>
+<p><strong>Reach for Kelora when:</strong></p>
+<ul>
+<li>You need multi-stage transformations (parse → filter → enrich → filter)</li>
+<li>Your logs mix formats or use custom delimiters</li>
+<li>You want windowed analysis (error bursts, sliding metrics)</li>
+<li>You're chaining grep + awk + jq + custom scripts</li>
+</ul>
+<p><strong>Use specialized tools for:</strong></p>
+<ul>
+<li>Simple text search: <code>grep</code>/<code>rg</code> (50-100× faster)</li>
+<li>Basic field extraction: <code>awk</code> (faster for simple splits)</li>
+<li>Pure JSON queries: <code>jq</code> (ubiquitous, similar speed)</li>
+<li>Interactive exploration: <code>lnav</code> (TUI with SQL)</li>
+<li>CSV analytics: <code>qsv</code>/<code>miller</code> (faster for stats)</li>
+</ul>
+<p>Kelora trades raw speed for expressiveness. See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for benchmarks and the full decision matrix.</p>
+<h2 id="integrate-with">Integrate With<a class="headerlink" href="#integrate-with" title="Permanent link">&para;</a></h2>
+<p>Pipe Kelora's output to: <strong>jq</strong> (JSON transforms) · <strong>lnav</strong> (interactive TUI) · <strong>SQLite/DuckDB</strong> (SQL queries) · <strong>qsv/miller</strong> (CSV analytics) · <strong>rare</strong> (visualizations)</p>
+<p>See <a href="how-to/integrate-external-tools/">Integrate Kelora with External Tools</a> for 18 tools and usage patterns.</p>
 <h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
 <p><strong><a href="quickstart/">→ Quickstart (5 minutes)</a></strong> - Install and run your first commands</p>
 <p><strong><a href="tutorials/basics/">→ Tutorial: Basics (30 minutes)</a></strong> - Learn input formats, filtering, and output</p>
