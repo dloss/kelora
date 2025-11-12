@@ -1,0 +1,128 @@
+{"timestamp":"2024-07-17T11:50:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":12}
+{"timestamp":"2024-07-17T11:50:15Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":145}
+{"timestamp":"2024-07-17T11:50:30Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":89}
+{"timestamp":"2024-07-17T11:50:45Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":234}
+{"timestamp":"2024-07-17T11:51:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":8}
+{"timestamp":"2024-07-17T11:51:15Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":156}
+{"timestamp":"2024-07-17T11:51:30Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":98}
+{"timestamp":"2024-07-17T11:51:45Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":112}
+{"timestamp":"2024-07-17T11:52:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":9}
+{"timestamp":"2024-07-17T11:52:15Z","level":"WARN","endpoint":"/api/search","status":429,"response_ms":5,"error":"rate limit exceeded"}
+{"timestamp":"2024-07-17T11:52:30Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":134}
+{"timestamp":"2024-07-17T11:52:45Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":167}
+{"timestamp":"2024-07-17T11:53:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":11}
+{"timestamp":"2024-07-17T11:53:15Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":245}
+{"timestamp":"2024-07-17T11:53:30Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":102}
+{"timestamp":"2024-07-17T11:53:45Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":119}
+{"timestamp":"2024-07-17T11:54:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":7}
+{"timestamp":"2024-07-17T11:54:15Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":151}
+{"timestamp":"2024-07-17T11:54:30Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3002,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:54:32Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":98}
+{"timestamp":"2024-07-17T11:54:45Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3001,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:55:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":13}
+{"timestamp":"2024-07-17T11:55:02Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":156,"error":"service unavailable"}
+{"timestamp":"2024-07-17T11:55:15Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":187}
+{"timestamp":"2024-07-17T11:55:18Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3003,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:55:30Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":112}
+{"timestamp":"2024-07-17T11:55:45Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3005,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:56:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":10}
+{"timestamp":"2024-07-17T11:56:12Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":201,"error":"service unavailable"}
+{"timestamp":"2024-07-17T11:56:15Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":134}
+{"timestamp":"2024-07-17T11:56:30Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3001,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:56:45Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":143}
+{"timestamp":"2024-07-17T11:56:55Z","level":"ERROR","endpoint":"/api/auth","status":500,"response_ms":2987,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:57:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":12}
+{"timestamp":"2024-07-17T11:57:08Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3009,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:57:15Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":256}
+{"timestamp":"2024-07-17T11:57:22Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":178,"error":"service unavailable"}
+{"timestamp":"2024-07-17T11:57:30Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3002,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:57:45Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":119}
+{"timestamp":"2024-07-17T11:57:56Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3006,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:58:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":9}
+{"timestamp":"2024-07-17T11:58:11Z","level":"ERROR","endpoint":"/api/auth","status":500,"response_ms":2995,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:58:15Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":101}
+{"timestamp":"2024-07-17T11:58:29Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3007,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:58:30Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":167}
+{"timestamp":"2024-07-17T11:58:45Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":189,"error":"service unavailable"}
+{"timestamp":"2024-07-17T11:59:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":11}
+{"timestamp":"2024-07-17T11:59:14Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3004,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:59:15Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":278}
+{"timestamp":"2024-07-17T11:59:30Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3008,"error":"database timeout"}
+{"timestamp":"2024-07-17T11:59:45Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":95}
+{"timestamp":"2024-07-17T11:59:58Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":167,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:00:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":8}
+{"timestamp":"2024-07-17T12:00:13Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3005,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:00:15Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":154}
+{"timestamp":"2024-07-17T12:00:27Z","level":"ERROR","endpoint":"/api/auth","status":500,"response_ms":2991,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:00:30Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":123}
+{"timestamp":"2024-07-17T12:00:41Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3003,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:00:45Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":267}
+{"timestamp":"2024-07-17T12:00:59Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":198,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:01:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":10}
+{"timestamp":"2024-07-17T12:01:15Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3007,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:01:30Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":108}
+{"timestamp":"2024-07-17T12:01:42Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3001,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:01:45Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":172}
+{"timestamp":"2024-07-17T12:01:56Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":176,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:02:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":9}
+{"timestamp":"2024-07-17T12:02:11Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3009,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:02:15Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":119}
+{"timestamp":"2024-07-17T12:02:28Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3002,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:02:30Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":289}
+{"timestamp":"2024-07-17T12:02:44Z","level":"ERROR","endpoint":"/api/auth","status":500,"response_ms":2998,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:02:45Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":103}
+{"timestamp":"2024-07-17T12:02:58Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":187,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:03:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":12}
+{"timestamp":"2024-07-17T12:03:14Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3004,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:03:15Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":161}
+{"timestamp":"2024-07-17T12:03:29Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3006,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:03:30Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":127}
+{"timestamp":"2024-07-17T12:03:43Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":193,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:03:45Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":271}
+{"timestamp":"2024-07-17T12:03:57Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3008,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:04:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":11}
+{"timestamp":"2024-07-17T12:04:13Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3001,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:04:15Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":97}
+{"timestamp":"2024-07-17T12:04:28Z","level":"ERROR","endpoint":"/api/auth","status":500,"response_ms":2993,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:04:30Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":179}
+{"timestamp":"2024-07-17T12:04:42Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3005,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:04:45Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":133}
+{"timestamp":"2024-07-17T12:04:56Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":181,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:05:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":10}
+{"timestamp":"2024-07-17T12:05:14Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3003,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:05:15Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":263}
+{"timestamp":"2024-07-17T12:05:29Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3007,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:05:30Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":106}
+{"timestamp":"2024-07-17T12:05:43Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":195,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:05:45Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":168}
+{"timestamp":"2024-07-17T12:05:58Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3009,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:06:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":9}
+{"timestamp":"2024-07-17T12:12:33Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3002,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:35Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3001,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:37Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3003,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:39Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3005,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:41Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":187,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:12:43Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3007,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:45Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3001,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:47Z","level":"ERROR","endpoint":"/api/auth","status":500,"response_ms":2996,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:49Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3004,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:51Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":192,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:12:53Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3006,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:55Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3008,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:57Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3002,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:12:59Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":178,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:13:01Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3009,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:13:03Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3001,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:13:05Z","level":"ERROR","endpoint":"/api/auth","status":500,"response_ms":2991,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:13:07Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3003,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:13:09Z","level":"ERROR","endpoint":"/api/export","status":503,"response_ms":189,"error":"service unavailable"}
+{"timestamp":"2024-07-17T12:13:11Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3005,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:13:13Z","level":"ERROR","endpoint":"/api/data","status":500,"response_ms":3007,"error":"database timeout"}
+{"timestamp":"2024-07-17T12:13:15Z","level":"INFO","endpoint":"/health","status":200,"response_ms":14}
+{"timestamp":"2024-07-17T12:13:30Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":141}
+{"timestamp":"2024-07-17T12:13:45Z","level":"INFO","endpoint":"/api/users","status":200,"response_ms":163}
+{"timestamp":"2024-07-17T12:14:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":10}
+{"timestamp":"2024-07-17T12:14:15Z","level":"INFO","endpoint":"/api/orders","status":200,"response_ms":251}
+{"timestamp":"2024-07-17T12:14:30Z","level":"INFO","endpoint":"/api/cart","status":200,"response_ms":99}
+{"timestamp":"2024-07-17T12:14:45Z","level":"INFO","endpoint":"/api/products","status":200,"response_ms":128}
+{"timestamp":"2024-07-17T12:15:00Z","level":"INFO","endpoint":"/health","status":200,"response_ms":8}
