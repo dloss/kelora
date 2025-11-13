@@ -3330,23 +3330,54 @@
 - <code>30m</code> - 30 minutes ago
 - <code>2d</code> - 2 days ago
 - <code>1w</code> - 1 week ago
+- <code>+1h</code> - 1 hour in the future (prefix <code>+</code> for future times)
 - Combine: <code>1h30m</code> - 1 hour 30 minutes ago</p>
 <p><strong>Absolute Time Formats:</strong>
 - ISO 8601: <code>2024-01-15T10:30:00Z</code>
 - RFC3339: <code>2024-01-15T10:30:00+00:00</code>
-- Unix timestamps: <code>1705318200</code></p>
-<p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Last hour</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>app.log
+- Unix timestamps: <code>1705318200</code>
+- Date only: <code>2024-01-15</code> (assumes 00:00:00)
+- Time only: <code>10:30:00</code> (assumes today)
+- Special values: <code>now</code>, <code>today</code>, <code>yesterday</code>, <code>tomorrow</code></p>
+<p><strong>Anchored Timestamps:</strong></p>
+<p>Anchor one boundary to the other for duration-based windows:</p>
+<ul>
+<li><code>start+DURATION</code> - Duration after <code>--since</code> value</li>
+<li><code>start-DURATION</code> - Duration before <code>--since</code> value</li>
+<li><code>end+DURATION</code> - Duration after <code>--until</code> value</li>
+<li><code>end-DURATION</code> - Duration before <code>--until</code> value</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Show 30 minutes starting at 10:00</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;10:00&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;start+30m&quot;</span><span class="w"> </span>app.log
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Last 30 minutes</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>30m<span class="w"> </span>app.log
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Show 1 hour ending at 11:00</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;end-1h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;11:00&quot;</span><span class="w"> </span>app.log
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Between two times</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;2024-01-15T10:00:00Z&#39;</span><span class="w"> </span>--until<span class="w"> </span><span class="s1">&#39;2024-01-15T11:00:00Z&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Show 1 hour starting from 2 hours ago</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;-2h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;start+1h&quot;</span><span class="w"> </span>app.log
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Since absolute time</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;2024-01-15T10:00:00Z&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Show 45 minutes starting at a specific timestamp</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;start+45m&quot;</span><span class="w"> </span>app.log
+</code></pre></div>
+<p><strong>Important Notes:</strong>
+- <code>start</code> anchors to the <code>--since</code> value, <code>end</code> anchors to the <code>--until</code> value
+- Cannot use both anchors in the same command (e.g., <code>--since end-1h --until start+1h</code> is an error)
+- The anchor target must be specified (e.g., <code>--until start+30m</code> requires <code>--since</code> to be set)</p>
+<p><strong>Basic Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Last hour</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>app.log
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Last 30 minutes</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>30m<span class="w"> </span>app.log
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Between two times</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;2024-01-15T10:00:00Z&#39;</span><span class="w"> </span>--until<span class="w"> </span><span class="s1">&#39;2024-01-15T11:00:00Z&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># Since absolute time</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;2024-01-15T10:00:00Z&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># Future events (1 hour from now)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>+1h<span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="timestamp-display-and-conversion">Timestamp Display and Conversion<a class="headerlink" href="#timestamp-display-and-conversion" title="Permanent link">&para;</a></h3>
 <table>
@@ -3378,11 +3409,11 @@
 <p><strong>Difference between <code>-z/-Z</code> and <code>--normalize-ts</code>:</strong>
 - <code>-z</code> and <code>-Z</code>: Display-only formatting, doesn't modify event data
 - <code>--normalize-ts</code>: Converts the timestamp field in the event itself to RFC3339</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Display in local time (doesn&#39;t modify events)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-z<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Convert timestamp field to RFC3339 in events</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Display in local time (doesn&#39;t modify events)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-z<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Convert timestamp field to RFC3339 in events</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
 </code></pre></div>
 <h3 id="time-based-features">Time-Based Features<a class="headerlink" href="#time-based-features" title="Permanent link">&para;</a></h3>
 <table>
@@ -3407,11 +3438,11 @@
 </tbody>
 </table>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># 1-hour aggregation windows</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>1h<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_span(|s| {count: s.len()})&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Mark gaps longer than 5 minutes</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>5m<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># 1-hour aggregation windows</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>1h<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_span(|s| {count: s.len()})&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Mark gaps longer than 5 minutes</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>5m<span class="w"> </span>app.log
 </code></pre></div></p>
 <h2 id="rhai-datetime-functions">Rhai DateTime Functions<a class="headerlink" href="#rhai-datetime-functions" title="Permanent link">&para;</a></h2>
 <p>Complete reference for working with dates and times in Rhai scripts.</p>
@@ -3496,10 +3527,10 @@
 </tbody>
 </table>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>if dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17 {
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    print(&quot;Business hours&quot;);
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>if dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17 {
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    print(&quot;Business hours&quot;);
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>}
 </code></pre></div></p>
 <h3 id="datetime-formatting">DateTime Formatting<a class="headerlink" href="#datetime-formatting" title="Permanent link">&para;</a></h3>
 <table>
@@ -3557,28 +3588,28 @@
 </table>
 <h3 id="datetime-comparison">DateTime Comparison<a class="headerlink" href="#datetime-comparison" title="Permanent link">&para;</a></h3>
 <p>DateTime values support all comparison operators:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>let dt1 = to_datetime(&quot;2024-01-15T10:30:00Z&quot;);
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>let dt2 = to_datetime(&quot;2024-01-15T11:00:00Z&quot;);
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>dt1 == dt2  // false
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>dt1 != dt2  // true
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>dt1 &lt; dt2   // true
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>dt1 &lt;= dt2  // true
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>dt1 &gt; dt2   // false
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>dt1 &gt;= dt2  // false
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>let dt1 = to_datetime(&quot;2024-01-15T10:30:00Z&quot;);
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>let dt2 = to_datetime(&quot;2024-01-15T11:00:00Z&quot;);
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>dt1 == dt2  // false
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>dt1 != dt2  // true
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>dt1 &lt; dt2   // true
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>dt1 &lt;= dt2  // true
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>dt1 &gt; dt2   // false
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>dt1 &gt;= dt2  // false
 </code></pre></div>
 <h3 id="datetime-arithmetic">DateTime Arithmetic<a class="headerlink" href="#datetime-arithmetic" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>// Add duration to datetime
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>let dt = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>let later = dt + to_duration(&quot;1h30m&quot;);  // 2024-01-15T11:30:00Z
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>// Subtract duration from datetime
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>let earlier = dt - to_duration(&quot;30m&quot;);  // 2024-01-15T09:30:00Z
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>// Difference between two datetimes (returns Duration)
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>let dt1 = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>let dt2 = to_datetime(&quot;2024-01-15T11:30:00Z&quot;);
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>let elapsed = dt2 - dt1;  // Duration: 1h30m
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>// Add duration to datetime
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>let dt = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>let later = dt + to_duration(&quot;1h30m&quot;);  // 2024-01-15T11:30:00Z
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>// Subtract duration from datetime
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>let earlier = dt - to_duration(&quot;30m&quot;);  // 2024-01-15T09:30:00Z
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>// Difference between two datetimes (returns Duration)
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>let dt1 = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>let dt2 = to_datetime(&quot;2024-01-15T11:30:00Z&quot;);
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>let elapsed = dt2 - dt1;  // Duration: 1h30m
 </code></pre></div>
 <h2 id="rhai-duration-functions">Rhai Duration Functions<a class="headerlink" href="#rhai-duration-functions" title="Permanent link">&para;</a></h2>
 <h3 id="parsing-and-creation_1">Parsing and Creation<a class="headerlink" href="#parsing-and-creation_1" title="Permanent link">&para;</a></h3>
@@ -3699,70 +3730,70 @@
 </tbody>
 </table>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>let dur = to_duration(&quot;1h30m&quot;);
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>print(`${dur.as_minutes()} minutes`);  // 90 minutes
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>print(`${dur.as_seconds()} seconds`);  // 5400 seconds
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>let dur = to_duration(&quot;1h30m&quot;);
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>print(`${dur.as_minutes()} minutes`);  // 90 minutes
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>print(`${dur.as_seconds()} seconds`);  // 5400 seconds
 </code></pre></div></p>
 <h3 id="duration-arithmetic">Duration Arithmetic<a class="headerlink" href="#duration-arithmetic" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>// Add durations
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>let d1 = to_duration(&quot;1h&quot;);
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>let d2 = to_duration(&quot;30m&quot;);
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>let total = d1 + d2;  // 1h30m
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>// Subtract durations
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>let diff = d1 - d2;  // 30m
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>// Multiply duration
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>let doubled = d1 * 2;  // 2h
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>// Divide duration
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>let half = d1 / 2;  // 30m
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>// Add durations
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>let d1 = to_duration(&quot;1h&quot;);
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>let d2 = to_duration(&quot;30m&quot;);
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>let total = d1 + d2;  // 1h30m
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>// Subtract durations
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>let diff = d1 - d2;  // 30m
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>// Multiply duration
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>let doubled = d1 * 2;  // 2h
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>// Divide duration
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>let half = d1 / 2;  // 30m
 </code></pre></div>
 <h3 id="duration-comparison">Duration Comparison<a class="headerlink" href="#duration-comparison" title="Permanent link">&para;</a></h3>
 <p>Duration values support all comparison operators:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>let d1 = to_duration(&quot;1h&quot;);
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>let d2 = to_duration(&quot;30m&quot;);
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>d1 == d2  // false
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>d1 != d2  // true
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>d1 &gt; d2   // true
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>d1 &gt;= d2  // true
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>d1 &lt; d2   // false
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>d1 &lt;= d2  // false
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>let d1 = to_duration(&quot;1h&quot;);
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let d2 = to_duration(&quot;30m&quot;);
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>d1 == d2  // false
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>d1 != d2  // true
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>d1 &gt; d2   // true
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>d1 &gt;= d2  // true
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>d1 &lt; d2   // false
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>d1 &lt;= d2  // false
 </code></pre></div>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="calculate-request-duration">Calculate Request Duration<a class="headerlink" href="#calculate-request-duration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>// Parse timestamps and calculate duration
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let start = to_datetime(e.start_time);
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>let end = to_datetime(e.end_time);
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>let duration = end - start;
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>e.duration_ms = duration.as_milliseconds();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Parse timestamps and calculate duration
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>let start = to_datetime(e.start_time);
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>let end = to_datetime(e.end_time);
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>let duration = end - start;
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>e.duration_ms = duration.as_milliseconds();
 </code></pre></div>
 <h3 id="filter-business-hours">Filter Business Hours<a class="headerlink" href="#filter-business-hours" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Filter events during business hours (9 AM - 5 PM)
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>if dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17 {
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    emit(e);
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>// Filter events during business hours (9 AM - 5 PM)
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>if dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17 {
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    emit(e);
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>}
 </code></pre></div>
 <h3 id="compare-against-current-time">Compare Against Current Time<a class="headerlink" href="#compare-against-current-time" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>// Find events older than 1 hour
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>let age = now() - dt;
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>if age &gt; to_duration(&quot;1h&quot;) {
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    e.is_old = true;
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Find events older than 1 hour
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>let age = now() - dt;
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>if age &gt; to_duration(&quot;1h&quot;) {
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    e.is_old = true;
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>}
 </code></pre></div>
 <h3 id="format-timestamp-for-display">Format Timestamp for Display<a class="headerlink" href="#format-timestamp-for-display" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Convert to custom display format
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>e.display_time = dt.format(&quot;%Y-%m-%d %I:%M %p&quot;);
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>// Result: &quot;2024-01-15 10:30 AM&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Convert to custom display format
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>e.display_time = dt.format(&quot;%Y-%m-%d %I:%M %p&quot;);
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>// Result: &quot;2024-01-15 10:30 AM&quot;
 </code></pre></div>
 <h3 id="time-based-aggregation">Time-Based Aggregation<a class="headerlink" href="#time-based-aggregation" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Group by hour of day
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>e.hour_of_day = dt.hour();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Group by hour of day
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>e.hour_of_day = dt.hour();
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="timestamp-not-detected">Timestamp Not Detected<a class="headerlink" href="#timestamp-not-detected" title="Permanent link">&para;</a></h3>
