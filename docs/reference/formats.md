@@ -18,6 +18,7 @@ Specify input format with `-f, --input-format <format>`.
 | `combined` | Apache/Nginx web server access logs |
 | `cef` | ArcSight Common Event Format, SIEM data |
 | `cols:<spec>` | Custom column-based logs |
+| `regex:<pattern>` | Custom regex parsing with named groups and type annotations |
 | `auto` | Auto-detect from first line |
 
 ### JSON Format
@@ -268,6 +269,67 @@ kelora -f 'cols:name age:int city' --cols-sep '|' data.txt
 **Notes:**
 
 - `*field` must be the final token
+
+### Regex Format
+
+**Syntax:** `-f 'regex:<pattern>'`
+
+**Description:** Parse logs using regular expressions with named capture groups and optional type annotations.
+
+**Pattern Syntax:**
+
+- `(?P<name>pattern)` - Named capture group (field stored as string)
+- `(?P<name:type>pattern)` - Named capture group with type annotation
+
+**Supported Types:** `int`, `float`, `bool` (lowercase only)
+
+**Examples:**
+
+Simple extraction:
+```bash
+# Input: 404 Not found
+kelora -f 'regex:(?P<code:int>\d+) (?P<msg>.*)' app.log
+```
+
+Structured logs:
+```bash
+# Input: 2025-01-15T10:00:00Z [ERROR] Database connection failed
+kelora -f 'regex:^(?P<ts>\S+) \[(?P<level>\w+)\] (?P<msg>.+)$' app.log
+```
+
+Apache-style logs with typed fields:
+```bash
+# Input: 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] "GET /api/users HTTP/1.1" 200 1234
+kelora -f 'regex:^(?P<ip>\S+) - - \[(?P<timestamp>[^\]]+)\] "(?P<method>\w+) (?P<path>\S+) HTTP/[\d.]+" (?P<status:int>\d+) (?P<bytes:int>\d+)$' access.log
+```
+
+**Output Fields:** Field names from capture groups with applied type conversions.
+
+**Behavior:**
+
+- **Full-line matching:** Pattern implicitly anchored with `^...$`
+- **Empty captures:** Skipped (not stored as fields)
+- **Non-matching lines:**
+    - Default (lenient): Creates event with empty fields
+    - With `--strict`: Error and exit
+- **Type conversion failures:**
+    - Default (lenient): Falls back to string
+    - With `--strict`: Error and exit
+
+**Reserved Field Names:**
+
+The following names cannot be used: `original_line`, `parsed_ts`, `fields`
+
+**Limitations:**
+
+- Nested named capture groups are not supported
+- Type annotations must be lowercase (`:int`, not `:INT`)
+
+**Notes:**
+
+- Use raw strings in shell to avoid escaping issues: `-f 'regex:...'`
+- Combine with `--ts-field` to specify which field contains the timestamp
+- Non-capturing groups `(?:...)` are supported
 
 ### Auto-Detection
 
