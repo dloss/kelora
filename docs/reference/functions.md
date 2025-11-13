@@ -98,11 +98,20 @@ e.extension = e.filename.after(".")                   // "file.txt" → "txt"
 e.domain = e.email.after("@")                         // "user@host.com" → "host.com"
 ```
 
-#### `text.between(start, end)`
-Text between start and end delimiters.
+#### `text.between(start, end [, nth])`
+Text between start and end delimiters (nth: 1=first, -1=last).
+
+Uses **positional matching**: finds the nth occurrence of `start`, then finds the first occurrence of `end` after that position. Does not perform balanced bracket matching for nested delimiters.
 
 ```rhai
 e.quoted = e.line.between('"', '"')                   // Extract quoted string
+"[a][b][c]".between("[", "]", 1)                      // "a" (1st [ to next ])
+"[a][b][c]".between("[", "]", 2)                      // "b" (2nd [ to next ])
+"[a][b][c]".between("[", "]", -1)                     // "c" (last [ to next ])
+
+// Note: For nested delimiters like "[a[b]c]", between("[", "]", 1) returns "a[b"
+// (from 1st [ to 1st ]), not "a[b]c" (balanced matching). Use regex or chained
+// methods for balanced bracket extraction.
 ```
 
 #### `text.starting_with(prefix [, nth])`
