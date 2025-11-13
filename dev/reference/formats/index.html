@@ -2862,13 +2862,13 @@
 <li><strong>Full-line matching:</strong> Pattern implicitly anchored with <code>^...$</code></li>
 <li><strong>Empty captures:</strong> Skipped (not stored as fields)</li>
 <li><strong>Non-matching lines:</strong><ul>
-<li>Default (lenient): Creates event with empty fields</li>
-<li>With <code>--strict</code>: Error and exit</li>
+<li>Default (lenient): Returns error, line skipped, processing continues</li>
+<li>With <code>--strict</code>: Returns error, processing halts</li>
 </ul>
 </li>
-<li><strong>Type conversion failures:</strong><ul>
-<li>Default (lenient): Falls back to string</li>
-<li>With <code>--strict</code>: Error and exit</li>
+<li><strong>Type conversion failures</strong> (e.g., <code>"abc"</code> for <code>:int</code>):<ul>
+<li>Default (lenient): Automatically falls back to storing as string</li>
+<li>With <code>--strict</code>: Returns error, processing halts</li>
 </ul>
 </li>
 </ul>
