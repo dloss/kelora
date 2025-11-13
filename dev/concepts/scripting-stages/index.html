@@ -4023,8 +4023,8 @@
 </code></pre></div>
 <h4 id="initialize-counters">Initialize Counters<a class="headerlink" href="#initialize-counters" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.start_time = now_utc()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let duration = now_utc() - conf.start_time; print(&quot;Processed in &quot; + duration + &quot;s&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.start_time = now()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let duration = now() - conf.start_time; print(&quot;Processed in &quot; + duration + &quot;s&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h4 id="load-configuration">Load Configuration<a class="headerlink" href="#load-configuration" title="Permanent link">&para;</a></h4>
@@ -4395,10 +4395,10 @@
 </code></pre></div>
 <h3 id="complete-example">Complete Example<a class="headerlink" href="#complete-example" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.threshold = 1000; conf.start = now_utc()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.threshold = 1000; conf.start = now()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.duration_ms &gt; conf.threshold { track_count(&quot;slow&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let elapsed = now_utc() - conf.start; print(&quot;Processed &quot; + metrics.total + &quot; events in &quot; + elapsed + &quot;s&quot;); print(&quot;Slow requests: &quot; + metrics.get(&quot;slow&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let elapsed = now() - conf.start; print(&quot;Processed &quot; + metrics.total + &quot; events in &quot; + elapsed + &quot;s&quot;); print(&quot;Slow requests: &quot; + metrics.get(&quot;slow&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p><strong>Flow:</strong>
@@ -4531,9 +4531,9 @@
 <h3 id="begin-and-end">Begin and End<a class="headerlink" href="#begin-and-end" title="Permanent link">&para;</a></h3>
 <p><code>--begin</code> and <code>--end</code> run <strong>once</strong> (not parallelized):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-63-2" name="__codelineno-63-2" href="#__codelineno-63-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.start = now_utc()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-63-2" name="__codelineno-63-2" href="#__codelineno-63-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.start = now()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-63-3" name="__codelineno-63-3" href="#__codelineno-63-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-63-4" name="__codelineno-63-4" href="#__codelineno-63-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Duration: &quot; + (now_utc() - conf.start))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-63-4" name="__codelineno-63-4" href="#__codelineno-63-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Duration: &quot; + (now() - conf.start))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-63-5" name="__codelineno-63-5" href="#__codelineno-63-5"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="exec-stage_1">Exec Stage<a class="headerlink" href="#exec-stage_1" title="Permanent link">&para;</a></h3>

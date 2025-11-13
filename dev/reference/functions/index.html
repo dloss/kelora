@@ -3195,10 +3195,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#now_utc-now_local" class="md-nav__link">
+  <a href="#now" class="md-nav__link">
     <span class="md-ellipsis">
       
-        now_utc() / now_local()
+        now()
       
     </span>
   </a>
@@ -5412,10 +5412,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#now_utc-now_local" class="md-nav__link">
+  <a href="#now" class="md-nav__link">
     <span class="md-ellipsis">
       
-        now_utc() / now_local()
+        now()
       
     </span>
   </a>
@@ -6737,7 +6737,7 @@
 </code></pre></div>
 <h4 id="mapmergeother_map"><code>map.merge(other_map)</code><a class="headerlink" href="#mapmergeother_map" title="Permanent link">&para;</a></h4>
 <p>Merge another map into this one.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>e.merge(#{status: &quot;ok&quot;, timestamp: now_utc()})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>e.merge(#{status: &quot;ok&quot;, timestamp: now()})
 </code></pre></div>
 <h4 id="mapflattenseparator-style"><code>map.flatten([separator [, style]])</code><a class="headerlink" href="#mapflattenseparator-style" title="Permanent link">&para;</a></h4>
 <p>Flatten nested object to dot notation.</p>
@@ -6770,10 +6770,9 @@
 <hr />
 <h2 id="datetime-functions">DateTime Functions<a class="headerlink" href="#datetime-functions" title="Permanent link">&para;</a></h2>
 <h3 id="creation">Creation<a class="headerlink" href="#creation" title="Permanent link">&para;</a></h3>
-<h4 id="now_utc-now_local"><code>now_utc()</code> / <code>now_local()</code><a class="headerlink" href="#now_utc-now_local" title="Permanent link">&para;</a></h4>
-<p>Current timestamp.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>e.timestamp = now_utc()
-<a id="__codelineno-86-2" name="__codelineno-86-2" href="#__codelineno-86-2"></a>e.local_time = now_local()
+<h4 id="now"><code>now()</code><a class="headerlink" href="#now" title="Permanent link">&para;</a></h4>
+<p>Current timestamp (UTC).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>e.timestamp = now()
 </code></pre></div>
 <h4 id="to_datetimetext-fmt-tz"><code>to_datetime(text [, fmt [, tz]])</code><a class="headerlink" href="#to_datetimetext-fmt-tz" title="Permanent link">&para;</a></h4>
 <p>Convert string into datetime value with optional hints.</p>
@@ -6783,7 +6782,7 @@
 <h4 id="to_duration1h30m"><code>to_duration("1h30m")</code><a class="headerlink" href="#to_duration1h30m" title="Permanent link">&para;</a></h4>
 <p>Convert duration string into duration value.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>let timeout = to_duration(&quot;5m&quot;)
-<a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a>e.deadline = now_utc() + timeout
+<a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a>e.deadline = now() + timeout
 </code></pre></div>
 <h4 id="duration_from_secondsn-duration_from_minutesn-etc"><code>duration_from_seconds(n)</code>, <code>duration_from_minutes(n)</code>, etc.<a class="headerlink" href="#duration_from_secondsn-duration_from_minutesn-etc" title="Permanent link">&para;</a></h4>
 <p>Create duration from specific units.</p>
@@ -6828,12 +6827,12 @@
 <h3 id="arithmetic-and-comparison">Arithmetic and Comparison<a class="headerlink" href="#arithmetic-and-comparison" title="Permanent link">&para;</a></h3>
 <h4 id="dt-duration-dt-duration"><code>dt + duration</code>, <code>dt - duration</code><a class="headerlink" href="#dt-duration-dt-duration" title="Permanent link">&para;</a></h4>
 <p>Add/subtract duration from datetime.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a>e.future = now_utc() + duration_from_hours(1)
-<a id="__codelineno-97-2" name="__codelineno-97-2" href="#__codelineno-97-2"></a>e.past = now_utc() - duration_from_days(7)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a>e.future = now() + duration_from_hours(1)
+<a id="__codelineno-97-2" name="__codelineno-97-2" href="#__codelineno-97-2"></a>e.past = now() - duration_from_days(7)
 </code></pre></div>
 <h4 id="dt1-dt2"><code>dt1 - dt2</code><a class="headerlink" href="#dt1-dt2" title="Permanent link">&para;</a></h4>
 <p>Get duration between datetimes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a>let elapsed = now_utc() - e.start_time
+<div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a>let elapsed = now() - e.start_time
 <a id="__codelineno-98-2" name="__codelineno-98-2" href="#__codelineno-98-2"></a>e.duration_ms = elapsed.as_milliseconds()
 </code></pre></div>
 <h4 id="dt1-dt2-dt1-dt2-etc"><code>dt1 == dt2</code>, <code>dt1 &gt; dt2</code>, etc.<a class="headerlink" href="#dt1-dt2-dt1-dt2-etc" title="Permanent link">&para;</a></h4>

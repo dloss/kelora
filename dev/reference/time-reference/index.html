@@ -3441,14 +3441,9 @@
 <td><code>to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "America/New_York")</code></td>
 </tr>
 <tr>
-<td><code>now_utc()</code></td>
-<td>Current time in UTC</td>
-<td><code>now_utc()</code></td>
-</tr>
-<tr>
-<td><code>now_local()</code></td>
-<td>Current time in local timezone</td>
-<td><code>now_local()</code></td>
+<td><code>now()</code></td>
+<td>Current time (UTC)</td>
+<td><code>now()</code></td>
 </tr>
 </tbody>
 </table>
@@ -3753,7 +3748,7 @@
 <h3 id="compare-against-current-time">Compare Against Current Time<a class="headerlink" href="#compare-against-current-time" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>// Find events older than 1 hour
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>let age = now_utc() - dt;
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>let age = now() - dt;
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>if age &gt; to_duration(&quot;1h&quot;) {
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    e.is_old = true;
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>}
