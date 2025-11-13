@@ -1403,6 +1403,55 @@ pub fn register_functions(engine: &mut Engine) {
         },
     );
 
+    engine.register_fn(
+        "between",
+        |text: &str, start_substring: &str, end_substring: &str, nth: i64| -> String {
+            if nth == 0 {
+                return String::new();
+            }
+
+            // Collect all match positions for start substring
+            let mut positions = Vec::new();
+            let mut start = 0;
+            while let Some(pos) = text[start..].find(start_substring) {
+                positions.push(start + pos);
+                start += pos + start_substring.len();
+            }
+
+            if positions.is_empty() {
+                return String::new();
+            }
+
+            // Handle negative indexing (from the end)
+            let idx = if nth < 0 {
+                let abs_nth = (-nth) as usize;
+                if abs_nth > positions.len() {
+                    return String::new();
+                }
+                positions.len() - abs_nth
+            } else {
+                let nth_usize = nth as usize;
+                if nth_usize < 1 || nth_usize > positions.len() {
+                    return String::new();
+                }
+                nth_usize - 1 // Convert to 0-indexed
+            };
+
+            let start_pos = positions[idx];
+            let start_idx = start_pos + start_substring.len();
+            let remainder = &text[start_idx..];
+
+            if end_substring.is_empty() {
+                // Empty end substring means "to end of string"
+                remainder.to_string()
+            } else if let Some(end_pos) = remainder.find(end_substring) {
+                remainder[..end_pos].to_string()
+            } else {
+                String::new()
+            }
+        },
+    );
+
     engine.register_fn("starting_with", |text: &str, prefix: &str| -> String {
         if let Some(pos) = text.find(prefix) {
             text[pos..].to_string()
@@ -2725,6 +2774,86 @@ mod tests {
             .eval_with_scope(&mut scope, r#"log.between("ERROR: ", "")"#)
             .unwrap();
         assert_eq!(result, "connection failed");
+    }
+
+    #[test]
+    fn test_between_function_with_nth() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        let mut scope = Scope::new();
+        scope.push("text", "[a][b][c][d]");
+
+        // Test first occurrence (nth=1)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", 1)"#)
+            .unwrap();
+        assert_eq!(result, "a");
+
+        // Test second occurrence (nth=2)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", 2)"#)
+            .unwrap();
+        assert_eq!(result, "b");
+
+        // Test third occurrence (nth=3)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", 3)"#)
+            .unwrap();
+        assert_eq!(result, "c");
+
+        // Test last occurrence (nth=-1)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", -1)"#)
+            .unwrap();
+        assert_eq!(result, "d");
+
+        // Test second-to-last occurrence (nth=-2)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", -2)"#)
+            .unwrap();
+        assert_eq!(result, "c");
+
+        // Test out of range (nth=10)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", 10)"#)
+            .unwrap();
+        assert_eq!(result, "");
+
+        // Test out of range negative (nth=-10)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", -10)"#)
+            .unwrap();
+        assert_eq!(result, "");
+
+        // Test nth=0
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"text.between("[", "]", 0)"#)
+            .unwrap();
+        assert_eq!(result, "");
+
+        // Test with empty end delimiter
+        scope.push(
+            "log",
+            "ERROR: first error | ERROR: second error | ERROR: third error",
+        );
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"log.between("ERROR: ", "", 2)"#)
+            .unwrap();
+        assert_eq!(result, "second error | ERROR: third error");
+
+        // Test when start delimiter not found
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"log.between("MISSING", " |", 1)"#)
+            .unwrap();
+        assert_eq!(result, "");
+
+        // Test when end delimiter not found after nth start
+        scope.push("brackets", "[start<end");
+        let result: String = engine
+            .eval_with_scope(&mut scope, r#"brackets.between("[", ">", 1)"#)
+            .unwrap();
+        assert_eq!(result, "");
     }
 
     #[test]
