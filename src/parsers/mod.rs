@@ -7,6 +7,7 @@ pub mod json;
 pub mod line;
 pub mod logfmt;
 pub mod raw;
+pub mod regex;
 pub mod syslog;
 pub mod type_conversion;
 
@@ -20,4 +21,5 @@ pub use json::JsonlParser;
 pub use line::LineParser;
 pub use logfmt::LogfmtParser;
 pub use raw::RawParser;
+pub use regex::RegexParser;
 pub use syslog::SyslogParser;

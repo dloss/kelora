@@ -1,0 +1,8 @@
+2025-01-15T10:00:00Z [ERROR] code=500 duration=123.45ms msg="Database connection failed"
+2025-01-15T10:00:05Z [INFO] code=200 duration=5.67ms msg="User login successful"
+2025-01-15T10:00:10Z [WARN] code=429 duration=1.23ms msg="Rate limit exceeded"
+2025-01-15T10:00:15Z [ERROR] code=503 duration=250.00ms msg="Service unavailable"
+2025-01-15T10:00:20Z [INFO] code=201 duration=15.30ms msg="Resource created"
+2025-01-15T10:00:25Z [DEBUG] code=200 duration=0.89ms msg="Cache hit"
+2025-01-15T10:00:30Z [ERROR] code=400 duration=2.10ms msg="Invalid request body"
+2025-01-15T10:00:35Z [INFO] code=200 duration=45.67ms msg="Query executed successfully"

@@ -21,6 +21,7 @@ pub enum InputFormat {
     Tsvnh,
     Combined,
     Cols,
+    Regex,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug, Default)]
@@ -63,8 +64,8 @@ pub struct Cli {
     #[arg(long = "no-input", help_heading = "Input Options")]
     pub no_input: bool,
 
-    /// Input format. Supports standard formats (json, line, csv, etc.), cols:<spec> for column parsing, and csv/tsv with type annotations.
-    /// Examples: -f json, -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
+    /// Input format. Supports standard formats (json, line, csv, etc.), regex:<pattern> for regex parsing with named groups, cols:<spec> for column parsing, and csv/tsv with type annotations.
+    /// Examples: -f json, -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
     #[arg(
         short = 'f',
         long = "input-format",
@@ -839,8 +840,18 @@ impl Cli {
     }
 }
 
-/// Parse and validate format value - supports standard formats, cols:<spec>, and csv/tsv with type annotations
+/// Parse and validate format value - supports standard formats, cols:<spec>, regex:<pattern>, and csv/tsv with type annotations
 fn parse_format_value(s: &str) -> Result<String, String> {
+    // Check if it's a regex format
+    if let Some(pattern) = s.strip_prefix("regex:") {
+        if pattern.trim().is_empty() {
+            return Err(
+                "regex format requires a pattern, e.g., 'regex:(?P<field>\\d+)'".to_string(),
+            );
+        }
+        return Ok(s.to_string());
+    }
+
     // Check if it's a cols format
     if let Some(spec) = s.strip_prefix("cols:") {
         if spec.trim().is_empty() {
@@ -867,7 +878,7 @@ fn parse_format_value(s: &str) -> Result<String, String> {
         }
         _ => {
             Err(format!(
-                "Unknown format '{}'. Supported formats: auto, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols, csv:<spec>, tsv:<spec>, or cols:<spec>",
+                "Unknown format '{}'. Supported formats: auto, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols, csv:<spec>, tsv:<spec>, cols:<spec>, or regex:<pattern>",
                 s
             ))
         }

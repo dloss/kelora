@@ -305,6 +305,9 @@ impl PipelineBuilder {
                     return Err(anyhow::anyhow!("Cols format requires a specification"));
                 }
             }
+            crate::config::InputFormat::Regex(ref pattern) => {
+                Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(self.strict))
+            }
         };
 
         // Wrap parser with prefix extraction if needed
@@ -746,6 +749,9 @@ impl PipelineBuilder {
                 } else {
                     return Err(anyhow::anyhow!("Cols format requires a specification"));
                 }
+            }
+            crate::config::InputFormat::Regex(ref pattern) => {
+                Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(self.strict))
             }
         };
 

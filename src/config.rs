@@ -190,7 +190,8 @@ pub enum InputFormat {
     Csvnh,               // No type annotations (no field names)
     Tsvnh,               // No type annotations (no field names)
     Combined,
-    Cols(String), // Contains the column spec
+    Cols(String),  // Contains the column spec
+    Regex(String), // Contains the regex pattern with optional type annotations
 }
 
 /// Output format enumeration
@@ -801,6 +802,16 @@ fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat> {
         }
     };
 
+    // Check for regex format with pattern
+    if let Some(regex_pattern) = spec.strip_prefix("regex:") {
+        if regex_pattern.trim().is_empty() {
+            return Err(anyhow::anyhow!(
+                "regex format requires a pattern, e.g., 'regex:(?P<field>\\d+)'"
+            ));
+        }
+        return Ok(InputFormat::Regex(regex_pattern.to_string()));
+    }
+
     // Check for cols format with spec
     if let Some(cols_spec) = spec.strip_prefix("cols:") {
         if cols_spec.trim().is_empty() {
@@ -833,7 +844,7 @@ fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat> {
         "csvnh" => Ok(InputFormat::Csvnh),
         "tsvnh" => Ok(InputFormat::Tsvnh),
         "combined" => Ok(InputFormat::Combined),
-        _ => Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: json, line, csv, syslog, cef, logfmt, raw, tsv, csvnh, tsvnh, combined, auto, and cols:<spec>", spec)),
+        _ => Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: json, line, csv, syslog, cef, logfmt, raw, tsv, csvnh, tsvnh, combined, auto, cols:<spec>, and regex:<pattern>", spec)),
     }
 }
 
@@ -1002,6 +1013,11 @@ impl From<crate::InputFormat> for InputFormat {
                 // But if it does, create an empty spec as fallback
                 InputFormat::Cols(String::new())
             }
+            crate::InputFormat::Regex => {
+                // This should not happen since CLI Regex enum has no parameters
+                // But if it does, create an empty pattern as fallback
+                InputFormat::Regex(String::new())
+            }
         }
     }
 }
@@ -1022,6 +1038,7 @@ impl From<InputFormat> for crate::InputFormat {
             InputFormat::Tsvnh => crate::InputFormat::Tsvnh,
             InputFormat::Combined => crate::InputFormat::Combined,
             InputFormat::Cols(_) => crate::InputFormat::Cols,
+            InputFormat::Regex(_) => crate::InputFormat::Regex,
         }
     }
 }
