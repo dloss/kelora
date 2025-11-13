@@ -1940,6 +1940,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#regex-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regex Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#auto-detection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2271,6 +2282,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#regex-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regex Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#auto-detection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2372,6 +2394,10 @@
 <tr>
 <td><code>cols:&lt;spec&gt;</code></td>
 <td>Custom column-based logs</td>
+</tr>
+<tr>
+<td><code>regex:&lt;pattern&gt;</code></td>
+<td>Custom regex parsing with named groups and type annotations</td>
 </tr>
 <tr>
 <td><code>auto</code></td>
@@ -2808,6 +2834,57 @@
 <ul>
 <li><code>*field</code> must be the final token</li>
 </ul>
+<h3 id="regex-format">Regex Format<a class="headerlink" href="#regex-format" title="Permanent link">&para;</a></h3>
+<p><strong>Syntax:</strong> <code>-f 'regex:&lt;pattern&gt;'</code></p>
+<p><strong>Description:</strong> Parse logs using regular expressions with named capture groups and optional type annotations.</p>
+<p><strong>Pattern Syntax:</strong></p>
+<ul>
+<li><code>(?P&lt;name&gt;pattern)</code> - Named capture group (field stored as string)</li>
+<li><code>(?P&lt;name:type&gt;pattern)</code> - Named capture group with type annotation</li>
+</ul>
+<p><strong>Supported Types:</strong> <code>int</code>, <code>float</code>, <code>bool</code> (lowercase only)</p>
+<p><strong>Examples:</strong></p>
+<p>Simple extraction:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Input: 404 Not found</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;code:int&gt;\d+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>app.log
+</code></pre></div></p>
+<p>Structured logs:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Input: 2025-01-15T10:00:00Z [ERROR] Database connection failed</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ts&gt;\S+) \[(?P&lt;level&gt;\w+)\] (?P&lt;msg&gt;.+)$&#39;</span><span class="w"> </span>app.log
+</code></pre></div></p>
+<p>Apache-style logs with typed fields:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Input: 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] &quot;GET /api/users HTTP/1.1&quot; 200 1234</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ip&gt;\S+) - - \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\w+) (?P&lt;path&gt;\S+) HTTP/[\d.]+&quot; (?P&lt;status:int&gt;\d+) (?P&lt;bytes:int&gt;\d+)$&#39;</span><span class="w"> </span>access.log
+</code></pre></div></p>
+<p><strong>Output Fields:</strong> Field names from capture groups with applied type conversions.</p>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li><strong>Full-line matching:</strong> Pattern implicitly anchored with <code>^...$</code></li>
+<li><strong>Empty captures:</strong> Skipped (not stored as fields)</li>
+<li><strong>Non-matching lines:</strong><ul>
+<li>Default (lenient): Creates event with empty fields</li>
+<li>With <code>--strict</code>: Error and exit</li>
+</ul>
+</li>
+<li><strong>Type conversion failures:</strong><ul>
+<li>Default (lenient): Falls back to string</li>
+<li>With <code>--strict</code>: Error and exit</li>
+</ul>
+</li>
+</ul>
+<p><strong>Reserved Field Names:</strong></p>
+<p>The following names cannot be used: <code>original_line</code>, <code>parsed_ts</code>, <code>fields</code></p>
+<p><strong>Limitations:</strong></p>
+<ul>
+<li>Nested named capture groups are not supported</li>
+<li>Type annotations must be lowercase (<code>:int</code>, not <code>:INT</code>)</li>
+</ul>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Use raw strings in shell to avoid escaping issues: <code>-f 'regex:...'</code></li>
+<li>Combine with <code>--ts-field</code> to specify which field contains the timestamp</li>
+<li>Non-capturing groups <code>(?:...)</code> are supported</li>
+</ul>
 <h3 id="auto-detection">Auto-Detection<a class="headerlink" href="#auto-detection" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong> <code>-f auto</code></p>
 <p><strong>Description:</strong> Automatically detect format from first non-empty line.</p>
@@ -2882,9 +2959,9 @@
 <p><img alt="Levelmap output format showing compact log visualization" src="../../screenshots/levelmap.gif" /></p>
 <p>The <code>levelmap</code> format provides a compact visual representation of logs, showing timestamps and level indicators in a condensed format ideal for quick scanning.</p>
 <p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w">              </span><span class="c1"># Only stats</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w">              </span><span class="c1"># Only stats</span>
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
