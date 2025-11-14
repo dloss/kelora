@@ -378,3 +378,398 @@ fn test_multiline_regex_invalid_pattern_surfaces_error() {
         "Error output should mention the invalid regex start pattern"
     );
 }
+
+// Edge cases for -M indent
+
+#[test]
+fn test_multiline_indent_empty_lines_between_events() {
+    let input = r#"ERROR first error
+    continuation line
+
+ERROR second error
+    another continuation
+
+INFO normal line"#;
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "indent", "-F", "json"], input);
+    assert_eq!(exit_code, 0, "Should handle empty lines in indent mode");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    // Empty lines should break multiline events
+    assert!(events.len() >= 3, "Should create multiple events");
+}
+
+#[test]
+fn test_multiline_indent_mixed_indentation() {
+    // Test with mix of spaces and tabs
+    let input =
+        "START line\n\tcontinuation with tab\n  continuation with spaces\n    deeper indentation";
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "indent", "-F", "json"], input);
+    assert_eq!(exit_code, 0, "Should handle mixed indentation");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    assert_eq!(
+        events.len(),
+        1,
+        "Mixed indentation should be treated as one event"
+    );
+    let event_text = events[0]["line"].as_str().unwrap();
+    assert!(
+        event_text.contains("START line"),
+        "Should contain start line"
+    );
+    assert!(
+        event_text.contains("tab") && event_text.contains("spaces"),
+        "Should contain continuations"
+    );
+}
+
+#[test]
+fn test_multiline_indent_all_indented() {
+    // If all lines are indented, what happens?
+    let input = "    line 1\n    line 2\n    line 3";
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "indent", "-F", "json"], input);
+    assert_eq!(exit_code, 0, "Should handle all-indented input");
+    assert!(!stdout.trim().is_empty(), "Should produce output");
+}
+
+// Edge cases for -M timestamp
+
+#[test]
+fn test_multiline_timestamp_missing_timestamp() {
+    let input = r#"2023-04-15T10:00:00 First event
+continuation without timestamp
+2023-04-15T10:00:01 Second event
+another continuation"#;
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "timestamp", "-F", "json"], input);
+    assert_eq!(exit_code, 0, "Should handle missing timestamps");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    assert_eq!(
+        events.len(),
+        2,
+        "Lines without timestamps should be grouped with previous event"
+    );
+}
+
+#[test]
+fn test_multiline_timestamp_nonmatching_lines() {
+    // Test lines that don't match the timestamp pattern get grouped with previous event
+    let input = r#"2023-04-15T10:00:00 Event 1
+Not a timestamp line
+2023-04-15T10:00:01 Event 2
+Also not a timestamp"#;
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "timestamp", "-F", "json"], input);
+    assert_eq!(
+        exit_code, 0,
+        "Should handle lines that don't match timestamp pattern"
+    );
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    // Should create 2 events, each with non-timestamped lines grouped with them
+    assert_eq!(
+        events.len(),
+        2,
+        "Should group non-matching lines with previous event"
+    );
+    let first_event = events[0]["line"].as_str().unwrap();
+    assert!(
+        first_event.contains("Not a timestamp line"),
+        "First event should include non-matching line"
+    );
+}
+
+#[test]
+fn test_multiline_timestamp_no_timestamp_at_start() {
+    // What if first line has no timestamp?
+    let input = r#"Random text without timestamp
+2023-04-15T10:00:00 First timestamped event
+continuation
+2023-04-15T10:00:01 Second event"#;
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "timestamp", "-F", "json"], input);
+    assert_eq!(
+        exit_code, 0,
+        "Should handle input starting without timestamp"
+    );
+    assert!(!stdout.trim().is_empty(), "Should produce output");
+}
+
+// Edge cases for -M regex
+
+#[test]
+fn test_multiline_regex_start_only() {
+    let input = r#"START event 1
+continuation 1
+START event 2
+continuation 2"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "raw", "-M", "regex:match=^START", "-F", "json"],
+        input,
+    );
+    assert_eq!(exit_code, 0, "Should handle regex with start pattern only");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    assert_eq!(
+        events.len(),
+        2,
+        "Should create events based on start pattern"
+    );
+}
+
+#[test]
+fn test_multiline_regex_end_without_match_error() {
+    // Test that end-only pattern requires match pattern
+    let input = "line 1\nEND\n";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "raw", "-M", "regex:end=^END", "-F", "json"], input);
+    // Should fail because regex:end requires match= to be specified
+    assert_ne!(
+        exit_code, 0,
+        "Should fail when end pattern specified without match"
+    );
+    assert!(
+        stderr.contains("Invalid") || stderr.contains("requires match"),
+        "Should indicate that match is required, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_multiline_regex_no_matches() {
+    // If regex never matches, everything should be one event
+    let input = r#"line 1
+line 2
+line 3"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "raw", "-M", "regex:match=^NOMATCH", "-F", "json"],
+        input,
+    );
+    assert_eq!(exit_code, 0, "Should handle regex that never matches");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    // All lines should be combined into one event since regex never matches
+    assert_eq!(
+        events.len(),
+        1,
+        "Non-matching regex should create single event"
+    );
+}
+
+#[test]
+fn test_multiline_regex_overlapping_patterns() {
+    // Test when both start and end patterns could match the same line
+    let input = r#"START-END
+middle
+START-END
+other"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "raw",
+            "-M",
+            "regex:match=^START:end=END$",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "Should handle overlapping patterns");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    // Should create events (exact behavior depends on implementation)
+    assert!(!events.is_empty(), "Should create some events");
+}
+
+#[test]
+fn test_multiline_regex_invalid_end_pattern() {
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "raw", "-M", "regex:end=[[[", "-F", "json"], "test");
+
+    assert_ne!(exit_code, 0, "Invalid regex end pattern should fail");
+    assert!(
+        stderr.contains("Invalid") || stderr.contains("regex"),
+        "Should indicate regex error"
+    );
+}
+
+// Edge cases with parallel mode
+
+#[test]
+fn test_multiline_parallel_worker_boundaries() {
+    // Create input with many multiline events to test worker boundaries
+    let mut input = String::new();
+    for i in 0..20 {
+        input.push_str(&format!("2023-04-15T10:00:{:02} Event {}\n", i, i));
+        input.push_str("  continuation line\n");
+    }
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "timestamp",
+            "--parallel",
+            "--batch-size",
+            "5",
+            "-F",
+            "json",
+        ],
+        &input,
+    );
+    assert_eq!(exit_code, 0, "Parallel mode should handle multiline events");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    // Should create 20 events, each with their continuation line
+    assert_eq!(
+        events.len(),
+        20,
+        "Parallel workers should not split multiline events"
+    );
+}
+
+#[test]
+fn test_multiline_very_long_event() {
+    // Test with a very long multiline event
+    let mut input = String::from("START\n");
+    for i in 0..1000 {
+        input.push_str(&format!("  continuation line {}\n", i));
+    }
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "indent", "-F", "json"], &input);
+    assert_eq!(exit_code, 0, "Should handle very long multiline events");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    assert_eq!(
+        events.len(),
+        1,
+        "Should create single event from long continuation"
+    );
+    let event_text = events[0]["line"].as_str().unwrap();
+    assert!(event_text.contains("START"), "Should contain start line");
+    assert!(
+        event_text.contains("line 999"),
+        "Should contain last continuation"
+    );
+}
+
+// Test multiline with filters
+
+#[test]
+fn test_multiline_filter_on_partial_content() {
+    // Filter should see the complete multiline event
+    let input = r#"ERROR connection failed
+    at database.rs:123
+    timeout exceeded
+INFO normal log"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "--filter",
+            "e.line.contains(\"timeout\")",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "Should filter on complete multiline content");
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+
+    // Only the ERROR event should match (because it contains "timeout" in continuation)
+    assert_eq!(
+        events.len(),
+        1,
+        "Should filter based on full multiline event"
+    );
+    assert!(
+        events[0]["line"].as_str().unwrap().contains("ERROR"),
+        "Should be the ERROR event"
+    );
+}
+
+#[test]
+fn test_multiline_with_malformed_events() {
+    // Test that malformed multiline patterns don't crash the pipeline
+    let input = r#"    orphaned indented line at start
+NORMAL line
+    indented
+NORMAL again"#;
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "-M", "indent", "-F", "json"], input);
+    assert_eq!(
+        exit_code, 0,
+        "Should handle malformed multiline input gracefully"
+    );
+    assert!(!stdout.trim().is_empty(), "Should produce some output");
+}
