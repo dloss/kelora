@@ -887,17 +887,17 @@ mod tests {
 
     #[test]
     fn test_json_to_dynamic_float() {
-        let json = serde_json::json!(3.14);
+        let json = serde_json::json!(42.5);
         let dynamic = json_to_dynamic(&json);
-        assert!((dynamic.as_float().unwrap() - 3.14).abs() < 0.001);
+        assert!((dynamic.as_float().unwrap() - 42.5).abs() < 0.001);
     }
 
     #[test]
     fn test_json_to_dynamic_bool() {
         let json_true = serde_json::json!(true);
         let json_false = serde_json::json!(false);
-        assert_eq!(json_to_dynamic(&json_true).as_bool().unwrap(), true);
-        assert_eq!(json_to_dynamic(&json_false).as_bool().unwrap(), false);
+        assert!(json_to_dynamic(&json_true).as_bool().unwrap());
+        assert!(!json_to_dynamic(&json_false).as_bool().unwrap());
     }
 
     #[test]
@@ -916,7 +916,7 @@ mod tests {
         assert_eq!(array[0].as_int().unwrap(), 1);
         assert_eq!(array[1].to_string(), "two");
         assert!((array[2].as_float().unwrap() - 3.0).abs() < 0.001);
-        assert_eq!(array[3].as_bool().unwrap(), true);
+        assert!(array[3].as_bool().unwrap());
         assert!(array[4].is_unit());
     }
 
@@ -932,7 +932,7 @@ mod tests {
         assert_eq!(map.len(), 3);
         assert_eq!(map.get("name").unwrap().to_string(), "alice");
         assert_eq!(map.get("age").unwrap().as_int().unwrap(), 30);
-        assert_eq!(map.get("active").unwrap().as_bool().unwrap(), true);
+        assert!(map.get("active").unwrap().as_bool().unwrap());
     }
 
     #[test]
@@ -1220,10 +1220,7 @@ mod tests {
             assert_eq!(flattened.get("tags.[0]").unwrap().to_string(), "tag1");
             assert_eq!(flattened.get("tags.[1]").unwrap().to_string(), "tag2");
         } else {
-            panic!(
-                "Expected array keys not found. Available keys: {:?}",
-                keys
-            );
+            panic!("Expected array keys not found. Available keys: {:?}", keys);
         }
     }
 
