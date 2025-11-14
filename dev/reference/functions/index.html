@@ -2036,10 +2036,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textbetweenstart-end" class="md-nav__link">
+  <a href="#textbetweenstart-end-nth" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.between(start, end)
+        text.between(start, end [, nth])
       
     </span>
   </a>
@@ -4253,10 +4253,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textbetweenstart-end" class="md-nav__link">
+  <a href="#textbetweenstart-end-nth" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.between(start, end)
+        text.between(start, end [, nth])
       
     </span>
   </a>
@@ -6280,9 +6280,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>e.extension = e.filename.after(&quot;.&quot;)                   // &quot;file.txt&quot; → &quot;txt&quot;
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>e.domain = e.email.after(&quot;@&quot;)                         // &quot;user@host.com&quot; → &quot;host.com&quot;
 </code></pre></div>
-<h4 id="textbetweenstart-end"><code>text.between(start, end)</code><a class="headerlink" href="#textbetweenstart-end" title="Permanent link">&para;</a></h4>
-<p>Text between start and end delimiters.</p>
+<h4 id="textbetweenstart-end-nth"><code>text.between(start, end [, nth])</code><a class="headerlink" href="#textbetweenstart-end-nth" title="Permanent link">&para;</a></h4>
+<p>Text between start and end delimiters (nth: 1=first, -1=last).</p>
+<p><strong>Note:</strong> <code>text.between(left, right, nth)</code> is equivalent to <code>text.after(left, nth).before(right)</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>e.quoted = e.line.between(&#39;&quot;&#39;, &#39;&quot;&#39;)                   // Extract quoted string
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>&quot;[a][b][c]&quot;.between(&quot;[&quot;, &quot;]&quot;, 2)                      // &quot;b&quot; - same as .after(&quot;[&quot;, 2).before(&quot;]&quot;)
 </code></pre></div>
 <h4 id="textstarting_withprefix-nth"><code>text.starting_with(prefix [, nth])</code><a class="headerlink" href="#textstarting_withprefix-nth" title="Permanent link">&para;</a></h4>
 <p>Return substring from prefix to end (nth: 1=first, -1=last).</p>
