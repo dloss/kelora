@@ -721,3 +721,333 @@ fn test_span_close_requires_span() {
         "error message should explain dependency"
     );
 }
+
+#[test]
+fn test_metrics_json_flag() {
+    // Test --metrics-json outputs JSON format
+    let input = r#"{"level": "info", "message": "test1"}
+{"level": "error", "message": "test2"}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"total\"); track_count(\"level_\" + e.level);",
+            "--metrics-json",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Check that metrics output is in JSON format
+    assert!(
+        stderr.contains("{") && stderr.contains("}"),
+        "Metrics output should be JSON format"
+    );
+    // Should be parseable as JSON
+    let json_start = stderr.find('{').expect("Should find JSON start");
+    let json_str = &stderr[json_start..];
+    let _: serde_json::Value =
+        serde_json::from_str(json_str).expect("Metrics output should be valid JSON");
+}
+
+#[test]
+fn test_stats_only_flag() {
+    // Test --stats-only suppresses event output, only shows stats
+    let input = r#"{"level": "info", "message": "test1"}
+{"level": "error", "message": "test2"}
+{"level": "info", "message": "test3"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json", "--stats-only"], input);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Stdout should be empty (no events output)
+    assert!(
+        stdout.trim().is_empty(),
+        "Stdout should be empty with --stats-only, got: {}",
+        stdout
+    );
+
+    // Stderr should contain stats
+    assert!(
+        stderr.contains("Lines processed") || stderr.contains("Events"),
+        "Should show stats in stderr, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_metrics_and_stats_together() {
+    // Test that --metrics and --stats can be used together
+    let input = r#"{"level": "info", "message": "test1"}
+{"level": "error", "message": "test2"}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"total\");",
+            "--metrics",
+            "--stats",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Should show both metrics and stats
+    assert!(
+        stderr.contains("Tracked metrics"),
+        "Should show metrics header"
+    );
+    assert!(
+        stderr.contains("Lines processed") || stderr.contains("Events"),
+        "Should show stats"
+    );
+}
+
+#[test]
+fn test_metrics_file_and_metrics_flag_together() {
+    // Test that --metrics-file and --metrics (-m) can be used together
+    let input = r#"{"level": "info", "message": "test1"}
+{"level": "error", "message": "test2"}"#;
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    let metrics_file_path = temp_file.path().to_str().unwrap();
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"total\");",
+            "--metrics",
+            "--metrics-file",
+            metrics_file_path,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Should show metrics in both stderr and file
+    assert!(
+        stderr.contains("Tracked metrics"),
+        "Should show metrics in stderr"
+    );
+
+    let metrics_content =
+        std::fs::read_to_string(metrics_file_path).expect("Failed to read metrics file");
+    let metrics_json: serde_json::Value =
+        serde_json::from_str(&metrics_content).expect("Metrics file should contain valid JSON");
+    assert_eq!(metrics_json["total"], 2, "Metrics file should contain data");
+}
+
+#[test]
+fn test_metrics_json_with_file_output() {
+    // Test --metrics-json with --metrics-file
+    let input = r#"{"level": "info", "message": "test1"}
+{"level": "error", "message": "test2"}"#;
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    let metrics_file_path = temp_file.path().to_str().unwrap();
+
+    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"total\");",
+            "--metrics-json",
+            "--metrics-file",
+            metrics_file_path,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let metrics_content =
+        std::fs::read_to_string(metrics_file_path).expect("Failed to read metrics file");
+    let metrics_json: serde_json::Value =
+        serde_json::from_str(&metrics_content).expect("Metrics file should contain valid JSON");
+    assert_eq!(metrics_json["total"], 2, "Metrics file should contain data");
+}
+
+#[test]
+fn test_stats_only_with_filter() {
+    // Test --stats-only with filtering to verify stats show filtered counts
+    let input = r#"{"level": "info", "message": "test1"}
+{"level": "error", "message": "test2"}
+{"level": "info", "message": "test3"}
+{"level": "error", "message": "test4"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.level == \"error\"",
+            "--stats-only",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Stdout should be empty
+    assert!(stdout.trim().is_empty(), "Stdout should be empty");
+
+    // Stats should show 2 output events and 2 filtered
+    assert!(
+        stderr.contains("Events") && (stderr.contains("2 output") || stderr.contains("output, 2")),
+        "Stats should show filtered counts, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_stats_only_with_exec() {
+    // Test that --stats-only suppresses event output but exec script still runs
+    let input = r#"{"count": 1}
+{"count": 2}
+{"count": 3}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_sum(\"total\", e.count);",
+            "--stats-only",
+            "--metrics",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Stdout should be empty (no event output)
+    assert!(stdout.trim().is_empty(), "Stdout should be empty");
+
+    // Stats and metrics should still appear
+    assert!(stderr.contains("Lines processed"), "Should show stats");
+    assert!(
+        stderr.contains("total") && stderr.contains("6"),
+        "Should show metrics with correct sum, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_conflicting_quiet_and_stats_flags() {
+    // Test that -q (quiet) and --stats work together (quiet suppresses other diagnostics)
+    let input = r#"{"level": "info", "message": "test"}"#;
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--stats", "-q"], input);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // With -q, stats should be suppressed
+    assert!(
+        !stderr.contains("Lines processed"),
+        "Quiet mode should suppress stats"
+    );
+}
+
+#[test]
+fn test_metrics_without_tracking_calls() {
+    // Test --metrics flag when no tracking functions are called
+    let input = r#"{"level": "info", "message": "test"}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json", "--metrics"], input);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Should indicate no metrics were tracked
+    assert!(
+        stderr.contains("No user metrics")
+            || stderr.is_empty()
+            || !stderr.contains("Tracked metrics:"),
+        "Should indicate no metrics or not show metrics header, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_stats_with_parallel_mode() {
+    // Test that stats work correctly with parallel mode
+    let input: String = (1..=100)
+        .map(|i| i.to_string())
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "--filter",
+            "line.to_int() % 10 == 0",
+            "--stats",
+            "--parallel",
+        ],
+        &input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    // Stats should show correct counts
+    assert!(
+        stderr.contains("Lines processed: 100 total"),
+        "Should show 100 lines processed"
+    );
+    assert!(stderr.contains("10 output"), "Should show 10 output events");
+}
+
+#[test]
+fn test_metrics_file_invalid_path() {
+    // Test that invalid metrics file path produces error message
+    let input = r#"{"level": "info", "message": "test"}"#;
+
+    let (_stdout, stderr, _exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"total\");",
+            "--metrics-file",
+            "/invalid/path/that/does/not/exist/metrics.json",
+        ],
+        input,
+    );
+
+    // Should show error message about metrics file failure
+    assert!(
+        stderr.to_lowercase().contains("failed to write metrics")
+            || stderr.to_lowercase().contains("no such file"),
+        "Should show error message about metrics file, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_stats_format_consistency() {
+    // Test that stats format is consistent across runs
+    let input = r#"{"level": "info", "message": "test1"}
+{"level": "error", "message": "test2"}"#;
+
+    let (_stdout1, stderr1, exit_code1) = run_kelora_with_input(&["-f", "json", "--stats"], input);
+    let (_stdout2, stderr2, exit_code2) = run_kelora_with_input(&["-f", "json", "--stats"], input);
+
+    assert_eq!(exit_code1, 0);
+    assert_eq!(exit_code2, 0);
+
+    // Stats format should be consistent
+    assert!(stderr1.contains("Lines processed"));
+    assert!(stderr2.contains("Lines processed"));
+    assert!(stderr1.contains("Events created") || stderr1.contains("Events"));
+    assert!(stderr2.contains("Events created") || stderr2.contains("Events"));
+}
