@@ -1,4 +1,4 @@
-use crate::event::Event;
+use crate::event::{json_to_dynamic, Event};
 use crate::parsers::{CefParser, CombinedParser, LogfmtParser, SyslogParser};
 use crate::pipeline::EventParser;
 use base64::engine::general_purpose::{URL_SAFE, URL_SAFE_NO_PAD};
@@ -1141,6 +1141,111 @@ fn parse_kv_impl(text: &str, sep: Option<&str>, kv_sep: &str) -> rhai::Map {
     map
 }
 
+/// Extract JSON objects or arrays from text
+///
+/// Searches through the text for valid JSON objects `{...}` or arrays `[...]`
+/// and returns the nth occurrence (0-indexed).
+///
+/// # Arguments
+/// * `text` - The input string to search for JSON
+/// * `nth` - Which occurrence to extract (0 = first, 1 = second, etc.)
+///
+/// # Returns
+/// A Rhai Dynamic containing the parsed JSON (Map for objects, Array for arrays),
+/// or an empty string if not found or parsing fails
+fn extract_json_impl(text: &str, nth: i64) -> Dynamic {
+    if text.is_empty() || nth < 0 {
+        return Dynamic::from(String::new());
+    }
+
+    let nth_usize = nth as usize;
+    let mut found_count = 0;
+    let bytes = text.as_bytes();
+    let len = bytes.len();
+
+    // Iterate through each character looking for JSON start markers
+    let mut i = 0;
+    while i < len {
+        let ch = bytes[i] as char;
+
+        // Check if this is a potential JSON start
+        if ch != '{' && ch != '[' {
+            i += 1;
+            continue;
+        }
+
+        let start_char = ch;
+        let end_char = if ch == '{' { '}' } else { ']' };
+
+        // Try to find matching closing bracket/brace
+        // We need to handle nested structures
+        let mut depth = 0;
+        let mut in_string = false;
+        let mut escape_next = false;
+        let mut end_pos = None;
+
+        #[allow(clippy::needless_range_loop)]
+        for j in i..len {
+            let current = bytes[j] as char;
+
+            if escape_next {
+                escape_next = false;
+                continue;
+            }
+
+            if current == '\\' && in_string {
+                escape_next = true;
+                continue;
+            }
+
+            if current == '"' {
+                in_string = !in_string;
+                continue;
+            }
+
+            if in_string {
+                continue;
+            }
+
+            if current == start_char {
+                depth += 1;
+            } else if current == end_char {
+                depth -= 1;
+                if depth == 0 {
+                    end_pos = Some(j + 1);
+                    break;
+                }
+            }
+        }
+
+        // If we found a complete structure, try to parse it
+        if let Some(end) = end_pos {
+            let candidate = &text[i..end];
+
+            // Try to parse as JSON
+            if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(candidate) {
+                // Check if it's an object or array
+                if json_value.is_object() || json_value.is_array() {
+                    if found_count == nth_usize {
+                        // This is the one we want!
+                        return json_to_dynamic(&json_value);
+                    }
+                    found_count += 1;
+                }
+            }
+
+            // Move past this structure
+            i = end;
+        } else {
+            // No matching closing bracket found, move to next character
+            i += 1;
+        }
+    }
+
+    // Not found
+    Dynamic::from(String::new())
+}
+
 pub fn register_functions(engine: &mut Engine) {
     // Note: print() function is now handled via engine.on_print() in engine.rs
 
@@ -1787,6 +1892,15 @@ pub fn register_functions(engine: &mut Engine) {
             }
         },
     );
+
+    // JSON extraction methods
+    engine.register_fn("extract_json", |text: &str| -> Dynamic {
+        extract_json_impl(text, 0)
+    });
+
+    engine.register_fn("extract_json", |text: &str, nth: i64| -> Dynamic {
+        extract_json_impl(text, nth)
+    });
 
     engine.register_fn("split_re", |text: &str, pattern: &str| -> rhai::Array {
         match regex::Regex::new(pattern) {

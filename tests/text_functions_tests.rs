@@ -357,3 +357,199 @@ fn test_or_empty_with_empty_maps() {
         "Third event should have metadata map"
     );
 }
+
+#[test]
+fn test_extract_json_basic_object() {
+    let input = r#"{"message": "User data: {\"name\":\"Alice\",\"age\":30,\"active\":true}"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f", "json",
+            "-F", "json",
+            "--exec", "let user = e.message.extract_json(); e.user_name = user.name; e.user_age = user.age; e.active = user.active;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["user_name"].as_str().unwrap(), "Alice");
+    assert_eq!(output["user_age"].as_i64().unwrap(), 30);
+    assert!(output["active"].as_bool().unwrap());
+}
+
+#[test]
+fn test_extract_json_array() {
+    let input = r#"{"message": "Tags: [\"rust\",\"cli\",\"logs\"] are available"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let tags = e.message.extract_json(); e.tags = tags;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    let tags = output["tags"].as_array().unwrap();
+    assert_eq!(tags.len(), 3);
+    assert_eq!(tags[0].as_str().unwrap(), "rust");
+    assert_eq!(tags[1].as_str().unwrap(), "cli");
+    assert_eq!(tags[2].as_str().unwrap(), "logs");
+}
+
+#[test]
+fn test_extract_json_with_nth_parameter() {
+    let input = r#"{"message": "First: {\"id\":1} and second: {\"id\":2} objects"}"#;
+
+    // Extract first JSON object (default)
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let first = e.message.extract_json(); e.first_id = first.id;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["first_id"].as_i64().unwrap(), 1);
+
+    // Extract second JSON object (nth=1)
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let second = e.message.extract_json(1); e.second_id = second.id;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["second_id"].as_i64().unwrap(), 2);
+}
+
+#[test]
+fn test_extract_json_nested_structures() {
+    let input = r#"{"message": "Config: {\"server\":{\"host\":\"localhost\",\"port\":8080},\"enabled\":true}"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f", "json",
+            "-F", "json",
+            "--exec", "let cfg = e.message.extract_json(); e.host = cfg.server.host; e.port = cfg.server.port; e.enabled = cfg.enabled;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["host"].as_str().unwrap(), "localhost");
+    assert_eq!(output["port"].as_i64().unwrap(), 8080);
+    assert!(output["enabled"].as_bool().unwrap());
+}
+
+#[test]
+fn test_extract_json_no_match() {
+    let input = r#"{"message": "This text has no JSON objects or arrays"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let result = e.message.extract_json(); e.found = (result != \"\");",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert!(!output["found"].as_bool().unwrap());
+}
+
+#[test]
+fn test_extract_json_mixed_objects_and_arrays() {
+    let input = r#"{"message": "Found [1,2,3] items and {\"status\":\"ok\"} result"}"#;
+
+    // Extract first (array)
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let first = e.message.extract_json(0); e.items = first;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    let items = output["items"].as_array().unwrap();
+    assert_eq!(items.len(), 3);
+
+    // Extract second (object)
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let second = e.message.extract_json(1); e.status = second.status;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["status"].as_str().unwrap(), "ok");
+}
+
+#[test]
+fn test_extract_json_with_escaped_characters() {
+    let input = r#"{"message": "Data: {\"text\":\"Line 1\\nLine 2\",\"quote\":\"He said \\\"hello\\\"\"}"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let data = e.message.extract_json(); e.text = data.text; e.quote = data.quote;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["text"].as_str().unwrap(), "Line 1\nLine 2");
+    assert_eq!(output["quote"].as_str().unwrap(), "He said \"hello\"");
+}
