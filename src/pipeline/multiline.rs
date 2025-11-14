@@ -357,4 +357,374 @@ mod tests {
 
         assert!(chunker.flush().is_some());
     }
+
+    #[test]
+    fn test_indent_strategy_basic() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        // First line starts event
+        assert!(chunker.feed_line("Header line\n".to_string()).is_none());
+
+        // Indented line continues
+        assert!(chunker
+            .feed_line("  continued line\n".to_string())
+            .is_none());
+        assert!(chunker
+            .feed_line("\tmore continuation\n".to_string())
+            .is_none());
+
+        // Non-indented starts new event
+        let event = chunker.feed_line("New header\n".to_string());
+        assert!(event.is_some());
+        assert!(event.unwrap().contains("Header"));
+
+        let final_event = chunker.flush();
+        assert!(final_event.is_some());
+        assert!(final_event.unwrap().contains("New header"));
+    }
+
+    #[test]
+    fn test_regex_strategy_start_only() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Regex {
+                start: r"^\d{4}-\d{2}-\d{2}".to_string(),
+                end: None,
+            },
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        assert!(chunker
+            .feed_line("2024-01-01 First event\n".to_string())
+            .is_none());
+        assert!(chunker.feed_line("continuation\n".to_string()).is_none());
+
+        let event = chunker.feed_line("2024-01-02 Second event\n".to_string());
+        assert!(event.is_some());
+        assert!(event.unwrap().contains("2024-01-01"));
+
+        let final_event = chunker.flush();
+        assert!(final_event.is_some());
+        assert!(final_event.unwrap().contains("2024-01-02"));
+    }
+
+    #[test]
+    fn test_regex_strategy_with_end() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Regex {
+                start: r"^START".to_string(),
+                end: Some(r"^END".to_string()),
+            },
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        assert!(chunker.feed_line("START event 1\n".to_string()).is_none());
+        assert!(chunker.feed_line("middle line\n".to_string()).is_none());
+
+        // End marker should flush
+        let event = chunker.feed_line("END\n".to_string());
+        assert!(event.is_some());
+        assert!(event.unwrap().contains("START"));
+    }
+
+    #[test]
+    fn test_all_strategy_joins_with_newlines() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::All,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        assert!(chunker.feed_line("line1\n".to_string()).is_none());
+        assert!(chunker.feed_line("line2\n".to_string()).is_none());
+        assert!(chunker.feed_line("line3\n".to_string()).is_none());
+
+        let event = chunker.flush();
+        assert!(event.is_some());
+        let content = event.unwrap();
+        assert!(content.contains("line1\n"));
+        assert!(content.contains("line2\n"));
+        assert!(content.contains("line3\n"));
+    }
+
+    #[test]
+    fn test_flush_empty_buffer() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+        assert!(chunker.flush().is_none());
+    }
+
+    #[test]
+    fn test_has_pending() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+        assert!(!chunker.has_pending());
+
+        chunker.feed_line("test\n".to_string());
+        assert!(chunker.has_pending());
+
+        chunker.flush();
+        assert!(!chunker.has_pending());
+    }
+
+    #[test]
+    fn test_empty_line_handling_indent() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        chunker.feed_line("Header\n".to_string());
+        chunker.feed_line("  continuation\n".to_string());
+        // Empty line (not indented) starts new event
+        let event = chunker.feed_line("\n".to_string());
+        assert!(event.is_some());
+    }
+
+    #[test]
+    fn test_very_large_multiline_event() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        chunker.feed_line("Header\n".to_string());
+
+        // Add 1000 continuation lines
+        for i in 0..1000 {
+            chunker.feed_line(format!("  line {}\n", i));
+        }
+
+        let event = chunker.flush();
+        assert!(event.is_some());
+        let content = event.unwrap();
+        assert!(content.contains("Header"));
+        assert!(content.contains("line 999"));
+    }
+
+    #[test]
+    fn test_timestamp_strategy_without_format_hint() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Timestamp {
+                chrono_format: None,
+            },
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        assert!(chunker
+            .feed_line("2024-01-01T10:00:00 First\n".to_string())
+            .is_none());
+        assert!(chunker.feed_line("continuation\n".to_string()).is_none());
+
+        let event = chunker.feed_line("2024-01-01T10:00:01 Second\n".to_string());
+        assert!(event.is_some());
+    }
+
+    #[test]
+    fn test_is_line_indented() {
+        assert!(is_line_indented("  indented\n"));
+        assert!(is_line_indented("\tindented\n"));
+        assert!(!is_line_indented("not indented\n"));
+        assert!(!is_line_indented(""));
+        assert!(!is_line_indented("\n"));
+    }
+
+    #[test]
+    fn test_timestamp_prefix_candidates() {
+        let line = "2024-01-01 10:00:00 INFO message";
+        let candidates = timestamp_prefix_candidates(line);
+        assert!(!candidates.is_empty());
+        assert!(candidates.iter().any(|c| c.contains("2024-01-01")));
+    }
+
+    #[test]
+    fn test_timestamp_prefix_candidates_empty() {
+        let candidates = timestamp_prefix_candidates("");
+        assert!(candidates.is_empty());
+    }
+
+    #[test]
+    fn test_timestamp_prefix_candidates_no_whitespace() {
+        let candidates = timestamp_prefix_candidates("singletoken");
+        assert!(!candidates.is_empty());
+    }
+
+    #[test]
+    fn test_timestamp_prefix_candidates_long_line() {
+        let long_line = format!("{}start", "x".repeat(100));
+        let candidates = timestamp_prefix_candidates(&long_line);
+        assert!(!candidates.is_empty());
+    }
+
+    #[test]
+    fn test_take_prefix_chars() {
+        assert_eq!(take_prefix_chars("hello world", 5), "hello");
+        assert_eq!(take_prefix_chars("hello", 10), "hello");
+        assert_eq!(take_prefix_chars("hello", 0), "");
+        assert_eq!(take_prefix_chars("", 5), "");
+    }
+
+    #[test]
+    fn test_take_prefix_chars_unicode() {
+        assert_eq!(take_prefix_chars("日本語test", 3), "日本語");
+    }
+
+    #[test]
+    fn test_push_candidate_deduplication() {
+        let mut candidates = Vec::new();
+        push_candidate(&mut candidates, "test".to_string());
+        push_candidate(&mut candidates, "test".to_string());
+        assert_eq!(candidates.len(), 1);
+    }
+
+    #[test]
+    fn test_push_candidate_empty() {
+        let mut candidates = Vec::new();
+        push_candidate(&mut candidates, "".to_string());
+        assert_eq!(candidates.len(), 0);
+    }
+
+    #[test]
+    fn test_invalid_regex_pattern() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Regex {
+                start: r"[invalid(".to_string(),
+                end: None,
+            },
+        };
+
+        let result = MultilineChunker::new(config, InputFormat::Raw);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_invalid_end_regex_pattern() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Regex {
+                start: r"^START".to_string(),
+                end: Some(r"[invalid(".to_string()),
+            },
+        };
+
+        let result = MultilineChunker::new(config, InputFormat::Raw);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_timestamp_detector_empty_line() {
+        let mut detector = TimestampDetector::new(None);
+        assert!(!detector.is_header(""));
+        assert!(!detector.is_header("   \n"));
+    }
+
+    #[test]
+    fn test_timestamp_detector_indented_line() {
+        let mut detector = TimestampDetector::new(None);
+        assert!(!detector.is_header("  2024-01-01 test"));
+    }
+
+    #[test]
+    fn test_timestamp_detector_valid_timestamp() {
+        let mut detector = TimestampDetector::new(None);
+        assert!(detector.is_header("2024-01-01T10:00:00 message"));
+    }
+
+    #[test]
+    fn test_pending_output_handling() {
+        // Test that pending_output is used correctly when multiple events are produced
+        // This happens with the timestamp/indent strategies when a new header arrives
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        // First event
+        chunker.feed_line("Header 1\n".to_string());
+        chunker.feed_line("  continuation\n".to_string());
+
+        // Second event starts - should flush first event
+        let first = chunker.feed_line("Header 2\n".to_string());
+        assert!(first.is_some());
+        assert!(first.unwrap().contains("Header 1"));
+
+        // Flush should return second event
+        let second = chunker.flush();
+        assert!(second.is_some());
+        assert!(second.unwrap().contains("Header 2"));
+    }
+
+    #[test]
+    fn test_multiline_with_raw_format_preserves_newlines_in_all_strategy() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::All,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        chunker.feed_line("line1\n".to_string());
+        chunker.feed_line("line2\n".to_string());
+
+        let event = chunker.flush();
+        assert!(event.is_some());
+        let content = event.unwrap();
+        // All strategy joins with \n, so it becomes "line1\n\nline2\n"
+        assert_eq!(content, "line1\n\nline2\n");
+    }
+
+    #[test]
+    fn test_multiline_with_json_format_removes_newlines() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Json).unwrap();
+
+        chunker.feed_line("Header\n".to_string());
+        chunker.feed_line("  continuation\n".to_string());
+
+        let event = chunker.flush();
+        assert!(event.is_some());
+        let content = event.unwrap();
+        // Should replace newlines with spaces for non-Raw formats
+        assert!(!content.contains('\n'));
+        assert!(content.contains(' '));
+    }
+
+    #[test]
+    fn test_create_multiline_chunker_function() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let result = create_multiline_chunker(&config, InputFormat::Raw);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_multiple_flush_on_empty_buffer() {
+        let config = MultilineConfig {
+            strategy: MultilineStrategy::Indent,
+        };
+
+        let mut chunker = MultilineChunker::new(config, InputFormat::Raw).unwrap();
+
+        assert!(chunker.flush().is_none());
+        assert!(chunker.flush().is_none());
+        assert!(chunker.flush().is_none());
+    }
 }

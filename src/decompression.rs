@@ -266,4 +266,287 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_gzip_multiple_members() -> Result<()> {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+
+        // Create a file with multiple gzip members (concatenated)
+        let mut temp_file = NamedTempFile::new()?;
+
+        // Create first gzip member
+        let mut encoder1 = GzEncoder::new(Vec::new(), Compression::default());
+        encoder1.write_all(b"first member\n")?;
+        let compressed1 = encoder1.finish()?;
+
+        // Create second gzip member
+        let mut encoder2 = GzEncoder::new(Vec::new(), Compression::default());
+        encoder2.write_all(b"second member\n")?;
+        let compressed2 = encoder2.finish()?;
+
+        // Write both members to file (concatenated)
+        temp_file.write_all(&compressed1)?;
+        temp_file.write_all(&compressed2)?;
+        temp_file.flush()?;
+
+        // Read the concatenated gzip file - MultiGzDecoder should handle multiple members
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+        let mut content = String::new();
+        reader.read_to_string(&mut content)?;
+
+        assert!(content.contains("first member"));
+        assert!(content.contains("second member"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_corrupted_gzip_data() {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+
+        let mut temp_file = NamedTempFile::new().unwrap();
+
+        // Create valid gzip header
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+        encoder.write_all(b"test data").unwrap();
+        let mut compressed = encoder.finish().unwrap();
+
+        // Corrupt the data by modifying bytes in the middle
+        if compressed.len() > 10 {
+            compressed[10] = !compressed[10]; // Flip bits
+            compressed[11] = !compressed[11];
+        }
+
+        temp_file.write_all(&compressed).unwrap();
+        temp_file.flush().unwrap();
+
+        let result = DecompressionReader::new(temp_file.path());
+
+        // Should create reader successfully (corruption detected during read)
+        if let Ok(mut reader) = result {
+            let mut content = String::new();
+            let read_result = reader.read_to_string(&mut content);
+            // Reading should fail due to corruption
+            assert!(read_result.is_err() || content != "test data");
+        }
+    }
+
+    #[test]
+    fn test_empty_file() -> Result<()> {
+        let temp_file = NamedTempFile::new()?;
+        // Don't write anything - leave file empty
+
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+        let mut content = String::new();
+        reader.read_to_string(&mut content)?;
+
+        assert_eq!(content, "");
+        Ok(())
+    }
+
+    #[test]
+    fn test_very_small_file() -> Result<()> {
+        let mut temp_file = NamedTempFile::new()?;
+        temp_file.write_all(b"x")?; // Single byte
+        temp_file.flush()?;
+
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+        let mut content = String::new();
+        reader.read_to_string(&mut content)?;
+
+        assert_eq!(content, "x");
+        Ok(())
+    }
+
+    #[test]
+    fn test_file_with_only_partial_magic_bytes() -> Result<()> {
+        let mut temp_file = NamedTempFile::new()?;
+        // Write only 2 bytes (partial gzip magic)
+        temp_file.write_all(&[0x1F, 0x8B])?;
+        temp_file.flush()?;
+
+        // Should be treated as plain text since we need 3 bytes for gzip
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+        let mut content = Vec::new();
+        reader.read_to_end(&mut content)?;
+
+        assert_eq!(content, vec![0x1F, 0x8B]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_gzip_with_no_extension() -> Result<()> {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+
+        // Create a gzipped file without .gz extension
+        let mut temp_file = NamedTempFile::new()?;
+
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+        encoder.write_all(b"compressed content\n")?;
+        let compressed = encoder.finish()?;
+
+        temp_file.write_all(&compressed)?;
+        temp_file.flush()?;
+
+        // Should detect gzip by magic bytes, not extension
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+        let mut content = String::new();
+        reader.read_to_string(&mut content)?;
+
+        assert_eq!(content, "compressed content\n");
+        Ok(())
+    }
+
+    #[test]
+    fn test_decompression_reader_debug_impl() {
+        let mut temp_file = NamedTempFile::new().unwrap();
+        writeln!(temp_file, "test").unwrap();
+        temp_file.flush().unwrap();
+
+        let reader = DecompressionReader::new(temp_file.path()).unwrap();
+        let debug_str = format!("{:?}", reader);
+        assert!(
+            debug_str.contains("DecompressionReader::")
+                && (debug_str.contains("Plain")
+                    || debug_str.contains("Gzip")
+                    || debug_str.contains("Zstd"))
+        );
+    }
+
+    #[test]
+    fn test_maybe_decompress_plain() -> Result<()> {
+        let data = b"plain text data";
+        let cursor = Cursor::new(data.to_vec());
+
+        let mut reader = maybe_decompress(cursor)?;
+        let mut content = Vec::new();
+        reader.read_to_end(&mut content)?;
+
+        assert_eq!(content, data);
+        Ok(())
+    }
+
+    #[test]
+    fn test_maybe_decompress_gzip() -> Result<()> {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+
+        let original_data = b"test data for gzip";
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+        encoder.write_all(original_data)?;
+        let compressed = encoder.finish()?;
+
+        let cursor = Cursor::new(compressed);
+        let mut reader = maybe_decompress(cursor)?;
+        let mut content = Vec::new();
+        reader.read_to_end(&mut content)?;
+
+        assert_eq!(content, original_data);
+        Ok(())
+    }
+
+    #[test]
+    fn test_bufread_methods() -> Result<()> {
+        use std::io::BufRead;
+
+        let mut temp_file = NamedTempFile::new()?;
+        writeln!(temp_file, "line1")?;
+        writeln!(temp_file, "line2")?;
+        writeln!(temp_file, "line3")?;
+        temp_file.flush()?;
+
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+
+        // Test BufRead trait methods
+        let mut lines = Vec::new();
+        loop {
+            let mut line = String::new();
+            let bytes_read = reader.read_line(&mut line)?;
+            if bytes_read == 0 {
+                break;
+            }
+            lines.push(line);
+        }
+
+        assert_eq!(lines.len(), 3);
+        assert!(lines[0].contains("line1"));
+        assert!(lines[1].contains("line2"));
+        assert!(lines[2].contains("line3"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_file_with_binary_data() -> Result<()> {
+        let mut temp_file = NamedTempFile::new()?;
+        // Write binary data that's not gzip or zstd magic bytes
+        let binary_data = vec![0xFF, 0xD8, 0xFF, 0xE0]; // JPEG magic bytes
+        temp_file.write_all(&binary_data)?;
+        temp_file.write_all(b"more data")?;
+        temp_file.flush()?;
+
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+        let mut content = Vec::new();
+        reader.read_to_end(&mut content)?;
+
+        assert!(content.starts_with(&binary_data));
+        Ok(())
+    }
+
+    #[test]
+    fn test_decompression_reader_is_send() {
+        // Compile-time check that DecompressionReader implements Send
+        fn assert_send<T: Send>() {}
+        assert_send::<DecompressionReader>();
+    }
+
+    #[test]
+    fn test_gzip_with_large_content() -> Result<()> {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+
+        // Create a large content (10KB)
+        let large_content = "x".repeat(10_000);
+
+        let mut temp_file = NamedTempFile::new()?;
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+        encoder.write_all(large_content.as_bytes())?;
+        let compressed = encoder.finish()?;
+
+        temp_file.write_all(&compressed)?;
+        temp_file.flush()?;
+
+        let mut reader = DecompressionReader::new(temp_file.path())?;
+        let mut content = String::new();
+        reader.read_to_string(&mut content)?;
+
+        assert_eq!(content.len(), 10_000);
+        assert_eq!(content, large_content);
+        Ok(())
+    }
+
+    #[test]
+    fn test_file_with_zstd_magic_but_invalid_data() {
+        let mut temp_file = NamedTempFile::new().unwrap();
+        // Write zstd magic bytes but invalid compressed data
+        temp_file.write_all(&[0x28, 0xB5, 0x2F, 0xFD]).unwrap();
+        temp_file.write_all(b"invalid data").unwrap();
+        temp_file.flush().unwrap();
+
+        let result = DecompressionReader::new(temp_file.path());
+
+        // Should either fail during creation or during read
+        match result {
+            Ok(mut reader) => {
+                let mut content = Vec::new();
+                let read_result = reader.read_to_end(&mut content);
+                // Reading should fail
+                assert!(read_result.is_err());
+            }
+            Err(_) => {
+                // Creation failed, which is also acceptable
+            }
+        }
+    }
 }

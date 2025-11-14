@@ -869,4 +869,411 @@ mod tests {
             }
         }
     }
+
+    // Tests for json_to_dynamic
+    #[test]
+    fn test_json_to_dynamic_string() {
+        let json = serde_json::json!("hello");
+        let dynamic = json_to_dynamic(&json);
+        assert_eq!(dynamic.to_string(), "hello");
+    }
+
+    #[test]
+    fn test_json_to_dynamic_integer() {
+        let json = serde_json::json!(42);
+        let dynamic = json_to_dynamic(&json);
+        assert_eq!(dynamic.as_int().unwrap(), 42);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_float() {
+        let json = serde_json::json!(3.14);
+        let dynamic = json_to_dynamic(&json);
+        assert!((dynamic.as_float().unwrap() - 3.14).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_bool() {
+        let json_true = serde_json::json!(true);
+        let json_false = serde_json::json!(false);
+        assert_eq!(json_to_dynamic(&json_true).as_bool().unwrap(), true);
+        assert_eq!(json_to_dynamic(&json_false).as_bool().unwrap(), false);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_null() {
+        let json = serde_json::json!(null);
+        let dynamic = json_to_dynamic(&json);
+        assert!(dynamic.is_unit());
+    }
+
+    #[test]
+    fn test_json_to_dynamic_array() {
+        let json = serde_json::json!([1, "two", 3.0, true, null]);
+        let dynamic = json_to_dynamic(&json);
+        let array = dynamic.clone().try_cast::<Array>().unwrap();
+        assert_eq!(array.len(), 5);
+        assert_eq!(array[0].as_int().unwrap(), 1);
+        assert_eq!(array[1].to_string(), "two");
+        assert!((array[2].as_float().unwrap() - 3.0).abs() < 0.001);
+        assert_eq!(array[3].as_bool().unwrap(), true);
+        assert!(array[4].is_unit());
+    }
+
+    #[test]
+    fn test_json_to_dynamic_object() {
+        let json = serde_json::json!({
+            "name": "alice",
+            "age": 30,
+            "active": true
+        });
+        let dynamic = json_to_dynamic(&json);
+        let map = dynamic.clone().try_cast::<Map>().unwrap();
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("name").unwrap().to_string(), "alice");
+        assert_eq!(map.get("age").unwrap().as_int().unwrap(), 30);
+        assert_eq!(map.get("active").unwrap().as_bool().unwrap(), true);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_nested_structure() {
+        let json = serde_json::json!({
+            "user": {
+                "name": "bob",
+                "scores": [95, 87, 92]
+            },
+            "metadata": {
+                "created": "2024-01-01",
+                "tags": ["urgent", "review"]
+            }
+        });
+        let dynamic = json_to_dynamic(&json);
+        let map = dynamic.clone().try_cast::<Map>().unwrap();
+
+        let user = map.get("user").unwrap().clone().try_cast::<Map>().unwrap();
+        assert_eq!(user.get("name").unwrap().to_string(), "bob");
+
+        let scores = user
+            .get("scores")
+            .unwrap()
+            .clone()
+            .try_cast::<Array>()
+            .unwrap();
+        assert_eq!(scores.len(), 3);
+        assert_eq!(scores[0].as_int().unwrap(), 95);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_empty_array() {
+        let json = serde_json::json!([]);
+        let dynamic = json_to_dynamic(&json);
+        let array = dynamic.clone().try_cast::<Array>().unwrap();
+        assert_eq!(array.len(), 0);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_empty_object() {
+        let json = serde_json::json!({});
+        let dynamic = json_to_dynamic(&json);
+        let map = dynamic.clone().try_cast::<Map>().unwrap();
+        assert_eq!(map.len(), 0);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_very_large_number() {
+        let json = serde_json::json!(9007199254740992i64); // 2^53, max safe integer in f64
+        let dynamic = json_to_dynamic(&json);
+        assert_eq!(dynamic.as_int().unwrap(), 9007199254740992i64);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_negative_number() {
+        let json = serde_json::json!(-42);
+        let dynamic = json_to_dynamic(&json);
+        assert_eq!(dynamic.as_int().unwrap(), -42);
+    }
+
+    // Tests for Event field operations
+    #[test]
+    fn test_event_default() {
+        let event = Event::default();
+        assert!(event.fields.is_empty());
+        assert!(!event.key_filtered);
+        assert!(event.original_line.is_empty());
+        assert!(event.line_num.is_none());
+        assert!(event.filename.is_none());
+        assert!(event.parsed_ts.is_none());
+    }
+
+    #[test]
+    fn test_event_with_capacity() {
+        let event = Event::with_capacity("test line".to_string(), 10);
+        assert_eq!(event.original_line, "test line");
+        assert_eq!(event.fields.capacity(), 10);
+    }
+
+    #[test]
+    fn test_event_set_field() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("key1".to_string(), Dynamic::from("value1"));
+        event.set_field("key2".to_string(), Dynamic::from(42i64));
+
+        assert_eq!(event.fields.len(), 2);
+        assert_eq!(event.fields.get("key1").unwrap().to_string(), "value1");
+        assert_eq!(event.fields.get("key2").unwrap().as_int().unwrap(), 42);
+    }
+
+    #[test]
+    fn test_event_set_metadata() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_metadata(42, Some("test.log".to_string()));
+
+        assert_eq!(event.line_num, Some(42));
+        assert_eq!(event.filename, Some("test.log".to_string()));
+    }
+
+    #[test]
+    fn test_event_set_span_info() {
+        let mut event = Event::default_with_line("line".to_string());
+        let span_info = SpanInfo {
+            status: Some(SpanStatus::Included),
+            span_id: Some("span123".to_string()),
+            span_start: Some(Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap()),
+            span_end: Some(Utc.with_ymd_and_hms(2024, 1, 1, 1, 0, 0).unwrap()),
+        };
+        event.set_span_info(span_info.clone());
+
+        assert_eq!(event.span.status, Some(SpanStatus::Included));
+        assert_eq!(event.span.span_id, Some("span123".to_string()));
+    }
+
+    #[test]
+    fn test_event_filter_keys() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("name".to_string(), Dynamic::from("alice"));
+        event.set_field("age".to_string(), Dynamic::from(30i64));
+        event.set_field("city".to_string(), Dynamic::from("Boston"));
+
+        let keys = vec!["name".to_string(), "city".to_string()];
+        event.filter_keys(&keys);
+
+        assert_eq!(event.fields.len(), 2);
+        assert!(event.fields.contains_key("name"));
+        assert!(event.fields.contains_key("city"));
+        assert!(!event.fields.contains_key("age"));
+    }
+
+    #[test]
+    fn test_event_filter_keys_non_existent() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("name".to_string(), Dynamic::from("alice"));
+        event.set_field("age".to_string(), Dynamic::from(30i64));
+
+        let keys = vec!["name".to_string(), "nonexistent".to_string()];
+        event.filter_keys(&keys);
+
+        assert_eq!(event.fields.len(), 1);
+        assert!(event.fields.contains_key("name"));
+        assert!(!event.fields.contains_key("nonexistent"));
+    }
+
+    #[test]
+    fn test_event_filter_keys_preserves_order() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("z".to_string(), Dynamic::from(1i64));
+        event.set_field("a".to_string(), Dynamic::from(2i64));
+        event.set_field("m".to_string(), Dynamic::from(3i64));
+
+        // Filter with specific order
+        let keys = vec!["a".to_string(), "z".to_string()];
+        event.filter_keys(&keys);
+
+        let collected_keys: Vec<&String> = event.fields.keys().collect();
+        assert_eq!(collected_keys, vec![&"a".to_string(), &"z".to_string()]);
+    }
+
+    #[test]
+    fn test_event_empty() {
+        let event = Event::default_with_line("".to_string());
+        assert!(event.fields.is_empty());
+        assert_eq!(event.original_line, "");
+    }
+
+    #[test]
+    fn test_event_very_large() {
+        let mut event = Event::with_capacity("line".to_string(), 1000);
+
+        // Add 1000 fields
+        for i in 0..1000 {
+            event.set_field(format!("field_{}", i), Dynamic::from(i as i64));
+        }
+
+        assert_eq!(event.fields.len(), 1000);
+        assert_eq!(
+            event.fields.get("field_500").unwrap().as_int().unwrap(),
+            500
+        );
+    }
+
+    // Tests for ordered_fields
+    #[test]
+    fn test_ordered_fields_basic() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("ts".to_string(), Dynamic::from("2024-01-01"));
+        event.set_field("level".to_string(), Dynamic::from("ERROR"));
+        event.set_field("msg".to_string(), Dynamic::from("test message"));
+        event.set_field("user".to_string(), Dynamic::from("alice"));
+
+        let ordered = ordered_fields(&event);
+        let keys: Vec<&str> = ordered.iter().map(|(k, _)| k.as_str()).collect();
+
+        // Should be: ts, level, msg, then others
+        assert_eq!(keys[0], "ts");
+        assert_eq!(keys[1], "level");
+        assert_eq!(keys[2], "msg");
+        assert_eq!(keys[3], "user");
+    }
+
+    #[test]
+    fn test_ordered_fields_multiple_timestamp_fields() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("time".to_string(), Dynamic::from("2024-01-01"));
+        event.set_field("ts".to_string(), Dynamic::from("2024-01-02"));
+        event.set_field("msg".to_string(), Dynamic::from("test"));
+
+        let ordered = ordered_fields(&event);
+        let keys: Vec<&str> = ordered.iter().map(|(k, _)| k.as_str()).collect();
+
+        // ts has higher priority than time
+        assert_eq!(keys[0], "ts");
+        assert_eq!(keys[1], "time");
+    }
+
+    #[test]
+    fn test_ordered_fields_key_filtered_preserves_order() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("z".to_string(), Dynamic::from(1i64));
+        event.set_field("a".to_string(), Dynamic::from(2i64));
+        event.key_filtered = true;
+
+        let ordered = ordered_fields(&event);
+        let keys: Vec<&str> = ordered.iter().map(|(k, _)| k.as_str()).collect();
+
+        // When key_filtered is true, preserve insertion order
+        assert_eq!(keys[0], "z");
+        assert_eq!(keys[1], "a");
+    }
+
+    #[test]
+    fn test_ordered_fields_empty_event() {
+        let event = Event::default_with_line("line".to_string());
+        let ordered = ordered_fields(&event);
+        assert_eq!(ordered.len(), 0);
+    }
+
+    #[test]
+    fn test_ordered_fields_no_special_fields() {
+        let mut event = Event::default_with_line("line".to_string());
+        event.set_field("user".to_string(), Dynamic::from("alice"));
+        event.set_field("action".to_string(), Dynamic::from("login"));
+
+        let ordered = ordered_fields(&event);
+        assert_eq!(ordered.len(), 2);
+    }
+
+    // Tests for flatten_event_fields
+    #[test]
+    fn test_flatten_event_fields_basic() {
+        let mut event = Event::default_with_line("line".to_string());
+
+        let mut nested = Map::new();
+        nested.insert("city".into(), Dynamic::from("Boston"));
+        nested.insert("state".into(), Dynamic::from("MA"));
+
+        event.set_field("name".to_string(), Dynamic::from("alice"));
+        event.set_field("address".to_string(), Dynamic::from(nested));
+
+        let flattened = flatten_event_fields(&event, FlattenStyle::Bracket, 10);
+
+        assert_eq!(flattened.get("name").unwrap().to_string(), "alice");
+        assert_eq!(flattened.get("address.city").unwrap().to_string(), "Boston");
+        assert_eq!(flattened.get("address.state").unwrap().to_string(), "MA");
+    }
+
+    #[test]
+    fn test_flatten_event_fields_with_arrays() {
+        let mut event = Event::default_with_line("line".to_string());
+
+        let array = vec![Dynamic::from("tag1"), Dynamic::from("tag2")];
+        event.set_field("tags".to_string(), Dynamic::from(array));
+
+        let flattened = flatten_event_fields(&event, FlattenStyle::Bracket, 10);
+
+        // Array fields are flattened with brackets
+        // The key format should be "tags.[0]" based on how flatten_event_fields works
+        let keys: Vec<String> = flattened.keys().cloned().collect();
+        // Check if the expected keys exist (could be "tags.[0]" or "tags[0]" depending on implementation)
+        if flattened.contains_key("tags[0]") {
+            assert_eq!(flattened.get("tags[0]").unwrap().to_string(), "tag1");
+            assert_eq!(flattened.get("tags[1]").unwrap().to_string(), "tag2");
+        } else if flattened.contains_key("tags.[0]") {
+            assert_eq!(flattened.get("tags.[0]").unwrap().to_string(), "tag1");
+            assert_eq!(flattened.get("tags.[1]").unwrap().to_string(), "tag2");
+        } else {
+            panic!(
+                "Expected array keys not found. Available keys: {:?}",
+                keys
+            );
+        }
+    }
+
+    #[test]
+    fn test_flatten_event_fields_empty_event() {
+        let event = Event::default_with_line("line".to_string());
+        let flattened = flatten_event_fields(&event, FlattenStyle::Bracket, 10);
+        assert_eq!(flattened.len(), 0);
+    }
+
+    // Tests for context type
+    #[test]
+    fn test_context_type_default() {
+        let event = Event::default();
+        assert_eq!(event.context_type, ContextType::None);
+    }
+
+    // Tests for span status
+    #[test]
+    fn test_span_status_as_str() {
+        assert_eq!(SpanStatus::Included.as_str(), "included");
+        assert_eq!(SpanStatus::Late.as_str(), "late");
+        assert_eq!(SpanStatus::Unassigned.as_str(), "unassigned");
+        assert_eq!(SpanStatus::Filtered.as_str(), "filtered");
+    }
+
+    // Tests for FlattenStyle formatting
+    #[test]
+    fn test_flatten_style_format_object_key() {
+        let style = FlattenStyle::Bracket;
+        assert_eq!(style.format_object_key("", "key"), "key");
+        assert_eq!(style.format_object_key("parent", "key"), "parent.key");
+
+        let style = FlattenStyle::Underscore;
+        assert_eq!(style.format_object_key("", "key"), "key");
+        assert_eq!(style.format_object_key("parent", "key"), "parent_key");
+    }
+
+    #[test]
+    fn test_flatten_style_format_array_key() {
+        let style = FlattenStyle::Bracket;
+        assert_eq!(style.format_array_key("", 0), "[0]");
+        assert_eq!(style.format_array_key("arr", 5), "arr[5]");
+
+        let style = FlattenStyle::Dot;
+        assert_eq!(style.format_array_key("", 0), "0");
+        assert_eq!(style.format_array_key("arr", 5), "arr.5");
+
+        let style = FlattenStyle::Underscore;
+        assert_eq!(style.format_array_key("", 0), "0");
+        assert_eq!(style.format_array_key("arr", 5), "arr_5");
+    }
 }
