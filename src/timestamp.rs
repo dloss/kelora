@@ -1173,4 +1173,595 @@ mod tests {
             prop_assert_eq!(parsed, dt);
         }
     }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Timezone Handling
+    // ============================================================================
+
+    #[test]
+    fn test_timezone_named_zones() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Test parsing with named timezone (America/New_York)
+        let result =
+            parser.parse_ts_with_config("2023-07-04 12:00:00", None, Some("America/New_York"));
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        // 12:00 EDT (UTC-4 in summer) = 16:00 UTC
+        assert_eq!(dt.hour(), 16);
+
+        // Test parsing with Europe/London
+        let result =
+            parser.parse_ts_with_config("2023-07-04 12:00:00", None, Some("Europe/London"));
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        // 12:00 BST (UTC+1 in summer) = 11:00 UTC
+        assert_eq!(dt.hour(), 11);
+
+        // Test parsing with Asia/Tokyo
+        let result = parser.parse_ts_with_config("2023-07-04 12:00:00", None, Some("Asia/Tokyo"));
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        // 12:00 JST (UTC+9) = 03:00 UTC
+        assert_eq!(dt.hour(), 3);
+
+        // Test that invalid timezone falls back to local time
+        let result = parser.parse_ts_with_config("2023-07-04 12:00:00", None, Some("Invalid/Zone"));
+        assert!(result.is_some());
+        // Should not error, just fall back to local time parsing
+    }
+
+    #[test]
+    fn test_timezone_utc_explicit() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Test explicit UTC timezone
+        let result = parser.parse_ts_with_config("2023-07-04 12:00:00", None, Some("UTC"));
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.hour(), 12);
+        assert_eq!(dt.minute(), 0);
+    }
+
+    #[test]
+    fn test_dst_transition_spring_forward() {
+        // Test DST transition - Spring forward (2:00 AM doesn't exist)
+        // In America/New_York, March 12, 2023 at 2:00 AM clocks jump to 3:00 AM
+        let mut parser = AdaptiveTsParser::new();
+
+        // 1:59 AM exists (before spring forward)
+        let result =
+            parser.parse_ts_with_config("2023-03-12 01:59:00", None, Some("America/New_York"));
+        assert!(result.is_some());
+
+        // 2:30 AM doesn't exist (in the gap)
+        // chrono will handle this - it may return None or map to a valid time
+        let _result =
+            parser.parse_ts_with_config("2023-03-12 02:30:00", None, Some("America/New_York"));
+        // The behavior here depends on chrono's DST handling
+        // We just verify it doesn't panic
+
+        // 3:00 AM exists (after spring forward)
+        let result =
+            parser.parse_ts_with_config("2023-03-12 03:00:00", None, Some("America/New_York"));
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_dst_transition_fall_back() {
+        // Test DST transition - Fall back (2:00 AM happens twice)
+        // In America/New_York, November 5, 2023 at 2:00 AM clocks fall back to 1:00 AM
+        let mut parser = AdaptiveTsParser::new();
+
+        // 1:30 AM exists (before fall back)
+        let result =
+            parser.parse_ts_with_config("2023-11-05 01:30:00", None, Some("America/New_York"));
+        assert!(result.is_some());
+
+        // 2:30 AM is ambiguous (happens twice)
+        // chrono's from_local_datetime will pick one (typically the first occurrence)
+        let result =
+            parser.parse_ts_with_config("2023-11-05 02:30:00", None, Some("America/New_York"));
+        assert!(result.is_some());
+
+        // 3:00 AM exists (after fall back)
+        let result =
+            parser.parse_ts_with_config("2023-11-05 03:00:00", None, Some("America/New_York"));
+        assert!(result.is_some());
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Edge Dates
+    // ============================================================================
+
+    #[test]
+    fn test_edge_dates_epoch_boundaries() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Unix epoch (1970-01-01 00:00:00 UTC)
+        let result = parser.parse_ts("1970-01-01T00:00:00Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.timestamp(), 0);
+
+        // Just after epoch
+        let result = parser.parse_ts("1970-01-01T00:00:01Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.timestamp(), 1);
+
+        // Before epoch (negative timestamp)
+        let result = parser.parse_ts("1969-12-31T23:59:59Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.timestamp(), -1);
+    }
+
+    #[test]
+    fn test_edge_dates_year_boundaries() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Year 2000 (Y2K boundary)
+        let result = parser.parse_ts("2000-01-01T00:00:00Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2000);
+
+        // Year 9999 (maximum reasonable year)
+        let result = parser.parse_ts("9999-12-31T23:59:59Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 9999);
+
+        // Year 1 (early date)
+        let result = parser.parse_ts("0001-01-01T00:00:00Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 1);
+    }
+
+    #[test]
+    fn test_leap_year_february_29() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Leap year - February 29, 2020
+        let result = parser.parse_ts("2020-02-29T12:00:00Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.month(), 2);
+        assert_eq!(dt.day(), 29);
+
+        // Leap year - February 29, 2000 (divisible by 400)
+        let result = parser.parse_ts("2000-02-29T12:00:00Z");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.month(), 2);
+        assert_eq!(dt.day(), 29);
+
+        // Non-leap year - February 29, 2019 (should fail)
+        let result = parser.parse_ts("2019-02-29T12:00:00Z");
+        assert!(result.is_none());
+
+        // Century year not divisible by 400 - February 29, 1900 (should fail)
+        let result = parser.parse_ts("1900-02-29T12:00:00Z");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_unix_timestamp_negative() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Negative Unix timestamps are not supported by the digit-only parser
+        // (it only handles positive integers)
+        let result = parser.parse_ts("-1");
+        // Should parse as relative time "-1" which is invalid
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_unix_timestamp_overflow() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Test Unix timestamp at maximum i64 - this is 19 digits so treated as nanoseconds
+        // The parser will handle it but the resulting DateTime may not be representable
+        let _result = parser.parse_ts("9223372036854775807"); // i64::MAX
+                                                              // This may succeed or fail depending on DateTime::from_timestamp limits
+                                                              // We just verify it doesn't panic
+
+        // Test very large timestamp that would overflow i64 parsing
+        let result = parser.parse_ts("99999999999999999999"); // 20 digits, too large for i64
+        assert!(result.is_none()); // Should fail at parsing stage
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Custom Format Strings
+    // ============================================================================
+
+    #[test]
+    fn test_custom_format_with_timezone() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Custom format: DD/MM/YYYY HH:MM:SS
+        let custom_format = "%d/%m/%Y %H:%M:%S";
+        let result = parser.parse_ts_with_config("15/07/2023 14:30:45", Some(custom_format), None);
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.day(), 15);
+        assert_eq!(dt.month(), 7);
+        assert_eq!(dt.year(), 2023);
+        assert_eq!(dt.hour(), 14);
+        assert_eq!(dt.minute(), 30);
+
+        // Custom format with timezone
+        let result = parser.parse_ts_with_config(
+            "15/07/2023 14:30:45",
+            Some(custom_format),
+            Some("America/New_York"),
+        );
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_custom_format_invalid() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Invalid custom format (wrong pattern) but input still parseable by standard formats
+        let custom_format = "%invalid%format";
+        let result = parser.parse_ts_with_config("2023-07-15 14:30:45", Some(custom_format), None);
+        // Will fall back to standard formats and succeed
+        assert!(result.is_some());
+
+        // Custom format doesn't match input but input isn't parseable by any format
+        let custom_format = "%Y-%m-%d";
+        let result =
+            parser.parse_ts_with_config("not-a-valid-timestamp", Some(custom_format), None);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_syslog_year_rollover() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Syslog format without year - should add current year
+        let result = parser.parse_ts("Dec 31 23:59:59");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.month(), 12);
+        assert_eq!(dt.day(), 31);
+
+        // Should also try previous year if it's early January
+        let result = parser.parse_ts("Jan 1 00:00:01");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.month(), 1);
+        assert_eq!(dt.day(), 1);
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Invalid Formats
+    // ============================================================================
+
+    #[test]
+    fn test_invalid_month_values() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Month 0 (invalid)
+        let result = parser.parse_ts("2023-00-15T12:00:00Z");
+        assert!(result.is_none());
+
+        // Month 13 (invalid)
+        let result = parser.parse_ts("2023-13-15T12:00:00Z");
+        assert!(result.is_none());
+
+        // Month 99 (invalid)
+        let result = parser.parse_ts("2023-99-15T12:00:00Z");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_invalid_day_values() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Day 0 (invalid)
+        let result = parser.parse_ts("2023-07-00T12:00:00Z");
+        assert!(result.is_none());
+
+        // Day 32 in July (invalid - July has 31 days)
+        let result = parser.parse_ts("2023-07-32T12:00:00Z");
+        assert!(result.is_none());
+
+        // Day 31 in February (invalid)
+        let result = parser.parse_ts("2023-02-31T12:00:00Z");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_invalid_time_values() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Hour 24 (invalid - should be 0-23)
+        let result = parser.parse_ts("2023-07-15T24:00:00Z");
+        assert!(result.is_none());
+
+        // Hour 25 (invalid)
+        let result = parser.parse_ts("2023-07-15T25:00:00Z");
+        assert!(result.is_none());
+
+        // Minute 60 (invalid - should be 0-59)
+        let result = parser.parse_ts("2023-07-15T12:60:00Z");
+        assert!(result.is_none());
+
+        // Second 60 (invalid - should be 0-59, 60 is only for leap seconds)
+        let _result = parser.parse_ts("2023-07-15T12:00:60Z");
+        // Note: Some parsers accept 60 for leap seconds
+        // We just verify it doesn't panic
+
+        // Second 61 (invalid)
+        let result = parser.parse_ts("2023-07-15T12:00:61Z");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_malformed_timestamps() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Empty string
+        let result = parser.parse_ts("");
+        assert!(result.is_none());
+
+        // Whitespace only
+        let result = parser.parse_ts("   ");
+        assert!(result.is_none());
+
+        // Partial timestamp
+        let result = parser.parse_ts("2023-07");
+        assert!(result.is_none());
+
+        // Missing separators
+        let result = parser.parse_ts("20230715120000");
+        assert!(result.is_none());
+
+        // Mixed formats
+        let _result = parser.parse_ts("2023-07-15 12:00:00Z");
+        // This might actually parse since space-separated ISO is supported
+        // We just verify it doesn't panic
+
+        // Garbage input
+        let result = parser.parse_ts("not-a-timestamp-at-all");
+        assert!(result.is_none());
+
+        // Special characters
+        let result = parser.parse_ts("2023@07@15T12:00:00Z");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_very_long_timestamp_strings() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Very long string (should not cause issues)
+        let mut long_string = "2023-07-15T12:00:00Z".to_string();
+        long_string.push_str(&"x".repeat(10000));
+        let result = parser.parse_ts(&long_string);
+        assert!(result.is_none());
+
+        // String with embedded valid timestamp
+        let result = parser.parse_ts("prefix 2023-07-15T12:00:00Z suffix");
+        // Should fail since we expect exact match (after trim)
+        assert!(result.is_none());
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - RFC2822 Format
+    // ============================================================================
+
+    #[test]
+    fn test_rfc2822_parsing() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Standard RFC2822 format
+        let result = parser.parse_ts("Tue, 1 Jul 2003 10:52:37 +0200");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2003);
+        assert_eq!(dt.month(), 7);
+        assert_eq!(dt.day(), 1);
+
+        // RFC2822 with different timezone - Sat, 15 Jul 2023 14:30:00 -0700
+        let result = parser.parse_ts("Sat, 15 Jul 2023 14:30:00 -0700");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2023);
+        assert_eq!(dt.month(), 7);
+        assert_eq!(dt.day(), 15);
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Duration Parsing Edge Cases
+    // ============================================================================
+
+    #[test]
+    fn test_duration_parsing_edge_cases() {
+        // Zero duration
+        let result = parse_duration("0s");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().num_seconds(), 0);
+
+        // Very large duration
+        let result = parse_duration("999999h");
+        assert!(result.is_ok());
+
+        // Empty unit (should fail)
+        let result = parse_duration("100");
+        assert!(result.is_err());
+
+        // Invalid unit (should fail)
+        let result = parse_duration("100x");
+        assert!(result.is_err());
+
+        // Space between number and unit
+        let result = parse_duration("10 hours");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().num_hours(), -10); // Defaults to negative (past)
+
+        // Multiple spaces (actually supported due to trim_start)
+        let result = parse_duration("10   hours");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().num_hours(), -10);
+
+        // Negative zero
+        let result = parse_duration("-0h");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().num_seconds(), 0);
+    }
+
+    #[test]
+    fn test_duration_overflow_protection() {
+        // Duration that would overflow i64
+        let result = parse_duration("999999999999999999999999999999h");
+        assert!(result.is_err());
+        // Error message could be about parsing the number or range overflow
+        let err_msg = result.unwrap_err();
+        assert!(err_msg.contains("out of supported range") || err_msg.contains("Invalid number"));
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Relative Time Edge Cases
+    // ============================================================================
+
+    #[test]
+    fn test_looks_like_relative_time_edge_cases() {
+        // Valid relative times
+        assert!(looks_like_relative_time("1h"));
+        assert!(looks_like_relative_time("30m"));
+        assert!(looks_like_relative_time("2d"));
+        assert!(looks_like_relative_time("1 hour"));
+        assert!(looks_like_relative_time("30 minutes"));
+
+        // Invalid relative times
+        assert!(!looks_like_relative_time("h")); // No number
+        assert!(!looks_like_relative_time("abc")); // No number at start
+        assert!(!looks_like_relative_time("1")); // No unit
+        assert!(!looks_like_relative_time("1x")); // Invalid unit
+        assert!(!looks_like_relative_time("")); // Empty
+        assert!(!looks_like_relative_time("  ")); // Whitespace only
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Date/Time Only Parsing Edge Cases
+    // ============================================================================
+
+    #[test]
+    fn test_date_only_various_formats() {
+        // YYYY-MM-DD
+        let result = parse_date_only("2023-07-15");
+        assert!(result.is_some());
+
+        // YYYY/MM/DD
+        let result = parse_date_only("2023/07/15");
+        assert!(result.is_some());
+
+        // MM/DD/YYYY (US format)
+        let result = parse_date_only("07/15/2023");
+        assert!(result.is_some());
+
+        // DD.MM.YYYY (German format)
+        let result = parse_date_only("15.07.2023");
+        assert!(result.is_some());
+
+        // Month name formats
+        let result = parse_date_only("July 15, 2023");
+        assert!(result.is_some());
+
+        let result = parse_date_only("15 July 2023");
+        assert!(result.is_some());
+
+        // Invalid date formats
+        let result = parse_date_only("2023-13-45");
+        assert!(result.is_none());
+
+        let result = parse_date_only("not-a-date");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_time_only_various_formats() {
+        // HH:MM:SS
+        let result = parse_time_only("14:30:45");
+        assert!(result.is_some());
+
+        // HH:MM
+        let result = parse_time_only("14:30");
+        assert!(result.is_some());
+
+        // Invalid time formats
+        let result = parse_time_only("25:00:00");
+        assert!(result.is_none());
+
+        let result = parse_time_only("14:60:00");
+        assert!(result.is_none());
+
+        let result = parse_time_only("not-a-time");
+        assert!(result.is_none());
+    }
+
+    // ============================================================================
+    // P0 EDGE CASE TESTS - Fractional Seconds Edge Cases
+    // ============================================================================
+
+    #[test]
+    fn test_fractional_seconds_various_precisions() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Milliseconds (3 digits)
+        let result = parser.parse_ts("2023-07-15T12:00:00.123Z");
+        assert!(result.is_some());
+
+        // Microseconds (6 digits)
+        let result = parser.parse_ts("2023-07-15T12:00:00.123456Z");
+        assert!(result.is_some());
+
+        // Nanoseconds (9 digits)
+        let result = parser.parse_ts("2023-07-15T12:00:00.123456789Z");
+        assert!(result.is_some());
+
+        // Single digit (deciseconds)
+        let result = parser.parse_ts("2023-07-15T12:00:00.1Z");
+        assert!(result.is_some());
+
+        // Two digits (centiseconds)
+        let result = parser.parse_ts("2023-07-15T12:00:00.12Z");
+        assert!(result.is_some());
+
+        // More than 9 digits (should truncate or handle gracefully)
+        let result = parser.parse_ts("2023-07-15T12:00:00.123456789012Z");
+        // Should still parse, possibly truncating extra precision
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_microsecond_unix_timestamp() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // 16-digit microsecond timestamp
+        let result = parser.parse_ts("1689422400000000"); // 2023-07-15 12:00:00 UTC in microseconds
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2023);
+        assert_eq!(dt.month(), 7);
+        assert_eq!(dt.day(), 15);
+    }
+
+    #[test]
+    fn test_nanosecond_unix_timestamp() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // 19-digit nanosecond timestamp
+        let result = parser.parse_ts("1689422400000000000"); // 2023-07-15 12:00:00 UTC in nanoseconds
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2023);
+        assert_eq!(dt.month(), 7);
+        assert_eq!(dt.day(), 15);
+    }
 }
