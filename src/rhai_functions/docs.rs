@@ -29,6 +29,7 @@ text.extract_domain()                Extract domain from URL or email address
 text.extract_ip([nth])               Extract IP address from text (nth: 1=first, -1=last)
 text.extract_ips()                   Extract all IP addresses as array
 text.extract_json([nth])             Extract JSON object/array from text (nth: 0=first, 1=second, etc.)
+text.extract_jsons()                 Extract all JSON objects/arrays from text as array of strings
 text.extract_re_maps(pattern, field) Extract regex matches as array of maps for fan-out
 text.extract_re(pattern [,group])    Extract regex match or capture group
 text.extract_url([nth])              Extract URL from text (nth: 1=first, -1=last)

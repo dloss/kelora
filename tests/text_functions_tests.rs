@@ -553,3 +553,135 @@ fn test_extract_json_with_escaped_characters() {
     assert_eq!(output["text"].as_str().unwrap(), "Line 1\nLine 2");
     assert_eq!(output["quote"].as_str().unwrap(), "He said \"hello\"");
 }
+
+#[test]
+fn test_extract_jsons_multiple_objects() {
+    let input = r#"{"message": "Found {\"id\":1,\"name\":\"Alice\"} and {\"id\":2,\"name\":\"Bob\"} users"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f", "json",
+            "-F", "json",
+            "--exec", "let jsons = e.message.extract_jsons(); e.count = jsons.len(); e.first = jsons[0]; e.second = jsons[1];",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["count"].as_i64().unwrap(), 2);
+    assert_eq!(
+        output["first"].as_str().unwrap(),
+        r#"{"id":1,"name":"Alice"}"#
+    );
+    assert_eq!(
+        output["second"].as_str().unwrap(),
+        r#"{"id":2,"name":"Bob"}"#
+    );
+}
+
+#[test]
+fn test_extract_jsons_mixed_types() {
+    let input = r#"{"message": "Data: [1,2,3] and {\"status\":\"ok\"} and [\"a\",\"b\"]"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let jsons = e.message.extract_jsons(); e.count = jsons.len(); e.items = jsons;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["count"].as_i64().unwrap(), 3);
+
+    let items = output["items"].as_array().unwrap();
+    assert_eq!(items[0].as_str().unwrap(), "[1,2,3]");
+    assert_eq!(items[1].as_str().unwrap(), r#"{"status":"ok"}"#);
+    assert_eq!(items[2].as_str().unwrap(), r#"["a","b"]"#);
+}
+
+#[test]
+fn test_extract_jsons_empty_result() {
+    let input = r#"{"message": "No JSON structures here, just plain text"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let jsons = e.message.extract_jsons(); e.count = jsons.len();",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["count"].as_i64().unwrap(), 0);
+}
+
+#[test]
+fn test_extract_jsons_nested_structures() {
+    let input = r#"{"message": "Config: {\"server\":{\"host\":\"localhost\",\"port\":8080}} and metadata: {\"version\":\"1.0\"}"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let jsons = e.message.extract_jsons(); e.count = jsons.len(); e.configs = jsons;",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let output: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
+    assert_eq!(output["count"].as_i64().unwrap(), 2);
+
+    let configs = output["configs"].as_array().unwrap();
+    assert_eq!(
+        configs[0].as_str().unwrap(),
+        r#"{"server":{"host":"localhost","port":8080}}"#
+    );
+    assert_eq!(configs[1].as_str().unwrap(), r#"{"version":"1.0"}"#);
+}
+
+#[test]
+fn test_extract_jsons_with_emit_each() {
+    let input = r#"{"message": "Items: {\"id\":1} and {\"id\":2} and {\"id\":3}"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            "let jsons = e.message.extract_jsons(); emit_each(jsons.map(|j| #{raw: j}))",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(lines.len(), 3, "Should emit 3 events");
+
+    for (i, line) in lines.iter().enumerate() {
+        let parsed: serde_json::Value = serde_json::from_str(line).expect("Should be valid JSON");
+        let expected = format!(r#"{{"id":{}}}"#, i + 1);
+        assert_eq!(parsed["raw"].as_str().unwrap(), expected);
+    }
+}
