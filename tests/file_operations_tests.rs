@@ -180,7 +180,7 @@ fn test_file_append_without_strict_mode() {
 
     let input = r#"{"message": "test"}"#;
 
-    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+    let (_stdout, _stderr, _exit_code) = run_kelora_with_input(
         &[
             "-f",
             "json",

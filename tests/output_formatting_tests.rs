@@ -447,7 +447,7 @@ fn test_no_emoji_flag() {
     // Test that --no-emoji suppresses emoji output
     let input = r#"{"level": "error", "message": "test error"}"#;
 
-    let (stdout_with_emoji, stderr_with_emoji, _) =
+    let (_stdout_with_emoji, _stderr_with_emoji, _) =
         run_kelora_with_input(&["-f", "json", "--stats"], input);
     let (stdout_no_emoji, stderr_no_emoji, _) =
         run_kelora_with_input(&["-f", "json", "--stats", "--no-emoji"], input);

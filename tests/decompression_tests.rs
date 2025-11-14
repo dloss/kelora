@@ -346,7 +346,7 @@ fn test_stdin_with_gzip() {
 
     let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
     encoder.write_all(log_content.as_bytes()).unwrap();
-    let compressed_data = encoder.finish().unwrap();
+    let _compressed_data = encoder.finish().unwrap();
 
     // Note: This test might be difficult to implement with current test infrastructure
     // as it requires passing binary data to stdin. Skipping for now or marking as TODO.

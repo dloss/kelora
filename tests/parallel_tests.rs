@@ -615,7 +615,7 @@ fn test_parallel_with_errors_in_exec_script() {
 {"value": 20}"#;
 
     // Division by zero in some cases
-    let (stdout, stderr, exit_code) = run_kelora_with_input(
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
         &[
             "-f",
             "json",
@@ -860,7 +860,7 @@ fn test_parallel_consistency_with_different_thread_counts() {
 
     let filter_expr = "e.value % 7 == 0";
 
-    let results: Vec<(String, i32)> = vec![2, 4, 8]
+    let results: Vec<(String, i32)> = [2, 4, 8]
         .iter()
         .map(|threads| {
             let (stdout, _stderr, exit_code) = run_kelora_with_input(
