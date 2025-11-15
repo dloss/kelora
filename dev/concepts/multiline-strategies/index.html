@@ -2356,7 +2356,7 @@ adaptive timestamp parser; you can hint a specific format with
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;2024-01-15 10:01:00 ERROR Failed to process request\nTraceback (most recent call last):\n  File \&quot;/app/server.py\&quot;, line 42, in handle_request\n    result = process_data(request.body)\n  File \&quot;/app/processor.py\&quot;, line 15, in process_data\n    return json.loads(data)\nValueError: Invalid JSON format at line 3\n&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;2024-01-15 10:01:00 ERROR Failed to process requestTraceback (most recent call last):  File \&quot;/app/server.py\&quot;, line 42, in handle_request    result = process_data(request.body)  File \&quot;/app/processor.py\&quot;, line 15, in process_data    return json.loads(data)ValueError: Invalid JSON format at line 3&quot;}
 </code></pre></div>
 </div>
 </div>
@@ -2382,7 +2382,7 @@ and similar outputs where continuation lines are indented.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;SQLException&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;java.sql.SQLException: Connection timeout\n\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\n\tat com.example.api.UserController.getUser(UserController.java:45)\n\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)\n&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;java.sql.SQLException: Connection timeout\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\tat com.example.api.UserController.getUser(UserController.java:45)\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)&quot;}
 </code></pre></div>
 </div>
 </div>
@@ -2409,7 +2409,7 @@ records with guard strings such as <code>BEGIN</code>/<code>END</code> or XML ta
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;database_backup&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;BEGIN\ntype: database_backup\ntimestamp: 2024-01-15T10:00:00Z\nstatus: started\ntarget: postgresql://production\nEND\n&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;BEGINtype: database_backuptimestamp: 2024-01-15T10:00:00Zstatus: startedtarget: postgresql://productionEND&quot;}
 </code></pre></div>
 </div>
 </div>
