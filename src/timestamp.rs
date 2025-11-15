@@ -259,10 +259,17 @@ fn try_parse_with_format(
         return Some(dt.with_timezone(&Utc));
     }
 
-    // Special handling for year-less syslog timestamps
-    if processed_format.contains("%b")
-        && processed_format.contains("%d")
-        && !processed_format.contains("%Y")
+    // Special handling for year-less timestamps (syslog, custom formats, etc.)
+    // Check if format has month and day but no year
+    let has_month = processed_format.contains("%b")   // Abbreviated month (Jan, Feb, ...)
+        || processed_format.contains("%B")            // Full month (January, February, ...)
+        || processed_format.contains("%m");           // Numeric month (01-12)
+    let has_day = processed_format.contains("%d")     // Day with leading zero (01-31)
+        || processed_format.contains("%e");           // Day without leading zero (1-31)
+    let has_year = processed_format.contains("%Y")    // 4-digit year (2024)
+        || processed_format.contains("%y");           // 2-digit year (24)
+
+    if has_month && has_day && !has_year
     {
         let now = chrono::Utc::now();
         let current_year = now.year();
