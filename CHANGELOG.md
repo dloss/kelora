@@ -9,9 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Anchored timestamp syntax for `--since` and `--until`:**
-  - `start+DURATION` and `start-DURATION` - anchor to `--since` value
-  - `end+DURATION` and `end-DURATION` - anchor to `--until` value
-  - Examples: `--since "10:00" --until "start+30m"` (30 minutes starting at 10:00)
+  - `since+DURATION` and `since-DURATION` - anchor to `--since` value
+  - `until+DURATION` and `until-DURATION` - anchor to `--until` value
+  - `now+DURATION` and `now-DURATION` - anchor to current time
+  - Examples: `--since "10:00" --until "since+30m"` (30 minutes starting at 10:00)
+  - Examples: `--until "now+5m"` (next 5 minutes)
   - Enables duration-based time windows without manual calculation
 - **New Rhai functions:**
   - `absorb_kv()` - Extract key-value pairs from unstructured text with format preservation

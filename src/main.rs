@@ -1094,26 +1094,26 @@ fn main() -> Result<()> {
         let cli_timezone = config.input.default_timezone.as_deref();
 
         // Check for anchor dependencies
-        let since_uses_end_anchor = cli
+        let since_uses_until_anchor = cli
             .since
             .as_ref()
-            .is_some_and(|s| s.starts_with("end+") || s.starts_with("end-"));
-        let until_uses_start_anchor = cli
+            .is_some_and(|s| s.starts_with("until+") || s.starts_with("until-"));
+        let until_uses_since_anchor = cli
             .until
             .as_ref()
-            .is_some_and(|u| u.starts_with("start+") || u.starts_with("start-"));
+            .is_some_and(|u| u.starts_with("since+") || u.starts_with("since-"));
 
         // Detect circular dependency
-        if since_uses_end_anchor && until_uses_start_anchor {
+        if since_uses_until_anchor && until_uses_since_anchor {
             stderr
                 .writeln(&config.format_error_message(
-                    "Cannot use both 'start' and 'end' anchors: --since uses 'end' anchor and --until uses 'start' anchor"
+                    "Cannot use both 'since' and 'until' anchors: --since uses 'until' anchor and --until uses 'since' anchor"
                 ))
                 .unwrap_or(());
             ExitCode::InvalidUsage.exit();
         }
 
-        let (since, until) = if until_uses_start_anchor {
+        let (since, until) = if until_uses_since_anchor {
             // Parse --since first, then use it as anchor for --until
             let since = if let Some(ref since_str) = cli.since {
                 match crate::timestamp::parse_timestamp_arg_with_timezone(since_str, cli_timezone) {
@@ -1155,7 +1155,7 @@ fn main() -> Result<()> {
             };
 
             (since, until)
-        } else if since_uses_end_anchor {
+        } else if since_uses_until_anchor {
             // Parse --until first, then use it as anchor for --since
             let until = if let Some(ref until_str) = cli.until {
                 match crate::timestamp::parse_timestamp_arg_with_timezone(until_str, cli_timezone) {

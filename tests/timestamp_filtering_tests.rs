@@ -939,12 +939,12 @@ fn test_timestamp_filtering_parallel_mode() {
 // }
 
 #[test]
-fn test_anchored_timestamp_start_plus() {
+fn test_anchored_timestamp_since_plus() {
     let base_ts = get_test_timestamp_iso(-60); // 1 hour ago
-    let event1_ts = get_test_timestamp_iso(-60); // At start time
-    let event2_ts = get_test_timestamp_iso(-45); // 15 minutes after start
-    let event3_ts = get_test_timestamp_iso(-30); // 30 minutes after start
-    let event4_ts = get_test_timestamp_iso(-15); // 45 minutes after start
+    let event1_ts = get_test_timestamp_iso(-60); // At since time
+    let event2_ts = get_test_timestamp_iso(-45); // 15 minutes after since
+    let event3_ts = get_test_timestamp_iso(-30); // 30 minutes after since
+    let event4_ts = get_test_timestamp_iso(-15); // 45 minutes after since
 
     let input = format!(
         r#"{{"ts": "{}", "level": "info", "msg": "event 1"}}
@@ -956,7 +956,7 @@ fn test_anchored_timestamp_start_plus() {
 
     // Show events from 1 hour ago for duration of 20 minutes
     let (stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--since", &base_ts, "--until", "start+20m"],
+        &["-f", "json", "--since", &base_ts, "--until", "since+20m"],
         &input,
     );
 
@@ -965,28 +965,28 @@ fn test_anchored_timestamp_start_plus() {
         "kelora should exit successfully. stderr: {}",
         stderr
     );
-    assert!(stdout.contains("event 1"), "Should include event at start");
+    assert!(stdout.contains("event 1"), "Should include event at since");
     assert!(
         stdout.contains("event 2"),
-        "Should include event 15min after start"
+        "Should include event 15min after since"
     );
     assert!(
         !stdout.contains("event 3"),
-        "Should exclude event 30min after start"
+        "Should exclude event 30min after since"
     );
     assert!(
         !stdout.contains("event 4"),
-        "Should exclude event 45min after start"
+        "Should exclude event 45min after since"
     );
 }
 
 #[test]
-fn test_anchored_timestamp_start_minus() {
+fn test_anchored_timestamp_since_minus() {
     let base_ts = get_test_timestamp_iso(-30); // 30 minutes ago
-    let event1_ts = get_test_timestamp_iso(-60); // 30 minutes before start
-    let event2_ts = get_test_timestamp_iso(-45); // 15 minutes before start
-    let event3_ts = get_test_timestamp_iso(-30); // At start time
-    let event4_ts = get_test_timestamp_iso(-15); // 15 minutes after start
+    let event1_ts = get_test_timestamp_iso(-60); // 30 minutes before since
+    let event2_ts = get_test_timestamp_iso(-45); // 15 minutes before since
+    let event3_ts = get_test_timestamp_iso(-30); // At since time
+    let event4_ts = get_test_timestamp_iso(-15); // 15 minutes after since
 
     let input = format!(
         r#"{{"ts": "{}", "level": "info", "msg": "event 1"}}
@@ -996,9 +996,9 @@ fn test_anchored_timestamp_start_minus() {
         event1_ts, event2_ts, event3_ts, event4_ts
     );
 
-    // Show events ending 10 minutes before start
+    // Show events ending 10 minutes before since
     let (stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--since", &base_ts, "--until", "start-10m"],
+        &["-f", "json", "--since", &base_ts, "--until", "since-10m"],
         &input,
     );
 
@@ -1007,29 +1007,29 @@ fn test_anchored_timestamp_start_minus() {
         "kelora should exit successfully. stderr: {}",
         stderr
     );
-    // No events should match (all are at or after start-10m boundary)
+    // No events should match (all are at or after since-10m boundary)
     assert!(
         !stdout.contains("event 1"),
-        "Should exclude event 30min before start"
+        "Should exclude event 30min before since"
     );
     assert!(
         !stdout.contains("event 2"),
-        "Should exclude event 15min before start"
+        "Should exclude event 15min before since"
     );
-    assert!(!stdout.contains("event 3"), "Should exclude event at start");
+    assert!(!stdout.contains("event 3"), "Should exclude event at since");
     assert!(
         !stdout.contains("event 4"),
-        "Should exclude event after start"
+        "Should exclude event after since"
     );
 }
 
 #[test]
-fn test_anchored_timestamp_end_minus() {
-    let end_ts = get_test_timestamp_iso(-15); // 15 minutes ago
-    let event1_ts = get_test_timestamp_iso(-60); // 45 minutes before end
-    let event2_ts = get_test_timestamp_iso(-45); // 30 minutes before end
-    let event3_ts = get_test_timestamp_iso(-30); // 15 minutes before end
-    let event4_ts = get_test_timestamp_iso(-15); // At end time
+fn test_anchored_timestamp_until_minus() {
+    let until_ts = get_test_timestamp_iso(-15); // 15 minutes ago
+    let event1_ts = get_test_timestamp_iso(-60); // 45 minutes before until
+    let event2_ts = get_test_timestamp_iso(-45); // 30 minutes before until
+    let event3_ts = get_test_timestamp_iso(-30); // 15 minutes before until
+    let event4_ts = get_test_timestamp_iso(-15); // At until time
 
     let input = format!(
         r#"{{"ts": "{}", "level": "info", "msg": "event 1"}}
@@ -1039,9 +1039,9 @@ fn test_anchored_timestamp_end_minus() {
         event1_ts, event2_ts, event3_ts, event4_ts
     );
 
-    // Show events starting 30 minutes before end
+    // Show events starting 30 minutes before until
     let (stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--since", "end-30m", "--until", &end_ts],
+        &["-f", "json", "--since", "until-30m", "--until", &until_ts],
         &input,
     );
 
@@ -1052,17 +1052,17 @@ fn test_anchored_timestamp_end_minus() {
     );
     assert!(
         !stdout.contains("event 1"),
-        "Should exclude event 45min before end"
+        "Should exclude event 45min before until"
     );
     assert!(
         stdout.contains("event 2"),
-        "Should include event 30min before end"
+        "Should include event 30min before until"
     );
     assert!(
         stdout.contains("event 3"),
-        "Should include event 15min before end"
+        "Should include event 15min before until"
     );
-    assert!(stdout.contains("event 4"), "Should include event at end");
+    assert!(stdout.contains("event 4"), "Should include event at until");
 }
 
 #[test]
@@ -1070,7 +1070,7 @@ fn test_anchored_timestamp_circular_dependency_error() {
     let input = r#"{"ts": "2024-01-15T10:00:00Z", "level": "info", "msg": "test"}"#;
 
     let (_stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--since", "end-1h", "--until", "start+1h"],
+        &["-f", "json", "--since", "until-1h", "--until", "since+1h"],
         input,
     );
 
@@ -1079,43 +1079,43 @@ fn test_anchored_timestamp_circular_dependency_error() {
         "kelora should exit with error for circular dependency"
     );
     assert!(
-        stderr.contains("Cannot use both 'start' and 'end' anchors"),
+        stderr.contains("Cannot use both 'since' and 'until' anchors"),
         "Should show circular dependency error. stderr: {}",
         stderr
     );
 }
 
 #[test]
-fn test_anchored_timestamp_missing_start_anchor_error() {
+fn test_anchored_timestamp_missing_since_anchor_error() {
     let input = r#"{"ts": "2024-01-15T10:00:00Z", "level": "info", "msg": "test"}"#;
 
     let (_stdout, stderr, exit_code) =
-        run_kelora_with_input(&["-f", "json", "--until", "start+30m"], input);
+        run_kelora_with_input(&["-f", "json", "--until", "since+30m"], input);
 
     assert_ne!(
         exit_code, 0,
-        "kelora should exit with error when start anchor is missing"
+        "kelora should exit with error when since anchor is missing"
     );
     assert!(
-        stderr.contains("'start' anchor requires --since"),
+        stderr.contains("'since' anchor requires --since"),
         "Should show missing anchor error. stderr: {}",
         stderr
     );
 }
 
 #[test]
-fn test_anchored_timestamp_missing_end_anchor_error() {
+fn test_anchored_timestamp_missing_until_anchor_error() {
     let input = r#"{"ts": "2024-01-15T10:00:00Z", "level": "info", "msg": "test"}"#;
 
     let (_stdout, stderr, exit_code) =
-        run_kelora_with_input(&["-f", "json", "--since", "end-30m"], input);
+        run_kelora_with_input(&["-f", "json", "--since", "until-30m"], input);
 
     assert_ne!(
         exit_code, 0,
-        "kelora should exit with error when end anchor is missing"
+        "kelora should exit with error when until anchor is missing"
     );
     assert!(
-        stderr.contains("'end' anchor requires --until"),
+        stderr.contains("'until' anchor requires --until"),
         "Should show missing anchor error. stderr: {}",
         stderr
     );
@@ -1140,7 +1140,7 @@ fn test_anchored_timestamp_with_relative_time() {
 
     // Show events from 10:00 for 1 hour (until 11:00)
     let (stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--since", base_ts, "--until", "start+1h"],
+        &["-f", "json", "--since", base_ts, "--until", "since+1h"],
         &input,
     );
 

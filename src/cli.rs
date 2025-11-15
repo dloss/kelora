@@ -296,7 +296,7 @@ pub struct Cli {
     #[arg(
         long = "since",
         help_heading = "Filtering Options",
-        help = "Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '-30m', 'yesterday'). Can also use 'end+DURATION' or 'end-DURATION' to anchor to --until."
+        help = "Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '-30m', 'yesterday'). Can also use 'until+DURATION', 'until-DURATION', 'now+DURATION', or 'now-DURATION' anchors."
     )]
     pub since: Option<String>,
 
@@ -304,7 +304,7 @@ pub struct Cli {
     #[arg(
         long = "until",
         help_heading = "Filtering Options",
-        help = "Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '+30m', 'tomorrow'). Can also use 'start+DURATION' or 'start-DURATION' to anchor to --since."
+        help = "Accepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '+30m', 'tomorrow'). Can also use 'since+DURATION', 'since-DURATION', 'now+DURATION', or 'now-DURATION' anchors."
     )]
     pub until: Option<String>,
 

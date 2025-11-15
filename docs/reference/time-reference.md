@@ -177,29 +177,38 @@ kelora --ts-format '%Y-%m-%d %H:%M:%S' --input-tz America/New_York app.log
 
 Anchor one boundary to the other for duration-based windows:
 
-- `start+DURATION` - Duration after `--since` value
-- `start-DURATION` - Duration before `--since` value
-- `end+DURATION` - Duration after `--until` value
-- `end-DURATION` - Duration before `--until` value
+- `since+DURATION` - Duration after `--since` value
+- `since-DURATION` - Duration before `--since` value
+- `until+DURATION` - Duration after `--until` value
+- `until-DURATION` - Duration before `--until` value
+- `now+DURATION` - Duration from current time (future)
+- `now-DURATION` - Duration from current time (past)
 
 ```bash
 # Show 30 minutes starting at 10:00
-kelora --since "10:00" --until "start+30m" app.log
+kelora --since "10:00" --until "since+30m" app.log
 
 # Show 1 hour ending at 11:00
-kelora --since "end-1h" --until "11:00" app.log
+kelora --since "until-1h" --until "11:00" app.log
 
 # Show 1 hour starting from 2 hours ago
-kelora --since "-2h" --until "start+1h" app.log
+kelora --since "-2h" --until "since+1h" app.log
 
 # Show 45 minutes starting at a specific timestamp
-kelora --since "2024-01-15T10:00:00Z" --until "start+45m" app.log
+kelora --since "2024-01-15T10:00:00Z" --until "since+45m" app.log
+
+# Show next 5 minutes (using now anchor)
+kelora --until "now+5m" app.log
+
+# Show from 1 hour ago to 5 minutes from now
+kelora --since "now-1h" --until "now+5m" app.log
 ```
 
 **Important Notes:**
-- `start` anchors to the `--since` value, `end` anchors to the `--until` value
-- Cannot use both anchors in the same command (e.g., `--since end-1h --until start+1h` is an error)
-- The anchor target must be specified (e.g., `--until start+30m` requires `--since` to be set)
+- `since` anchors to the `--since` value, `until` anchors to the `--until` value
+- `now` anchors to the current time (doesn't require --since or --until to be set)
+- Cannot use both anchors in the same command (e.g., `--since until-1h --until since+1h` is an error)
+- The anchor target must be specified (e.g., `--until since+30m` requires `--since` to be set)
 
 **Basic Examples:**
 ```bash

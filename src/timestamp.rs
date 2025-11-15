@@ -449,40 +449,52 @@ pub fn parse_timestamp_arg_with_timezone(
         .ok_or_else(|| format!("Could not parse timestamp: {}", arg))
 }
 
-/// Parse anchored timestamp expressions like "start+30m", "end-1h"
-/// Requires the corresponding anchor timestamp to be provided
+/// Parse anchored timestamp expressions like "since+30m", "until-1h", "now+5m"
+/// Requires the corresponding anchor timestamp to be provided (except for "now")
 pub fn parse_anchored_timestamp(
     arg: &str,
-    start_anchor: Option<DateTime<Utc>>,
-    end_anchor: Option<DateTime<Utc>>,
+    since_anchor: Option<DateTime<Utc>>,
+    until_anchor: Option<DateTime<Utc>>,
     default_timezone: Option<&str>,
 ) -> Result<DateTime<Utc>, String> {
     // Try to parse as anchor reference
-    if let Some(offset_part) = arg.strip_prefix("start+") {
-        let start = start_anchor
-            .ok_or_else(|| "'start' anchor requires --since to be specified".to_string())?;
+    if let Some(offset_part) = arg.strip_prefix("since+") {
+        let since = since_anchor
+            .ok_or_else(|| "'since' anchor requires --since to be specified".to_string())?;
         let duration = parse_duration(&format!("+{}", offset_part))?;
-        start
+        since
             .checked_add_signed(duration)
             .ok_or_else(|| "Anchored timestamp is out of supported range".to_string())
-    } else if let Some(offset_part) = arg.strip_prefix("start-") {
-        let start = start_anchor
-            .ok_or_else(|| "'start' anchor requires --since to be specified".to_string())?;
+    } else if let Some(offset_part) = arg.strip_prefix("since-") {
+        let since = since_anchor
+            .ok_or_else(|| "'since' anchor requires --since to be specified".to_string())?;
         let duration = parse_duration(&format!("-{}", offset_part))?;
-        start
+        since
             .checked_add_signed(duration)
             .ok_or_else(|| "Anchored timestamp is out of supported range".to_string())
-    } else if let Some(offset_part) = arg.strip_prefix("end+") {
-        let end = end_anchor
-            .ok_or_else(|| "'end' anchor requires --until to be specified".to_string())?;
+    } else if let Some(offset_part) = arg.strip_prefix("until+") {
+        let until = until_anchor
+            .ok_or_else(|| "'until' anchor requires --until to be specified".to_string())?;
         let duration = parse_duration(&format!("+{}", offset_part))?;
-        end.checked_add_signed(duration)
+        until
+            .checked_add_signed(duration)
             .ok_or_else(|| "Anchored timestamp is out of supported range".to_string())
-    } else if let Some(offset_part) = arg.strip_prefix("end-") {
-        let end = end_anchor
-            .ok_or_else(|| "'end' anchor requires --until to be specified".to_string())?;
+    } else if let Some(offset_part) = arg.strip_prefix("until-") {
+        let until = until_anchor
+            .ok_or_else(|| "'until' anchor requires --until to be specified".to_string())?;
         let duration = parse_duration(&format!("-{}", offset_part))?;
-        end.checked_add_signed(duration)
+        until
+            .checked_add_signed(duration)
+            .ok_or_else(|| "Anchored timestamp is out of supported range".to_string())
+    } else if let Some(offset_part) = arg.strip_prefix("now+") {
+        let duration = parse_duration(&format!("+{}", offset_part))?;
+        Utc::now()
+            .checked_add_signed(duration)
+            .ok_or_else(|| "Anchored timestamp is out of supported range".to_string())
+    } else if let Some(offset_part) = arg.strip_prefix("now-") {
+        let duration = parse_duration(&format!("-{}", offset_part))?;
+        Utc::now()
+            .checked_add_signed(duration)
             .ok_or_else(|| "Anchored timestamp is out of supported range".to_string())
     } else {
         // Not an anchored timestamp, parse normally
@@ -958,9 +970,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_anchored_timestamp_start_plus() {
+    fn test_parse_anchored_timestamp_since_plus() {
         let base = chrono::Utc.with_ymd_and_hms(2024, 1, 15, 10, 0, 0).unwrap();
-        let result = parse_anchored_timestamp("start+30m", Some(base), None, None).unwrap();
+        let result = parse_anchored_timestamp("since+30m", Some(base), None, None).unwrap();
 
         let expected = chrono::Utc
             .with_ymd_and_hms(2024, 1, 15, 10, 30, 0)
@@ -969,27 +981,27 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_anchored_timestamp_start_minus() {
+    fn test_parse_anchored_timestamp_since_minus() {
         let base = chrono::Utc.with_ymd_and_hms(2024, 1, 15, 10, 0, 0).unwrap();
-        let result = parse_anchored_timestamp("start-1h", Some(base), None, None).unwrap();
+        let result = parse_anchored_timestamp("since-1h", Some(base), None, None).unwrap();
 
         let expected = chrono::Utc.with_ymd_and_hms(2024, 1, 15, 9, 0, 0).unwrap();
         assert_eq!(result, expected);
     }
 
     #[test]
-    fn test_parse_anchored_timestamp_end_plus() {
+    fn test_parse_anchored_timestamp_until_plus() {
         let base = chrono::Utc.with_ymd_and_hms(2024, 1, 15, 11, 0, 0).unwrap();
-        let result = parse_anchored_timestamp("end+1h", None, Some(base), None).unwrap();
+        let result = parse_anchored_timestamp("until+1h", None, Some(base), None).unwrap();
 
         let expected = chrono::Utc.with_ymd_and_hms(2024, 1, 15, 12, 0, 0).unwrap();
         assert_eq!(result, expected);
     }
 
     #[test]
-    fn test_parse_anchored_timestamp_end_minus() {
+    fn test_parse_anchored_timestamp_until_minus() {
         let base = chrono::Utc.with_ymd_and_hms(2024, 1, 15, 11, 0, 0).unwrap();
-        let result = parse_anchored_timestamp("end-30m", None, Some(base), None).unwrap();
+        let result = parse_anchored_timestamp("until-30m", None, Some(base), None).unwrap();
 
         let expected = chrono::Utc
             .with_ymd_and_hms(2024, 1, 15, 10, 30, 0)
@@ -998,20 +1010,46 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_anchored_timestamp_missing_anchor() {
-        // start anchor required but not provided
-        let result = parse_anchored_timestamp("start+30m", None, None, None);
-        assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .contains("'start' anchor requires --since"));
+    fn test_parse_anchored_timestamp_now_plus() {
+        let before = chrono::Utc::now();
+        let result = parse_anchored_timestamp("now+30m", None, None, None).unwrap();
+        let after = chrono::Utc::now();
 
-        // end anchor required but not provided
-        let result = parse_anchored_timestamp("end+30m", None, None, None);
+        // Result should be approximately 30 minutes from now
+        // Allow some tolerance for test execution time
+        let expected_min = before + chrono::Duration::minutes(30) - chrono::Duration::seconds(5);
+        let expected_max = after + chrono::Duration::minutes(30) + chrono::Duration::seconds(5);
+        assert!(result >= expected_min && result <= expected_max);
+    }
+
+    #[test]
+    fn test_parse_anchored_timestamp_now_minus() {
+        let before = chrono::Utc::now();
+        let result = parse_anchored_timestamp("now-1h", None, None, None).unwrap();
+        let after = chrono::Utc::now();
+
+        // Result should be approximately 1 hour ago
+        // Allow some tolerance for test execution time
+        let expected_min = before - chrono::Duration::hours(1) - chrono::Duration::seconds(5);
+        let expected_max = after - chrono::Duration::hours(1) + chrono::Duration::seconds(5);
+        assert!(result >= expected_min && result <= expected_max);
+    }
+
+    #[test]
+    fn test_parse_anchored_timestamp_missing_anchor() {
+        // since anchor required but not provided
+        let result = parse_anchored_timestamp("since+30m", None, None, None);
         assert!(result.is_err());
         assert!(result
             .unwrap_err()
-            .contains("'end' anchor requires --until"));
+            .contains("'since' anchor requires --since"));
+
+        // until anchor required but not provided
+        let result = parse_anchored_timestamp("until+30m", None, None, None);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("'until' anchor requires --until"));
     }
 
     #[test]
