@@ -29,6 +29,7 @@ struct PlainLineContext<'a> {
     skipped_lines_count: &'a mut usize,
     filtered_lines: &'a mut usize,
     skip_lines: usize,
+    head_lines: Option<usize>,
     section_selector: &'a mut Option<crate::pipeline::SectionSelector>,
     input_format: &'a crate::config::InputFormat,
     ignore_lines: &'a Option<regex::Regex>,
@@ -559,6 +560,7 @@ impl ParallelProcessor {
             let ignore_lines = config.input.ignore_lines.clone();
             let keep_lines = config.input.keep_lines.clone();
             let skip_lines = config.input.skip_lines;
+            let head_lines = config.input.head_lines;
             let section_config = config.input.section.clone();
             let global_tracker_clone = self.global_tracker.clone();
             let input_format = config.input.format.clone();
@@ -574,6 +576,7 @@ impl ParallelProcessor {
                     ignore_lines,
                     keep_lines,
                     skip_lines,
+                    head_lines,
                     section_config,
                     input_format,
                     preprocessing_line_count,
@@ -753,6 +756,7 @@ impl ParallelProcessor {
             let ignore_lines = config.input.ignore_lines.clone();
             let keep_lines = config.input.keep_lines.clone();
             let skip_lines = config.input.skip_lines;
+            let head_lines = config.input.head_lines;
             let section_config = config.input.section.clone();
             let global_tracker_clone = self.global_tracker.clone();
             let input_format = config.input.format.clone();
@@ -769,6 +773,7 @@ impl ParallelProcessor {
                     ignore_lines,
                     keep_lines,
                     skip_lines,
+                    head_lines,
                     section_config,
                     input_format,
                     strict,
@@ -1010,6 +1015,7 @@ impl ParallelProcessor {
         ignore_lines: Option<regex::Regex>,
         keep_lines: Option<regex::Regex>,
         skip_lines: usize,
+        head_lines: Option<usize>,
         section_config: Option<crate::config::SectionConfig>,
         input_format: crate::config::InputFormat,
         preprocessing_line_count: usize,
@@ -1092,6 +1098,7 @@ impl ParallelProcessor {
                                         skipped_lines_count: &mut skipped_lines_count,
                                         filtered_lines: &mut filtered_lines,
                                         skip_lines,
+                                        head_lines,
                                         section_selector: &mut section_selector,
                                         input_format: &input_format,
                                         ignore_lines: &ignore_lines,
@@ -1099,6 +1106,22 @@ impl ParallelProcessor {
                                         pending_deadline: &mut pending_deadline,
                                     },
                                 )?;
+
+                                // Check if we've reached the head limit after processing this line
+                                if let Some(head_limit) = head_lines {
+                                    if line_num >= head_limit {
+                                        // Flush remaining batch and stop
+                                        if !current_batch.is_empty() {
+                                            Self::send_batch(
+                                                &batch_sender,
+                                                &mut current_batch,
+                                                batch_id,
+                                                batch_start_line,
+                                            )?;
+                                        }
+                                        break 'outer;
+                                    }
+                                }
                             }
                             Ok(LineMessage::Error { error, .. }) => return Err(error.into()),
                             Ok(LineMessage::Eof) => {
@@ -1186,6 +1209,7 @@ impl ParallelProcessor {
                                         skipped_lines_count: &mut skipped_lines_count,
                                         filtered_lines: &mut filtered_lines,
                                         skip_lines,
+                                        head_lines,
                                         section_selector: &mut section_selector,
                                         input_format: &input_format,
                                         ignore_lines: &ignore_lines,
@@ -1193,6 +1217,22 @@ impl ParallelProcessor {
                                         pending_deadline: &mut pending_deadline,
                                     },
                                 )?;
+
+                                // Check if we've reached the head limit after processing this line
+                                if let Some(head_limit) = head_lines {
+                                    if line_num >= head_limit {
+                                        // Flush remaining batch and stop
+                                        if !current_batch.is_empty() {
+                                            Self::send_batch(
+                                                &batch_sender,
+                                                &mut current_batch,
+                                                batch_id,
+                                                batch_start_line,
+                                            )?;
+                                        }
+                                        break 'outer;
+                                    }
+                                }
                             }
                             Ok(LineMessage::Error { error, .. }) => return Err(error.into()),
                             Ok(LineMessage::Eof) => {
@@ -1239,6 +1279,7 @@ impl ParallelProcessor {
         ignore_lines: Option<regex::Regex>,
         keep_lines: Option<regex::Regex>,
         skip_lines: usize,
+        head_lines: Option<usize>,
         section_config: Option<crate::config::SectionConfig>,
         input_format: crate::config::InputFormat,
         strict: bool,
@@ -1331,6 +1372,7 @@ impl ParallelProcessor {
                                     &mut skipped_lines_count,
                                     &mut filtered_lines,
                                     skip_lines,
+                                    head_lines,
                                     &mut section_selector,
                                     &input_format,
                                     strict,
@@ -1340,6 +1382,24 @@ impl ParallelProcessor {
                                     &mut current_headers,
                                     &mut last_filename,
                                 )?;
+
+                                // Check if we've reached the head limit after processing this line
+                                if let Some(head_limit) = head_lines {
+                                    if line_num >= head_limit {
+                                        // Flush remaining batch and stop
+                                        if !current_batch.is_empty() {
+                                            Self::send_batch_with_filenames_and_headers(
+                                                &batch_sender,
+                                                &mut current_batch,
+                                                &mut current_filenames,
+                                                batch_id,
+                                                batch_start_line,
+                                                current_headers.clone(),
+                                            )?;
+                                        }
+                                        break 'outer;
+                                    }
+                                }
                             }
                             Ok(LineMessage::Error { error, .. }) => return Err(error.into()),
                             Ok(LineMessage::Eof) => {
@@ -1438,6 +1498,7 @@ impl ParallelProcessor {
                                     &mut skipped_lines_count,
                                     &mut filtered_lines,
                                     skip_lines,
+                                    head_lines,
                                     &mut section_selector,
                                     &input_format,
                                     strict,
@@ -1447,6 +1508,24 @@ impl ParallelProcessor {
                                     &mut current_headers,
                                     &mut last_filename,
                                 )?;
+
+                                // Check if we've reached the head limit after processing this line
+                                if let Some(head_limit) = head_lines {
+                                    if line_num >= head_limit {
+                                        // Flush remaining batch and stop
+                                        if !current_batch.is_empty() {
+                                            Self::send_batch_with_filenames_and_headers(
+                                                &batch_sender,
+                                                &mut current_batch,
+                                                &mut current_filenames,
+                                                batch_id,
+                                                batch_start_line,
+                                                current_headers.clone(),
+                                            )?;
+                                        }
+                                        break 'outer;
+                                    }
+                                }
                             }
                             Ok(LineMessage::Error { error, .. }) => return Err(error.into()),
                             Ok(LineMessage::Eof) => {
@@ -1489,6 +1568,15 @@ impl ParallelProcessor {
 
     fn handle_plain_line(line: String, ctx: PlainLineContext<'_>) -> Result<()> {
         *ctx.line_num += 1;
+
+        // Check if we've hit the head limit (stops processing early)
+        if let Some(head_limit) = ctx.head_lines {
+            if *ctx.line_num > head_limit {
+                // Signal that we should stop processing by returning early
+                // The batcher will flush remaining batch and stop
+                return Ok(());
+            }
+        }
 
         if *ctx.skipped_lines_count < ctx.skip_lines {
             *ctx.skipped_lines_count += 1;
@@ -1556,6 +1644,7 @@ impl ParallelProcessor {
         skipped_lines_count: &mut usize,
         filtered_lines: &mut usize,
         skip_lines: usize,
+        head_lines: Option<usize>,
         section_selector: &mut Option<crate::pipeline::SectionSelector>,
         input_format: &crate::config::InputFormat,
         strict: bool,
@@ -1566,6 +1655,14 @@ impl ParallelProcessor {
         last_filename: &mut Option<String>,
     ) -> Result<()> {
         *line_num += 1;
+
+        // Check if we've hit the head limit (stops processing early)
+        if let Some(head_limit) = head_lines {
+            if *line_num > head_limit {
+                // Signal that we should stop processing by returning early
+                return Ok(());
+            }
+        }
 
         if *skipped_lines_count < skip_lines {
             *skipped_lines_count += 1;

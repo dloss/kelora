@@ -775,7 +775,7 @@ fn handle_reader_message<W: Write>(
                 gap_tracker,
             )? {
                 ProcessingResult::Continue => Ok(false),
-                ProcessingResult::TakeLimitExhausted => Ok(true),
+                ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
             }
         }
         ReaderMessage::Error { error, filename } => {
@@ -794,7 +794,7 @@ fn handle_reader_message<W: Write>(
                 gap_tracker,
             )? {
                 ProcessingResult::Continue => Ok(false),
-                ProcessingResult::TakeLimitExhausted => Ok(true),
+                ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
             }
         }
         ReaderMessage::Eof => Ok(true),
@@ -805,6 +805,7 @@ fn handle_reader_message<W: Write>(
 enum ProcessingResult {
     Continue,
     TakeLimitExhausted,
+    Stop,
 }
 
 /// Process a single line in sequential mode with filename tracking and CSV schema detection
@@ -829,6 +830,13 @@ fn process_line_sequential<W: Write>(
     // Count line read for stats
     if config.output.stats {
         stats_add_line_read();
+    }
+
+    // Check if we've hit the head limit (stops I/O early)
+    if let Some(head_limit) = config.input.head_lines {
+        if *line_num > head_limit {
+            return Ok(ProcessingResult::Stop);
+        }
     }
 
     // Skip the first N lines if configured (applied before ignore-lines and parsing)

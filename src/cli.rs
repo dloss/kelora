@@ -92,6 +92,10 @@ pub struct Cli {
     #[arg(long = "skip-lines", help_heading = "Input Options")]
     pub skip_lines: Option<usize>,
 
+    /// Read only the first N input lines (stops I/O early, complementing --take which limits output events)
+    #[arg(long = "head", help_heading = "Input Options")]
+    pub head: Option<usize>,
+
     /// Start emitting sections from the matching line (inclusive)
     #[arg(
         long = "section-from",

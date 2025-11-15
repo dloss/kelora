@@ -18,6 +18,7 @@ pub struct InputConfig {
     pub format: InputFormat,
     pub file_order: FileOrder,
     pub skip_lines: usize,
+    pub head_lines: Option<usize>,
     pub section: Option<SectionConfig>,
     pub ignore_lines: Option<regex::Regex>,
     pub keep_lines: Option<regex::Regex>,
@@ -626,6 +627,7 @@ impl KeloraConfig {
                 },
                 file_order: cli.file_order.clone().into(),
                 skip_lines: cli.skip_lines.unwrap_or(0),
+                head_lines: cli.head,
                 section: None,      // Will be set after CLI parsing
                 ignore_lines: None, // Will be set after CLI parsing
                 keep_lines: None,   // Will be set after CLI parsing
@@ -725,6 +727,7 @@ impl Default for KeloraConfig {
                 format: InputFormat::Json,
                 file_order: FileOrder::Cli,
                 skip_lines: 0,
+                head_lines: None,
                 section: None,
                 ignore_lines: None,
                 keep_lines: None,
