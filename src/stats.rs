@@ -41,6 +41,7 @@ pub struct ProcessingStats {
     pub timestamp_override_format: Option<String>,
     pub timestamp_override_failed: bool,
     pub timestamp_override_warning: Option<String>,
+    pub yearless_timestamps: usize, // Count of timestamps parsed with year inference
 }
 
 // Thread-local storage for statistics (following track_count pattern)
@@ -102,6 +103,12 @@ pub fn stats_set_timestamp_override(field: Option<String>, format: Option<String
 pub fn stats_add_late_event() {
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().late_events += 1;
+    });
+}
+
+pub fn stats_add_yearless_timestamp() {
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().yearless_timestamps += 1;
     });
 }
 
@@ -474,6 +481,21 @@ impl ProcessingStats {
             output.push_str(&format!("Warning: {}\n", message));
         }
 
+        if self.yearless_timestamps > 0 {
+            output.push_str(&format!(
+                "Warning: Year-less timestamp format detected ({} parse{})\n",
+                self.yearless_timestamps,
+                if self.yearless_timestamps == 1 {
+                    ""
+                } else {
+                    "s"
+                }
+            ));
+            output.push_str("  Format lacks year (e.g., \"Dec 31 23:59:59\")\n");
+            output.push_str("  Year inferred using heuristic (±1 year from current date)\n");
+            output.push_str("  Timestamps >18 months old may be incorrect\n");
+        }
+
         // Time span: show generic label when identical, specific labels when different
         let has_original = self.first_timestamp.is_some() && self.last_timestamp.is_some();
         let has_result =
@@ -591,6 +613,18 @@ impl ProcessingStats {
             if let Some(message) = &self.timestamp_override_warning {
                 parts.push(message.clone());
             }
+        }
+
+        if self.yearless_timestamps > 0 {
+            parts.push(format!(
+                "{} year-less timestamp{} (±1yr heuristic)",
+                self.yearless_timestamps,
+                if self.yearless_timestamps == 1 {
+                    ""
+                } else {
+                    "s"
+                }
+            ));
         }
 
         format!("Processing completed with {}", parts.join(", "))

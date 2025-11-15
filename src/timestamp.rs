@@ -294,6 +294,8 @@ fn try_parse_with_format(
         // If we have multiple valid candidates, choose the most reasonable one
         // Prefer timestamps in the past and closest to now
         if !candidates.is_empty() {
+            // Track that we used year inference for statistics
+            crate::stats::stats_add_yearless_timestamp();
             return Some(choose_best_timestamp(&candidates, now));
         }
     }
