@@ -136,14 +136,77 @@ impl Default for AdaptiveTsParser {
     }
 }
 
+/// Helper function to apply timezone configuration to a naive datetime
+fn apply_timezone_to_naive(
+    naive_dt: chrono::NaiveDateTime,
+    default_timezone: Option<&str>,
+) -> Option<DateTime<Utc>> {
+    use chrono_tz::Tz;
+
+    match default_timezone {
+        Some("UTC") => Some(naive_dt.and_utc()),
+        Some(tz_str) => {
+            // Try to parse as named timezone
+            if let Ok(tz) = tz_str.parse::<Tz>() {
+                if let Some(dt) = tz.from_local_datetime(&naive_dt).single() {
+                    return Some(dt.with_timezone(&Utc));
+                }
+            }
+            // Fall back to local time if timezone parsing fails
+            chrono::Local
+                .from_local_datetime(&naive_dt)
+                .single()
+                .map(|local_dt| local_dt.with_timezone(&Utc))
+        }
+        None => {
+            // Default: interpret as local time
+            chrono::Local
+                .from_local_datetime(&naive_dt)
+                .single()
+                .map(|local_dt| local_dt.with_timezone(&Utc))
+        }
+    }
+}
+
+/// Choose the best timestamp from multiple candidates
+/// Prefers timestamps that are in the past and closest to now
+fn choose_best_timestamp(candidates: &[DateTime<Utc>], now: DateTime<Utc>) -> DateTime<Utc> {
+    use chrono::Duration;
+
+    // Allow small future tolerance for clock skew (24 hours)
+    const FUTURE_TOLERANCE_HOURS: i64 = 24;
+    let future_cutoff = now + Duration::hours(FUTURE_TOLERANCE_HOURS);
+
+    // Filter to reasonable timestamps (not far in future)
+    let reasonable: Vec<_> = candidates
+        .iter()
+        .filter(|dt| **dt <= future_cutoff)
+        .collect();
+
+    // If we have reasonable candidates, pick the one closest to now
+    let candidates_to_use = if !reasonable.is_empty() {
+        reasonable
+    } else {
+        // Fallback: use all candidates if none are reasonable
+        candidates.iter().collect()
+    };
+
+    // Return the timestamp closest to now
+    **candidates_to_use
+        .iter()
+        .min_by_key(|dt| {
+            let diff = ***dt - now;
+            diff.num_seconds().abs()
+        })
+        .expect("candidates should not be empty")
+}
+
 /// Try to parse a timestamp with a specific format and timezone configuration
 fn try_parse_with_format(
     ts_str: &str,
     format: &str,
     default_timezone: Option<&str>,
 ) -> Option<DateTime<Utc>> {
-    use chrono_tz::Tz;
-
     // Strip brackets if present (common in Apache/Nginx logs)
     let ts_str = ts_str.trim();
     let ts_str = if ts_str.starts_with('[') && ts_str.ends_with(']') {
@@ -201,71 +264,31 @@ fn try_parse_with_format(
         && processed_format.contains("%d")
         && !processed_format.contains("%Y")
     {
-        // Try adding current year for syslog-style timestamps
-        let current_year = chrono::Utc::now().year();
-        let ts_with_year = format!("{} {}", current_year, processed_ts_str);
+        let now = chrono::Utc::now();
+        let current_year = now.year();
         let format_with_year = format!("%Y {}", processed_format);
 
-        if let Ok(naive_dt) =
-            chrono::NaiveDateTime::parse_from_str(&ts_with_year, &format_with_year)
-        {
-            // Apply timezone configuration
-            match default_timezone {
-                Some("UTC") => {
-                    return Some(naive_dt.and_utc());
-                }
-                Some(tz_str) => {
-                    // Try to parse as named timezone
-                    if let Ok(tz) = tz_str.parse::<Tz>() {
-                        if let Some(dt) = tz.from_local_datetime(&naive_dt).single() {
-                            return Some(dt.with_timezone(&Utc));
-                        }
-                    }
-                    // Fall back to local time if timezone parsing fails
-                    if let Some(local_dt) = chrono::Local.from_local_datetime(&naive_dt).single() {
-                        return Some(local_dt.with_timezone(&Utc));
-                    }
-                }
-                None => {
-                    // Default: interpret as local time
-                    if let Some(local_dt) = chrono::Local.from_local_datetime(&naive_dt).single() {
-                        return Some(local_dt.with_timezone(&Utc));
-                    }
+        let mut candidates = Vec::new();
+
+        // Try current year, previous year, and next year
+        // This handles edge cases around year boundaries
+        for year_offset in [-1, 0, 1] {
+            let year = current_year + year_offset;
+            let ts_with_year = format!("{} {}", year, processed_ts_str);
+
+            if let Ok(naive_dt) =
+                chrono::NaiveDateTime::parse_from_str(&ts_with_year, &format_with_year)
+            {
+                if let Some(dt) = apply_timezone_to_naive(naive_dt, default_timezone) {
+                    candidates.push(dt);
                 }
             }
         }
 
-        // Also try with previous year (in case it's early January and the log is from December)
-        let prev_year = current_year - 1;
-        let ts_with_prev_year = format!("{} {}", prev_year, processed_ts_str);
-
-        if let Ok(naive_dt) =
-            chrono::NaiveDateTime::parse_from_str(&ts_with_prev_year, &format_with_year)
-        {
-            // Apply timezone configuration
-            match default_timezone {
-                Some("UTC") => {
-                    return Some(naive_dt.and_utc());
-                }
-                Some(tz_str) => {
-                    // Try to parse as named timezone
-                    if let Ok(tz) = tz_str.parse::<Tz>() {
-                        if let Some(dt) = tz.from_local_datetime(&naive_dt).single() {
-                            return Some(dt.with_timezone(&Utc));
-                        }
-                    }
-                    // Fall back to local time if timezone parsing fails
-                    if let Some(local_dt) = chrono::Local.from_local_datetime(&naive_dt).single() {
-                        return Some(local_dt.with_timezone(&Utc));
-                    }
-                }
-                None => {
-                    // Default: interpret as local time
-                    if let Some(local_dt) = chrono::Local.from_local_datetime(&naive_dt).single() {
-                        return Some(local_dt.with_timezone(&Utc));
-                    }
-                }
-            }
+        // If we have multiple valid candidates, choose the most reasonable one
+        // Prefer timestamps in the past and closest to now
+        if !candidates.is_empty() {
+            return Some(choose_best_timestamp(&candidates, now));
         }
     }
 
@@ -273,30 +296,7 @@ fn try_parse_with_format(
     if let Ok(naive_dt) =
         chrono::NaiveDateTime::parse_from_str(&processed_ts_str, &processed_format)
     {
-        // Apply timezone configuration
-        match default_timezone {
-            Some("UTC") => {
-                return Some(naive_dt.and_utc());
-            }
-            Some(tz_str) => {
-                // Try to parse as named timezone
-                if let Ok(tz) = tz_str.parse::<Tz>() {
-                    if let Some(dt) = tz.from_local_datetime(&naive_dt).single() {
-                        return Some(dt.with_timezone(&Utc));
-                    }
-                }
-                // Fall back to local time if timezone parsing fails
-                if let Some(local_dt) = chrono::Local.from_local_datetime(&naive_dt).single() {
-                    return Some(local_dt.with_timezone(&Utc));
-                }
-            }
-            None => {
-                // Default: interpret as local time
-                if let Some(local_dt) = chrono::Local.from_local_datetime(&naive_dt).single() {
-                    return Some(local_dt.with_timezone(&Utc));
-                }
-            }
-        }
+        return apply_timezone_to_naive(naive_dt, default_timezone);
     }
 
     None
