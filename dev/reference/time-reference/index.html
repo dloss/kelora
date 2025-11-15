@@ -3342,27 +3342,36 @@
 <p><strong>Anchored Timestamps:</strong></p>
 <p>Anchor one boundary to the other for duration-based windows:</p>
 <ul>
-<li><code>start+DURATION</code> - Duration after <code>--since</code> value</li>
-<li><code>start-DURATION</code> - Duration before <code>--since</code> value</li>
-<li><code>end+DURATION</code> - Duration after <code>--until</code> value</li>
-<li><code>end-DURATION</code> - Duration before <code>--until</code> value</li>
+<li><code>since+DURATION</code> - Duration after <code>--since</code> value</li>
+<li><code>since-DURATION</code> - Duration before <code>--since</code> value</li>
+<li><code>until+DURATION</code> - Duration after <code>--until</code> value</li>
+<li><code>until-DURATION</code> - Duration before <code>--until</code> value</li>
+<li><code>now+DURATION</code> - Duration from current time (future)</li>
+<li><code>now-DURATION</code> - Duration from current time (past)</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Show 30 minutes starting at 10:00</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;10:00&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;start+30m&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;10:00&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;since+30m&quot;</span><span class="w"> </span>app.log
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Show 1 hour ending at 11:00</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;end-1h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;11:00&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;until-1h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;11:00&quot;</span><span class="w"> </span>app.log
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Show 1 hour starting from 2 hours ago</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;-2h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;start+1h&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;-2h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;since+1h&quot;</span><span class="w"> </span>app.log
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Show 45 minutes starting at a specific timestamp</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;start+45m&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;since+45m&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Show next 5 minutes (using now anchor)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>kelora<span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;now+5m&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># Show from 1 hour ago to 5 minutes from now</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;now-1h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;now+5m&quot;</span><span class="w"> </span>app.log
 </code></pre></div>
 <p><strong>Important Notes:</strong>
-- <code>start</code> anchors to the <code>--since</code> value, <code>end</code> anchors to the <code>--until</code> value
-- Cannot use both anchors in the same command (e.g., <code>--since end-1h --until start+1h</code> is an error)
-- The anchor target must be specified (e.g., <code>--until start+30m</code> requires <code>--since</code> to be set)</p>
+- <code>since</code> anchors to the <code>--since</code> value, <code>until</code> anchors to the <code>--until</code> value
+- <code>now</code> anchors to the current time (doesn't require --since or --until to be set)
+- Cannot use both anchors in the same command (e.g., <code>--since until-1h --until since+1h</code> is an error)
+- The anchor target must be specified (e.g., <code>--until since+30m</code> requires <code>--since</code> to be set)</p>
 <p><strong>Basic Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Last hour</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>app.log
