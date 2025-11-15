@@ -2839,10 +2839,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#arrayflattenstyle-max_depth" class="md-nav__link">
+  <a href="#arrayflattenedstyle-max_depth" class="md-nav__link">
     <span class="md-ellipsis">
       
-        array.flatten([style [, max_depth]])
+        array.flattened([style [, max_depth]])
       
     </span>
   </a>
@@ -3027,17 +3027,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#maphaskey_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        map.has("key")
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3078,10 +3067,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mapflattenseparator-style" class="md-nav__link">
+  <a href="#mapenrichother_map" class="md-nav__link">
     <span class="md-ellipsis">
       
-        map.flatten([separator [, style]])
+        map.enrich(other_map)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapflattenedstyle-max_depth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        map.flattened([style [, max_depth]])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapflatten_fieldfield_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        map.flatten_field("field_name")
       
     </span>
   </a>
@@ -5056,10 +5067,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#arrayflattenstyle-max_depth" class="md-nav__link">
+  <a href="#arrayflattenedstyle-max_depth" class="md-nav__link">
     <span class="md-ellipsis">
       
-        array.flatten([style [, max_depth]])
+        array.flattened([style [, max_depth]])
       
     </span>
   </a>
@@ -5244,17 +5255,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#maphaskey_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        map.has("key")
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -5295,10 +5295,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mapflattenseparator-style" class="md-nav__link">
+  <a href="#mapenrichother_map" class="md-nav__link">
     <span class="md-ellipsis">
       
-        map.flatten([separator [, style]])
+        map.enrich(other_map)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapflattenedstyle-max_depth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        map.flattened([style [, max_depth]])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapflatten_fieldfield_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        map.flatten_field("field_name")
       
     </span>
   </a>
@@ -6660,10 +6682,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>e.doubled = e.numbers.map(|n| n * 2)
 <a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a>e.names = e.users.map(|u| u.name)
 </code></pre></div>
-<h4 id="arrayflattenstyle-max_depth"><code>array.flatten([style [, max_depth]])</code><a class="headerlink" href="#arrayflattenstyle-max_depth" title="Permanent link">&para;</a></h4>
+<h4 id="arrayflattenedstyle-max_depth"><code>array.flattened([style [, max_depth]])</code><a class="headerlink" href="#arrayflattenedstyle-max_depth" title="Permanent link">&para;</a></h4>
 <p>Flatten nested arrays/objects.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>e.flat = [[1, 2], [3, 4]].flatten()                   // [1, 2, 3, 4]
-<a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a>e.fields = e.nested.flatten(&quot;dot&quot;, 2)                 // Flatten to dot notation
+<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>e.flat = [[1, 2], [3, 4]].flattened()                 // Returns flat map
+<a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a>e.fields = e.nested.flattened(&quot;dot&quot;, 2)               // Flatten to dot notation
 </code></pre></div>
 <h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
 <h4 id="arraycontainsvalue"><code>array.contains(value)</code><a class="headerlink" href="#arraycontainsvalue" title="Permanent link">&para;</a></h4>
@@ -6726,172 +6748,175 @@
 <a id="__codelineno-76-2" name="__codelineno-76-2" href="#__codelineno-76-2"></a>    // Field exists and has a value
 <a id="__codelineno-76-3" name="__codelineno-76-3" href="#__codelineno-76-3"></a>}
 </code></pre></div>
-<h4 id="maphaskey_1"><code>map.has("key")</code><a class="headerlink" href="#maphaskey_1" title="Permanent link">&para;</a></h4>
-<p>Check if map contains key whose value is not <code>()</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>if e.has(&quot;user&quot;) {
-<a id="__codelineno-77-2" name="__codelineno-77-2" href="#__codelineno-77-2"></a>    // `user` present and not explicitly cleared to ()
-<a id="__codelineno-77-3" name="__codelineno-77-3" href="#__codelineno-77-3"></a>}
-</code></pre></div>
 <h3 id="field-manipulation">Field Manipulation<a class="headerlink" href="#field-manipulation" title="Permanent link">&para;</a></h3>
 <h4 id="maprename_fieldold-new"><code>map.rename_field("old", "new")</code><a class="headerlink" href="#maprename_fieldold-new" title="Permanent link">&para;</a></h4>
 <p>Rename a field, returns true if successful.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>e.rename_field(&quot;old_name&quot;, &quot;new_name&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>e.rename_field(&quot;old_name&quot;, &quot;new_name&quot;)
 </code></pre></div>
 <h4 id="mapmergeother_map"><code>map.merge(other_map)</code><a class="headerlink" href="#mapmergeother_map" title="Permanent link">&para;</a></h4>
-<p>Merge another map into this one.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>e.merge(#{status: &quot;ok&quot;, timestamp: now()})
+<p>Merge another map into this one (overwrites existing keys).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>e.merge(#{status: &quot;ok&quot;, timestamp: now()})
 </code></pre></div>
-<h4 id="mapflattenseparator-style"><code>map.flatten([separator [, style]])</code><a class="headerlink" href="#mapflattenseparator-style" title="Permanent link">&para;</a></h4>
+<h4 id="mapenrichother_map"><code>map.enrich(other_map)</code><a class="headerlink" href="#mapenrichother_map" title="Permanent link">&para;</a></h4>
+<p>Merge another map, inserting only missing keys (does not overwrite).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>e.enrich(#{user: &quot;default&quot;, level: &quot;info&quot;})  // Only adds if keys don&#39;t exist
+</code></pre></div>
+<h4 id="mapflattenedstyle-max_depth"><code>map.flattened([style [, max_depth]])</code><a class="headerlink" href="#mapflattenedstyle-max_depth" title="Permanent link">&para;</a></h4>
 <p>Flatten nested object to dot notation.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>let flat = e.nested.flatten(&quot;.&quot;, &quot;dot&quot;)               // {a: {b: 1}} → {&quot;a.b&quot;: 1}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>let flat = e.nested.flattened(&quot;dot&quot;)                  // {a: {b: 1}} → {&quot;a.b&quot;: 1}
+<a id="__codelineno-80-2" name="__codelineno-80-2" href="#__codelineno-80-2"></a>let flat = e.nested.flattened(&quot;dot&quot;, 2)               // With max depth
+</code></pre></div>
+<h4 id="mapflatten_fieldfield_name"><code>map.flatten_field("field_name")</code><a class="headerlink" href="#mapflatten_fieldfield_name" title="Permanent link">&para;</a></h4>
+<p>Flatten just one specific field from the map.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>let flat = e.flatten_field(&quot;metadata&quot;)                // Flattens only e.metadata
 </code></pre></div>
 <h4 id="mapunflattenseparator"><code>map.unflatten([separator])</code><a class="headerlink" href="#mapunflattenseparator" title="Permanent link">&para;</a></h4>
 <p>Reconstruct nested object from flat keys.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>let nested = e.flat.unflatten(&quot;.&quot;)                    // {&quot;a.b&quot;: 1} → {a: {b: 1}}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>let nested = e.flat.unflatten(&quot;.&quot;)                    // {&quot;a.b&quot;: 1} → {a: {b: 1}}
 </code></pre></div>
 <h3 id="format-conversion">Format Conversion<a class="headerlink" href="#format-conversion" title="Permanent link">&para;</a></h3>
 <h4 id="mapto_jsonpretty"><code>map.to_json([pretty])</code><a class="headerlink" href="#mapto_jsonpretty" title="Permanent link">&para;</a></h4>
 <p>Convert map to JSON string.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>e.payload = e.data.to_json()
-<a id="__codelineno-82-2" name="__codelineno-82-2" href="#__codelineno-82-2"></a>e.readable = e.data.to_json(true)                     // Pretty-printed
+<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>e.payload = e.data.to_json()
+<a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a>e.readable = e.data.to_json(true)                     // Pretty-printed
 </code></pre></div>
 <h4 id="mapto_logfmt"><code>map.to_logfmt()</code><a class="headerlink" href="#mapto_logfmt" title="Permanent link">&para;</a></h4>
 <p>Convert map to logfmt format string.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>e.formatted = e.fields.to_logfmt()                    // {a: 1, b: 2} → &quot;a=1 b=2&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>e.formatted = e.fields.to_logfmt()                    // {a: 1, b: 2} → &quot;a=1 b=2&quot;
 </code></pre></div>
 <h4 id="mapto_kvsep-kv_sep"><code>map.to_kv([sep [, kv_sep]])</code><a class="headerlink" href="#mapto_kvsep-kv_sep" title="Permanent link">&para;</a></h4>
 <p>Convert map to key-value string with separators.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>e.query = e.params.to_kv(&quot;&amp;&quot;, &quot;=&quot;)                    // {a: 1, b: 2} → &quot;a=1&amp;b=2&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>e.query = e.params.to_kv(&quot;&amp;&quot;, &quot;=&quot;)                    // {a: 1, b: 2} → &quot;a=1&amp;b=2&quot;
 </code></pre></div>
 <h4 id="mapto_syslog-mapto_cef-mapto_combined"><code>map.to_syslog()</code> / <code>map.to_cef()</code> / <code>map.to_combined()</code><a class="headerlink" href="#mapto_syslog-mapto_cef-mapto_combined" title="Permanent link">&para;</a></h4>
 <p>Convert map to specific log format.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>e.syslog_line = e.fields.to_syslog()
-<a id="__codelineno-85-2" name="__codelineno-85-2" href="#__codelineno-85-2"></a>e.cef_line = e.security_event.to_cef()
-<a id="__codelineno-85-3" name="__codelineno-85-3" href="#__codelineno-85-3"></a>e.access_log = e.request.to_combined()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>e.syslog_line = e.fields.to_syslog()
+<a id="__codelineno-86-2" name="__codelineno-86-2" href="#__codelineno-86-2"></a>e.cef_line = e.security_event.to_cef()
+<a id="__codelineno-86-3" name="__codelineno-86-3" href="#__codelineno-86-3"></a>e.access_log = e.request.to_combined()
 </code></pre></div>
 <hr />
 <h2 id="datetime-functions">DateTime Functions<a class="headerlink" href="#datetime-functions" title="Permanent link">&para;</a></h2>
 <h3 id="creation">Creation<a class="headerlink" href="#creation" title="Permanent link">&para;</a></h3>
 <h4 id="now"><code>now()</code><a class="headerlink" href="#now" title="Permanent link">&para;</a></h4>
 <p>Current timestamp (UTC).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>e.timestamp = now()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>e.timestamp = now()
 </code></pre></div>
 <h4 id="to_datetimetext-fmt-tz"><code>to_datetime(text [, fmt [, tz]])</code><a class="headerlink" href="#to_datetimetext-fmt-tz" title="Permanent link">&para;</a></h4>
 <p>Convert string into datetime value with optional hints.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>e.parsed = to_datetime(&quot;2024-01-15 10:30:00&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;, &quot;UTC&quot;)
-<a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a>e.auto = to_datetime(&quot;2024-01-15T10:30:00Z&quot;)          // Auto-detect format
+<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>e.parsed = to_datetime(&quot;2024-01-15 10:30:00&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;, &quot;UTC&quot;)
+<a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a>e.auto = to_datetime(&quot;2024-01-15T10:30:00Z&quot;)          // Auto-detect format
 </code></pre></div>
 <h4 id="to_duration1h30m"><code>to_duration("1h30m")</code><a class="headerlink" href="#to_duration1h30m" title="Permanent link">&para;</a></h4>
 <p>Convert duration string into duration value.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>let timeout = to_duration(&quot;5m&quot;)
-<a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a>e.deadline = now() + timeout
+<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a>let timeout = to_duration(&quot;5m&quot;)
+<a id="__codelineno-89-2" name="__codelineno-89-2" href="#__codelineno-89-2"></a>e.deadline = now() + timeout
 </code></pre></div>
 <h4 id="duration_from_secondsn-duration_from_minutesn-etc"><code>duration_from_seconds(n)</code>, <code>duration_from_minutes(n)</code>, etc.<a class="headerlink" href="#duration_from_secondsn-duration_from_minutesn-etc" title="Permanent link">&para;</a></h4>
 <p>Create duration from specific units.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a>let hour = duration_from_hours(1)
-<a id="__codelineno-89-2" name="__codelineno-89-2" href="#__codelineno-89-2"></a>let day = duration_from_days(1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>let hour = duration_from_hours(1)
+<a id="__codelineno-90-2" name="__codelineno-90-2" href="#__codelineno-90-2"></a>let day = duration_from_days(1)
 </code></pre></div>
 <h3 id="formatting">Formatting<a class="headerlink" href="#formatting" title="Permanent link">&para;</a></h3>
 <h4 id="dtto_iso"><code>dt.to_iso()</code><a class="headerlink" href="#dtto_iso" title="Permanent link">&para;</a></h4>
 <p>Convert datetime to ISO 8601 string.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>e.iso_timestamp = e.timestamp.to_iso()                // &quot;2024-01-15T10:30:00Z&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a>e.iso_timestamp = e.timestamp.to_iso()                // &quot;2024-01-15T10:30:00Z&quot;
 </code></pre></div>
 <h4 id="dtformatformat_string"><code>dt.format("format_string")</code><a class="headerlink" href="#dtformatformat_string" title="Permanent link">&para;</a></h4>
 <p>Format datetime using custom format string (see <code>--help-time</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a>e.date = e.timestamp.format(&quot;%Y-%m-%d&quot;)               // &quot;2024-01-15&quot;
-<a id="__codelineno-91-2" name="__codelineno-91-2" href="#__codelineno-91-2"></a>e.time = e.timestamp.format(&quot;%H:%M:%S&quot;)               // &quot;10:30:00&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>e.date = e.timestamp.format(&quot;%Y-%m-%d&quot;)               // &quot;2024-01-15&quot;
+<a id="__codelineno-92-2" name="__codelineno-92-2" href="#__codelineno-92-2"></a>e.time = e.timestamp.format(&quot;%H:%M:%S&quot;)               // &quot;10:30:00&quot;
 </code></pre></div>
 <h3 id="component-extraction">Component Extraction<a class="headerlink" href="#component-extraction" title="Permanent link">&para;</a></h3>
 <h4 id="dtyear-dtmonth-dtday"><code>dt.year()</code>, <code>dt.month()</code>, <code>dt.day()</code><a class="headerlink" href="#dtyear-dtmonth-dtday" title="Permanent link">&para;</a></h4>
 <p>Extract date components.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>e.year = e.timestamp.year()
-<a id="__codelineno-92-2" name="__codelineno-92-2" href="#__codelineno-92-2"></a>e.month = e.timestamp.month()
-<a id="__codelineno-92-3" name="__codelineno-92-3" href="#__codelineno-92-3"></a>e.day = e.timestamp.day()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-93-1" name="__codelineno-93-1" href="#__codelineno-93-1"></a>e.year = e.timestamp.year()
+<a id="__codelineno-93-2" name="__codelineno-93-2" href="#__codelineno-93-2"></a>e.month = e.timestamp.month()
+<a id="__codelineno-93-3" name="__codelineno-93-3" href="#__codelineno-93-3"></a>e.day = e.timestamp.day()
 </code></pre></div>
 <h4 id="dthour-dtminute-dtsecond"><code>dt.hour()</code>, <code>dt.minute()</code>, <code>dt.second()</code><a class="headerlink" href="#dthour-dtminute-dtsecond" title="Permanent link">&para;</a></h4>
 <p>Extract time components.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-93-1" name="__codelineno-93-1" href="#__codelineno-93-1"></a>e.hour = e.timestamp.hour()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>e.hour = e.timestamp.hour()
 </code></pre></div>
 <h3 id="timezone-conversion">Timezone Conversion<a class="headerlink" href="#timezone-conversion" title="Permanent link">&para;</a></h3>
 <h4 id="dtto_utc-dtto_local"><code>dt.to_utc()</code> / <code>dt.to_local()</code><a class="headerlink" href="#dtto_utc-dtto_local" title="Permanent link">&para;</a></h4>
 <p>Convert timezone.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>e.utc_time = e.local_timestamp.to_utc()
-<a id="__codelineno-94-2" name="__codelineno-94-2" href="#__codelineno-94-2"></a>e.local_time = e.utc_timestamp.to_local()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a>e.utc_time = e.local_timestamp.to_utc()
+<a id="__codelineno-95-2" name="__codelineno-95-2" href="#__codelineno-95-2"></a>e.local_time = e.utc_timestamp.to_local()
 </code></pre></div>
 <h4 id="dtto_timezonetz_name"><code>dt.to_timezone("tz_name")</code><a class="headerlink" href="#dtto_timezonetz_name" title="Permanent link">&para;</a></h4>
 <p>Convert to named timezone.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a>e.ny_time = e.timestamp.to_timezone(&quot;America/New_York&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-96-1" name="__codelineno-96-1" href="#__codelineno-96-1"></a>e.ny_time = e.timestamp.to_timezone(&quot;America/New_York&quot;)
 </code></pre></div>
 <h4 id="dttimezone_name"><code>dt.timezone_name()</code><a class="headerlink" href="#dttimezone_name" title="Permanent link">&para;</a></h4>
 <p>Get timezone name as string.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-96-1" name="__codelineno-96-1" href="#__codelineno-96-1"></a>e.tz = e.timestamp.timezone_name()                    // &quot;UTC&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a>e.tz = e.timestamp.timezone_name()                    // &quot;UTC&quot;
 </code></pre></div>
 <h3 id="arithmetic-and-comparison">Arithmetic and Comparison<a class="headerlink" href="#arithmetic-and-comparison" title="Permanent link">&para;</a></h3>
 <h4 id="dt-duration-dt-duration"><code>dt + duration</code>, <code>dt - duration</code><a class="headerlink" href="#dt-duration-dt-duration" title="Permanent link">&para;</a></h4>
 <p>Add/subtract duration from datetime.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a>e.future = now() + duration_from_hours(1)
-<a id="__codelineno-97-2" name="__codelineno-97-2" href="#__codelineno-97-2"></a>e.past = now() - duration_from_days(7)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a>e.future = now() + duration_from_hours(1)
+<a id="__codelineno-98-2" name="__codelineno-98-2" href="#__codelineno-98-2"></a>e.past = now() - duration_from_days(7)
 </code></pre></div>
 <h4 id="dt1-dt2"><code>dt1 - dt2</code><a class="headerlink" href="#dt1-dt2" title="Permanent link">&para;</a></h4>
 <p>Get duration between datetimes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a>let elapsed = now() - e.start_time
-<a id="__codelineno-98-2" name="__codelineno-98-2" href="#__codelineno-98-2"></a>e.duration_ms = elapsed.as_milliseconds()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-99-1" name="__codelineno-99-1" href="#__codelineno-99-1"></a>let elapsed = now() - e.start_time
+<a id="__codelineno-99-2" name="__codelineno-99-2" href="#__codelineno-99-2"></a>e.duration_ms = elapsed.as_milliseconds()
 </code></pre></div>
 <h4 id="dt1-dt2-dt1-dt2-etc"><code>dt1 == dt2</code>, <code>dt1 &gt; dt2</code>, etc.<a class="headerlink" href="#dt1-dt2-dt1-dt2-etc" title="Permanent link">&para;</a></h4>
 <p>Compare datetimes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-99-1" name="__codelineno-99-1" href="#__codelineno-99-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
-<a id="__codelineno-99-2" name="__codelineno-99-2" href="#__codelineno-99-2"></a>    e.this_year = true
-<a id="__codelineno-99-3" name="__codelineno-99-3" href="#__codelineno-99-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-100-1" name="__codelineno-100-1" href="#__codelineno-100-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
+<a id="__codelineno-100-2" name="__codelineno-100-2" href="#__codelineno-100-2"></a>    e.this_year = true
+<a id="__codelineno-100-3" name="__codelineno-100-3" href="#__codelineno-100-3"></a>}
 </code></pre></div>
 <h3 id="duration-operations">Duration Operations<a class="headerlink" href="#duration-operations" title="Permanent link">&para;</a></h3>
 <h4 id="durationas_seconds-durationas_milliseconds-etc"><code>duration.as_seconds()</code>, <code>duration.as_milliseconds()</code>, etc.<a class="headerlink" href="#durationas_seconds-durationas_milliseconds-etc" title="Permanent link">&para;</a></h4>
 <p>Convert duration to specific units.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-100-1" name="__codelineno-100-1" href="#__codelineno-100-1"></a>e.seconds = duration.as_seconds()
-<a id="__codelineno-100-2" name="__codelineno-100-2" href="#__codelineno-100-2"></a>e.ms = duration.as_milliseconds()
-<a id="__codelineno-100-3" name="__codelineno-100-3" href="#__codelineno-100-3"></a>e.hours = duration.as_hours()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-101-1" name="__codelineno-101-1" href="#__codelineno-101-1"></a>e.seconds = duration.as_seconds()
+<a id="__codelineno-101-2" name="__codelineno-101-2" href="#__codelineno-101-2"></a>e.ms = duration.as_milliseconds()
+<a id="__codelineno-101-3" name="__codelineno-101-3" href="#__codelineno-101-3"></a>e.hours = duration.as_hours()
 </code></pre></div>
 <h4 id="durationto_string-humanize_durationms"><code>duration.to_string()</code> / <code>humanize_duration(ms)</code><a class="headerlink" href="#durationto_string-humanize_durationms" title="Permanent link">&para;</a></h4>
 <p>Format duration as human-readable string.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-101-1" name="__codelineno-101-1" href="#__codelineno-101-1"></a>e.readable = duration.to_string()                     // &quot;1h 30m&quot;
-<a id="__codelineno-101-2" name="__codelineno-101-2" href="#__codelineno-101-2"></a>e.humanized = humanize_duration(5400000)              // &quot;1h 30m&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-102-1" name="__codelineno-102-1" href="#__codelineno-102-1"></a>e.readable = duration.to_string()                     // &quot;1h 30m&quot;
+<a id="__codelineno-102-2" name="__codelineno-102-2" href="#__codelineno-102-2"></a>e.humanized = humanize_duration(5400000)              // &quot;1h 30m&quot;
 </code></pre></div>
 <hr />
 <h2 id="math-functions">Math Functions<a class="headerlink" href="#math-functions" title="Permanent link">&para;</a></h2>
 <h4 id="absx"><code>abs(x)</code><a class="headerlink" href="#absx" title="Permanent link">&para;</a></h4>
 <p>Absolute value of number.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-102-1" name="__codelineno-102-1" href="#__codelineno-102-1"></a>e.magnitude = abs(e.value)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-103-1" name="__codelineno-103-1" href="#__codelineno-103-1"></a>e.magnitude = abs(e.value)
 </code></pre></div>
 <h4 id="clampvalue-min-max"><code>clamp(value, min, max)</code><a class="headerlink" href="#clampvalue-min-max" title="Permanent link">&para;</a></h4>
 <p>Constrain value to be within min/max range.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-103-1" name="__codelineno-103-1" href="#__codelineno-103-1"></a>e.bounded = clamp(e.score, 0, 100)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-104-1" name="__codelineno-104-1" href="#__codelineno-104-1"></a>e.bounded = clamp(e.score, 0, 100)
 </code></pre></div>
 <h4 id="floorx-roundx"><code>floor(x)</code> / <code>round(x)</code><a class="headerlink" href="#floorx-roundx" title="Permanent link">&para;</a></h4>
 <p>Rounding operations.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-104-1" name="__codelineno-104-1" href="#__codelineno-104-1"></a>e.floored = floor(e.value)
-<a id="__codelineno-104-2" name="__codelineno-104-2" href="#__codelineno-104-2"></a>e.rounded = round(e.value)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-105-1" name="__codelineno-105-1" href="#__codelineno-105-1"></a>e.floored = floor(e.value)
+<a id="__codelineno-105-2" name="__codelineno-105-2" href="#__codelineno-105-2"></a>e.rounded = round(e.value)
 </code></pre></div>
 <h4 id="moda-b-a-b"><code>mod(a, b)</code> / <code>a % b</code><a class="headerlink" href="#moda-b-a-b" title="Permanent link">&para;</a></h4>
 <p>Modulo operation with division-by-zero protection.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-105-1" name="__codelineno-105-1" href="#__codelineno-105-1"></a>e.bucket = e.id % 10
+<div class="highlight"><pre><span></span><code><a id="__codelineno-106-1" name="__codelineno-106-1" href="#__codelineno-106-1"></a>e.bucket = e.id % 10
 </code></pre></div>
 <h4 id="rand-rand_intmin-max"><code>rand()</code> / <code>rand_int(min, max)</code><a class="headerlink" href="#rand-rand_intmin-max" title="Permanent link">&para;</a></h4>
 <p>Random number generation.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-106-1" name="__codelineno-106-1" href="#__codelineno-106-1"></a>if rand() &lt; 0.1 {                                     // 10% sampling
-<a id="__codelineno-106-2" name="__codelineno-106-2" href="#__codelineno-106-2"></a>    e.sampled = true
-<a id="__codelineno-106-3" name="__codelineno-106-3" href="#__codelineno-106-3"></a>}
-<a id="__codelineno-106-4" name="__codelineno-106-4" href="#__codelineno-106-4"></a>e.random_id = rand_int(1000, 9999)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-107-1" name="__codelineno-107-1" href="#__codelineno-107-1"></a>if rand() &lt; 0.1 {                                     // 10% sampling
+<a id="__codelineno-107-2" name="__codelineno-107-2" href="#__codelineno-107-2"></a>    e.sampled = true
+<a id="__codelineno-107-3" name="__codelineno-107-3" href="#__codelineno-107-3"></a>}
+<a id="__codelineno-107-4" name="__codelineno-107-4" href="#__codelineno-107-4"></a>e.random_id = rand_int(1000, 9999)
 </code></pre></div>
 <hr />
 <h2 id="type-conversion-functions">Type Conversion Functions<a class="headerlink" href="#type-conversion-functions" title="Permanent link">&para;</a></h2>
 <h4 id="to_intvalue-to_floatvalue-to_boolvalue"><code>to_int(value)</code> / <code>to_float(value)</code> / <code>to_bool(value)</code><a class="headerlink" href="#to_intvalue-to_floatvalue-to_boolvalue" title="Permanent link">&para;</a></h4>
 <p>Convert value to type (returns <code>()</code> on error).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-107-1" name="__codelineno-107-1" href="#__codelineno-107-1"></a>e.status = to_int(e.status_string)
-<a id="__codelineno-107-2" name="__codelineno-107-2" href="#__codelineno-107-2"></a>e.score = to_float(e.score_string)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-108-1" name="__codelineno-108-1" href="#__codelineno-108-1"></a>e.status = to_int(e.status_string)
+<a id="__codelineno-108-2" name="__codelineno-108-2" href="#__codelineno-108-2"></a>e.score = to_float(e.score_string)
 </code></pre></div>
 <h4 id="to_int_orvalue-default-to_float_orvalue-default-to_bool_orvalue-default"><code>to_int_or(value, default)</code> / <code>to_float_or(value, default)</code> / <code>to_bool_or(value, default)</code><a class="headerlink" href="#to_int_orvalue-default-to_float_orvalue-default-to_bool_orvalue-default" title="Permanent link">&para;</a></h4>
 <p>Convert value to type with fallback.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-108-1" name="__codelineno-108-1" href="#__codelineno-108-1"></a>e.status = to_int_or(e.status_string, 0)
-<a id="__codelineno-108-2" name="__codelineno-108-2" href="#__codelineno-108-2"></a>e.score = to_float_or(e.score_string, 0.0)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-109-1" name="__codelineno-109-1" href="#__codelineno-109-1"></a>e.status = to_int_or(e.status_string, 0)
+<a id="__codelineno-109-2" name="__codelineno-109-2" href="#__codelineno-109-2"></a>e.score = to_float_or(e.score_string, 0.0)
 </code></pre></div>
 <h4 id="valueor_empty"><code>value.or_empty()</code><a class="headerlink" href="#valueor_empty" title="Permanent link">&para;</a></h4>
 <p>Convert empty values to Unit <code>()</code> for removal/filtering.</p>
@@ -6905,74 +6930,74 @@
 - Empty map: <code>#{}</code> → <code>()</code>
 - Unit itself: <code>()</code> → <code>()</code> (pass-through)</p>
 <p><strong>String extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-109-1" name="__codelineno-109-1" href="#__codelineno-109-1"></a>// Extract only when prefix exists, otherwise remove field
-<a id="__codelineno-109-2" name="__codelineno-109-2" href="#__codelineno-109-2"></a>e.name = e.message.after(&quot;prefix:&quot;).or_empty()
-<a id="__codelineno-109-3" name="__codelineno-109-3" href="#__codelineno-109-3"></a>
-<a id="__codelineno-109-4" name="__codelineno-109-4" href="#__codelineno-109-4"></a>// Track only non-empty values
-<a id="__codelineno-109-5" name="__codelineno-109-5" href="#__codelineno-109-5"></a>track_unique(&quot;names&quot;, e.extracted.or_empty())
+<div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>// Extract only when prefix exists, otherwise remove field
+<a id="__codelineno-110-2" name="__codelineno-110-2" href="#__codelineno-110-2"></a>e.name = e.message.after(&quot;prefix:&quot;).or_empty()
+<a id="__codelineno-110-3" name="__codelineno-110-3" href="#__codelineno-110-3"></a>
+<a id="__codelineno-110-4" name="__codelineno-110-4" href="#__codelineno-110-4"></a>// Track only non-empty values
+<a id="__codelineno-110-5" name="__codelineno-110-5" href="#__codelineno-110-5"></a>track_unique(&quot;names&quot;, e.extracted.or_empty())
 </code></pre></div></p>
 <p><strong>Array filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>// Only assign tags if array is non-empty
-<a id="__codelineno-110-2" name="__codelineno-110-2" href="#__codelineno-110-2"></a>e.tags = e.tags.or_empty()  // [] becomes (), field removed
-<a id="__codelineno-110-3" name="__codelineno-110-3" href="#__codelineno-110-3"></a>
-<a id="__codelineno-110-4" name="__codelineno-110-4" href="#__codelineno-110-4"></a>// Track only events with items
-<a id="__codelineno-110-5" name="__codelineno-110-5" href="#__codelineno-110-5"></a>track_bucket(&quot;item_count&quot;, e.items.len())
-<a id="__codelineno-110-6" name="__codelineno-110-6" href="#__codelineno-110-6"></a>if e.items.len() == 0 {
-<a id="__codelineno-110-7" name="__codelineno-110-7" href="#__codelineno-110-7"></a>    e.items = e.items.or_empty()  // Remove empty array
-<a id="__codelineno-110-8" name="__codelineno-110-8" href="#__codelineno-110-8"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a>// Only assign tags if array is non-empty
+<a id="__codelineno-111-2" name="__codelineno-111-2" href="#__codelineno-111-2"></a>e.tags = e.tags.or_empty()  // [] becomes (), field removed
+<a id="__codelineno-111-3" name="__codelineno-111-3" href="#__codelineno-111-3"></a>
+<a id="__codelineno-111-4" name="__codelineno-111-4" href="#__codelineno-111-4"></a>// Track only events with items
+<a id="__codelineno-111-5" name="__codelineno-111-5" href="#__codelineno-111-5"></a>track_bucket(&quot;item_count&quot;, e.items.len())
+<a id="__codelineno-111-6" name="__codelineno-111-6" href="#__codelineno-111-6"></a>if e.items.len() == 0 {
+<a id="__codelineno-111-7" name="__codelineno-111-7" href="#__codelineno-111-7"></a>    e.items = e.items.or_empty()  // Remove empty array
+<a id="__codelineno-111-8" name="__codelineno-111-8" href="#__codelineno-111-8"></a>}
 </code></pre></div></p>
 <p><strong>Map filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a>// Only keep non-empty metadata
-<a id="__codelineno-111-2" name="__codelineno-111-2" href="#__codelineno-111-2"></a>e.metadata = e.parse_json().or_empty()  // {} becomes (), field removed
-<a id="__codelineno-111-3" name="__codelineno-111-3" href="#__codelineno-111-3"></a>
-<a id="__codelineno-111-4" name="__codelineno-111-4" href="#__codelineno-111-4"></a>// Safe chaining with missing fields
-<a id="__codelineno-111-5" name="__codelineno-111-5" href="#__codelineno-111-5"></a>e.optional = e.maybe_field.or_empty()  // Works even if maybe_field is ()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>// Only keep non-empty metadata
+<a id="__codelineno-112-2" name="__codelineno-112-2" href="#__codelineno-112-2"></a>e.metadata = e.parse_json().or_empty()  // {} becomes (), field removed
+<a id="__codelineno-112-3" name="__codelineno-112-3" href="#__codelineno-112-3"></a>
+<a id="__codelineno-112-4" name="__codelineno-112-4" href="#__codelineno-112-4"></a>// Safe chaining with missing fields
+<a id="__codelineno-112-5" name="__codelineno-112-5" href="#__codelineno-112-5"></a>e.optional = e.maybe_field.or_empty()  // Works even if maybe_field is ()
 </code></pre></div></p>
 <p><strong>Common pattern - conditional extraction and tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>e.extracted = e.message.after(&quot;User:&quot;).or_empty()
-<a id="__codelineno-112-2" name="__codelineno-112-2" href="#__codelineno-112-2"></a>track_unique(&quot;users&quot;, e.extracted)  // Only tracks when extraction succeeds
-<a id="__codelineno-112-3" name="__codelineno-112-3" href="#__codelineno-112-3"></a>
-<a id="__codelineno-112-4" name="__codelineno-112-4" href="#__codelineno-112-4"></a>// Filter events with no data
-<a id="__codelineno-112-5" name="__codelineno-112-5" href="#__codelineno-112-5"></a>e.results = e.search_results.or_empty()
-<a id="__codelineno-112-6" name="__codelineno-112-6" href="#__codelineno-112-6"></a>track_unique(&quot;result_sets&quot;, e.results)  // Skips empty arrays and ()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-113-1" name="__codelineno-113-1" href="#__codelineno-113-1"></a>e.extracted = e.message.after(&quot;User:&quot;).or_empty()
+<a id="__codelineno-113-2" name="__codelineno-113-2" href="#__codelineno-113-2"></a>track_unique(&quot;users&quot;, e.extracted)  // Only tracks when extraction succeeds
+<a id="__codelineno-113-3" name="__codelineno-113-3" href="#__codelineno-113-3"></a>
+<a id="__codelineno-113-4" name="__codelineno-113-4" href="#__codelineno-113-4"></a>// Filter events with no data
+<a id="__codelineno-113-5" name="__codelineno-113-5" href="#__codelineno-113-5"></a>e.results = e.search_results.or_empty()
+<a id="__codelineno-113-6" name="__codelineno-113-6" href="#__codelineno-113-6"></a>track_unique(&quot;result_sets&quot;, e.results)  // Skips empty arrays and ()
 </code></pre></div></p>
 <hr />
 <h2 id="utility-functions">Utility Functions<a class="headerlink" href="#utility-functions" title="Permanent link">&para;</a></h2>
 <h4 id="get_envvar-default"><code>get_env(var [, default])</code><a class="headerlink" href="#get_envvar-default" title="Permanent link">&para;</a></h4>
 <p>Get environment variable with optional default.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-113-1" name="__codelineno-113-1" href="#__codelineno-113-1"></a>e.branch = get_env(&quot;CI_BRANCH&quot;, &quot;main&quot;)
-<a id="__codelineno-113-2" name="__codelineno-113-2" href="#__codelineno-113-2"></a>e.build_id = get_env(&quot;BUILD_ID&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-114-1" name="__codelineno-114-1" href="#__codelineno-114-1"></a>e.branch = get_env(&quot;CI_BRANCH&quot;, &quot;main&quot;)
+<a id="__codelineno-114-2" name="__codelineno-114-2" href="#__codelineno-114-2"></a>e.build_id = get_env(&quot;BUILD_ID&quot;)
 </code></pre></div>
 <h4 id="pseudonymvalue-domain"><code>pseudonym(value, domain)</code><a class="headerlink" href="#pseudonymvalue-domain" title="Permanent link">&para;</a></h4>
 <p>Generate domain-separated pseudonym (requires <code>KELORA_SECRET</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-114-1" name="__codelineno-114-1" href="#__codelineno-114-1"></a>e.user_alias = pseudonym(e.username, &quot;users&quot;)
-<a id="__codelineno-114-2" name="__codelineno-114-2" href="#__codelineno-114-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-115-1" name="__codelineno-115-1" href="#__codelineno-115-1"></a>e.user_alias = pseudonym(e.username, &quot;users&quot;)
+<a id="__codelineno-115-2" name="__codelineno-115-2" href="#__codelineno-115-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
 </code></pre></div>
 <h4 id="read_filepath-read_linespath"><code>read_file(path)</code> / <code>read_lines(path)</code><a class="headerlink" href="#read_filepath-read_linespath" title="Permanent link">&para;</a></h4>
 <p>Read file contents.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-115-1" name="__codelineno-115-1" href="#__codelineno-115-1"></a>e.config = read_file(&quot;config.json&quot;)
-<a id="__codelineno-115-2" name="__codelineno-115-2" href="#__codelineno-115-2"></a>e.lines = read_lines(&quot;data.txt&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-116-1" name="__codelineno-116-1" href="#__codelineno-116-1"></a>e.config = read_file(&quot;config.json&quot;)
+<a id="__codelineno-116-2" name="__codelineno-116-2" href="#__codelineno-116-2"></a>e.lines = read_lines(&quot;data.txt&quot;)
 </code></pre></div>
 <h4 id="printmessage-eprintmessage"><code>print(message)</code> / <code>eprint(message)</code><a class="headerlink" href="#printmessage-eprintmessage" title="Permanent link">&para;</a></h4>
 <p>Print to stdout/stderr (suppressed with <code>-qqq</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-116-1" name="__codelineno-116-1" href="#__codelineno-116-1"></a>print(&quot;Processing event: &quot; + e.id)
-<a id="__codelineno-116-2" name="__codelineno-116-2" href="#__codelineno-116-2"></a>eprint(&quot;Warning: &quot; + e.error)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-117-1" name="__codelineno-117-1" href="#__codelineno-117-1"></a>print(&quot;Processing event: &quot; + e.id)
+<a id="__codelineno-117-2" name="__codelineno-117-2" href="#__codelineno-117-2"></a>eprint(&quot;Warning: &quot; + e.error)
 </code></pre></div>
 <h4 id="exitcode"><code>exit(code)</code><a class="headerlink" href="#exitcode" title="Permanent link">&para;</a></h4>
 <p>Exit kelora with given exit code.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-117-1" name="__codelineno-117-1" href="#__codelineno-117-1"></a>if e.critical {
-<a id="__codelineno-117-2" name="__codelineno-117-2" href="#__codelineno-117-2"></a>    exit(1)
-<a id="__codelineno-117-3" name="__codelineno-117-3" href="#__codelineno-117-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-118-1" name="__codelineno-118-1" href="#__codelineno-118-1"></a>if e.critical {
+<a id="__codelineno-118-2" name="__codelineno-118-2" href="#__codelineno-118-2"></a>    exit(1)
+<a id="__codelineno-118-3" name="__codelineno-118-3" href="#__codelineno-118-3"></a>}
 </code></pre></div>
 <h4 id="type_ofvalue"><code>type_of(value)</code><a class="headerlink" href="#type_ofvalue" title="Permanent link">&para;</a></h4>
 <p>Get type name as string.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-118-1" name="__codelineno-118-1" href="#__codelineno-118-1"></a>e.value_type = type_of(e.value)                       // &quot;string&quot;, &quot;int&quot;, &quot;array&quot;, etc.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-119-1" name="__codelineno-119-1" href="#__codelineno-119-1"></a>e.value_type = type_of(e.value)                       // &quot;string&quot;, &quot;int&quot;, &quot;array&quot;, etc.
 </code></pre></div>
 <h4 id="windowpluckfield-windowpluck_as_numsfield"><code>window.pluck(field)</code> / <code>window.pluck_as_nums(field)</code><a class="headerlink" href="#windowpluckfield-windowpluck_as_numsfield" title="Permanent link">&para;</a></h4>
 <p>Extract field values from the current window array (requires <code>--window</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-119-1" name="__codelineno-119-1" href="#__codelineno-119-1"></a>let recent_statuses = window.pluck(&quot;status&quot;)
-<a id="__codelineno-119-2" name="__codelineno-119-2" href="#__codelineno-119-2"></a>let recent_times = window.pluck_as_nums(&quot;response_time&quot;)
-<a id="__codelineno-119-3" name="__codelineno-119-3" href="#__codelineno-119-3"></a>e.avg_time = recent_times.reduce(|s, x| s + x, 0) / recent_times.len()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-120-1" name="__codelineno-120-1" href="#__codelineno-120-1"></a>let recent_statuses = window.pluck(&quot;status&quot;)
+<a id="__codelineno-120-2" name="__codelineno-120-2" href="#__codelineno-120-2"></a>let recent_times = window.pluck_as_nums(&quot;response_time&quot;)
+<a id="__codelineno-120-3" name="__codelineno-120-3" href="#__codelineno-120-3"></a>e.avg_time = recent_times.reduce(|s, x| s + x, 0) / recent_times.len()
 </code></pre></div>
 <hr />
 <h2 id="trackingmetrics-functions">Tracking/Metrics Functions<a class="headerlink" href="#trackingmetrics-functions" title="Permanent link">&para;</a></h2>
@@ -6984,85 +7009,85 @@
 <h3 id="tracking-functions">Tracking Functions<a class="headerlink" href="#tracking-functions" title="Permanent link">&para;</a></h3>
 <h4 id="track_countkey"><code>track_count(key)</code><a class="headerlink" href="#track_countkey" title="Permanent link">&para;</a></h4>
 <p>Increment counter for key by 1.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-120-1" name="__codelineno-120-1" href="#__codelineno-120-1"></a>track_count(e.service)                                // Count by service
-<a id="__codelineno-120-2" name="__codelineno-120-2" href="#__codelineno-120-2"></a>track_count(&quot;total&quot;)                                  // Global counter
+<div class="highlight"><pre><span></span><code><a id="__codelineno-121-1" name="__codelineno-121-1" href="#__codelineno-121-1"></a>track_count(e.service)                                // Count by service
+<a id="__codelineno-121-2" name="__codelineno-121-2" href="#__codelineno-121-2"></a>track_count(&quot;total&quot;)                                  // Global counter
 </code></pre></div>
 <h4 id="track_sumkey-value"><code>track_sum(key, value)</code><a class="headerlink" href="#track_sumkey-value" title="Permanent link">&para;</a></h4>
 <p>Accumulate numeric values for key. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-121-1" name="__codelineno-121-1" href="#__codelineno-121-1"></a>track_sum(&quot;total_bytes&quot;, e.bytes)
-<a id="__codelineno-121-2" name="__codelineno-121-2" href="#__codelineno-121-2"></a>track_sum(e.endpoint, e.response_time)
-<a id="__codelineno-121-3" name="__codelineno-121-3" href="#__codelineno-121-3"></a>
-<a id="__codelineno-121-4" name="__codelineno-121-4" href="#__codelineno-121-4"></a>// Safe with conversions that may fail
-<a id="__codelineno-121-5" name="__codelineno-121-5" href="#__codelineno-121-5"></a>let score = e.score_str.to_int()  // Returns () on error
-<a id="__codelineno-121-6" name="__codelineno-121-6" href="#__codelineno-121-6"></a>track_sum(&quot;total_score&quot;, score)   // Skips () values
+<div class="highlight"><pre><span></span><code><a id="__codelineno-122-1" name="__codelineno-122-1" href="#__codelineno-122-1"></a>track_sum(&quot;total_bytes&quot;, e.bytes)
+<a id="__codelineno-122-2" name="__codelineno-122-2" href="#__codelineno-122-2"></a>track_sum(e.endpoint, e.response_time)
+<a id="__codelineno-122-3" name="__codelineno-122-3" href="#__codelineno-122-3"></a>
+<a id="__codelineno-122-4" name="__codelineno-122-4" href="#__codelineno-122-4"></a>// Safe with conversions that may fail
+<a id="__codelineno-122-5" name="__codelineno-122-5" href="#__codelineno-122-5"></a>let score = e.score_str.to_int()  // Returns () on error
+<a id="__codelineno-122-6" name="__codelineno-122-6" href="#__codelineno-122-6"></a>track_sum(&quot;total_score&quot;, score)   // Skips () values
 </code></pre></div>
 <h4 id="track_minkey-value-track_maxkey-value"><code>track_min(key, value)</code> / <code>track_max(key, value)</code><a class="headerlink" href="#track_minkey-value-track_maxkey-value" title="Permanent link">&para;</a></h4>
 <p>Track minimum/maximum value for key. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-122-1" name="__codelineno-122-1" href="#__codelineno-122-1"></a>track_min(&quot;fastest&quot;, e.response_time)
-<a id="__codelineno-122-2" name="__codelineno-122-2" href="#__codelineno-122-2"></a>track_max(&quot;slowest&quot;, e.response_time)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-123-1" name="__codelineno-123-1" href="#__codelineno-123-1"></a>track_min(&quot;fastest&quot;, e.response_time)
+<a id="__codelineno-123-2" name="__codelineno-123-2" href="#__codelineno-123-2"></a>track_max(&quot;slowest&quot;, e.response_time)
 </code></pre></div>
 <h4 id="track_uniquekey-value"><code>track_unique(key, value)</code><a class="headerlink" href="#track_uniquekey-value" title="Permanent link">&para;</a></h4>
 <p>Track unique values for key. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-123-1" name="__codelineno-123-1" href="#__codelineno-123-1"></a>track_unique(&quot;users&quot;, e.user_id)
-<a id="__codelineno-123-2" name="__codelineno-123-2" href="#__codelineno-123-2"></a>track_unique(&quot;ips&quot;, e.client_ip)
-<a id="__codelineno-123-3" name="__codelineno-123-3" href="#__codelineno-123-3"></a>
-<a id="__codelineno-123-4" name="__codelineno-123-4" href="#__codelineno-123-4"></a>// Combined with .or_empty() for conditional tracking
-<a id="__codelineno-123-5" name="__codelineno-123-5" href="#__codelineno-123-5"></a>track_unique(&quot;names&quot;, e.message.after(&quot;User:&quot;).or_empty())
+<div class="highlight"><pre><span></span><code><a id="__codelineno-124-1" name="__codelineno-124-1" href="#__codelineno-124-1"></a>track_unique(&quot;users&quot;, e.user_id)
+<a id="__codelineno-124-2" name="__codelineno-124-2" href="#__codelineno-124-2"></a>track_unique(&quot;ips&quot;, e.client_ip)
+<a id="__codelineno-124-3" name="__codelineno-124-3" href="#__codelineno-124-3"></a>
+<a id="__codelineno-124-4" name="__codelineno-124-4" href="#__codelineno-124-4"></a>// Combined with .or_empty() for conditional tracking
+<a id="__codelineno-124-5" name="__codelineno-124-5" href="#__codelineno-124-5"></a>track_unique(&quot;names&quot;, e.message.after(&quot;User:&quot;).or_empty())
 </code></pre></div>
 <h4 id="track_bucketkey-bucket"><code>track_bucket(key, bucket)</code><a class="headerlink" href="#track_bucketkey-bucket" title="Permanent link">&para;</a></h4>
 <p>Track values in buckets for histograms. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-124-1" name="__codelineno-124-1" href="#__codelineno-124-1"></a>let bucket = floor(e.response_time / 100) * 100
-<a id="__codelineno-124-2" name="__codelineno-124-2" href="#__codelineno-124-2"></a>track_bucket(&quot;latency&quot;, bucket)
-<a id="__codelineno-124-3" name="__codelineno-124-3" href="#__codelineno-124-3"></a>
-<a id="__codelineno-124-4" name="__codelineno-124-4" href="#__codelineno-124-4"></a>// Safe with optional fields
-<a id="__codelineno-124-5" name="__codelineno-124-5" href="#__codelineno-124-5"></a>track_bucket(&quot;user_types&quot;, e.user_type.or_empty())  // Skips empty/missing
+<div class="highlight"><pre><span></span><code><a id="__codelineno-125-1" name="__codelineno-125-1" href="#__codelineno-125-1"></a>let bucket = floor(e.response_time / 100) * 100
+<a id="__codelineno-125-2" name="__codelineno-125-2" href="#__codelineno-125-2"></a>track_bucket(&quot;latency&quot;, bucket)
+<a id="__codelineno-125-3" name="__codelineno-125-3" href="#__codelineno-125-3"></a>
+<a id="__codelineno-125-4" name="__codelineno-125-4" href="#__codelineno-125-4"></a>// Safe with optional fields
+<a id="__codelineno-125-5" name="__codelineno-125-5" href="#__codelineno-125-5"></a>track_bucket(&quot;user_types&quot;, e.user_type.or_empty())  // Skips empty/missing
 </code></pre></div>
 <hr />
 <h2 id="file-output-functions">File Output Functions<a class="headerlink" href="#file-output-functions" title="Permanent link">&para;</a></h2>
 <p>All file output functions require the <code>--allow-fs-writes</code> flag.</p>
 <h4 id="append_filepath-text_or_array"><code>append_file(path, text_or_array)</code><a class="headerlink" href="#append_filepath-text_or_array" title="Permanent link">&para;</a></h4>
 <p>Append line(s) to file; arrays append one line per element.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-125-1" name="__codelineno-125-1" href="#__codelineno-125-1"></a>append_file(&quot;errors.log&quot;, e.message)
-<a id="__codelineno-125-2" name="__codelineno-125-2" href="#__codelineno-125-2"></a>append_file(&quot;batch.log&quot;, [e.line1, e.line2, e.line3])
+<div class="highlight"><pre><span></span><code><a id="__codelineno-126-1" name="__codelineno-126-1" href="#__codelineno-126-1"></a>append_file(&quot;errors.log&quot;, e.message)
+<a id="__codelineno-126-2" name="__codelineno-126-2" href="#__codelineno-126-2"></a>append_file(&quot;batch.log&quot;, [e.line1, e.line2, e.line3])
 </code></pre></div>
 <h4 id="truncate_filepath"><code>truncate_file(path)</code><a class="headerlink" href="#truncate_filepath" title="Permanent link">&para;</a></h4>
 <p>Create or zero-length a file for fresh output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-126-1" name="__codelineno-126-1" href="#__codelineno-126-1"></a>truncate_file(&quot;output.log&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-127-1" name="__codelineno-127-1" href="#__codelineno-127-1"></a>truncate_file(&quot;output.log&quot;)
 </code></pre></div>
 <h4 id="mkdirpath-recursive"><code>mkdir(path [, recursive])</code><a class="headerlink" href="#mkdirpath-recursive" title="Permanent link">&para;</a></h4>
 <p>Create directory (set recursive=true to create parents).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-127-1" name="__codelineno-127-1" href="#__codelineno-127-1"></a>mkdir(&quot;logs&quot;)
-<a id="__codelineno-127-2" name="__codelineno-127-2" href="#__codelineno-127-2"></a>mkdir(&quot;deep/nested/path&quot;, true)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-128-1" name="__codelineno-128-1" href="#__codelineno-128-1"></a>mkdir(&quot;logs&quot;)
+<a id="__codelineno-128-2" name="__codelineno-128-2" href="#__codelineno-128-2"></a>mkdir(&quot;deep/nested/path&quot;, true)
 </code></pre></div>
 <hr />
 <h2 id="event-manipulation">Event Manipulation<a class="headerlink" href="#event-manipulation" title="Permanent link">&para;</a></h2>
 <h4 id="emit_eacharray-base_map"><code>emit_each(array [, base_map])</code><a class="headerlink" href="#emit_eacharray-base_map" title="Permanent link">&para;</a></h4>
 <p>Fan out array elements as separate events (returns emitted count).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-128-1" name="__codelineno-128-1" href="#__codelineno-128-1"></a>emit_each(e.users)                                    // Each user becomes an event
-<a id="__codelineno-128-2" name="__codelineno-128-2" href="#__codelineno-128-2"></a>emit_each(e.items, #{batch_id: e.batch_id})           // Add batch_id to each
-<a id="__codelineno-128-3" name="__codelineno-128-3" href="#__codelineno-128-3"></a>
-<a id="__codelineno-128-4" name="__codelineno-128-4" href="#__codelineno-128-4"></a>// Use return value to track emission count
-<a id="__codelineno-128-5" name="__codelineno-128-5" href="#__codelineno-128-5"></a>let count = emit_each(e.batch_items, #{batch_id: e.id})
-<a id="__codelineno-128-6" name="__codelineno-128-6" href="#__codelineno-128-6"></a>track_sum(&quot;items_emitted&quot;, count)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-129-1" name="__codelineno-129-1" href="#__codelineno-129-1"></a>emit_each(e.users)                                    // Each user becomes an event
+<a id="__codelineno-129-2" name="__codelineno-129-2" href="#__codelineno-129-2"></a>emit_each(e.items, #{batch_id: e.batch_id})           // Add batch_id to each
+<a id="__codelineno-129-3" name="__codelineno-129-3" href="#__codelineno-129-3"></a>
+<a id="__codelineno-129-4" name="__codelineno-129-4" href="#__codelineno-129-4"></a>// Use return value to track emission count
+<a id="__codelineno-129-5" name="__codelineno-129-5" href="#__codelineno-129-5"></a>let count = emit_each(e.batch_items, #{batch_id: e.id})
+<a id="__codelineno-129-6" name="__codelineno-129-6" href="#__codelineno-129-6"></a>track_sum(&quot;items_emitted&quot;, count)
 </code></pre></div>
 <h4 id="e"><code>e = ()</code><a class="headerlink" href="#e" title="Permanent link">&para;</a></h4>
 <p>Clear entire event (remove all fields).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-129-1" name="__codelineno-129-1" href="#__codelineno-129-1"></a>if e.should_drop {
-<a id="__codelineno-129-2" name="__codelineno-129-2" href="#__codelineno-129-2"></a>    e = ()  // Event is filtered out
-<a id="__codelineno-129-3" name="__codelineno-129-3" href="#__codelineno-129-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-130-1" name="__codelineno-130-1" href="#__codelineno-130-1"></a>if e.should_drop {
+<a id="__codelineno-130-2" name="__codelineno-130-2" href="#__codelineno-130-2"></a>    e = ()  // Event is filtered out
+<a id="__codelineno-130-3" name="__codelineno-130-3" href="#__codelineno-130-3"></a>}
 </code></pre></div>
 <h4 id="efield"><code>e.field = ()</code><a class="headerlink" href="#efield" title="Permanent link">&para;</a></h4>
 <p>Remove individual field from event.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-130-1" name="__codelineno-130-1" href="#__codelineno-130-1"></a>e.password = ()                                       // Remove sensitive field
-<a id="__codelineno-130-2" name="__codelineno-130-2" href="#__codelineno-130-2"></a>e.temp_data = ()                                      // Clean up temporary field
+<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a>e.password = ()                                       // Remove sensitive field
+<a id="__codelineno-131-2" name="__codelineno-131-2" href="#__codelineno-131-2"></a>e.temp_data = ()                                      // Clean up temporary field
 </code></pre></div>
 <h4 id="eabsorb_kvfield-options"><code>e.absorb_kv(field [, options])</code><a class="headerlink" href="#eabsorb_kvfield-options" title="Permanent link">&para;</a></h4>
 <p>Parse inline <code>key=value</code> tokens from a string field, merge the pairs into the event, and get a status report back. Returns a map with <code>status</code>, <code>data</code>, <code>written</code>, <code>remainder</code>, <code>removed_source</code>, and <code>error</code> so scripts can branch without guessing.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a>let res = e.absorb_kv(&quot;msg&quot;, #{ sep: &quot;,&quot;, kv_sep: &quot;=&quot;, keep_source: true });
-<a id="__codelineno-131-2" name="__codelineno-131-2" href="#__codelineno-131-2"></a>if res.status == &quot;applied&quot; {
-<a id="__codelineno-131-3" name="__codelineno-131-3" href="#__codelineno-131-3"></a>    e.cleaned_msg = res.remainder ?? &quot;&quot;;
-<a id="__codelineno-131-4" name="__codelineno-131-4" href="#__codelineno-131-4"></a>    // Parsed keys now live on the event; res.data mirrors the inserted pairs
-<a id="__codelineno-131-5" name="__codelineno-131-5" href="#__codelineno-131-5"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>let res = e.absorb_kv(&quot;msg&quot;, #{ sep: &quot;,&quot;, kv_sep: &quot;=&quot;, keep_source: true });
+<a id="__codelineno-132-2" name="__codelineno-132-2" href="#__codelineno-132-2"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-132-3" name="__codelineno-132-3" href="#__codelineno-132-3"></a>    e.cleaned_msg = res.remainder ?? &quot;&quot;;
+<a id="__codelineno-132-4" name="__codelineno-132-4" href="#__codelineno-132-4"></a>    // Parsed keys now live on the event; res.data mirrors the inserted pairs
+<a id="__codelineno-132-5" name="__codelineno-132-5" href="#__codelineno-132-5"></a>}
 </code></pre></div>
 <p>Options:</p>
 <ul>
@@ -7074,12 +7099,12 @@
 <p>Unknown option keys set <code>status = "invalid_option"</code>; in <code>--strict</code> mode this aborts the pipeline.</p>
 <h4 id="eabsorb_jsonfield-options"><code>e.absorb_json(field [, options])</code><a class="headerlink" href="#eabsorb_jsonfield-options" title="Permanent link">&para;</a></h4>
 <p>Parse a JSON object from a string field, merge its keys into the event, and return the same status map as <code>absorb_kv()</code>. On success the source field is deleted unless <code>keep_source</code> is true, and <code>remainder</code> is always <code>()</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>let res = e.absorb_json(&quot;payload&quot;);
-<a id="__codelineno-132-2" name="__codelineno-132-2" href="#__codelineno-132-2"></a>if res.status == &quot;applied&quot; {
-<a id="__codelineno-132-3" name="__codelineno-132-3" href="#__codelineno-132-3"></a>    e.actor = e.actor ?? e.user;      // merged from payload
-<a id="__codelineno-132-4" name="__codelineno-132-4" href="#__codelineno-132-4"></a>} else if res.status == &quot;parse_error&quot; {
-<a id="__codelineno-132-5" name="__codelineno-132-5" href="#__codelineno-132-5"></a>    warn(`bad payload: ${res.error}`);
-<a id="__codelineno-132-6" name="__codelineno-132-6" href="#__codelineno-132-6"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>let res = e.absorb_json(&quot;payload&quot;);
+<a id="__codelineno-133-2" name="__codelineno-133-2" href="#__codelineno-133-2"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-133-3" name="__codelineno-133-3" href="#__codelineno-133-3"></a>    e.actor = e.actor ?? e.user;      // merged from payload
+<a id="__codelineno-133-4" name="__codelineno-133-4" href="#__codelineno-133-4"></a>} else if res.status == &quot;parse_error&quot; {
+<a id="__codelineno-133-5" name="__codelineno-133-5" href="#__codelineno-133-5"></a>    warn(`bad payload: ${res.error}`);
+<a id="__codelineno-133-6" name="__codelineno-133-6" href="#__codelineno-133-6"></a>}
 </code></pre></div>
 <p>Options:</p>
 <ul>
@@ -7091,55 +7116,55 @@
 <p>A read-only <code>span</code> object is injected into scope whenever a <code>--span-close</code> script runs. Use it to emit per-span rollups after Kelora closes a count- or time-based window.</p>
 <h3 id="span-identity">Span Identity<a class="headerlink" href="#span-identity" title="Permanent link">&para;</a></h3>
 <p><code>span.id</code> returns the current span identifier. Count-based spans use <code>#&lt;index&gt;</code> (zero-based). Time-based spans use <code>ISO_START/DURATION</code> (e.g. <code>2024-05-19T12:00:00Z/5m</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
 </code></pre></div>
 <h3 id="span-boundaries">Span Boundaries<a class="headerlink" href="#span-boundaries" title="Permanent link">&para;</a></h3>
 <p><code>span.start</code> and <code>span.end</code> expose the half-open window bounds as <code>DateTime</code> values. Count-based spans return <code>()</code> for both fields.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>if span.start != () {
-<a id="__codelineno-134-2" name="__codelineno-134-2" href="#__codelineno-134-2"></a>    print(`Window: ${span.start} → ${span.end}`);
-<a id="__codelineno-134-3" name="__codelineno-134-3" href="#__codelineno-134-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>if span.start != () {
+<a id="__codelineno-135-2" name="__codelineno-135-2" href="#__codelineno-135-2"></a>    print(`Window: ${span.start} → ${span.end}`);
+<a id="__codelineno-135-3" name="__codelineno-135-3" href="#__codelineno-135-3"></a>}
 </code></pre></div>
 <h3 id="span-size-and-events">Span Size and Events<a class="headerlink" href="#span-size-and-events" title="Permanent link">&para;</a></h3>
 <p><code>span.size</code> reports how many events survived filters and were buffered in the span. <code>span.events</code> returns those events in arrival order. Each map includes span metadata fields (<code>span_status</code>, <code>span_id</code>, <code>span_start</code>, <code>span_end</code>) alongside the original event data.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>let included = span.events
-<a id="__codelineno-135-2" name="__codelineno-135-2" href="#__codelineno-135-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
-<a id="__codelineno-135-3" name="__codelineno-135-3" href="#__codelineno-135-3"></a>    .len();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>let included = span.events
+<a id="__codelineno-136-2" name="__codelineno-136-2" href="#__codelineno-136-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
+<a id="__codelineno-136-3" name="__codelineno-136-3" href="#__codelineno-136-3"></a>    .len();
 </code></pre></div>
 <h3 id="metrics-snapshot">Metrics Snapshot<a class="headerlink" href="#metrics-snapshot" title="Permanent link">&para;</a></h3>
 <p><code>span.metrics</code> contains per-span deltas from <code>track_*</code> calls. Values reset automatically after each span closes, so you can emit per-span summaries without manual bookkeeping.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>let metrics = span.metrics;
-<a id="__codelineno-136-2" name="__codelineno-136-2" href="#__codelineno-136-2"></a>let hits = metrics[&quot;events&quot;];          // from track_count(&quot;events&quot;)
-<a id="__codelineno-136-3" name="__codelineno-136-3" href="#__codelineno-136-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_count(&quot;failures&quot;)
-<a id="__codelineno-136-4" name="__codelineno-136-4" href="#__codelineno-136-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
-<a id="__codelineno-136-5" name="__codelineno-136-5" href="#__codelineno-136-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>let metrics = span.metrics;
+<a id="__codelineno-137-2" name="__codelineno-137-2" href="#__codelineno-137-2"></a>let hits = metrics[&quot;events&quot;];          // from track_count(&quot;events&quot;)
+<a id="__codelineno-137-3" name="__codelineno-137-3" href="#__codelineno-137-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_count(&quot;failures&quot;)
+<a id="__codelineno-137-4" name="__codelineno-137-4" href="#__codelineno-137-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
+<a id="__codelineno-137-5" name="__codelineno-137-5" href="#__codelineno-137-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
 </code></pre></div>
 <hr />
 <h2 id="quick-reference-by-use-case">Quick Reference by Use Case<a class="headerlink" href="#quick-reference-by-use-case" title="Permanent link">&para;</a></h2>
 <p><strong>Error Extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>e.error_code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>e.error_code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1)
 </code></pre></div></p>
 <p><strong>IP Anonymization:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>e.masked_ip = e.client_ip.mask_ip()
-<a id="__codelineno-138-2" name="__codelineno-138-2" href="#__codelineno-138-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>e.masked_ip = e.client_ip.mask_ip()
+<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
 </code></pre></div></p>
 <p><strong>Time Filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
-<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>    // Process recent events
-<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
+<a id="__codelineno-140-2" name="__codelineno-140-2" href="#__codelineno-140-2"></a>    // Process recent events
+<a id="__codelineno-140-3" name="__codelineno-140-3" href="#__codelineno-140-3"></a>}
 </code></pre></div></p>
 <p><strong>Metrics Tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>track_count(e.service)
-<a id="__codelineno-140-2" name="__codelineno-140-2" href="#__codelineno-140-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
-<a id="__codelineno-140-3" name="__codelineno-140-3" href="#__codelineno-140-3"></a>track_unique(&quot;users&quot;, e.user_id)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>track_count(e.service)
+<a id="__codelineno-141-2" name="__codelineno-141-2" href="#__codelineno-141-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
+<a id="__codelineno-141-3" name="__codelineno-141-3" href="#__codelineno-141-3"></a>track_unique(&quot;users&quot;, e.user_id)
 </code></pre></div></p>
 <p><strong>Array Fan-Out:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
 </code></pre></div></p>
 <p><strong>Safe Field Access:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
-<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>if e.has_path(&quot;error.details.code&quot;) {
-<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>    e.detailed = true
-<a id="__codelineno-142-4" name="__codelineno-142-4" href="#__codelineno-142-4"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
+<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>if e.has_path(&quot;error.details.code&quot;) {
+<a id="__codelineno-143-3" name="__codelineno-143-3" href="#__codelineno-143-3"></a>    e.detailed = true
+<a id="__codelineno-143-4" name="__codelineno-143-4" href="#__codelineno-143-4"></a>}
 </code></pre></div></p>
 <hr />
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
@@ -7150,9 +7175,9 @@
 <li><a href="../../how-to/extract-and-mask-sensitive-data/">How-To: Sanitize Logs Before Sharing</a> - Practical examples</li>
 </ul>
 <p>For more details, run:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># This reference in CLI form</span>
-<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai language guide</span>
-<a id="__codelineno-143-3" name="__codelineno-143-3" href="#__codelineno-143-3"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># This reference in CLI form</span>
+<a id="__codelineno-144-2" name="__codelineno-144-2" href="#__codelineno-144-2"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai language guide</span>
+<a id="__codelineno-144-3" name="__codelineno-144-3" href="#__codelineno-144-3"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
 </code></pre></div></p>
 
 
