@@ -630,12 +630,12 @@ e.doubled = e.numbers.map(|n| n * 2)
 e.names = e.users.map(|u| u.name)
 ```
 
-#### `array.flatten([style [, max_depth]])`
+#### `array.flattened([style [, max_depth]])`
 Flatten nested arrays/objects.
 
 ```rhai
-e.flat = [[1, 2], [3, 4]].flatten()                   // [1, 2, 3, 4]
-e.fields = e.nested.flatten("dot", 2)                 // Flatten to dot notation
+e.flat = [[1, 2], [3, 4]].flattened()                 // Returns flat map
+e.fields = e.nested.flattened("dot", 2)               // Flatten to dot notation
 ```
 
 ### Testing
@@ -734,15 +734,6 @@ if e.has("error_code") {
 }
 ```
 
-#### `map.has("key")`
-Check if map contains key whose value is not `()`.
-
-```rhai
-if e.has("user") {
-    // `user` present and not explicitly cleared to ()
-}
-```
-
 ### Field Manipulation
 
 #### `map.rename_field("old", "new")`
@@ -753,17 +744,32 @@ e.rename_field("old_name", "new_name")
 ```
 
 #### `map.merge(other_map)`
-Merge another map into this one.
+Merge another map into this one (overwrites existing keys).
 
 ```rhai
 e.merge(#{status: "ok", timestamp: now()})
 ```
 
-#### `map.flatten([separator [, style]])`
+#### `map.enrich(other_map)`
+Merge another map, inserting only missing keys (does not overwrite).
+
+```rhai
+e.enrich(#{user: "default", level: "info"})  // Only adds if keys don't exist
+```
+
+#### `map.flattened([style [, max_depth]])`
 Flatten nested object to dot notation.
 
 ```rhai
-let flat = e.nested.flatten(".", "dot")               // {a: {b: 1}} → {"a.b": 1}
+let flat = e.nested.flattened("dot")                  // {a: {b: 1}} → {"a.b": 1}
+let flat = e.nested.flattened("dot", 2)               // With max depth
+```
+
+#### `map.flatten_field("field_name")`
+Flatten just one specific field from the map.
+
+```rhai
+let flat = e.flatten_field("metadata")                // Flattens only e.metadata
 ```
 
 #### `map.unflatten([separator])`

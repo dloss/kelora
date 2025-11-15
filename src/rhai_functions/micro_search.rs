@@ -1,7 +1,7 @@
-//! Micro search helpers for Rhai filters (`like`, `ilike`, `has`, `matches`)
+//! Micro search helpers for Rhai filters (`like`, `ilike`, `matches`)
 use lru::LruCache;
 use regex::{Regex, RegexBuilder};
-use rhai::{Engine, EvalAltResult, ImmutableString, Map, Position};
+use rhai::{Engine, EvalAltResult, Position};
 use std::{cell::RefCell, num::NonZeroUsize};
 use unicode_normalization::UnicodeNormalization;
 
@@ -19,9 +19,6 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("like", |text: &str, pattern: &str| like_impl(text, pattern));
     engine.register_fn("ilike", |text: &str, pattern: &str| {
         ilike_impl(text, pattern)
-    });
-    engine.register_fn("has", |map: Map, key: ImmutableString| {
-        has_impl(&map, key.as_str())
     });
     engine.register_fn(
         "matches",
@@ -60,10 +57,6 @@ pub fn ilike_impl(haystack: &str, pattern: &str) -> bool {
     let haystack_chars: Vec<char> = haystack_norm.chars().collect();
     let pattern_chars: Vec<char> = pattern_norm.chars().collect();
     glob_like_unicode(&haystack_chars, &pattern_chars)
-}
-
-fn has_impl(map: &Map, key: &str) -> bool {
-    map.get(key).is_some_and(|value| !value.is_unit())
 }
 
 #[doc(hidden)]
@@ -200,15 +193,31 @@ mod tests {
 
     #[test]
     fn has_checks_unit_semantics() {
+        // Test that map.has() correctly handles unit values
+        // Note: has() is registered in maps.rs module
+        let mut engine = rhai::Engine::new();
+        crate::rhai_functions::maps::register_functions(&mut engine);
+
         let mut map = RhaiMap::new();
         map.insert("present".into(), Dynamic::from("value"));
         map.insert("empty_string".into(), Dynamic::from(""));
         map.insert("unit".into(), Dynamic::UNIT);
 
-        assert!(has_impl(&map, "present"));
-        assert!(has_impl(&map, "empty_string"));
-        assert!(!has_impl(&map, "unit"));
-        assert!(!has_impl(&map, "missing"));
+        let mut scope = rhai::Scope::new();
+        scope.push("map", map);
+
+        assert!(engine
+            .eval_with_scope::<bool>(&mut scope, "map.has(\"present\")")
+            .unwrap());
+        assert!(engine
+            .eval_with_scope::<bool>(&mut scope, "map.has(\"empty_string\")")
+            .unwrap());
+        assert!(!engine
+            .eval_with_scope::<bool>(&mut scope, "map.has(\"unit\")")
+            .unwrap());
+        assert!(!engine
+            .eval_with_scope::<bool>(&mut scope, "map.has(\"missing\")")
+            .unwrap());
     }
 
     #[test]

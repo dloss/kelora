@@ -111,11 +111,13 @@ array.unique()                       Remove all duplicate elements (preserves fi
   
 MAP/OBJECT FUNCTIONS:
 map.contains("key")                  Check if map contains key (ignores value) (builtin)
+map.enrich(other_map)                Merge another map, inserting only missing keys
 map.flattened([style [,max_depth]])  Return new flattened map from nested object
+map.flatten_field("field_name")      Flatten just one field from the map
 map.get_path("field.path" [,default]) Safe nested field access with fallback
-map.has("key")                 Check if map contains key with non-unit value
+map.has("key")                       Check if map contains key with non-unit value
 map.has_path("field.path")           Check if nested field path exists
-map.merge(other_map)                 Merge another map into this one
+map.merge(other_map)                 Merge another map into this one (overwrites existing keys)
 map.normalized([patterns])           Return new map with all string fields normalized
 map.path_equals("path", value)       Safe nested field comparison
 map.rename_field("old", "new")       Rename a field, returns true if successful
