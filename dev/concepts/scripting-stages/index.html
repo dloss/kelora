@@ -4180,7 +4180,7 @@
 <p>When you need local variables to persist across operations, use semicolons within a single <code>--exec</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># ✅ CORRECT - Both operations in one stage</span>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let ctx = e.user_id; e.context = ctx; emit(e)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let ctx = e.user_id; e.context = ctx&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p><strong>When to use multiple stages vs semicolons:</strong></p>
