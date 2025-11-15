@@ -221,10 +221,16 @@ pub fn json_to_dynamic(value: &serde_json::Value) -> Dynamic {
     match value {
         serde_json::Value::String(s) => Dynamic::from(s.clone()),
         serde_json::Value::Number(n) => {
+            // Try i64 first for signed integers
             if let Some(i) = n.as_i64() {
                 Dynamic::from(i)
+            // Try u64 for large unsigned integers (prevents precision loss)
+            } else if let Some(u) = n.as_u64() {
+                Dynamic::from(u)
+            // Fall back to f64 for floating-point numbers
             } else if let Some(f) = n.as_f64() {
                 Dynamic::from(f)
+            // Final fallback: preserve as string
             } else {
                 Dynamic::from(n.to_string())
             }
@@ -991,6 +997,46 @@ mod tests {
         let json = serde_json::json!(-42);
         let dynamic = json_to_dynamic(&json);
         assert_eq!(dynamic.as_int().unwrap(), -42);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_large_u64() {
+        // Test a u64 value larger than i64::MAX (9,223,372,036,854,775,807)
+        // but still precisely representable
+        let large_u64 = 18_446_744_073_709_551_615u64; // u64::MAX
+
+        // Parse from JSON string to preserve exact value
+        let json_str = format!("{}", large_u64);
+        let json: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+        let dynamic = json_to_dynamic(&json);
+
+        // Should preserve the exact u64 value, not convert to lossy f64
+        // Rhai supports u64, so we should be able to extract it
+        assert!(
+            dynamic.is::<u64>(),
+            "Expected u64 type, got: {:?}",
+            dynamic.type_name()
+        );
+        let extracted: u64 = dynamic.clone().try_cast().unwrap();
+        assert_eq!(extracted, large_u64);
+    }
+
+    #[test]
+    fn test_json_to_dynamic_u64_above_i64_max() {
+        // Test a u64 value just above i64::MAX
+        let value = 9_223_372_036_854_775_808u64; // i64::MAX + 1
+
+        let json_str = format!("{}", value);
+        let json: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+        let dynamic = json_to_dynamic(&json);
+
+        // Should be stored as u64, not f64 (which would lose precision)
+        assert!(
+            dynamic.is::<u64>(),
+            "Expected u64 type for value > i64::MAX"
+        );
+        let extracted: u64 = dynamic.clone().try_cast().unwrap();
+        assert_eq!(extracted, value);
     }
 
     // Tests for Event field operations
