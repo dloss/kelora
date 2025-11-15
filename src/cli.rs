@@ -558,6 +558,10 @@ pub struct Cli {
     /// Show multiline strategy help and exit
     #[arg(long = "help-multiline", help_heading = "Help Options")]
     pub help_multiline: bool,
+
+    /// Show regex format help and exit
+    #[arg(long = "help-regex", help_heading = "Help Options")]
+    pub help_regex: bool,
 }
 
 impl Cli {
