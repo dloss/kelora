@@ -2350,7 +2350,7 @@
 <li><strong>Performance sweep</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">for</span><span class="w"> </span>size<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="m">5000</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Batch size </span><span class="nv">$size</span><span class="s2">&quot;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="nv">$size</span><span class="w"> </span>-qq
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="nv">$size</span><span class="w"> </span>-q
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">done</span>
 </code></pre></div></li>
 </ul>

@@ -2282,11 +2282,15 @@
 <ul>
 <li>Use <code>-l warn,error,critical</code> when log levels are reliable and you want broad coverage.</li>
 <li>Reuse helpers like <code>e.message.contains()</code> or <code>e.get_path()</code> for structured payloads.</li>
-<li>Keep <code>eprint()</code> output short; it routes to stderr and works well with <code>-qq</code> (see next step).</li>
+<li>Keep <code>eprint()</code> output short; it routes to stderr and works well with <code>-q</code>/<code>--silent</code> (see next step).</li>
 </ul>
 <h2 id="step-3-control-noise">Step 3: Control Noise<a class="headerlink" href="#step-3-control-noise" title="Permanent link">&para;</a></h2>
 <p>Quiet modes and counters help you avoid pager fatigue.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Need alerts to come from <code>print</code>/<code>eprint</code>? Use <code>-q --no-diagnostics</code> to suppress events and diagnostics while keeping script output. <code>--silent</code> suppresses script output too.</p>
+</div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;level|&quot; + e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-m<span class="w"> </span><span class="se">\</span>
@@ -2299,14 +2303,12 @@
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s1">    }</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s1">  &#39;</span>
 </code></pre></div>
-<ul>
-<li><code>-q</code> hides diagnostics; <code>-qq</code> also suppresses event output so only alerts are printed.</li>
-<li>Combine <code>--window N</code> with <code>window.pluck()</code> to examine rolling slices when bursts matter more than totals.</li>
-<li>Call <code>exit(1)</code> to propagate failure into CI or cron jobs; Kelora exits with 0 otherwise.</li>
-</ul>
+<p>-- <code>-q</code> suppresses events so only alerts are printed; add <code>--silent</code> to suppress diagnostics too.
+- Combine <code>--window N</code> with <code>window.pluck()</code> to examine rolling slices when bursts matter more than totals.
+- Call <code>exit(1)</code> to propagate failure into CI or cron jobs; Kelora exits with 0 otherwise.</p>
 <h2 id="step-4-decide-how-to-emit-alerts">Step 4: Decide How to Emit Alerts<a class="headerlink" href="#step-4-decide-how-to-emit-alerts" title="Permanent link">&para;</a></h2>
 <p>Direct alerts to stderr for on-call use, files for dashboards, or downstream commands.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-l<span class="w"> </span>critical<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;append_file(&quot;/tmp/critical.log&quot;, `${e.timestamp} ${e.service} ${e.message}\n`)&#39;</span>
 </code></pre></div>
@@ -2320,30 +2322,30 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="ch">#!/usr/bin/env bash</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qqq<span class="w"> </span>-l<span class="w"> </span>critical<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--silent<span class="w"> </span>-l<span class="w"> </span>critical<span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;Critical log seen at %s\n&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>date<span class="w"> </span>-Is<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>mail<span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;PROD critical&quot;</span><span class="w"> </span>ops@example.com
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">fi</span>
 </code></pre></div>
 <ul>
-<li><code>-qqq</code> suppresses both events and script output; only exit status remains.</li>
+<li><code>--silent</code> suppresses terminal output; only exit status (and metrics files) remains.</li>
 <li>Add <code>systemd</code> or supervisor configuration around this script to handle restarts.</li>
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Service-specific watcher</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;search&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;search error: &quot; + e.message)&#39;</span>
 </code></pre></div></li>
 <li><strong>Spike detection</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">50</span><span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">50</span><span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let recent = window_events();&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if recent.len() &gt;= 10 { eprint(&quot;ALERT: error spike (&quot; + recent.len().to_string() + &quot; / 50)&quot;) }&#39;</span>
 </code></pre></div></li>
 <li><strong>Access log latency guard</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() &gt; 1.5&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(`SLOW: ${e.method} ${e.path} ${e.request_time}s`)&#39;</span>
 </code></pre></div></li>

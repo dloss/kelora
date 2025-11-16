@@ -6492,7 +6492,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Recommended alias for easy pattern discovery</span>
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>kelora<span class="w"> </span>--save-alias<span class="w"> </span>patterns<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;patterns&quot;, e.message.normalized())&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">  </span>--metrics<span class="w"> </span>-qq
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">  </span>--metrics<span class="w"> </span>-q
 <a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>
 <a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a><span class="c1"># Usage</span>
 <a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>kelora<span class="w"> </span>-a<span class="w"> </span>patterns<span class="w"> </span>app.log
@@ -6979,7 +6979,7 @@
 <a id="__codelineno-116-2" name="__codelineno-116-2" href="#__codelineno-116-2"></a>e.lines = read_lines(&quot;data.txt&quot;)
 </code></pre></div>
 <h4 id="printmessage-eprintmessage"><code>print(message)</code> / <code>eprint(message)</code><a class="headerlink" href="#printmessage-eprintmessage" title="Permanent link">&para;</a></h4>
-<p>Print to stdout/stderr (suppressed with <code>-qqq</code>).</p>
+<p>Print to stdout/stderr (suppressed with <code>--no-script-output</code>/<code>--silent</code>).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-117-1" name="__codelineno-117-1" href="#__codelineno-117-1"></a>print(&quot;Processing event: &quot; + e.id)
 <a id="__codelineno-117-2" name="__codelineno-117-2" href="#__codelineno-117-2"></a>eprint(&quot;Warning: &quot; + e.error)
 </code></pre></div>

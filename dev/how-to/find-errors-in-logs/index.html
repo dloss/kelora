@@ -2323,7 +2323,7 @@
 </code></pre></div>
 <p>Alternatives:
 - <code>-J</code> (or <code>-F json</code>) for structured archives.
-- <code>-q</code> or <code>-qq</code> when piping into shell scripts that only care about exit codes.</p>
+- <code>-q</code> or <code>--silent</code> when piping into shell scripts that only care about exit codes.</p>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Web server failures</strong><br />
@@ -2344,7 +2344,7 @@
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--metrics
 </code></pre></div></li>
 <li><strong>Fail fast in CI</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-qq<span class="w"> </span>-j<span class="w"> </span>build/kelora.log<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>build/kelora.log<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;no errors&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="o">||</span><span class="w"> </span><span class="o">(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;errors detected&quot;</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="o">)</span>
 </code></pre></div></li>

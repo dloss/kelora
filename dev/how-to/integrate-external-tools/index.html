@@ -3176,9 +3176,9 @@
 <p>See <a href="../batch-process-archives/">Process Archives at Scale</a> for parallel processing strategies.</p>
 <hr />
 <h3 id="tail-journalctl-live-streaming">tail / journalctl — Live Streaming<a class="headerlink" href="#tail-journalctl-live-streaming" title="Permanent link">&para;</a></h3>
-<p>Stream live log data into Kelora for real-time monitoring and alerting during deployments or incidents. Use <code>tail -F</code> (capital F) to survive log rotation. Combine with Kelora's <code>-qq</code> for quiet monitoring.</p>
+<p>Stream live log data into Kelora for real-time monitoring and alerting during deployments or incidents. Use <code>tail -F</code> (capital F) to survive log rotation. Combine with Kelora's <code>-q</code> to suppress event output while keeping diagnostics and metrics visible.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Monitor live logs for critical errors</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>critical<span class="w"> </span>-qq
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>critical<span class="w"> </span>-q
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Stream systemd journal logs for a specific service</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>myapp.service<span class="w"> </span>-f<span class="w"> </span>--output<span class="o">=</span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
@@ -3312,7 +3312,7 @@
 <a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
 <a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="c1"># Kelora can pre-aggregate before export for faster qsv processing</span>
 <a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/app.jsonl<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span><span class="s1">&#39;print(span.id + &quot;,&quot; + span.size.to_string())&#39;</span><span class="w"> </span>-qq<span class="w"> </span>&gt;<span class="w"> </span>summary.csv
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span><span class="s1">&#39;print(span.id + &quot;,&quot; + span.size.to_string())&#39;</span><span class="w"> </span>-q<span class="w"> </span>&gt;<span class="w"> </span>summary.csv
 <a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>qsv<span class="w"> </span>stats<span class="w"> </span>summary.csv
 </code></pre></div>
 <p><a href="https://github.com/jqnatividad/qsv">qsv documentation</a></p>
@@ -3571,7 +3571,7 @@
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="c1"># Pre-aggregate with spans before uploading</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.jsonl.gz<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(span.metrics.to_json())&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;events&quot;); track_sum(&quot;bytes&quot;, e.size)&#39;</span><span class="w"> </span>-qq<span class="w"> </span>&gt;<span class="w"> </span>metrics.jsonl
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;events&quot;); track_sum(&quot;bytes&quot;, e.size)&#39;</span><span class="w"> </span>-q<span class="w"> </span>&gt;<span class="w"> </span>metrics.jsonl
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://victorialogs:9428/insert/jsonl<span class="w"> </span>-d<span class="w"> </span>@metrics.jsonl
 </code></pre></div>
 <hr />
@@ -3624,7 +3624,7 @@
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="c1"># Simple alert on specific conditions</span>
 <a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-qq<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;payments&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;PAYMENT ERROR: &quot; + e.message)&#39;</span>
 <a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>
@@ -3633,7 +3633,7 @@
 <a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(&quot;errors&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a><span class="w">    </span>--span-close<span class="w"> </span><span class="s1">&#39;if span.metrics[&quot;errors&quot;].or_empty() &gt; 10 { eprint(&quot;⚠️  High error rate: &quot; + span.metrics[&quot;errors&quot;].to_string() + &quot; errors/min&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a><span class="w">    </span>-qq
+<a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a><span class="w">    </span>-q
 <a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a>
 <a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a><span class="c1"># Spike detection with window functions</span>
 <a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
@@ -3641,7 +3641,7 @@
 <a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.recent_500s = window.pluck(&quot;status&quot;).filter(|x| x &gt;= 500).len()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.recent_500s &gt; 5&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-24" name="__codelineno-25-24" href="#__codelineno-25-24"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;🚨 Error spike detected: &quot; + e.recent_500s.to_string() + &quot; 5xx in last 20 requests&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a><span class="w">    </span>-qq
+<a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a><span class="w">    </span>-q
 </code></pre></div>
 <hr />
 <h2 id="when-to-use-kelora-vs-external-tools">When to Use Kelora vs External Tools<a class="headerlink" href="#when-to-use-kelora-vs-external-tools" title="Permanent link">&para;</a></h2>
@@ -3681,7 +3681,7 @@
 <p><strong>Benchmark your pipeline:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Measure each stage</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="nb">time</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;ERROR&quot;</span><span class="w"> </span>logs/huge.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/huge.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>-qq<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/huge.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>-q<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
 <a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="c1"># Compare integrated vs multi-tool approaches</span>
 <a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>hyperfine<span class="w"> </span><span class="se">\</span>
