@@ -2241,6 +2241,7 @@
 <p>Choose Kelora when you need <strong>programmable log processing</strong> in one streaming pipeline—filtering, transforming, and analyzing structured events with embedded scripts.</p>
 <p><strong>Reach for Kelora when:</strong></p>
 <ul>
+<li>You're processing small to medium logs (a few hundred thousand lines; Kelora is slow)</li>
 <li>You need multi-stage transformations (parse → filter → enrich → filter)</li>
 <li>Your logs mix formats or use custom delimiters</li>
 <li>You want windowed analysis (error bursts, sliding metrics)</li>
@@ -2253,6 +2254,7 @@
 <li>Pure JSON queries: <code>jq</code> (ubiquitous, similar speed)</li>
 <li>Interactive exploration: <code>lnav</code> (TUI with SQL)</li>
 <li>CSV analytics: <code>qsv</code>/<code>miller</code> (faster for stats)</li>
+<li>Large logs (millions of events): <code>loki</code>/<code>victoria-logs</code>/<code>openobserve</code> (production log systems)</li>
 </ul>
 <p>Kelora trades raw speed for expressiveness. See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for benchmarks and the full decision matrix.</p>
 <h2 id="integrate-with">Integrate With<a class="headerlink" href="#integrate-with" title="Permanent link">&para;</a></h2>
