@@ -476,13 +476,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-examples" class="md-nav__link">
+  <a href="#when-to-use-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Examples
+        When to Use Kelora
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#live-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Live Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-filter-convert-the-basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Filter &amp; Convert (The Basics)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-modify-anonymize-scripting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Modify &amp; Anonymize (Scripting)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-contextual-analysis-pipeline-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Contextual Analysis (Pipeline Order)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -491,28 +541,6 @@
     <span class="md-ellipsis">
       
         Advanced Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-kelora" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why Kelora
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integrate-with" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integrate With
       
     </span>
   </a>
@@ -2109,13 +2137,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-examples" class="md-nav__link">
+  <a href="#when-to-use-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Examples
+        When to Use Kelora
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#live-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Live Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Live Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-filter-convert-the-basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Filter &amp; Convert (The Basics)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-modify-anonymize-scripting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Modify &amp; Anonymize (Scripting)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-contextual-analysis-pipeline-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Contextual Analysis (Pipeline Order)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2124,28 +2202,6 @@
     <span class="md-ellipsis">
       
         Advanced Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#why-kelora" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why Kelora
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integrate-with" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integrate With
       
     </span>
   </a>
@@ -2206,22 +2262,47 @@
 
 
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
-<p><strong>Scriptable log processor for the command line.</strong></p>
-<p>Parse messy logs into structured events, then filter, transform, and analyze them with embedded <a href="https://rhai.rs">Rhai</a> scripting (a Rust-based scripting language with JavaScript-like syntax).</p>
+<p><strong>Turn messy logs into structured data with one command.</strong></p>
+<p>Kelora is a scriptable log processor for the command line. Parse mixed formats, filter with complex logic, and analyze streams using embedded <a href="https://rhai.rs">Rhai</a> scripting—all in a single binary.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
+</code></pre></div>
+<blockquote>
+<p>Or download pre-built binaries for <strong>Windows, macOS, and Linux</strong> from <a href="https://github.com/dloss/kelora/releases">GitHub Releases</a>.</p>
+</blockquote>
 <div class="admonition note">
 <p class="admonition-title">Development Status</p>
 <p>Pre-1.0 tool generated entirely by AI agents. Validated by a large test suite and Rust security tools; see <a href="#development-approach">Development Approach</a> and the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before relying on it in production. APIs might change without notice before v1.0.</p>
 </div>
-<h2 id="quick-examples">Quick Examples<a class="headerlink" href="#quick-examples" title="Permanent link">&para;</a></h2>
-<p><strong>Detect problems</strong> - Filter server errors and slow requests. Each log line becomes an event (<code>e</code>) you can query with expressions like <code>e.status &gt;= 500</code>:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label><label for="__tabbed_1_2">Log Data</label></div>
+<h2 id="when-to-use-kelora">When to Use Kelora<a class="headerlink" href="#when-to-use-kelora" title="Permanent link">&para;</a></h2>
+<p>Kelora trades speed for programmability. It's <strong>slower than grep, awk, and jq</strong>, but adds stateful scripting for complex multi-stage transformations.</p>
+<p><strong>Reach for Kelora when:</strong></p>
+<ul>
+<li>You have <strong>mixed formats</strong> - Logs that aren't consistently JSON or need custom parsing</li>
+<li>You're <strong>chaining tools</strong> - Replacing <code>grep | awk | jq | custom-script.py</code> with one command</li>
+<li>You need <strong>stateful logic</strong> - Counting errors per service, windowed metrics, lookup tables</li>
+<li>You want <strong>embedded scripting</strong> - Complex transformations without leaving your shell</li>
+</ul>
+<p><strong>Use specialized tools for:</strong></p>
+<ul>
+<li><strong>Fast search</strong>: <code>grep</code>/<code>rg</code> (50-100× faster) - Finding text patterns in logs</li>
+<li><strong>Simple splitting</strong>: <code>awk</code> (faster, ubiquitous) - Field extraction and simple statistics</li>
+<li><strong>JSON queries</strong>: <code>jq</code> (faster, everywhere) - Querying structured JSON documents</li>
+<li><strong>Interactive exploration</strong>: <code>lnav</code> (TUI with SQL) - Browsing logs with a visual interface</li>
+</ul>
+<p>Kelora focuses on transformation—pipe its output to <code>lnav</code> (visualization), <code>jq</code> (further processing), <code>qsv</code> (analytics), or <code>sqlite-utils</code> (storage). See <a href="how-to/integrate-external-tools/">Integrate with External Tools</a> for more patterns.</p>
+<hr />
+<h2 id="live-examples">Live Examples<a class="headerlink" href="#live-examples" title="Permanent link">&para;</a></h2>
+<h3 id="1-filter-convert-the-basics">1. Filter &amp; Convert (The Basics)<a class="headerlink" href="#1-filter-convert-the-basics" title="Permanent link">&para;</a></h3>
+<p><em>Scenario: Filter a Logfmt file for slow requests and output clean JSON.</em></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label><label for="__tabbed_1_2">Input Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status.to_int() &gt;= 500 || e.latency_ms.to_int() &gt; 1200&#39;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status.to_int() &gt;= 500 || e.latency_ms.to_int() &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ts=&#39;2024-07-17T12:00:04Z&#39; level=&#39;INFO&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=200 latency_ms=1450
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ts=&#39;2024-07-17T12:00:05Z&#39; level=&#39;ERROR&#39; method=&#39;POST&#39; path=&#39;/checkout&#39; status=502 latency_ms=2100
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;ts&quot;:&quot;2024-07-17T12:00:04Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/checkout&quot;,&quot;status&quot;:200,&quot;latency_ms&quot;:1450}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;ts&quot;:&quot;2024-07-17T12:00:05Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/checkout&quot;,&quot;status&quot;:502,&quot;latency_ms&quot;:2100}
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2235,47 +2316,41 @@
 </div>
 </div>
 </div>
-<p><strong>Parse custom formats and extract structured data</strong> - Name columns by position, with <code>*message</code> capturing everything remaining, then extract nested key-value pairs:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Log Data</label></div>
+<h3 id="2-modify-anonymize-scripting">2. Modify &amp; Anonymize (Scripting)<a class="headerlink" href="#2-modify-anonymize-scripting" title="Permanent link">&para;</a></h3>
+<p><em>Scenario: Mask user emails for privacy and convert milliseconds to seconds before printing.</em></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Input Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts level service request_id *message&#39;</span><span class="w"> </span>examples/release_pipe.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--levels<span class="w"> </span>warn,error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;message&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-F<span class="w"> </span>json
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:02&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;message&quot;:&quot;retrying payment&quot;,&quot;request_id&quot;:&quot;req-92&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;duration&quot;:&quot;890ms&quot;,&quot;status&quot;:&quot;SOFT_FAIL&quot;}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;ts&quot;:&quot;2024-07-17 12:10:06&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;message&quot;:&quot;final failure&quot;,&quot;request_id&quot;:&quot;req-93&quot;,&quot;service&quot;:&quot;checkout&quot;,&quot;cause&quot;:&quot;db_deadlock&quot;,&quot;duration&quot;:&quot;1480ms&quot;,&quot;status&quot;:&quot;HARD_FAIL&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora:<span class="w"> </span>Error:<span class="w"> </span>File<span class="w"> </span>not<span class="w"> </span>found:<span class="w"> </span>examples/audit.jsonl
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>2024-07-17 12:10:02|WARN|checkout|req-92|retrying payment status=SOFT_FAIL duration=890ms
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2024-07-17 12:10:06|ERROR|checkout|req-93|final failure status=HARD_FAIL duration=1480ms cause=db_deadlock
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>2024-07-17 12:10:09|INFO|checkout|req-94|completed status=OK duration=640ms
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cat:<span class="w"> </span>examples/audit.jsonl:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
 </code></pre></div>
 </div>
 </div>
 </div>
-<p><strong>Enrich events with recent context</strong> - Keep recent events in a sliding window to analyze patterns and add context:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Log Data</label></div>
+<h3 id="3-contextual-analysis-pipeline-order">3. Contextual Analysis (Pipeline Order)<a class="headerlink" href="#3-contextual-analysis-pipeline-order" title="Permanent link">&para;</a></h3>
+<p><em>Scenario: An error occurred. We want to see the error, but enrich it with context from the </em><em>previous</em><em> log line (even if that line wasn't an error).</em></p>
+<div class="admonition tip">
+<p class="admonition-title">Sequential Pipeline</p>
+<p>Kelora processes flags in order. We run <code>--exec</code> <strong>before</strong> <code>--filter</code> so the sliding window can see the normal events before they are discarded.</p>
+</div>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Input Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_errors.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let err = window.filter(|x| x.level == &quot;ERROR&quot;);</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          if err.len() &gt; 0 { e.ctx = err[0].error; }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,endpoint,ctx<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>-F<span class="w"> </span>logfmt
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; &amp;&amp; window.len() &gt; 1 {</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">      e.prev_ctx = window[1].info;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>-F<span class="w"> </span>logfmt
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-07-17T12:00:00Z endpoint=/health
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=2024-07-17T12:00:05Z endpoint=/api/data ctx=&quot;database timeout&quot;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=2024-07-17T12:00:10Z endpoint=/api/users ctx=&quot;database timeout&quot;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=2024-07-17T12:00:12Z endpoint=/api/admin ctx=&quot;token expired&quot;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=2024-07-17T12:00:15Z endpoint=/api/posts ctx=&quot;token expired&quot;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=2024-07-17T12:00:18Z endpoint=/api/billing ctx=&quot;token expired&quot;
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=2024-07-17T12:00:20Z endpoint=/api/export ctx=&quot;service unavailable&quot;
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=2024-07-17T12:00:25Z endpoint=/health ctx=&quot;service unavailable&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-07-17T12:00:05Z level=ERROR endpoint=/api/data status=500 error=&quot;database timeout&quot;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=2024-07-17T12:00:12Z level=ERROR endpoint=/api/admin status=401 request_id=req-abc123 user=alice token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcwMDAwMDAwMH0.sig1 error=&quot;token expired&quot;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=2024-07-17T12:00:18Z level=ERROR endpoint=/api/billing status=401 request_id=req-def456 user=bob token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IiLCJyb2xlIjoidXNlciIsImV4cCI6MTcwNTAwMDAwMH0.sig2 error=&quot;token expired&quot;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=2024-07-17T12:00:20Z level=ERROR endpoint=/api/export status=503 error=&quot;service unavailable&quot;
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2291,6 +2366,7 @@
 </div>
 </div>
 </div>
+<hr />
 <h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
 <p>Beyond basic filtering, Kelora includes specialized functions that solve problems you'd otherwise need multiple tools or custom scripts for:</p>
 <ul>
@@ -2301,36 +2377,15 @@
 <li><strong><a href="how-to/power-user-techniques/#pattern-normalization">Pattern normalization</a></strong> - Group error messages by replacing IPs, UUIDs, emails with placeholders</li>
 <li><strong><a href="how-to/power-user-techniques/#deterministic-sampling-with-bucket">Deterministic sampling</a></strong> - Hash-based sampling that's consistent across log rotations and distributed systems</li>
 </ul>
-<p>See <strong><a href="how-to/power-user-techniques/">Power-User Techniques</a></strong> for real-world examples.</p>
-<h2 id="why-kelora">Why Kelora<a class="headerlink" href="#why-kelora" title="Permanent link">&para;</a></h2>
-<p>Choose Kelora when you need <strong>programmable log processing</strong> in one streaming pipeline—filtering, transforming, and analyzing structured events with embedded scripts.</p>
-<p><strong>Reach for Kelora when:</strong></p>
-<ul>
-<li>You're processing small to medium logs (a few hundred thousand lines; Kelora is slow)</li>
-<li>You need multi-stage transformations (parse → filter → enrich → filter)</li>
-<li>Your logs mix formats or use custom delimiters</li>
-<li>You want windowed analysis (error bursts, sliding metrics)</li>
-<li>You're chaining grep + awk + jq + custom scripts</li>
-</ul>
-<p><strong>Use specialized tools for:</strong></p>
-<ul>
-<li>Simple text search: <code>grep</code>/<code>rg</code> (50-100× faster)</li>
-<li>Basic field extraction: <code>awk</code> (faster for simple splits)</li>
-<li>Pure JSON queries: <code>jq</code> (ubiquitous, similar speed)</li>
-<li>Interactive exploration: <code>lnav</code> (TUI with SQL)</li>
-<li>CSV analytics: <code>qsv</code>/<code>miller</code> (faster for stats)</li>
-<li>Large logs (millions of events): <code>loki</code>/<code>victoria-logs</code>/<code>openobserve</code> (production log systems)</li>
-</ul>
-<p>Kelora trades raw speed for expressiveness. See <a href="concepts/performance-comparisons/">Performance Comparisons</a> for benchmarks and the full decision matrix.</p>
-<h2 id="integrate-with">Integrate With<a class="headerlink" href="#integrate-with" title="Permanent link">&para;</a></h2>
-<p>Pipe Kelora's output to: <strong>jq</strong> (JSON transforms) · <strong>lnav</strong> (interactive TUI) · <strong>SQLite/DuckDB</strong> (SQL queries) · <strong>qsv/miller</strong> (CSV analytics) · <strong>rare</strong> (visualizations)</p>
-<p>See <a href="how-to/integrate-external-tools/">Integrate Kelora with External Tools</a> for 18 tools and usage patterns.</p>
+<p>See <strong><a href="how-to/power-user-techniques/">Power-User Techniques</a></strong> for real-world examples. For performance characteristics and when to use specialized tools instead, see <a href="concepts/performance-comparisons/">Performance Comparisons</a>.</p>
+<hr />
 <h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
 <p><strong><a href="quickstart/">→ Quickstart (5 minutes)</a></strong> - Install and run your first commands</p>
 <p><strong><a href="tutorials/basics/">→ Tutorial: Basics (30 minutes)</a></strong> - Learn input formats, filtering, and output</p>
 <p><strong><a href="troubleshooting/">→ Troubleshooting</a></strong> - Fix common issues and debug effectively</p>
 <p><strong><a href="how-to/">→ How-To Guides</a></strong> - Solve specific problems</p>
 <p>For deeper understanding, see <a href="concepts/">Concepts</a>. For complete reference, see <a href="glossary/">Glossary</a>, <a href="reference/functions/">Functions</a>, <a href="reference/formats/">Formats</a>, and <a href="reference/cli-reference/">CLI options</a>.</p>
+<hr />
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>Kelora is open source software licensed under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>.</p>
 <h2 id="development-approach">Development Approach<a class="headerlink" href="#development-approach" title="Permanent link">&para;</a></h2>
