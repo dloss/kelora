@@ -85,7 +85,7 @@ pub fn register(engine: &mut Engine) {
         })
         .register_fn("clear", |state: &mut StateMap| {
             let mut map = state.inner.write().unwrap();
-            map.clear();
+            map.clear()
         })
         .register_fn("remove", |state: &mut StateMap, key: &str| -> Dynamic {
             let mut map = state.inner.write().unwrap();
@@ -121,6 +121,13 @@ pub fn register(engine: &mut Engine) {
             let mut map = state.inner.write().unwrap();
             *map = other;
         });
+
+    // Register conversion to regular Map (for compatibility with functions that accept Map)
+    // Users can call state.to_map().to_logfmt(), state.to_map().to_kv(), etc.
+    engine.register_fn("to_map", |state: &mut StateMap| -> Map {
+        let map = state.inner.read().unwrap();
+        map.clone()
+    });
 
     // Register StateNotAvailable type
     engine.register_type::<StateNotAvailable>();
