@@ -2262,7 +2262,7 @@
 
 
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
-<p><strong>Turn messy logs into structured data with one command.</strong></p>
+<p><strong>Turn messy logs into structured data.</strong></p>
 <p>Kelora is a scriptable log processor for the command line. Parse mixed formats, filter with complex logic, and analyze streams using embedded <a href="https://rhai.rs">Rhai</a> scripting—all in a single binary.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
 </code></pre></div>
@@ -2289,7 +2289,7 @@
 <li><strong>JSON queries</strong>: <code>jq</code> (faster, everywhere) - Querying structured JSON documents</li>
 <li><strong>Interactive exploration</strong>: <code>lnav</code> (TUI with SQL) - Browsing logs with a visual interface</li>
 </ul>
-<p>Kelora works well in pipelines—combine it with <a href="how-to/integrate-external-tools/">lnav, jq, qsv, and other tools</a> for visualization, analytics, and storage.</p>
+<p>Kelora reads from files or stdin and outputs JSON, CSV, or Logfmt. Combine it with <a href="how-to/integrate-external-tools/">lnav, jq, qsv, and other tools</a> for visualization, analytics, and storage.</p>
 <hr />
 <h2 id="live-examples">Live Examples<a class="headerlink" href="#live-examples" title="Permanent link">&para;</a></h2>
 <h3 id="1-filter-convert-the-basics">1. Filter &amp; Convert (The Basics)<a class="headerlink" href="#1-filter-convert-the-basics" title="Permanent link">&para;</a></h3>
@@ -2378,7 +2378,7 @@
 </div>
 <hr />
 <h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
-<p>Beyond basic filtering, Kelora includes specialized functions that solve problems you'd otherwise need multiple tools or custom scripts for:</p>
+<p>Beyond basic filtering and conversion, Kelora includes specialized functions that solve problems you'd otherwise need multiple tools or custom scripts for:</p>
 <ul>
 <li><strong><a href="how-to/power-user-techniques/#deep-structure-flattening">Deep flattening</a></strong> - Fan out nested JSON arrays to flat records (<code>emit_each()</code>)</li>
 <li><strong><a href="how-to/power-user-techniques/#extract-json-from-unstructured-text">Extract JSON from text</a></strong> - Pull structured data from unstructured log lines</li>
