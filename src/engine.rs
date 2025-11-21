@@ -665,6 +665,7 @@ pub struct RhaiEngine {
     scope_template: Scope<'static>,
     suppress_side_effects: bool,
     conf_map: Option<rhai::Map>,
+    state_map: Option<crate::rhai_functions::state::StateMap>,
     debug_tracker: Option<DebugTracker>,
     execution_tracer: Option<ExecutionTracer>,
 }
@@ -703,6 +704,7 @@ impl Clone for RhaiEngine {
             scope_template: self.scope_template.clone(),
             suppress_side_effects,
             conf_map: self.conf_map.clone(),
+            state_map: self.state_map.clone(),
             debug_tracker: self.debug_tracker.clone(),
             execution_tracer: self.execution_tracer.clone(),
         }
@@ -1033,6 +1035,7 @@ impl RhaiEngine {
             scope_template,
             suppress_side_effects: false,
             conf_map: None,
+            state_map: Some(crate::rhai_functions::state::StateMap::new()),
             debug_tracker: None,
             execution_tracer: None,
         }
@@ -1410,6 +1413,13 @@ impl RhaiEngine {
 
         let mut scope = self.scope_template.clone();
 
+        // Add state map (sequential mode) or dummy object (parallel mode)
+        if crate::rhai_functions::strings::is_parallel_mode() {
+            scope.push("state", crate::rhai_functions::state::StateNotAvailable);
+        } else if let Some(ref state_map) = self.state_map {
+            scope.push("state", state_map.clone());
+        }
+
         let _ = self
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
@@ -1455,6 +1465,13 @@ impl RhaiEngine {
             scope.set_value("conf", conf_map.clone());
         }
 
+        // Add state map (sequential mode) or dummy object (parallel mode)
+        if crate::rhai_functions::strings::is_parallel_mode() {
+            scope.push("state", crate::rhai_functions::state::StateNotAvailable);
+        } else if let Some(ref state_map) = self.state_map {
+            scope.push("state", state_map.clone());
+        }
+
         let _ = self
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
@@ -1487,6 +1504,13 @@ impl RhaiEngine {
         // Set the frozen conf map (read-only)
         if let Some(ref conf_map) = self.conf_map {
             scope.set_value("conf", conf_map.clone());
+        }
+
+        // Add state map (sequential mode) or dummy object (parallel mode)
+        if crate::rhai_functions::strings::is_parallel_mode() {
+            scope.push("state", crate::rhai_functions::state::StateNotAvailable);
+        } else if let Some(ref state_map) = self.state_map {
+            scope.push("state", state_map.clone());
         }
 
         crate::rhai_functions::file_ops::clear_pending_ops();
@@ -1733,6 +1757,13 @@ impl RhaiEngine {
         // Set the frozen conf map
         if let Some(ref conf_map) = self.conf_map {
             scope.set_value("conf", conf_map.clone());
+        }
+
+        // Add state map (sequential mode) or dummy object (parallel mode)
+        if crate::rhai_functions::strings::is_parallel_mode() {
+            scope.push("state", crate::rhai_functions::state::StateNotAvailable);
+        } else if let Some(ref state_map) = self.state_map {
+            scope.push("state", state_map.clone());
         }
 
         scope
