@@ -67,6 +67,14 @@ pub fn register(engine: &mut Engine) {
             let map = state.inner.read().unwrap();
             map.contains_key(key)
         })
+        .register_fn("get", |state: &mut StateMap, key: &str| -> Dynamic {
+            let map = state.inner.read().unwrap();
+            map.get(key).cloned().unwrap_or(Dynamic::UNIT)
+        })
+        .register_fn("set", |state: &mut StateMap, key: &str, value: Dynamic| {
+            let mut map = state.inner.write().unwrap();
+            map.insert(key.into(), value);
+        })
         .register_fn("len", |state: &mut StateMap| -> i64 {
             let map = state.inner.read().unwrap();
             map.len() as i64
