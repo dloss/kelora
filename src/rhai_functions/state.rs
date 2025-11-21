@@ -7,7 +7,7 @@ use rhai::{Dynamic, Engine, Map};
 use std::fmt;
 use std::sync::{Arc, RwLock};
 
-/// Wrapper for a shared mutable map that serves as the state store
+/// Wrapper for shared mutable map (behaves like a regular Rhai map with interior mutability)
 #[derive(Debug, Clone)]
 pub struct StateMap {
     inner: Arc<RwLock<Map>>,
@@ -50,7 +50,7 @@ pub fn register(engine: &mut Engine) {
     // Register StateMap type
     engine.register_type::<StateMap>();
 
-    // Register indexer operations for StateMap
+    // Register indexers (most important - makes state["key"] work)
     engine
         .register_indexer_get(|state: &mut StateMap, key: &str| -> Dynamic {
             let map = state.inner.read().unwrap();
@@ -61,7 +61,7 @@ pub fn register(engine: &mut Engine) {
             map.insert(key.into(), value);
         });
 
-    // Register StateMap methods
+    // Register all standard map methods
     engine
         .register_fn("contains", |state: &mut StateMap, key: &str| -> bool {
             let map = state.inner.read().unwrap();
@@ -79,21 +79,48 @@ pub fn register(engine: &mut Engine) {
             let map = state.inner.read().unwrap();
             map.keys().map(|k| Dynamic::from(k.to_string())).collect()
         })
+        .register_fn("values", |state: &mut StateMap| -> Vec<Dynamic> {
+            let map = state.inner.read().unwrap();
+            map.values().cloned().collect()
+        })
         .register_fn("clear", |state: &mut StateMap| {
             let mut map = state.inner.write().unwrap();
             map.clear();
         })
-        .register_fn("get", |state: &mut StateMap, key: &str| -> Dynamic {
-            let map = state.inner.read().unwrap();
-            map.get(key).cloned().unwrap_or(Dynamic::UNIT)
+        .register_fn("remove", |state: &mut StateMap, key: &str| -> Dynamic {
+            let mut map = state.inner.write().unwrap();
+            map.remove(key).unwrap_or(Dynamic::UNIT)
         })
-        .register_fn(
-            "insert",
-            |state: &mut StateMap, key: &str, value: Dynamic| {
-                let mut map = state.inner.write().unwrap();
-                map.insert(key.into(), value);
-            },
-        );
+        .register_fn("mixin", |state: &mut StateMap, other: Map| {
+            let mut map = state.inner.write().unwrap();
+            for (k, v) in other {
+                map.insert(k, v);
+            }
+        })
+        .register_fn("+", |state: StateMap, other: Map| -> StateMap {
+            let new_state = StateMap::new();
+            {
+                let src = state.inner.read().unwrap();
+                let mut dst = new_state.inner.write().unwrap();
+                for (k, v) in src.iter() {
+                    dst.insert(k.clone(), v.clone());
+                }
+                for (k, v) in other {
+                    dst.insert(k, v);
+                }
+            }
+            new_state
+        })
+        .register_fn("+=", |state: &mut StateMap, other: Map| {
+            let mut map = state.inner.write().unwrap();
+            for (k, v) in other {
+                map.insert(k, v);
+            }
+        })
+        .register_fn("fill_with", |state: &mut StateMap, other: Map| {
+            let mut map = state.inner.write().unwrap();
+            *map = other;
+        });
 
     // Register StateNotAvailable type
     engine.register_type::<StateNotAvailable>();
