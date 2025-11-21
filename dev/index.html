@@ -487,6 +487,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1386,6 +1397,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/power-user-techniques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Power-User Techniques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2081,6 +2120,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2221,22 +2271,37 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-07-17T12:00:00Z endpoint=/health
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=2024-07-17T12:00:05Z endpoint=/api/data ctx=&quot;database timeout&quot;
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=2024-07-17T12:00:10Z endpoint=/api/users ctx=&quot;database timeout&quot;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=2024-07-17T12:00:15Z endpoint=/api/posts ctx=&quot;database timeout&quot;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=2024-07-17T12:00:20Z endpoint=/api/export ctx=&quot;service unavailable&quot;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=2024-07-17T12:00:25Z endpoint=/health ctx=&quot;service unavailable&quot;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=2024-07-17T12:00:12Z endpoint=/api/admin ctx=&quot;token expired&quot;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=2024-07-17T12:00:15Z endpoint=/api/posts ctx=&quot;token expired&quot;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=2024-07-17T12:00:18Z endpoint=/api/billing ctx=&quot;token expired&quot;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=2024-07-17T12:00:20Z endpoint=/api/export ctx=&quot;service unavailable&quot;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=2024-07-17T12:00:25Z endpoint=/health ctx=&quot;service unavailable&quot;
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:00Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/health&quot;,&quot;status&quot;:200}
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:05Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/data&quot;,&quot;status&quot;:500,&quot;error&quot;:&quot;database timeout&quot;}
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:10Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/api/users&quot;,&quot;status&quot;:200}
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:15Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/api/posts&quot;,&quot;status&quot;:200}
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:20Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/export&quot;,&quot;status&quot;:503,&quot;error&quot;:&quot;service unavailable&quot;}
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:25Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/health&quot;,&quot;status&quot;:200}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:12Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/admin&quot;,&quot;status&quot;:401,&quot;request_id&quot;:&quot;req-abc123&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcwMDAwMDAwMH0.sig1&quot;,&quot;error&quot;:&quot;token expired&quot;}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:15Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/api/posts&quot;,&quot;status&quot;:200}
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:18Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/billing&quot;,&quot;status&quot;:401,&quot;request_id&quot;:&quot;req-def456&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IiLCJyb2xlIjoidXNlciIsImV4cCI6MTcwNTAwMDAwMH0.sig2&quot;,&quot;error&quot;:&quot;token expired&quot;}
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:20Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/export&quot;,&quot;status&quot;:503,&quot;error&quot;:&quot;service unavailable&quot;}
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:25Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/health&quot;,&quot;status&quot;:200}
 </code></pre></div>
 </div>
 </div>
 </div>
+<h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
+<p>Beyond basic filtering, Kelora includes specialized functions that solve problems you'd otherwise need multiple tools or custom scripts for:</p>
+<ul>
+<li><strong><a href="how-to/power-user-techniques/#deep-structure-flattening">Deep flattening</a></strong> - Fan out nested JSON arrays to flat records (<code>emit_each()</code>)</li>
+<li><strong><a href="how-to/power-user-techniques/#extract-json-from-unstructured-text">Extract JSON from text</a></strong> - Pull structured data from unstructured log lines</li>
+<li><strong><a href="how-to/power-user-techniques/#jwt-parsing-without-verification">JWT parsing</a></strong> - Extract claims without signature verification for debugging</li>
+<li><strong><a href="how-to/power-user-techniques/#multiple-hash-algorithms">Cryptographic pseudonymization</a></strong> - Privacy-preserving anonymization with Argon2id + HKDF + HMAC</li>
+<li><strong><a href="how-to/power-user-techniques/#pattern-normalization">Pattern normalization</a></strong> - Group error messages by replacing IPs, UUIDs, emails with placeholders</li>
+<li><strong><a href="how-to/power-user-techniques/#deterministic-sampling-with-bucket">Deterministic sampling</a></strong> - Hash-based sampling that's consistent across log rotations and distributed systems</li>
+</ul>
+<p>See <strong><a href="how-to/power-user-techniques/">Power-User Techniques</a></strong> for real-world examples.</p>
 <h2 id="why-kelora">Why Kelora<a class="headerlink" href="#why-kelora" title="Permanent link">&para;</a></h2>
 <p>Choose Kelora when you need <strong>programmable log processing</strong> in one streaming pipeline—filtering, transforming, and analyzing structured events with embedded scripts.</p>
 <p><strong>Reach for Kelora when:</strong></p>
