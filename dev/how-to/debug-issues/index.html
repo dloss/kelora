@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://dloss.github.io/kelora/dev/how-to/analyze-web-traffic/">
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/how-to/debug-issues/">
       
       
-        <link rel="prev" href="../find-errors-in-logs/">
+        <link rel="prev" href="../">
       
       
-        <link rel="next" href="../monitor-application-health/">
+        <link rel="next" href="../find-errors-in-logs/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Analyze Web Traffic - Kelora</title>
+        <title>Debug Issues Systematically - Kelora</title>
       
     
     
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#analyze-web-traffic" class="md-skip">
+        <a href="#debug-issues-systematically" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Analyze Web Traffic
+              Debug Issues Systematically
             
           </span>
         </div>
@@ -874,10 +874,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../debug-issues/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug Issues Systematically
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -893,6 +920,181 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-debugging-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Debugging Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging-tools-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging Tools Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging Tools Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-f-inspect-see-field-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -F inspect - See Field Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-verbose-detailed-error-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --verbose - Detailed Error Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-stats-processing-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --stats - Processing Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-take-n-limit-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --take N - Limit Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-strict-fail-fast-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --strict - Fail-Fast Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-keep-lines-ignore-lines-pre-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --keep-lines / --ignore-lines - Pre-filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-more-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting More Help
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting More Help">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Help
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tips-for-asking-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips for Asking Questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -930,37 +1132,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Analyze Web Traffic
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../analyze-web-traffic/" class="md-nav__link">
         
   
   
@@ -976,136 +1151,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#when-to-use-this-guide" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When to Use This Guide
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Before You Start
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-1-inspect-a-sample" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 1: Inspect a Sample
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-highlight-errors-and-hotspots" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 2: Highlight Errors and Hotspots
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-3-investigate-slow-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 3: Investigate Slow Endpoints
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-summarise-by-status-and-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 4: Summarise by Status and Source
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-5-export-a-shareable-slice" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 5: Export a Shareable Slice
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#variations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Variations
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validate-and-communicate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validate and Communicate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2159,10 +2204,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#when-to-use-this-guide" class="md-nav__link">
+  <a href="#quick-debugging-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When to Use This Guide
+        Quick Debugging Workflow
       
     </span>
   </a>
@@ -2170,98 +2215,143 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#before-you-start" class="md-nav__link">
+  <a href="#debugging-tools-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Before You Start
+        Debugging Tools Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging Tools Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-f-inspect-see-field-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -F inspect - See Field Structure
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-1-inspect-a-sample" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#-verbose-detailed-error-output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1: Inspect a Sample
+        --verbose - Detailed Error Output
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-2-highlight-errors-and-hotspots" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#-stats-processing-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2: Highlight Errors and Hotspots
+        --stats - Processing Summary
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-3-investigate-slow-endpoints" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#-take-n-limit-output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3: Investigate Slow Endpoints
+        --take N - Limit Output
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-4-summarise-by-status-and-source" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#-strict-fail-fast-mode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4: Summarise by Status and Source
+        --strict - Fail-Fast Mode
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#step-5-export-a-shareable-slice" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#-keep-lines-ignore-lines-pre-filter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5: Export a Shareable Slice
+        --keep-lines / --ignore-lines - Pre-filter
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#variations" class="md-nav__link">
+  <a href="#getting-more-help" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Variations
+        Getting More Help
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Getting More Help">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in Help
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#validate-and-communicate" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Validate and Communicate
+        Documentation
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#tips-for-asking-questions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See Also
+        Tips for Asking Questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
       
     </span>
   </a>
@@ -2288,123 +2378,186 @@
   
 
 
-<h1 id="analyze-web-traffic">Analyze Web Traffic<a class="headerlink" href="#analyze-web-traffic" title="Permanent link">&para;</a></h1>
-<p>Understand how HTTP traffic behaves, catch spikes in errors, and share data-backed summaries with stakeholders.</p>
-<h2 id="when-to-use-this-guide">When to Use This Guide<a class="headerlink" href="#when-to-use-this-guide" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Operating Nginx or Apache services that emit combined-format access logs.</li>
-<li>Investigating customer complaints about latency or failed requests.</li>
-<li>Building quick daily reports without moving data into another system.</li>
-</ul>
-<h2 id="before-you-start">Before You Start<a class="headerlink" href="#before-you-start" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Ensure the access logs include the fields you need. The bundled sample <code>examples/simple_combined.log</code> follows the Apache/Nginx combined format.</li>
-<li><code>request_time</code> is only present when you add it to your Nginx log format. If it is missing, prefer backend application metrics or use upstream timing fields instead.</li>
-<li>Run commands from the repo root or update paths to point at your own logs (Kelora handles <code>.gz</code> files automatically).</li>
-</ul>
-<h2 id="step-1-inspect-a-sample">Step 1: Inspect a Sample<a class="headerlink" href="#step-1-inspect-a-sample" title="Permanent link">&para;</a></h2>
-<p>Confirm the log format and field names before you start filtering.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
+<h1 id="debug-issues-systematically">Debug Issues Systematically<a class="headerlink" href="#debug-issues-systematically" title="Permanent link">&para;</a></h1>
+<p>Learn how to diagnose and fix problems when Kelora isn't working as expected.</p>
+<h2 id="quick-debugging-workflow">Quick Debugging Workflow<a class="headerlink" href="#quick-debugging-workflow" title="Permanent link">&para;</a></h2>
+<p>When something isn't working, follow this process:</p>
+<ol>
+<li><strong>Check field names and types</strong> - Use <code>-F inspect</code> to see actual field structure</li>
+<li><strong>Enable error output</strong> - Use <code>--verbose</code> to see detailed error messages</li>
+<li><strong>Check statistics</strong> - Use <code>--stats</code> to see how many events were filtered/errored</li>
+<li><strong>Test with small sample</strong> - Use <code>--take 10</code> for fast iteration</li>
+<li><strong>Use strict mode</strong> - Use <code>--strict</code> to fail-fast on errors during debugging</li>
+</ol>
+<p><strong>Example debugging session:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. What fields are actually present?</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># 2. Why is my filter not matching?</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span>--verbose<span class="w"> </span>--stats
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># 3. Test quickly with a small sample</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span>--take<span class="w"> </span><span class="m">10</span>
 </code></pre></div>
-<p>Key fields available in the combined format:</p>
-<ul>
-<li><code>ip</code>, <code>timestamp</code>, <code>method</code>, <code>path</code>, <code>status</code>, <code>bytes</code></li>
-<li>Optional <code>request_time</code> (Nginx custom field), <code>referer</code>, <code>user_agent</code></li>
-<li>Use <code>--keys</code> or <code>-k</code> to display additional headers if you extended the format.</li>
-</ul>
-<h2 id="step-2-highlight-errors-and-hotspots">Step 2: Highlight Errors and Hotspots<a class="headerlink" href="#step-2-highlight-errors-and-hotspots" title="Permanent link">&para;</a></h2>
-<p>Filter for failing requests and capture the context you need for triage.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,ip,status,request
+<hr />
+<h2 id="debugging-tools-reference">Debugging Tools Reference<a class="headerlink" href="#debugging-tools-reference" title="Permanent link">&para;</a></h2>
+<h3 id="-f-inspect-see-field-structure"><code>-F inspect</code> - See Field Structure<a class="headerlink" href="#-f-inspect-see-field-structure" title="Permanent link">&para;</a></h3>
+<p>Shows field names, types, and values for debugging:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
-<p>Tips:</p>
-<ul>
-<li>For client errors, use <code>'e.status &gt;= 400 &amp;&amp; e.status &lt; 500'</code>.</li>
-<li>When the application encodes errors in the URI, add a second filter such as <code>e.path.contains("/api/")</code>.</li>
-<li>Use <code>--before-context</code> and <code>--after-context</code> if you need to see neighbouring requests from the same source.</li>
-</ul>
-<h2 id="step-3-investigate-slow-endpoints">Step 3: Investigate Slow Endpoints<a class="headerlink" href="#step-3-investigate-slow-endpoints" title="Permanent link">&para;</a></h2>
-<p>Track latency outliers to confirm performance complaints or detect resource exhaustion.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,method,path,request_time,status
-</code></pre></div>
-<p>If <code>request_time</code> is not logged:</p>
-<ul>
-<li>Switch to backend service logs via <a href="../monitor-application-health/">Build a Service Health Snapshot</a>.</li>
-<li>Consider adding upstream timing variables (<code>$upstream_response_time</code>, <code>$request_time</code>) to your Nginx format so Kelora can read them directly.</li>
-</ul>
-<h2 id="step-4-summarise-by-status-and-source">Step 4: Summarise by Status and Source<a class="headerlink" href="#step-4-summarise-by-status-and-source" title="Permanent link">&para;</a></h2>
-<p>Generate quick aggregates to prioritise remediation work or include in change reviews.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;status_&quot; + e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;method_&quot; + e.method)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--metrics
-</code></pre></div>
-<ul>
-<li><code>track_count(e.ip)</code> highlights noisy consumers or suspicious sources.</li>
-<li>Use <code>track_bucket()</code> with <code>request_time</code> to build latency histograms.</li>
-<li>Run with <code>--stats</code> for throughput metrics and parse error counts.</li>
-</ul>
-<h2 id="step-5-export-a-shareable-slice">Step 5: Export a Shareable Slice<a class="headerlink" href="#step-5-export-a-shareable-slice" title="Permanent link">&para;</a></h2>
-<p>Deliver the findings to teammates or import them into downstream tools.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,ip,status,request,user_agent<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>web-errors.csv
-</code></pre></div>
-<p>Alternatives:</p>
-<ul>
-<li><code>-J</code> to produce JSON for ingestion into a SIEM.</li>
-<li>Add <code>--no-diagnostics</code> to suppress diagnostics if the output is piped into another script.</li>
-</ul>
-<h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
-<ul>
-<li>
-<p><strong>Focus on a specific endpoint</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.path.starts_with(&quot;/api/orders&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--metrics
+<p><strong>Output example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>🔹 {&quot;timestamp&quot;: String(&quot;2024-01-15T10:00:00Z&quot;), &quot;level&quot;: String(&quot;ERROR&quot;), &quot;status&quot;: Integer(500)}
 </code></pre></div></p>
-</li>
-<li>
-<p><strong>Compare time windows</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;yesterday 00:00&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;yesterday 12:00&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;morning_&quot; + e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--metrics
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Detect suspicious behaviour</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.method == &quot;POST&quot; &amp;&amp; !e.path.starts_with(&quot;/api/&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,ip,method,path
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Process rotated archives</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log*.gz<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics
-</code></pre></div></p>
-</li>
-</ul>
-<h2 id="validate-and-communicate">Validate and Communicate<a class="headerlink" href="#validate-and-communicate" title="Permanent link">&para;</a></h2>
+<p><strong>Use when:</strong></p>
 <ul>
-<li>Use <code>--strict</code> if you added new log fields and want Kelora to stop on parsing mistakes.</li>
-<li>Attach <code>--stats</code> output to change reports so readers can see event counts and error rates.</li>
-<li>Note whether <code>request_time</code> or other custom fields were available; this influences how teams interpret latency results.</li>
+<li>Need to see actual field types</li>
+<li>Unsure what fields are present</li>
+<li>Debugging type comparison errors</li>
 </ul>
-<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<hr />
+<h3 id="-verbose-detailed-error-output"><code>--verbose</code> - Detailed Error Output<a class="headerlink" href="#-verbose-detailed-error-output" title="Permanent link">&para;</a></h3>
+<p>Shows detailed error messages for parse, filter, and exec errors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--verbose
+</code></pre></div>
+<p><strong>Use multiple times for more detail:</strong></p>
 <ul>
-<li><a href="../batch-process-archives/">Process Archives at Scale</a> for large historical datasets.</li>
-<li><a href="../build-streaming-alerts/">Design Streaming Alerts</a> to notify on live 5xx spikes.</li>
-<li><a href="../parse-syslog-files/">Investigate Syslog Sources</a> for load balancer or reverse-proxy system logs.</li>
+<li><code>-v</code> - Show error messages as they occur</li>
+<li><code>-vv</code> - Show error messages plus original line content for parse errors</li>
+<li><code>-vvv</code> - Show error messages, lines, plus detailed line analysis (character counts, encoding issues)</li>
+</ul>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Filters aren't working</li>
+<li>Parse errors occurring</li>
+<li>Scripts failing</li>
+</ul>
+<hr />
+<h3 id="-stats-processing-summary"><code>--stats</code> - Processing Summary<a class="headerlink" href="#-stats-processing-summary" title="Permanent link">&para;</a></h3>
+<p>Shows statistics at end of processing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats
+</code></pre></div>
+<p><strong>Output example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>🔹 Processed 1000 lines, 850 events output, 150 filtered, 0 errors
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>🔹 Time range: 2024-01-15T10:00:00Z to 2024-01-15T11:00:00Z
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>🔹 Levels: ERROR(150), WARN(300), INFO(550)
+</code></pre></div></p>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Need to understand filtering results</li>
+<li>Checking error counts</li>
+<li>Verifying time ranges</li>
+<li>Understanding level distribution</li>
+</ul>
+<hr />
+<h3 id="-take-n-limit-output"><code>--take N</code> - Limit Output<a class="headerlink" href="#-take-n-limit-output" title="Permanent link">&para;</a></h3>
+<p>Process only first N events (after filtering):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--take<span class="w"> </span><span class="m">10</span>
+</code></pre></div>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Testing filters quickly</li>
+<li>Debugging with large files</li>
+<li>Iterating on scripts</li>
+<li>Checking output format</li>
+</ul>
+<p><strong>Tip:</strong> Combine with <code>--stats</code> to see total counts while limiting output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>large.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--take<span class="w"> </span><span class="m">10</span><span class="w"> </span>--stats
+</code></pre></div>
+<hr />
+<h3 id="-strict-fail-fast-mode"><code>--strict</code> - Fail-Fast Mode<a class="headerlink" href="#-strict-fail-fast-mode" title="Permanent link">&para;</a></h3>
+<p>Abort immediately on first error:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
+</code></pre></div>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Debugging parse errors</li>
+<li>Validating log format</li>
+<li>Testing scripts</li>
+<li>CI/CD validation</li>
+</ul>
+<p><strong>Difference from default:</strong></p>
+<ul>
+<li><strong>Default (resilient):</strong> Continue on errors, show count at end</li>
+<li><strong>Strict:</strong> Abort immediately on first error</li>
+</ul>
+<hr />
+<h3 id="-keep-lines-ignore-lines-pre-filter"><code>--keep-lines</code> / <code>--ignore-lines</code> - Pre-filter<a class="headerlink" href="#-keep-lines-ignore-lines-pre-filter" title="Permanent link">&para;</a></h3>
+<p>Filter at line level before parsing (faster than post-parse filtering):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Only process lines containing ERROR</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--keep-lines<span class="w"> </span><span class="s1">&#39;ERROR&#39;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Skip debug lines</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--ignore-lines<span class="w"> </span><span class="s1">&#39;DEBUG|TRACE&#39;</span>
+</code></pre></div>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Processing very large files</li>
+<li>Most lines can be skipped early</li>
+<li>Performance is critical</li>
+</ul>
+<hr />
+<h2 id="getting-more-help">Getting More Help<a class="headerlink" href="#getting-more-help" title="Permanent link">&para;</a></h2>
+<h3 id="built-in-help">Built-in Help<a class="headerlink" href="#built-in-help" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai scripting guide</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># All built-in functions</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kelora<span class="w"> </span>--help-time<span class="w">         </span><span class="c1"># Timestamp format reference</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>kelora<span class="w"> </span>--help-multiline<span class="w">    </span><span class="c1"># Multiline strategies</span>
+</code></pre></div>
+<h3 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><a href="../../quickstart/">Quickstart</a></strong> - Get started in 5 minutes</li>
+<li><strong><a href="../../tutorials/basics/">Basics Tutorial</a></strong> - Learn fundamental concepts</li>
+<li><strong><a href="../../tutorials/intro-to-rhai/">Intro to Rhai</a></strong> - Learn scripting</li>
+<li><strong><a href="../../glossary/">Glossary</a></strong> - Terminology reference</li>
+<li><strong><a href="../../reference/common-errors/">Common Errors</a></strong> - Error reference</li>
+<li><strong><a href="../../concepts/error-handling/">Error Handling</a></strong> - Error modes in detail</li>
+<li><strong><a href="../../reference/exit-codes/">Exit Codes</a></strong> - Exit code reference</li>
+</ul>
+<h3 id="tips-for-asking-questions">Tips for Asking Questions<a class="headerlink" href="#tips-for-asking-questions" title="Permanent link">&para;</a></h3>
+<p>When asking for help, include:</p>
+<ol>
+<li><strong>Command you ran</strong> - Full command with all flags</li>
+<li><strong>Sample input</strong> - A few lines of log data</li>
+<li><strong>Expected output</strong> - What you expected to see</li>
+<li><strong>Actual output</strong> - What actually happened</li>
+<li><strong>Error messages</strong> - Complete error output with <code>--verbose</code></li>
+<li><strong>Field structure</strong> - Output of <code>-F inspect --take 3</code></li>
+</ol>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Command:
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  kelora -j app.log --filter &#39;e.status &gt;= 500&#39;
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>Sample input:
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  {&quot;timestamp&quot;: &quot;2024-01-15T10:00:00Z&quot;, &quot;status&quot;: &quot;500&quot;}
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>Error:
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>  Type mismatch: cannot compare String with Integer
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>Field structure (kelora -j app.log -F inspect --take 1):
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>  {&quot;status&quot;: String(&quot;500&quot;)}
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>Expected: Filter events with status &gt;= 500
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>Actual: Error on type comparison
+</code></pre></div>
+<hr />
+<h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<p><strong>Start here when debugging:</strong></p>
+<ol>
+<li><code>kelora -j app.log -F inspect --take 5</code> - See field structure</li>
+<li><code>kelora -j app.log --verbose --stats</code> - See errors and statistics</li>
+<li><code>kelora -j app.log --take 10</code> - Test with small sample</li>
+<li><code>kelora -j --strict app.log</code> - Fail-fast mode for debugging</li>
+</ol>
+<p><strong>Common fixes:</strong></p>
+<ul>
+<li>Field not found → Use <code>e.has("field")</code> or <code>e.get("field", default)</code></li>
+<li>Type error → Use <code>.to_int_or(0)</code> or <code>.to_string()</code></li>
+<li>Empty output → Check with <code>--stats</code></li>
+<li>Parse error → Check format with <code>-f auto</code> or use <code>--verbose</code></li>
+<li>Stage order → Create fields before filtering on them</li>
+<li>Slow processing → Use <code>--parallel</code> for large files</li>
 </ul>
 
 
