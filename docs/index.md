@@ -82,7 +82,7 @@ Kelora reads from files or stdin and outputs JSON, CSV, or Logfmt. Combine it wi
     kelora -j examples/api_errors.jsonl \
       --window 2 \
       --exec 'if e.level == "ERROR" && window.len() > 1 {
-          e.prev_ctx = window[1].info;
+          e.prev_ctx = window[1].endpoint;
       }' \
       --filter 'e.level == "ERROR"' \
       -F logfmt
