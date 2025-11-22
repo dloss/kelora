@@ -3010,28 +3010,31 @@
 <a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>to_int_or(val, 0)                     // Safe int conversion
 <a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>to_float_or(val, 0.0)                 // Safe float conversion
 <a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>to_bool_or(val, false)                // Safe bool conversion
-<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>
-<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>// Arrays
-<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>e.items.len()                         // Length
-<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a>e.items.is_empty()                    // Check empty
-<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a>sorted(e.items)                       // Sort
-<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a>unique(e.items)                       // Deduplicate
-<a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a>emit_each(e.items)                    // Fan out to events
-<a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a>
-<a id="__codelineno-19-26" name="__codelineno-19-26" href="#__codelineno-19-26"></a>// Strings
-<a id="__codelineno-19-27" name="__codelineno-19-27" href="#__codelineno-19-27"></a>e.text.to_lower()                     // Lowercase
-<a id="__codelineno-19-28" name="__codelineno-19-28" href="#__codelineno-19-28"></a>e.text.to_upper()                     // Uppercase
-<a id="__codelineno-19-29" name="__codelineno-19-29" href="#__codelineno-19-29"></a>e.text.strip()                        // Trim whitespace
-<a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a>e.text.contains(&quot;word&quot;)               // Substring check
-<a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>e.text.extract_re(r&quot;(\d+)&quot;, 1)        // Regex extraction
-<a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>
-<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>// Environment &amp; Context
-<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var
-<a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a>conf.key                              // Read config (from --begin)
-<a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>metrics.key                           // Read metrics (in --end)
-<a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>meta.filename                         // Current source filename
-<a id="__codelineno-19-38" name="__codelineno-19-38" href="#__codelineno-19-38"></a>meta.line_num                         // Current line number (1-based)
-<a id="__codelineno-19-39" name="__codelineno-19-39" href="#__codelineno-19-39"></a>meta.line                             // Original raw line
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>try { risky_call(); } catch (err) {   // Catch runtime errors (type mismatch, missing fields); slower than guards
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>  eprint(err);                        // Prefer to_int_or/has_path for common cases
+<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>}
+<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a>
+<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a>// Arrays
+<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a>e.items.len()                         // Length
+<a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a>e.items.is_empty()                    // Check empty
+<a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a>sorted(e.items)                       // Sort
+<a id="__codelineno-19-26" name="__codelineno-19-26" href="#__codelineno-19-26"></a>unique(e.items)                       // Deduplicate
+<a id="__codelineno-19-27" name="__codelineno-19-27" href="#__codelineno-19-27"></a>emit_each(e.items)                    // Fan out to events
+<a id="__codelineno-19-28" name="__codelineno-19-28" href="#__codelineno-19-28"></a>
+<a id="__codelineno-19-29" name="__codelineno-19-29" href="#__codelineno-19-29"></a>// Strings
+<a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a>e.text.to_lower()                     // Lowercase
+<a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>e.text.to_upper()                     // Uppercase
+<a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>e.text.strip()                        // Trim whitespace
+<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>e.text.contains(&quot;word&quot;)               // Substring check
+<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>e.text.extract_re(r&quot;(\d+)&quot;, 1)        // Regex extraction
+<a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a>
+<a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>// Environment &amp; Context
+<a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var
+<a id="__codelineno-19-38" name="__codelineno-19-38" href="#__codelineno-19-38"></a>conf.key                              // Read config (from --begin)
+<a id="__codelineno-19-39" name="__codelineno-19-39" href="#__codelineno-19-39"></a>metrics.key                           // Read metrics (in --end)
+<a id="__codelineno-19-40" name="__codelineno-19-40" href="#__codelineno-19-40"></a>meta.filename                         // Current source filename
+<a id="__codelineno-19-41" name="__codelineno-19-41" href="#__codelineno-19-41"></a>meta.line_num                         // Current line number (1-based)
+<a id="__codelineno-19-42" name="__codelineno-19-42" href="#__codelineno-19-42"></a>meta.line                             // Original raw line
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
