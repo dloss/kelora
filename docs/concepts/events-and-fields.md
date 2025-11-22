@@ -630,6 +630,7 @@ e.user.name       // Fast: two map lookups
 ```
 
 **Use direct access when:**
+
 - Field names are known at script time
 - Fields are guaranteed to exist (e.g., parser output)
 - Performance is critical
@@ -641,6 +642,7 @@ e.get_path("user.name", "unknown")       // Handles missing fields
 ```
 
 **Use `get_path()` when:**
+
 - Fields might not exist (optional data)
 - Working with inconsistent log formats
 - You need default values for missing fields

@@ -22,6 +22,7 @@ head -n 20 examples/multiline_stacktrace.log
 ```
 
 Look for:
+
 - Consistent timestamps (e.g., `2024-05-03 12:10:45 ERROR …`).
 - Indentation on continuation lines.
 - Unique keywords or start/end markers.
@@ -36,6 +37,7 @@ kelora examples/multiline_stacktrace.log \
 ```
 
 Customization:
+
 - Specify a format if auto-detect fails: `--multiline 'timestamp:format=%Y-%m-%d %H:%M:%S'`.
 - Combine with parsing flags (e.g., `-f logfmt`) after multiline grouping.
 
@@ -61,6 +63,7 @@ kelora app.log \
 ```
 
 Variants:
+
 - Start and end markers: `--multiline 'regex:match=^BEGIN:end=^END'`.
 - Negated starts: treat lines that **do not** match as continuations with `--multiline 'regex:match=^[^\\s]'`.
 
@@ -86,6 +89,7 @@ kelora config.json --multiline all -J
     -f logfmt app.log \
     -l error
   ```
+
 - **Extract stack trace metadata**  
   ```bash
   kelora --multiline timestamp app.log \
@@ -93,6 +97,7 @@ kelora config.json --multiline all -J
     -e 'e.frames = e.line.split("\\n").len()' \
     -k timestamp,frames,line
   ```
+
 - **Combine with context flags**  
   After grouping, use `--before-context` / `--after-context` to include neighbouring events.
 

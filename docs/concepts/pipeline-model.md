@@ -19,12 +19,14 @@ This layered architecture enables efficient streaming with low memory usage whil
 ### Input Sources
 
 **Stdin Mode:**
+
 - Activated when no files specified or file is `"-"`
 - Background thread reads from stdin via channel
 - Supports one stdin source (error if `"-"` appears multiple times)
 - Useful for piping: `tail -f app.log | kelora -j`
 
 **File Mode:**
+
 - Processes one or more files sequentially
 - Tracks current filename for context
 - Supports `--file-order` for processing sequence:
@@ -49,11 +51,13 @@ kelora file1.log - file2.log  # stdin in middle
 Kelora automatically detects and decompresses compressed input using **magic bytes detection** (not file extensions):
 
 **Supported Formats:**
+
 - **Gzip** - Magic bytes `1F 8B 08` (`.gz` files or gzipped stdin)
 - **Zstd** - Magic bytes `28 B5 2F FD` (`.zst` files or zstd stdin)
 - **Plain** - No magic bytes, passthrough
 
 **Behavior:**
+
 - Transparent decompression before any processing
 - Works on both files and stdin
 - ZIP files explicitly rejected with error message
@@ -69,12 +73,14 @@ gzip -c app.log | kelora -j          # Gzipped stdin
 ### Reader Threading
 
 **Sequential Mode:**
+
 - Spawns background reader thread
 - Sends lines via bounded channel (1024 line buffer)
 - Main thread processes lines one at a time
 - Supports multiline timeout flush (default: 200ms)
 
 **Parallel Mode:**
+
 - Reader batches lines (default: 1000 lines, 200ms timeout)
 - Worker pool processes batches concurrently
 - No cross-batch state (impacts multiline, spans)
@@ -116,6 +122,7 @@ kelora app.log --keep-lines '^\d{4}-\d{2}-\d{2}'
 Extract specific sections from logs based on start/end markers:
 
 **Flags:**
+
 - `--section-after <REGEX>` - Begin section (exclude marker line)
 - `--section-from <REGEX>` - Begin section (include marker line)
 - `--section-through <REGEX>` - End section (include marker line)
@@ -170,6 +177,7 @@ Buffers entire input as single event (use for structured files).
 *Note:* The current CLI treats `:` as an option separator inside the `-M` value. For regex patterns, encode literal colons (for example `\x3A`). Timestamp hints that require `:` currently need pre-normalised input or a regex-based strategy.
 
 **Multiline Timeout:**
+
 - Sequential mode: Flush incomplete events after timeout (default: 200ms)
 - Parallel mode: Flush at batch boundaries (no timeout)
 
@@ -218,9 +226,11 @@ Each stage processes the output of the previous stage sequentially.
 ### Complete Stage Ordering
 
 **User-controlled stages** (run in the order you specify them on the CLI):
+
 1. `--filter`, `--levels`, `--exclude-levels`, `--exec`, `--exec-file`
 
 **Fixed-position filters** (always run after user-controlled stages, regardless of CLI order):
+
 2. **Timestamp filtering** – `--since`, `--until`
 3. **Key filtering** – `--keys`, `--exclude-keys`
 
@@ -245,6 +255,7 @@ kelora -j app.log --span 5m \
 Closes span on aligned time windows (5m, 1h, 30s, etc.).
 
 **Span Processing Flow:**
+
 1. Event passes through filters/execs
 2. Span processor assigns `span_id` and `SpanStatus`
 3. Event processed with span context
@@ -252,6 +263,7 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).
 5. Hook has access to `meta.span_id`, `meta.span_start`, `meta.span_end`, `metrics`
 
 **Constraints:**
+
 - Spans force sequential mode (incompatible with `--parallel`)
 - Span state maintained across events
 
@@ -269,6 +281,7 @@ kelora -j app.log \
 ```
 
 In parallel mode:
+
 - `--begin` runs sequentially before worker pool starts
 - `--end` runs sequentially after workers complete (with merged metrics)
 
@@ -324,6 +337,7 @@ Parallel:    Batch of lines → Worker pool
 ```
 
 Where:
+
 - **Line filters** = `--skip-lines`, `--ignore-lines`, `--section-start`, etc.
 - **Multiline** = Event boundary detection (aggregates multiple lines into events)
 - **Script stages** = `--filter` and `--exec` in CLI order
@@ -348,24 +362,29 @@ kelora -j large.log \
 ### Constraints and Tradeoffs
 
 **Incompatible Features:**
+
 - **Spans** - Cannot maintain span state across batches (forces sequential)
 - **Cross-event context** - Each batch processed independently
 
 **Multiline Behavior:**
+
 - Multiline chunking happens **per-batch**
 - Event boundaries may not span batch boundaries
 - Consider larger batch sizes for multiline workloads
 
 **Ordering:**
+
 - Default: Preserve input order (adds overhead)
 - `--unordered`: Trade ordering for maximum throughput
 
 **Best For:**
+
 - Large files with independent events
 - CPU-bound transformations (regex, hashing, calculations)
 - High-throughput batch processing
 
 **Not Ideal For:**
+
 - Real-time streaming (use sequential)
 - Cross-event analysis (use spans in sequential mode)
 - Small files (overhead exceeds benefit)
@@ -389,6 +408,7 @@ kelora -j app.log \
 ```
 
 **Available Functions:**
+
 - `track_count(key)` - Increment counter
 - `track_sum(key, value)` - Sum values
 - `track_min(key, value)` - Track minimum value
@@ -405,6 +425,7 @@ kelora -j app.log \
 ```
 
 **Output:**
+
 - Printed to stderr with `--metrics`
 - Written to JSON file with `--metrics-file metrics.json`
 
@@ -426,6 +447,7 @@ kelora -j app.log --stats
 ### Parallel Metrics Merging
 
 In parallel mode:
+
 - Each worker maintains local tracking state
 - GlobalTracker merges worker states after processing:
   - Counters: summed
@@ -513,6 +535,7 @@ kelora -j app.log --strict
 ```
 Line batching (1000 lines) → Worker pool
 Each worker independently:
+
   - Line-level processing
   - Event-level processing
 Results → Ordering buffer → Merged output
@@ -532,6 +555,7 @@ Metrics → GlobalTracker → Merged stats
 ### Sequential vs Parallel
 
 **Sequential (default):**
+
 - Events processed in order
 - Lower memory usage
 - Predictable output order
@@ -539,6 +563,7 @@ Metrics → GlobalTracker → Merged stats
 - Best for streaming and interactive use
 
 **Parallel (`--parallel`):**
+
 - Events processed in batches across cores
 - Higher throughput for CPU-bound work
 - Higher memory usage (batching + worker pools)

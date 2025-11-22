@@ -38,6 +38,7 @@ kelora -j examples/simple_json.jsonl \
 ```
 
 Guidance:
+
 - Prefer `--filter` (Rhai expression) for field checks, pattern scans, or numerical comparisons.
 - Chain multiple `--filter` flags if it reads better than a long expression.
 - Use safe accessors (`e.get_path("error.code", "unknown")`) when fields may be missing.
@@ -83,6 +84,7 @@ kelora -j examples/simple_json.jsonl \
 ```
 
 Alternatives:
+
 - `-J` (or `-F json`) for structured archives.
 - `-q` or `--silent` when piping into shell scripts that only care about exit codes.
 
@@ -93,6 +95,7 @@ Alternatives:
     --filter 'e.status >= 500' \
     -k timestamp,status,request
   ```
+
 - **Search compressed archives in parallel**  
   ```bash
   kelora -j logs/2024-04-*.jsonl.gz \
@@ -100,6 +103,7 @@ Alternatives:
     -l error,critical \
     --filter 'e.message.contains("timeout")'
   ```
+
 - **Pivot by customer or shard**  
   ```bash
   kelora -j examples/simple_json.jsonl \
@@ -107,6 +111,7 @@ Alternatives:
     -e 'track_count(e.account_id)' \
     --metrics
   ```
+
 - **Fail fast in CI**  
   ```bash
   kelora -q -j build/kelora.log -l error \

@@ -107,8 +107,10 @@ kelora -j examples/simple_json.jsonl \
     --span 100 \
     --span-close 'print(span.id + ",payments=" + span.size.to_string())'
   ```
+
 - **Sliding error thresholds**  
   Combine `--span` with [Design Streaming Alerts](build-streaming-alerts.md) to trigger notifications when span metrics cross a threshold.
+
 - **Hybrid reporting**  
   Run two spans simultaneously by invoking Kelora twice: one count-based for rapid feedback, another time-based for dashboards.
 

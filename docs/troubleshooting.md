@@ -380,6 +380,7 @@ kelora -j app.log -F inspect --take 3
 ```
 
 **Use when:**
+
 - Need to see actual field types
 - Unsure what fields are present
 - Debugging type comparison errors
@@ -395,11 +396,13 @@ kelora -j app.log --verbose
 ```
 
 **Use multiple times for more detail:**
+
 - `-v` - Show errors with context
 - `-vv` - Show detailed stack traces
 - `-vvv` - Show all debug information
 
 **Use when:**
+
 - Filters aren't working
 - Parse errors occurring
 - Scripts failing
@@ -422,6 +425,7 @@ kelora -j app.log --stats
 ```
 
 **Use when:**
+
 - Need to understand filtering results
 - Checking error counts
 - Verifying time ranges
@@ -438,6 +442,7 @@ kelora -j app.log --take 10
 ```
 
 **Use when:**
+
 - Testing filters quickly
 - Debugging with large files
 - Iterating on scripts
@@ -460,12 +465,14 @@ kelora -j --strict app.log
 ```
 
 **Use when:**
+
 - Debugging parse errors
 - Validating log format
 - Testing scripts
 - CI/CD validation
 
 **Difference from default:**
+
 - **Default (resilient):** Continue on errors, show count at end
 - **Strict:** Abort immediately on first error
 
@@ -484,6 +491,7 @@ kelora -j app.log --ignore-lines 'DEBUG|TRACE'
 ```
 
 **Use when:**
+
 - Processing very large files
 - Most lines can be skipped early
 - Performance is critical
@@ -522,6 +530,7 @@ See [Exit Codes Reference](reference/exit-codes.md) for complete documentation.
 **Cause:** Invalid JSON syntax on that line.
 
 **Solutions:**
+
 - Check the line: `sed -n 'Np' app.log` (where N is the line number)
 - Use `--verbose` to see the problematic line
 - Use `-f auto` to try auto-detection
@@ -534,6 +543,7 @@ See [Exit Codes Reference](reference/exit-codes.md) for complete documentation.
 **Cause:** Trying to access field on a value that isn't an object (e.g., null, array, primitive).
 
 **Solutions:**
+
 - Check field existence: `e.has("field")`
 - Use inspect to see structure: `-F inspect`
 - Handle nulls: `if e.field != () { ... }`
@@ -545,6 +555,7 @@ See [Exit Codes Reference](reference/exit-codes.md) for complete documentation.
 **Cause:** Comparing values of different types (e.g., `"500" >= 500`).
 
 **Solutions:**
+
 - Convert types: `e.status.to_int_or(0) >= 500`
 - Check types with inspect: `-F inspect`
 - Use string comparison: `e.status == "500"`
@@ -556,6 +567,7 @@ See [Exit Codes Reference](reference/exit-codes.md) for complete documentation.
 **Cause:** Accessing a field that doesn't exist in the event.
 
 **Solutions:**
+
 - Check field name spelling
 - Verify field exists: `e.has("field")`
 - Use safe accessor: `e.get("field", default)`
@@ -568,6 +580,7 @@ See [Exit Codes Reference](reference/exit-codes.md) for complete documentation.
 **Cause:** All events filtered out by your filters.
 
 **Solutions:**
+
 - Check filter logic
 - Use `--stats` to see filtering breakdown
 - Remove filters temporarily to see all events
@@ -580,6 +593,7 @@ See [Exit Codes Reference](reference/exit-codes.md) for complete documentation.
 **Cause:** File doesn't exist, no permission, or path is wrong.
 
 **Solutions:**
+
 - Check file exists: `ls -l file.log`
 - Check permissions: `stat file.log`
 - Use absolute path

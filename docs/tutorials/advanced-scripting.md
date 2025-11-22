@@ -283,9 +283,11 @@ pipeline definitions.
 - **Resilient mode (default)**: Kelora rolls back the event when an exec throws
   and prints a warning. The pipeline continues with the next event. Use this for
   exploratory work and long-running tail sessions.
+
 - **Strict mode (`--strict`)**: The first exec error stops the process with
   exit code `1`. Ideal for CI, production batch jobs, or when you have unit
   tests guarding your scripts.
+
 - **Filtering events**: Set `e = ()` to drop a record after you detect invalid
   data. This is preferable to letting bad events fail later stages.
 
@@ -293,12 +295,15 @@ pipeline definitions.
 
 - **Function not found**: Ensure supporting files are loaded via `-I` or
   `--exec-file`, and double-check spelling—Rhai treats names as case-sensitive.
+
 - **Unexpected fields missing**: Remember that filters remove events between
   exec stages. If a later exec cannot find a field, verify the event survived the
   earlier filters.
+
 - **Decimal precision**: Functions like `round(value)` operate on whole numbers.
   Multiply before rounding (`round(value * 100.0) / 100.0`) to keep two decimal
   places.
+
 - **Fan-out explosion**: Each `emit_each` can multiply events. Add guard
   conditions (`if e.has_path("orders")`) to avoid emitting empty rows.
 
@@ -307,5 +312,6 @@ pipeline definitions.
 - Deepen your understanding of the [Scripting Stages concept](../concepts/scripting-stages.md).
 - Learn how Kelora [handles multiline input](../concepts/multiline-strategies.md)
   for stack traces and payloads.
+
 - Explore the [Function Reference](../reference/functions.md) for every helper
   available in the scripting environment.

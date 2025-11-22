@@ -20,6 +20,7 @@ kelora -f syslog examples/simple_syslog.log -n 5
 ```
 
 Common fields:
+
 - `timestamp`, `hostname`, `process`, `pid`, `message`
 - `facility` (integer code) and `severity` (0 = emergency, 7 = debug)
 - Some devices include structured data in `message`; plan to parse it with Rhai helpers.
@@ -34,6 +35,7 @@ kelora -f syslog /var/log/syslog \
 ```
 
 Helpful ranges:
+
 - `<= 2` for emergencies/alerts/critical.
 - `== 4` for warnings.
 - Facility codes: `0` Kernel, `3` System daemons, `4` Auth/Security, `10` Auth (private), `16+` Local use.
@@ -79,6 +81,7 @@ kelora -f syslog /var/log/syslog \
 ```
 
 Alternatives:
+
 - `-J` for JSON exports consumed by log analytics tools.
 - Use `-q` when running inside scripts that only care about exit codes or metrics.
 
@@ -97,6 +100,7 @@ kelora -f syslog app-5424.log \
     -e 'track_count(e.src_ip)' \
     --metrics
   ```
+
 - **Time-boxed reporting**  
   ```bash
   kelora -f syslog /var/log/syslog \

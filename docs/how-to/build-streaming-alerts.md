@@ -21,6 +21,7 @@ tail -f /var/log/app.log | kelora -j \
 ```
 
 Notes:
+
 - `tail -F` survives log rotation.
 - Use `--from-stdin` only when you want to suppress format detection banner (Kelora infers format when possible, but explicit `-j`/`-f` is safer).
 
@@ -60,6 +61,7 @@ tail -f /var/log/app.log | kelora -j -q \
 ```
 
 -- `-q` suppresses events so only alerts are printed; add `--silent` to suppress diagnostics too.
+
 - Combine `--window N` with `window.pluck()` to examine rolling slices when bursts matter more than totals.
 - Call `exit(1)` to propagate failure into CI or cron jobs; Kelora exits with 0 otherwise.
 
@@ -99,6 +101,7 @@ fi
     -l error \
     -e 'eprint("search error: " + e.message)'
   ```
+
 - **Spike detection**  
   ```bash
   tail -f /var/log/app.log | kelora -j --window 50 -q \
@@ -106,6 +109,7 @@ fi
     -e 'let recent = window_events();' \
     -e 'if recent.len() >= 10 { eprint("ALERT: error spike (" + recent.len().to_string() + " / 50)") }'
   ```
+
 - **Access log latency guard**  
   ```bash
   tail -f /var/log/nginx/access.log | kelora -f combined -q \

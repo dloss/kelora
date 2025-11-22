@@ -21,6 +21,7 @@ Learn how to use Kelora's four scripting stages to build complete data processin
 ## Sample Data
 
 This tutorial uses:
+
 - `examples/simple_json.jsonl` - Application logs
 - `examples/service_metadata.json` - Service lookup data
 
@@ -129,6 +130,7 @@ Let's create service metadata and enrich events:
     ```
 
 **What happened:**
+
 1. `--begin` created an inline map with service metadata in `conf.services`
 2. `--exec` looked up each event's service in the loaded data
 3. Added team, owner, and criticality fields to each event
@@ -221,6 +223,7 @@ Chain multiple `--exec` and `--filter` stages to build complex logic.
     ```
 
 **Pipeline flow:**
+
 1. Load metadata in `--begin`
 2. Enrich with criticality (`--exec`)
 3. Keep only critical/high services (`--filter`)
@@ -259,6 +262,7 @@ Use `--end` to run code **once** after all events are processed.
     ```
 
 **Available in `--end`:**
+
 - `metrics` - Map populated by `track_*()` functions
 - `conf` - The configuration map (read-only)
 
@@ -340,6 +344,7 @@ Combine all stages for a production-ready alert pipeline.
     ```
 
 **Complete pipeline:**
+
 1. `--begin`: Load service metadata and set threshold
 2. `--exec`: Enrich events with criticality and owner
 3. `--filter`: Keep only critical errors
@@ -424,12 +429,14 @@ kelora -j app.log \
 ```
 
 **What DOES persist between stages:**
+
 - ✅ **Event fields** - Modifications to `e.field` carry forward
 - ✅ **`conf` map** - Initialized in `--begin`, read-only afterward
 - ✅ **`metrics` map** - Populated by `track_*()`, accessed in `--end`
 - ✅ **`window` array** - When `--window` is enabled
 
 **What DOES NOT persist:**
+
 - ❌ **Local variables** (`let x = ...`) - Scoped to the stage only
 - ❌ **Function definitions** - Unless loaded via `--include`
 
@@ -457,6 +464,7 @@ kelora -j app.log --resilient \
 ```
 
 **Why use multiple stages:**
+
 - ✅ **Error isolation** - Failures don't corrupt earlier transformations
 - ✅ **Progressive validation** - Each stage is a checkpoint
 - ✅ **Debugging** - Easier to identify which stage failed
@@ -473,6 +481,7 @@ kelora -j app.log --resilient \
 Events that fail the risky parse still have `safe_field` and are included in output (unless filtered out).
 
 **Trade-off:**
+
 - **Multiple stages**: Better error handling, snapshotting, but variables don't persist
 - **Single stage with semicolons**: Shared variables, but all-or-nothing execution
 
@@ -631,6 +640,7 @@ Now that you understand the complete pipeline lifecycle, continue to:
 - **[Working with Time](working-with-time.md)** - Time-based filtering and operations
 
 **Related guides:**
+
 - [How-To: Build a Service Health Snapshot](../how-to/monitor-application-health.md)
 - [How-To: Design Streaming Alerts](../how-to/build-streaming-alerts.md)
 - [Concepts: Scripting Stages](../concepts/scripting-stages.md) - Deep technical details

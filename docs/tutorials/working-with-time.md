@@ -103,6 +103,7 @@ kelora -j --since "2024-01-15T10:00:00Z" --until "start+45m" app.log
 ```
 
 **Anchor syntax:**
+
 - `start+DURATION` or `start-DURATION` - relative to `--since` value
 - `end+DURATION` or `end-DURATION` - relative to `--until` value
 
@@ -179,6 +180,7 @@ kelora -j --input-tz America/New_York app.log
 ```
 
 **Timezone precedence:**
+
 1. `--input-tz` flag (highest priority)
 2. `TZ` environment variable
 3. UTC (default)

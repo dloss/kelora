@@ -239,6 +239,7 @@ kelora -j large.log | head -n 10 || [ $? -eq 141 ]
 ### Exit Code 2 with Valid Syntax
 
 **Check:**
+
 - File exists and is readable: `ls -l app.log`
 - Permissions are correct: `stat app.log`
 - Configuration file is valid
@@ -247,6 +248,7 @@ kelora -j large.log | head -n 10 || [ $? -eq 141 ]
 ### Different Exit Codes in CI vs Local
 
 **Possible causes:**
+
 - Different file permissions/paths
 - Different configuration files
 - Environment variables

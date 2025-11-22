@@ -31,6 +31,7 @@ kelora -f 'csv status:int bytes:int duration_ms:int' examples/simple_csv.csv \
 ```
 
 Alternatives:
+
 - Embed annotations in the header row (e.g., `status:int,duration_ms:int`).
 - For TSV, replace `csv` with `tsv` in the format string.
 
@@ -46,6 +47,7 @@ kelora -f 'csv status:int bytes:int duration_ms:int' examples/simple_csv.csv \
 ```
 
 Tips:
+
 - Use `to_int_or()` / `to_float_or()` for defensive conversions.
 - Remove sensitive data with assignments like `e.user_email = ()` before export.
 - Apply `strip()` when whitespace is inconsistent.
@@ -84,6 +86,7 @@ kelora -f 'csv status:int duration_ms:int bytes:int' examples/simple_csv.csv \
 ```
 
 Other formats:
+
 - `-J` or `-F json` for ingestion into document stores.
 - `-F logfmt` when shipping data to systems that expect key=value lines.
 
@@ -94,6 +97,7 @@ Other formats:
     -e 'e.timestamp = e._1; e.status = e._2.to_int(); e.bytes = e._3.to_int()' \
     -k timestamp,status,bytes
   ```
+
 - **Large archives**  
   ```bash
   kelora -f 'csv status:int bytes:int' logs/2024-*.csv.gz \
@@ -101,6 +105,7 @@ Other formats:
     -e 'track_sum("bytes_total", e.bytes)' \
     --metrics
   ```
+
 - **Ragged data validation**  
   ```bash
   kelora -f csv raw.csv \

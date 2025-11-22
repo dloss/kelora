@@ -20,6 +20,7 @@ kelora -f combined examples/simple_combined.log -n 5
 ```
 
 Key fields available in the combined format:
+
 - `ip`, `timestamp`, `method`, `path`, `status`, `bytes`
 - Optional `request_time` (Nginx custom field), `referer`, `user_agent`
 - Use `--keys` or `-k` to display additional headers if you extended the format.
@@ -34,6 +35,7 @@ kelora -f combined examples/simple_combined.log \
 ```
 
 Tips:
+
 - For client errors, use `'e.status >= 400 && e.status < 500'`.
 - When the application encodes errors in the URI, add a second filter such as `e.path.contains("/api/")`.
 - Use `--before-context` and `--after-context` if you need to see neighbouring requests from the same source.
@@ -48,6 +50,7 @@ kelora -f combined examples/simple_combined.log \
 ```
 
 If `request_time` is not logged:
+
 - Switch to backend service logs via [Build a Service Health Snapshot](monitor-application-health.md).
 - Consider adding upstream timing variables (`$upstream_response_time`, `$request_time`) to your Nginx format so Kelora can read them directly.
 
@@ -77,6 +80,7 @@ kelora -f combined examples/simple_combined.log \
 ```
 
 Alternatives:
+
 - `-J` to produce JSON for ingestion into a SIEM.
 - Add `--no-diagnostics` to suppress diagnostics if the output is piped into another script.
 
@@ -88,6 +92,7 @@ Alternatives:
     -e 'track_count(e.status)' \
     --metrics
   ```
+
 - **Compare time windows**  
   ```bash
   kelora -f combined /var/log/nginx/access.log \
@@ -95,12 +100,14 @@ Alternatives:
     -e 'track_count("morning_" + e.status)' \
     --metrics
   ```
+
 - **Detect suspicious behaviour**  
   ```bash
   kelora -f combined /var/log/nginx/access.log \
     --filter 'e.method == "POST" && !e.path.starts_with("/api/")' \
     -k timestamp,ip,method,path
   ```
+
 - **Process rotated archives**  
   ```bash
   kelora -f combined /var/log/nginx/access.log*.gz \

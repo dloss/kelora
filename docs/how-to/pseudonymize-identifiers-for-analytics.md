@@ -95,6 +95,7 @@ kelora -j examples/security_audit.jsonl \
     -F json
   ```
   Tokens cannot be correlated between tenants while remaining consistent inside each tenant.
+
 - **Selective reversibility**
   - Keep a secure mapping of `(original_id, pseudonym)` when legal/compliance teams need an escalation path.
   - Store the mapping in an encrypted datastore; never in the output log files themselves.

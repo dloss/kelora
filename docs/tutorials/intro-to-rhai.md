@@ -147,6 +147,7 @@ kelora -j examples/basics.jsonl \
 ```
 
 **Common string methods:**
+
 - `contains(substr)` - Check if string contains text
 - `starts_with(prefix)` - Check prefix
 - `ends_with(suffix)` - Check suffix
@@ -203,6 +204,7 @@ echo '{"id":"123","status":"200","invalid":"abc"}
 **Note:** Multiple statements in one `-e` are separated by semicolons and share the same scope. Use this when operations are related or when you need to share `let` variables.
 
 **Safe conversion functions:**
+
 - `to_int_or(fallback)` - Convert to integer or use fallback
 - `to_float_or(fallback)` - Convert to float or use fallback
 - `to_string()` - Convert to string (always succeeds)
@@ -287,6 +289,7 @@ echo '{"value":"not_a_number"}' | \
 ```
 
 **Debug workflow:**
+
 1. Use `-F inspect` to check field types
 2. Use `--verbose` to see error messages
 3. Use `--strict` to fail fast on first error

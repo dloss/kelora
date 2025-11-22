@@ -50,11 +50,13 @@ kelora -j logs/2024-04-*.jsonl.gz \
 ```
 
 Guidelines:
+
 - 1000 (default) balances throughput and memory.
 - Increase to 5000–10000 for simple filters on machines with ample RAM.
 - Decrease to 200–500 when transformations are heavy or memory is constrained.
 
 Ordering options:
+
 - `--file-order name` for deterministic alphabetical processing.
 - `--file-order mtime` to scan oldest/newest archives first.
 
@@ -102,6 +104,7 @@ kelora -j "$OUTPUT" --stats
     -l critical \
     --stats
   ```
+
 - **Recursive discovery**  
   ```bash
   find /archives/app -name "*.jsonl.gz" -print0 |
@@ -109,6 +112,7 @@ kelora -j "$OUTPUT" --stats
       -e 'track_count(e.service)' \
       --metrics
   ```
+
 - **Performance sweep**  
   ```bash
   for size in 500 1000 5000; do

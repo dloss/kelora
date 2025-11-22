@@ -424,15 +424,19 @@ human-readable histogram once processing finishes.
 
 - **No metrics printed**: Ensure you pass `-m` (or `--metrics`) or consume `metrics`
   within an `--end` script. Tracking functions alone do not emit output.
+
 - **Truncated arrays**: If `-m` shows only the first 5 items with a hint, use `-mm`
   for full table output, `--metrics-json` for JSON format, or `--metrics-file` to
   write JSON to disk.
+
 - **Huge maps**: Reset counters between runs by clearing your terminal or using
   `rm metrics.json` when exporting to disk. Large cardinality sets from
   `track_unique()` are the usual culprit.
+
 - **Operation metadata**: Kelora keeps operator hints (the `__op_*` keys)
   in the internal tracker now, so user metric maps print cleanly. If you need
   those hints for custom aggregation, read them from the internal metrics map.
+
 - **Sliding window functions return empty arrays**: `window.pluck_as_nums("field")`
   only works after you enable `--window` and the requested field exists in the
   buffered events.
@@ -474,6 +478,7 @@ Now that you can track and aggregate data, continue to:
 - **[Configuration and Reusability](configuration-and-reusability.md)** - Save common patterns as aliases
 
 **Related guides:**
+
 - [Concepts: Scripting Stages](../concepts/scripting-stages.md) - Deep dive into stage execution
 - [Function Reference](../reference/functions.md#tracking-functions) - Complete function signatures
 - [How-To: Build a Service Health Snapshot](../how-to/monitor-application-health.md) - Real-world examples

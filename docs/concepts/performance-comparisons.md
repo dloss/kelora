@@ -387,16 +387,19 @@ See [Performance Model](performance-model.md) for deep dive on tuning.
    ```bash
    cargo build --release
    ```
+
 3. **Generate the deterministic datasets.**
    ```bash
    ./benchmarks/generate_comparison_data.sh
    ```
    This script ensures the 100k/500k JSONL fixtures plus CSV/syslog derivatives match what the docs describe.
+
 4. **Run the comparison suite.**
    ```bash
    just bench-compare    # wraps ./benchmarks/compare_tools.sh
    ```
    The runner prints human-friendly summaries and writes raw markdown tables to `benchmarks/comparison_results/0*.md`.
+
 5. **Update the docs.** Copy the system-info block and any new tables into `docs/concepts/benchmark-results/` (one file per machine) and open a PR that references your hardware + date.
 
 Every rerun should state the git commit, OS version, CPU, and tool versions so readers can compare apples to apples.
@@ -421,6 +424,7 @@ Have a different machine? Want to test additional tools? Benchmark contributions
 3. Submit a PR with your results in `docs/concepts/benchmark-results/`
 
 We're especially interested in:
+
 - Different CPU architectures (ARM, x86, RISC-V)
 - Linux vs macOS vs Windows
 - Comparison with additional tools (angle, pv+awk, etc.)

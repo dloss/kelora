@@ -135,6 +135,7 @@ kelora -j \
 ```
 
 **Behavior:**
+
 - Returns `true` → Event passes to next stage
 - Returns `false` → Event is skipped (removed from pipeline)
 - Error in resilient mode → Treated as `false`, event skipped
@@ -297,6 +298,7 @@ kelora -j \
 ```
 
 **Execution order:**
+
 1. Convert `duration_ms` to `duration_s`
 2. Track average duration
 3. Add `alert` field for slow requests
@@ -314,12 +316,14 @@ kelora -j \
 ```
 
 **What persists between stages:**
+
 - ✅ **Event fields** (`e.field = value`) - Modifications carry forward
 - ✅ **`conf` map** - Initialized in `--begin`, read-only in exec stages
 - ✅ **`metrics` map** - Populated by `track_*()` functions
 - ✅ **`window` array** - When using `--window`
 
 **What does NOT persist:**
+
 - ❌ **Local variables** (`let x = ...`) - Scoped to the stage only
 - ❌ **Function definitions** - Unless loaded via `--include`
 
@@ -337,11 +341,13 @@ kelora -j \
 **When to use multiple stages vs semicolons:**
 
 Use **multiple `-e` stages** when you want:
+
 - Stage-level error isolation (see resilient mode below)
 - Logical separation of transformation steps
 - Progressive validation checkpoints
 
 Use **semicolons within one `-e`** when you need:
+
 - Shared local variables across operations
 - All-or-nothing execution (no partial results)
 
@@ -359,6 +365,7 @@ kelora -j \
 ```
 
 **What happens:**
+
 1. First `--exec` adds `duration_s` field to all events
 2. `--filter` removes events under 1.0s
 3. Second `--exec` only processes slow events (tracks count)
@@ -401,6 +408,7 @@ kelora -j --resilient \
 ```
 
 **Behavior on error:**
+
 - If `step2` fails for an event, it **keeps `step1` but not `step2`**
 - The event continues through the pipeline with fields from the last successful stage
 - Later stages see the rolled-back event
@@ -438,6 +446,7 @@ kelora -j --resilient \
 Events that fail external lookup still get `normalized` field.
 
 **Trade-off:**
+
 - **Multiple stages**: Better error isolation, partial success, but local variables don't persist
 - **Single stage with semicolons**: Shared variables, but all-or-nothing execution
 
@@ -644,6 +653,7 @@ kelora -j \
 ```
 
 **Flow:**
+
 1. `--begin`: Set threshold to 1000ms, record start time
 2. `--exec` (per event): Track slow requests, track total
 3. `--end`: Calculate elapsed time, print summary
@@ -917,6 +927,7 @@ kelora -j --exec 'e.a = 1' --filter 'e.level == "ERROR"' --exec 'e.b = e.a + 1' 
 ```
 
 **What happens in the second example:**
+
 1. First `--exec` adds field `a=1` to all events
 2. `--filter` removes non-ERROR events
 3. Second `--exec` adds field `b=2` to ERROR events only

@@ -679,10 +679,12 @@ All in a single command without temporary files or custom scripts.
 ## Troubleshooting
 
 **"Function not found" errors:**
+
 - Check spelling and capitalization (Rhai is case-sensitive)
 - Verify the function exists in `kelora --help-functions`
 
 **`()` (unit) value errors:**
+
 - Guard optional fields: `if e.has("field") { ... }`
 - Use safe conversions: `to_int_or(e.field, 0)`
 

@@ -1021,11 +1021,13 @@ e.score = to_float_or(e.score_string, 0.0)
 Convert empty values to Unit `()` for removal/filtering.
 
 Converts conceptually "empty" values to Unit, which:
+
 - Removes the field when assigned (e.g., `e.field = value.or_empty()`)
 - Gets skipped by `track_*()` functions
 - Works with missing fields (passes Unit through unchanged)
 
 **Supported empty values:**
+
 - Empty string: `""` → `()`
 - Empty array: `[]` → `()`
 - Empty map: `#{}` → `()`

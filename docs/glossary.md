@@ -37,6 +37,7 @@ The essential fields displayed with `-c`: timestamp, level, and message. See [Ba
 A structured data object (map/dictionary) representing a single log entry after parsing. Each event contains fields that can be accessed in Rhai scripts via the `e` variable. Example: after parsing `{"level": "ERROR", "message": "timeout"}`, you can access `e.level` and `e.message`.
 
 **Key points:**
+
 - Created by parsing raw log lines
 - Accessible via `e` in filters and transforms
 - Fields accessed with dot notation: `e.field_name`
@@ -58,6 +59,7 @@ A transformation stage where Rhai scripts modify events. Specified with `--exec`
 A key-value pair within an event. Fields can contain strings, numbers, booleans, nulls, nested objects, or arrays. Access fields using `e.field_name` in scripts.
 
 **Examples:**
+
 - `e.timestamp` - String field
 - `e.status` - Number field
 - `e.user.id` - Nested field
@@ -87,6 +89,7 @@ Operations performed on raw string lines before parsing into events. Includes li
 
 ### Metadata
 Contextual information about log processing available in the `meta` variable. Includes:
+
 - `meta.filename` - Current input file
 - `meta.line_number` - Line number in file
 - `meta.span_id` - Current span identifier (if using spans)
@@ -100,6 +103,7 @@ User-defined counters and aggregations tracked with `track_*()` functions. Displ
 A strategy for combining multiple consecutive raw lines into a single event before parsing. Used for logs with stack traces, wrapped messages, or multi-line JSON. Specified with `-M`. See [Multiline Strategies](concepts/multiline-strategies.md).
 
 **Common strategies:**
+
 - `timestamp` - Lines starting with timestamps begin new events
 - `indent` - Indented lines continue previous event
 - `regex` - Custom patterns define boundaries
@@ -136,12 +140,14 @@ The embedded scripting language used for filters and transforms. Rust-based with
 A group of consecutive events treated as a unit for aggregation. Spans close after N events (count-based) or after a time window (time-based). Configured with `--span` and `--span-close`. See [Span Aggregation Tutorial](tutorials/span-aggregation.md).
 
 **Examples:**
+
 - `--span 100` - Spans of 100 events each
 - `--span 5m` - 5-minute time windows
 - `--span 1h` - 1-hour time windows
 
 ### Stage
 A single processing step in the pipeline. User-controlled stages include:
+
 - `--filter` - Boolean filter
 - `--exec` / `-e` - Transform script
 - `--levels` / `-l` - Include log levels
@@ -167,6 +173,7 @@ A field containing the date and time when a log event occurred. Kelora auto-dete
 
 ### Tracking
 The process of accumulating metrics across events using `track_*()` functions:
+
 - `track_count(key)` - Count occurrences
 - `track_sum(key, value)` - Sum values
 - `track_unique(key, value)` - Collect unique values

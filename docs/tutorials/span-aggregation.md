@@ -21,6 +21,7 @@ Group events into non-overlapping spans for periodic rollups, time-series analys
 ## Sample Data
 
 This tutorial uses:
+
 - `examples/simple_json.jsonl` - Application logs with timestamps
 - Generated data for demonstrations
 
@@ -697,12 +698,14 @@ kelora -j huge.log --span 1000000 --span-close 'for evt in span.events { ... }'
 ### Choosing Count vs Time Spans
 
 **Use count spans when:**
+
 - You want fixed-size batches (every 1000 errors, every 100 requests)
 - Timestamps are unavailable or unreliable
 - Event ordering doesn't matter
 - You're doing arrival-order analysis
 
 **Use time spans when:**
+
 - You need dashboard/time-series rollups
 - You want aligned windows (every 5 minutes on the clock)
 - You're correlating with external time-based systems
@@ -748,6 +751,7 @@ if total_processed > 1000 {  // Only alert after warmup
 ```
 
 **When to use each:**
+
 - `span.metrics`: "What changed in this window?"
 - `metrics`: "What's the big picture?"
 
@@ -764,6 +768,7 @@ Now that you understand span aggregation, continue your journey:
 - **[Concepts: Pipeline Model](../concepts/pipeline-model.md)** - Deep dive into span processing architecture
 
 **Related guides:**
+
 - [Metrics and Tracking](metrics-and-tracking.md) - Understanding `track_*()` functions
 - [Working with Time](working-with-time.md) - Timestamp parsing and filtering
 - [How-To: Build a Service Health Snapshot](../how-to/monitor-application-health.md) - Real-world monitoring patterns

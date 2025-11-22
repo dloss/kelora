@@ -77,6 +77,7 @@ grep -A 20 "Exception" /var/log/app.log | kelora -f line -M 'regex:match=^[A-Z]'
 ```
 
 **When to use grep vs Kelora:**
+
 - Use `grep` for raw text scanning across massive unstructured files
 - Use `--keep-lines`/`--ignore-lines` when you want Kelora to track parse errors
 - Use `--filter` for structured field checks after parsing (e.g., `e.status >= 500`)
@@ -211,6 +212,7 @@ kelora -f combined access.log \
 ```
 
 **Kelora parsing functions that work well with jc output:**
+
 - `parse_url()` - Extract URL components
 - `parse_user_agent()` - Parse browser/OS from user-agent strings
 - `parse_email()` - Extract email parts
@@ -229,6 +231,7 @@ kelora -f combined access.log \
 Powerful JSON querying, reshaping, and computation beyond Kelora's built-in capabilities. Use for complex JSON restructuring, recursive descent, or computations that are awkward in Rhai. Kelora focuses on log-specific operations; jq excels at generic JSON transformation.
 
 **When to use Kelora vs jq:**
+
 - Use Kelora for filtering, aggregation, and log-specific operations
 - Use jq for complex JSON reshaping, recursive queries, and output formatting
 - Many common jq tasks can be done natively in Kelora (see examples below)
@@ -318,6 +321,7 @@ kelora -j logs/app.jsonl -J | \
 Sorts Kelora's TSV/CSV output by columns. Use `sort` when output order matters for chronological analysis, top-N queries, and ordered exports. Use `-t$'\t'` for tab delimiter. Column numbers are 1-indexed.
 
 **Kelora alternatives to consider first:**
+
 - Use `--since`/`--until` for time-based filtering (often eliminates need for sorting)
 - Use `sorted()` or `sorted_by()` Rhai functions for array sorting within events
 - Use `--take N` to limit output (though not sorted)
@@ -593,6 +597,7 @@ kelora -j logs/app.jsonl -k timestamp,level,service,message -F tsv | \
 ```
 
 **When to use jtbl vs column:**
+
 - Use `jtbl` when working with JSON output (no need to convert to TSV first)
 - Use `column` for TSV output or when you need more control over formatting
 - `jtbl` auto-detects columns; `column` requires explicit configuration
@@ -729,6 +734,7 @@ tail -F /var/log/app.log | \
 Before reaching for external tools, check if Kelora can handle it natively:
 
 **Kelora excels at:**
+
 - Time-based filtering (`--since`, `--until`) - no grep needed
 - Structured field filtering (`--filter 'e.status >= 500'`)
 - Pattern extraction (`extract_re()`, `extract_re_maps()`)
@@ -741,6 +747,7 @@ Before reaching for external tools, check if Kelora can handle it natively:
 - Section extraction (`--section-from`, `--section-before`)
 
 **Use external tools when:**
+
 - jq: Complex JSON reshaping, recursive descent
 - qsv: Statistical analysis, CSV joins, data validation
 - sort: Output ordering (Kelora doesn't sort output)
@@ -753,16 +760,19 @@ Before reaching for external tools, check if Kelora can handle it natively:
 ## Performance Tips
 
 **When to pre-filter with grep:**
+
 - Scanning for specific keywords in huge unstructured files
 - Text search is simpler than structured field checks
 - Benchmarking shows grep is faster for your use case
 
 **When to use Kelora's --filter instead:**
+
 - Checking structured fields (e.g., `e.status >= 500`)
 - Complex boolean logic or numerical comparisons
 - You need type-aware filtering (strings, numbers, timestamps)
 
 **When to post-process with jq/qsv/miller:**
+
 - Kelora extracted and normalized the data
 - You need reshaping, aggregation, or format conversion
 - SQL-style operations (GROUP BY, JOINs) are needed

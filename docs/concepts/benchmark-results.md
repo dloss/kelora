@@ -10,12 +10,14 @@ Raw performance benchmarks comparing Kelora against common command-line tools ac
 ## Test System: Apple M1 (2024-10-26)
 
 **Hardware:**
+
 - **CPU:** Apple M1
 - **Cores:** 8 (4 performance + 4 efficiency)
 - **OS:** macOS (Darwin)
 - **RAM:** 16GB
 
 **Software Versions:**
+
 - kelora: (current development build)
 - jq: 1.7.1
 - ripgrep: 14.1.0
@@ -102,6 +104,7 @@ Raw performance benchmarks comparing Kelora against common command-line tools ac
 | kelora (--parallel) | 8.143s | ~0.06 M/s | Multi-core processing (8 cores) |
 
 **Interpretation:**
+
 - Kelora sequential is 9.7x slower than jq
 - Kelora `--parallel` provides 5.2x speedup over sequential
 - Still 1.8x slower than jq overall
@@ -141,6 +144,7 @@ Have different hardware? Want to add Linux/Windows results? Contributions welcom
 3. Submit a PR with your results
 
 **Especially interested in:**
+
 - Linux (x86_64, ARM)
 - Windows (WSL, native)
 - Different CPU architectures
@@ -162,12 +166,14 @@ Track performance improvements across Kelora versions:
 ## Test System: Intel Core i5 (2025-10-26)
 
 **Hardware:**
+
 - **CPU:** Intel Core i5 (3.0 GHz, 6 cores)
 - **Cores:** 6
 - **OS:** macOS 15.6.1 (24G90) · `x86_64`
 - **RAM:** 16 GB
 
 **Software Versions:**
+
 - Kelora: `target/release/kelora` @ `09faf43`
 - Rust: 1.90.0
 - grep: 2.6.0 (BSD)

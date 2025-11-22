@@ -32,6 +32,7 @@ kelora -j examples/security_audit.jsonl \
 ```
 
 Tips:
+
 - Assigning `()` deletes a field.
 - Rebuilding the event (as above) ensures no unexpected data leaks.
 - `--exclude-keys field1,field2` works when the data is already flat.
@@ -89,12 +90,14 @@ kelora -j sanitized.json \
     -e 'e.card = ()' \
     -J > "$OUTPUT"
   ```
+
 - **Redact stack traces for non-engineers**
   ```bash
   kelora -j app.log \
     -e 'if e.level != "DEBUG" { e.stack_trace = () }' \
     -F json
   ```
+
 - **Metrics to confirm coverage**
   ```bash
   kelora -j app.log \

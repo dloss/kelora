@@ -201,6 +201,7 @@ kelora -f 'cols:raw_ts level service *message' app.log \
 ```
 
 **What this does:**
+
 1. Parse `raw_ts` as the first field (including brackets)
 2. Extract the timestamp using regex
 3. Remove the temporary `raw_ts` field
@@ -220,6 +221,7 @@ cat app.log | \
 ```
 
 **Pipeline:**
+
 1. Parse custom format
 2. Extract duration from the message if present
 3. Filter for slow requests (>1000ms)
@@ -271,6 +273,7 @@ kelora -f 'cols:raw_ts status:int service bytes:int latency:float *message' cust
 ```
 
 **What happens:**
+
 1. Parse fields with type annotations
 2. Extract the timestamp from brackets
 3. Mark HTTP errors (`>= 400`) and slow responses

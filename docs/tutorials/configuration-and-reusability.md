@@ -21,6 +21,7 @@ Learn how to create reusable workflows with aliases, configuration files, and ex
 ## Sample Data
 
 This tutorial uses:
+
 - `examples/simple_json.jsonl` - Application logs
 - Example configuration files we'll create
 
@@ -131,6 +132,7 @@ This opens your active config file in `$EDITOR` (vi/vim/nano on Unix, notepad on
 Location: `~/.config/kelora/kelora.ini`
 
 **Good for:**
+
 - Personal formatting preferences
 - Local development shortcuts
 - Your own workflow patterns
@@ -149,6 +151,7 @@ quickcheck = -j -F none --stats
 Location: `.kelora.ini` in project root
 
 **Good for:**
+
 - Team-wide conventions
 - Project-specific formats
 - Shared analysis patterns
@@ -267,6 +270,7 @@ We've created `examples/helpers.rhai` with useful functions:
     ```
 
 **How it works:**
+
 1. `-I examples/helpers.rhai` loads the function definitions
 2. Functions become available in all `--exec` and `--filter` stages
 3. Call them like any built-in function
@@ -656,6 +660,7 @@ kelora -j app.log \
 ### Exercise 3: Create a Project Workflow
 
 Set up a `.kelora.ini` for a web application with aliases for:
+
 - API errors
 - Slow requests
 - Traffic analysis
@@ -684,6 +689,7 @@ Now that you can create reusable workflows, continue to:
 - **[Working with Time](working-with-time.md)** - Time-based filtering in aliases
 
 **Related guides:**
+
 - [Concepts: Configuration System](../concepts/configuration-system.md) - Deep dive into config precedence
 - [How-To: Build a Service Health Snapshot](../how-to/monitor-application-health.md) - Real-world alias examples
 - [CLI Reference: Configuration Options](../reference/cli-reference.md#configuration-options) - All config flags

@@ -42,6 +42,7 @@ kelora -j examples/simple_json.jsonl \
 ```
 
 Guidance:
+
 - `e.get_path()` returns unit `()` when a field is missing; check for `()` to avoid polluting metrics.
 - Combine totals and sample counts to compute averages (e.g., divide `latency_total_ms|SERVICE` by `latency_samples|SERVICE`) in an `--end` block or downstream tooling.
 - Track additional business KPIs (orders, sign-ups) with `track_sum()` or `track_count()` as needed.
@@ -154,6 +155,7 @@ kelora -j examples/simple_json.jsonl \
         }' \
     --metrics
   ```
+
 - **Time-boxed reports**  
   ```bash
   kelora -j app.log \
@@ -162,6 +164,7 @@ kelora -j examples/simple_json.jsonl \
     -e 'track_count(e.window)' \
     --metrics
   ```
+
 - **Live monitoring**  
   ```bash
   tail -f /var/log/app.log | kelora -j -q \

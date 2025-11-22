@@ -277,6 +277,7 @@ Multi-line event detection strategy. Value format: `<strategy>[:key=value[:key=v
 
 - `timestamp` — optional `format=` hint (e.g., `timestamp:format=%Y-%m-%d %H-%M-%S`)  
   *(Literal `:` characters in the format string are not supported yet.)*
+
 - `indent`
 - `regex` — requires `match=REGEX`, optional `end=REGEX`
 - `all`

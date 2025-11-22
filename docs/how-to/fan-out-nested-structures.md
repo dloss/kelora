@@ -31,6 +31,7 @@ kelora -j examples/json_arrays.jsonl \
 ```
 
 Key points:
+
 - After `emit_each()`, `e` refers to the array element.
 - The original event is not emitted unless you capture it beforehand.
 
@@ -60,6 +61,7 @@ kelora -j examples/fan_out_batches.jsonl \
 ```
 
 Tips:
+
 - Apply filters between stages to cut unnecessary data early.
 - Rename conflicting keys (e.g., parent `id` vs child `id`) to avoid overwriting.
 
@@ -89,6 +91,7 @@ kelora -j examples/fan_out_batches.jsonl \
     -e 'let ctx = #{order_id: e.id}; emit_each(e.items, ctx)' \
     --filter 'e.priority == "high"'
   ```
+
 - **Count emitted records**  
   ```bash
   kelora -j data.jsonl \
@@ -96,6 +99,7 @@ kelora -j examples/fan_out_batches.jsonl \
     -e 'track_sum("row_count", e.emitted)' \
     --metrics
   ```
+
 - **Guard against missing arrays**  
   ```bash
   kelora -j data.jsonl \

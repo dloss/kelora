@@ -27,6 +27,7 @@ The following field names are recognized as timestamps (case-insensitive):
 - `t`
 
 **Behavior:**
+
 - Detection is case-insensitive (`Timestamp`, `TIMESTAMP`, etc. all match)
 - First matching field in the event is used
 - To override auto-detection, use `--ts-field <field_name>`
@@ -136,6 +137,7 @@ kelora --ts-format '%Y-%m-%d %H:%M:%S' --input-tz America/New_York app.log
 ```
 
 **Timezone Options:**
+
 - `UTC` - Coordinated Universal Time
 - `local` - System local timezone
 - `America/New_York`, `Europe/London`, etc. - Named IANA timezones
@@ -158,6 +160,7 @@ kelora --ts-format '%Y-%m-%d %H:%M:%S' --input-tz America/New_York app.log
 | `--until <TIME>` | Include events until this time | `--until '30m'` or `--until '2024-01-15T11:00:00Z'` |
 
 **Relative Time Formats:**
+
 - `1h` - 1 hour ago
 - `30m` - 30 minutes ago
 - `2d` - 2 days ago
@@ -166,6 +169,7 @@ kelora --ts-format '%Y-%m-%d %H:%M:%S' --input-tz America/New_York app.log
 - Combine: `1h30m` - 1 hour 30 minutes ago
 
 **Absolute Time Formats:**
+
 - ISO 8601: `2024-01-15T10:30:00Z`
 - RFC3339: `2024-01-15T10:30:00+00:00`
 - Unix timestamps: `1705318200`
@@ -205,6 +209,7 @@ kelora --since "now-1h" --until "now+5m" app.log
 ```
 
 **Important Notes:**
+
 - `since` anchors to the `--since` value, `until` anchors to the `--until` value
 - `now` anchors to the current time (doesn't require --since or --until to be set)
 - Cannot use both anchors in the same command (e.g., `--since until-1h --until since+1h` is an error)
@@ -237,6 +242,7 @@ kelora -j --since +1h app.log
 | `--normalize-ts` | Normalize timestamp field to RFC3339 (modifies event) | `kelora -j --normalize-ts app.log` |
 
 **Difference between `-z/-Z` and `--normalize-ts`:**
+
 - `-z` and `-Z`: Display-only formatting, doesn't modify event data
 - `--normalize-ts`: Converts the timestamp field in the event itself to RFC3339
 
@@ -362,6 +368,7 @@ let elapsed = dt2 - dt1;  // Duration: 1h30m
 | `duration_from_days(n)` | Create from days | `duration_from_days(7)` |
 
 **Duration String Format:**
+
 - `1h` - 1 hour
 - `30m` - 30 minutes
 - `45s` - 45 seconds
@@ -482,6 +489,7 @@ e.hour_of_day = dt.hour();
 **Problem:** Timestamps not being parsed automatically.
 
 **Solutions:**
+
 1. Check if field name is in auto-detected list (see above)
 2. Specify field explicitly: `--ts-field your_field_name`
 3. Check field value is a string (not nested object)
@@ -491,6 +499,7 @@ e.hour_of_day = dt.hour();
 **Problem:** "Failed to parse timestamp" errors.
 
 **Solutions:**
+
 1. Check if format matches exactly: `--ts-format '%Y-%m-%d %H:%M:%S'`
 2. Verify timezone handling: add `--input-tz UTC` for naive timestamps
 3. Check for subsecond precision: use `%.f` for auto-matching
@@ -501,6 +510,7 @@ e.hour_of_day = dt.hour();
 **Problem:** Times appear in wrong timezone.
 
 **Solutions:**
+
 1. For display: Use `-z` (local) or `-Z` (UTC)
 2. For naive inputs: Set `--input-tz America/New_York`
 3. Check TZ environment variable if using "local"
@@ -511,6 +521,7 @@ e.hour_of_day = dt.hour();
 **Problem:** `--since 1h` not working as expected.
 
 **Solutions:**
+
 1. Check timestamp is properly detected/parsed first
 2. Ensure timestamps are in chronological order (for best results)
 3. Verify format: `1h`, `30m`, `2d` (no spaces)
@@ -521,6 +532,7 @@ e.hour_of_day = dt.hour();
 **Problem:** Syslog timestamps missing year.
 
 **Solution:**
+
 - Kelora infers year from current time
 - For historical logs, ensure system clock is correct
 - Use custom format with explicit year if available

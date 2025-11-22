@@ -49,6 +49,7 @@ Kelora exposes several built-in variables to Rhai scripts. Their availability de
 - **When NOT to use**: Simple counting or metrics—prefer `track_count()`, `track_sum()`, etc., which work in parallel mode too.
 
 **Direct operations** (no conversion needed):
+
 - Indexing: `state["key"]` for get/set, returns `()` if key doesn't exist
 - Methods: `contains(key)`, `get(key)`, `set(key, value)`, `len()`, `is_empty()`, `keys()`, `values()`, `clear()`, `remove(key)`
 - Operators: `+=`, `mixin(map)`, `fill_with(map)`
