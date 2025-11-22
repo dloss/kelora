@@ -2777,9 +2777,11 @@
 <li><strong>Time:</strong> ~20 minutes</li>
 </ul>
 <h2 id="sample-data">Sample Data<a class="headerlink" href="#sample-data" title="Permanent link">&para;</a></h2>
-<p>This tutorial uses:
-- <code>examples/simple_json.jsonl</code> - Application logs with timestamps
-- Generated data for demonstrations</p>
+<p>This tutorial uses:</p>
+<ul>
+<li><code>examples/simple_json.jsonl</code> - Application logs with timestamps</li>
+<li>Generated data for demonstrations</li>
+</ul>
 <p>All commands use <code>markdown-exec</code> format, so output is live from the actual CLI.</p>
 <hr />
 <h2 id="step-1-count-based-spans-batch-every-n-events">Step 1: Count-Based Spans – Batch Every N Events<a class="headerlink" href="#step-1-count-based-spans-batch-every-n-events" title="Permanent link">&para;</a></h2>
@@ -3581,16 +3583,20 @@
 </code></pre></div></p>
 <h2 id="tips-best-practices">Tips &amp; Best Practices<a class="headerlink" href="#tips-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="choosing-count-vs-time-spans">Choosing Count vs Time Spans<a class="headerlink" href="#choosing-count-vs-time-spans" title="Permanent link">&para;</a></h3>
-<p><strong>Use count spans when:</strong>
-- You want fixed-size batches (every 1000 errors, every 100 requests)
-- Timestamps are unavailable or unreliable
-- Event ordering doesn't matter
-- You're doing arrival-order analysis</p>
-<p><strong>Use time spans when:</strong>
-- You need dashboard/time-series rollups
-- You want aligned windows (every 5 minutes on the clock)
-- You're correlating with external time-based systems
-- Order matters (financial transactions, audit logs)</p>
+<p><strong>Use count spans when:</strong></p>
+<ul>
+<li>You want fixed-size batches (every 1000 errors, every 100 requests)</li>
+<li>Timestamps are unavailable or unreliable</li>
+<li>Event ordering doesn't matter</li>
+<li>You're doing arrival-order analysis</li>
+</ul>
+<p><strong>Use time spans when:</strong></p>
+<ul>
+<li>You need dashboard/time-series rollups</li>
+<li>You want aligned windows (every 5 minutes on the clock)</li>
+<li>You're correlating with external time-based systems</li>
+<li>Order matters (financial transactions, audit logs)</li>
+</ul>
 <h3 id="memory-considerations">Memory Considerations<a class="headerlink" href="#memory-considerations" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Count spans</strong> buffer all events until <code>span.size</code> is reached</li>
@@ -3620,9 +3626,11 @@
 <a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>  if span_rate &gt; 0.10 { eprint(&quot;⚠️  Error rate exceeds 10%&quot;); }
 <a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>}
 </code></pre></div>
-<p><strong>When to use each:</strong>
-- <code>span.metrics</code>: "What changed in this window?"
-- <code>metrics</code>: "What's the big picture?"</p>
+<p><strong>When to use each:</strong></p>
+<ul>
+<li><code>span.metrics</code>: "What changed in this window?"</li>
+<li><code>metrics</code>: "What's the big picture?"</li>
+</ul>
 <h3 id="signal-handling">Signal Handling<a class="headerlink" href="#signal-handling" title="Permanent link">&para;</a></h3>
 <p>If you press Ctrl+C during span processing, Kelora waits for the current <code>--span-close</code> hook to finish before exiting (press Ctrl+C twice to force quit). This prevents incomplete span reports.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
@@ -3632,10 +3640,12 @@
 <li><strong><a href="../../how-to/span-aggregation-cookbook/">How-To: Roll Up Logs with Span Windows</a></strong> - More advanced span patterns</li>
 <li><strong><a href="../../concepts/pipeline-model/">Concepts: Pipeline Model</a></strong> - Deep dive into span processing architecture</li>
 </ul>
-<p><strong>Related guides:</strong>
-- <a href="../metrics-and-tracking/">Metrics and Tracking</a> - Understanding <code>track_*()</code> functions
-- <a href="../working-with-time/">Working with Time</a> - Timestamp parsing and filtering
-- <a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a> - Real-world monitoring patterns</p>
+<p><strong>Related guides:</strong></p>
+<ul>
+<li><a href="../metrics-and-tracking/">Metrics and Tracking</a> - Understanding <code>track_*()</code> functions</li>
+<li><a href="../working-with-time/">Working with Time</a> - Timestamp parsing and filtering</li>
+<li><a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a> - Real-world monitoring patterns</li>
+</ul>
 
 
 

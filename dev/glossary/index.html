@@ -3170,11 +3170,13 @@
 <h2 id="e">E<a class="headerlink" href="#e" title="Permanent link">&para;</a></h2>
 <h3 id="event">Event<a class="headerlink" href="#event" title="Permanent link">&para;</a></h3>
 <p>A structured data object (map/dictionary) representing a single log entry after parsing. Each event contains fields that can be accessed in Rhai scripts via the <code>e</code> variable. Example: after parsing <code>{"level": "ERROR", "message": "timeout"}</code>, you can access <code>e.level</code> and <code>e.message</code>.</p>
-<p><strong>Key points:</strong>
-- Created by parsing raw log lines
-- Accessible via <code>e</code> in filters and transforms
-- Fields accessed with dot notation: <code>e.field_name</code>
-- Nested fields: <code>e.user.name</code></p>
+<p><strong>Key points:</strong></p>
+<ul>
+<li>Created by parsing raw log lines</li>
+<li>Accessible via <code>e</code> in filters and transforms</li>
+<li>Fields accessed with dot notation: <code>e.field_name</code></li>
+<li>Nested fields: <code>e.user.name</code></li>
+</ul>
 <p>See <a href="../concepts/events-and-fields/">Events and Fields</a>.</p>
 <h3 id="event-boundary">Event Boundary<a class="headerlink" href="#event-boundary" title="Permanent link">&para;</a></h3>
 <p>The point where one log entry ends and another begins. Important for multiline logs where stack traces or wrapped messages span multiple lines. See <a href="../concepts/multiline-strategies/">Multiline Strategies</a>.</p>
@@ -3184,11 +3186,13 @@
 <h2 id="f">F<a class="headerlink" href="#f" title="Permanent link">&para;</a></h2>
 <h3 id="field">Field<a class="headerlink" href="#field" title="Permanent link">&para;</a></h3>
 <p>A key-value pair within an event. Fields can contain strings, numbers, booleans, nulls, nested objects, or arrays. Access fields using <code>e.field_name</code> in scripts.</p>
-<p><strong>Examples:</strong>
-- <code>e.timestamp</code> - String field
-- <code>e.status</code> - Number field
-- <code>e.user.id</code> - Nested field
-- <code>e.tags</code> - Array field</p>
+<p><strong>Examples:</strong></p>
+<ul>
+<li><code>e.timestamp</code> - String field</li>
+<li><code>e.status</code> - Number field</li>
+<li><code>e.user.id</code> - Nested field</li>
+<li><code>e.tags</code> - Array field</li>
+</ul>
 <p>See <a href="../concepts/events-and-fields/">Events and Fields</a>.</p>
 <h3 id="filter-stage">Filter Stage<a class="headerlink" href="#filter-stage" title="Permanent link">&para;</a></h3>
 <p>A stage that keeps or skips events based on a boolean expression. Specified with <code>--filter</code>. Events where the expression evaluates to <code>true</code> are kept; <code>false</code> means skip. Example: <code>--filter 'e.status &gt;= 500'</code>. See <a href="../concepts/scripting-stages/">Scripting Stages</a>.</p>
@@ -3203,20 +3207,24 @@
 <hr />
 <h2 id="m">M<a class="headerlink" href="#m" title="Permanent link">&para;</a></h2>
 <h3 id="metadata">Metadata<a class="headerlink" href="#metadata" title="Permanent link">&para;</a></h3>
-<p>Contextual information about log processing available in the <code>meta</code> variable. Includes:
-- <code>meta.filename</code> - Current input file
-- <code>meta.line_number</code> - Line number in file
-- <code>meta.span_id</code> - Current span identifier (if using spans)</p>
+<p>Contextual information about log processing available in the <code>meta</code> variable. Includes:</p>
+<ul>
+<li><code>meta.filename</code> - Current input file</li>
+<li><code>meta.line_number</code> - Line number in file</li>
+<li><code>meta.span_id</code> - Current span identifier (if using spans)</li>
+</ul>
 <p>See <a href="../reference/script-variables/">Script Variables</a>.</p>
 <h3 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h3>
 <p>User-defined counters and aggregations tracked with <code>track_*()</code> functions. Displayed with <code>--metrics</code> or saved with <code>--metrics-file</code>. Includes counts, sums, unique values, and buckets. See <a href="../tutorials/metrics-and-tracking/">Metrics and Tracking Tutorial</a>.</p>
 <h3 id="multiline">Multiline<a class="headerlink" href="#multiline" title="Permanent link">&para;</a></h3>
 <p>A strategy for combining multiple consecutive raw lines into a single event before parsing. Used for logs with stack traces, wrapped messages, or multi-line JSON. Specified with <code>-M</code>. See <a href="../concepts/multiline-strategies/">Multiline Strategies</a>.</p>
-<p><strong>Common strategies:</strong>
-- <code>timestamp</code> - Lines starting with timestamps begin new events
-- <code>indent</code> - Indented lines continue previous event
-- <code>regex</code> - Custom patterns define boundaries
-- <code>all</code> - Entire input as one event</p>
+<p><strong>Common strategies:</strong></p>
+<ul>
+<li><code>timestamp</code> - Lines starting with timestamps begin new events</li>
+<li><code>indent</code> - Indented lines continue previous event</li>
+<li><code>regex</code> - Custom patterns define boundaries</li>
+<li><code>all</code> - Entire input as one event</li>
+</ul>
 <hr />
 <h2 id="p">P<a class="headerlink" href="#p" title="Permanent link">&para;</a></h2>
 <h3 id="parallel-mode">Parallel Mode<a class="headerlink" href="#parallel-mode" title="Permanent link">&para;</a></h3>
@@ -3235,16 +3243,20 @@
 <h2 id="s">S<a class="headerlink" href="#s" title="Permanent link">&para;</a></h2>
 <h3 id="span">Span<a class="headerlink" href="#span" title="Permanent link">&para;</a></h3>
 <p>A group of consecutive events treated as a unit for aggregation. Spans close after N events (count-based) or after a time window (time-based). Configured with <code>--span</code> and <code>--span-close</code>. See <a href="../tutorials/span-aggregation/">Span Aggregation Tutorial</a>.</p>
-<p><strong>Examples:</strong>
-- <code>--span 100</code> - Spans of 100 events each
-- <code>--span 5m</code> - 5-minute time windows
-- <code>--span 1h</code> - 1-hour time windows</p>
+<p><strong>Examples:</strong></p>
+<ul>
+<li><code>--span 100</code> - Spans of 100 events each</li>
+<li><code>--span 5m</code> - 5-minute time windows</li>
+<li><code>--span 1h</code> - 1-hour time windows</li>
+</ul>
 <h3 id="stage">Stage<a class="headerlink" href="#stage" title="Permanent link">&para;</a></h3>
-<p>A single processing step in the pipeline. User-controlled stages include:
-- <code>--filter</code> - Boolean filter
-- <code>--exec</code> / <code>-e</code> - Transform script
-- <code>--levels</code> / <code>-l</code> - Include log levels
-- <code>--exclude-levels</code> / <code>-L</code> - Exclude log levels</p>
+<p>A single processing step in the pipeline. User-controlled stages include:</p>
+<ul>
+<li><code>--filter</code> - Boolean filter</li>
+<li><code>--exec</code> / <code>-e</code> - Transform script</li>
+<li><code>--levels</code> / <code>-l</code> - Include log levels</li>
+<li><code>--exclude-levels</code> / <code>-L</code> - Exclude log levels</li>
+</ul>
 <p>Stages run in the order specified on the command line. See <a href="../concepts/scripting-stages/">Scripting Stages</a>.</p>
 <h3 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h3>
 <p>Auto-collected processing metrics displayed with <code>--stats</code>. Includes events parsed, filtered, output; discovered levels and field names; errors; time span. Different from user-defined metrics. See <a href="../concepts/pipeline-model/#internal-statistics-stats">Processing Architecture</a>.</p>
@@ -3257,11 +3269,13 @@
 <h3 id="timestamp">Timestamp<a class="headerlink" href="#timestamp" title="Permanent link">&para;</a></h3>
 <p>A field containing the date and time when a log event occurred. Kelora auto-detects common field names: <code>timestamp</code>, <code>ts</code>, <code>time</code>, <code>@timestamp</code>. Used for time-based filtering with <code>--since</code> and <code>--until</code>. See <a href="../tutorials/working-with-time/">Working with Time Tutorial</a>.</p>
 <h3 id="tracking">Tracking<a class="headerlink" href="#tracking" title="Permanent link">&para;</a></h3>
-<p>The process of accumulating metrics across events using <code>track_*()</code> functions:
-- <code>track_count(key)</code> - Count occurrences
-- <code>track_sum(key, value)</code> - Sum values
-- <code>track_unique(key, value)</code> - Collect unique values
-- <code>track_min/max(key, value)</code> - Track extremes</p>
+<p>The process of accumulating metrics across events using <code>track_*()</code> functions:</p>
+<ul>
+<li><code>track_count(key)</code> - Count occurrences</li>
+<li><code>track_sum(key, value)</code> - Sum values</li>
+<li><code>track_unique(key, value)</code> - Collect unique values</li>
+<li><code>track_min/max(key, value)</code> - Track extremes</li>
+</ul>
 <p>See <a href="../tutorials/metrics-and-tracking/">Metrics and Tracking Tutorial</a>.</p>
 <h3 id="transform">Transform<a class="headerlink" href="#transform" title="Permanent link">&para;</a></h3>
 <p>A modification applied to an event, typically in an <code>--exec</code> stage. Can add new fields, modify existing fields, or remove fields. Example: <code>--exec 'e.status_class = e.status / 100'</code>.</p>

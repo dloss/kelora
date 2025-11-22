@@ -2356,7 +2356,8 @@
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Tenant isolation</strong>
+<li>
+<p><strong>Tenant isolation</strong>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>multi_tenant.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let tenant = e.tenant_name;</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s1">        e.tenant_id = pseudonym(tenant, &quot;tenants&quot;);</span>
@@ -2364,8 +2365,11 @@
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">        e.tenant_name = (); e.user_email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
-  Tokens cannot be correlated between tenants while remaining consistent inside each tenant.</li>
-<li><strong>Selective reversibility</strong></li>
+  Tokens cannot be correlated between tenants while remaining consistent inside each tenant.</p>
+</li>
+<li>
+<p><strong>Selective reversibility</strong></p>
+</li>
 <li>Keep a secure mapping of <code>(original_id, pseudonym)</code> when legal/compliance teams need an escalation path.</li>
 <li>Store the mapping in an encrypted datastore; never in the output log files themselves.</li>
 <li><strong>Secret rotation checklist</strong></li>

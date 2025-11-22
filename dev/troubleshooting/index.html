@@ -3107,23 +3107,29 @@
 <p><strong>Output example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>🔹 {&quot;timestamp&quot;: String(&quot;2024-01-15T10:00:00Z&quot;), &quot;level&quot;: String(&quot;ERROR&quot;), &quot;status&quot;: Integer(500)}
 </code></pre></div></p>
-<p><strong>Use when:</strong>
-- Need to see actual field types
-- Unsure what fields are present
-- Debugging type comparison errors</p>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Need to see actual field types</li>
+<li>Unsure what fields are present</li>
+<li>Debugging type comparison errors</li>
+</ul>
 <hr />
 <h3 id="-verbose-detailed-error-output"><code>--verbose</code> - Detailed Error Output<a class="headerlink" href="#-verbose-detailed-error-output" title="Permanent link">&para;</a></h3>
 <p>Shows detailed error messages for parse, filter, and exec errors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--verbose
 </code></pre></div>
-<p><strong>Use multiple times for more detail:</strong>
-- <code>-v</code> - Show errors with context
-- <code>-vv</code> - Show detailed stack traces
-- <code>-vvv</code> - Show all debug information</p>
-<p><strong>Use when:</strong>
-- Filters aren't working
-- Parse errors occurring
-- Scripts failing</p>
+<p><strong>Use multiple times for more detail:</strong></p>
+<ul>
+<li><code>-v</code> - Show errors with context</li>
+<li><code>-vv</code> - Show detailed stack traces</li>
+<li><code>-vvv</code> - Show all debug information</li>
+</ul>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Filters aren't working</li>
+<li>Parse errors occurring</li>
+<li>Scripts failing</li>
+</ul>
 <hr />
 <h3 id="-stats-processing-summary"><code>--stats</code> - Processing Summary<a class="headerlink" href="#-stats-processing-summary" title="Permanent link">&para;</a></h3>
 <p>Shows statistics at end of processing:</p>
@@ -3134,21 +3140,25 @@
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>🔹 Time range: 2024-01-15T10:00:00Z to 2024-01-15T11:00:00Z
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>🔹 Levels: ERROR(150), WARN(300), INFO(550)
 </code></pre></div></p>
-<p><strong>Use when:</strong>
-- Need to understand filtering results
-- Checking error counts
-- Verifying time ranges
-- Understanding level distribution</p>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Need to understand filtering results</li>
+<li>Checking error counts</li>
+<li>Verifying time ranges</li>
+<li>Understanding level distribution</li>
+</ul>
 <hr />
 <h3 id="-take-n-limit-output"><code>--take N</code> - Limit Output<a class="headerlink" href="#-take-n-limit-output" title="Permanent link">&para;</a></h3>
 <p>Process only first N events (after filtering):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--take<span class="w"> </span><span class="m">10</span>
 </code></pre></div>
-<p><strong>Use when:</strong>
-- Testing filters quickly
-- Debugging with large files
-- Iterating on scripts
-- Checking output format</p>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Testing filters quickly</li>
+<li>Debugging with large files</li>
+<li>Iterating on scripts</li>
+<li>Checking output format</li>
+</ul>
 <p><strong>Tip:</strong> Combine with <code>--stats</code> to see total counts while limiting output:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>large.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--take<span class="w"> </span><span class="m">10</span><span class="w"> </span>--stats
 </code></pre></div>
@@ -3157,14 +3167,18 @@
 <p>Abort immediately on first error:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
 </code></pre></div>
-<p><strong>Use when:</strong>
-- Debugging parse errors
-- Validating log format
-- Testing scripts
-- CI/CD validation</p>
-<p><strong>Difference from default:</strong>
-- <strong>Default (resilient):</strong> Continue on errors, show count at end
-- <strong>Strict:</strong> Abort immediately on first error</p>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Debugging parse errors</li>
+<li>Validating log format</li>
+<li>Testing scripts</li>
+<li>CI/CD validation</li>
+</ul>
+<p><strong>Difference from default:</strong></p>
+<ul>
+<li><strong>Default (resilient):</strong> Continue on errors, show count at end</li>
+<li><strong>Strict:</strong> Abort immediately on first error</li>
+</ul>
 <hr />
 <h3 id="-keep-lines-ignore-lines-pre-filter"><code>--keep-lines</code> / <code>--ignore-lines</code> - Pre-filter<a class="headerlink" href="#-keep-lines-ignore-lines-pre-filter" title="Permanent link">&para;</a></h3>
 <p>Filter at line level before parsing (faster than post-parse filtering):</p>
@@ -3174,10 +3188,12 @@
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Skip debug lines</span>
 <a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--ignore-lines<span class="w"> </span><span class="s1">&#39;DEBUG|TRACE&#39;</span>
 </code></pre></div>
-<p><strong>Use when:</strong>
-- Processing very large files
-- Most lines can be skipped early
-- Performance is critical</p>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Processing very large files</li>
+<li>Most lines can be skipped early</li>
+<li>Performance is critical</li>
+</ul>
 <hr />
 <h2 id="exit-codes-for-automation">Exit Codes for Automation<a class="headerlink" href="#exit-codes-for-automation" title="Permanent link">&para;</a></h2>
 <p>Kelora uses standard exit codes:</p>
@@ -3228,49 +3244,61 @@
 <h2 id="common-error-messages">Common Error Messages<a class="headerlink" href="#common-error-messages" title="Permanent link">&para;</a></h2>
 <h3 id="failed-to-parse-json-on-line-n">"Failed to parse JSON on line N"<a class="headerlink" href="#failed-to-parse-json-on-line-n" title="Permanent link">&para;</a></h3>
 <p><strong>Cause:</strong> Invalid JSON syntax on that line.</p>
-<p><strong>Solutions:</strong>
-- Check the line: <code>sed -n 'Np' app.log</code> (where N is the line number)
-- Use <code>--verbose</code> to see the problematic line
-- Use <code>-f auto</code> to try auto-detection
-- Use multiline mode if JSON spans multiple lines: <code>-M start</code></p>
+<p><strong>Solutions:</strong></p>
+<ul>
+<li>Check the line: <code>sed -n 'Np' app.log</code> (where N is the line number)</li>
+<li>Use <code>--verbose</code> to see the problematic line</li>
+<li>Use <code>-f auto</code> to try auto-detection</li>
+<li>Use multiline mode if JSON spans multiple lines: <code>-M start</code></li>
+</ul>
 <hr />
 <h3 id="cannot-access-field-x-of-non-object-value">"Cannot access field 'X' of non-object value"<a class="headerlink" href="#cannot-access-field-x-of-non-object-value" title="Permanent link">&para;</a></h3>
 <p><strong>Cause:</strong> Trying to access field on a value that isn't an object (e.g., null, array, primitive).</p>
-<p><strong>Solutions:</strong>
-- Check field existence: <code>e.has("field")</code>
-- Use inspect to see structure: <code>-F inspect</code>
-- Handle nulls: <code>if e.field != () { ... }</code></p>
+<p><strong>Solutions:</strong></p>
+<ul>
+<li>Check field existence: <code>e.has("field")</code></li>
+<li>Use inspect to see structure: <code>-F inspect</code></li>
+<li>Handle nulls: <code>if e.field != () { ... }</code></li>
+</ul>
 <hr />
 <h3 id="type-mismatch-cannot-compare-string-with-integer">"Type mismatch: cannot compare String with Integer"<a class="headerlink" href="#type-mismatch-cannot-compare-string-with-integer" title="Permanent link">&para;</a></h3>
 <p><strong>Cause:</strong> Comparing values of different types (e.g., <code>"500" &gt;= 500</code>).</p>
-<p><strong>Solutions:</strong>
-- Convert types: <code>e.status.to_int_or(0) &gt;= 500</code>
-- Check types with inspect: <code>-F inspect</code>
-- Use string comparison: <code>e.status == "500"</code></p>
+<p><strong>Solutions:</strong></p>
+<ul>
+<li>Convert types: <code>e.status.to_int_or(0) &gt;= 500</code></li>
+<li>Check types with inspect: <code>-F inspect</code></li>
+<li>Use string comparison: <code>e.status == "500"</code></li>
+</ul>
 <hr />
 <h3 id="field-x-not-found">"Field 'X' not found"<a class="headerlink" href="#field-x-not-found" title="Permanent link">&para;</a></h3>
 <p><strong>Cause:</strong> Accessing a field that doesn't exist in the event.</p>
-<p><strong>Solutions:</strong>
-- Check field name spelling
-- Verify field exists: <code>e.has("field")</code>
-- Use safe accessor: <code>e.get("field", default)</code>
-- Check actual field names: <code>-F inspect</code></p>
+<p><strong>Solutions:</strong></p>
+<ul>
+<li>Check field name spelling</li>
+<li>Verify field exists: <code>e.has("field")</code></li>
+<li>Use safe accessor: <code>e.get("field", default)</code></li>
+<li>Check actual field names: <code>-F inspect</code></li>
+</ul>
 <hr />
 <h3 id="no-events-matched-filter">"No events matched filter"<a class="headerlink" href="#no-events-matched-filter" title="Permanent link">&para;</a></h3>
 <p><strong>Cause:</strong> All events filtered out by your filters.</p>
-<p><strong>Solutions:</strong>
-- Check filter logic
-- Use <code>--stats</code> to see filtering breakdown
-- Remove filters temporarily to see all events
-- Check if level filtering is too restrictive</p>
+<p><strong>Solutions:</strong></p>
+<ul>
+<li>Check filter logic</li>
+<li>Use <code>--stats</code> to see filtering breakdown</li>
+<li>Remove filters temporarily to see all events</li>
+<li>Check if level filtering is too restrictive</li>
+</ul>
 <hr />
 <h3 id="failed-to-open-file">"Failed to open file"<a class="headerlink" href="#failed-to-open-file" title="Permanent link">&para;</a></h3>
 <p><strong>Cause:</strong> File doesn't exist, no permission, or path is wrong.</p>
-<p><strong>Solutions:</strong>
-- Check file exists: <code>ls -l file.log</code>
-- Check permissions: <code>stat file.log</code>
-- Use absolute path
-- Check if file is actually stdin: use <code>-</code> for stdin</p>
+<p><strong>Solutions:</strong></p>
+<ul>
+<li>Check file exists: <code>ls -l file.log</code></li>
+<li>Check permissions: <code>stat file.log</code></li>
+<li>Use absolute path</li>
+<li>Check if file is actually stdin: use <code>-</code> for stdin</li>
+</ul>
 <hr />
 <h2 id="getting-more-help">Getting More Help<a class="headerlink" href="#getting-more-help" title="Permanent link">&para;</a></h2>
 <h3 id="built-in-help">Built-in Help<a class="headerlink" href="#built-in-help" title="Permanent link">&para;</a></h3>

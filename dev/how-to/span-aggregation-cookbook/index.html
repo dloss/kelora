@@ -2374,16 +2374,22 @@
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Per-service spans</strong><br />
+<li>
+<p><strong>Per-service spans</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;payments&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;print(span.id + &quot;,payments=&quot; + span.size.to_string())&#39;</span>
-</code></pre></div></li>
-<li><strong>Sliding error thresholds</strong><br />
-  Combine <code>--span</code> with <a href="../build-streaming-alerts/">Design Streaming Alerts</a> to trigger notifications when span metrics cross a threshold.</li>
-<li><strong>Hybrid reporting</strong><br />
-  Run two spans simultaneously by invoking Kelora twice: one count-based for rapid feedback, another time-based for dashboards.</li>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Sliding error thresholds</strong><br />
+  Combine <code>--span</code> with <a href="../build-streaming-alerts/">Design Streaming Alerts</a> to trigger notifications when span metrics cross a threshold.</p>
+</li>
+<li>
+<p><strong>Hybrid reporting</strong><br />
+  Run two spans simultaneously by invoking Kelora twice: one count-based for rapid feedback, another time-based for dashboards.</p>
+</li>
 </ul>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <ul>

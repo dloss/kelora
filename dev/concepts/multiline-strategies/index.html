@@ -2341,24 +2341,36 @@ explains how multiline detection fits into the pipeline and how to pick the
 right strategy for your data set.</p>
 <h2 id="why-multiline-matters">Why Multiline Matters<a class="headerlink" href="#why-multiline-matters" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Application errors often spill over multiple lines (Java stack traces, Python
-  tracebacks, Go panics).</li>
-<li>Structured payloads such as JSON, YAML, or CEF frequently span multiple lines
-  when logged with indentation.</li>
-<li>Batch systems may wrap related log entries between explicit boundary markers
-  like <code>BEGIN</code>/<code>END</code>.</li>
+<li>
+<p>Application errors often spill over multiple lines (Java stack traces, Python
+  tracebacks, Go panics).</p>
+</li>
+<li>
+<p>Structured payloads such as JSON, YAML, or CEF frequently span multiple lines
+  when logged with indentation.</p>
+</li>
+<li>
+<p>Batch systems may wrap related log entries between explicit boundary markers
+  like <code>BEGIN</code>/<code>END</code>.</p>
+</li>
 </ul>
 <p>Without multiline detection, Kelora parses each physical line as its own event,
 making it hard to correlate context.</p>
 <h2 id="how-multiline-processing-works">How Multiline Processing Works<a class="headerlink" href="#how-multiline-processing-works" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Pre-parse stage</strong> – Multiline runs before the input parser. The chunker
-   groups input lines into blocks according to the configured strategy.</li>
-<li><strong>Parsing</strong> – The aggregated block is fed into the selected parser (<code>-f</code>).
+<li>
+<p><strong>Pre-parse stage</strong> – Multiline runs before the input parser. The chunker
+   groups input lines into blocks according to the configured strategy.</p>
+</li>
+<li>
+<p><strong>Parsing</strong> – The aggregated block is fed into the selected parser (<code>-f</code>).
    Use <code>-f raw</code> when you want to keep the block exactly as-is, including
-   newlines.</li>
-<li><strong>Downstream pipeline</strong> – Filters, exec scripts, and formatters see the
-   aggregated event exactly once.</li>
+   newlines.</p>
+</li>
+<li>
+<p><strong>Downstream pipeline</strong> – Filters, exec scripts, and formatters see the
+   aggregated event exactly once.</p>
+</li>
 </ol>
 <p>Multiline increases per-event memory usage. When processing large files, keep an
 eye on chunk size via <code>--stats</code> and consider tuning <code>--batch-size</code>/<code>--batch-timeout</code>
@@ -2452,58 +2464,92 @@ Use with care: the entire input must fit in memory.</p>
 </code></pre></div>
 <h2 id="choosing-the-right-parser">Choosing the Right Parser<a class="headerlink" href="#choosing-the-right-parser" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>-f raw</code></strong> preserves newlines (<code>\n</code>) so you can post-process blocks with
-  <code>split("\n")</code>, regex extractions, or write them to disk unchanged.</li>
-<li><strong>Structured parsers</strong> (<code>-f json</code>, <code>-f logfmt</code>, <code>-f cols:...</code>) expect a single
-  logical record. Use multiline to restore that logical record before parsing.</li>
-<li>After parsing, you can still keep the original text by copying the raw block
-  into another field inside an exec script.</li>
+<li>
+<p><strong><code>-f raw</code></strong> preserves newlines (<code>\n</code>) so you can post-process blocks with
+  <code>split("\n")</code>, regex extractions, or write them to disk unchanged.</p>
+</li>
+<li>
+<p><strong>Structured parsers</strong> (<code>-f json</code>, <code>-f logfmt</code>, <code>-f cols:...</code>) expect a single
+  logical record. Use multiline to restore that logical record before parsing.</p>
+</li>
+<li>
+<p>After parsing, you can still keep the original text by copying the raw block
+  into another field inside an exec script.</p>
+</li>
 </ul>
 <h2 id="observability-and-debugging">Observability and Debugging<a class="headerlink" href="#observability-and-debugging" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Run with <code>--stats</code> or <code>--stats-only</code> to see how many events were emitted after
+<li>
+<p>Run with <code>--stats</code> or <code>--stats-only</code> to see how many events were emitted after
   chunking. A sudden drop or spike indicates the strategy might be too broad or
-  too narrow.</li>
-<li>Use <code>--take</code> while experimenting so you do not print massive aggregates to the
-  terminal.</li>
-<li>Inspect the aggregated text with <code>-f raw -F json</code> during tuning to confirm the
-  block boundaries look correct.</li>
+  too narrow.</p>
+</li>
+<li>
+<p>Use <code>--take</code> while experimenting so you do not print massive aggregates to the
+  terminal.</p>
+</li>
+<li>
+<p>Inspect the aggregated text with <code>-f raw -F json</code> during tuning to confirm the
+  block boundaries look correct.</p>
+</li>
 </ul>
 <h2 id="advanced-tips">Advanced Tips<a class="headerlink" href="#advanced-tips" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Custom timestamp formats</strong>: <code>--multiline 'timestamp:format=%d/%b/%Y:%H:%M:%S %z'</code>
-  mirrors Apache/Nginx access log headers.</li>
-<li><strong>Prefix extraction</strong>: When container runtimes prepend metadata, run
-  <code>--extract-prefix</code> <em>before</em> multiline so the separator line is preserved.</li>
-<li><strong>Parallel mode</strong>: With <code>--parallel</code>, tune <code>--batch-size</code> and
+<li>
+<p><strong>Custom timestamp formats</strong>: <code>--multiline 'timestamp:format=%d/%b/%Y:%H:%M:%S %z'</code>
+  mirrors Apache/Nginx access log headers.</p>
+</li>
+<li>
+<p><strong>Prefix extraction</strong>: When container runtimes prepend metadata, run
+  <code>--extract-prefix</code> <em>before</em> multiline so the separator line is preserved.</p>
+</li>
+<li>
+<p><strong>Parallel mode</strong>: With <code>--parallel</code>, tune <code>--batch-size</code> and
   <code>--batch-timeout</code> if you have extremely large blocks to prevent workers from
-  buffering too much at once.</li>
-<li><strong>Fallback for JSON/YAML</strong>: Complex nested documents may require <code>regex</code>
+  buffering too much at once.</p>
+</li>
+<li>
+<p><strong>Fallback for JSON/YAML</strong>: Complex nested documents may require <code>regex</code>
   boundaries or pre-processing (for example, <code>jq</code>) because closing braces often
-  return to column zero, breaking the <code>indent</code> heuristic.</li>
+  return to column zero, breaking the <code>indent</code> heuristic.</p>
+</li>
 </ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Strategy misfires</strong>: If you see every line printed individually, your start
+<li>
+<p><strong>Strategy misfires</strong>: If you see every line printed individually, your start
   detector did not trigger. Try <code>--multiline regex</code> with an explicit pattern, or
-  switch to <code>timestamp</code> with a format hint.</li>
-<li><strong>Truncated blocks</strong>: For JSON or YAML, remember that closing braces/brackets
+  switch to <code>timestamp</code> with a format hint.</p>
+</li>
+<li>
+<p><strong>Truncated blocks</strong>: For JSON or YAML, remember that closing braces/brackets
   often start at column zero. Use regex boundaries that match <code>^}</code> or <code>^\]</code> to
-  keep the termination line.</li>
-<li><strong>Out-of-memory risk</strong>: <code>--multiline all</code> and poorly tuned regex patterns can
+  keep the termination line.</p>
+</li>
+<li>
+<p><strong>Out-of-memory risk</strong>: <code>--multiline all</code> and poorly tuned regex patterns can
   accumulate the entire file. Run on a sample first, or set <code>--take</code>/<code>--stats</code>
-  to monitor chunk counts.</li>
-<li><strong>Context flags</strong>: <code>-A/-B/-C</code> require a sliding window. If you combine context
-  with multiline, increase <code>--window</code> so the context has enough buffered events.</li>
+  to monitor chunk counts.</p>
+</li>
+<li>
+<p><strong>Context flags</strong>: <code>-A/-B/-C</code> require a sliding window. If you combine context
+  with multiline, increase <code>--window</code> so the context has enough buffered events.</p>
+</li>
 </ul>
 <h2 id="related-reading">Related Reading<a class="headerlink" href="#related-reading" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../pipeline-model/">Pipeline Model</a> – see where multiline sits relative to
-  parsing and transformation.</li>
-<li><a href="../../reference/cli-reference/#input-options">Reference: CLI Options</a> – full
-  flag syntax for <code>--multiline</code>, <code>--extract-prefix</code>, and timestamp controls.</li>
-<li><a href="../../tutorials/parsing-custom-formats/">Tutorial: Parsing Custom Formats</a> –
-  practical recipes that often start with multiline normalization.</li>
+<li>
+<p><a href="../pipeline-model/">Pipeline Model</a> – see where multiline sits relative to
+  parsing and transformation.</p>
+</li>
+<li>
+<p><a href="../../reference/cli-reference/#input-options">Reference: CLI Options</a> – full
+  flag syntax for <code>--multiline</code>, <code>--extract-prefix</code>, and timestamp controls.</p>
+</li>
+<li>
+<p><a href="../../tutorials/parsing-custom-formats/">Tutorial: Parsing Custom Formats</a> –
+  practical recipes that often start with multiline normalization.</p>
+</li>
 </ul>
 
 

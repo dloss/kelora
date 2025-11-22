@@ -3117,14 +3117,16 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; error_type=&#39;Query&#39; message=&#39;Query timeout&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; service=&#39;auth&#39; error_type=&#39;Account&#39; message=&#39;Account locked&#39;
 </code></pre></div>
-<p><strong>Common string methods:</strong>
-- <code>contains(substr)</code> - Check if string contains text
-- <code>starts_with(prefix)</code> - Check prefix
-- <code>ends_with(suffix)</code> - Check suffix
-- <code>split(sep)</code> - Split into array
-- <code>to_upper()</code> / <code>to_lower()</code> - Change case
-- <code>trim()</code> - Remove whitespace
-- <code>len()</code> - String length</p>
+<p><strong>Common string methods:</strong></p>
+<ul>
+<li><code>contains(substr)</code> - Check if string contains text</li>
+<li><code>starts_with(prefix)</code> - Check prefix</li>
+<li><code>ends_with(suffix)</code> - Check suffix</li>
+<li><code>split(sep)</code> - Split into array</li>
+<li><code>to_upper()</code> / <code>to_lower()</code> - Change case</li>
+<li><code>trim()</code> - Remove whitespace</li>
+<li><code>len()</code> - String length</li>
+</ul>
 <hr />
 <h2 id="step-5-conditionals-and-logic">Step 5: Conditionals and Logic<a class="headerlink" href="#step-5-conditionals-and-logic" title="Permanent link">&para;</a></h2>
 <p>Use <code>if/else</code> to make decisions in your transforms.</p>
@@ -3166,10 +3168,12 @@
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id=&#39;456&#39; id_num=456 status=&#39;404&#39; status_num=404 invalid=&#39;xyz&#39; invalid_num=999
 </code></pre></div>
 <p><strong>Note:</strong> Multiple statements in one <code>-e</code> are separated by semicolons and share the same scope. Use this when operations are related or when you need to share <code>let</code> variables.</p>
-<p><strong>Safe conversion functions:</strong>
-- <code>to_int_or(fallback)</code> - Convert to integer or use fallback
-- <code>to_float_or(fallback)</code> - Convert to float or use fallback
-- <code>to_string()</code> - Convert to string (always succeeds)</p>
+<p><strong>Safe conversion functions:</strong></p>
+<ul>
+<li><code>to_int_or(fallback)</code> - Convert to integer or use fallback</li>
+<li><code>to_float_or(fallback)</code> - Convert to float or use fallback</li>
+<li><code>to_string()</code> - Convert to string (always succeeds)</li>
+</ul>
 <hr />
 <h2 id="step-7-pipeline-order-matters">Step 7: Pipeline Order Matters<a class="headerlink" href="#step-7-pipeline-order-matters" title="Permanent link">&para;</a></h2>
 <p>The order of <code>--filter</code> and <code>-e</code> flags determines execution order.</p>
@@ -3237,11 +3241,13 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>🔹Executing stage 1 (exec)
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>value=&#39;not_a_number&#39;
 </code></pre></div>
-<p><strong>Debug workflow:</strong>
-1. Use <code>-F inspect</code> to check field types
-2. Use <code>--verbose</code> to see error messages
-3. Use <code>--strict</code> to fail fast on first error
-4. Add temporary fields to see intermediate values</p>
+<p><strong>Debug workflow:</strong></p>
+<ol>
+<li>Use <code>-F inspect</code> to check field types</li>
+<li>Use <code>--verbose</code> to see error messages</li>
+<li>Use <code>--strict</code> to fail fast on first error</li>
+<li>Add temporary fields to see intermediate values</li>
+</ol>
 <hr />
 <h2 id="step-10-multi-stage-pipelines">Step 10: Multi-Stage Pipelines<a class="headerlink" href="#step-10-multi-stage-pipelines" title="Permanent link">&para;</a></h2>
 <p>Chain multiple <code>-e</code> and <code>--filter</code> stages for complex logic.</p>

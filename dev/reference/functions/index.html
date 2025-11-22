@@ -6948,15 +6948,19 @@
 </code></pre></div>
 <h4 id="valueor_empty"><code>value.or_empty()</code><a class="headerlink" href="#valueor_empty" title="Permanent link">&para;</a></h4>
 <p>Convert empty values to Unit <code>()</code> for removal/filtering.</p>
-<p>Converts conceptually "empty" values to Unit, which:
-- Removes the field when assigned (e.g., <code>e.field = value.or_empty()</code>)
-- Gets skipped by <code>track_*()</code> functions
-- Works with missing fields (passes Unit through unchanged)</p>
-<p><strong>Supported empty values:</strong>
-- Empty string: <code>""</code> → <code>()</code>
-- Empty array: <code>[]</code> → <code>()</code>
-- Empty map: <code>#{}</code> → <code>()</code>
-- Unit itself: <code>()</code> → <code>()</code> (pass-through)</p>
+<p>Converts conceptually "empty" values to Unit, which:</p>
+<ul>
+<li>Removes the field when assigned (e.g., <code>e.field = value.or_empty()</code>)</li>
+<li>Gets skipped by <code>track_*()</code> functions</li>
+<li>Works with missing fields (passes Unit through unchanged)</li>
+</ul>
+<p><strong>Supported empty values:</strong></p>
+<ul>
+<li>Empty string: <code>""</code> → <code>()</code></li>
+<li>Empty array: <code>[]</code> → <code>()</code></li>
+<li>Empty map: <code>#{}</code> → <code>()</code></li>
+<li>Unit itself: <code>()</code> → <code>()</code> (pass-through)</li>
+</ul>
 <p><strong>String extraction:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>// Extract only when prefix exists, otherwise remove field
 <a id="__codelineno-110-2" name="__codelineno-110-2" href="#__codelineno-110-2"></a>e.name = e.message.after(&quot;prefix:&quot;).or_empty()

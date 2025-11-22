@@ -2929,7 +2929,7 @@
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora: Stats:
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Lines processed: 3 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Events created: 3 total, 3 output, 0 filtered (0.0%)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Throughput: 2506 lines/s in 1ms
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Throughput: 2265 lines/s in 1ms
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Timestamp: ts, timestamp, time (auto-detected) - 3/3 parsed (100.0%).
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Time span: 2024-01-15T10:30:00+00:00 to 2024-01-15T10:32:00+00:00 (2m)
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Keys seen: message,time,timestamp,ts
@@ -2986,9 +2986,11 @@
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># 45 minutes starting from a specific timestamp</span>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;start+45m&quot;</span><span class="w"> </span>app.log
 </code></pre></div>
-<p><strong>Anchor syntax:</strong>
-- <code>start+DURATION</code> or <code>start-DURATION</code> - relative to <code>--since</code> value
-- <code>end+DURATION</code> or <code>end-DURATION</code> - relative to <code>--until</code> value</p>
+<p><strong>Anchor syntax:</strong></p>
+<ul>
+<li><code>start+DURATION</code> or <code>start-DURATION</code> - relative to <code>--since</code> value</li>
+<li><code>end+DURATION</code> or <code>end-DURATION</code> - relative to <code>--until</code> value</li>
+</ul>
 <p><strong>Note:</strong> Cannot use both anchors in the same command (e.g., <code>--since end-1h --until start+1h</code> will error).</p>
 <h2 id="step-3-custom-timestamp-formats">Step 3: Custom Timestamp Formats<a class="headerlink" href="#step-3-custom-timestamp-formats" title="Permanent link">&para;</a></h2>
 <p>When your timestamps don't match standard formats, use <code>--ts-format</code>:</p>
@@ -3056,10 +3058,12 @@
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>Europe/Berlin<span class="w"> </span>app.log
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>America/New_York<span class="w"> </span>app.log
 </code></pre></div>
-<p><strong>Timezone precedence:</strong>
-1. <code>--input-tz</code> flag (highest priority)
-2. <code>TZ</code> environment variable
-3. UTC (default)</p>
+<p><strong>Timezone precedence:</strong></p>
+<ol>
+<li><code>--input-tz</code> flag (highest priority)</li>
+<li><code>TZ</code> environment variable</li>
+<li>UTC (default)</li>
+</ol>
 <p><strong>Important:</strong> <code>--input-tz</code> only affects naive timestamps. Timestamps with explicit timezone info (like <code>2024-01-15T10:30:00+01:00</code>) preserve their original timezone.</p>
 <h2 id="step-5-converting-timestamps-in-events">Step 5: Converting Timestamps in Events<a class="headerlink" href="#step-5-converting-timestamps-in-events" title="Permanent link">&para;</a></h2>
 <p>Use <code>--normalize-ts</code> to normalize the primary timestamp (the same field Kelora uses for filtering and stats) to RFC3339:</p>

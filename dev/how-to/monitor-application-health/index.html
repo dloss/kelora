@@ -2316,10 +2316,12 @@
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_max(&quot;memory_peak|&quot; + e.service, e.get_path(&quot;memory_percent&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<p>Guidance:
-- <code>e.get_path()</code> returns unit <code>()</code> when a field is missing; check for <code>()</code> to avoid polluting metrics.
-- Combine totals and sample counts to compute averages (e.g., divide <code>latency_total_ms|SERVICE</code> by <code>latency_samples|SERVICE</code>) in an <code>--end</code> block or downstream tooling.
-- Track additional business KPIs (orders, sign-ups) with <code>track_sum()</code> or <code>track_count()</code> as needed.</p>
+<p>Guidance:</p>
+<ul>
+<li><code>e.get_path()</code> returns unit <code>()</code> when a field is missing; check for <code>()</code> to avoid polluting metrics.</li>
+<li>Combine totals and sample counts to compute averages (e.g., divide <code>latency_total_ms|SERVICE</code> by <code>latency_samples|SERVICE</code>) in an <code>--end</code> block or downstream tooling.</li>
+<li>Track additional business KPIs (orders, sign-ups) with <code>track_sum()</code> or <code>track_count()</code> as needed.</li>
+</ul>
 <h2 id="step-3-flag-error-hotspots">Step 3: Flag Error Hotspots<a class="headerlink" href="#step-3-flag-error-hotspots" title="Permanent link">&para;</a></h2>
 <p>Separate healthy traffic from incidents and identify recurring failure modes.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
@@ -2411,7 +2413,8 @@
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Per-service drilldown</strong><br />
+<li>
+<p><strong>Per-service drilldown</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;payments&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
@@ -2421,21 +2424,26 @@
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">        track_count(&quot;latency_samples|&quot; + e.service);</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">      }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--metrics
-</code></pre></div></li>
-<li><strong>Time-boxed reports</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Time-boxed reports</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2 hours ago&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.window = e.timestamp.format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.window)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span>--metrics
-</code></pre></div></li>
-<li><strong>Live monitoring</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Live monitoring</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;ALERT: error in &quot; + e.service)&#39;</span>
 </code></pre></div>
-  Add <code>--no-emoji</code> when piping into systems that cannot render emoji.</li>
+  Add <code>--no-emoji</code> when piping into systems that cannot render emoji.</p>
+</li>
 </ul>
 <h2 id="validate-and-iterate">Validate and Iterate<a class="headerlink" href="#validate-and-iterate" title="Permanent link">&para;</a></h2>
 <ul>

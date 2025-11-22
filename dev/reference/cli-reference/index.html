@@ -6049,9 +6049,13 @@
 <h4 id="-m-multiline-strategy"><code>-M, --multiline &lt;STRATEGY&gt;</code><a class="headerlink" href="#-m-multiline-strategy" title="Permanent link">&para;</a></h4>
 <p>Multi-line event detection strategy. Value format: <code>&lt;strategy&gt;[:key=value[:key=value...]]</code>. Supported strategies:</p>
 <ul>
-<li><code>timestamp</code> — optional <code>format=</code> hint (e.g., <code>timestamp:format=%Y-%m-%d %H-%M-%S</code>)<br />
-<em>(Literal <code>:</code> characters in the format string are not supported yet.)</em></li>
-<li><code>indent</code></li>
+<li>
+<p><code>timestamp</code> — optional <code>format=</code> hint (e.g., <code>timestamp:format=%Y-%m-%d %H-%M-%S</code>)<br />
+<em>(Literal <code>:</code> characters in the format string are not supported yet.)</em></p>
+</li>
+<li>
+<p><code>indent</code></p>
+</li>
 <li><code>regex</code> — requires <code>match=REGEX</code>, optional <code>end=REGEX</code></li>
 <li><code>all</code></li>
 </ul>

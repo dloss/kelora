@@ -4076,11 +4076,13 @@
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p><strong>Behavior:</strong>
-- Returns <code>true</code> → Event passes to next stage
-- Returns <code>false</code> → Event is skipped (removed from pipeline)
-- Error in resilient mode → Treated as <code>false</code>, event skipped
-- Error in strict mode → Processing aborts</p>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Returns <code>true</code> → Event passes to next stage</li>
+<li>Returns <code>false</code> → Event is skipped (removed from pipeline)</li>
+<li>Error in resilient mode → Treated as <code>false</code>, event skipped</li>
+<li>Error in strict mode → Processing aborts</li>
+</ul>
 <h3 id="access-to-event-data">Access to Event Data<a class="headerlink" href="#access-to-event-data" title="Permanent link">&para;</a></h3>
 <p>Filters have access to:</p>
 <ul>
@@ -4184,10 +4186,12 @@
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.duration_s &gt; 5.0 { e.alert = true }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p><strong>Execution order:</strong>
-1. Convert <code>duration_ms</code> to <code>duration_s</code>
-2. Track average duration
-3. Add <code>alert</code> field for slow requests</p>
+<p><strong>Execution order:</strong></p>
+<ol>
+<li>Convert <code>duration_ms</code> to <code>duration_s</code></li>
+<li>Track average duration</li>
+<li>Add <code>alert</code> field for slow requests</li>
+</ol>
 <h3 id="variable-scope-between-exec-stages">Variable Scope Between Exec Stages<a class="headerlink" href="#variable-scope-between-exec-stages" title="Permanent link">&para;</a></h3>
 <p><strong>Important:</strong> Each <code>--exec</code> stage has its own isolated scope. Local variables declared with <code>let</code> do <strong>NOT</strong> persist between stages:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># ❌ WRONG - ctx doesn&#39;t exist in the second stage</span>
@@ -4196,14 +4200,18 @@
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.context = ctx&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># ERROR: ctx undefined!</span>
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p><strong>What persists between stages:</strong>
-- ✅ <strong>Event fields</strong> (<code>e.field = value</code>) - Modifications carry forward
-- ✅ <strong><code>conf</code> map</strong> - Initialized in <code>--begin</code>, read-only in exec stages
-- ✅ <strong><code>metrics</code> map</strong> - Populated by <code>track_*()</code> functions
-- ✅ <strong><code>window</code> array</strong> - When using <code>--window</code></p>
-<p><strong>What does NOT persist:</strong>
-- ❌ <strong>Local variables</strong> (<code>let x = ...</code>) - Scoped to the stage only
-- ❌ <strong>Function definitions</strong> - Unless loaded via <code>--include</code></p>
+<p><strong>What persists between stages:</strong></p>
+<ul>
+<li>✅ <strong>Event fields</strong> (<code>e.field = value</code>) - Modifications carry forward</li>
+<li>✅ <strong><code>conf</code> map</strong> - Initialized in <code>--begin</code>, read-only in exec stages</li>
+<li>✅ <strong><code>metrics</code> map</strong> - Populated by <code>track_*()</code> functions</li>
+<li>✅ <strong><code>window</code> array</strong> - When using <code>--window</code></li>
+</ul>
+<p><strong>What does NOT persist:</strong></p>
+<ul>
+<li>❌ <strong>Local variables</strong> (<code>let x = ...</code>) - Scoped to the stage only</li>
+<li>❌ <strong>Function definitions</strong> - Unless loaded via <code>--include</code></li>
+</ul>
 <p><strong>Solution - Use semicolons for shared variables:</strong></p>
 <p>When you need local variables to persist across operations, use semicolons within a single <code>--exec</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># ✅ CORRECT - Both operations in one stage</span>
@@ -4212,13 +4220,17 @@
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p><strong>When to use multiple stages vs semicolons:</strong></p>
-<p>Use <strong>multiple <code>-e</code> stages</strong> when you want:
-- Stage-level error isolation (see resilient mode below)
-- Logical separation of transformation steps
-- Progressive validation checkpoints</p>
-<p>Use <strong>semicolons within one <code>-e</code></strong> when you need:
-- Shared local variables across operations
-- All-or-nothing execution (no partial results)</p>
+<p>Use <strong>multiple <code>-e</code> stages</strong> when you want:</p>
+<ul>
+<li>Stage-level error isolation (see resilient mode below)</li>
+<li>Logical separation of transformation steps</li>
+<li>Progressive validation checkpoints</li>
+</ul>
+<p>Use <strong>semicolons within one <code>-e</code></strong> when you need:</p>
+<ul>
+<li>Shared local variables across operations</li>
+<li>All-or-nothing execution (no partial results)</li>
+</ul>
 <h3 id="intermixing-filter-and-exec">Intermixing --filter and --exec<a class="headerlink" href="#intermixing-filter-and-exec" title="Permanent link">&para;</a></h3>
 <p><code>--filter</code> and <code>--exec</code> are both script stages and execute in <strong>exact CLI order</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
@@ -4228,11 +4240,13 @@
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.alert = true&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">                         </span><span class="c1"># Stage 4: Add field (slow only)</span>
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p><strong>What happens:</strong>
-1. First <code>--exec</code> adds <code>duration_s</code> field to all events
-2. <code>--filter</code> removes events under 1.0s
-3. Second <code>--exec</code> only processes slow events (tracks count)
-4. Third <code>--exec</code> only processes slow events (adds alert field)</p>
+<p><strong>What happens:</strong></p>
+<ol>
+<li>First <code>--exec</code> adds <code>duration_s</code> field to all events</li>
+<li><code>--filter</code> removes events under 1.0s</li>
+<li>Second <code>--exec</code> only processes slow events (tracks count)</li>
+<li>Third <code>--exec</code> only processes slow events (adds alert field)</li>
+</ol>
 <p>Later stages only see events that passed earlier filters. This allows precise control over which events are transformed or tracked.</p>
 <h3 id="atomic-execution">Atomic Execution<a class="headerlink" href="#atomic-execution" title="Permanent link">&para;</a></h3>
 <p>In resilient mode (default), exec scripts execute <strong>atomically</strong>:</p>
@@ -4260,10 +4274,12 @@
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.step3 = &quot;complete&quot;&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">        </span><span class="c1"># Snapshot 3 (if step2 succeeds)</span>
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p><strong>Behavior on error:</strong>
-- If <code>step2</code> fails for an event, it <strong>keeps <code>step1</code> but not <code>step2</code></strong>
-- The event continues through the pipeline with fields from the last successful stage
-- Later stages see the rolled-back event</p>
+<p><strong>Behavior on error:</strong></p>
+<ul>
+<li>If <code>step2</code> fails for an event, it <strong>keeps <code>step1</code> but not <code>step2</code></strong></li>
+<li>The event continues through the pipeline with fields from the last successful stage</li>
+<li>Later stages see the rolled-back event</li>
+</ul>
 <p><strong>Why use multiple stages for error handling:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Multiple stages - Graceful degradation</span>
 <a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
@@ -4288,9 +4304,11 @@
 <a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">    </span>app.log
 </code></pre></div>
 <p>Events that fail external lookup still get <code>normalized</code> field.</p>
-<p><strong>Trade-off:</strong>
-- <strong>Multiple stages</strong>: Better error isolation, partial success, but local variables don't persist
-- <strong>Single stage with semicolons</strong>: Shared variables, but all-or-nothing execution</p>
+<p><strong>Trade-off:</strong></p>
+<ul>
+<li><strong>Multiple stages</strong>: Better error isolation, partial success, but local variables don't persist</li>
+<li><strong>Single stage with semicolons</strong>: Shared variables, but all-or-nothing execution</li>
+</ul>
 <h3 id="common-patterns_1">Common Patterns<a class="headerlink" href="#common-patterns_1" title="Permanent link">&para;</a></h3>
 <h4 id="transform-fields">Transform Fields<a class="headerlink" href="#transform-fields" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
@@ -4429,10 +4447,12 @@
 <a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let elapsed = now() - conf.start; print(&quot;Processed &quot; + metrics.total + &quot; events in &quot; + elapsed + &quot;s&quot;); print(&quot;Slow requests: &quot; + metrics.get(&quot;slow&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a><span class="w">    </span>app.log
 </code></pre></div>
-<p><strong>Flow:</strong>
-1. <code>--begin</code>: Set threshold to 1000ms, record start time
-2. <code>--exec</code> (per event): Track slow requests, track total
-3. <code>--end</code>: Calculate elapsed time, print summary</p>
+<p><strong>Flow:</strong></p>
+<ol>
+<li><code>--begin</code>: Set threshold to 1000ms, record start time</li>
+<li><code>--exec</code> (per event): Track slow requests, track total</li>
+<li><code>--end</code>: Calculate elapsed time, print summary</li>
+</ol>
 <h2 id="using-exec-files">Using Exec Files<a class="headerlink" href="#using-exec-files" title="Permanent link">&para;</a></h2>
 <h3 id="-e-exec-file"><code>-E, --exec-file</code><a class="headerlink" href="#-e-exec-file" title="Permanent link">&para;</a></h3>
 <p>Load Rhai script from file for the exec stage:</p>
@@ -4617,10 +4637,12 @@
 <a id="__codelineno-71-4" name="__codelineno-71-4" href="#__codelineno-71-4"></a><span class="c1"># Filter runs between execs - second --exec only sees filtered events</span>
 <a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.a = 1&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.b = e.a + 1&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
-<p><strong>What happens in the second example:</strong>
-1. First <code>--exec</code> adds field <code>a=1</code> to all events
-2. <code>--filter</code> removes non-ERROR events
-3. Second <code>--exec</code> adds field <code>b=2</code> to ERROR events only</p>
+<p><strong>What happens in the second example:</strong></p>
+<ol>
+<li>First <code>--exec</code> adds field <code>a=1</code> to all events</li>
+<li><code>--filter</code> removes non-ERROR events</li>
+<li>Second <code>--exec</code> adds field <code>b=2</code> to ERROR events only</li>
+</ol>
 <p>This is <strong>expected behavior</strong> - later stages only process events that passed earlier filters. Each stage (filter or exec) processes the output of the previous stage sequentially.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

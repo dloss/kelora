@@ -3887,19 +3887,23 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>e.level           // Fast: direct map lookup
 <a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>e.user.name       // Fast: two map lookups
 </code></pre></div></p>
-<p><strong>Use direct access when:</strong>
-- Field names are known at script time
-- Fields are guaranteed to exist (e.g., parser output)
-- Performance is critical</p>
+<p><strong>Use direct access when:</strong></p>
+<ul>
+<li>Field names are known at script time</li>
+<li>Fields are guaranteed to exist (e.g., parser output)</li>
+<li>Performance is critical</li>
+</ul>
 <p><strong>Path access</strong> provides safety and flexibility:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>e.get_path(&quot;level&quot;, &quot;INFO&quot;)              // Safe with default
 <a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)       // Handles missing fields
 </code></pre></div></p>
-<p><strong>Use <code>get_path()</code> when:</strong>
-- Fields might not exist (optional data)
-- Working with inconsistent log formats
-- You need default values for missing fields
-- Path is dynamic or comes from configuration</p>
+<p><strong>Use <code>get_path()</code> when:</strong></p>
+<ul>
+<li>Fields might not exist (optional data)</li>
+<li>Working with inconsistent log formats</li>
+<li>You need default values for missing fields</li>
+<li>Path is dynamic or comes from configuration</li>
+</ul>
 <p><strong>Hybrid approach for best results:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>// Check existence, then use direct access for speed
 <a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>if &quot;user&quot; in e {

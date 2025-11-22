@@ -2304,10 +2304,12 @@
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let keep = #{timestamp: e.timestamp, service: e.service, message: e.message}; e = keep&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
-<p>Tips:
-- Assigning <code>()</code> deletes a field.
-- Rebuilding the event (as above) ensures no unexpected data leaks.
-- <code>--exclude-keys field1,field2</code> works when the data is already flat.</p>
+<p>Tips:</p>
+<ul>
+<li>Assigning <code>()</code> deletes a field.</li>
+<li>Rebuilding the event (as above) ensures no unexpected data leaks.</li>
+<li><code>--exclude-keys field1,field2</code> works when the data is already flat.</li>
+</ul>
 <h2 id="step-3-mask-direct-identifiers">Step 3: Mask Direct Identifiers<a class="headerlink" href="#step-3-mask-direct-identifiers" title="Permanent link">&para;</a></h2>
 <p>Use helper functions for IPs and structured values.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
@@ -2345,25 +2347,31 @@
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Automated daily scrub</strong>
+<li>
+<p><strong>Automated daily scrub</strong>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OUTPUT</span><span class="o">=</span>/secure/sanitized-<span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span>.json
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>/var/log/app/app-<span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span>.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.ip = e.ip.mask_ip(2)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.card = ()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span>-J<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUTPUT</span><span class="s2">&quot;</span>
-</code></pre></div></li>
-<li><strong>Redact stack traces for non-engineers</strong>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Redact stack traces for non-engineers</strong>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.level != &quot;DEBUG&quot; { e.stack_trace = () }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-F<span class="w"> </span>json
-</code></pre></div></li>
-<li><strong>Metrics to confirm coverage</strong>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Metrics to confirm coverage</strong>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;ip&quot;) { track_count(&quot;ip_fields&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;token&quot;) { track_count(&quot;token_fields&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--metrics
-</code></pre></div></li>
+</code></pre></div></p>
+</li>
 </ul>
 <h2 id="good-practices">Good Practices<a class="headerlink" href="#good-practices" title="Permanent link">&para;</a></h2>
 <ul>

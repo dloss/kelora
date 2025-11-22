@@ -2508,18 +2508,22 @@
 </div>
 <hr />
 <h2 id="test-system-apple-m1-2024-10-26">Test System: Apple M1 (2024-10-26)<a class="headerlink" href="#test-system-apple-m1-2024-10-26" title="Permanent link">&para;</a></h2>
-<p><strong>Hardware:</strong>
-- <strong>CPU:</strong> Apple M1
-- <strong>Cores:</strong> 8 (4 performance + 4 efficiency)
-- <strong>OS:</strong> macOS (Darwin)
-- <strong>RAM:</strong> 16GB</p>
-<p><strong>Software Versions:</strong>
-- kelora: (current development build)
-- jq: 1.7.1
-- ripgrep: 14.1.0
-- awk: BSD awk (macOS built-in)
-- miller: 6.12.0
-- qsv: 0.131.0</p>
+<p><strong>Hardware:</strong></p>
+<ul>
+<li><strong>CPU:</strong> Apple M1</li>
+<li><strong>Cores:</strong> 8 (4 performance + 4 efficiency)</li>
+<li><strong>OS:</strong> macOS (Darwin)</li>
+<li><strong>RAM:</strong> 16GB</li>
+</ul>
+<p><strong>Software Versions:</strong></p>
+<ul>
+<li>kelora: (current development build)</li>
+<li>jq: 1.7.1</li>
+<li>ripgrep: 14.1.0</li>
+<li>awk: BSD awk (macOS built-in)</li>
+<li>miller: 6.12.0</li>
+<li>qsv: 0.131.0</li>
+</ul>
 <hr />
 <h3 id="1-simple-text-filtering">1. Simple Text Filtering<a class="headerlink" href="#1-simple-text-filtering" title="Permanent link">&para;</a></h3>
 <p><strong>Task:</strong> Find all ERROR lines in 100,000-line log file</p>
@@ -2699,10 +2703,12 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Interpretation:</strong>
-- Kelora sequential is 9.7x slower than jq
-- Kelora <code>--parallel</code> provides 5.2x speedup over sequential
-- Still 1.8x slower than jq overall</p>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li>Kelora sequential is 9.7x slower than jq</li>
+<li>Kelora <code>--parallel</code> provides 5.2x speedup over sequential</li>
+<li>Still 1.8x slower than jq overall</li>
+</ul>
 <hr />
 <h3 id="7-csv-processing">7. CSV Processing<a class="headerlink" href="#7-csv-processing" title="Permanent link">&para;</a></h3>
 <p><strong>Task:</strong> Filter CSV by level, select columns</p>
@@ -2756,11 +2762,13 @@
 <p>Submit a PR with your results</p>
 </li>
 </ol>
-<p><strong>Especially interested in:</strong>
-- Linux (x86_64, ARM)
-- Windows (WSL, native)
-- Different CPU architectures
-- Older vs newer hardware comparisons</p>
+<p><strong>Especially interested in:</strong></p>
+<ul>
+<li>Linux (x86_64, ARM)</li>
+<li>Windows (WSL, native)</li>
+<li>Different CPU architectures</li>
+<li>Older vs newer hardware comparisons</li>
+</ul>
 <hr />
 <h2 id="historical-results">Historical Results<a class="headerlink" href="#historical-results" title="Permanent link">&para;</a></h2>
 <p>Track performance improvements across Kelora versions:</p>
@@ -2793,21 +2801,25 @@
 </table>
 <hr />
 <h2 id="test-system-intel-core-i5-2025-10-26">Test System: Intel Core i5 (2025-10-26)<a class="headerlink" href="#test-system-intel-core-i5-2025-10-26" title="Permanent link">&para;</a></h2>
-<p><strong>Hardware:</strong>
-- <strong>CPU:</strong> Intel Core i5 (3.0 GHz, 6 cores)
-- <strong>Cores:</strong> 6
-- <strong>OS:</strong> macOS 15.6.1 (24G90) · <code>x86_64</code>
-- <strong>RAM:</strong> 16 GB</p>
-<p><strong>Software Versions:</strong>
-- Kelora: <code>target/release/kelora</code> @ <code>09faf43</code>
-- Rust: 1.90.0
-- grep: 2.6.0 (BSD)
-- ripgrep: 15.1.0
-- jq: 1.6
-- mlr: 6.15.0
-- qsv: 8.1.1
-- angle-grinder: 0.19.5
-- klp: 0.77.0</p>
+<p><strong>Hardware:</strong></p>
+<ul>
+<li><strong>CPU:</strong> Intel Core i5 (3.0 GHz, 6 cores)</li>
+<li><strong>Cores:</strong> 6</li>
+<li><strong>OS:</strong> macOS 15.6.1 (24G90) · <code>x86_64</code></li>
+<li><strong>RAM:</strong> 16 GB</li>
+</ul>
+<p><strong>Software Versions:</strong></p>
+<ul>
+<li>Kelora: <code>target/release/kelora</code> @ <code>09faf43</code></li>
+<li>Rust: 1.90.0</li>
+<li>grep: 2.6.0 (BSD)</li>
+<li>ripgrep: 15.1.0</li>
+<li>jq: 1.6</li>
+<li>mlr: 6.15.0</li>
+<li>qsv: 8.1.1</li>
+<li>angle-grinder: 0.19.5</li>
+<li>klp: 0.77.0</li>
+</ul>
 <hr />
 <h3 id="1-simple-text-filtering_1">1. Simple Text Filtering<a class="headerlink" href="#1-simple-text-filtering_1" title="Permanent link">&para;</a></h3>
 <p><strong>Task:</strong> Find all ERROR lines in 100,000-line log file</p>

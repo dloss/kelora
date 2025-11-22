@@ -2401,18 +2401,28 @@ pipelines.</p>
 <h3 id="sequential-mode">Sequential Mode<a class="headerlink" href="#sequential-mode" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Processes one event at a time and forwards it immediately.</li>
-<li>Ideal for <code>tail -f</code> pipelines, interactive filtering, or anything that needs
-  deterministic ordering.</li>
-<li>Windowing (<code>--window</code>), context flags (<code>-A/-B/-C</code>), and Rhai metrics operate
-  with minimal latency.</li>
+<li>
+<p>Ideal for <code>tail -f</code> pipelines, interactive filtering, or anything that needs
+  deterministic ordering.</p>
+</li>
+<li>
+<p>Windowing (<code>--window</code>), context flags (<code>-A/-B/-C</code>), and Rhai metrics operate
+  with minimal latency.</p>
+</li>
 </ul>
 <h3 id="parallel-mode">Parallel Mode<a class="headerlink" href="#parallel-mode" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Uses a worker pool (defaults to logical CPU count) to parse, filter, and
-  transform events concurrently.</li>
-<li>Requires buffering to preserve order unless you pass <code>--unordered</code> (faster but
-  only safe when ordering does not matter).</li>
-<li>Adjust batching:</li>
+<li>
+<p>Uses a worker pool (defaults to logical CPU count) to parse, filter, and
+  transform events concurrently.</p>
+</li>
+<li>
+<p>Requires buffering to preserve order unless you pass <code>--unordered</code> (faster but
+  only safe when ordering does not matter).</p>
+</li>
+<li>
+<p>Adjust batching:</p>
+</li>
 <li><code>--batch-size &lt;N&gt;</code> – number of events per batch before flushing to workers.</li>
 <li><code>--batch-timeout &lt;ms&gt;</code> – flush partially filled batches after idle period.</li>
 <li><code>--threads &lt;N&gt;</code> – override the thread count (0 = auto).</li>
@@ -2441,14 +2451,14 @@ pipelines.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Stats:
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 1200 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 1200 total, 1200 output, 0 filtered (0.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 35577 lines/s in 33ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 35668 lines/s in 33ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts (auto-detected) - 1200/1200 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2025-10-04T08:27:22+00:00 (single timestamp)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Keys seen: bytes,ip,method,path,protocol,referer,request,status,ts,user,user_agent
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora: Stats:
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Lines processed: 1200 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Events created: 1200 total, 1200 output, 0 filtered (0.0%)
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Throughput: 33172 lines/s in 36ms
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Throughput: 33669 lines/s in 35ms
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Timestamp: ts (auto-detected) - 1200/1200 parsed (100.0%).
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Keys seen: bytes,ip,method,path,protocol,referer,request,status,ts,user,user_agent
 </code></pre></div>
@@ -2460,46 +2470,72 @@ throughput because the CPU-bound combined parser is spread across cores.
 Real-world gains depend on disk speed, decompression cost, and script workload.</p>
 <h2 id="pipeline-components-that-affect-throughput">Pipeline Components That Affect Throughput<a class="headerlink" href="#pipeline-components-that-affect-throughput" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Input</strong> – Kelora streams from files or stdin, automatically decompressing
+<li>
+<p><strong>Input</strong> – Kelora streams from files or stdin, automatically decompressing
    <code>.gz</code>. Network filesystems or slow disks can dominate runtime; consider using
-   <code>pv</code>/<code>zcat</code> to monitor upstream throughput.</li>
-<li><strong>Parsing</strong> – Structured formats like <code>combined</code>, <code>syslog</code>, or <code>cols:</code> spend
-   more CPU cycles than <code>line</code> or <code>raw</code>. Parallel mode shines here.</li>
-<li><strong>Filtering</strong> – Complex regex (<code>--filter</code>, <code>--keep-lines</code>, <code>--ignore-lines</code>)
-   benefit from batching; simple boolean predicates are cheap.</li>
-<li><strong>Transformation</strong> – Rhai scripts are executed for every event. Expensive
+   <code>pv</code>/<code>zcat</code> to monitor upstream throughput.</p>
+</li>
+<li>
+<p><strong>Parsing</strong> – Structured formats like <code>combined</code>, <code>syslog</code>, or <code>cols:</code> spend
+   more CPU cycles than <code>line</code> or <code>raw</code>. Parallel mode shines here.</p>
+</li>
+<li>
+<p><strong>Filtering</strong> – Complex regex (<code>--filter</code>, <code>--keep-lines</code>, <code>--ignore-lines</code>)
+   benefit from batching; simple boolean predicates are cheap.</p>
+</li>
+<li>
+<p><strong>Transformation</strong> – Rhai scripts are executed for every event. Expensive
    operations (regex extraction, JSON parsing, cryptographic hashes) may need
-   <code>--parallel</code> or optimized logic (e.g., caching in <code>--begin</code>).</li>
-<li><strong>Output</strong> – <code>-F json</code> and CSV/TSV encoders allocate more than the default
-   key=value printer. Writing to disk (<code>-o file</code>) shifts performance to storage.</li>
+   <code>--parallel</code> or optimized logic (e.g., caching in <code>--begin</code>).</p>
+</li>
+<li>
+<p><strong>Output</strong> – <code>-F json</code> and CSV/TSV encoders allocate more than the default
+   key=value printer. Writing to disk (<code>-o file</code>) shifts performance to storage.</p>
+</li>
 </ol>
 <h2 id="measuring-performance">Measuring Performance<a class="headerlink" href="#measuring-performance" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>--stats</code> or <code>--stats-only</code> print throughput, error counts, time span, and
-  key inventory. Compare sequential vs parallel runs with the same dataset.</li>
-<li><code>--metrics</code> combined with <code>track_sum</code>/<code>track_bucket</code> can act as lightweight
-  profilers (e.g., sum <code>duration_ms</code> to estimate runtime distribution).</li>
-<li>Use <code>time</code>, <code>hyperfine</code>, or CI timers around your Kelora command for wall
-  clock baselines.</li>
+<li>
+<p><code>--stats</code> or <code>--stats-only</code> print throughput, error counts, time span, and
+  key inventory. Compare sequential vs parallel runs with the same dataset.</p>
+</li>
+<li>
+<p><code>--metrics</code> combined with <code>track_sum</code>/<code>track_bucket</code> can act as lightweight
+  profilers (e.g., sum <code>duration_ms</code> to estimate runtime distribution).</p>
+</li>
+<li>
+<p>Use <code>time</code>, <code>hyperfine</code>, or CI timers around your Kelora command for wall
+  clock baselines.</p>
+</li>
 </ul>
 <h2 id="memory-considerations">Memory Considerations<a class="headerlink" href="#memory-considerations" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Multiline (<code>--multiline</code>) and windowing (<code>--window</code>, context flags) enlarge
+<li>
+<p>Multiline (<code>--multiline</code>) and windowing (<code>--window</code>, context flags) enlarge
   per-event buffers. Monitor with <code>--stats</code> and consider lowering
-  <code>--batch-size</code> if memory grows uncontrollably in parallel mode.</li>
-<li><code>--multiline all</code> or gigantic regex chunks can hold the entire file in RAM.
-  Prefer incremental processing or pre-splitting input.</li>
-<li><code>--metrics</code> keeps maps in memory until the run ends. Guard high-cardinality
-  structures (<code>track_unique</code>) with filters.</li>
+  <code>--batch-size</code> if memory grows uncontrollably in parallel mode.</p>
+</li>
+<li>
+<p><code>--multiline all</code> or gigantic regex chunks can hold the entire file in RAM.
+  Prefer incremental processing or pre-splitting input.</p>
+</li>
+<li>
+<p><code>--metrics</code> keeps maps in memory until the run ends. Guard high-cardinality
+  structures (<code>track_unique</code>) with filters.</p>
+</li>
 </ul>
 <h2 id="ordering-guarantees">Ordering Guarantees<a class="headerlink" href="#ordering-guarantees" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Sequential mode preserves input order exactly.</li>
-<li>Parallel mode preserves order by default through batch sequencing. Use
+<li>
+<p>Parallel mode preserves order by default through batch sequencing. Use
   <code>--unordered</code> only when the output order is irrelevant (e.g., writing JSON
-  lines to a file for downstream aggregation).</li>
-<li><code>--batch-size</code> too large can increase latency before the first events appear.
-  Tune for the desired balance between throughput and interactivity.</li>
+  lines to a file for downstream aggregation).</p>
+</li>
+<li>
+<p><code>--batch-size</code> too large can increase latency before the first events appear.
+  Tune for the desired balance between throughput and interactivity.</p>
+</li>
 </ul>
 <h2 id="streaming-vs-batch-recommendations">Streaming vs Batch Recommendations<a class="headerlink" href="#streaming-vs-batch-recommendations" title="Permanent link">&para;</a></h2>
 <table>
@@ -2530,48 +2566,80 @@ Real-world gains depend on disk speed, decompression cost, and script workload.<
 </table>
 <h2 id="troubleshooting-slow-pipelines">Troubleshooting Slow Pipelines<a class="headerlink" href="#troubleshooting-slow-pipelines" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>High CPU usage</strong> – Profile Rhai scripts. Move static setup to <code>--begin</code> and
-  eliminate redundant parsing inside <code>--exec</code>.</li>
-<li><strong>Low throughput in parallel mode</strong> – Increase <code>--batch-size</code>, decrease
-  <code>--batch-timeout</code>, or allow Kelora to run more threads with <code>--threads 0</code>.</li>
-<li><strong>Out-of-order events</strong> – Ensure <code>--unordered</code> is not set. Multiline plus
-  <code>--parallel</code> may delay chunk emission; reduce batch size.</li>
-<li><strong>Backpressure when writing to files</strong> – Use <code>-o output.log</code> to avoid stdout
-  buffering by other processes.</li>
-<li><strong>Gzip bottlenecks</strong> – Pre-decompress with <code>zcat file.gz | kelora -f combined -</code>
-  if CPU is the limiting factor and disk is fast.</li>
+<li>
+<p><strong>High CPU usage</strong> – Profile Rhai scripts. Move static setup to <code>--begin</code> and
+  eliminate redundant parsing inside <code>--exec</code>.</p>
+</li>
+<li>
+<p><strong>Low throughput in parallel mode</strong> – Increase <code>--batch-size</code>, decrease
+  <code>--batch-timeout</code>, or allow Kelora to run more threads with <code>--threads 0</code>.</p>
+</li>
+<li>
+<p><strong>Out-of-order events</strong> – Ensure <code>--unordered</code> is not set. Multiline plus
+  <code>--parallel</code> may delay chunk emission; reduce batch size.</p>
+</li>
+<li>
+<p><strong>Backpressure when writing to files</strong> – Use <code>-o output.log</code> to avoid stdout
+  buffering by other processes.</p>
+</li>
+<li>
+<p><strong>Gzip bottlenecks</strong> – Pre-decompress with <code>zcat file.gz | kelora -f combined -</code>
+  if CPU is the limiting factor and disk is fast.</p>
+</li>
 </ul>
 <h2 id="quick-checklist">Quick Checklist<a class="headerlink" href="#quick-checklist" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Streaming workloads? Stay sequential and stream to stdout for the lowest
-   latency.</li>
-<li>Batch archives? Combine <code>--parallel --stats</code> and tune <code>--batch-size</code> /
-   <code>--batch-timeout</code> after inspecting skew.</li>
-<li>Heavy windowing? Keep <code>--window</code> small (50 or less) or sample upstream to
-   cap memory.</li>
-<li>Verbose diagnostics? Drop to <code>-q</code> once the pipeline is stable to reduce
-   stderr noise.</li>
-<li>Ordering critical? Avoid <code>--unordered</code>; otherwise enabling it can flush
-   parallel batches faster.</li>
+<li>
+<p>Streaming workloads? Stay sequential and stream to stdout for the lowest
+   latency.</p>
+</li>
+<li>
+<p>Batch archives? Combine <code>--parallel --stats</code> and tune <code>--batch-size</code> /
+   <code>--batch-timeout</code> after inspecting skew.</p>
+</li>
+<li>
+<p>Heavy windowing? Keep <code>--window</code> small (50 or less) or sample upstream to
+   cap memory.</p>
+</li>
+<li>
+<p>Verbose diagnostics? Drop to <code>-q</code> once the pipeline is stable to reduce
+   stderr noise.</p>
+</li>
+<li>
+<p>Ordering critical? Avoid <code>--unordered</code>; otherwise enabling it can flush
+   parallel batches faster.</p>
+</li>
 </ol>
 <h2 id="troubleshooting-cheats">Troubleshooting Cheats<a class="headerlink" href="#troubleshooting-cheats" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Inspect parse hiccups with <code>-F inspect</code> or by raising <code>--verbose</code>.</li>
-<li>Timestamp drift? Pin down <code>--ts-field</code>, <code>--ts-format</code>, or <code>--input-tz</code>
-  (see <code>kelora --help-time</code>).</li>
-<li>Rhai panics? Guard lookups with <code>e.get_path("field", ())</code> and conversions with
-  <code>to_int_or</code> / <code>to_float_or</code>.</li>
-<li>Abundant <code>.gz</code> files? No need for extra tooling—Kelora already detects and
-  decompresses them automatically.</li>
+<li>
+<p>Timestamp drift? Pin down <code>--ts-field</code>, <code>--ts-format</code>, or <code>--input-tz</code>
+  (see <code>kelora --help-time</code>).</p>
+</li>
+<li>
+<p>Rhai panics? Guard lookups with <code>e.get_path("field", ())</code> and conversions with
+  <code>to_int_or</code> / <code>to_float_or</code>.</p>
+</li>
+<li>
+<p>Abundant <code>.gz</code> files? No need for extra tooling—Kelora already detects and
+  decompresses them automatically.</p>
+</li>
 </ul>
 <h2 id="related-guides">Related Guides<a class="headerlink" href="#related-guides" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../tutorials/metrics-and-tracking/">Metrics and Tracking Tutorial</a> – build
-  dashboards to observe throughput.</li>
-<li><a href="../multiline-strategies/">Multiline Strategies</a> – large multiline blocks can
-  influence memory and batching.</li>
-<li><a href="../../reference/cli-reference/#performance-options">CLI Reference – Performance Options</a>
-  – full documentation for <code>--parallel</code>, <code>--threads</code>, and friends.</li>
+<li>
+<p><a href="../../tutorials/metrics-and-tracking/">Metrics and Tracking Tutorial</a> – build
+  dashboards to observe throughput.</p>
+</li>
+<li>
+<p><a href="../multiline-strategies/">Multiline Strategies</a> – large multiline blocks can
+  influence memory and batching.</p>
+</li>
+<li>
+<p><a href="../../reference/cli-reference/#performance-options">CLI Reference – Performance Options</a>
+  – full documentation for <code>--parallel</code>, <code>--threads</code>, and friends.</p>
+</li>
 </ul>
 
 

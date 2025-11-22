@@ -2546,7 +2546,7 @@ any time you want a quick histogram after a batch run.</p>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora: Stats:
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Throughput: 11315 lines/s in 1ms
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Throughput: 11093 lines/s in 1ms
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Timestamp: timestamp (auto-detected) - 20/20 parsed (100.0%).
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN
@@ -2837,15 +2837,15 @@ clean text summary that you can redirect or feed into alerts.</p>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>{
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;api&quot;: 7,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;database&quot;: 2,
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;auth&quot;: 2,
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;database&quot;: 2,
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;admin&quot;: 2,
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;scheduler&quot;: 3,
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;cache&quot;: 1,
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;health&quot;: 1,
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;monitoring&quot;: 1,
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;disk&quot;: 1
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;api&quot;: 7,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;disk&quot;: 1,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;scheduler&quot;: 3,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;admin&quot;: 2,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;health&quot;: 1,
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;cache&quot;: 1
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>}
 </code></pre></div>
 </div>
@@ -2923,20 +2923,30 @@ you terminate the process.</p>
 human-readable histogram once processing finishes.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>No metrics printed</strong>: Ensure you pass <code>-m</code> (or <code>--metrics</code>) or consume <code>metrics</code>
-  within an <code>--end</code> script. Tracking functions alone do not emit output.</li>
-<li><strong>Truncated arrays</strong>: If <code>-m</code> shows only the first 5 items with a hint, use <code>-mm</code>
+<li>
+<p><strong>No metrics printed</strong>: Ensure you pass <code>-m</code> (or <code>--metrics</code>) or consume <code>metrics</code>
+  within an <code>--end</code> script. Tracking functions alone do not emit output.</p>
+</li>
+<li>
+<p><strong>Truncated arrays</strong>: If <code>-m</code> shows only the first 5 items with a hint, use <code>-mm</code>
   for full table output, <code>--metrics-json</code> for JSON format, or <code>--metrics-file</code> to
-  write JSON to disk.</li>
-<li><strong>Huge maps</strong>: Reset counters between runs by clearing your terminal or using
+  write JSON to disk.</p>
+</li>
+<li>
+<p><strong>Huge maps</strong>: Reset counters between runs by clearing your terminal or using
   <code>rm metrics.json</code> when exporting to disk. Large cardinality sets from
-  <code>track_unique()</code> are the usual culprit.</li>
-<li><strong>Operation metadata</strong>: Kelora keeps operator hints (the <code>__op_*</code> keys)
+  <code>track_unique()</code> are the usual culprit.</p>
+</li>
+<li>
+<p><strong>Operation metadata</strong>: Kelora keeps operator hints (the <code>__op_*</code> keys)
   in the internal tracker now, so user metric maps print cleanly. If you need
-  those hints for custom aggregation, read them from the internal metrics map.</li>
-<li><strong>Sliding window functions return empty arrays</strong>: <code>window.pluck_as_nums("field")</code>
+  those hints for custom aggregation, read them from the internal metrics map.</p>
+</li>
+<li>
+<p><strong>Sliding window functions return empty arrays</strong>: <code>window.pluck_as_nums("field")</code>
   only works after you enable <code>--window</code> and the requested field exists in the
-  buffered events.</li>
+  buffered events.</p>
+</li>
 </ul>
 <h2 id="quick-reference-all-tracking-functions">Quick Reference: All Tracking Functions<a class="headerlink" href="#quick-reference-all-tracking-functions" title="Permanent link">&para;</a></h2>
 <table>
@@ -3006,10 +3016,12 @@ human-readable histogram once processing finishes.</p>
 <li><strong><a href="../advanced-scripting/">Advanced Scripting</a></strong> - Advanced transformation patterns</li>
 <li><strong><a href="../configuration-and-reusability/">Configuration and Reusability</a></strong> - Save common patterns as aliases</li>
 </ul>
-<p><strong>Related guides:</strong>
-- <a href="../../concepts/scripting-stages/">Concepts: Scripting Stages</a> - Deep dive into stage execution
-- <a href="../../reference/functions/#tracking-functions">Function Reference</a> - Complete function signatures
-- <a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a> - Real-world examples</p>
+<p><strong>Related guides:</strong></p>
+<ul>
+<li><a href="../../concepts/scripting-stages/">Concepts: Scripting Stages</a> - Deep dive into stage execution</li>
+<li><a href="../../reference/functions/#tracking-functions">Function Reference</a> - Complete function signatures</li>
+<li><a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a> - Real-world examples</li>
+</ul>
 
 
 

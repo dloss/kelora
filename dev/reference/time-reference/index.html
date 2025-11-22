@@ -3067,10 +3067,12 @@
 <li><code>@t</code></li>
 <li><code>t</code></li>
 </ul>
-<p><strong>Behavior:</strong>
-- Detection is case-insensitive (<code>Timestamp</code>, <code>TIMESTAMP</code>, etc. all match)
-- First matching field in the event is used
-- To override auto-detection, use <code>--ts-field &lt;field_name&gt;</code></p>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Detection is case-insensitive (<code>Timestamp</code>, <code>TIMESTAMP</code>, etc. all match)</li>
+<li>First matching field in the event is used</li>
+<li>To override auto-detection, use <code>--ts-field &lt;field_name&gt;</code></li>
+</ul>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Auto-detects &quot;timestamp&quot; field</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;timestamp&quot;: &quot;2024-01-15T10:30:00Z&quot;, &quot;level&quot;: &quot;INFO&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j
@@ -3299,10 +3301,12 @@
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Timestamps are in specific timezone</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>--input-tz<span class="w"> </span>America/New_York<span class="w"> </span>app.log
 </code></pre></div>
-<p><strong>Timezone Options:</strong>
-- <code>UTC</code> - Coordinated Universal Time
-- <code>local</code> - System local timezone
-- <code>America/New_York</code>, <code>Europe/London</code>, etc. - Named IANA timezones</p>
+<p><strong>Timezone Options:</strong></p>
+<ul>
+<li><code>UTC</code> - Coordinated Universal Time</li>
+<li><code>local</code> - System local timezone</li>
+<li><code>America/New_York</code>, <code>Europe/London</code>, etc. - Named IANA timezones</li>
+</ul>
 <h2 id="cli-timestamp-options">CLI Timestamp Options<a class="headerlink" href="#cli-timestamp-options" title="Permanent link">&para;</a></h2>
 <h3 id="parsing-configuration">Parsing Configuration<a class="headerlink" href="#parsing-configuration" title="Permanent link">&para;</a></h3>
 <table>
@@ -3353,20 +3357,24 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Relative Time Formats:</strong>
-- <code>1h</code> - 1 hour ago
-- <code>30m</code> - 30 minutes ago
-- <code>2d</code> - 2 days ago
-- <code>1w</code> - 1 week ago
-- <code>+1h</code> - 1 hour in the future (prefix <code>+</code> for future times)
-- Combine: <code>1h30m</code> - 1 hour 30 minutes ago</p>
-<p><strong>Absolute Time Formats:</strong>
-- ISO 8601: <code>2024-01-15T10:30:00Z</code>
-- RFC3339: <code>2024-01-15T10:30:00+00:00</code>
-- Unix timestamps: <code>1705318200</code>
-- Date only: <code>2024-01-15</code> (assumes 00:00:00)
-- Time only: <code>10:30:00</code> (assumes today)
-- Special values: <code>now</code>, <code>today</code>, <code>yesterday</code>, <code>tomorrow</code></p>
+<p><strong>Relative Time Formats:</strong></p>
+<ul>
+<li><code>1h</code> - 1 hour ago</li>
+<li><code>30m</code> - 30 minutes ago</li>
+<li><code>2d</code> - 2 days ago</li>
+<li><code>1w</code> - 1 week ago</li>
+<li><code>+1h</code> - 1 hour in the future (prefix <code>+</code> for future times)</li>
+<li>Combine: <code>1h30m</code> - 1 hour 30 minutes ago</li>
+</ul>
+<p><strong>Absolute Time Formats:</strong></p>
+<ul>
+<li>ISO 8601: <code>2024-01-15T10:30:00Z</code></li>
+<li>RFC3339: <code>2024-01-15T10:30:00+00:00</code></li>
+<li>Unix timestamps: <code>1705318200</code></li>
+<li>Date only: <code>2024-01-15</code> (assumes 00:00:00)</li>
+<li>Time only: <code>10:30:00</code> (assumes today)</li>
+<li>Special values: <code>now</code>, <code>today</code>, <code>yesterday</code>, <code>tomorrow</code></li>
+</ul>
 <p><strong>Anchored Timestamps:</strong></p>
 <p>Anchor one boundary to the other for duration-based windows:</p>
 <ul>
@@ -3395,11 +3403,13 @@
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># Show from 1 hour ago to 5 minutes from now</span>
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;now-1h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;now+5m&quot;</span><span class="w"> </span>app.log
 </code></pre></div>
-<p><strong>Important Notes:</strong>
-- <code>since</code> anchors to the <code>--since</code> value, <code>until</code> anchors to the <code>--until</code> value
-- <code>now</code> anchors to the current time (doesn't require --since or --until to be set)
-- Cannot use both anchors in the same command (e.g., <code>--since until-1h --until since+1h</code> is an error)
-- The anchor target must be specified (e.g., <code>--until since+30m</code> requires <code>--since</code> to be set)</p>
+<p><strong>Important Notes:</strong></p>
+<ul>
+<li><code>since</code> anchors to the <code>--since</code> value, <code>until</code> anchors to the <code>--until</code> value</li>
+<li><code>now</code> anchors to the current time (doesn't require --since or --until to be set)</li>
+<li>Cannot use both anchors in the same command (e.g., <code>--since until-1h --until since+1h</code> is an error)</li>
+<li>The anchor target must be specified (e.g., <code>--until since+30m</code> requires <code>--since</code> to be set)</li>
+</ul>
 <p><strong>Basic Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Last hour</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>app.log
@@ -3443,9 +3453,11 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Difference between <code>-z/-Z</code> and <code>--normalize-ts</code>:</strong>
-- <code>-z</code> and <code>-Z</code>: Display-only formatting, doesn't modify event data
-- <code>--normalize-ts</code>: Converts the timestamp field in the event itself to RFC3339</p>
+<p><strong>Difference between <code>-z/-Z</code> and <code>--normalize-ts</code>:</strong></p>
+<ul>
+<li><code>-z</code> and <code>-Z</code>: Display-only formatting, doesn't modify event data</li>
+<li><code>--normalize-ts</code>: Converts the timestamp field in the event itself to RFC3339</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Display in local time (doesn&#39;t modify events)</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-z<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
@@ -3696,12 +3708,14 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Duration String Format:</strong>
-- <code>1h</code> - 1 hour
-- <code>30m</code> - 30 minutes
-- <code>45s</code> - 45 seconds
-- <code>500ms</code> - 500 milliseconds
-- Combine: <code>1h30m45s</code> - 1 hour, 30 minutes, 45 seconds</p>
+<p><strong>Duration String Format:</strong></p>
+<ul>
+<li><code>1h</code> - 1 hour</li>
+<li><code>30m</code> - 30 minutes</li>
+<li><code>45s</code> - 45 seconds</li>
+<li><code>500ms</code> - 500 milliseconds</li>
+<li>Combine: <code>1h30m45s</code> - 1 hour, 30 minutes, 45 seconds</li>
+</ul>
 <h3 id="duration-conversion">Duration Conversion<a class="headerlink" href="#duration-conversion" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -3833,37 +3847,47 @@
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="timestamp-not-detected">Timestamp Not Detected<a class="headerlink" href="#timestamp-not-detected" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Timestamps not being parsed automatically.</p>
-<p><strong>Solutions:</strong>
-1. Check if field name is in auto-detected list (see above)
-2. Specify field explicitly: <code>--ts-field your_field_name</code>
-3. Check field value is a string (not nested object)</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check if field name is in auto-detected list (see above)</li>
+<li>Specify field explicitly: <code>--ts-field your_field_name</code></li>
+<li>Check field value is a string (not nested object)</li>
+</ol>
 <h3 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> "Failed to parse timestamp" errors.</p>
-<p><strong>Solutions:</strong>
-1. Check if format matches exactly: <code>--ts-format '%Y-%m-%d %H:%M:%S'</code>
-2. Verify timezone handling: add <code>--input-tz UTC</code> for naive timestamps
-3. Check for subsecond precision: use <code>%.f</code> for auto-matching
-4. Look for Python comma separator: automatic conversion to period</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check if format matches exactly: <code>--ts-format '%Y-%m-%d %H:%M:%S'</code></li>
+<li>Verify timezone handling: add <code>--input-tz UTC</code> for naive timestamps</li>
+<li>Check for subsecond precision: use <code>%.f</code> for auto-matching</li>
+<li>Look for Python comma separator: automatic conversion to period</li>
+</ol>
 <h3 id="timezone-issues">Timezone Issues<a class="headerlink" href="#timezone-issues" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Times appear in wrong timezone.</p>
-<p><strong>Solutions:</strong>
-1. For display: Use <code>-z</code> (local) or <code>-Z</code> (UTC)
-2. For naive inputs: Set <code>--input-tz America/New_York</code>
-3. Check TZ environment variable if using "local"
-4. Verify timestamp includes timezone: <code>+00:00</code> or <code>Z</code></p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>For display: Use <code>-z</code> (local) or <code>-Z</code> (UTC)</li>
+<li>For naive inputs: Set <code>--input-tz America/New_York</code></li>
+<li>Check TZ environment variable if using "local"</li>
+<li>Verify timestamp includes timezone: <code>+00:00</code> or <code>Z</code></li>
+</ol>
 <h3 id="relative-time-parsing">Relative Time Parsing<a class="headerlink" href="#relative-time-parsing" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> <code>--since 1h</code> not working as expected.</p>
-<p><strong>Solutions:</strong>
-1. Check timestamp is properly detected/parsed first
-2. Ensure timestamps are in chronological order (for best results)
-3. Verify format: <code>1h</code>, <code>30m</code>, <code>2d</code> (no spaces)
-4. Use absolute times if relative parsing fails</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check timestamp is properly detected/parsed first</li>
+<li>Ensure timestamps are in chronological order (for best results)</li>
+<li>Verify format: <code>1h</code>, <code>30m</code>, <code>2d</code> (no spaces)</li>
+<li>Use absolute times if relative parsing fails</li>
+</ol>
 <h3 id="syslog-year-inference">Syslog Year Inference<a class="headerlink" href="#syslog-year-inference" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Syslog timestamps missing year.</p>
-<p><strong>Solution:</strong>
-- Kelora infers year from current time
-- For historical logs, ensure system clock is correct
-- Use custom format with explicit year if available</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Kelora infers year from current time</li>
+<li>For historical logs, ensure system clock is correct</li>
+<li>Use custom format with explicit year if available</li>
+</ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../tutorials/working-with-time/">Working with Time Tutorial</a> - Step-by-step guide with examples</li>

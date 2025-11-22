@@ -4185,12 +4185,16 @@
 <li><strong>Limit window size</strong> (<code>--window N</code>) to minimum needed for sliding calculations</li>
 </ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p><strong>"Function not found" errors:</strong>
-- Check spelling and capitalization (Rhai is case-sensitive)
-- Verify the function exists in <code>kelora --help-functions</code></p>
-<p><strong><code>()</code> (unit) value errors:</strong>
-- Guard optional fields: <code>if e.has("field") { ... }</code>
-- Use safe conversions: <code>to_int_or(e.field, 0)</code></p>
+<p><strong>"Function not found" errors:</strong></p>
+<ul>
+<li>Check spelling and capitalization (Rhai is case-sensitive)</li>
+<li>Verify the function exists in <code>kelora --help-functions</code></li>
+</ul>
+<p><strong><code>()</code> (unit) value errors:</strong></p>
+<ul>
+<li>Guard optional fields: <code>if e.has("field") { ... }</code></li>
+<li>Use safe conversions: <code>to_int_or(e.field, 0)</code></li>
+</ul>
 <p><strong>Pattern normalization doesn't work:</strong></p>
 <ul>
 <li>Check that patterns exist in input: <code>echo "test 192.168.1.1" | kelora --exec '...'</code></li>

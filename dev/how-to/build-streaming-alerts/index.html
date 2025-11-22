@@ -2297,9 +2297,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;5 minutes ago&quot;</span>
 </code></pre></div>
-<p>Notes:
-- <code>tail -F</code> survives log rotation.
-- Use <code>--from-stdin</code> only when you want to suppress format detection banner (Kelora infers format when possible, but explicit <code>-j</code>/<code>-f</code> is safer).</p>
+<p>Notes:</p>
+<ul>
+<li><code>tail -F</code> survives log rotation.</li>
+<li>Use <code>--from-stdin</code> only when you want to suppress format detection banner (Kelora infers format when possible, but explicit <code>-j</code>/<code>-f</code> is safer).</li>
+</ul>
 <h2 id="step-2-detect-the-condition">Step 2: Detect the Condition<a class="headerlink" href="#step-2-detect-the-condition" title="Permanent link">&para;</a></h2>
 <p>Combine level filters with Rhai expressions to describe the alert.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
@@ -2331,9 +2333,11 @@
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s1">    }</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s1">  &#39;</span>
 </code></pre></div>
-<p>-- <code>-q</code> suppresses events so only alerts are printed; add <code>--silent</code> to suppress diagnostics too.
-- Combine <code>--window N</code> with <code>window.pluck()</code> to examine rolling slices when bursts matter more than totals.
-- Call <code>exit(1)</code> to propagate failure into CI or cron jobs; Kelora exits with 0 otherwise.</p>
+<p>-- <code>-q</code> suppresses events so only alerts are printed; add <code>--silent</code> to suppress diagnostics too.</p>
+<ul>
+<li>Combine <code>--window N</code> with <code>window.pluck()</code> to examine rolling slices when bursts matter more than totals.</li>
+<li>Call <code>exit(1)</code> to propagate failure into CI or cron jobs; Kelora exits with 0 otherwise.</li>
+</ul>
 <h2 id="step-4-decide-how-to-emit-alerts">Step 4: Decide How to Emit Alerts<a class="headerlink" href="#step-4-decide-how-to-emit-alerts" title="Permanent link">&para;</a></h2>
 <p>Direct alerts to stderr for on-call use, files for dashboards, or downstream commands.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
@@ -2360,23 +2364,29 @@
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Service-specific watcher</strong><br />
+<li>
+<p><strong>Service-specific watcher</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;search&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(&quot;search error: &quot; + e.message)&#39;</span>
-</code></pre></div></li>
-<li><strong>Spike detection</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Spike detection</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--window<span class="w"> </span><span class="m">50</span><span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let recent = window_events();&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if recent.len() &gt;= 10 { eprint(&quot;ALERT: error spike (&quot; + recent.len().to_string() + &quot; / 50)&quot;) }&#39;</span>
-</code></pre></div></li>
-<li><strong>Access log latency guard</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Access log latency guard</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() &gt; 1.5&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;eprint(`SLOW: ${e.method} ${e.path} ${e.request_time}s`)&#39;</span>
-</code></pre></div></li>
+</code></pre></div></p>
+</li>
 </ul>
 <h2 id="validate-before-paging-people">Validate Before Paging People<a class="headerlink" href="#validate-before-paging-people" title="Permanent link">&para;</a></h2>
 <ul>

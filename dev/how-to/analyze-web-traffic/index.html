@@ -2296,29 +2296,35 @@
 <p>Confirm the log format and field names before you start filtering.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span>-n<span class="w"> </span><span class="m">5</span>
 </code></pre></div>
-<p>Key fields available in the combined format:
-- <code>ip</code>, <code>timestamp</code>, <code>method</code>, <code>path</code>, <code>status</code>, <code>bytes</code>
-- Optional <code>request_time</code> (Nginx custom field), <code>referer</code>, <code>user_agent</code>
-- Use <code>--keys</code> or <code>-k</code> to display additional headers if you extended the format.</p>
+<p>Key fields available in the combined format:</p>
+<ul>
+<li><code>ip</code>, <code>timestamp</code>, <code>method</code>, <code>path</code>, <code>status</code>, <code>bytes</code></li>
+<li>Optional <code>request_time</code> (Nginx custom field), <code>referer</code>, <code>user_agent</code></li>
+<li>Use <code>--keys</code> or <code>-k</code> to display additional headers if you extended the format.</li>
+</ul>
 <h2 id="step-2-highlight-errors-and-hotspots">Step 2: Highlight Errors and Hotspots<a class="headerlink" href="#step-2-highlight-errors-and-hotspots" title="Permanent link">&para;</a></h2>
 <p>Filter for failing requests and capture the context you need for triage.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,ip,status,request
 </code></pre></div>
-<p>Tips:
-- For client errors, use <code>'e.status &gt;= 400 &amp;&amp; e.status &lt; 500'</code>.
-- When the application encodes errors in the URI, add a second filter such as <code>e.path.contains("/api/")</code>.
-- Use <code>--before-context</code> and <code>--after-context</code> if you need to see neighbouring requests from the same source.</p>
+<p>Tips:</p>
+<ul>
+<li>For client errors, use <code>'e.status &gt;= 400 &amp;&amp; e.status &lt; 500'</code>.</li>
+<li>When the application encodes errors in the URI, add a second filter such as <code>e.path.contains("/api/")</code>.</li>
+<li>Use <code>--before-context</code> and <code>--after-context</code> if you need to see neighbouring requests from the same source.</li>
+</ul>
 <h2 id="step-3-investigate-slow-endpoints">Step 3: Investigate Slow Endpoints<a class="headerlink" href="#step-3-investigate-slow-endpoints" title="Permanent link">&para;</a></h2>
 <p>Track latency outliers to confirm performance complaints or detect resource exhaustion.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;request_time&quot;, &quot;0&quot;).to_float() &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,method,path,request_time,status
 </code></pre></div>
-<p>If <code>request_time</code> is not logged:
-- Switch to backend service logs via <a href="../monitor-application-health/">Build a Service Health Snapshot</a>.
-- Consider adding upstream timing variables (<code>$upstream_response_time</code>, <code>$request_time</code>) to your Nginx format so Kelora can read them directly.</p>
+<p>If <code>request_time</code> is not logged:</p>
+<ul>
+<li>Switch to backend service logs via <a href="../monitor-application-health/">Build a Service Health Snapshot</a>.</li>
+<li>Consider adding upstream timing variables (<code>$upstream_response_time</code>, <code>$request_time</code>) to your Nginx format so Kelora can read them directly.</li>
+</ul>
 <h2 id="step-4-summarise-by-status-and-source">Step 4: Summarise by Status and Source<a class="headerlink" href="#step-4-summarise-by-status-and-source" title="Permanent link">&para;</a></h2>
 <p>Generate quick aggregates to prioritise remediation work or include in change reviews.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
@@ -2339,34 +2345,44 @@
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,ip,status,request,user_agent<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>web-errors.csv
 </code></pre></div>
-<p>Alternatives:
-- <code>-J</code> to produce JSON for ingestion into a SIEM.
-- Add <code>--no-diagnostics</code> to suppress diagnostics if the output is piped into another script.</p>
+<p>Alternatives:</p>
+<ul>
+<li><code>-J</code> to produce JSON for ingestion into a SIEM.</li>
+<li>Add <code>--no-diagnostics</code> to suppress diagnostics if the output is piped into another script.</li>
+</ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Focus on a specific endpoint</strong><br />
+<li>
+<p><strong>Focus on a specific endpoint</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.path.starts_with(&quot;/api/orders&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--metrics
-</code></pre></div></li>
-<li><strong>Compare time windows</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Compare time windows</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;yesterday 00:00&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;yesterday 12:00&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;morning_&quot; + e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--metrics
-</code></pre></div></li>
-<li><strong>Detect suspicious behaviour</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Detect suspicious behaviour</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.method == &quot;POST&quot; &amp;&amp; !e.path.starts_with(&quot;/api/&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,ip,method,path
-</code></pre></div></li>
-<li><strong>Process rotated archives</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Process rotated archives</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log*.gz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics
-</code></pre></div></li>
+</code></pre></div></p>
+</li>
 </ul>
 <h2 id="validate-and-communicate">Validate and Communicate<a class="headerlink" href="#validate-and-communicate" title="Permanent link">&para;</a></h2>
 <ul>

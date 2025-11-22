@@ -3176,11 +3176,13 @@
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Extract multi-line stack traces after grep</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>grep<span class="w"> </span>-A<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="s2">&quot;Exception&quot;</span><span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>-M<span class="w"> </span><span class="s1">&#39;regex:match=^[A-Z]&#39;</span>
 </code></pre></div>
-<p><strong>When to use grep vs Kelora:</strong>
-- Use <code>grep</code> for raw text scanning across massive unstructured files
-- Use <code>--keep-lines</code>/<code>--ignore-lines</code> when you want Kelora to track parse errors
-- Use <code>--filter</code> for structured field checks after parsing (e.g., <code>e.status &gt;= 500</code>)
-- Use <code>--since</code>/<code>--until</code> for time-based filtering (no grep needed)</p>
+<p><strong>When to use grep vs Kelora:</strong></p>
+<ul>
+<li>Use <code>grep</code> for raw text scanning across massive unstructured files</li>
+<li>Use <code>--keep-lines</code>/<code>--ignore-lines</code> when you want Kelora to track parse errors</li>
+<li>Use <code>--filter</code> for structured field checks after parsing (e.g., <code>e.status &gt;= 500</code>)</li>
+<li>Use <code>--since</code>/<code>--until</code> for time-based filtering (no grep needed)</li>
+</ul>
 <hr />
 <h3 id="find-xargs-archive-discovery">find + xargs — Archive Discovery<a class="headerlink" href="#find-xargs-archive-discovery" title="Permanent link">&para;</a></h3>
 <p>Locate log files across directories and process them in parallel. Use when you have scattered archives that need systematic batch processing. The <code>find</code> command provides powerful file selection (by date, size, name), and <code>-print0 | xargs -0</code> handles paths with spaces safely.</p>
@@ -3281,22 +3283,26 @@
 <a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.ua = e.user_agent.parse_user_agent()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;browser|&quot; + e.ua.browser)&#39;</span><span class="w"> </span>-m
 </code></pre></div>
-<p><strong>Kelora parsing functions that work well with jc output:</strong>
-- <code>parse_url()</code> - Extract URL components
-- <code>parse_user_agent()</code> - Parse browser/OS from user-agent strings
-- <code>parse_email()</code> - Extract email parts
-- <code>parse_path()</code> - Parse filesystem paths
-- <code>extract_domain()</code> - Extract domains from URLs
-- <code>extract_ip()</code> / <code>extract_ips()</code> - Extract IP addresses</p>
+<p><strong>Kelora parsing functions that work well with jc output:</strong></p>
+<ul>
+<li><code>parse_url()</code> - Extract URL components</li>
+<li><code>parse_user_agent()</code> - Parse browser/OS from user-agent strings</li>
+<li><code>parse_email()</code> - Extract email parts</li>
+<li><code>parse_path()</code> - Parse filesystem paths</li>
+<li><code>extract_domain()</code> - Extract domains from URLs</li>
+<li><code>extract_ip()</code> / <code>extract_ips()</code> - Extract IP addresses</li>
+</ul>
 <p><a href="https://kellyjonbrazil.github.io/jc/">jc documentation</a></p>
 <hr />
 <h2 id="downstream-tools-post-processing">Downstream Tools (Post-Processing)<a class="headerlink" href="#downstream-tools-post-processing" title="Permanent link">&para;</a></h2>
 <h3 id="jq-advanced-json-manipulation">jq — Advanced JSON Manipulation<a class="headerlink" href="#jq-advanced-json-manipulation" title="Permanent link">&para;</a></h3>
 <p>Powerful JSON querying, reshaping, and computation beyond Kelora's built-in capabilities. Use for complex JSON restructuring, recursive descent, or computations that are awkward in Rhai. Kelora focuses on log-specific operations; jq excels at generic JSON transformation.</p>
-<p><strong>When to use Kelora vs jq:</strong>
-- Use Kelora for filtering, aggregation, and log-specific operations
-- Use jq for complex JSON reshaping, recursive queries, and output formatting
-- Many common jq tasks can be done natively in Kelora (see examples below)</p>
+<p><strong>When to use Kelora vs jq:</strong></p>
+<ul>
+<li>Use Kelora for filtering, aggregation, and log-specific operations</li>
+<li>Use jq for complex JSON reshaping, recursive queries, and output formatting</li>
+<li>Many common jq tasks can be done natively in Kelora (see examples below)</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># This jq pattern...</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.jsonl<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-J<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>jq<span class="w"> </span><span class="s1">&#39;group_by(.service) | map({service: .[0].service, count: length})&#39;</span>
@@ -3363,10 +3369,12 @@
 <hr />
 <h3 id="sort-column-based-sorting">sort — Column-Based Sorting<a class="headerlink" href="#sort-column-based-sorting" title="Permanent link">&para;</a></h3>
 <p>Sorts Kelora's TSV/CSV output by columns. Use <code>sort</code> when output order matters for chronological analysis, top-N queries, and ordered exports. Use <code>-t$'\t'</code> for tab delimiter. Column numbers are 1-indexed.</p>
-<p><strong>Kelora alternatives to consider first:</strong>
-- Use <code>--since</code>/<code>--until</code> for time-based filtering (often eliminates need for sorting)
-- Use <code>sorted()</code> or <code>sorted_by()</code> Rhai functions for array sorting within events
-- Use <code>--take N</code> to limit output (though not sorted)</p>
+<p><strong>Kelora alternatives to consider first:</strong></p>
+<ul>
+<li>Use <code>--since</code>/<code>--until</code> for time-based filtering (often eliminates need for sorting)</li>
+<li>Use <code>sorted()</code> or <code>sorted_by()</code> Rhai functions for array sorting within events</li>
+<li>Use <code>--take N</code> to limit output (though not sorted)</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Sort errors by timestamp</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/app.jsonl<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-k<span class="w"> </span>timestamp,service,message<span class="w"> </span>-F<span class="w"> </span>tsv<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>sort<span class="w"> </span>-t<span class="s1">$&#39;\t&#39;</span><span class="w"> </span>-k1,1
@@ -3567,10 +3575,12 @@
 <a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/app.jsonl<span class="w"> </span>-k<span class="w"> </span>timestamp,level,service,message<span class="w"> </span>-F<span class="w"> </span>tsv<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="w">  </span>column<span class="w"> </span>-ts<span class="w"> </span><span class="s1">$&#39;\t&#39;</span>
 </code></pre></div>
-<p><strong>When to use jtbl vs column:</strong>
-- Use <code>jtbl</code> when working with JSON output (no need to convert to TSV first)
-- Use <code>column</code> for TSV output or when you need more control over formatting
-- <code>jtbl</code> auto-detects columns; <code>column</code> requires explicit configuration</p>
+<p><strong>When to use jtbl vs column:</strong></p>
+<ul>
+<li>Use <code>jtbl</code> when working with JSON output (no need to convert to TSV first)</li>
+<li>Use <code>column</code> for TSV output or when you need more control over formatting</li>
+<li><code>jtbl</code> auto-detects columns; <code>column</code> requires explicit configuration</li>
+</ul>
 <p><a href="https://github.com/kellyjonbrazil/jtbl">jtbl documentation</a></p>
 <hr />
 <h2 id="destinations-storage-aggregation">Destinations (Storage &amp; Aggregation)<a class="headerlink" href="#destinations-storage-aggregation" title="Permanent link">&para;</a></h2>
@@ -3674,38 +3684,48 @@
 <hr />
 <h2 id="when-to-use-kelora-vs-external-tools">When to Use Kelora vs External Tools<a class="headerlink" href="#when-to-use-kelora-vs-external-tools" title="Permanent link">&para;</a></h2>
 <p>Before reaching for external tools, check if Kelora can handle it natively:</p>
-<p><strong>Kelora excels at:</strong>
-- Time-based filtering (<code>--since</code>, <code>--until</code>) - no grep needed
-- Structured field filtering (<code>--filter 'e.status &gt;= 500'</code>)
-- Pattern extraction (<code>extract_re()</code>, <code>extract_re_maps()</code>)
-- Parsing structured formats (<code>parse_url()</code>, <code>parse_kv()</code>, <code>parse_json()</code>, etc.)
-- Aggregation and counting (<code>track_count()</code>, <code>track_sum()</code>, <code>track_bucket()</code>)
-- Array operations (<code>sorted()</code>, <code>filter()</code>, <code>map()</code>, <code>percentile()</code>)
-- Window-based analysis (<code>--window</code> with <code>window.pluck()</code>)
-- Time-windowed aggregation (<code>--span</code> with <code>--span-close</code>)
-- Multi-line event detection (<code>-M timestamp</code>, <code>-M regex:...</code>)
-- Section extraction (<code>--section-from</code>, <code>--section-before</code>)</p>
-<p><strong>Use external tools when:</strong>
-- jq: Complex JSON reshaping, recursive descent
-- qsv: Statistical analysis, CSV joins, data validation
-- sort: Output ordering (Kelora doesn't sort output)
-- grep: Raw text scanning across massive unstructured files
-- SQL databases: Long-term storage, complex JOINs, persistent queries
-- Visualization tools: Interactive exploration (lnav, visidata), charts (rare)</p>
+<p><strong>Kelora excels at:</strong></p>
+<ul>
+<li>Time-based filtering (<code>--since</code>, <code>--until</code>) - no grep needed</li>
+<li>Structured field filtering (<code>--filter 'e.status &gt;= 500'</code>)</li>
+<li>Pattern extraction (<code>extract_re()</code>, <code>extract_re_maps()</code>)</li>
+<li>Parsing structured formats (<code>parse_url()</code>, <code>parse_kv()</code>, <code>parse_json()</code>, etc.)</li>
+<li>Aggregation and counting (<code>track_count()</code>, <code>track_sum()</code>, <code>track_bucket()</code>)</li>
+<li>Array operations (<code>sorted()</code>, <code>filter()</code>, <code>map()</code>, <code>percentile()</code>)</li>
+<li>Window-based analysis (<code>--window</code> with <code>window.pluck()</code>)</li>
+<li>Time-windowed aggregation (<code>--span</code> with <code>--span-close</code>)</li>
+<li>Multi-line event detection (<code>-M timestamp</code>, <code>-M regex:...</code>)</li>
+<li>Section extraction (<code>--section-from</code>, <code>--section-before</code>)</li>
+</ul>
+<p><strong>Use external tools when:</strong></p>
+<ul>
+<li>jq: Complex JSON reshaping, recursive descent</li>
+<li>qsv: Statistical analysis, CSV joins, data validation</li>
+<li>sort: Output ordering (Kelora doesn't sort output)</li>
+<li>grep: Raw text scanning across massive unstructured files</li>
+<li>SQL databases: Long-term storage, complex JOINs, persistent queries</li>
+<li>Visualization tools: Interactive exploration (lnav, visidata), charts (rare)</li>
+</ul>
 <hr />
 <h2 id="performance-tips">Performance Tips<a class="headerlink" href="#performance-tips" title="Permanent link">&para;</a></h2>
-<p><strong>When to pre-filter with grep:</strong>
-- Scanning for specific keywords in huge unstructured files
-- Text search is simpler than structured field checks
-- Benchmarking shows grep is faster for your use case</p>
-<p><strong>When to use Kelora's --filter instead:</strong>
-- Checking structured fields (e.g., <code>e.status &gt;= 500</code>)
-- Complex boolean logic or numerical comparisons
-- You need type-aware filtering (strings, numbers, timestamps)</p>
-<p><strong>When to post-process with jq/qsv/miller:</strong>
-- Kelora extracted and normalized the data
-- You need reshaping, aggregation, or format conversion
-- SQL-style operations (GROUP BY, JOINs) are needed</p>
+<p><strong>When to pre-filter with grep:</strong></p>
+<ul>
+<li>Scanning for specific keywords in huge unstructured files</li>
+<li>Text search is simpler than structured field checks</li>
+<li>Benchmarking shows grep is faster for your use case</li>
+</ul>
+<p><strong>When to use Kelora's --filter instead:</strong></p>
+<ul>
+<li>Checking structured fields (e.g., <code>e.status &gt;= 500</code>)</li>
+<li>Complex boolean logic or numerical comparisons</li>
+<li>You need type-aware filtering (strings, numbers, timestamps)</li>
+</ul>
+<p><strong>When to post-process with jq/qsv/miller:</strong></p>
+<ul>
+<li>Kelora extracted and normalized the data</li>
+<li>You need reshaping, aggregation, or format conversion</li>
+<li>SQL-style operations (GROUP BY, JOINs) are needed</li>
+</ul>
 <p><strong>Benchmark your pipeline:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Measure each stage</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="nb">time</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;ERROR&quot;</span><span class="w"> </span>logs/huge.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l

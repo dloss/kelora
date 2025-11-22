@@ -2864,16 +2864,20 @@
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>large.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">141</span><span class="w"> </span><span class="o">]</span>
 </code></pre></div>
 <h3 id="exit-code-2-with-valid-syntax">Exit Code 2 with Valid Syntax<a class="headerlink" href="#exit-code-2-with-valid-syntax" title="Permanent link">&para;</a></h3>
-<p><strong>Check:</strong>
-- File exists and is readable: <code>ls -l app.log</code>
-- Permissions are correct: <code>stat app.log</code>
-- Configuration file is valid
-- Try ignoring config: <code>kelora --ignore-config -j app.log</code></p>
+<p><strong>Check:</strong></p>
+<ul>
+<li>File exists and is readable: <code>ls -l app.log</code></li>
+<li>Permissions are correct: <code>stat app.log</code></li>
+<li>Configuration file is valid</li>
+<li>Try ignoring config: <code>kelora --ignore-config -j app.log</code></li>
+</ul>
 <h3 id="different-exit-codes-in-ci-vs-local">Different Exit Codes in CI vs Local<a class="headerlink" href="#different-exit-codes-in-ci-vs-local" title="Permanent link">&para;</a></h3>
-<p><strong>Possible causes:</strong>
-- Different file permissions/paths
-- Different configuration files
-- Environment variables</p>
+<p><strong>Possible causes:</strong></p>
+<ul>
+<li>Different file permissions/paths</li>
+<li>Different configuration files</li>
+<li>Environment variables</li>
+</ul>
 <p><strong>Solution:</strong> Test with same conditions:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>--ignore-config<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Ignore config files</span>
 </code></pre></div></p>

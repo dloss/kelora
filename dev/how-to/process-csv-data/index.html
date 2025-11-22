@@ -2305,9 +2305,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int duration_ms:int&#39;</span><span class="w"> </span>examples/simple_csv.csv<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
-<p>Alternatives:
-- Embed annotations in the header row (e.g., <code>status:int,duration_ms:int</code>).
-- For TSV, replace <code>csv</code> with <code>tsv</code> in the format string.</p>
+<p>Alternatives:</p>
+<ul>
+<li>Embed annotations in the header row (e.g., <code>status:int,duration_ms:int</code>).</li>
+<li>For TSV, replace <code>csv</code> with <code>tsv</code> in the format string.</li>
+</ul>
 <h2 id="step-3-clean-and-transform-rows">Step 3: Clean and Transform Rows<a class="headerlink" href="#step-3-clean-and-transform-rows" title="Permanent link">&para;</a></h2>
 <p>Normalise values, derive new columns, or drop unnecessary data.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int duration_ms:int&#39;</span><span class="w"> </span>examples/simple_csv.csv<span class="w"> </span><span class="se">\</span>
@@ -2316,10 +2318,12 @@
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.success = e.status &lt; 400&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,method,endpoint,status,duration_s,success
 </code></pre></div>
-<p>Tips:
-- Use <code>to_int_or()</code> / <code>to_float_or()</code> for defensive conversions.
-- Remove sensitive data with assignments like <code>e.user_email = ()</code> before export.
-- Apply <code>strip()</code> when whitespace is inconsistent.</p>
+<p>Tips:</p>
+<ul>
+<li>Use <code>to_int_or()</code> / <code>to_float_or()</code> for defensive conversions.</li>
+<li>Remove sensitive data with assignments like <code>e.user_email = ()</code> before export.</li>
+<li>Apply <code>strip()</code> when whitespace is inconsistent.</li>
+</ul>
 <h2 id="step-4-summarise-for-sanity-checks">Step 4: Summarise for Sanity Checks<a class="headerlink" href="#step-4-summarise-for-sanity-checks" title="Permanent link">&para;</a></h2>
 <p>Validate assumptions and produce quick metrics prior to export.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int duration_ms:int&#39;</span><span class="w"> </span>examples/simple_csv.csv<span class="w"> </span><span class="se">\</span>
@@ -2348,29 +2352,37 @@
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,method,path,status,duration_ms,bytes<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>cleaned.csv
 </code></pre></div>
-<p>Other formats:
-- <code>-J</code> or <code>-F json</code> for ingestion into document stores.
-- <code>-F logfmt</code> when shipping data to systems that expect key=value lines.</p>
+<p>Other formats:</p>
+<ul>
+<li><code>-J</code> or <code>-F json</code> for ingestion into document stores.</li>
+<li><code>-F logfmt</code> when shipping data to systems that expect key=value lines.</li>
+</ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Files without headers</strong><br />
+<li>
+<p><strong>Files without headers</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csvnh<span class="w"> </span>data.csv<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.timestamp = e._1; e.status = e._2.to_int(); e.bytes = e._3.to_int()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,status,bytes
-</code></pre></div></li>
-<li><strong>Large archives</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Large archives</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int&#39;</span><span class="w"> </span>logs/2024-*.csv.gz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--parallel<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;bytes_total&quot;, e.bytes)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--metrics
-</code></pre></div></li>
-<li><strong>Ragged data validation</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Ragged data validation</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>csv<span class="w"> </span>raw.csv<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--stats<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--verbose<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;meta.parse_errors &gt; 0&#39;</span>
 </code></pre></div>
-  Switch to <code>--strict</code> to abort on the first malformed row once cleanup is complete.</li>
+  Switch to <code>--strict</code> to abort on the first malformed row once cleanup is complete.</p>
+</li>
 </ul>
 <h2 id="quality-checklist">Quality Checklist<a class="headerlink" href="#quality-checklist" title="Permanent link">&para;</a></h2>
 <ul>

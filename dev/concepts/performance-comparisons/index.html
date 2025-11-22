@@ -3338,18 +3338,26 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <h2 id="reproduction-guide">Reproduction Guide<a class="headerlink" href="#reproduction-guide" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Install comparison tools.</strong> <code>brew install ripgrep jq miller qsv</code> (macOS) or the equivalent packages via <code>apt</code>, <code>dnf</code>, etc.</li>
-<li><strong>Build Kelora in release mode.</strong>
+<li>
+<p><strong>Build Kelora in release mode.</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>cargo<span class="w"> </span>build<span class="w"> </span>--release
-</code></pre></div></li>
-<li><strong>Generate the deterministic datasets.</strong>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Generate the deterministic datasets.</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>./benchmarks/generate_comparison_data.sh
 </code></pre></div>
-   This script ensures the 100k/500k JSONL fixtures plus CSV/syslog derivatives match what the docs describe.</li>
-<li><strong>Run the comparison suite.</strong>
+   This script ensures the 100k/500k JSONL fixtures plus CSV/syslog derivatives match what the docs describe.</p>
+</li>
+<li>
+<p><strong>Run the comparison suite.</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>just<span class="w"> </span>bench-compare<span class="w">    </span><span class="c1"># wraps ./benchmarks/compare_tools.sh</span>
 </code></pre></div>
-   The runner prints human-friendly summaries and writes raw markdown tables to <code>benchmarks/comparison_results/0*.md</code>.</li>
-<li><strong>Update the docs.</strong> Copy the system-info block and any new tables into <code>docs/concepts/benchmark-results/</code> (one file per machine) and open a PR that references your hardware + date.</li>
+   The runner prints human-friendly summaries and writes raw markdown tables to <code>benchmarks/comparison_results/0*.md</code>.</p>
+</li>
+<li>
+<p><strong>Update the docs.</strong> Copy the system-info block and any new tables into <code>docs/concepts/benchmark-results/</code> (one file per machine) and open a PR that references your hardware + date.</p>
+</li>
 </ol>
 <p>Every rerun should state the git commit, OS version, CPU, and tool versions so readers can compare apples to apples.</p>
 <hr />
@@ -3368,10 +3376,12 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <li>Save results with hardware info</li>
 <li>Submit a PR with your results in <code>docs/concepts/benchmark-results/</code></li>
 </ol>
-<p>We're especially interested in:
-- Different CPU architectures (ARM, x86, RISC-V)
-- Linux vs macOS vs Windows
-- Comparison with additional tools (angle, pv+awk, etc.)</p>
+<p>We're especially interested in:</p>
+<ul>
+<li>Different CPU architectures (ARM, x86, RISC-V)</li>
+<li>Linux vs macOS vs Windows</li>
+<li>Comparison with additional tools (angle, pv+awk, etc.)</li>
+</ul>
 
 
 

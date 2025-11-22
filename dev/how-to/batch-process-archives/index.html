@@ -2322,13 +2322,17 @@
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--stats
 </code></pre></div>
-<p>Guidelines:
-- 1000 (default) balances throughput and memory.
-- Increase to 5000–10000 for simple filters on machines with ample RAM.
-- Decrease to 200–500 when transformations are heavy or memory is constrained.</p>
-<p>Ordering options:
-- <code>--file-order name</code> for deterministic alphabetical processing.
-- <code>--file-order mtime</code> to scan oldest/newest archives first.</p>
+<p>Guidelines:</p>
+<ul>
+<li>1000 (default) balances throughput and memory.</li>
+<li>Increase to 5000–10000 for simple filters on machines with ample RAM.</li>
+<li>Decrease to 200–500 when transformations are heavy or memory is constrained.</li>
+</ul>
+<p>Ordering options:</p>
+<ul>
+<li><code>--file-order name</code> for deterministic alphabetical processing.</li>
+<li><code>--file-order mtime</code> to scan oldest/newest archives first.</li>
+</ul>
 <h2 id="step-4-drop-ordering-when-safe">Step 4: Drop Ordering When Safe<a class="headerlink" href="#step-4-drop-ordering-when-safe" title="Permanent link">&para;</a></h2>
 <p>If output order is irrelevant (metrics only, exports to sorted files), add <code>--unordered</code> for higher throughput.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
@@ -2363,24 +2367,30 @@
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Mixed compression</strong><br />
+<li>
+<p><strong>Mixed compression</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--threads<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-l<span class="w"> </span>critical<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--stats
-</code></pre></div></li>
-<li><strong>Recursive discovery</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Recursive discovery</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>find<span class="w"> </span>/archives/app<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.jsonl.gz&quot;</span><span class="w"> </span>-print0<span class="w"> </span><span class="p">|</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>xargs<span class="w"> </span>-0<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>--metrics
-</code></pre></div></li>
-<li><strong>Performance sweep</strong><br />
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Performance sweep</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">for</span><span class="w"> </span>size<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="m">5000</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Batch size </span><span class="nv">$size</span><span class="s2">&quot;</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="nv">$size</span><span class="w"> </span>-q
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">done</span>
-</code></pre></div></li>
+</code></pre></div></p>
+</li>
 </ul>
 <h2 id="performance-checklist">Performance Checklist<a class="headerlink" href="#performance-checklist" title="Permanent link">&para;</a></h2>
 <ul>

@@ -3477,9 +3477,11 @@
 <li><strong>Time:</strong> ~20 minutes</li>
 </ul>
 <h2 id="sample-data">Sample Data<a class="headerlink" href="#sample-data" title="Permanent link">&para;</a></h2>
-<p>This tutorial uses:
-- <code>examples/simple_json.jsonl</code> - Application logs
-- Example configuration files we'll create</p>
+<p>This tutorial uses:</p>
+<ul>
+<li><code>examples/simple_json.jsonl</code> - Application logs</li>
+<li>Example configuration files we'll create</li>
+</ul>
 <hr />
 <h2 id="part-1-understanding-configuration-files">Part 1: Understanding Configuration Files<a class="headerlink" href="#part-1-understanding-configuration-files" title="Permanent link">&para;</a></h2>
 <h3 id="configuration-file-locations">Configuration File Locations<a class="headerlink" href="#configuration-file-locations" title="Permanent link">&para;</a></h3>
@@ -3578,10 +3580,12 @@
 <h2 id="part-4-project-vs-user-configuration">Part 4: Project vs User Configuration<a class="headerlink" href="#part-4-project-vs-user-configuration" title="Permanent link">&para;</a></h2>
 <h3 id="user-configuration-personal-preferences">User Configuration (Personal Preferences)<a class="headerlink" href="#user-configuration-personal-preferences" title="Permanent link">&para;</a></h3>
 <p>Location: <code>~/.config/kelora/kelora.ini</code></p>
-<p><strong>Good for:</strong>
-- Personal formatting preferences
-- Local development shortcuts
-- Your own workflow patterns</p>
+<p><strong>Good for:</strong></p>
+<ul>
+<li>Personal formatting preferences</li>
+<li>Local development shortcuts</li>
+<li>Your own workflow patterns</li>
+</ul>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="na">defaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--stats --no-emoji</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
@@ -3591,10 +3595,12 @@
 </code></pre></div></p>
 <h3 id="project-configuration-team-shared">Project Configuration (Team Shared)<a class="headerlink" href="#project-configuration-team-shared" title="Permanent link">&para;</a></h3>
 <p>Location: <code>.kelora.ini</code> in project root</p>
-<p><strong>Good for:</strong>
-- Team-wide conventions
-- Project-specific formats
-- Shared analysis patterns</p>
+<p><strong>Good for:</strong></p>
+<ul>
+<li>Team-wide conventions</li>
+<li>Project-specific formats</li>
+<li>Shared analysis patterns</li>
+</ul>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Commit this to version control</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="na">defaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-f json</span>
@@ -3748,10 +3754,12 @@
 </div>
 </div>
 </div>
-<p><strong>How it works:</strong>
-1. <code>-I examples/helpers.rhai</code> loads the function definitions
-2. Functions become available in all <code>--exec</code> and <code>--filter</code> stages
-3. Call them like any built-in function</p>
+<p><strong>How it works:</strong></p>
+<ol>
+<li><code>-I examples/helpers.rhai</code> loads the function definitions</li>
+<li>Functions become available in all <code>--exec</code> and <code>--filter</code> stages</li>
+<li>Call them like any built-in function</li>
+</ol>
 <h3 id="multiple-include-files">Multiple Include Files<a class="headerlink" href="#multiple-include-files" title="Permanent link">&para;</a></h3>
 <p>You can load multiple libraries:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
@@ -4133,10 +4141,12 @@
 </details>
 
 <h3 id="exercise-3-create-a-project-workflow">Exercise 3: Create a Project Workflow<a class="headerlink" href="#exercise-3-create-a-project-workflow" title="Permanent link">&para;</a></h3>
-<p>Set up a <code>.kelora.ini</code> for a web application with aliases for:
-- API errors
-- Slow requests
-- Traffic analysis</p>
+<p>Set up a <code>.kelora.ini</code> for a web application with aliases for:</p>
+<ul>
+<li>API errors</li>
+<li>Slow requests</li>
+<li>Traffic analysis</li>
+</ul>
 <details>
 <summary>Solution</summary>
 
@@ -4157,10 +4167,12 @@
 <li><strong><a href="../metrics-and-tracking/">Metrics and Tracking</a></strong> - Build analytics into your aliases</li>
 <li><strong><a href="../working-with-time/">Working with Time</a></strong> - Time-based filtering in aliases</li>
 </ul>
-<p><strong>Related guides:</strong>
-- <a href="../../concepts/configuration-system/">Concepts: Configuration System</a> - Deep dive into config precedence
-- <a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a> - Real-world alias examples
-- <a href="../../reference/cli-reference/#configuration-options">CLI Reference: Configuration Options</a> - All config flags</p>
+<p><strong>Related guides:</strong></p>
+<ul>
+<li><a href="../../concepts/configuration-system/">Concepts: Configuration System</a> - Deep dive into config precedence</li>
+<li><a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a> - Real-world alias examples</li>
+<li><a href="../../reference/cli-reference/#configuration-options">CLI Reference: Configuration Options</a> - All config flags</li>
+</ul>
 
 
 

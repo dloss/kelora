@@ -2275,10 +2275,14 @@ teams that maintain project-specific log pipelines.</p>
 <h2 id="file-locations-and-precedence">File Locations and Precedence<a class="headerlink" href="#file-locations-and-precedence" title="Permanent link">&para;</a></h2>
 <p>Kelora searches for configuration files in the following order:</p>
 <ol>
-<li><strong>Project config</strong> – the nearest <code>.kelora.ini</code> walking up from the current
-   directory.</li>
-<li><strong>User config</strong> – <code>$XDG_CONFIG_HOME/kelora/kelora.ini</code> on Unix, or
-   <code>%APPDATA%\kelora\kelora.ini</code> on Windows.</li>
+<li>
+<p><strong>Project config</strong> – the nearest <code>.kelora.ini</code> walking up from the current
+   directory.</p>
+</li>
+<li>
+<p><strong>User config</strong> – <code>$XDG_CONFIG_HOME/kelora/kelora.ini</code> on Unix, or
+   <code>%APPDATA%\kelora\kelora.ini</code> on Windows.</p>
+</li>
 </ol>
 <p>Project files override user files. You can override both by passing
 <code>--config-file &lt;path&gt;</code> or ignore them entirely with <code>--ignore-config</code>.</p>
@@ -2310,10 +2314,14 @@ searched.</p>
 <h2 id="ini-structure">INI Structure<a class="headerlink" href="#ini-structure" title="Permanent link">&para;</a></h2>
 <p>Kelora recognizes two sections:</p>
 <ul>
-<li><code>defaults</code> (root level) – prepended to every command before user-supplied
-  flags.</li>
-<li><code>[aliases]</code> – reusable snippets invoked with <code>--alias &lt;name&gt;</code> (short flag
-  <code>-a</code>). Aliases can reference other aliases recursively up to a depth of 10.</li>
+<li>
+<p><code>defaults</code> (root level) – prepended to every command before user-supplied
+  flags.</p>
+</li>
+<li>
+<p><code>[aliases]</code> – reusable snippets invoked with <code>--alias &lt;name&gt;</code> (short flag
+  <code>-a</code>). Aliases can reference other aliases recursively up to a depth of 10.</p>
+</li>
 </ul>
 <p>Example <code>.kelora.ini</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>defaults = -f auto --stats
@@ -2327,10 +2335,14 @@ the invocation. <code>kelora --alias errors app.log</code> expands to
 <code>kelora -l error --stats app.log</code>.</p>
 <h2 id="creating-and-editing-config-files">Creating and Editing Config Files<a class="headerlink" href="#creating-and-editing-config-files" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>--edit-config</code> opens the active config in <code>$EDITOR</code> (default <code>vi</code> on Unix,
-  <code>notepad.exe</code> on Windows). Kelora creates parent directories if needed.</li>
-<li><code>--config-file path/to/file.ini</code> scopes edits to a specific file. Combine
-  this with <code>--save-alias</code> to keep examples alongside project code.</li>
+<li>
+<p><code>--edit-config</code> opens the active config in <code>$EDITOR</code> (default <code>vi</code> on Unix,
+  <code>notepad.exe</code> on Windows). Kelora creates parent directories if needed.</p>
+</li>
+<li>
+<p><code>--config-file path/to/file.ini</code> scopes edits to a specific file. Combine
+  this with <code>--save-alias</code> to keep examples alongside project code.</p>
+</li>
 </ul>
 <h3 id="saving-an-alias-programmatically">Saving an Alias Programmatically<a class="headerlink" href="#saving-an-alias-programmatically" title="Permanent link">&para;</a></h3>
 <p><code>--save-alias</code> writes (or updates) an entry without leaving your editor. The
@@ -2366,31 +2378,47 @@ it so the repository stays clean.</p>
 match the regex <code>^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$</code>.</p>
 <h2 id="how-argument-expansion-works">How Argument Expansion Works<a class="headerlink" href="#how-argument-expansion-works" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Defaults applied</strong> – the <code>defaults</code> string is parsed with shell-style
-   quoting (<code>shell_words</code>) and inserted immediately after the executable name.</li>
-<li><strong>Alias expansion</strong> – each <code>--alias name</code> (or <code>-a name</code>) is replaced with the
+<li>
+<p><strong>Defaults applied</strong> – the <code>defaults</code> string is parsed with shell-style
+   quoting (<code>shell_words</code>) and inserted immediately after the executable name.</p>
+</li>
+<li>
+<p><strong>Alias expansion</strong> – each <code>--alias name</code> (or <code>-a name</code>) is replaced with the
    corresponding argument list. Aliases can reference other aliases by using
-   <code>--alias other-alias</code> inside their definition.</li>
-<li><strong>CLI parsing</strong> – the augmented argument vector is passed to Clap, and those
-   resolved flags are what the pipeline sees.</li>
+   <code>--alias other-alias</code> inside their definition.</p>
+</li>
+<li>
+<p><strong>CLI parsing</strong> – the augmented argument vector is passed to Clap, and those
+   resolved flags are what the pipeline sees.</p>
+</li>
 </ol>
 <p>Implications:</p>
 <ul>
-<li>User-provided flags take precedence over defaults if they appear later on the
+<li>
+<p>User-provided flags take precedence over defaults if they appear later on the
   command line (standard CLI precedence rules). For example, <code>defaults = --stats</code>
-  and <code>kelora --no-stats</code> results in stats being disabled.</li>
-<li>Quote arguments that contain spaces inside the config file just as you would
-  in a shell.</li>
-<li>Recursive aliases are allowed but guarded by a maximum depth of 10 to prevent
-  infinite loops.</li>
+  and <code>kelora --no-stats</code> results in stats being disabled.</p>
+</li>
+<li>
+<p>Quote arguments that contain spaces inside the config file just as you would
+  in a shell.</p>
+</li>
+<li>
+<p>Recursive aliases are allowed but guarded by a maximum depth of 10 to prevent
+  infinite loops.</p>
+</li>
 </ul>
 <h2 id="ignoring-or-switching-configurations">Ignoring or Switching Configurations<a class="headerlink" href="#ignoring-or-switching-configurations" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>--ignore-config</code> bypasses both defaults and aliases, useful for clean-room
-  troubleshooting or one-off commands.</li>
-<li><code>--config-file</code> works with every config-aware flag (<code>--show-config</code>,
+<li>
+<p><code>--ignore-config</code> bypasses both defaults and aliases, useful for clean-room
+  troubleshooting or one-off commands.</p>
+</li>
+<li>
+<p><code>--config-file</code> works with every config-aware flag (<code>--show-config</code>,
   <code>--edit-config</code>, <code>--save-alias</code>). This makes it easy to ship presets within a
-  project directory while keeping personal settings separate.</li>
+  project directory while keeping personal settings separate.</p>
+</li>
 </ul>
 <h2 id="configuration-vs-cli-flags">Configuration vs CLI Flags<a class="headerlink" href="#configuration-vs-cli-flags" title="Permanent link">&para;</a></h2>
 <table>
@@ -2425,24 +2453,38 @@ match the regex <code>^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$</code>.</p>
 </table>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Keep aliases small</strong> – Compose pipelines by chaining multiple aliases via
-  <code>--alias</code> rather than stuffing every flag into a single macro.</li>
-<li><strong>Document heavy aliases</strong> – Use the repository README or comments in
-  <code>.kelora.ini</code> to explain when to use each alias.</li>
-<li><strong>Pair with <code>just</code> or shell scripts</strong> – For multi-step workflows (downloading
+<li>
+<p><strong>Keep aliases small</strong> – Compose pipelines by chaining multiple aliases via
+  <code>--alias</code> rather than stuffing every flag into a single macro.</p>
+</li>
+<li>
+<p><strong>Document heavy aliases</strong> – Use the repository README or comments in
+  <code>.kelora.ini</code> to explain when to use each alias.</p>
+</li>
+<li>
+<p><strong>Pair with <code>just</code> or shell scripts</strong> – For multi-step workflows (downloading
   logs, running Kelora, archiving output) keep orchestration in a script and
-  have the script call the alias.</li>
-<li><strong>Review before committing</strong> – Project-level <code>.kelora.ini</code> affects every run
-  from that directory. Make sure defaults remain sensible for newcomers.</li>
+  have the script call the alias.</p>
+</li>
+<li>
+<p><strong>Review before committing</strong> – Project-level <code>.kelora.ini</code> affects every run
+  from that directory. Make sure defaults remain sensible for newcomers.</p>
+</li>
 </ul>
 <h2 id="related-topics">Related Topics<a class="headerlink" href="#related-topics" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../reference/cli-reference/#configuration-options">CLI Reference – Configuration Options</a>
-  lists every config-aware flag.</li>
-<li><a href="../scripting-stages/">Scripting Stages</a> covers the Rhai pipeline, which you
-  can drive via aliases for complex transformations.</li>
-<li><a href="../../tutorials/metrics-and-tracking/">Tutorial: Metrics and Tracking</a> shows
-  how to package common analytics commands as aliases.</li>
+<li>
+<p><a href="../../reference/cli-reference/#configuration-options">CLI Reference – Configuration Options</a>
+  lists every config-aware flag.</p>
+</li>
+<li>
+<p><a href="../scripting-stages/">Scripting Stages</a> covers the Rhai pipeline, which you
+  can drive via aliases for complex transformations.</p>
+</li>
+<li>
+<p><a href="../../tutorials/metrics-and-tracking/">Tutorial: Metrics and Tracking</a> shows
+  how to package common analytics commands as aliases.</p>
+</li>
 </ul>
 
 

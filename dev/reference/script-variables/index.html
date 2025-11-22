@@ -2458,10 +2458,12 @@
 <li><strong>When to use</strong>: Deduplication, storing complex objects, cross-event dependencies that <code>track_*()</code> functions cannot handle.</li>
 <li><strong>When NOT to use</strong>: Simple counting or metrics—prefer <code>track_count()</code>, <code>track_sum()</code>, etc., which work in parallel mode too.</li>
 </ul>
-<p><strong>Direct operations</strong> (no conversion needed):
-- Indexing: <code>state["key"]</code> for get/set, returns <code>()</code> if key doesn't exist
-- Methods: <code>contains(key)</code>, <code>get(key)</code>, <code>set(key, value)</code>, <code>len()</code>, <code>is_empty()</code>, <code>keys()</code>, <code>values()</code>, <code>clear()</code>, <code>remove(key)</code>
-- Operators: <code>+=</code>, <code>mixin(map)</code>, <code>fill_with(map)</code></p>
+<p><strong>Direct operations</strong> (no conversion needed):</p>
+<ul>
+<li>Indexing: <code>state["key"]</code> for get/set, returns <code>()</code> if key doesn't exist</li>
+<li>Methods: <code>contains(key)</code>, <code>get(key)</code>, <code>set(key, value)</code>, <code>len()</code>, <code>is_empty()</code>, <code>keys()</code>, <code>values()</code>, <code>clear()</code>, <code>remove(key)</code></li>
+<li>Operators: <code>+=</code>, <code>mixin(map)</code>, <code>fill_with(map)</code></li>
+</ul>
 <p><strong>For other map functions</strong>: Convert to regular map first using <code>state.to_map()</code>, then use any map function:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>// Convert state to use functions like to_logfmt(), to_kv(), etc.
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>print(state.to_map().to_logfmt());

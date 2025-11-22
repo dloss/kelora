@@ -3143,9 +3143,11 @@
 <li><strong>Time:</strong> ~20 minutes</li>
 </ul>
 <h2 id="sample-data">Sample Data<a class="headerlink" href="#sample-data" title="Permanent link">&para;</a></h2>
-<p>This tutorial uses:
-- <code>examples/simple_json.jsonl</code> - Application logs
-- <code>examples/service_metadata.json</code> - Service lookup data</p>
+<p>This tutorial uses:</p>
+<ul>
+<li><code>examples/simple_json.jsonl</code> - Application logs</li>
+<li><code>examples/service_metadata.json</code> - Service lookup data</li>
+</ul>
 <hr />
 <h2 id="understanding-the-pipeline-lifecycle">Understanding the Pipeline Lifecycle<a class="headerlink" href="#understanding-the-pipeline-lifecycle" title="Permanent link">&para;</a></h2>
 <p>Kelora processes events through four distinct stages:</p>
@@ -3263,10 +3265,12 @@
 </div>
 </div>
 </div>
-<p><strong>What happened:</strong>
-1. <code>--begin</code> created an inline map with service metadata in <code>conf.services</code>
-2. <code>--exec</code> looked up each event's service in the loaded data
-3. Added team, owner, and criticality fields to each event</p>
+<p><strong>What happened:</strong></p>
+<ol>
+<li><code>--begin</code> created an inline map with service metadata in <code>conf.services</code></li>
+<li><code>--exec</code> looked up each event's service in the loaded data</li>
+<li>Added team, owner, and criticality fields to each event</li>
+</ol>
 <hr />
 <h2 id="step-3-load-array-data-with-read_lines">Step 3: Load Array Data with read_lines()<a class="headerlink" href="#step-3-load-array-data-with-read_lines" title="Permanent link">&para;</a></h2>
 <p>Load a list of values from a text file.</p>
@@ -3352,13 +3356,15 @@
 </div>
 </div>
 </div>
-<p><strong>Pipeline flow:</strong>
-1. Load metadata in <code>--begin</code>
-2. Enrich with criticality (<code>--exec</code>)
-3. Keep only critical/high services (<code>--filter</code>)
-4. Add error flag (<code>--exec</code>)
-5. Keep only errors (<code>--filter</code>)
-6. Output result</p>
+<p><strong>Pipeline flow:</strong></p>
+<ol>
+<li>Load metadata in <code>--begin</code></li>
+<li>Enrich with criticality (<code>--exec</code>)</li>
+<li>Keep only critical/high services (<code>--filter</code>)</li>
+<li>Add error flag (<code>--exec</code>)</li>
+<li>Keep only errors (<code>--filter</code>)</li>
+<li>Output result</li>
+</ol>
 <hr />
 <h2 id="step-5-the-end-stage">Step 5: The --end Stage<a class="headerlink" href="#step-5-the-end-stage" title="Permanent link">&para;</a></h2>
 <p>Use <code>--end</code> to run code <strong>once</strong> after all events are processed.</p>
@@ -3398,9 +3404,11 @@
 </div>
 </div>
 </div>
-<p><strong>Available in <code>--end</code>:</strong>
-- <code>metrics</code> - Map populated by <code>track_*()</code> functions
-- <code>conf</code> - The configuration map (read-only)</p>
+<p><strong>Available in <code>--end</code>:</strong></p>
+<ul>
+<li><code>metrics</code> - Map populated by <code>track_*()</code> functions</li>
+<li><code>conf</code> - The configuration map (read-only)</li>
+</ul>
 <hr />
 <h2 id="step-6-accessing-metrics-in-end">Step 6: Accessing Metrics in --end<a class="headerlink" href="#step-6-accessing-metrics-in-end" title="Permanent link">&para;</a></h2>
 <p>Build custom reports using tracked metrics.</p>
@@ -3493,12 +3501,14 @@
 </div>
 </div>
 </div>
-<p><strong>Complete pipeline:</strong>
-1. <code>--begin</code>: Load service metadata and set threshold
-2. <code>--exec</code>: Enrich events with criticality and owner
-3. <code>--filter</code>: Keep only critical errors
-4. <code>--exec</code>: Track error count per owner
-5. <code>--end</code>: Generate alert report based on threshold</p>
+<p><strong>Complete pipeline:</strong></p>
+<ol>
+<li><code>--begin</code>: Load service metadata and set threshold</li>
+<li><code>--exec</code>: Enrich events with criticality and owner</li>
+<li><code>--filter</code>: Keep only critical errors</li>
+<li><code>--exec</code>: Track error count per owner</li>
+<li><code>--end</code>: Generate alert report based on threshold</li>
+</ol>
 <hr />
 <h2 id="step-8-when-to-use-each-stage">Step 8: When to Use Each Stage<a class="headerlink" href="#step-8-when-to-use-each-stage" title="Permanent link">&para;</a></h2>
 <h3 id="use-begin-when-you-need-to">Use --begin when you need to:<a class="headerlink" href="#use-begin-when-you-need-to" title="Permanent link">&para;</a></h3>
@@ -3564,14 +3574,18 @@
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let ctx = e.user_id; e.context = ctx&#39;</span>
 </code></pre></div>
-<p><strong>What DOES persist between stages:</strong>
-- ✅ <strong>Event fields</strong> - Modifications to <code>e.field</code> carry forward
-- ✅ <strong><code>conf</code> map</strong> - Initialized in <code>--begin</code>, read-only afterward
-- ✅ <strong><code>metrics</code> map</strong> - Populated by <code>track_*()</code>, accessed in <code>--end</code>
-- ✅ <strong><code>window</code> array</strong> - When <code>--window</code> is enabled</p>
-<p><strong>What DOES NOT persist:</strong>
-- ❌ <strong>Local variables</strong> (<code>let x = ...</code>) - Scoped to the stage only
-- ❌ <strong>Function definitions</strong> - Unless loaded via <code>--include</code></p>
+<p><strong>What DOES persist between stages:</strong></p>
+<ul>
+<li>✅ <strong>Event fields</strong> - Modifications to <code>e.field</code> carry forward</li>
+<li>✅ <strong><code>conf</code> map</strong> - Initialized in <code>--begin</code>, read-only afterward</li>
+<li>✅ <strong><code>metrics</code> map</strong> - Populated by <code>track_*()</code>, accessed in <code>--end</code></li>
+<li>✅ <strong><code>window</code> array</strong> - When <code>--window</code> is enabled</li>
+</ul>
+<p><strong>What DOES NOT persist:</strong></p>
+<ul>
+<li>❌ <strong>Local variables</strong> (<code>let x = ...</code>) - Scoped to the stage only</li>
+<li>❌ <strong>Function definitions</strong> - Unless loaded via <code>--include</code></li>
+</ul>
 <p><strong>When to use multiple stages vs semicolons:</strong></p>
 <p>Use <strong>semicolons within one <code>-e</code></strong> when you need shared local variables:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
@@ -3587,10 +3601,12 @@
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.step2 = risky_operation(e)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="c1"># Might fail</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.step3 = &quot;done&quot;&#39;</span><span class="w">             </span><span class="c1"># If step2 fails, event has step1 but not step2</span>
 </code></pre></div>
-<p><strong>Why use multiple stages:</strong>
-- ✅ <strong>Error isolation</strong> - Failures don't corrupt earlier transformations
-- ✅ <strong>Progressive validation</strong> - Each stage is a checkpoint
-- ✅ <strong>Debugging</strong> - Easier to identify which stage failed</p>
+<p><strong>Why use multiple stages:</strong></p>
+<ul>
+<li>✅ <strong>Error isolation</strong> - Failures don't corrupt earlier transformations</li>
+<li>✅ <strong>Progressive validation</strong> - Each stage is a checkpoint</li>
+<li>✅ <strong>Debugging</strong> - Easier to identify which stage failed</li>
+</ul>
 <p><strong>Example - Risky enrichment with fallback:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.safe_field = &quot;processed&quot;&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">     </span><span class="c1"># Always succeeds</span>
@@ -3599,9 +3615,11 @@
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span>-k<span class="w"> </span>safe_field,risky
 </code></pre></div></p>
 <p>Events that fail the risky parse still have <code>safe_field</code> and are included in output (unless filtered out).</p>
-<p><strong>Trade-off:</strong>
-- <strong>Multiple stages</strong>: Better error handling, snapshotting, but variables don't persist
-- <strong>Single stage with semicolons</strong>: Shared variables, but all-or-nothing execution</p>
+<p><strong>Trade-off:</strong></p>
+<ul>
+<li><strong>Multiple stages</strong>: Better error handling, snapshotting, but variables don't persist</li>
+<li><strong>Single stage with semicolons</strong>: Shared variables, but all-or-nothing execution</li>
+</ul>
 <hr />
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="pattern-1-lookup-table-enrichment">Pattern 1: Lookup Table Enrichment<a class="headerlink" href="#pattern-1-lookup-table-enrichment" title="Permanent link">&para;</a></h3>
@@ -3717,10 +3735,12 @@
 <li><strong><a href="../advanced-scripting/">Advanced Scripting</a></strong> - Advanced transformation patterns</li>
 <li><strong><a href="../working-with-time/">Working with Time</a></strong> - Time-based filtering and operations</li>
 </ul>
-<p><strong>Related guides:</strong>
-- <a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a>
-- <a href="../../how-to/build-streaming-alerts/">How-To: Design Streaming Alerts</a>
-- <a href="../../concepts/scripting-stages/">Concepts: Scripting Stages</a> - Deep technical details</p>
+<p><strong>Related guides:</strong></p>
+<ul>
+<li><a href="../../how-to/monitor-application-health/">How-To: Build a Service Health Snapshot</a></li>
+<li><a href="../../how-to/build-streaming-alerts/">How-To: Design Streaming Alerts</a></li>
+<li><a href="../../concepts/scripting-stages/">Concepts: Scripting Stages</a> - Deep technical details</li>
+</ul>
 
 
 
