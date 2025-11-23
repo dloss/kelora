@@ -865,6 +865,13 @@ pub struct CompiledExpression {
     expr: String,
 }
 
+impl CompiledExpression {
+    /// Get the source expression
+    pub fn source(&self) -> &str {
+        &self.expr
+    }
+}
+
 pub struct RhaiEngine {
     engine: Engine,
     compiled_filters: Vec<CompiledExpression>,

@@ -260,6 +260,10 @@ pub struct Cli {
     #[arg(long = "no-diagnostics", help_heading = "Error Handling")]
     pub no_diagnostics: bool,
 
+    /// Suppress field access warnings
+    #[arg(long = "no-warnings", help_heading = "Error Handling")]
+    pub no_warnings: bool,
+
     /// Silence all stdout/stderr emitters except a single fatal line; metrics files still write.
     #[arg(long = "silent", help_heading = "Error Handling")]
     pub silent: bool,

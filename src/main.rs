@@ -1569,6 +1569,21 @@ fn main() -> Result<()> {
                             stderr.writeln(&formatted).unwrap_or(());
                         }
                     }
+
+                    // Display field access warnings (unless suppressed) - show independently of errors
+                    if diagnostics_allowed_runtime && !config.processing.no_warnings {
+                        let warnings = crate::rhai_functions::tracking::get_thread_warnings();
+                        if let Some(warning_summary) =
+                            crate::rhai_functions::tracking::format_warning_summary(
+                                &warnings,
+                                pipeline_result.stats.as_ref(),
+                                crate::tty::should_use_colors_with_mode(&config.output.color),
+                                config.output.no_emoji,
+                            )
+                        {
+                            stderr.writeln(&warning_summary).unwrap_or(());
+                        }
+                    }
                 }
             }
             (pipeline_result.stats, Some(pipeline_result.tracking_data))

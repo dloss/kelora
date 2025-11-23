@@ -573,6 +573,257 @@ pub fn extract_error_summary_from_tracking(
     Some(summary)
 }
 
+/// Warning detail for field access warnings
+#[derive(Debug, Clone)]
+pub struct WarningDetail {
+    pub field_name: String,
+    pub operation: Option<String>,
+    pub line_numbers: Vec<usize>,
+    pub count: usize,
+    pub suggestions: Vec<String>,
+}
+
+// Thread-local storage for warnings
+thread_local! {
+    static THREAD_WARNINGS: RefCell<HashMap<String, WarningDetail>> = RefCell::new(HashMap::new());
+}
+
+/// Track a field access warning
+pub fn track_warning(
+    field_name: &str,
+    operation: Option<&str>,
+    line_num: usize,
+    available_fields: &std::collections::BTreeSet<String>,
+) {
+    THREAD_WARNINGS.with(|warnings| {
+        let key = format!("{}:{}", field_name, operation.unwrap_or(""));
+        let mut map = warnings.borrow_mut();
+
+        map.entry(key)
+            .and_modify(|w| {
+                w.count += 1;
+                if w.line_numbers.len() < 100 {
+                    // Limit stored line numbers
+                    w.line_numbers.push(line_num);
+                }
+            })
+            .or_insert_with(|| {
+                let suggestions = suggest_similar_fields(field_name, available_fields, 3);
+                WarningDetail {
+                    field_name: field_name.to_string(),
+                    operation: operation.map(String::from),
+                    line_numbers: vec![line_num],
+                    count: 1,
+                    suggestions,
+                }
+            });
+    });
+}
+
+/// Get thread-local warnings
+pub fn get_thread_warnings() -> HashMap<String, WarningDetail> {
+    THREAD_WARNINGS.with(|warnings| warnings.borrow().clone())
+}
+
+/// Clear thread-local warnings
+#[allow(dead_code)]
+pub fn clear_thread_warnings() {
+    THREAD_WARNINGS.with(|warnings| warnings.borrow_mut().clear());
+}
+
+/// Suggest similar field names using Levenshtein distance
+fn suggest_similar_fields(
+    missing_field: &str,
+    available_fields: &std::collections::BTreeSet<String>,
+    max_distance: usize,
+) -> Vec<String> {
+    // First check for case-insensitive exact match
+    for field in available_fields {
+        if field.eq_ignore_ascii_case(missing_field) && field != missing_field {
+            return vec![format!("{} (case mismatch)", field)];
+        }
+    }
+
+    // Then check edit distance
+    let mut suggestions: Vec<(String, usize)> = available_fields
+        .iter()
+        .map(|field| (field.clone(), levenshtein_distance(missing_field, field)))
+        .filter(|(_, distance)| *distance > 0 && *distance <= max_distance)
+        .collect();
+
+    suggestions.sort_by_key(|(_, distance)| *distance);
+    suggestions
+        .into_iter()
+        .take(3)
+        .map(|(field, _)| field)
+        .collect()
+}
+
+/// Calculate Levenshtein distance between two strings
+#[allow(clippy::needless_range_loop)]
+fn levenshtein_distance(a: &str, b: &str) -> usize {
+    let len_a = a.chars().count();
+    let len_b = b.chars().count();
+
+    if len_a == 0 {
+        return len_b;
+    }
+    if len_b == 0 {
+        return len_a;
+    }
+
+    let mut matrix = vec![vec![0; len_b + 1]; len_a + 1];
+
+    for i in 0..=len_a {
+        matrix[i][0] = i;
+    }
+    for j in 0..=len_b {
+        matrix[0][j] = j;
+    }
+
+    let a_chars: Vec<char> = a.chars().collect();
+    let b_chars: Vec<char> = b.chars().collect();
+
+    for (i, ca) in a_chars.iter().enumerate() {
+        for (j, cb) in b_chars.iter().enumerate() {
+            let cost = if ca == cb { 0 } else { 1 };
+            matrix[i + 1][j + 1] = std::cmp::min(
+                std::cmp::min(
+                    matrix[i][j + 1] + 1, // deletion
+                    matrix[i + 1][j] + 1, // insertion
+                ),
+                matrix[i][j] + cost, // substitution
+            );
+        }
+    }
+
+    matrix[len_a][len_b]
+}
+
+/// Check if an error message indicates a unit type operation
+pub fn is_unit_type_error(error_msg: &str) -> bool {
+    error_msg.contains("Function not found:") && error_msg.contains("()")
+}
+
+/// Extract operation from error message
+pub fn extract_operation(error_msg: &str) -> Option<String> {
+    // Example: "Function not found: > ((), i64)"
+    // Extract: ">"
+    if let Some(start) = error_msg.find("Function not found: ") {
+        let after = &error_msg[start + "Function not found: ".len()..];
+        if let Some(end) = after.find(" (") {
+            return Some(after[..end].trim().to_string());
+        }
+    }
+    None
+}
+
+/// Extract field name from script and error context
+/// Uses simple regex matching for common pattern: e.field_name
+pub fn extract_field_from_script(script: &str) -> Option<String> {
+    // Simple regex to find e.field_name patterns
+    // This handles the most common case
+    if let Some(captures) = regex::Regex::new(r"e\.([a-zA-Z_][a-zA-Z0-9_]*)")
+        .ok()
+        .and_then(|re| re.captures(script))
+    {
+        if let Some(field_match) = captures.get(1) {
+            return Some(field_match.as_str().to_string());
+        }
+    }
+    None
+}
+
+/// Format warning summary for display
+pub fn format_warning_summary(
+    warnings: &HashMap<String, WarningDetail>,
+    _stats: Option<&ProcessingStats>,
+    use_colors: bool,
+    no_emoji: bool,
+) -> Option<String> {
+    if warnings.is_empty() {
+        return None;
+    }
+
+    let total_warnings: usize = warnings.values().map(|w| w.count).sum();
+    let prefix = if use_colors && !no_emoji {
+        "⚠️  "
+    } else {
+        "kelora: "
+    };
+
+    let mut summary = format!(
+        "\n{}Field access warnings: {} total",
+        prefix, total_warnings
+    );
+
+    // Sort by field name for consistent output
+    let mut sorted_warnings: Vec<_> = warnings.values().collect();
+    sorted_warnings.sort_by(|a, b| a.field_name.cmp(&b.field_name));
+
+    // Limit to 20 warnings displayed
+    const MAX_WARNINGS_DISPLAYED: usize = 20;
+    let display_count = std::cmp::min(sorted_warnings.len(), MAX_WARNINGS_DISPLAYED);
+
+    for detail in sorted_warnings.iter().take(display_count) {
+        let line_range = format_line_range(&detail.line_numbers);
+
+        summary.push_str(&format!(
+            "\n  • Field '{}' not found in {} event{}{}",
+            detail.field_name,
+            detail.count,
+            if detail.count == 1 { "" } else { "s" },
+            if !line_range.is_empty() {
+                format!(" ({})", line_range)
+            } else {
+                String::new()
+            }
+        ));
+
+        if !detail.suggestions.is_empty() {
+            let suggestions_str = detail.suggestions.join(", ");
+            summary.push_str(&format!("\n    Did you mean: {}?", suggestions_str));
+        }
+
+        if let Some(op) = &detail.operation {
+            summary.push_str(&format!("\n    Operation: {}", op));
+        }
+    }
+
+    if sorted_warnings.len() > MAX_WARNINGS_DISPLAYED {
+        summary.push_str(&format!(
+            "\n  ... and {} more field warnings",
+            sorted_warnings.len() - MAX_WARNINGS_DISPLAYED
+        ));
+    }
+
+    summary.push_str("\n\n  💡 Tip: Use e.has(\"field\") to check existence before accessing");
+    summary
+        .push_str("\n  💡 Tip: Use e.get_path(\"field\", default) for safe access with defaults");
+    summary.push_str("\n  💡 Tip: Run with -F inspect to see actual field names");
+
+    Some(summary)
+}
+
+fn format_line_range(line_numbers: &[usize]) -> String {
+    if line_numbers.is_empty() {
+        return String::new();
+    }
+
+    if line_numbers.len() == 1 {
+        format!("line {}", line_numbers[0])
+    } else if line_numbers.len() <= 3 {
+        let lines: Vec<String> = line_numbers.iter().map(|n| n.to_string()).collect();
+        format!("lines {}", lines.join(", "))
+    } else {
+        format!(
+            "lines {}-{}",
+            line_numbers.first().unwrap(),
+            line_numbers.last().unwrap()
+        )
+    }
+}
+
 pub fn register_functions(engine: &mut Engine) {
     // Track functions using thread-local storage - clean user API
     // Store operation metadata for proper parallel merging

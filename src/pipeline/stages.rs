@@ -116,6 +116,28 @@ impl FilterStage {
         let is_match = match self.evaluate_filter(&event, ctx) {
             Ok(result) => result,
             Err(e) => {
+                let error_msg = format!("{}", e);
+
+                // NEW: Detect unit type operations and track as warnings
+                if crate::rhai_functions::tracking::is_unit_type_error(&error_msg) {
+                    let field_name = crate::rhai_functions::tracking::extract_field_from_script(
+                        self.compiled_filter.source(),
+                    )
+                    .unwrap_or_else(|| "unknown".to_string());
+                    let operation = crate::rhai_functions::tracking::extract_operation(&error_msg);
+
+                    // Get available field names from the current event
+                    let available_fields: std::collections::BTreeSet<String> =
+                        event.fields.keys().cloned().collect();
+
+                    crate::rhai_functions::tracking::track_warning(
+                        &field_name,
+                        operation.as_deref(),
+                        ctx.meta.line_num.unwrap_or(0),
+                        &available_fields,
+                    );
+                }
+
                 // Handle error (same as original FilterStage)
                 crate::rhai_functions::tracking::track_error(
                     "filter",
@@ -396,6 +418,28 @@ impl ScriptStage for ExecStage {
                 // Clear emission state on error
                 crate::rhai_functions::emit::clear_suppression_flag();
                 let _ = crate::rhai_functions::emit::get_and_clear_pending_emissions();
+
+                let error_msg = format!("{}", e);
+
+                // NEW: Detect unit type operations and track as warnings
+                if crate::rhai_functions::tracking::is_unit_type_error(&error_msg) {
+                    let field_name = crate::rhai_functions::tracking::extract_field_from_script(
+                        self.compiled_exec.source(),
+                    )
+                    .unwrap_or_else(|| "unknown".to_string());
+                    let operation = crate::rhai_functions::tracking::extract_operation(&error_msg);
+
+                    // Get available field names from the current event
+                    let available_fields: std::collections::BTreeSet<String> =
+                        event.fields.keys().cloned().collect();
+
+                    crate::rhai_functions::tracking::track_warning(
+                        &field_name,
+                        operation.as_deref(),
+                        ctx.meta.line_num.unwrap_or(0),
+                        &available_fields,
+                    );
+                }
 
                 // Track error for reporting even in resilient mode
                 crate::rhai_functions::tracking::track_error(
