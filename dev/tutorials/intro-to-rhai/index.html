@@ -3055,6 +3055,13 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora: Field access warnings (5 total)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;duration_ms&#39; missing in 5 events
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Important:</strong> This only keeps events that <strong>have</strong> a <code>duration_ms</code> field. Events without it are skipped.</p>
 <h3 id="combine-conditions-with-logical-operators">Combine Conditions with Logical Operators<a class="headerlink" href="#combine-conditions-with-logical-operators" title="Permanent link">&para;</a></h3>
@@ -3087,12 +3094,14 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; duration_ms=5000 duration_s=5
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora: Field access warnings (5 total)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  • &#39;duration_s&#39; missing in 5 events (suggestion: duration_ms)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Run with -F inspect to see actual field names
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora: Field access warnings (21 total)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  • &#39;duration_s&#39; missing in 11 events (suggestion: duration_ms)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;duration_ms&#39; missing in 5 events
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  • &#39;duration_s&#39; missing in 5 events (suggestion: duration_ms)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Key insight:</strong> <code>--exec</code> runs <strong>before</strong> <code>--filter</code>, so the new field is available for filtering.</p>
 <h3 id="modify-existing-fields">Modify Existing Fields<a class="headerlink" href="#modify-existing-fields" title="Permanent link">&para;</a></h3>
@@ -3133,6 +3142,13 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; error_type=&#39;Query&#39; message=&#39;Query timeout&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; service=&#39;auth&#39; error_type=&#39;Account&#39; message=&#39;Account locked&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora: Field access warnings (2 total)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;error_type&#39; missing in 2 events
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Common string methods:</strong></p>
 <ul>
@@ -3158,6 +3174,13 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;database&#39; message=&#39;Query timeout&#39;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>level=&#39;INFO&#39; severity=&#39;low&#39; service=&#39;api&#39; message=&#39;Request received&#39;
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;auth&#39; message=&#39;Account locked&#39;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora: Field access warnings (6 total)
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  • &#39;severity&#39; missing in 6 events
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Syntax:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>if condition {
@@ -3183,6 +3206,15 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>id=&#39;123&#39; id_num=123 status=&#39;200&#39; status_num=200 invalid=&#39;abc&#39; invalid_num=999
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id=&#39;456&#39; id_num=456 status=&#39;404&#39; status_num=404 invalid=&#39;xyz&#39; invalid_num=999
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora: Field access warnings (6 total)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;id_num&#39; missing in 2 events
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  • &#39;invalid_num&#39; missing in 2 events
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  • &#39;status_num&#39; missing in 2 events
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Note:</strong> Multiple statements in one <code>-e</code> are separated by semicolons and share the same scope. Use this when operations are related or when you need to share <code>let</code> variables.</p>
 <p><strong>Safe conversion functions:</strong></p>
@@ -3209,12 +3241,14 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>service=&#39;database&#39; duration_s=5 message=&#39;Query timeout&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora: Field access warnings (5 total)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  • &#39;duration_s&#39; missing in 5 events (suggestion: duration_ms)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Run with -F inspect to see actual field names
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora: Field access warnings (21 total)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  • &#39;duration_s&#39; missing in 11 events (suggestion: duration_ms)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;duration_ms&#39; missing in 5 events
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  • &#39;duration_s&#39; missing in 5 events (suggestion: duration_ms)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Rule:</strong> Fields must exist before you filter on them. Scripts run in CLI order.</p>
 <hr />
@@ -3231,6 +3265,14 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>service=&#39;database&#39; slow=true message=&#39;Query timeout&#39;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>service=&#39;api&#39; slow=false message=&#39;Request received&#39;
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>service=&#39;auth&#39; slow=false message=&#39;Account locked&#39;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora: Field access warnings (11 total)
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  • &#39;slow&#39; missing in 6 events
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  • &#39;duration_ms&#39; missing in 5 events
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Pattern:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>if e.has(&quot;field_name&quot;) {
@@ -3264,6 +3306,13 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>🔹Executing stage 1 (exec)
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>value=&#39;not_a_number&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora: Field access warnings (1 total)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;num&#39; missing in 1 event (line 1)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Debug workflow:</strong></p>
 <ol>
@@ -3285,6 +3334,16 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>service=&#39;database&#39; level=&#39;ERROR&#39; is_error=true is_slow=true message=&#39;Query timeout&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>service=&#39;auth&#39; level=&#39;ERROR&#39; is_error=true is_slow=false message=&#39;Account locked&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora: Field access warnings (23 total)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;is_error&#39; missing in 6 events
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  • &#39;is_slow&#39; missing in 6 events
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  • &#39;needs_attention&#39; missing in 6 events
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  • &#39;duration_ms&#39; missing in 5 events
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 <p><strong>Pattern:</strong> Build up computed fields step-by-step, then filter on the final result.</p>
 <hr />

@@ -2556,7 +2556,7 @@ any time you want a quick histogram after a batch run.</p>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora: Stats:
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Throughput: 11024 lines/s in 1ms
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Throughput: 3044 lines/s in 6ms
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Timestamp: timestamp (auto-detected) - 20/20 parsed (100.0%).
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN
@@ -2595,6 +2595,13 @@ response sizes and latency as rolling aggregates.</p>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>max_duration = 300000
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>min_duration = 45
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>total_duration = 305045
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora: Field access warnings (17 total)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  • &#39;duration_ms&#39; missing in 17 events
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
@@ -2632,6 +2639,13 @@ response sizes and latency as rolling aggregates.</p>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>latency_histogram = #{&quot;0&quot;: 1, &quot;300000&quot;: 1, &quot;5000&quot;: 1}
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora: Field access warnings (17 total)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;duration_ms&#39; missing in 17 events
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
@@ -2748,6 +2762,14 @@ five-event moving average and P95 latency for CPU metrics.</p>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  p95_last_5=47.91
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:00:04Z&#39; metric=&#39;cpu&#39; value=47.3 host=&#39;server1&#39; avg_last_5=46.38
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  p95_last_5=47.94
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>kelora: Field access warnings (10 total)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  • &#39;avg_last_5&#39; missing in 5 events
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  • &#39;p95_last_5&#39; missing in 5 events
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
@@ -2854,15 +2876,15 @@ clean text summary that you can redirect or feed into alerts.</p>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>{
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;admin&quot;: 2,
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;monitoring&quot;: 1,
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;scheduler&quot;: 3,
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;disk&quot;: 1,
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;auth&quot;: 2,
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;cache&quot;: 1,
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;api&quot;: 7,
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;health&quot;: 1,
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;database&quot;: 2
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;database&quot;: 2,
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;disk&quot;: 1,
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;cache&quot;: 1,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;admin&quot;: 2,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;scheduler&quot;: 3,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;health&quot;: 1,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;api&quot;: 7,
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;auth&quot;: 2
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>}
 </code></pre></div>
 </div>
