@@ -2437,10 +2437,6 @@ events.</p>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora: Field access warnings (9 total)
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  • &#39;status&#39; missing in 9 events (suggestion: tags)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
@@ -9086,9 +9082,7 @@ available to later filters or transformations.</p>
 <a id="__codelineno-1-6625" name="__codelineno-1-6625" href="#__codelineno-1-6625"></a>kelora: Field access warnings (1200 total)
 <a id="__codelineno-1-6626" name="__codelineno-1-6626" href="#__codelineno-1-6626"></a>  • &#39;family&#39; missing in 1200 events
 <a id="__codelineno-1-6627" name="__codelineno-1-6627" href="#__codelineno-1-6627"></a>
-<a id="__codelineno-1-6628" name="__codelineno-1-6628" href="#__codelineno-1-6628"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
-<a id="__codelineno-1-6629" name="__codelineno-1-6629" href="#__codelineno-1-6629"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
-<a id="__codelineno-1-6630" name="__codelineno-1-6630" href="#__codelineno-1-6630"></a>  💡 Tip: Run with -F inspect to see actual field names
+<a id="__codelineno-1-6628" name="__codelineno-1-6628" href="#__codelineno-1-6628"></a>  💡 Tip: Run with -S to see all available keys, or use e.has(&quot;field&quot;) for conditional access
 </code></pre></div>
 </div>
 </div>
@@ -9107,28 +9101,28 @@ available to later filters or transformations.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_alias = pseudonym(e.user, &quot;users&quot;); e.ip_masked = e.ip.mask_ip(1)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,event,user_alias,ip_masked
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; event=&#39;login&#39; user_alias=&#39;0MO_1-3FaSR7YOpg6vUqqc2M&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; event=&#39;login&#39; user_alias=&#39;nWIh5BjlgJpoQsAarYSB1IX1&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  ip_masked=&#39;192.168.1.X&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; event=&#39;login&#39; user_alias=&#39;A8PNrZA-F0PpjbROtx0PUSiQ&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; event=&#39;login&#39; user_alias=&#39;jyDakn7NOgvuKeuqv2wbk2Aw&#39;
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  ip_masked=&#39;203.0.113.X&#39;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:00:20Z&#39; event=&#39;api_call&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; event=&#39;file_upload&#39; user_alias=&#39;029woNQ_ZR7afVfT6Sa97zmu&#39;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=&#39;2024-01-15T10:00:30Z&#39; event=&#39;file_upload&#39; user_alias=&#39;focqieAgq_6KZ5nDpHnh_rnO&#39;
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  ip_masked=&#39;172.16.0.X&#39;
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2024-01-15T10:00:40Z&#39; event=&#39;suspicious_activity&#39;
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:00:50Z&#39; event=&#39;login&#39; user_alias=&#39;NdCKyEcFbrgnoJ_9AlOezD8x&#39;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:00:50Z&#39; event=&#39;login&#39; user_alias=&#39;HdRE1dTlmdLrPWwDi9Amr5Uv&#39;
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  ip_masked=&#39;2001:db8::1&#39;
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; event=&#39;password_change&#39; user_alias=&#39;7PETr-IuFFk_VtN1AHwP9Cfs&#39;
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; event=&#39;password_change&#39; user_alias=&#39;O-C3EC5euJFLrS7DNXSIVATv&#39;
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  ip_masked=&#39;192.168.1.X&#39;
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2024-01-15T10:01:10Z&#39; event=&#39;api_call&#39; user_alias=&#39;zHdKDB0Yx5L0km2kTdXAsGrH&#39;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2024-01-15T10:01:10Z&#39; event=&#39;api_call&#39; user_alias=&#39;PJB6EwA-bQNL5nxQZLfh3RkB&#39;
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  ip_masked=&#39;10.255.255.X&#39;
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>timestamp=&#39;2024-01-15T10:01:20Z&#39; event=&#39;vpn_connect&#39;
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; event=&#39;data_export&#39; user_alias=&#39;uYYMbey2LPZJoHtdhUyFPIRA&#39;
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; event=&#39;data_export&#39; user_alias=&#39;FjZ3WTPKXPMyGUkop-_G4kgi&#39;
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  ip_masked=&#39;192.168.2.X&#39;
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>timestamp=&#39;2024-01-15T10:01:40Z&#39; event=&#39;firewall_block&#39;
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>timestamp=&#39;2024-01-15T10:01:50Z&#39; event=&#39;certificate_renewal&#39;
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; event=&#39;malware_scan&#39;
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>timestamp=&#39;2024-01-15T10:02:10Z&#39; event=&#39;ddos_attempt&#39;
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>timestamp=&#39;2024-01-15T10:02:20Z&#39; event=&#39;ssh_login&#39; user_alias=&#39;H-rkVhtw7ER9CvSLc8LwgmxF&#39;
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>timestamp=&#39;2024-01-15T10:02:20Z&#39; event=&#39;ssh_login&#39; user_alias=&#39;YIYtl13TVJzRKq-nFVid9SLu&#39;
 <a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>  ip_masked=&#39;192.168.1.X&#39;
 <a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>kelora: Field access warnings (18 total)
@@ -9136,10 +9130,6 @@ available to later filters or transformations.</p>
 <a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>  • &#39;user_alias&#39; missing in 6 events
 <a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>  • &#39;ip&#39; missing in 5 events (suggestion: file)
 <a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>  • &#39;user_alias&#39; missing in 1 event
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
@@ -9168,9 +9158,7 @@ records explicitly.</p>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;tag_count&#39; missing in 12 events
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  • &#39;tags&#39; missing in 9 events (suggestion: status)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Use e.has(&quot;field&quot;) before accessing
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  💡 Tip: Use e.get_path(&quot;field&quot;, default) for safe access
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  💡 Tip: Run with -F inspect to see actual field names
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
