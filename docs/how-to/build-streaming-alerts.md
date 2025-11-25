@@ -8,7 +8,7 @@ Create lightweight monitors that watch live log streams, trigger when conditions
 - Teams want deterministic checks (exit codes, console output) embedded in automation.
 
 ## Before You Start
-- Ensure Kelora is installed or run `cargo run --quiet --release --` from the repository root.
+- Ensure Kelora is installed or run `cargo run --release --` from the repository root.
 - Pick a log source that updates continuously (`tail -f`, `journalctl -f`, container logs). Examples below use `examples/simple_json.jsonl`.
 - Keep alert logic simple: Kelora excels at boolean conditions, counters, and short windows. For complex routing, hand the output to an external service.
 

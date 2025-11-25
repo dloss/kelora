@@ -120,7 +120,7 @@ Exit codes are preserved under all quiet/silent combinations. Use the new toggle
 - `-q/--no-events`: suppress events only.
 - `--no-diagnostics`: suppress diagnostics and summaries (fatal line still emitted).
 - `--silent`: suppress all terminal emitters except a single fatal line; metrics files still write.
-- `--metrics-only` / `--stats-only`: suppress events and script output while emitting the selected channel.
+- `-m/--metrics` / `-s/--stats`: suppress events and script output while emitting the selected channel (data-only modes).
 
 ## Using Exit Codes in Scripts
 
