@@ -3669,22 +3669,31 @@
 </tr>
 <tr>
 <td><code>--no-script-output</code></td>
-<td>Suppress Rhai <code>print</code>/<code>eprint</code> (implied by <code>--silent</code>, <code>--metrics-only</code>, <code>--stats-only</code>)</td>
+<td>Suppress Rhai <code>print</code>/<code>eprint</code> (implied by <code>--silent</code>)</td>
 </tr>
 <tr>
-<td><code>--metrics-only</code></td>
-<td>Emit metrics only (suppress events, diagnostics except fatal line, stats, script output)</td>
+<td><code>-s</code> / <code>--stats=FORMAT</code></td>
+<td>Show stats only (suppress events, script output; diagnostics stay on). Format: table, json</td>
 </tr>
 <tr>
-<td><code>--stats-only</code> (<code>-S</code>)</td>
-<td>Emit stats only (suppress events, script output; diagnostics stay on)</td>
+<td><code>-m</code> / <code>--metrics=FORMAT</code></td>
+<td>Show metrics only (suppress events, diagnostics except fatal line, stats, script output). Format: table, full, json</td>
+</tr>
+<tr>
+<td><code>--with-stats</code></td>
+<td>Show stats alongside events (rare case)</td>
+</tr>
+<tr>
+<td><code>--with-metrics</code></td>
+<td>Show metrics alongside events (rare case)</td>
 </tr>
 </tbody>
 </table>
 <p>Examples:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                         </span><span class="c1"># No events; stats emit</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--with-stats<span class="w">                    </span><span class="c1"># No events; stats emit</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kelora<span class="w"> </span>--silent<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Clean&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Has errors&quot;</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>kelora<span class="w"> </span>--metrics-only<span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>kelora<span class="w"> </span>-m<span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Metrics only</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>kelora<span class="w"> </span>--metrics<span class="o">=</span>json<span class="w"> </span>app.log<span class="w">                        </span><span class="c1"># Metrics in JSON format</span>
 </code></pre></div>
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <p>Kelora uses standard Unix exit codes:</p>
@@ -3843,7 +3852,7 @@
 </code></pre></div>
 <h3 id="validate-input-format">Validate Input Format<a class="headerlink" href="#validate-input-format" title="Permanent link">&para;</a></h3>
 <p>Test parsing with strict mode:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--stats-only<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>-s<span class="w"> </span>app.log
 </code></pre></div>
 <p>No output, but exits with error if parsing fails.</p>
 <h2 id="error-messages">Error Messages<a class="headerlink" href="#error-messages" title="Permanent link">&para;</a></h2>

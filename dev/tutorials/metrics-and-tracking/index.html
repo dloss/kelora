@@ -2556,7 +2556,7 @@ any time you want a quick histogram after a batch run.</p>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora: Stats:
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Throughput: 2628 lines/s in 7ms
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Throughput: 2619 lines/s in 7ms
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Timestamp: timestamp (auto-detected) - 20/20 parsed (100.0%).
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN
@@ -2595,11 +2595,6 @@ response sizes and latency as rolling aggregates.</p>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>max_duration = 300000
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>min_duration = 45
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>total_duration = 305045
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora: Field access warnings (17 total)
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  • &#39;duration_ms&#39; missing in 17 events
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
@@ -2637,11 +2632,6 @@ response sizes and latency as rolling aggregates.</p>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>latency_histogram = #{&quot;0&quot;: 1, &quot;300000&quot;: 1, &quot;5000&quot;: 1}
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora: Field access warnings (17 total)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  • &#39;duration_ms&#39; missing in 17 events
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  💡 Tip: Run with -F inspect to see actual field names
 </code></pre></div>
 </div>
 </div>
@@ -2691,27 +2681,27 @@ cardinality analysis.</p>
 <p>Use <code>metrics["services"].len()</code> later to compute the number of distinct members.</p>
 <h3 id="viewing-full-metrics">Viewing Full Metrics<a class="headerlink" href="#viewing-full-metrics" title="Permanent link">&para;</a></h3>
 <p>When <code>track_unique()</code> collects many items, <code>-m</code> shows only the first 5 with a
-hint. Use <code>-mm</code> for the complete list or <code>--metrics-json</code> for JSON format:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Full table with -mm</label><label for="__tabbed_6_2">JSON format with --metrics-json</label></div>
+hint. Use <code>--metrics=full</code> for the complete list or <code>--metrics=json</code> for JSON format:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Full table with --metrics=full</label><label for="__tabbed_6_2">JSON format with --metrics=json</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-mm
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--metrics<span class="o">=</span>full
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;services&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics-json
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics<span class="o">=</span>json
 </code></pre></div>
 </div>
 </div>
 </div>
-<p>The <code>-mm</code> flag shows all items in table format, while <code>--metrics-json</code> outputs
-structured JSON to stderr. Both are mutually exclusive—pick the format that
+<p>The <code>--metrics=full</code> flag shows all items in table format, while <code>--metrics=json</code> outputs
+structured JSON to stdout. Both are mutually exclusive—pick the format that
 matches your workflow. You can also combine <code>-m</code> with <code>--metrics-file</code> to get
 both table output and a JSON file.</p>
 <h2 id="step-4-sliding-windows-and-percentiles">Step 4 – Sliding Windows and Percentiles<a class="headerlink" href="#step-4-sliding-windows-and-percentiles" title="Permanent link">&para;</a></h2>
@@ -2869,15 +2859,15 @@ clean text summary that you can redirect or feed into alerts.</p>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>{
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;api&quot;: 7,
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;admin&quot;: 2,
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;admin&quot;: 2,
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;database&quot;: 2,
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;scheduler&quot;: 3,
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;disk&quot;: 1,
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;database&quot;: 2,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;api&quot;: 7,
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;health&quot;: 1,
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;cache&quot;: 1,
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;auth&quot;: 2,
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;scheduler&quot;: 3
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;cache&quot;: 1,
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;auth&quot;: 2
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>}
 </code></pre></div>
 </div>
@@ -2944,9 +2934,8 @@ you terminate the process.</p>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>400: 1
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>status_family = #{&quot;400&quot;: 1}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>status_family = #{&quot;400&quot;: 1}
 </code></pre></div>
 </div>
 </div>
@@ -2960,8 +2949,8 @@ human-readable histogram once processing finishes.</p>
   within an <code>--end</code> script. Tracking functions alone do not emit output.</p>
 </li>
 <li>
-<p><strong>Truncated arrays</strong>: If <code>-m</code> shows only the first 5 items with a hint, use <code>-mm</code>
-  for full table output, <code>--metrics-json</code> for JSON format, or <code>--metrics-file</code> to
+<p><strong>Truncated arrays</strong>: If <code>-m</code> shows only the first 5 items with a hint, use <code>--metrics=full</code>
+  for full table output, <code>--metrics=json</code> for JSON format, or <code>--metrics-file</code> to
   write JSON to disk.</p>
 </li>
 <li>
@@ -3036,7 +3025,7 @@ human-readable histogram once processing finishes.</p>
 <li>✅ Calculate averages in <code>--end</code> stage from sum and count</li>
 <li>✅ Build histograms with <code>track_bucket()</code></li>
 <li>✅ Count unique values with <code>track_unique()</code></li>
-<li>✅ View metrics with <code>-m</code>, <code>-mm</code>, and <code>--metrics-json</code></li>
+<li>✅ View metrics with <code>-m</code>, <code>--metrics=full</code>, and <code>--metrics=json</code></li>
 <li>✅ Persist metrics with <code>--metrics-file</code></li>
 <li>✅ Generate custom reports in <code>--end</code> stage</li>
 <li>✅ Use sliding windows for percentile analysis</li>
