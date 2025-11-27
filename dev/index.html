@@ -2273,7 +2273,7 @@
 
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
 <p><strong>Turn messy logs into structured data.</strong></p>
-<p>Kelora is a scriptable log processor for the command line. Parse mixed formats, filter with complex logic, and analyze streams using embedded <a href="https://rhai.rs">Rhai</a> scripting—all in a single binary.</p>
+<p>Kelora is a scriptable log processor for the command line. Parse structured or semi-structured logs (one format per file/stream), filter with complex logic, and analyze streams using embedded <a href="https://rhai.rs">Rhai</a> scripting—all in a single binary. It can also extract logfmt/JSON blobs embedded inside a single event.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
 </code></pre></div>
 <blockquote>
@@ -2287,7 +2287,7 @@
 <p>Kelora trades speed for programmability. It's slower than grep, awk, and jq, but adds stateful scripting for complex multi-stage transformations.</p>
 <p><strong>Reach for Kelora when:</strong></p>
 <ul>
-<li>You have <strong>mixed formats</strong> - Logs that aren't consistently JSON or need custom parsing</li>
+<li>Your logs are <strong>messy</strong> - One format per file/stream, with embedded JSON/logfmt fields you want to pull out</li>
 <li>You're <strong>chaining tools</strong> - Replacing <code>grep | awk | jq | custom-script.py</code> with one command</li>
 <li>You need <strong>stateful logic</strong> - Counting errors per service, windowed metrics, lookup tables</li>
 <li>You want <strong>embedded scripting</strong> - Complex transformations without leaving your shell</li>

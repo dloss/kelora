@@ -2328,7 +2328,7 @@
 <p>Quiet modes and counters help you avoid pager fatigue.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Need alerts to come from <code>print</code>/<code>eprint</code>? Use <code>-q --no-diagnostics</code> to suppress events and diagnostics while keeping script output. <code>--silent</code> suppresses script output too.</p>
+<p>Need alerts to come from <code>print</code>/<code>eprint</code>? Use <code>-q --no-diagnostics</code> to suppress events and diagnostics while keeping script output. Add <code>--no-script-output</code> if you want to mute script prints as well.</p>
 </div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>

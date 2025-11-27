@@ -2397,10 +2397,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#-span-n-duration" class="md-nav__link">
+  <a href="#-span-n-duration-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --span &lt;N | DURATION&gt;
+        --span &lt;N | DURATION | FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-span-idle-duration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-idle &lt;DURATION&gt;
       
     </span>
   </a>
@@ -4474,10 +4485,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#-span-n-duration" class="md-nav__link">
+  <a href="#-span-n-duration-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --span &lt;N | DURATION&gt;
+        --span &lt;N | DURATION | FIELD&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-span-idle-duration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --span-idle &lt;DURATION&gt;
       
     </span>
   </a>
@@ -6104,11 +6126,12 @@
 <a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="span-aggregation">Span Aggregation<a class="headerlink" href="#span-aggregation" title="Permanent link">&para;</a></h3>
-<h4 id="-span-n-duration"><code>--span &lt;N | DURATION&gt;</code><a class="headerlink" href="#-span-n-duration" title="Permanent link">&para;</a></h4>
+<h4 id="-span-n-duration-field"><code>--span &lt;N | DURATION | FIELD&gt;</code><a class="headerlink" href="#-span-n-duration-field" title="Permanent link">&para;</a></h4>
 <p>Group events into non-overlapping spans before running a span-close hook. Sequential mode is required (Kelora prints a warning and falls back to sequential if <code>--parallel</code> is also supplied).</p>
 <ul>
 <li><code>--span &lt;N&gt;</code> – Count-based spans. Close after every <strong>N</strong> events that survive all filters. Example: <code>--span 500</code>.</li>
 <li><code>--span &lt;DURATION&gt;</code> – Time-based spans aligned to the events' canonical timestamp (<code>ts</code>). The first event with a valid <code>ts</code> anchors fixed windows such as <code>1m</code>, <code>5m</code>, <code>30s</code>, <code>1h</code>.</li>
+<li><code>--span &lt;FIELD&gt;</code> – Field-based spans. Open a new span whenever the field value changes. With the single-active-span model, interleaved IDs (<code>req-1, req-2, req-1</code>) produce multiple spans per ID.</li>
 </ul>
 <p>How it works:</p>
 <ul>
@@ -6116,6 +6139,15 @@
 <li>Events missing a timestamp (time mode) are marked <code>meta.span_status == "unassigned"</code> and excluded from the span buffer.</li>
 <li>Events with timestamps that fall into an already-closed window are emitted immediately with <code>meta.span_status == "late"</code>. Closed spans are never reopened.</li>
 <li>Count spans keep buffered events in memory until the span closes. Kelora warns when <code>N &gt; 100_000</code>.</li>
+<li>Field spans continue the current span when the field is missing (error with <code>--strict</code>).</li>
+</ul>
+<h4 id="-span-idle-duration"><code>--span-idle &lt;DURATION&gt;</code><a class="headerlink" href="#-span-idle-duration" title="Permanent link">&para;</a></h4>
+<p>Close spans after a period of inactivity (no events). Requires timestamps and cannot be combined with <code>--span</code>.</p>
+<ul>
+<li>Opens a span on the first event with a timestamp; closes when the forward gap between events exceeds the timeout.</li>
+<li>Span IDs use <code>idle-#&lt;seq&gt;-&lt;start_timestamp&gt;</code>.</li>
+<li>Missing timestamps: tagged <code>unassigned</code> (errors with <code>--strict</code>).</li>
+<li>Interleaved/out-of-order events do not close spans; only forward-time gaps are considered. Sort input if you need strict wall-clock ordering.</li>
 </ul>
 <h4 id="-span-close-script"><code>--span-close &lt;SCRIPT&gt;</code><a class="headerlink" href="#-span-close-script" title="Permanent link">&para;</a></h4>
 <p>Run a Rhai snippet once whenever a span closes. Use it to emit per-span summaries, metrics, or rollups. The script runs after the event that triggered the close finishes all per-event stages (filters, execs, etc.).</p>
@@ -6173,11 +6205,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-q<span class="w"> </span>--no-diagnostics<span class="w"> </span>app.log<span class="w">        </span><span class="c1"># No events, no diagnostics</span>
 </code></pre></div>
 <h4 id="-silent-no-silent"><code>--silent</code> / <code>--no-silent</code><a class="headerlink" href="#-silent-no-silent" title="Permanent link">&para;</a></h4>
-<p>Suppress all stdout/stderr emitters (events, diagnostics, stats, terminal metrics, script output). Metrics files still write. A single fatal line is emitted on errors. <code>--no-silent</code> disables a silent default from config.</p>
+<p>Suppress pipeline emitters on stdout/stderr (events, diagnostics, stats, terminal metrics). Script output stays enabled unless you also use <code>--no-script-output</code> or data-only modes. Metrics files still write. A single fatal line is emitted on errors. <code>--no-silent</code> disables a silent default from config.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>--silent<span class="w"> </span>--metrics-file<span class="w"> </span>out.json<span class="w"> </span>app.log<span class="w">   </span><span class="c1"># Quiet terminal, metrics file written</span>
 </code></pre></div>
 <h4 id="-no-script-output"><code>--no-script-output</code><a class="headerlink" href="#-no-script-output" title="Permanent link">&para;</a></h4>
-<p>Suppress Rhai <code>print</code>/<code>eprint</code> and side-effect warnings without affecting diagnostics/stats/metrics. Implied by <code>--silent</code> and data-only modes (<code>-s</code>, <code>-m</code> without <code>--with-*</code> flags).</p>
+<p>Suppress Rhai <code>print</code>/<code>eprint</code> and side-effect warnings without affecting diagnostics/stats/metrics. Implied by data-only modes (<code>-s</code>, <code>-m</code> without <code>--with-*</code> flags).</p>
 <h2 id="filtering-options">Filtering Options<a class="headerlink" href="#filtering-options" title="Permanent link">&para;</a></h2>
 <h3 id="level-filtering">Level Filtering<a class="headerlink" href="#level-filtering" title="Permanent link">&para;</a></h3>
 <h4 id="-l-levels-levels"><code>-l, --levels &lt;LEVELS&gt;</code><a class="headerlink" href="#-l-levels-levels" title="Permanent link">&para;</a></h4>
