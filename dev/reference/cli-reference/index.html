@@ -6549,11 +6549,11 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Linux/macOS</label><label for="__tabbed_1_2">Windows</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,warn
+<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error,warn
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a><span class="nb">Get-Content</span> <span class="n">-Wait</span> <span class="n">app</span><span class="p">.</span><span class="n">log</span> <span class="p">|</span> <span class="n">kelora</span> <span class="n">-j</span> <span class="p">-</span><span class="n">-levels</span> <span class="n">error</span><span class="p">,</span><span class="n">warn</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a><span class="nb">Get-Content</span> <span class="n">-Wait</span> <span class="n">app</span><span class="p">.</span><span class="n">log</span> <span class="p">|</span> <span class="n">kelora</span> <span class="n">-j</span> <span class="n">-l</span> <span class="n">error</span><span class="p">,</span><span class="n">warn</span>
 </code></pre></div>
 </div>
 </div>
