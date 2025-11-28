@@ -1,0 +1,3983 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v0.12.1/reference/time-reference/">
+      
+      
+        <link rel="prev" href="../formats/">
+      
+      
+        <link rel="next" href="../functions/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Time Reference - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#time-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Time Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/" class="md-tabs__link">
+          
+  
+  
+  How-To Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction to Rhai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and Tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/begin-end-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Begin and End Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/advanced-scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing Custom Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/span-aggregation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Span Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/configuration-and-reusability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Reusability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/debug-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug Issues Systematically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triage Production Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze Web Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Service Health Snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Investigate Syslog Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose a Multiline Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sanitize Logs Before Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pseudonymize Identifiers for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare CSV Exports for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flatten Nested JSON for Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/build-streaming-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Streaming Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process Archives at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/span-aggregation-cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roll Up Logs with Span Windows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/integrate-external-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrate Kelora with External Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/power-user-techniques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Power-User Techniques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/pipeline-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processing Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/events-and-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events and Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/scripting-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/multiline-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/performance-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/performance-comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Comparisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/benchmark-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/configuration-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../common-errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-timestamp-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic Timestamp Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automatic Timestamp Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auto-detected-field-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Detected Field Names
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timestamp-format-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timestamp Format Parsing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Timestamp Format Parsing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#date-and-time-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Date and Time Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subsecond-precision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subsecond Precision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timezone-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timezone Tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#weekday-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weekday Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week Numbers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-timestamp-format-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Timestamp Format Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#naive-timestamps-and-timezone-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naive Timestamps and Timezone Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-timestamp-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Timestamp Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Timestamp Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parsing-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-range-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time Range Filtering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-display-and-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timestamp Display and Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rhai-datetime-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhai DateTime Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rhai DateTime Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parsing-and-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing and Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timezone-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timezone Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rhai-duration-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhai Duration Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rhai Duration Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parsing-and-creation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing and Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calculate-request-duration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculate Request Duration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-business-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Business Hours
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compare-against-current-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compare Against Current Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format-timestamp-for-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Timestamp for Display
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Aggregation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-not-detected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timestamp Not Detected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parse Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timezone-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timezone Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relative-time-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relative Time Parsing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syslog-year-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syslog Year Inference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Function Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#automatic-timestamp-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic Timestamp Detection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Automatic Timestamp Detection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#auto-detected-field-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Detected Field Names
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timestamp-format-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timestamp Format Parsing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Timestamp Format Parsing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#date-and-time-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Date and Time Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subsecond-precision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subsecond Precision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timezone-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timezone Tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#weekday-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weekday Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#week-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Week Numbers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-timestamp-format-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Timestamp Format Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#naive-timestamps-and-timezone-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naive Timestamps and Timezone Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-timestamp-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Timestamp Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Timestamp Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parsing-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-range-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time Range Filtering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-display-and-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timestamp Display and Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rhai-datetime-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhai DateTime Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rhai DateTime Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parsing-and-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing and Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timezone-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timezone Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datetime-arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DateTime Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rhai-duration-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhai Duration Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rhai Duration Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parsing-and-creation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing and Creation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-arithmetic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Arithmetic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#duration-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duration Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calculate-request-duration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculate Request Duration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-business-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Business Hours
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compare-against-current-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compare Against Current Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#format-timestamp-for-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Format Timestamp for Display
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-aggregation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Aggregation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#timestamp-not-detected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timestamp Not Detected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parse-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parse Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timezone-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timezone Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relative-time-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relative Time Parsing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#syslog-year-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syslog Year Inference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="time-reference">Time Reference<a class="headerlink" href="#time-reference" title="Permanent link">&para;</a></h1>
+<p>Complete reference for timestamp detection, parsing, formatting, and time-based operations in Kelora.</p>
+<h2 id="automatic-timestamp-detection">Automatic Timestamp Detection<a class="headerlink" href="#automatic-timestamp-detection" title="Permanent link">&para;</a></h2>
+<p>Kelora automatically detects timestamp fields in structured formats (JSON, logfmt, CEF, syslog, etc.) using a standard set of field names.</p>
+<h3 id="auto-detected-field-names">Auto-Detected Field Names<a class="headerlink" href="#auto-detected-field-names" title="Permanent link">&para;</a></h3>
+<p>The following field names are recognized as timestamps (case-insensitive):</p>
+<ul>
+<li><code>ts</code></li>
+<li><code>_ts</code></li>
+<li><code>timestamp</code></li>
+<li><code>at</code></li>
+<li><code>time</code></li>
+<li><code>@timestamp</code></li>
+<li><code>log_timestamp</code></li>
+<li><code>event_time</code></li>
+<li><code>datetime</code></li>
+<li><code>date_time</code></li>
+<li><code>created_at</code></li>
+<li><code>logged_at</code></li>
+<li><code>_t</code></li>
+<li><code>@t</code></li>
+<li><code>t</code></li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Detection is case-insensitive (<code>Timestamp</code>, <code>TIMESTAMP</code>, etc. all match)</li>
+<li>First matching field in the event is used</li>
+<li>To override auto-detection, use <code>--ts-field &lt;field_name&gt;</code></li>
+</ul>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Auto-detects &quot;timestamp&quot; field</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;timestamp&quot;: &quot;2024-01-15T10:30:00Z&quot;, &quot;level&quot;: &quot;INFO&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Override to use &quot;created_at&quot; field</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;timestamp&quot;: &quot;2024-01-15T10:30:00Z&quot;, &quot;created_at&quot;: &quot;2024-01-15T10:31:00Z&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--ts-field<span class="w"> </span>created_at
+</code></pre></div></p>
+<h2 id="timestamp-format-parsing">Timestamp Format Parsing<a class="headerlink" href="#timestamp-format-parsing" title="Permanent link">&para;</a></h2>
+<p>Kelora uses <a href="https://docs.rs/chrono/latest/chrono/format/strftime/index.html">chrono format strings</a> for parsing and formatting timestamps.</p>
+<h3 id="date-and-time-components">Date and Time Components<a class="headerlink" href="#date-and-time-components" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%Y</code></td>
+<td><code>2024</code></td>
+<td>4-digit year</td>
+</tr>
+<tr>
+<td><code>%y</code></td>
+<td><code>24</code></td>
+<td>2-digit year</td>
+</tr>
+<tr>
+<td><code>%m</code></td>
+<td><code>01</code></td>
+<td>Month (01-12)</td>
+</tr>
+<tr>
+<td><code>%b</code></td>
+<td><code>Jan</code></td>
+<td>Abbreviated month name</td>
+</tr>
+<tr>
+<td><code>%B</code></td>
+<td><code>January</code></td>
+<td>Full month name</td>
+</tr>
+<tr>
+<td><code>%d</code></td>
+<td><code>15</code></td>
+<td>Day of month (01-31)</td>
+</tr>
+<tr>
+<td><code>%j</code></td>
+<td><code>015</code></td>
+<td>Day of year (001-366)</td>
+</tr>
+<tr>
+<td><code>%H</code></td>
+<td><code>14</code></td>
+<td>Hour (00-23)</td>
+</tr>
+<tr>
+<td><code>%I</code></td>
+<td><code>02</code></td>
+<td>Hour (01-12)</td>
+</tr>
+<tr>
+<td><code>%p</code></td>
+<td><code>PM</code></td>
+<td>AM/PM</td>
+</tr>
+<tr>
+<td><code>%M</code></td>
+<td><code>30</code></td>
+<td>Minute (00-59)</td>
+</tr>
+<tr>
+<td><code>%S</code></td>
+<td><code>45</code></td>
+<td>Second (00-59)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="subsecond-precision">Subsecond Precision<a class="headerlink" href="#subsecond-precision" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%f</code></td>
+<td><code>123456789</code></td>
+<td>Nanoseconds (9 digits)</td>
+</tr>
+<tr>
+<td><code>%3f</code></td>
+<td><code>123</code></td>
+<td>Milliseconds (3 digits)</td>
+</tr>
+<tr>
+<td><code>%6f</code></td>
+<td><code>123456</code></td>
+<td>Microseconds (6 digits)</td>
+</tr>
+<tr>
+<td><code>%9f</code></td>
+<td><code>123456789</code></td>
+<td>Nanoseconds (9 digits)</td>
+</tr>
+<tr>
+<td><code>%.f</code></td>
+<td><code>.123</code> or <code>.123456</code></td>
+<td>Auto-match subseconds with dot</td>
+</tr>
+</tbody>
+</table>
+<h3 id="timezone-tokens">Timezone Tokens<a class="headerlink" href="#timezone-tokens" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%z</code></td>
+<td><code>+0000</code></td>
+<td>Numeric offset (+HHMM)</td>
+</tr>
+<tr>
+<td><code>%:z</code></td>
+<td><code>+00:00</code></td>
+<td>Numeric offset with colon</td>
+</tr>
+<tr>
+<td><code>%Z</code></td>
+<td><code>UTC</code>, <code>EST</code></td>
+<td>Timezone abbreviation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="weekday-formats">Weekday Formats<a class="headerlink" href="#weekday-formats" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%a</code></td>
+<td><code>Mon</code></td>
+<td>Abbreviated weekday</td>
+</tr>
+<tr>
+<td><code>%A</code></td>
+<td><code>Monday</code></td>
+<td>Full weekday name</td>
+</tr>
+<tr>
+<td><code>%w</code></td>
+<td><code>1</code></td>
+<td>Weekday number (0=Sunday)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="week-numbers">Week Numbers<a class="headerlink" href="#week-numbers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%W</code></td>
+<td><code>03</code></td>
+<td>Week number (Monday as first day)</td>
+</tr>
+<tr>
+<td><code>%U</code></td>
+<td><code>03</code></td>
+<td>Week number (Sunday as first day)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-timestamp-format-examples">Common Timestamp Format Examples<a class="headerlink" href="#common-timestamp-format-examples" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># ISO 8601 / RFC3339</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%dT%H:%M:%S%.f%:z&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Apache/Nginx logs</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%d/%b/%Y:%H:%M:%S %z&#39;</span><span class="w"> </span>access.log
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Syslog</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%b %d %H:%M:%S&#39;</span><span class="w"> </span>syslog.log
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Python logging</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S,%3f&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Custom date and time</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># Unix timestamp (numeric)</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="c1"># No format needed - auto-detected</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="c1"># US format with 12-hour time</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%m/%d/%Y %I:%M:%S %p&#39;</span><span class="w"> </span>app.log
+</code></pre></div>
+<h3 id="naive-timestamps-and-timezone-handling">Naive Timestamps and Timezone Handling<a class="headerlink" href="#naive-timestamps-and-timezone-handling" title="Permanent link">&para;</a></h3>
+<p>If your timestamps lack timezone information, specify the input timezone:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Timestamps are in UTC</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>app.log
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Timestamps are in local time</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>--input-tz<span class="w"> </span><span class="nb">local</span><span class="w"> </span>app.log
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Timestamps are in specific timezone</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>--input-tz<span class="w"> </span>America/New_York<span class="w"> </span>app.log
+</code></pre></div>
+<p><strong>Timezone Options:</strong></p>
+<ul>
+<li><code>UTC</code> - Coordinated Universal Time</li>
+<li><code>local</code> - System local timezone</li>
+<li><code>America/New_York</code>, <code>Europe/London</code>, etc. - Named IANA timezones</li>
+</ul>
+<h2 id="cli-timestamp-options">CLI Timestamp Options<a class="headerlink" href="#cli-timestamp-options" title="Permanent link">&para;</a></h2>
+<h3 id="parsing-configuration">Parsing Configuration<a class="headerlink" href="#parsing-configuration" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--ts-field &lt;FIELD&gt;</code></td>
+<td>Override auto-detected timestamp field</td>
+<td><code>--ts-field created_at</code></td>
+</tr>
+<tr>
+<td><code>--ts-format &lt;FORMAT&gt;</code></td>
+<td>Custom timestamp format (chrono syntax)</td>
+<td><code>--ts-format '%Y-%m-%d %H:%M:%S'</code></td>
+</tr>
+<tr>
+<td><code>--input-tz &lt;TZ&gt;</code></td>
+<td>Timezone for naive timestamps</td>
+<td><code>--input-tz America/New_York</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="time-range-filtering">Time Range Filtering<a class="headerlink" href="#time-range-filtering" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--since &lt;TIME&gt;</code></td>
+<td>Include events from this time onward</td>
+<td><code>--since '1h'</code> or <code>--since '2024-01-15T10:00:00Z'</code></td>
+</tr>
+<tr>
+<td><code>--until &lt;TIME&gt;</code></td>
+<td>Include events until this time</td>
+<td><code>--until '30m'</code> or <code>--until '2024-01-15T11:00:00Z'</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Relative Time Formats:</strong></p>
+<ul>
+<li><code>1h</code> - 1 hour ago</li>
+<li><code>30m</code> - 30 minutes ago</li>
+<li><code>2d</code> - 2 days ago</li>
+<li><code>1w</code> - 1 week ago</li>
+<li><code>+1h</code> - 1 hour in the future (prefix <code>+</code> for future times)</li>
+<li>Combine: <code>1h30m</code> - 1 hour 30 minutes ago</li>
+</ul>
+<p><strong>Absolute Time Formats:</strong></p>
+<ul>
+<li>ISO 8601: <code>2024-01-15T10:30:00Z</code></li>
+<li>RFC3339: <code>2024-01-15T10:30:00+00:00</code></li>
+<li>Unix timestamps: <code>1705318200</code></li>
+<li>Date only: <code>2024-01-15</code> (assumes 00:00:00)</li>
+<li>Time only: <code>10:30:00</code> (assumes today)</li>
+<li>Special values: <code>now</code>, <code>today</code>, <code>yesterday</code>, <code>tomorrow</code></li>
+</ul>
+<p><strong>Anchored Timestamps:</strong></p>
+<p>Anchor one boundary to the other for duration-based windows:</p>
+<ul>
+<li><code>since+DURATION</code> - Duration after <code>--since</code> value</li>
+<li><code>since-DURATION</code> - Duration before <code>--since</code> value</li>
+<li><code>until+DURATION</code> - Duration after <code>--until</code> value</li>
+<li><code>until-DURATION</code> - Duration before <code>--until</code> value</li>
+<li><code>now+DURATION</code> - Duration from current time (future)</li>
+<li><code>now-DURATION</code> - Duration from current time (past)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Show 30 minutes starting at 10:00</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;10:00&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;since+30m&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Show 1 hour ending at 11:00</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;until-1h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;11:00&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Show 1 hour starting from 2 hours ago</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;-2h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;since+1h&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># Show 45 minutes starting at a specific timestamp</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;since+45m&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Show next 5 minutes (using now anchor)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>kelora<span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;now+5m&quot;</span><span class="w"> </span>app.log
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># Show from 1 hour ago to 5 minutes from now</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>kelora<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;now-1h&quot;</span><span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;now+5m&quot;</span><span class="w"> </span>app.log
+</code></pre></div>
+<p><strong>Important Notes:</strong></p>
+<ul>
+<li><code>since</code> anchors to the <code>--since</code> value, <code>until</code> anchors to the <code>--until</code> value</li>
+<li><code>now</code> anchors to the current time (doesn't require --since or --until to be set)</li>
+<li>Cannot use both anchors in the same command (e.g., <code>--since until-1h --until since+1h</code> is an error)</li>
+<li>The anchor target must be specified (e.g., <code>--until since+30m</code> requires <code>--since</code> to be set)</li>
+</ul>
+<p><strong>Basic Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Last hour</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>app.log
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Last 30 minutes</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>30m<span class="w"> </span>app.log
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Between two times</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;2024-01-15T10:00:00Z&#39;</span><span class="w"> </span>--until<span class="w"> </span><span class="s1">&#39;2024-01-15T11:00:00Z&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># Since absolute time</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s1">&#39;2024-01-15T10:00:00Z&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># Future events (1 hour from now)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>+1h<span class="w"> </span>app.log
+</code></pre></div></p>
+<h3 id="timestamp-display-and-conversion">Timestamp Display and Conversion<a class="headerlink" href="#timestamp-display-and-conversion" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-z</code></td>
+<td>Display timestamps as local RFC3339 (display only)</td>
+<td><code>kelora -j -z app.log</code></td>
+</tr>
+<tr>
+<td><code>-Z</code></td>
+<td>Display timestamps as UTC RFC3339 (display only)</td>
+<td><code>kelora -j -Z app.log</code></td>
+</tr>
+<tr>
+<td><code>--normalize-ts</code></td>
+<td>Normalize timestamp field to RFC3339 (modifies event)</td>
+<td><code>kelora -j --normalize-ts app.log</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Difference between <code>-z/-Z</code> and <code>--normalize-ts</code>:</strong></p>
+<ul>
+<li><code>-z</code> and <code>-Z</code>: Display-only formatting, doesn't modify event data</li>
+<li><code>--normalize-ts</code>: Converts the timestamp field in the event itself to RFC3339</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Display in local time (doesn&#39;t modify events)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-z<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Convert timestamp field to RFC3339 in events</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json
+</code></pre></div>
+<h3 id="time-based-features">Time-Based Features<a class="headerlink" href="#time-based-features" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--span &lt;DURATION&gt;</code></td>
+<td>Time-based span windows for aggregation</td>
+<td><code>--span 1h</code></td>
+</tr>
+<tr>
+<td><code>--mark-gaps &lt;DURATION&gt;</code></td>
+<td>Insert markers when time delta exceeds duration</td>
+<td><code>--mark-gaps 5m</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># 1-hour aggregation windows</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--span<span class="w"> </span>1h<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;emit_span(|s| {count: s.len()})&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Mark gaps longer than 5 minutes</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--mark-gaps<span class="w"> </span>5m<span class="w"> </span>app.log
+</code></pre></div></p>
+<h2 id="rhai-datetime-functions">Rhai DateTime Functions<a class="headerlink" href="#rhai-datetime-functions" title="Permanent link">&para;</a></h2>
+<p>Complete reference for working with dates and times in Rhai scripts.</p>
+<h3 id="parsing-and-creation">Parsing and Creation<a class="headerlink" href="#parsing-and-creation" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_datetime(text)</code></td>
+<td>Parse ISO 8601 timestamp (auto-format)</td>
+<td><code>to_datetime("2024-01-15T10:30:00Z")</code></td>
+</tr>
+<tr>
+<td><code>to_datetime(text, fmt)</code></td>
+<td>Parse with custom format</td>
+<td><code>to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S")</code></td>
+</tr>
+<tr>
+<td><code>to_datetime(text, fmt, tz)</code></td>
+<td>Parse with format and timezone</td>
+<td><code>to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "America/New_York")</code></td>
+</tr>
+<tr>
+<td><code>now()</code></td>
+<td>Current time (UTC)</td>
+<td><code>now()</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="datetime-components">DateTime Components<a class="headerlink" href="#datetime-components" title="Permanent link">&para;</a></h3>
+<p>Access components of a DateTime value:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.year()</code></td>
+<td>Integer</td>
+<td>Year (e.g., 2024)</td>
+</tr>
+<tr>
+<td><code>.month()</code></td>
+<td>Integer</td>
+<td>Month (1-12)</td>
+</tr>
+<tr>
+<td><code>.day()</code></td>
+<td>Integer</td>
+<td>Day of month (1-31)</td>
+</tr>
+<tr>
+<td><code>.hour()</code></td>
+<td>Integer</td>
+<td>Hour (0-23)</td>
+</tr>
+<tr>
+<td><code>.minute()</code></td>
+<td>Integer</td>
+<td>Minute (0-59)</td>
+</tr>
+<tr>
+<td><code>.second()</code></td>
+<td>Integer</td>
+<td>Second (0-59)</td>
+</tr>
+<tr>
+<td><code>.ts_nanos()</code></td>
+<td>Integer</td>
+<td>Unix timestamp in nanoseconds</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>if dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17 {
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    print(&quot;Business hours&quot;);
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>}
+</code></pre></div></p>
+<h3 id="datetime-formatting">DateTime Formatting<a class="headerlink" href="#datetime-formatting" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.to_iso()</code></td>
+<td>Convert to ISO 8601 string</td>
+<td><code>dt.to_iso()</code> → <code>"2024-01-15T10:30:00Z"</code></td>
+</tr>
+<tr>
+<td><code>.format(fmt)</code></td>
+<td>Format with custom pattern</td>
+<td><code>dt.format("%Y-%m-%d")</code> → <code>"2024-01-15"</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="timezone-conversion">Timezone Conversion<a class="headerlink" href="#timezone-conversion" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.to_utc()</code></td>
+<td>Convert to UTC</td>
+<td><code>dt.to_utc()</code></td>
+</tr>
+<tr>
+<td><code>.to_local()</code></td>
+<td>Convert to local timezone</td>
+<td><code>dt.to_local()</code></td>
+</tr>
+<tr>
+<td><code>.to_timezone(name)</code></td>
+<td>Convert to named timezone</td>
+<td><code>dt.to_timezone("America/New_York")</code></td>
+</tr>
+<tr>
+<td><code>.timezone_name()</code></td>
+<td>Get timezone name</td>
+<td><code>dt.timezone_name()</code> → <code>"UTC"</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="datetime-comparison">DateTime Comparison<a class="headerlink" href="#datetime-comparison" title="Permanent link">&para;</a></h3>
+<p>DateTime values support all comparison operators:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>let dt1 = to_datetime(&quot;2024-01-15T10:30:00Z&quot;);
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>let dt2 = to_datetime(&quot;2024-01-15T11:00:00Z&quot;);
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>dt1 == dt2  // false
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>dt1 != dt2  // true
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>dt1 &lt; dt2   // true
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>dt1 &lt;= dt2  // true
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>dt1 &gt; dt2   // false
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>dt1 &gt;= dt2  // false
+</code></pre></div>
+<h3 id="datetime-arithmetic">DateTime Arithmetic<a class="headerlink" href="#datetime-arithmetic" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>// Add duration to datetime
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>let dt = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>let later = dt + to_duration(&quot;1h30m&quot;);  // 2024-01-15T11:30:00Z
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>// Subtract duration from datetime
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>let earlier = dt - to_duration(&quot;30m&quot;);  // 2024-01-15T09:30:00Z
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>// Difference between two datetimes (returns Duration)
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>let dt1 = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>let dt2 = to_datetime(&quot;2024-01-15T11:30:00Z&quot;);
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>let elapsed = dt2 - dt1;  // Duration: 1h30m
+</code></pre></div>
+<h2 id="rhai-duration-functions">Rhai Duration Functions<a class="headerlink" href="#rhai-duration-functions" title="Permanent link">&para;</a></h2>
+<h3 id="parsing-and-creation_1">Parsing and Creation<a class="headerlink" href="#parsing-and-creation_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_duration(text)</code></td>
+<td>Parse duration string</td>
+<td><code>to_duration("1h30m")</code></td>
+</tr>
+<tr>
+<td><code>duration_from_seconds(n)</code></td>
+<td>Create from seconds</td>
+<td><code>duration_from_seconds(3600)</code></td>
+</tr>
+<tr>
+<td><code>duration_from_milliseconds(n)</code></td>
+<td>Create from milliseconds</td>
+<td><code>duration_from_milliseconds(5000)</code></td>
+</tr>
+<tr>
+<td><code>duration_from_nanoseconds(n)</code></td>
+<td>Create from nanoseconds</td>
+<td><code>duration_from_nanoseconds(1000000)</code></td>
+</tr>
+<tr>
+<td><code>duration_from_minutes(n)</code></td>
+<td>Create from minutes</td>
+<td><code>duration_from_minutes(30)</code></td>
+</tr>
+<tr>
+<td><code>duration_from_hours(n)</code></td>
+<td>Create from hours</td>
+<td><code>duration_from_hours(2)</code></td>
+</tr>
+<tr>
+<td><code>duration_from_days(n)</code></td>
+<td>Create from days</td>
+<td><code>duration_from_days(7)</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Duration String Format:</strong></p>
+<ul>
+<li><code>1h</code> - 1 hour</li>
+<li><code>30m</code> - 30 minutes</li>
+<li><code>45s</code> - 45 seconds</li>
+<li><code>500ms</code> - 500 milliseconds</li>
+<li>Combine: <code>1h30m45s</code> - 1 hour, 30 minutes, 45 seconds</li>
+</ul>
+<h3 id="duration-conversion">Duration Conversion<a class="headerlink" href="#duration-conversion" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.as_seconds()</code></td>
+<td>Float</td>
+<td>Duration in seconds</td>
+</tr>
+<tr>
+<td><code>.as_milliseconds()</code></td>
+<td>Integer</td>
+<td>Duration in milliseconds</td>
+</tr>
+<tr>
+<td><code>.as_nanoseconds()</code></td>
+<td>Integer</td>
+<td>Duration in nanoseconds</td>
+</tr>
+<tr>
+<td><code>.as_minutes()</code></td>
+<td>Float</td>
+<td>Duration in minutes</td>
+</tr>
+<tr>
+<td><code>.as_hours()</code></td>
+<td>Float</td>
+<td>Duration in hours</td>
+</tr>
+<tr>
+<td><code>.as_days()</code></td>
+<td>Float</td>
+<td>Duration in days</td>
+</tr>
+</tbody>
+</table>
+<h3 id="duration-formatting">Duration Formatting<a class="headerlink" href="#duration-formatting" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>humanize_duration(ms)</code></td>
+<td>Format milliseconds as human-readable</td>
+<td><code>humanize_duration(5000)</code> → <code>"5s"</code></td>
+</tr>
+<tr>
+<td><code>.to_string()</code></td>
+<td>Convert duration to string</td>
+<td><code>dur.to_string()</code> → <code>"1h30m"</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>let dur = to_duration(&quot;1h30m&quot;);
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>print(`${dur.as_minutes()} minutes`);  // 90 minutes
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>print(`${dur.as_seconds()} seconds`);  // 5400 seconds
+</code></pre></div></p>
+<h3 id="duration-arithmetic">Duration Arithmetic<a class="headerlink" href="#duration-arithmetic" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>// Add durations
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>let d1 = to_duration(&quot;1h&quot;);
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>let d2 = to_duration(&quot;30m&quot;);
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>let total = d1 + d2;  // 1h30m
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>// Subtract durations
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>let diff = d1 - d2;  // 30m
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>// Multiply duration
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>let doubled = d1 * 2;  // 2h
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>// Divide duration
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>let half = d1 / 2;  // 30m
+</code></pre></div>
+<h3 id="duration-comparison">Duration Comparison<a class="headerlink" href="#duration-comparison" title="Permanent link">&para;</a></h3>
+<p>Duration values support all comparison operators:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>let d1 = to_duration(&quot;1h&quot;);
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let d2 = to_duration(&quot;30m&quot;);
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>d1 == d2  // false
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>d1 != d2  // true
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>d1 &gt; d2   // true
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>d1 &gt;= d2  // true
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>d1 &lt; d2   // false
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>d1 &lt;= d2  // false
+</code></pre></div>
+<h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="calculate-request-duration">Calculate Request Duration<a class="headerlink" href="#calculate-request-duration" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Parse timestamps and calculate duration
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>let start = to_datetime(e.start_time);
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>let end = to_datetime(e.end_time);
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>let duration = end - start;
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>e.duration_ms = duration.as_milliseconds();
+</code></pre></div>
+<h3 id="filter-business-hours">Filter Business Hours<a class="headerlink" href="#filter-business-hours" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>// Use inside a --filter stage to keep only business hours (9 AM - 5 PM)
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17
+</code></pre></div>
+<h3 id="compare-against-current-time">Compare Against Current Time<a class="headerlink" href="#compare-against-current-time" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Find events older than 1 hour
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>let age = now() - dt;
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>if age &gt; to_duration(&quot;1h&quot;) {
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    e.is_old = true;
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>}
+</code></pre></div>
+<h3 id="format-timestamp-for-display">Format Timestamp for Display<a class="headerlink" href="#format-timestamp-for-display" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Convert to custom display format
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>e.display_time = dt.format(&quot;%Y-%m-%d %I:%M %p&quot;);
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>// Result: &quot;2024-01-15 10:30 AM&quot;
+</code></pre></div>
+<h3 id="time-based-aggregation">Time-Based Aggregation<a class="headerlink" href="#time-based-aggregation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Group by hour of day
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>e.hour_of_day = dt.hour();
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="timestamp-not-detected">Timestamp Not Detected<a class="headerlink" href="#timestamp-not-detected" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Timestamps not being parsed automatically.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check if field name is in auto-detected list (see above)</li>
+<li>Specify field explicitly: <code>--ts-field your_field_name</code></li>
+<li>Check field value is a string (not nested object)</li>
+</ol>
+<h3 id="parse-errors">Parse Errors<a class="headerlink" href="#parse-errors" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> "Failed to parse timestamp" errors.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check if format matches exactly: <code>--ts-format '%Y-%m-%d %H:%M:%S'</code></li>
+<li>Verify timezone handling: add <code>--input-tz UTC</code> for naive timestamps</li>
+<li>Check for subsecond precision: use <code>%.f</code> for auto-matching</li>
+<li>Look for Python comma separator: automatic conversion to period</li>
+</ol>
+<h3 id="timezone-issues">Timezone Issues<a class="headerlink" href="#timezone-issues" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Times appear in wrong timezone.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>For display: Use <code>-z</code> (local) or <code>-Z</code> (UTC)</li>
+<li>For naive inputs: Set <code>--input-tz America/New_York</code></li>
+<li>Check TZ environment variable if using "local"</li>
+<li>Verify timestamp includes timezone: <code>+00:00</code> or <code>Z</code></li>
+</ol>
+<h3 id="relative-time-parsing">Relative Time Parsing<a class="headerlink" href="#relative-time-parsing" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> <code>--since 1h</code> not working as expected.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check timestamp is properly detected/parsed first</li>
+<li>Ensure timestamps are in chronological order (for best results)</li>
+<li>Verify format: <code>1h</code>, <code>30m</code>, <code>2d</code> (no spaces)</li>
+<li>Use absolute times if relative parsing fails</li>
+</ol>
+<h3 id="syslog-year-inference">Syslog Year Inference<a class="headerlink" href="#syslog-year-inference" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Syslog timestamps missing year.</p>
+<p><strong>Solution:</strong></p>
+<ul>
+<li>Kelora infers year from current time</li>
+<li>For historical logs, ensure system clock is correct</li>
+<li>Use custom format with explicit year if available</li>
+</ul>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../tutorials/working-with-time/">Working with Time Tutorial</a> - Step-by-step guide with examples</li>
+<li><a href="../functions/">Functions Reference</a> - Complete Rhai function documentation</li>
+<li><a href="../cli-reference/">CLI Reference</a> - All command-line flags</li>
+<li><a href="../script-variables/">Script Variables</a> - Available variables in Rhai scripts</li>
+<li><a href="https://docs.rs/chrono/latest/chrono/format/strftime/index.html">Chrono Format Strings</a> - Complete format token reference</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
