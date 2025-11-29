@@ -2338,10 +2338,10 @@
 <h2 id="step-4-compare-against-hashing">Step 4: Compare Against Hashing<a class="headerlink" href="#step-4-compare-against-hashing" title="Permanent link">&para;</a></h2>
 <p>When you only need grouping (and not reversibility), hashing may suffice. Benchmark both approaches so downstream tools understand collision risks.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_hash = e.user_id.hash(&quot;xxh3&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_anon = pseudonym(e.user_id, &quot;users&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;hashes&quot;, e.user_hash)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;pseudonyms&quot;, e.user_anon)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user_hash = e.user_id.hash(&quot;xxh3&quot;);</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s1">      e.user_anon = pseudonym(e.user_id, &quot;users&quot;);</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">      track_unique(&quot;hashes&quot;, e.user_hash);</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">      track_unique(&quot;pseudonyms&quot;, e.user_anon)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <ul>
@@ -2356,8 +2356,8 @@
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--stats
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let token = pseudonym(e.user_email, &quot;users&quot;);&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_unique(&quot;tokens&quot;, token)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let token = pseudonym(e.user_email, &quot;users&quot;);</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">      track_unique(&quot;tokens&quot;, token)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <ul>

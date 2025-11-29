@@ -3483,9 +3483,9 @@
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>
 <a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="c1"># For mixed prose + key=value tails, absorb them in-place</span>
 <a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>logs/mixed.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let res = e.absorb_kv(&quot;message&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.user = res.data[&quot;user_id&quot;] ?? &quot;&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.user)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let res = e.absorb_kv(&quot;message&quot;);</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="s1">      e.user = res.data[&quot;user_id&quot;] ?? &quot;&quot;;</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="s1">      track_count(e.user)&#39;</span><span class="w"> </span>-m
 </code></pre></div>
 <p><strong>When to use angle-grinder:</strong> You prefer its query syntax, or need features Kelora doesn't have.
 <strong>When to use Kelora:</strong> You want Rhai's full programming power, need advanced parsing functions, or want better integration with other tools.</p>
