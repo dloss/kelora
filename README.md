@@ -44,7 +44,7 @@ cargo install kelora
 
 ## Documentation
 
-Read the full documentation at **[kelora.dev](https://kelora.dev)**:
+> 📚 **[Read the full documentation at kelora.dev](https://kelora.dev)**
 
 - [Quickstart](https://kelora.dev/latest/quickstart/)
 - [Tutorials](https://kelora.dev/latest/tutorials/)
