@@ -3027,6 +3027,15 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>klp<span class="w"> </span>--input-format<span class="w"> </span>jsonl<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>benchmarks/bench_100k.jsonl
 </code></pre></div></p>
 <p>Kelora runs <strong>~6× slower than jq</strong> (and ~17× slower than angle-grinder) because it pulls every event into a Rhai context with metrics/windowing hooks; klp pays a similar tax for its Python runtime. Reach for Kelora when you need that scripting environment (multiple <code>--filter</code> stages, stateful metrics) or want to mix formats. For pure filtering, enable <code>--no-emoji</code> and emit <code>-F json</code> to hold the gap to ~4× on this machine, or run the query in <code>agrind</code>/<code>jq</code> and feed the structured output back into Kelora.</p>
+<div class="admonition tip">
+<p class="admonition-title">Recent Kelora JSON fast paths (500k lines)</p>
+<ul>
+<li>Ingest-only (<code>-j --silent</code>): ~7.1 s (≈70k lines/s) after JSON allocation and stats tweaks.</li>
+<li>Level filter (<code>-j -l debug --silent</code>): ~5.9 s (≈85k lines/s).</li>
+<li>Rhai filter (<code>-j --filter 'e.level==\"DEBUG\"' --silent</code>): ~11.9 s (≈42k lines/s).</li>
+<li>Takeaways: prefer native flags like <code>-l</code> when available, and use <code>--silent</code>/<code>--no-diagnostics</code> to bypass stats overhead during batch runs.</li>
+</ul>
+</div>
 <hr />
 <h3 id="4-json-transformation">4. JSON Transformation<a class="headerlink" href="#4-json-transformation" title="Permanent link">&para;</a></h3>
 <p><strong>Task:</strong> Filter API logs, extract status code, add computed field</p>

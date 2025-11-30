@@ -6103,7 +6103,7 @@
 <h4 id="-filter-expression"><code>--filter &lt;EXPRESSION&gt;</code><a class="headerlink" href="#-filter-expression" title="Permanent link">&para;</a></h4>
 <p>Boolean filter expression. Events where expression returns <code>true</code> are kept. Multiple filters are combined with AND logic.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span>app.log<span class="w">   </span><span class="c1"># Use -l for level filtering (faster than Rhai)</span>
 </code></pre></div>
 <h4 id="-e-exec-script"><code>-e, --exec &lt;SCRIPT&gt;</code><a class="headerlink" href="#-e-exec-script" title="Permanent link">&para;</a></h4>
 <p>Transform/process script evaluated on each event. Multiple <code>--exec</code> scripts run in order.</p>
