@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="765.73712"
+   height="579.82758"
+   viewBox="0 0 765.73712 579.82758"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="kelora-logo.svg"
+   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.55726091"
+     inkscape:cx="418.11653"
+     inkscape:cy="293.39937"
+     inkscape:window-width="1464"
+     inkscape:window-height="956"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg3" />
+  <!-- Colors (exact):
+       Orange: rgb(244,126,54)  #F47E36
+       Blue:   rgb(23,87,155)   #17579B
+       Dark:   rgb(40,40,40)    #282828
+       Background: transparent -->
+  <!-- BLUE outer diamond (hollow), rotated around a LOWER center to create offset -->
+  <path
+     style="baseline-shift:baseline;display:inline;overflow:visible;vector-effect:none;fill:#17579b;enable-background:accumulate;stop-color:#000000;stop-opacity:1;opacity:1"
+     d="M 336.45703,-336.45703 V 73.542969 h 410 V -336.45703 Z m 50,50 h 310 V 23.542969 h -310 z"
+     id="rect1"
+     transform="rotate(45)" />
+  <!-- ORANGE outer diamond (hollow), rotated around an UPPER center to create offset -->
+  <path
+     style="baseline-shift:baseline;display:inline;overflow:visible;vector-effect:none;fill:#f47e36;enable-background:accumulate;stop-color:#000000;stop-opacity:1;opacity:1"
+     d="m 205,-205 v 410 h 410 v -410 z m 50,50 H 565 V 155 H 255 Z"
+     id="rect2"
+     transform="rotate(45)" />
+  <!-- Central diamond made of two triangles, centered and visible in the overlap -->
+  <!-- Left triangle (blue) -->
+  <!-- Right triangle (dark) -->
+  <g
+     id="g3"
+     transform="matrix(1.1762447,0,0,1.1762447,81.955437,-11.204863)">
+    <polygon
+       points="256,200 256,312 200,256 "
+       fill="#17579b"
+       id="polygon2" />
+    <polygon
+       points="256,200 312,256 256,312 "
+       fill="#282828"
+       id="polygon3" />
+  </g>
+  <path
+     style="baseline-shift:baseline;display:inline;overflow:visible;vector-effect:none;fill:#f47e36;enable-background:accumulate;stop-color:#000000;stop-opacity:1;opacity:1;fill-opacity:1"
+     d="M 565.00042,23.544446 V 73.54463 H 615.0006 V 23.544446 Z"
+     transform="rotate(45)"
+     id="path2" />
+  <path
+     style="baseline-shift:baseline;display:inline;overflow:visible;vector-effect:none;fill:#17579b;enable-background:accumulate;stop-color:#000000;stop-opacity:1;opacity:1"
+     d="m 336.45577,-205.0002 v 50.00018 h 50.00018 v -50.00018 z"
+     transform="rotate(45)"
+     id="path1" />
+</svg>
