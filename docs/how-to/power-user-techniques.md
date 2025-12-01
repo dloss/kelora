@@ -532,6 +532,19 @@ The `state` global map enables complex stateful processing that `track_*()` func
 - **Cross-event dependencies**: Make decisions based on previous events
 - **Complex objects**: Store nested maps, arrays, or other structured data
 - **Conditional logic**: Remember arbitrary state across events
+- **State machines**: Track connection states, session lifecycles
+- **Event correlation**: Match request/response pairs, build sessions
+
+**Quick Decision Guide:**
+
+| Feature | `state` | `track_*()` |
+|---------|---------|-------------|
+| **Purpose** | Complex stateful logic | Simple metrics |
+| **Read access** | ✅ Yes | ❌ No (write-only) |
+| **Parallel mode** | ❌ Sequential only | ✅ Works in parallel |
+| **Storage** | Any Rhai value | Numbers only |
+| **Performance** | Slower (RwLock) | Faster (atomic) |
+| **Use for** | Deduplication, FSMs, correlation | Counting, summing, min/max |
 
 **Important**: For simple counting and metrics, prefer `track_count()`, `track_sum()`, etc.—they work in both sequential and parallel modes. `state` only works in sequential mode.
 
@@ -620,6 +633,118 @@ kelora -j logs.jsonl \
     ```bash exec="on" result="ansi"
     head -5 examples/simple_json.jsonl
     ```
+
+### Use Case: Event Correlation (Request/Response Pairs)
+
+Match request and response events, calculating latency and emitting complete transactions:
+
+```bash
+kelora -j api-events.jsonl \
+  --exec 'if e.event_type == "request" {
+    state[e.request_id] = #{sent_at: e.timestamp, method: e.method};
+    e = ();  # Don't emit until we see response
+  } else if e.event_type == "response" && state.contains(e.request_id) {
+    let req = state[e.request_id];
+    e.duration_ms = (e.timestamp - req.sent_at).as_millis();
+    e.method = req.method;
+    state.remove(e.request_id);  # Clean up
+  }' \
+  -k request_id,method,duration_ms,status
+```
+
+### Use Case: State Machines for Protocol Analysis
+
+Track connection states through their lifecycle:
+
+```bash
+kelora -j network-events.jsonl \
+  --exec 'if !state.contains(e.conn_id) {
+    state[e.conn_id] = "NEW";
+  }
+  let current_state = state[e.conn_id];
+
+  # State transitions
+  if current_state == "NEW" && e.event == "SYN" {
+    state[e.conn_id] = "SYN_SENT";
+  } else if current_state == "SYN_SENT" && e.event == "SYN_ACK" {
+    state[e.conn_id] = "ESTABLISHED";
+  } else if current_state == "ESTABLISHED" && e.event == "FIN" {
+    state[e.conn_id] = "CLOSING";
+  } else if e.event != "DATA" {
+    e.protocol_error = true;  # Invalid transition
+  }
+  e.connection_state = state[e.conn_id]' \
+  --filter 'e.has("protocol_error")' \
+  -k timestamp,conn_id,event,connection_state
+```
+
+### Use Case: Session Reconstruction
+
+Accumulate events into complete sessions, emitting only when session ends:
+
+```bash
+kelora -j user-events.jsonl \
+  --exec 'if e.event == "login" {
+    state[e.session_id] = #{
+      user: e.user,
+      events: [],
+      start: e.timestamp
+    };
+  }
+  if state.contains(e.session_id) {
+    state[e.session_id].events.push(#{event: e.event, ts: e.timestamp});
+  }
+  if e.event == "logout" {
+    let session = state[e.session_id];
+    session.end = e.timestamp;
+    session.event_count = session.events.len();
+    print(session.to_json());
+    state.remove(e.session_id);
+  }
+  e = ()' -q  # Suppress individual events, only emit complete sessions
+```
+
+### Use Case: Rate Limiting - Sample First N per Key
+
+Only emit the first 100 events per API key, then suppress the rest:
+
+```bash
+kelora -j api-logs.jsonl \
+  --exec 'if !state.contains(e.api_key) {
+    state[e.api_key] = 0;
+  }
+  state[e.api_key] += 1;
+  if state[e.api_key] > 100 {
+    e = ();  # Drop after first 100 per key
+  }' \
+  -k timestamp,api_key,endpoint
+```
+
+### Performance and Memory Management
+
+For large state maps (millions of keys), consider periodic cleanup:
+
+```bash
+kelora -j huge-logs.jsonl \
+  --exec 'if !state.contains("counter") { state["counter"] = 0; }
+  state["counter"] += 1;
+
+  # Periodic cleanup every 100k events
+  if state["counter"] % 100000 == 0 {
+    eprint("State size: " + state.len() + " keys");
+    if state.len() > 500000 {
+      state.clear();  # Reset if too large
+      eprint("State cleared");
+    }
+  }
+
+  # Your stateful logic here
+  if !state.contains(e.request_id) {
+    state[e.request_id] = true;
+  } else {
+    e = ();
+  }'
+```
 
 ### Parallel Mode Restriction
 

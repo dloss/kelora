@@ -45,8 +45,67 @@ Kelora exposes several built-in variables to Rhai scripts. Their availability de
 ### `state`
 - Type: `StateMap` (special wrapper, not a regular `Map`)
 - Mutable global map for complex state tracking across events. Available in all per-event stages (`--filter`, `--exec`, `--begin`, `--end`) **in sequential mode only**.
-- **When to use**: Deduplication, storing complex objects, cross-event dependencies that `track_*()` functions cannot handle.
-- **When NOT to use**: Simple counting or metrics—prefer `track_count()`, `track_sum()`, etc., which work in parallel mode too.
+
+#### Mental Model
+
+Think of `state` as a **persistent notebook** that travels with your log processor:
+
+- Each event can READ from and WRITE to this notebook
+- Previous events can leave notes for future events
+- The notebook persists across all files in a single run
+- When processing ends, the notebook is discarded
+
+This differs from `track_*()` functions, which are **write-only counters** that accumulate metrics but can't influence per-event decisions.
+
+#### When to Use
+
+**Use `state` for:**
+
+- Deduplication (tracking seen IDs)
+- Cross-event dependencies and correlation
+- Storing complex objects (nested maps, arrays)
+- Conditional logic based on previous events
+- State machines and session reconstruction
+
+**Don't use `state` for:**
+
+- Simple counting or metrics → use `track_count()`, `track_sum()`, etc.
+  - These work in parallel mode too
+  - More efficient (atomic operations vs RwLock)
+
+**Comparison with `track_*()`:**
+
+| Feature | `state` | `track_*()` |
+|---------|---------|-------------|
+| **Purpose** | Complex stateful logic | Simple metrics |
+| **Read access** | ✅ Yes | ❌ No (write-only) |
+| **Parallel mode** | ❌ Sequential only | ✅ Works in parallel |
+| **Storage** | Any Rhai value | Numbers only |
+| **Performance** | Slower (RwLock) | Faster (atomic) |
+| **Use for** | Deduplication, FSMs, correlation | Counting, summing, min/max |
+
+#### State Lifecycle
+
+State persists:
+
+- ✅ Across multiple input files in one invocation
+- ✅ From `--begin` through all events to `--end`
+- ✅ Between events within the same run
+
+State resets:
+
+- ❌ Between separate `kelora` invocations (no persistence to disk)
+- ❌ When using `state.clear()` explicitly
+- ❌ Not per-file or per-batch (common misconception)
+
+Example: Processing 3 files maintains one shared state:
+```bash
+# State persists across all 3 files
+kelora -j file1.json file2.json file3.json \
+  --exec 'state[e.user] = true'  # Deduplicates across ALL files
+```
+
+#### Operations
 
 **Direct operations** (no conversion needed):
 
@@ -61,11 +120,78 @@ print(state.to_map().to_logfmt());
 let json_str = state.to_map().to_json();
 ```
 
-**Parallel mode restriction**: Accessing `state` in `--parallel` mode causes a runtime panic with a clear error message. State requires sequential processing to maintain consistency.
+#### Performance Considerations
 
-**Example use cases**:
+**Memory usage**: State grows with unique keys. For deduplication of millions of IDs, consider:
+
 ```rhai
-// Deduplication - track seen IDs
+// Periodic cleanup
+if state.len() > 100000 {
+    state.clear();
+}
+
+// Time-based expiration
+if !state.contains("cleanup_time") {
+    state["cleanup_time"] = now();
+}
+if (now() - state["cleanup_time"]).as_secs() > 3600 {
+    // Remove old entries
+    for key in state.keys() {
+        if should_expire(state[key]) {
+            state.remove(key);
+        }
+    }
+    state["cleanup_time"] = now();
+}
+```
+
+**Sequential processing**: State requires sequential mode, which processes one event at a time. For large files (100M+ events), consider:
+
+- Using `track_*()` functions with `--parallel` when possible
+- Filtering before stateful processing to reduce volume
+- Breaking into smaller files for distributed processing
+
+#### Debugging State
+
+Inspect state at any point:
+
+```bash
+# Print state size periodically
+kelora -j logs.json \
+  --exec 'state["count"] = (state["count"] ?? 0) + 1;
+           if state["count"] % 1000 == 0 {
+             eprint("State size: " + state.len());
+             eprint("Sample keys: " + state.keys().slice(0, 10).to_json());
+           }'
+
+# Dump final state as JSON
+kelora -j logs.json \
+  --exec 'state[e.user] = true' \
+  --end 'print(state.to_map().to_json())' -q > state_dump.json
+
+# Check state contents in --end stage
+kelora -j logs.json \
+  --exec 'state[e.level] = (state.get(e.level) ?? 0) + 1' \
+  --end 'eprint("Final state: " + state.to_map().to_kv())'
+```
+
+#### Parallel Mode Restriction
+
+Accessing `state` in `--parallel` mode causes a runtime panic with a clear error message. State requires sequential processing to maintain consistency:
+
+```bash
+# This will fail:
+kelora -j logs.jsonl --parallel \
+  --exec 'state["count"] += 1'
+# Error: 'state' is not available in --parallel mode
+```
+
+For parallel-safe tracking, use `track_*()` functions instead.
+
+#### Example Use Cases
+
+**Deduplication - track seen IDs:**
+```rhai
 if !state.contains(e.request_id) {
     state[e.request_id] = true;
     // Process first occurrence
@@ -73,16 +199,41 @@ if !state.contains(e.request_id) {
     // Skip duplicate
     e = ();
 }
+```
 
-// Store complex nested state
+**Store complex nested state:**
+```rhai
 if !state.contains(e.user) {
-    state[e.user] = #{login_count: 0, last_seen: ()};
+    state[e.user] = #{login_count: 0, last_seen: (), errors: []};
 }
 let user_data = state[e.user];
 user_data.login_count += 1;
 user_data.last_seen = e.timestamp;
+if e.has("error") {
+    user_data.errors.push(e.error);
+}
 state[e.user] = user_data;
 ```
+
+**State machines for protocol analysis:**
+```rhai
+if !state.contains(e.conn_id) {
+    state[e.conn_id] = "NEW";
+}
+let current_state = state[e.conn_id];
+
+// State transitions
+if current_state == "NEW" && e.event == "SYN" {
+    state[e.conn_id] = "SYN_SENT";
+} else if current_state == "SYN_SENT" && e.event == "SYN_ACK" {
+    state[e.conn_id] = "ESTABLISHED";
+} else {
+    e.protocol_error = true;  // Invalid transition
+}
+e.connection_state = state[e.conn_id];
+```
+
+See `examples/state_examples.rhai` for more patterns.
 
 ## Span Hooks (`--span-close`)
 
