@@ -160,8 +160,7 @@ Inspect state at any point:
 kelora -j logs.json \
   --exec 'state["count"] = (state["count"] ?? 0) + 1;
            if state["count"] % 1000 == 0 {
-             eprint("State size: " + state.len());
-             eprint("Sample keys: " + state.keys().slice(0, 10).to_json());
+             eprint("State size: " + state.len() + " keys");
            }'
 
 # Dump final state as JSON
