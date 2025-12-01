@@ -77,12 +77,12 @@ This differs from `track_*()` functions, which are **write-only counters** that 
 
 | Feature | `state` | `track_*()` |
 |---------|---------|-------------|
-| **Purpose** | Complex stateful logic | Simple metrics |
-| **Read access** | ✅ Yes | ❌ No (write-only) |
+| **Purpose** | Complex stateful logic | Simple metrics & aggregations |
+| **Read access** | ✅ Yes (during processing) | ❌ No (write-only, read in `--end`) |
 | **Parallel mode** | ❌ Sequential only | ✅ Works in parallel |
-| **Storage** | Any Rhai value | Numbers only |
-| **Performance** | Slower (RwLock) | Faster (atomic) |
-| **Use for** | Deduplication, FSMs, correlation | Counting, summing, min/max |
+| **Storage** | Any Rhai value | Any value (strings, numbers, etc.) |
+| **Performance** | Slower (RwLock) | Faster (atomic/optimized) |
+| **Use for** | Deduplication, FSMs, correlation | Counting, unique tracking, bucketing |
 
 #### State Lifecycle
 
