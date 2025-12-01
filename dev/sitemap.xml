@@ -2,194 +2,194 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://dloss.github.io/kelora/dev/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/glossary/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/quickstart/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/benchmark-results/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/configuration-system/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/error-handling/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/events-and-fields/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/multiline-strategies/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/performance-comparisons/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/performance-model/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/pipeline-model/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/concepts/scripting-stages/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/analyze-web-traffic/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/batch-process-archives/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/build-streaming-alerts/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/debug-issues/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/extract-and-mask-sensitive-data/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/fan-out-nested-structures/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/find-errors-in-logs/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/handle-multiline-stacktraces/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/integrate-external-tools/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/monitor-application-health/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/parse-syslog-files/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/power-user-techniques/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/process-csv-data/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/pseudonymize-identifiers-for-analytics/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/how-to/span-aggregation-cookbook/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/cli-reference/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/common-errors/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/exit-codes/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/formats/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/functions/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/rhai-cheatsheet/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/script-variables/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/reference/time-reference/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/advanced-scripting/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/basics/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/begin-end-stages/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/configuration-and-reusability/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/intro-to-rhai/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/metrics-and-tracking/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/parsing-custom-formats/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/span-aggregation/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
     <url>
          <loc>https://dloss.github.io/kelora/dev/tutorials/working-with-time/</loc>
-         <lastmod>2025-11-30</lastmod>
+         <lastmod>2025-12-01</lastmod>
     </url>
 </urlset>

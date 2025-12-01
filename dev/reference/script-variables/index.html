@@ -2026,6 +2026,100 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="state">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mental-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mental Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-mode-restriction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel Mode Restriction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -2268,6 +2362,100 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="state">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mental-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mental Model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to Use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-mode-restriction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel Mode Restriction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -2465,9 +2653,92 @@
 <ul>
 <li>Type: <code>StateMap</code> (special wrapper, not a regular <code>Map</code>)</li>
 <li>Mutable global map for complex state tracking across events. Available in all per-event stages (<code>--filter</code>, <code>--exec</code>, <code>--begin</code>, <code>--end</code>) <strong>in sequential mode only</strong>.</li>
-<li><strong>When to use</strong>: Deduplication, storing complex objects, cross-event dependencies that <code>track_*()</code> functions cannot handle.</li>
-<li><strong>When NOT to use</strong>: Simple counting or metrics—prefer <code>track_count()</code>, <code>track_sum()</code>, etc., which work in parallel mode too.</li>
 </ul>
+<h4 id="mental-model">Mental Model<a class="headerlink" href="#mental-model" title="Permanent link">&para;</a></h4>
+<p>Think of <code>state</code> as a <strong>persistent notebook</strong> that travels with your log processor:</p>
+<ul>
+<li>Each event can READ from and WRITE to this notebook</li>
+<li>Previous events can leave notes for future events</li>
+<li>The notebook persists across all files in a single run</li>
+<li>When processing ends, the notebook is discarded</li>
+</ul>
+<p>This differs from <code>track_*()</code> functions, which are <strong>write-only counters</strong> that accumulate metrics but can't influence per-event decisions.</p>
+<h4 id="when-to-use">When to Use<a class="headerlink" href="#when-to-use" title="Permanent link">&para;</a></h4>
+<p><strong>Use <code>state</code> for:</strong></p>
+<ul>
+<li>Deduplication (tracking seen IDs)</li>
+<li>Cross-event dependencies and correlation</li>
+<li>Storing complex objects (nested maps, arrays)</li>
+<li>Conditional logic based on previous events</li>
+<li>State machines and session reconstruction</li>
+</ul>
+<p><strong>Don't use <code>state</code> for:</strong></p>
+<ul>
+<li>Simple counting or metrics → use <code>track_count()</code>, <code>track_sum()</code>, etc.</li>
+<li>These work in parallel mode too</li>
+<li>More efficient (atomic operations vs RwLock)</li>
+</ul>
+<p><strong>Comparison with <code>track_*()</code>:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th><code>state</code></th>
+<th><code>track_*()</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purpose</strong></td>
+<td>Complex stateful logic</td>
+<td>Simple metrics &amp; aggregations</td>
+</tr>
+<tr>
+<td><strong>Read access</strong></td>
+<td>✅ Yes (during processing)</td>
+<td>❌ No (write-only, read in <code>--end</code>)</td>
+</tr>
+<tr>
+<td><strong>Parallel mode</strong></td>
+<td>❌ Sequential only</td>
+<td>✅ Works in parallel</td>
+</tr>
+<tr>
+<td><strong>Storage</strong></td>
+<td>Any Rhai value</td>
+<td>Any value (strings, numbers, etc.)</td>
+</tr>
+<tr>
+<td><strong>Performance</strong></td>
+<td>Slower (RwLock)</td>
+<td>Faster (atomic/optimized)</td>
+</tr>
+<tr>
+<td><strong>Use for</strong></td>
+<td>Deduplication, FSMs, correlation</td>
+<td>Counting, unique tracking, bucketing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="state-lifecycle">State Lifecycle<a class="headerlink" href="#state-lifecycle" title="Permanent link">&para;</a></h4>
+<p>State persists:</p>
+<ul>
+<li>✅ Across multiple input files in one invocation</li>
+<li>✅ From <code>--begin</code> through all events to <code>--end</code></li>
+<li>✅ Between events within the same run</li>
+</ul>
+<p>State resets:</p>
+<ul>
+<li>❌ Between separate <code>kelora</code> invocations (no persistence to disk)</li>
+<li>❌ When using <code>state.clear()</code> explicitly</li>
+<li>❌ Not per-file or per-batch (common misconception)</li>
+</ul>
+<p>Example: Processing 3 files maintains one shared state:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># State persists across all 3 files</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>file1.json<span class="w"> </span>file2.json<span class="w"> </span>file3.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.user] = true&#39;</span><span class="w">  </span><span class="c1"># Deduplicates across ALL files</span>
+</code></pre></div></p>
+<h4 id="operations">Operations<a class="headerlink" href="#operations" title="Permanent link">&para;</a></h4>
 <p><strong>Direct operations</strong> (no conversion needed):</p>
 <ul>
 <li>Indexing: <code>state["key"]</code> for get/set, returns <code>()</code> if key doesn't exist</li>
@@ -2475,30 +2746,103 @@
 <li>Operators: <code>+=</code>, <code>mixin(map)</code>, <code>fill_with(map)</code></li>
 </ul>
 <p><strong>For other map functions</strong>: Convert to regular map first using <code>state.to_map()</code>, then use any map function:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>// Convert state to use functions like to_logfmt(), to_kv(), etc.
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>print(state.to_map().to_logfmt());
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>let json_str = state.to_map().to_json();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>// Convert state to use functions like to_logfmt(), to_kv(), etc.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>print(state.to_map().to_logfmt());
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>let json_str = state.to_map().to_json();
 </code></pre></div></p>
-<p><strong>Parallel mode restriction</strong>: Accessing <code>state</code> in <code>--parallel</code> mode causes a runtime panic with a clear error message. State requires sequential processing to maintain consistency.</p>
-<p><strong>Example use cases</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>// Deduplication - track seen IDs
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>if !state.contains(e.request_id) {
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    state[e.request_id] = true;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    // Process first occurrence
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>} else {
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    // Skip duplicate
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    e = ();
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>}
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>// Store complex nested state
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>if !state.contains(e.user) {
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    state[e.user] = #{login_count: 0, last_seen: ()};
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>}
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>let user_data = state[e.user];
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>user_data.login_count += 1;
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>user_data.last_seen = e.timestamp;
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>state[e.user] = user_data;
+<h4 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h4>
+<p><strong>Memory usage</strong>: State grows with unique keys. For deduplication of millions of IDs, consider:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>// Periodic cleanup
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>if state.len() &gt; 100000 {
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    state.clear();
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>}
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>// Time-based expiration
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>if !state.contains(&quot;cleanup_time&quot;) {
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    state[&quot;cleanup_time&quot;] = now();
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>}
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>if (now() - state[&quot;cleanup_time&quot;]).as_secs() &gt; 3600 {
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    // Remove old entries
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    for key in state.keys() {
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        if should_expire(state[key]) {
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>            state.remove(key);
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        }
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    }
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    state[&quot;cleanup_time&quot;] = now();
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>}
+</code></pre></div>
+<p><strong>Sequential processing</strong>: State requires sequential mode, which processes one event at a time. For large files (100M+ events), consider:</p>
+<ul>
+<li>Using <code>track_*()</code> functions with <code>--parallel</code> when possible</li>
+<li>Filtering before stateful processing to reduce volume</li>
+<li>Breaking into smaller files for distributed processing</li>
+</ul>
+<h4 id="debugging-state">Debugging State<a class="headerlink" href="#debugging-state" title="Permanent link">&para;</a></h4>
+<p>Inspect state at any point:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Print state size periodically</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[&quot;count&quot;] = (state[&quot;count&quot;] ?? 0) + 1;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">           if state[&quot;count&quot;] % 1000 == 0 {</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">             eprint(&quot;State size: &quot; + state.len() + &quot; keys&quot;);</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">           }&#39;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Dump final state as JSON</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.user] = true&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;print(state.to_map().to_json())&#39;</span><span class="w"> </span>-q<span class="w"> </span>&gt;<span class="w"> </span>state_dump.json
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Check state contents in --end stage</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.level] = (state.get(e.level) ?? 0) + 1&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;eprint(&quot;Final state: &quot; + state.to_map().to_kv())&#39;</span>
+</code></pre></div>
+<h4 id="parallel-mode-restriction">Parallel Mode Restriction<a class="headerlink" href="#parallel-mode-restriction" title="Permanent link">&para;</a></h4>
+<p>Accessing <code>state</code> in <code>--parallel</code> mode causes a runtime panic with a clear error message. State requires sequential processing to maintain consistency:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># This will fail:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.jsonl<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[&quot;count&quot;] += 1&#39;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Error: &#39;state&#39; is not available in --parallel mode</span>
+</code></pre></div>
+<p>For parallel-safe tracking, use <code>track_*()</code> functions instead.</p>
+<h4 id="example-use-cases">Example Use Cases<a class="headerlink" href="#example-use-cases" title="Permanent link">&para;</a></h4>
+<p><strong>Deduplication - track seen IDs:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>if !state.contains(e.request_id) {
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    state[e.request_id] = true;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    // Process first occurrence
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>} else {
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    // Skip duplicate
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    e = ();
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>}
 </code></pre></div></p>
+<p><strong>Store complex nested state:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>if !state.contains(e.user) {
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    state[e.user] = #{login_count: 0, last_seen: (), errors: []};
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>}
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>let user_data = state[e.user];
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>user_data.login_count += 1;
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>user_data.last_seen = e.timestamp;
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>if e.has(&quot;error&quot;) {
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    user_data.errors.push(e.error);
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>}
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>state[e.user] = user_data;
+</code></pre></div></p>
+<p><strong>State machines for protocol analysis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>if !state.contains(e.conn_id) {
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    state[e.conn_id] = &quot;NEW&quot;;
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>}
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>let current_state = state[e.conn_id];
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>// State transitions
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>if current_state == &quot;NEW&quot; &amp;&amp; e.event == &quot;SYN&quot; {
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    state[e.conn_id] = &quot;SYN_SENT&quot;;
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>} else if current_state == &quot;SYN_SENT&quot; &amp;&amp; e.event == &quot;SYN_ACK&quot; {
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    state[e.conn_id] = &quot;ESTABLISHED&quot;;
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>} else {
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    e.protocol_error = true;  // Invalid transition
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>}
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>e.connection_state = state[e.conn_id];
+</code></pre></div></p>
+<p>See <code>examples/state_examples.rhai</code> for more patterns.</p>
 <h2 id="span-hooks-span-close">Span Hooks (<code>--span-close</code>)<a class="headerlink" href="#span-hooks-span-close" title="Permanent link">&para;</a></h2>
 <h3 id="span"><code>span</code><a class="headerlink" href="#span" title="Permanent link">&para;</a></h3>
 <ul>
