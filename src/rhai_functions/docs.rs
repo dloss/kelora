@@ -123,7 +123,7 @@ map.path_equals("path", value)       Safe nested field comparison
 map.rename_field("old", "new")       Rename a field, returns true if successful
 map.to_cef()                         Convert map to Common Event Format (CEF) string
 map.to_combined()                    Convert map to Apache/Nginx combined log format
-map.to_json([pretty])                Convert map to JSON string
+map.to_json([indent])                Convert map to JSON string (indent: spaces for pretty-printing, 0/omit for compact)
 map.to_kv([sep [,kv_sep]])           Convert map to key-value string with separators
 map.to_logfmt()                      Convert map to logfmt format string
 map.to_syslog()                      Convert map to syslog format string

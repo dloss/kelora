@@ -1,4 +1,5 @@
 use rhai::Engine;
+use serde::Serialize;
 
 /// Encode a string to base64
 fn encode_b64_impl(input: &str) -> String {
@@ -76,6 +77,74 @@ fn unescape_json_impl(input: &str) -> Result<String, Box<rhai::EvalAltResult>> {
     }
 }
 
+/// Convert a Rhai Dynamic value to a JSON string with indentation
+/// This overload allows pretty-printing with the specified number of spaces
+fn to_json_with_indent(
+    value: rhai::Dynamic,
+    indent: i64,
+) -> Result<String, Box<rhai::EvalAltResult>> {
+    let json_value = dynamic_to_json_value(&value);
+
+    if indent > 0 {
+        // Pretty-print with indentation
+        let indent_bytes = vec![b' '; indent as usize];
+        let formatter = serde_json::ser::PrettyFormatter::with_indent(&indent_bytes);
+        let mut buf = Vec::new();
+        let mut serializer = serde_json::Serializer::with_formatter(&mut buf, formatter);
+        json_value
+            .serialize(&mut serializer)
+            .map_err(|e| format!("Failed to serialize to JSON: {}", e))?;
+        String::from_utf8(buf).map_err(|e| format!("Invalid UTF-8 in JSON output: {}", e).into())
+    } else {
+        // Compact output (same as builtin to_json())
+        serde_json::to_string(&json_value)
+            .map_err(|e| format!("Failed to serialize to JSON: {}", e).into())
+    }
+}
+
+/// Convert Rhai Dynamic to serde_json::Value recursively
+fn dynamic_to_json_value(value: &rhai::Dynamic) -> serde_json::Value {
+    if value.is_unit() {
+        return serde_json::Value::Null;
+    }
+
+    if value.is_string() {
+        if let Ok(s) = value.clone().into_string() {
+            return serde_json::Value::String(s);
+        }
+    }
+
+    if let Ok(b) = value.as_bool() {
+        return serde_json::Value::Bool(b);
+    }
+
+    if let Ok(i) = value.as_int() {
+        return serde_json::Value::Number(serde_json::Number::from(i));
+    }
+
+    if let Ok(f) = value.as_float() {
+        if let Some(num) = serde_json::Number::from_f64(f) {
+            return serde_json::Value::Number(num);
+        }
+    }
+
+    if let Some(arr) = value.clone().try_cast::<rhai::Array>() {
+        let json_array: Vec<serde_json::Value> = arr.iter().map(dynamic_to_json_value).collect();
+        return serde_json::Value::Array(json_array);
+    }
+
+    if let Some(map) = value.clone().try_cast::<rhai::Map>() {
+        let mut json_obj = serde_json::Map::new();
+        for (key, val) in map {
+            json_obj.insert(key.to_string(), dynamic_to_json_value(&val));
+        }
+        return serde_json::Value::Object(json_obj);
+    }
+
+    // Fallback: try to convert to string
+    serde_json::Value::String(format!("{:?}", value))
+}
+
 /// Register encoding/decoding functions with the Rhai engine
 pub fn register_functions(engine: &mut Engine) {
     // Base64 encoding/decoding functions
@@ -97,6 +166,9 @@ pub fn register_functions(engine: &mut Engine) {
     // JSON escaping/unescaping functions
     engine.register_fn("escape_json", escape_json_impl);
     engine.register_fn("unescape_json", unescape_json_impl);
+
+    // JSON conversion with indentation (overload for pretty-printing)
+    engine.register_fn("to_json", to_json_with_indent);
 }
 
 #[cfg(test)]
@@ -337,5 +409,122 @@ mod tests {
             .eval_with_scope(&mut scope, r#"unescape_json(empty)"#)
             .unwrap();
         assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_to_json_with_indent_map() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Test pretty-printing with indent = 2
+        let result: String = engine
+            .eval(r#"let m = #{name: "John", age: 30, city: "NYC"}; m.to_json(2)"#)
+            .unwrap();
+
+        // Check that result contains newlines and indentation
+        assert!(result.contains('\n'));
+        assert!(result.contains("  \"name\""));
+        assert!(result.contains("  \"age\""));
+        assert!(result.contains("  \"city\""));
+
+        // Test compact output with indent = 0
+        let compact: String = engine
+            .eval(r#"let m = #{name: "John", age: 30}; m.to_json(0)"#)
+            .unwrap();
+
+        assert!(!compact.contains('\n'));
+        assert!(compact.contains("\"name\":\"John\""));
+    }
+
+    #[test]
+    fn test_to_json_with_indent_array() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Test array with indent = 4
+        let result: String = engine
+            .eval(r#"let arr = [1, 2, 3, 4, 5]; arr.to_json(4)"#)
+            .unwrap();
+
+        // Check that result contains newlines and proper indentation
+        assert!(result.contains('\n'));
+        assert!(result.contains("    "));
+
+        // Test compact output
+        let compact: String = engine
+            .eval(r#"let arr = [1, 2, 3]; arr.to_json(0)"#)
+            .unwrap();
+
+        assert!(!compact.contains('\n'));
+        assert_eq!(compact, "[1,2,3]");
+    }
+
+    #[test]
+    fn test_to_json_with_indent_nested() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Test nested structures with indent = 2
+        let result: String = engine
+            .eval(
+                r#"
+                let m = #{
+                    user: #{name: "Alice", age: 25},
+                    items: ["apple", "banana", "cherry"]
+                };
+                m.to_json(2)
+                "#,
+            )
+            .unwrap();
+
+        // Check that result is properly formatted
+        assert!(result.contains('\n'));
+        assert!(result.contains("  \"user\""));
+        assert!(result.contains("    \"name\""));
+        assert!(result.contains("  \"items\""));
+    }
+
+    #[test]
+    fn test_to_json_with_indent_types() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Test different value types
+        let result: String = engine
+            .eval(
+                r#"
+                let m = #{
+                    string: "hello",
+                    number: 42,
+                    float: 3.14,
+                    bool: true,
+                    nothing: ()
+                };
+                m.to_json(2)
+                "#,
+            )
+            .unwrap();
+
+        assert!(result.contains("\"string\": \"hello\""));
+        assert!(result.contains("\"number\": 42"));
+        assert!(result.contains("\"float\": 3.14"));
+        assert!(result.contains("\"bool\": true"));
+        assert!(result.contains("\"nothing\": null"));
+    }
+
+    #[test]
+    fn test_to_json_builtin_still_works() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Ensure the builtin to_json() without parameters still works
+        let result: String = engine
+            .eval(r#"let m = #{name: "Bob", age: 35}; m.to_json()"#)
+            .unwrap();
+
+        // Should be compact (no newlines)
+        assert!(!result.contains('\n'));
+        assert!(result.contains("\"name\""));
+        assert!(result.contains("\"age\""));
     }
 }
