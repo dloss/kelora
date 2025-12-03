@@ -722,20 +722,66 @@ impl GapTracker {
         let std_duration = diff.to_std().unwrap_or_else(|_| StdDuration::from_secs(0));
 
         let total_seconds = std_duration.as_secs();
-        let hours = total_seconds / 3600;
-        let minutes = (total_seconds % 3600) / 60;
-        let seconds = total_seconds % 60;
         let micros = std_duration.subsec_micros();
 
-        let time_label = if micros == 0 {
-            format!("{}:{:02}:{:02}", hours, minutes, seconds)
-        } else {
-            let mut fractional = format!("{:06}", micros);
-            while fractional.ends_with('0') {
-                fractional.pop();
+        // Calculate time units
+        let years = total_seconds / (365 * 24 * 3600);
+        let remaining_after_years = total_seconds % (365 * 24 * 3600);
+        let days = remaining_after_years / (24 * 3600);
+        let remaining_after_days = remaining_after_years % (24 * 3600);
+        let hours = remaining_after_days / 3600;
+        let minutes = (remaining_after_days % 3600) / 60;
+        let seconds = remaining_after_days % 60;
+
+        // Build humanized time string
+        let mut parts = Vec::new();
+
+        if years > 0 {
+            parts.push(format!(
+                "{} year{}",
+                years,
+                if years == 1 { "" } else { "s" }
+            ));
+        }
+        if days > 0 {
+            parts.push(format!("{} day{}", days, if days == 1 { "" } else { "s" }));
+        }
+        if hours > 0 {
+            parts.push(format!(
+                "{} hour{}",
+                hours,
+                if hours == 1 { "" } else { "s" }
+            ));
+        }
+        if minutes > 0 {
+            parts.push(format!(
+                "{} minute{}",
+                minutes,
+                if minutes == 1 { "" } else { "s" }
+            ));
+        }
+        if seconds > 0 || parts.is_empty() {
+            if micros > 0 {
+                let mut fractional = format!("{:06}", micros);
+                while fractional.ends_with('0') {
+                    fractional.pop();
+                }
+                parts.push(format!(
+                    "{}.{} second{}",
+                    seconds,
+                    fractional,
+                    if seconds == 1 && micros == 0 { "" } else { "s" }
+                ));
+            } else {
+                parts.push(format!(
+                    "{} second{}",
+                    seconds,
+                    if seconds == 1 { "" } else { "s" }
+                ));
             }
-            format!("{}:{:02}:{:02}.{}", hours, minutes, seconds, fractional)
-        };
+        }
+
+        let time_label = parts.join(" ");
         let label = format!(" time gap: {} ", time_label);
 
         let blue = "\x1b[34m";
@@ -2668,7 +2714,7 @@ mod tests {
         let marker = tracker.check(second).expect("marker line");
         assert!(marker.starts_with('_'));
         assert!(marker.ends_with('_'));
-        assert!(marker.contains("time gap: 2:00:00"));
+        assert!(marker.contains("time gap: 2 hours"));
     }
 
     #[test]
@@ -2693,7 +2739,7 @@ mod tests {
 
         let third = Some(Utc.with_ymd_and_hms(2024, 2, 5, 13, 0, 0).unwrap());
         let marker = tracker.check(third).expect("marker line");
-        assert!(marker.contains("time gap: 1:00:00"));
+        assert!(marker.contains("time gap: 1 hour"));
         assert!(marker.starts_with('_'));
     }
 
@@ -2723,7 +2769,7 @@ mod tests {
         assert!(marker.starts_with("\x1b[34m_"));
         let reset_index = marker.rfind("\x1b[0m").expect("reset sequence");
         assert!(marker[..reset_index].ends_with('_'));
-        assert!(marker.contains("time gap: 2:00:00"));
+        assert!(marker.contains("time gap: 2 hours"));
     }
 
     #[test]
@@ -2735,6 +2781,6 @@ mod tests {
 
         assert!(tracker.check(first).is_none());
         let marker = tracker.check(second).expect("fractional marker");
-        assert!(marker.contains("time gap: 0:00:01.23"));
+        assert!(marker.contains("time gap: 1.23 seconds"));
     }
 }
