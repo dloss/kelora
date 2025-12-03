@@ -142,7 +142,7 @@ kelora -j app.log --take 10
 kelora -j app.log --levels error --stats  # See how many events have ERROR level
 
 # Verify output format
-kelora -j app.log -F pretty --take 10
+kelora -j app.log --take 10
 
 # Check timestamp range
 kelora -j app.log --since '1 hour ago' --stats
