@@ -252,8 +252,6 @@ kelora -f syslog syslog.log --levels error,critical
 # Your first filter - exact match
 kelora -f combined web_access.log --filter 'e.status >= 500'
 
-Note: unguarded e.field reads emit missing-field warnings; use get_path/has/?? for optional fields.
-
 FILTERING & SEARCHING:
 # Case-insensitive wildcard search in JSON logs
 kelora -j api_logs.jsonl --filter 'e.message.ilike("*timeout*")'
