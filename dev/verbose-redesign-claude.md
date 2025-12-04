@@ -155,7 +155,7 @@ Summary:
 
 **Suppression:**
 - Honors `--silent` (suppress all output including startup plan and stats)
-- Honors `--metrics-only` and `--stats-only` (suppress startup plan, show final stats)
+- Honors `-m` and `-s` (suppress startup plan, show final stats)
 - Honors `--no-diagnostics` (suppress final stats, show startup plan only)
 - Honors `--no-emoji` and `NO_EMOJI` env var
 
@@ -415,14 +415,14 @@ kelora --explain large.log
 | Flag | `-v` errors | `--explain` startup | `--explain` stats | `--trace` |
 |------|-------------|---------------------|-------------------|-----------|
 | `--silent` | ✗ | ✗ | ✗ | ✗ |
-| `--metrics-only` | ✗ | ✗ | ✓ | ✗ |
-| `--stats-only` | ✗ | ✗ | ✓ | ✗ |
+| `-m` / `--metrics` | ✗ | ✗ | ✓ | ✗ |
+| `-s` / `--stats` | ✗ | ✗ | ✓ | ✗ |
 | `--no-diagnostics` | ✓ | ✓ | ✗ | ✓ |
 | `-q` / `--no-events` | ✓ | ✓ | ✓ | ✓ |
 
 **Rationale:**
 - `--silent`: Suppress everything except fatal errors and metrics files
-- `--metrics-only`/`--stats-only`: Only show final statistics
+- `-m`/`-s`: Only show final statistics
 - `--no-diagnostics`: Suppress progress/stats but allow errors and traces
 - `-q` / `--no-events`: Suppress event output but allow diagnostics/errors/traces
 

@@ -2161,7 +2161,7 @@ Quick Examples:
   tail -f app.log | kelora -j -l error,warn
   kelora -f logfmt --levels error examples/simple_logfmt.log
   kelora -j examples/simple_json.jsonl --filter 'e.service == "database"' --exec 'e.duration_s = e.get_path("duration_ms", 0) / 1000' -k timestamp,message,duration_s
-  kelora -f combined examples/web_access_large.log.gz --stats-only
+  kelora -f combined examples/web_access_large.log.gz -s
   kelora -j examples/simple_json.jsonl --since 2024-01-15T10:01:00Z --levels warn,error --stats
   kelora -j examples/audit.jsonl -F none --exec 'track_count(e.action)' --metrics
   kelora -j examples/payments_latency.jsonl --parallel --filter 'e.duration_ms > 500' -k order_id,duration_ms,status

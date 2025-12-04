@@ -47,7 +47,7 @@
 - Counters: lines read, events emitted, errors by type, spans open/closed, per-stage drop/error counts (via tracking).
 
 ## Output Rules / Suppression
-- Honor `--silent`/`--metrics-only`/`--stats-only`/`--no-events`/`-q` → suppress traces/progress; still allow fatal errors.
+- Honor `--silent`/`-m`/`-s`/`--no-events`/`-q` → suppress traces/progress; still allow fatal errors.
 - Honor `--no-diagnostics` → suppress periodic progress blocks only (traces/errors still print).
 - Honor `--no-emoji`/`NO_EMOJI` in prefixes for all verbose lines.
 
@@ -58,7 +58,7 @@
 ## Testing Notes
 - Cover sequential vs parallel runs to ensure caps prevent runaway output.
 - Validate drop reasons and stage IDs align with startup map.
-- Ensure silent/metrics-only/stats-only produce no traces.
+- Ensure silent/-m/-s produce no traces.
 - Check long filenames/basename conflicts still format correctly in traces.
 
 ## Open Questions (to decide when implementing)
