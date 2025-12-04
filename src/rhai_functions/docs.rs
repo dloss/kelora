@@ -367,12 +367,12 @@ METRICS & AGGREGATION:
 kelora -j api_errors.jsonl -l error -m \
   --exec 'track_count(e.error_type)'
 
-# Track unique users
-kelora -f combined web_access.log -m \
+# Track unique users (compact output)
+kelora -f combined web_access.log --metrics=short \
   --exec 'track_unique("users", e.user)'
 
-# Histogram of status codes by bucket
-kelora web_access.log -m \
+# Histogram of status codes by bucket (JSON output)
+kelora web_access.log --metrics=json \
   --exec 'track_bucket("status", e.status / 100 * 100)'
 
 # Save metrics to JSON file
