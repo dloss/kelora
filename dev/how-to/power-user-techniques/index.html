@@ -1629,15 +1629,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#multiple-hash-algorithms" class="md-nav__link">
+  <a href="#hash-algorithms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Multiple Hash Algorithms
+        Hash Algorithms
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Multiple Hash Algorithms">
+    <nav class="md-nav" aria-label="Hash Algorithms">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1652,10 +1652,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-solution-multi-algorithm-hashing" class="md-nav__link">
+  <a href="#the-solution-cryptographic-and-non-cryptographic-hashing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Solution: Multi-Algorithm Hashing
+        The Solution: Cryptographic and Non-Cryptographic Hashing
       
     </span>
   </a>
@@ -3059,15 +3059,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#multiple-hash-algorithms" class="md-nav__link">
+  <a href="#hash-algorithms" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Multiple Hash Algorithms
+        Hash Algorithms
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Multiple Hash Algorithms">
+    <nav class="md-nav" aria-label="Hash Algorithms">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3082,10 +3082,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-solution-multi-algorithm-hashing" class="md-nav__link">
+  <a href="#the-solution-cryptographic-and-non-cryptographic-hashing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Solution: Multi-Algorithm Hashing
+        The Solution: Cryptographic and Non-Cryptographic Hashing
       
     </span>
   </a>
@@ -3846,27 +3846,25 @@
 </div>
 </div>
 </div>
-<h2 id="multiple-hash-algorithms">Multiple Hash Algorithms<a class="headerlink" href="#multiple-hash-algorithms" title="Permanent link">&para;</a></h2>
+<h2 id="hash-algorithms">Hash Algorithms<a class="headerlink" href="#hash-algorithms" title="Permanent link">&para;</a></h2>
 <h3 id="the-problem_4">The Problem<a class="headerlink" href="#the-problem_4" title="Permanent link">&para;</a></h3>
-<p>Different systems use different hash algorithms. You might need SHA-256 for one system, MD5 for legacy compatibility, or Blake3 for performance.</p>
-<h3 id="the-solution-multi-algorithm-hashing">The Solution: Multi-Algorithm Hashing<a class="headerlink" href="#the-solution-multi-algorithm-hashing" title="Permanent link">&para;</a></h3>
+<p>You need to hash data for checksums, deduplication, or correlation with external systems.</p>
+<h3 id="the-solution-cryptographic-and-non-cryptographic-hashing">The Solution: Cryptographic and Non-Cryptographic Hashing<a class="headerlink" href="#the-solution-cryptographic-and-non-cryptographic-hashing" title="Permanent link">&para;</a></h3>
 <div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Command/Output</label><label for="__tabbed_13_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/user-data.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.sha256 = e.email.hash(&quot;sha256&quot;);</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">          e.md5 = e.email.hash(&quot;md5&quot;);</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          e.blake3 = e.email.hash(&quot;blake3&quot;);</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          e.xxh3 = e.email.hash(&quot;xxh3&quot;);</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">          e.email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>-k<span class="w"> </span>user_id,sha256,blake3<span class="w"> </span>-F<span class="w"> </span>csv
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">          e.xxh3 = e.email.hash(&quot;xxh3&quot;);</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          e.email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-k<span class="w"> </span>user_id,sha256,xxh3<span class="w"> </span>-F<span class="w"> </span>csv
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>user_id,sha256,blake3
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>user001,ff8d9819fc0e12bf0d24892e45987e249a28dce836a85cad60e28eaaa8c6d976,b0592e381d5b6b5b8e14a53e089e693779525183161310286e48597d54a062b9
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>user002,686b5e4cf4f963adf8f51468a48028ef8d15bd02fa335f821279a3d1678c9615,4c46ce0702ff74e0810e49fd1614c360f63ce95785b38a92a5cf510247baaaeb
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>user003,653974f7ada0b4cb371ab7c8b1aaeaf6ba2855f89b2b0a9735b664fec7fdbc89,c118355d0100d65593e905c323ac985384ff88c3e484645aeee727152df91c00
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>user004,80905964842ce834af09045642241f609661deefa60e5e926235b3306582725e,bba429659d349a11016d31a453abbb029823ce98d22d3b007bc654379a59db8f
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>user005,d1d8233690c21cb0eba4915374178b71cafa23599a3d1961beaf1bac2faf0b64,07ae202705159a89673a260185bd9cd065135aaef6e7e37349e99d96d5fd216f
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>user_id,sha256,xxh3
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>user001,ff8d9819fc0e12bf0d24892e45987e249a28dce836a85cad60e28eaaa8c6d976,76eb895512bf35ff
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>user002,686b5e4cf4f963adf8f51468a48028ef8d15bd02fa335f821279a3d1678c9615,71ad17ff8e8c867a
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>user003,653974f7ada0b4cb371ab7c8b1aaeaf6ba2855f89b2b0a9735b664fec7fdbc89,cedd532a6ab34757
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>user004,80905964842ce834af09045642241f609661deefa60e5e926235b3306582725e,14d867ef05bedac8
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>user005,d1d8233690c21cb0eba4915374178b71cafa23599a3d1961beaf1bac2faf0b64,30fe5cfbd1ca7cae
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -3881,11 +3879,13 @@
 </div>
 <p><strong>Available algorithms:</strong></p>
 <ul>
-<li><code>sha256</code> - SHA-256 (default, most common)</li>
-<li><code>sha1</code> - SHA-1 (legacy)</li>
-<li><code>md5</code> - MD5 (legacy, fast but not secure)</li>
-<li><code>blake3</code> - BLAKE3 (fastest modern algorithm)</li>
+<li><code>sha256</code> - SHA-256 (default, cryptographic)</li>
 <li><code>xxh3</code> - xxHash3 (non-cryptographic, extremely fast)</li>
+</ul>
+<p><strong>When to use which:</strong></p>
+<ul>
+<li>Use <code>sha256</code> for checksums, integrity verification, or when you need cryptographic properties</li>
+<li>Use <code>xxh3</code> for bucketing, sampling, or deduplication where speed matters and cryptographic security isn't needed</li>
 </ul>
 <h3 id="use-case-privacy-preserving-analytics">Use Case: Privacy-Preserving Analytics<a class="headerlink" href="#use-case-privacy-preserving-analytics" title="Permanent link">&para;</a></h3>
 <p>Create consistent anonymous IDs using HMAC-SHA256 with a secret key for domain-separated hashing:</p>
@@ -4408,7 +4408,7 @@
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.get_path(&quot;data.orders&quot;, []))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.error_pattern = e.get(&quot;error_msg&quot;, &quot;&quot;).normalized();</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s1">          e.user_hash = e.user_id.hash(&quot;blake3&quot;);</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s1">          e.user_hash = e.user_id.hash(&quot;xxh3&quot;);</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="s1">          e.sample_group = e.order_id.bucket() % 10;</span>
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="s1">          e.user_id = ()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.sample_group &lt; 3&#39;</span><span class="w"> </span><span class="se">\</span>
@@ -4434,7 +4434,7 @@
 <li><strong>Use <code>bucket()</code> for sampling before heavy processing</strong> - reduces work by 90% with 10% sample</li>
 <li><strong>Apply filters early</strong> - before fan-out or expensive transformations</li>
 <li><strong>Chain operations in one <code>--exec</code></strong> when sharing variables (semicolon-separated)</li>
-<li><strong>Use <code>blake3</code> or <code>xxh3</code> hashes</strong> for non-cryptographic use cases (much faster)</li>
+<li><strong>Use <code>xxh3</code> hash</strong> for non-cryptographic use cases (much faster than <code>sha256</code>)</li>
 <li><strong>Limit window size</strong> (<code>--window N</code>) to minimum needed for sliding calculations</li>
 </ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>

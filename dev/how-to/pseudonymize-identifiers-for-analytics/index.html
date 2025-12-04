@@ -2346,7 +2346,7 @@
 </code></pre></div>
 <ul>
 <li><code>hash("xxh3")</code> is fast but not secret; use <code>pseudonym()</code> whenever anonymity guarantees matter.</li>
-<li>Cryptographic hashes (<code>sha256</code>, <code>blake3</code>) avoid collisions but still leak the same input if the attacker knows it. Pseudonyms resist this by requiring the secret.</li>
+<li>Cryptographic hashes (<code>sha256</code>) avoid collisions but still leak the same input if the attacker knows it. Pseudonyms resist this by requiring the secret.</li>
 </ul>
 <h2 id="step-5-validate-consistency">Step 5: Validate Consistency<a class="headerlink" href="#step-5-validate-consistency" title="Permanent link">&para;</a></h2>
 <p>Confirm that the same inputs produce identical pseudonyms across runs and that expected fields are gone.</p>

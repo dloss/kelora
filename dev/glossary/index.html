@@ -2201,6 +2201,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#statistics" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3012,6 +3023,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#statistics" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3221,6 +3243,7 @@
 <ul>
 <li><code>meta.filename</code> - Current input file</li>
 <li><code>meta.line_number</code> - Line number in file</li>
+<li><code>meta.parsed_ts</code> - Parsed UTC timestamp before scripts (or empty when missing)</li>
 <li><code>meta.span_id</code> - Current span identifier (if using spans)</li>
 </ul>
 <p>See <a href="../reference/script-variables/">Script Variables</a>.</p>
@@ -3268,6 +3291,10 @@
 <li><code>--exclude-levels</code> / <code>-L</code> - Exclude log levels</li>
 </ul>
 <p>Stages run in the order specified on the command line. See <a href="../concepts/scripting-stages/">Scripting Stages</a>.</p>
+<h3 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h3>
+<p>A mutable global map for tracking complex stateful information across events. Accessible via the <code>state</code> variable. Only available in sequential mode (not with <code>--parallel</code>).</p>
+<p>Common uses: deduplication, session reconstruction, state machines, cross-event correlation. For simple counting, use <code>track_*()</code> functions instead.</p>
+<p>See <a href="../reference/script-variables/#state">Script Variables</a> and <code>examples/state_examples.rhai</code>.</p>
 <h3 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h3>
 <p>Auto-collected processing metrics displayed with <code>--stats</code>. Includes events parsed, filtered, output; discovered levels and field names; errors; time span. Different from user-defined metrics. See <a href="../concepts/pipeline-model/#internal-statistics-stats">Processing Architecture</a>.</p>
 <h3 id="streaming">Streaming<a class="headerlink" href="#streaming" title="Permanent link">&para;</a></h3>

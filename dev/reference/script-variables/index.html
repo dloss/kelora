@@ -2628,6 +2628,11 @@
 <td>Source filename, if known.</td>
 </tr>
 <tr>
+<td><code>parsed_ts</code></td>
+<td><code>DateTime</code> or <code>()</code></td>
+<td>Parsed UTC timestamp before any <code>--filter</code>/<code>--exec</code> scripts. Missing if the event had no timestamp.</td>
+</tr>
+<tr>
 <td><code>span_status</code></td>
 <td><code>String</code></td>
 <td><code>"included"</code>, <code>"late"</code>, <code>"unassigned"</code>, or <code>"filtered"</code> when spans are enabled. Missing otherwise.</td>
@@ -2677,6 +2682,9 @@
 <li>Simple counting or metrics → use <code>track_count()</code>, <code>track_sum()</code>, etc.</li>
 <li>These work in parallel mode too</li>
 <li>More efficient (atomic operations vs RwLock)</li>
+<li>Time-based or count-based batching → use <a href="../../tutorials/span-aggregation/">spans</a></li>
+<li><code>--span 5m</code> for time windows, <code>--span 1000</code> for event batches</li>
+<li>Automatic per-window metrics with <code>span.metrics</code></li>
 </ul>
 <p><strong>Comparison with <code>track_*()</code>:</strong></p>
 <table>

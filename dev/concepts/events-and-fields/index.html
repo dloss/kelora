@@ -3869,7 +3869,7 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>track_sum(&quot;total&quot;, score)      // Only tracks valid integers
 </code></pre></div>
 <p>With defaults if conversion fails:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>e.status_code = to_int_or(e.status, 0)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>e.status_code = e.status.to_int_or(0)
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>e.duration = to_float_or(e.duration_str, 0.0)
 </code></pre></div>
 <h3 id="number-to-string">Number to String<a class="headerlink" href="#number-to-string" title="Permanent link">&para;</a></h3>
@@ -3967,8 +3967,8 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <h3 id="type-mismatch">Type Mismatch<a class="headerlink" href="#type-mismatch" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Field has unexpected type.</p>
 <p><strong>Solution:</strong> Use type conversion with defaults:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>e.status_code = to_int_or(e.status, 0)
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>e.duration = to_float_or(e.duration_ms, 0.0)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>e.status_code = e.status.to_int_or(0)
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>e.duration = e.duration_ms.to_float_or(0.0)
 </code></pre></div></p>
 <h3 id="nested-field-access-errors">Nested Field Access Errors<a class="headerlink" href="#nested-field-access-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Accessing non-existent nested fields causes errors.</p>

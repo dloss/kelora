@@ -6161,6 +6161,7 @@
 </ul>
 <p><strong>Metadata added to <code>meta</code> during per-event stages:</strong></p>
 <ul>
+<li><code>meta.parsed_ts</code> – Parsed UTC timestamp before any <code>--filter</code>/<code>--exec</code> scripts (or <code>()</code> when absent)</li>
 <li><code>meta.span_status</code> – <code>"included"</code>, <code>"late"</code>, <code>"unassigned"</code>, or <code>"filtered"</code></li>
 <li><code>meta.span_id</code> – Span identifier (<code>null</code> for unassigned events)</li>
 <li><code>meta.span_start</code>, <code>meta.span_end</code> – Boundaries as DateTime values (or <code>()</code> when not applicable)</li>

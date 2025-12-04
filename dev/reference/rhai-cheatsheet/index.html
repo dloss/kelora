@@ -2844,9 +2844,9 @@
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>to_bool(e.active)                     // String → boolean
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>// Safe conversions with defaults
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>to_int_or(e.port, 8080)               // Use default if conversion fails
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>to_float_or(e.price, 0.0)
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>to_bool_or(e.active, false)
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>e.port.to_int_or(8080)                // Use default if conversion fails
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>e.price.to_float_or(0.0)
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>e.active.to_bool_or(false)
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>// String conversions
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>to_string(42)                         // Any → string
@@ -2860,7 +2860,7 @@
 <h3 id="safe-nested-access">Safe Nested Access<a class="headerlink" href="#safe-nested-access" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>// With default fallback
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;);
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>let port = to_int_or(e.port, 8080);
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>let port = e.port.to_int_or(8080);
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>// With existence check
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>if e.has_path(&quot;user.profile.avatar&quot;) {
@@ -2927,16 +2927,17 @@
 <a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>meta.line                             // Original raw line (always available)
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>meta.line_num                         // Line number, 1-based (available with files)
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>meta.filename                         // Source filename (multi-file processing)
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>// Example usage:
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>--begin &#39;conf.env = get_env(&quot;ENVIRONMENT&quot;, &quot;dev&quot;)&#39;
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>// Multi-file tracking
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>// Debugging with line numbers
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>--exec &#39;eprint(&quot;Error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>meta.parsed_ts                        // Parsed UTC timestamp before scripts (or () if missing)
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>// Example usage:
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>--begin &#39;conf.env = get_env(&quot;ENVIRONMENT&quot;, &quot;dev&quot;)&#39;
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>// Multi-file tracking
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_count(meta.filename) }&#39;
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>// Debugging with line numbers
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>--exec &#39;eprint(&quot;Error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;
 </code></pre></div>
 <h2 id="error-handling-modes">Error Handling Modes<a class="headerlink" href="#error-handling-modes" title="Permanent link">&para;</a></h2>
 <p><strong>Default (resilient):</strong></p>
@@ -3007,9 +3008,9 @@
 <a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>e.has_path(&quot;a.b.c&quot;)                   // Check nested exists
 <a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>
 <a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>// Conversions
-<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>to_int_or(val, 0)                     // Safe int conversion
-<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>to_float_or(val, 0.0)                 // Safe float conversion
-<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>to_bool_or(val, false)                // Safe bool conversion
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>val.to_int_or(0)                      // Safe int conversion
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>val.to_float_or(0.0)                  // Safe float conversion
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>val.to_bool_or(false)                 // Safe bool conversion
 <a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>try { risky_call(); } catch (err) {   // Catch runtime errors (type mismatch, missing fields); slower than guards
 <a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>  eprint(err);                        // Prefer to_int_or/has_path for common cases
 <a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a>}

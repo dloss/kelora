@@ -3802,7 +3802,7 @@
 </code></pre></div></p>
 <p><code>e.value</code> is a string, not a number.</p>
 <p><strong>Solution:</strong> Use type conversion with defaults:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = to_int_or(e.value, 0) * 2&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int_or(0) * 2&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <h3 id="invalid-timestamps">Invalid Timestamps<a class="headerlink" href="#invalid-timestamps" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong>
