@@ -2588,16 +2588,15 @@ expressions and rerun them locally.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>admin        = 2
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>api          = 7
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>auth         = 2
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cache        = 1
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>database     = 2
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>disk         = 1
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>health       = 1
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>admin        = 2
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>api          = 7
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>auth         = 2
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>cache        = 1
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>database     = 2
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>disk         = 1
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>health       = 1
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>monitoring   = 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>scheduler    = 3
 </code></pre></div>
 </div>
 </div>
@@ -2621,25 +2620,23 @@ any time you want a quick histogram after a batch run.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-m<span class="w"> </span>--stats
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>admin        = 2
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>api          = 7
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>auth         = 2
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cache        = 1
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>database     = 2
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>disk         = 1
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>health       = 1
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora: Stats:
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Detected format: json
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Throughput: 2723 lines/s in 7ms
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Timestamp: timestamp (auto-detected) - 20/20 parsed (100.0%).
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN,high
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>Keys seen: attempts,channel,config_file,downtime_seconds,duration_ms,endpoints,free_gb,freed_gb,ip,job,key,level,max_connections,memory_percent,message,method,partition,path,query,reason,schedule,script,service,severity,size_mb,status,target,timestamp,ttl,user_id,username,version
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>admin        = 2
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>api          = 7
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>auth         = 2
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>cache        = 1
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>database     = 2
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>disk         = 1
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>health       = 1
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>monitoring   = 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>scheduler    = 3
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Detected format: json
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Throughput: 3006 lines/s in 6ms
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Timestamp: timestamp (auto-detected) - 20/20 parsed (100.0%).
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN,high
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>Keys seen: attempts,channel,config_file,downtime_seconds,duration_ms,endpoints,free_gb,freed_gb,ip,job,key,level,max_connections,memory_percent,message,method,partition,path,query,reason,schedule,script,service,severity,size_mb,status,target,timestamp,ttl,user_id,username,version
 </code></pre></div>
 </div>
 </div>
@@ -2669,11 +2666,10 @@ response sizes and latency as rolling aggregates.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has(&quot;duration_ms&quot;) { track_sum(&quot;total_duration&quot;, e.duration_ms); track_count(&quot;duration_count&quot;); track_min(&quot;min_duration&quot;, e.duration_ms); track_max(&quot;max_duration&quot;, e.duration_ms) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>duration_count = 3
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>max_duration = 300000
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>min_duration = 45
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>total_duration = 305045
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>duration_count = 3
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>max_duration = 300000
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>min_duration = 45
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>total_duration = 305045
 </code></pre></div>
 </div>
 </div>
@@ -2709,8 +2705,7 @@ response sizes and latency as rolling aggregates.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has(&quot;duration_ms&quot;) { let bucket = (e.duration_ms / 1000) * 1000; track_bucket(&quot;latency_histogram&quot;, bucket) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>latency_histogram = #{&quot;0&quot;: 1, &quot;300000&quot;: 1, &quot;5000&quot;: 1}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>latency_histogram = #{&quot;0&quot;: 1, &quot;300000&quot;: 1, &quot;5000&quot;: 1}
 </code></pre></div>
 </div>
 </div>
@@ -2775,15 +2770,14 @@ value maintains its own count. Perfect for building histograms.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.has(&quot;duration_ms&quot;) { track_top(&quot;slowest&quot;, e.service, 3, e.duration_ms); track_bottom(&quot;fastest&quot;, e.service, 3, e.duration_ms) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>fastest      (3 items):
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  #1  api                            45.00
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  #2  database                       5000.00
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  #3  scheduler                      300000.00
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>slowest      (3 items):
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  #1  scheduler                      300000.00
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  #2  database                       5000.00
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  #3  api                            45.00
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>fastest      (3 items):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  #1  api                            45.00
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  #2  database                       5000.00
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  #3  scheduler                      300000.00
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>slowest      (3 items):
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  #1  scheduler                      300000.00
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  #2  database                       5000.00
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  #3  api                            45.00
 </code></pre></div>
 </div>
 </div>
@@ -2849,9 +2843,8 @@ cardinality analysis.</p>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_unique(&quot;error_messages&quot;, e.message) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>error_messages = [&quot;Query timeout&quot;, &quot;Account locked&quot;, &quot;Service unavailable&quot;]
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>services     = [&quot;api&quot;, &quot;database&quot;, &quot;cache&quot;, &quot;auth&quot;, &quot;scheduler&quot;, &quot;disk&quot;, &quot;monitoring&quot;, &quot;admin&quot;, &quot;health&quot;]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>error_messages = [&quot;Query timeout&quot;, &quot;Account locked&quot;, &quot;Service unavailable&quot;]
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>services     = [&quot;api&quot;, &quot;database&quot;, &quot;cache&quot;, &quot;auth&quot;, &quot;scheduler&quot;, &quot;disk&quot;, &quot;monitoring&quot;, &quot;admin&quot;, &quot;health&quot;]
 </code></pre></div>
 </div>
 </div>
@@ -3021,27 +3014,26 @@ clean text summary that you can redirect or feed into alerts.</p>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>cat<span class="w"> </span>metrics.json
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>rm<span class="w"> </span>metrics.json
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>admin        = 2
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>api          = 7
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>auth         = 2
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cache        = 1
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>database     = 2
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>disk         = 1
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>health       = 1
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>monitoring   = 1
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>scheduler    = 3
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>{
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;health&quot;: 1,
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;auth&quot;: 2,
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;cache&quot;: 1,
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;disk&quot;: 1,
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;monitoring&quot;: 1,
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;scheduler&quot;: 3,
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;api&quot;: 7,
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;admin&quot;: 2,
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  &quot;database&quot;: 2
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>admin        = 2
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>api          = 7
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>auth         = 2
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>cache        = 1
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>database     = 2
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>disk         = 1
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>health       = 1
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>monitoring   = 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>scheduler    = 3
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>{
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  &quot;database&quot;: 2,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;cache&quot;: 1,
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;scheduler&quot;: 3,
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;api&quot;: 7,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;auth&quot;: 2,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;admin&quot;: 2,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;health&quot;: 1,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;disk&quot;: 1
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>}
 </code></pre></div>
 </div>
 </div>
@@ -3066,8 +3058,7 @@ This command watches a gzipped access log and surfaces top status classes.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-m<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>400          = 1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>400          = 1
 </code></pre></div>
 </div>
 </div>
@@ -3107,8 +3098,7 @@ you terminate the process.</p>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>-F<span class="w"> </span>none<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Tracked metrics:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>status_family = #{&quot;400&quot;: 1}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>status_family = #{&quot;400&quot;: 1}
 </code></pre></div>
 </div>
 </div>
