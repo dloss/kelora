@@ -2402,12 +2402,16 @@
 </thead>
 <tbody>
 <tr>
+<td><code>auto</code></td>
+<td>Auto-detect from first line (default)</td>
+</tr>
+<tr>
 <td><code>json</code></td>
 <td>Application logs, structured data (shorthand: <code>-j</code>)</td>
 </tr>
 <tr>
 <td><code>line</code></td>
-<td>Unstructured logs, raw text (default)</td>
+<td>Unstructured logs, raw text</td>
 </tr>
 <tr>
 <td><code>logfmt</code></td>
@@ -2437,10 +2441,6 @@
 <td><code>regex:&lt;pattern&gt;</code></td>
 <td>Custom regex parsing with named groups and type annotations</td>
 </tr>
-<tr>
-<td><code>auto</code></td>
-<td>Auto-detect from first line</td>
-</tr>
 </tbody>
 </table>
 <h3 id="json-format">JSON Format<a class="headerlink" href="#json-format" title="Permanent link">&para;</a></h3>
@@ -2457,7 +2457,7 @@
 <li>Supports nested objects and arrays</li>
 </ul>
 <h3 id="line-format">Line Format<a class="headerlink" href="#line-format" title="Permanent link">&para;</a></h3>
-<p><strong>Syntax:</strong> <code>-f line</code> (default)</p>
+<p><strong>Syntax:</strong> <code>-f line</code></p>
 <p><strong>Description:</strong> Plain text, one line per event.</p>
 <p><strong>Output Fields:</strong></p>
 <table>
@@ -2478,7 +2478,7 @@
 </table>
 <p><strong>Notes:</strong></p>
 <ul>
-<li>Default format when no <code>-f</code> specified</li>
+<li>Auto-detect falls back to line when it can't identify a structured format</li>
 <li>Empty lines are skipped</li>
 <li>Useful for unstructured logs or custom parsing with <code>--exec</code></li>
 </ul>

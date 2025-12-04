@@ -5931,15 +5931,15 @@
 <p>Specify input format. Supports standard formats, column parsing, and CSV with type annotations.</p>
 <p><strong>Standard Formats:</strong></p>
 <ul>
+<li><code>auto</code> - Auto-detect format from the first line (default)</li>
 <li><code>json</code> - JSON lines (one JSON object per line)</li>
-<li><code>line</code> - Plain text (default, one line per event)</li>
+<li><code>line</code> - Plain text (one line per event)</li>
 <li><code>csv</code> - CSV with header row</li>
 <li><code>tsv</code> - Tab-separated values with header</li>
 <li><code>logfmt</code> - Key-value pairs (logfmt format)</li>
 <li><code>syslog</code> - Syslog RFC5424 and RFC3164</li>
 <li><code>combined</code> - Apache/Nginx log formats (Common + Combined)</li>
 <li><code>cef</code> - ArcSight Common Event Format</li>
-<li><code>auto</code> - Auto-detect format</li>
 </ul>
 <p><strong>Column Parsing:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) level *message&#39;</span>

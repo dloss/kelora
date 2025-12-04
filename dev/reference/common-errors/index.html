@@ -2495,7 +2495,7 @@
 <p><strong>Problem:</strong> No output or errors like "field 'status' not found".</p>
 <p><strong>Possible causes:</strong></p>
 <ol>
-<li><strong>Wrong format specified</strong> - Default is <code>-f line</code> (plain text), not JSON</li>
+<li><strong>Wrong format specified</strong> - Default is <code>-f auto</code> (content-based). Force <code>-f json</code>, <code>-f logfmt</code>, or <code>-f line</code> if detection disagrees.</li>
 <li><strong>Field doesn't exist</strong> - Field name is misspelled or doesn't exist in all events</li>
 <li><strong>All events filtered out</strong> - Your filters are too restrictive</li>
 </ol>
@@ -2503,15 +2503,16 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Check if format is correct</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span><span class="w">        </span><span class="c1"># For JSON</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="c1"># For logfmt</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># See what fields are actually present</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>--head<span class="w"> </span><span class="m">20</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Check if field exists before using it</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;status&quot;) &amp;&amp; e.status &gt;= 500&#39;</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># See statistics to understand what&#39;s happening</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span>--stats
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>--take<span class="w"> </span><span class="m">3</span><span class="w">   </span><span class="c1"># For raw lines</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># See what fields are actually present</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>inspect<span class="w"> </span>--head<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Check if field exists before using it</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;status&quot;) &amp;&amp; e.status &gt;= 500&#39;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># See statistics to understand what&#39;s happening</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span>--stats
 </code></pre></div>
 <p><strong>Common mistakes:</strong></p>
 <ul>
