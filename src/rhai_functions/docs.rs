@@ -238,10 +238,10 @@ Common Log Analysis Patterns:
 
 GETTING STARTED:
 # Preview first 100 lines to understand structure
-kelora web_access.log --head 100 -F inspect
+kelora -f combined web_access.log --head 100 -F inspect
 
 # Quick field discovery and parsing statistics
-kelora api_logs.jsonl --stats
+kelora -j api_logs.jsonl --stats
 
 # Stream from stdin (tail -f, kubectl logs, etc.) and keep only error/warn
 tail -f app.log | kelora -j -l error,warn
@@ -259,7 +259,7 @@ FILTERING & SEARCHING:
 kelora -j api_logs.jsonl --filter 'e.message.ilike("*timeout*")'
 
 # Regex with Rhai raw string syntax (no escaping backslashes)
-kelora email_logs.log --filter 'e.line.matches(#"\d{3}-\d{2}-\d{4}"#)'
+kelora -f line email_logs.log --filter 'e.line.matches(#"\d{3}-\d{2}-\d{4}"#)'
 
 # Regex with regular string (requires escaping)
 kelora -j api_logs.jsonl --filter 'e.url.matches("/api/v\\d+/users")'
@@ -292,14 +292,14 @@ kelora -j api_logs.jsonl --exec 'e.metadata = e.json_payload.parse_json()' \
   --exec 'e.user_tier = e.get_path("metadata.subscription.tier", "free")'
 
 # Extract data with regex from plain text logs (regex in Rhai's raw strings)
-kelora email_logs.log --exec 'e.duration = e.line.extract_re(#"took (\d+)ms"#, 1).to_int()'
-kelora app.log --exec 'e.ip = e.line.extract_re(#"ip=([\d.]+)"#, 1)'
+kelora -f line email_logs.log --exec 'e.duration = e.line.extract_re(#"took (\d+)ms"#, 1).to_int()'
+kelora -f line app.log --exec 'e.ip = e.line.extract_re(#"ip=([\d.]+)"#, 1)'
 
 # Fan out nested arrays into separate events
 kelora -j fan_out_batches.jsonl --exec 'emit_each(e.items)' --filter 'e.status == "active"'
 
 # Parse key=value pairs from unstructured text
-kelora incident_story.log --exec 'e.absorb_kv("line", #{ keep_source: true })'
+kelora -f line incident_story.log --exec 'e.absorb_kv("line", #{ keep_source: true })'
 
 OUTPUT FORMATS & CLI OPTIONS:
 # Output as JSON (from any input format)
@@ -312,7 +312,7 @@ kelora -j api_logs.jsonl -F logfmt
 kelora -j api_logs.jsonl -F csv
 
 # Inspect format shows structure (useful for debugging)
-kelora email_logs.log --head 20 -F inspect
+kelora -f line email_logs.log --head 20 -F inspect
 
 # Select specific fields only (-k)
 kelora -f combined web_access.log -k client_ip,status,path
@@ -324,7 +324,7 @@ kelora -j api_logs.jsonl -b -k timestamp,level,message
 kelora -j api_logs.jsonl -c --filter 'e.level == "ERROR"'
 
 # Quiet mode: suppress event output, show only stats (-q or --no-events)
-kelora web_access.log --filter 'e.status >= 500' -q --stats
+kelora -f combined web_access.log --filter 'e.status >= 500' -q --stats
 
 # Silent mode: suppress all output except fatal errors (metrics files still write)
 kelora -j api_logs.jsonl --metrics --metrics-file errors.json \
@@ -336,13 +336,13 @@ kelora -f logfmt app.log --exec 'print(e.to_json())' -q
 
 COMPRESSION:
 # Transparent decompression of .gz files
-kelora web_access_large.log.gz --filter 'e.status >= 400' --stats
+kelora -f combined web_access_large.log.gz --filter 'e.status >= 400' --stats
 
 # Compressed JSON logs
-kelora sampling_hash.jsonl.gz -k session_id,event,timestamp
+kelora -j sampling_hash.jsonl.gz -k session_id,event,timestamp
 
 # Mix compressed and uncompressed files
-kelora logs/*.log logs/*.log.gz --filter 'e.level == "ERROR"'
+kelora -j logs/*.log logs/*.log.gz --filter 'e.level == "ERROR"'
 
 TIME HANDLING:
 # Events from the last 2 hours
@@ -374,7 +374,7 @@ kelora -f combined web_access.log --window 1000 --metrics \
   --end 'let times = window.pluck_as_nums("response_time"); print("p95: " + times.percentile(95))'
 
 # Histogram of status codes by bucket
-kelora web_access.log --metrics \
+kelora -f combined web_access.log --metrics \
   --exec 'track_bucket("status", e.status / 100 * 100)' \
   --end 'print(metrics.status)'
 
@@ -387,19 +387,19 @@ kelora -j api_logs.jsonl --metrics \
   --exec 'if e.level == "ERROR" { track_top("common_errors", e.error_type, 10) }'
 
 # Top 10 slowest endpoints by latency
-kelora access.log --metrics \
+kelora -f combined access.log --metrics \
   --exec 'track_top("slowest", e.endpoint, 10, e.latency_ms)'
 
 # Bottom 5 fastest queries (least CPU time)
-kelora db.log --metrics \
+kelora -j db.log --metrics \
   --exec 'track_bottom("fastest", e.query_id, 5, e.cpu_time)'
 
 MULTI-FILE PROCESSING:
 # Add source filename to each event
-kelora logs/*.jsonl --exec 'e.source = meta.filename'
+kelora -j logs/*.jsonl --exec 'e.source = meta.filename'
 
 # Count errors per file
-kelora logs/*.{log,jsonl} --metrics --exec '
+kelora -j logs/*.{log,jsonl} --metrics --exec '
   if e.level == "ERROR" {
     track_count(meta.filename)
   }
@@ -425,13 +425,13 @@ kelora -j audit_findings.jsonl --exec 'e.email_hash = pseudonym(e.email, "users"
 
 PERFORMANCE PATTERNS:
 # Quick preview with --head (stops reading early)
-kelora huge.log.gz --head 1000 -F inspect
+kelora -f line huge.log.gz --head 1000 -F inspect
 
 # Sample 10% of events for analysis (deterministic)
 kelora -j api_logs.jsonl --filter 'e.request_id.bucket() % 10 == 0'
 
 # Limit output events (reads entire file)
-kelora web_access.log --filter 'e.status == 404' --take 50
+kelora -f combined web_access.log --filter 'e.status == 404' --take 50
 
 # Stats-only mode: no event output
 kelora -j api_logs.jsonl -s
