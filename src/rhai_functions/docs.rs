@@ -407,7 +407,7 @@ kelora logs/*.{log,jsonl} --metrics --exec '
 
 # Debug with line numbers
 kelora -j api_logs.jsonl --filter 'e.status >= 500' --exec '
-  eprint("⚠️  Error at " + meta.filename + ":" + meta.line_num)
+  eprint("Error at " + meta.filename + ":" + meta.line_num)
 '
 
 SECURITY & DATA PRIVACY:
