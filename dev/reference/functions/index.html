@@ -1958,10 +1958,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#textextract_repattern-group" class="md-nav__link">
+  <a href="#textextract_regexpattern-group" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.extract_re(pattern [, group])
+        text.extract_regex(pattern [, group])
       
     </span>
   </a>
@@ -1969,10 +1969,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textextract_all_repattern-group" class="md-nav__link">
+  <a href="#textextract_regexespattern-group" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.extract_all_re(pattern [, group])
+        text.extract_regexes(pattern [, group])
       
     </span>
   </a>
@@ -4219,10 +4219,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#textextract_repattern-group" class="md-nav__link">
+  <a href="#textextract_regexpattern-group" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.extract_re(pattern [, group])
+        text.extract_regex(pattern [, group])
       
     </span>
   </a>
@@ -4230,10 +4230,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textextract_all_repattern-group" class="md-nav__link">
+  <a href="#textextract_regexespattern-group" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.extract_all_re(pattern [, group])
+        text.extract_regexes(pattern [, group])
       
     </span>
   </a>
@@ -6361,15 +6361,15 @@
 <hr />
 <h2 id="string-functions">String Functions<a class="headerlink" href="#string-functions" title="Permanent link">&para;</a></h2>
 <h3 id="extraction-and-searching">Extraction and Searching<a class="headerlink" href="#extraction-and-searching" title="Permanent link">&para;</a></h3>
-<h4 id="textextract_repattern-group"><code>text.extract_re(pattern [, group])</code><a class="headerlink" href="#textextract_repattern-group" title="Permanent link">&para;</a></h4>
+<h4 id="textextract_regexpattern-group"><code>text.extract_regex(pattern [, group])</code><a class="headerlink" href="#textextract_regexpattern-group" title="Permanent link">&para;</a></h4>
 <p>Extract first regex match or capture group.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>e.error_code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1)  // &quot;ERR-404&quot; → &quot;404&quot;
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>e.full_match = e.line.extract_re(r&quot;\d{3}&quot;)            // First 3-digit number
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>e.error_code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1)  // &quot;ERR-404&quot; → &quot;404&quot;
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>e.full_match = e.line.extract_regex(r&quot;\d{3}&quot;)            // First 3-digit number
 </code></pre></div>
-<h4 id="textextract_all_repattern-group"><code>text.extract_all_re(pattern [, group])</code><a class="headerlink" href="#textextract_all_repattern-group" title="Permanent link">&para;</a></h4>
+<h4 id="textextract_regexespattern-group"><code>text.extract_regexes(pattern [, group])</code><a class="headerlink" href="#textextract_regexespattern-group" title="Permanent link">&para;</a></h4>
 <p>Extract all regex matches as array.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>e.numbers = e.line.extract_all_re(r&quot;\d+&quot;)             // All numbers
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>e.codes = e.message.extract_all_re(r&quot;ERR-(\d+)&quot;, 1)   // All error codes
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>e.numbers = e.line.extract_regexes(r&quot;\d+&quot;)             // All numbers
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>e.codes = e.message.extract_regexes(r&quot;ERR-(\d+)&quot;, 1)   // All error codes
 </code></pre></div>
 <h4 id="textextract_re_mapspattern-field"><code>text.extract_re_maps(pattern, field)</code><a class="headerlink" href="#textextract_re_mapspattern-field" title="Permanent link">&para;</a></h4>
 <p>Extract regex matches as array of maps for fan-out with <code>emit_each()</code>.</p>
@@ -7306,7 +7306,7 @@
 <hr />
 <h2 id="quick-reference-by-use-case">Quick Reference by Use Case<a class="headerlink" href="#quick-reference-by-use-case" title="Permanent link">&para;</a></h2>
 <p><strong>Error Extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>e.error_code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>e.error_code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1)
 </code></pre></div></p>
 <p><strong>IP Anonymization:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a>e.masked_ip = e.client_ip.mask_ip()

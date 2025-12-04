@@ -3615,7 +3615,7 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.user = e.message.after(&quot;User:&quot;).or_empty()
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>// If &quot;User:&quot; not found → empty string → Unit → field removed
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.code = e.error.extract_re(r&quot;ERR-(\d+)&quot;, 1).or_empty()
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.code = e.error.extract_regex(r&quot;ERR-(\d+)&quot;, 1).or_empty()
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>// If regex doesn&#39;t match → empty string → Unit → field removed
 </code></pre></div></p>
 <p><strong>Array filtering:</strong>
@@ -3815,7 +3815,7 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Extract and track only when pattern exists</span>
 <a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user = e.message.after(&quot;User:&quot;).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = e.message.extract_re(r&quot;ERR-(\d+)&quot;, 1).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;error_codes&quot;, e.code)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="w">    </span>--metrics

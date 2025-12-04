@@ -2769,8 +2769,8 @@
 <h2 id="rhai-special-feature-function-as-method">Rhai Special Feature: Function-as-Method<a class="headerlink" href="#rhai-special-feature-function-as-method" title="Permanent link">&para;</a></h2>
 <p>Rhai allows calling any function as a method on its first argument:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>// These are equivalent:
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>extract_re(e.line, r&quot;\d+&quot;)            // Function call style
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>e.line.extract_re(r&quot;\d+&quot;)             // Method call style
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>extract_regex(e.line, r&quot;\d+&quot;)            // Function call style
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>e.line.extract_regex(r&quot;\d+&quot;)             // Method call style
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>// Use method style for chaining:
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>e.domain = e.url
@@ -2891,7 +2891,7 @@
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>// Parse and extract from structured text
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>e.error_line = e.stack_trace
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    .extract_re(r&quot;line (\d+)&quot;, 1)
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    .extract_regex(r&quot;line (\d+)&quot;, 1)
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    .to_int_or(0);
 </code></pre></div>
 <h3 id="array-processing">Array Processing<a class="headerlink" href="#array-processing" title="Permanent link">&para;</a></h3>
@@ -3026,7 +3026,7 @@
 <a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>e.text.to_upper()                     // Uppercase
 <a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>e.text.strip()                        // Trim whitespace
 <a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>e.text.contains(&quot;word&quot;)               // Substring check
-<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>e.text.extract_re(r&quot;(\d+)&quot;, 1)        // Regex extraction
+<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>e.text.extract_regex(r&quot;(\d+)&quot;, 1)        // Regex extraction
 <a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a>
 <a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>// Environment &amp; Context
 <a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var
