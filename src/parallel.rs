@@ -3100,6 +3100,7 @@ impl ParallelProcessor {
                     let stats_message = config.format_stats_message(
                         &current_stats
                             .format_stats_for_signal(config.input.multiline.is_some(), false),
+                        true, // Always show header for signal handler
                     );
                     let _ = crate::platform::SafeStderr::new().writeln(&stats_message);
                 }

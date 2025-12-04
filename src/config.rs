@@ -483,26 +483,36 @@ impl KeloraConfig {
     }
 
     /// Format a stats message with appropriate prefix (emoji or "Stats:")
-    pub fn format_stats_message(&self, message: &str) -> String {
+    /// If `with_header` is true, includes the "📈 Stats:" header
+    pub fn format_stats_message(&self, message: &str, with_header: bool) -> String {
         let use_colors = crate::tty::should_use_colors_with_mode(&self.output.color);
         let use_emoji = use_colors && !self.output.no_emoji;
 
-        if use_emoji {
-            format!("\n📈 Stats:\n{}", message)
+        if with_header {
+            if use_emoji {
+                format!("\n📈 Stats:\n{}", message)
+            } else {
+                format!("\nkelora: Stats:\n{}", message)
+            }
         } else {
-            format!("\nkelora: Stats:\n{}", message)
+            format!("\n{}", message)
         }
     }
 
     /// Format a metrics message with appropriate prefix (emoji or "Metrics:")
-    pub fn format_metrics_message(&self, message: &str) -> String {
+    /// If `with_header` is true, includes the "📊 Tracked metrics:" header
+    pub fn format_metrics_message(&self, message: &str, with_header: bool) -> String {
         let use_colors = crate::tty::should_use_colors_with_mode(&self.output.color);
         let use_emoji = use_colors && !self.output.no_emoji;
 
-        if use_emoji {
-            format!("\n📊 Tracked metrics:\n{}", message)
+        if with_header {
+            if use_emoji {
+                format!("\n📊 Tracked metrics:\n{}", message)
+            } else {
+                format!("\nkelora: Tracked metrics:\n{}", message)
+            }
         } else {
-            format!("\nkelora: Tracked metrics:\n{}", message)
+            format!("\n{}", message)
         }
     }
 }

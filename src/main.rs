@@ -616,6 +616,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     config.input.multiline.is_some(),
                                     true,
                                 ),
+                                true, // Always show header for signal handler
                             );
                             let _ = SafeStderr::new().writeln(&stats_message);
                         }
@@ -683,6 +684,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     config.input.multiline.is_some(),
                                     true,
                                 ),
+                                true, // Always show header for signal handler
                             );
                             let _ = SafeStderr::new().writeln(&stats_message);
                         }
@@ -1524,7 +1526,10 @@ fn main() -> Result<()> {
                                 );
                             if !metrics_output.is_empty() && metrics_output != "No metrics tracked"
                             {
-                                let mut formatted = config.format_metrics_message(&metrics_output);
+                                let mut formatted = config.format_metrics_message(
+                                    &metrics_output,
+                                    config.output.metrics_with_events, // Show header only for --with-metrics
+                                );
                                 if !events_were_output {
                                     formatted = formatted.trim_start_matches('\n').to_string();
                                 }
@@ -1594,6 +1599,7 @@ fn main() -> Result<()> {
                         let use_stdout = !config.output.stats_with_events;
                         let mut formatted = config.format_stats_message(
                             &s.format_stats(config.input.multiline.is_some()),
+                            config.output.stats_with_events, // Show header only for --with-stats
                         );
                         if !events_were_output {
                             formatted = formatted.trim_start_matches('\n').to_string();
@@ -1640,8 +1646,10 @@ fn main() -> Result<()> {
         if let Some(stats) = final_stats {
             if config.output.stats.is_some() && terminal_allowed {
                 // Full stats when --stats flag is used (unless suppressed)
-                let mut formatted = config
-                    .format_stats_message(&stats.format_stats(config.input.multiline.is_some()));
+                let mut formatted = config.format_stats_message(
+                    &stats.format_stats(config.input.multiline.is_some()),
+                    config.output.stats_with_events, // Show header only for --with-stats
+                );
                 if !events_were_output {
                     formatted = formatted.trim_start_matches('\n').to_string();
                 }
@@ -1655,7 +1663,10 @@ fn main() -> Result<()> {
                 stderr.writeln(&formatted).unwrap_or(());
             }
         } else if config.output.stats.is_some() && terminal_allowed {
-            let mut formatted = config.format_stats_message("Processing interrupted");
+            let mut formatted = config.format_stats_message(
+                "Processing interrupted",
+                config.output.stats_with_events, // Show header only for --with-stats
+            );
             if !events_were_output {
                 formatted = formatted.trim_start_matches('\n').to_string();
             }
