@@ -364,35 +364,37 @@ kelora -j api_logs.jsonl -z --since yesterday
 
 METRICS & AGGREGATION:
 # Count errors by type with metrics
-kelora -j api_errors.jsonl -l error --metrics \
-  --exec 'track_count(e.error_type)' \
-  --end 'for key in metrics.keys() { print(key + ": " + metrics[key]) }'
+kelora -j api_errors.jsonl -l error -m \
+  --exec 'track_count(e.error_type)'
 
-# Track unique users and compute percentiles (requires --window)
-kelora -f combined web_access.log --window 1000 --metrics \
-  --exec 'track_unique("users", e.user)' \
-  --end 'let times = window.pluck_as_nums("response_time"); print("p95: " + times.percentile(95))'
+# Track unique users
+kelora -f combined web_access.log -m \
+  --exec 'track_unique("users", e.user)'
 
 # Histogram of status codes by bucket
-kelora web_access.log --metrics \
-  --exec 'track_bucket("status", e.status / 100 * 100)' \
-  --end 'print(metrics.status)'
+kelora web_access.log -m \
+  --exec 'track_bucket("status", e.status / 100 * 100)'
 
 # Save metrics to JSON file
 kelora -j api_logs.jsonl --metrics --metrics-file stats.json \
   --exec 'track_count(e.level); track_sum("bytes", e.bytes)' --silent
 
 # Top 10 most common errors
-kelora -j api_logs.jsonl --metrics \
+kelora -j api_logs.jsonl -m \
   --exec 'if e.level == "ERROR" { track_top("common_errors", e.error_type, 10) }'
 
 # Top 10 slowest endpoints by latency
-kelora access.log --metrics \
+kelora access.log -m \
   --exec 'track_top("slowest", e.endpoint, 10, e.latency_ms)'
 
 # Bottom 5 fastest queries (least CPU time)
-kelora db.log --metrics \
+kelora db.log -m \
   --exec 'track_bottom("fastest", e.query_id, 5, e.cpu_time)'
+
+# Custom calculations with print() for complex output (requires --window)
+kelora -f combined web_access.log --window 1000 --metrics \
+  --exec 'track_unique("users", e.user)' \
+  --end 'let times = window.pluck_as_nums("response_time"); print("p95: " + times.percentile(95))'
 
 MULTI-FILE PROCESSING:
 # Add source filename to each event
