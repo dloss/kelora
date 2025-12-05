@@ -2594,19 +2594,19 @@
 <td><code>0</code></td>
 <td>Success</td>
 <td>No errors occurred</td>
-<td>Clean processing, no parse/filter/exec errors</td>
+<td>Clean processing, no parse/filter/exec/file errors</td>
 </tr>
 <tr>
 <td><code>1</code></td>
 <td>General Error</td>
 <td>Processing errors occurred</td>
-<td>Parse errors, filter errors, exec errors</td>
+<td>Parse errors, filter errors, exec errors, file I/O failures</td>
 </tr>
 <tr>
 <td><code>2</code></td>
 <td>Usage Error</td>
 <td>Invalid command-line usage</td>
-<td>Invalid flags, missing files, configuration errors</td>
+<td>Invalid flags, incompatible options, configuration errors</td>
 </tr>
 </tbody>
 </table>
@@ -2652,7 +2652,7 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="m">1</span>
 </code></pre></div>
 <h2 id="exit-code-1-processing-errors">Exit Code 1: Processing Errors<a class="headerlink" href="#exit-code-1-processing-errors" title="Permanent link">&para;</a></h2>
-<p>Indicates errors occurred during processing. Three types:</p>
+<p>Indicates errors occurred during processing. Four types:</p>
 <table>
 <thead>
 <tr>
@@ -2677,6 +2677,11 @@
 <td><code>--exec</code> scripts failed during execution</td>
 <td>Runtime errors in Rhai code</td>
 </tr>
+<tr>
+<td><strong>File I/O failures</strong></td>
+<td>Individual files failed to open or decompress</td>
+<td>Permission denied, file not readable, decompression failed</td>
+</tr>
 </tbody>
 </table>
 <h3 id="resilient-mode-default">Resilient Mode (Default)<a class="headerlink" href="#resilient-mode-default" title="Permanent link">&para;</a></h3>
@@ -2689,9 +2694,15 @@
 <h3 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h3>
 <p>Processing aborts immediately on first error with <code>--strict</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># ... aborts on first error ...</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># ... aborts on first parse/filter/exec/file error ...</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Processing aborted</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># With multiple files, strict mode aborts on first file failure</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>good.log<span class="w"> </span>missing.log<span class="w"> </span>another.log
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>⚠️<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>open<span class="w"> </span>file<span class="w"> </span><span class="s1">&#39;missing.log&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Aborted immediately, another.log not processed</span>
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Parse error</span>
@@ -2700,7 +2711,9 @@
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.missing_field.to_int()&#39;</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Exec error</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.invalid.to_int()&#39;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># All return exit code 1</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># File I/O error (some files failed)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>good.log<span class="w"> </span>missing.log
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># All return exit code 1</span>
 </code></pre></div>
 <h2 id="exit-code-2-usage-errors">Exit Code 2: Usage Errors<a class="headerlink" href="#exit-code-2-usage-errors" title="Permanent link">&para;</a></h2>
 <p>Indicates <strong>command-line usage errors</strong> before processing begins:</p>
@@ -2721,23 +2734,38 @@
 <td><code>kelora --filter</code> (no expression provided)</td>
 </tr>
 <tr>
-<td>File not found</td>
-<td><code>kelora -j nonexistent.log</code></td>
-</tr>
-<tr>
-<td>Permission denied</td>
-<td><code>kelora -j /root/secure.log</code> (without permission)</td>
+<td>Incompatible flags</td>
+<td><code>kelora -I helper.rhai --filter 'e.level == "ERROR"'</code></td>
 </tr>
 <tr>
 <td>Invalid configuration</td>
 <td><code>kelora --config-file invalid.ini app.log</code></td>
 </tr>
+<tr>
+<td>No input provided</td>
+<td><code>kelora</code> (no files + stdin is TTY)</td>
+</tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>nonexistent.log
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora:<span class="w"> </span>error:<span class="w"> </span>failed<span class="w"> </span>to<span class="w"> </span>open<span class="w"> </span>file<span class="w"> </span><span class="s1">&#39;nonexistent.log&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="m">2</span>
+<p><strong>Note:</strong> File I/O failures (unable to open files) are <strong>processing errors</strong> (exit 1), not usage errors, regardless of how many files fail. This is consistent with standard Unix tools like <code>cat</code>, <code>tail</code>, and <code>head</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># File I/O failures are always exit 1</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>nonexistent.log
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>⚠️<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>open<span class="w"> </span>file<span class="w"> </span><span class="s1">&#39;nonexistent.log&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Processing error, not usage error</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Even if all files fail</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>missing1.log<span class="w"> </span>missing2.log
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>⚠️<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>open<span class="w"> </span>file<span class="w"> </span><span class="s1">&#39;missing1.log&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>⚠️<span class="w"> </span>Failed<span class="w"> </span>to<span class="w"> </span>open<span class="w"> </span>file<span class="w"> </span><span class="s1">&#39;missing2.log&#39;</span>:<span class="w"> </span>No<span class="w"> </span>such<span class="w"> </span>file<span class="w"> </span>or<span class="w"> </span>directory
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Still processing error (like parse errors)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1"># Usage error (incompatible flags)</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>kelora<span class="w"> </span>-I<span class="w"> </span>helper.rhai<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>⚠️<span class="w"> </span>--include<span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>supported<span class="w"> </span>with<span class="w"> </span>--filter
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="m">2</span><span class="w">  </span><span class="c1"># Usage error</span>
 </code></pre></div>
 <h2 id="mode-interactions">Mode Interactions<a class="headerlink" href="#mode-interactions" title="Permanent link">&para;</a></h2>
 <h3 id="processing-modes">Processing Modes<a class="headerlink" href="#processing-modes" title="Permanent link">&para;</a></h3>
