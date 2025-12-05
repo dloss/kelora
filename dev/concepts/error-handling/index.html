@@ -3656,7 +3656,7 @@
 </thead>
 <tbody>
 <tr>
-<td><code>-q</code> / <code>--no-events</code></td>
+<td><code>-q</code> / <code>--quiet</code></td>
 <td>Suppress events (formatter output)</td>
 </tr>
 <tr>
@@ -3673,11 +3673,11 @@
 </tr>
 <tr>
 <td><code>-s</code> / <code>--stats=FORMAT</code></td>
-<td>Show stats only (suppress events, script output; diagnostics stay on). Format: table, json</td>
+<td>Show stats only (implies <code>-q/--quiet</code>; also suppresses script output; diagnostics stay on). Format: table, json</td>
 </tr>
 <tr>
 <td><code>-m</code> / <code>--metrics=FORMAT</code></td>
-<td>Show metrics only (suppress events, diagnostics except fatal line, stats, script output). Format: short, full (default), json</td>
+<td>Show metrics only (implies <code>-q/--quiet</code>; suppresses diagnostics except fatal line, stats, script output). Format: short, full (default), json</td>
 </tr>
 <tr>
 <td><code>--with-stats</code></td>

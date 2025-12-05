@@ -2987,19 +2987,16 @@
 <td><code>tsvnh</code></td>
 <td>TSV without header</td>
 </tr>
-<tr>
-<td><code>none</code></td>
-<td>No output (useful with <code>--stats</code> or <code>--metrics</code>)</td>
-</tr>
 </tbody>
 </table>
+<p>Use <code>-q/--quiet</code> to suppress output (implied by <code>--stats</code> and <code>--metrics</code>).</p>
 <p><strong>Levelmap Visual Example:</strong></p>
 <p><img alt="Levelmap output format showing compact log visualization" src="../../screenshots/levelmap.gif" /></p>
 <p>The <code>levelmap</code> format provides a compact visual representation of logs, showing timestamps and level indicators in a condensed format ideal for quick scanning.</p>
 <p><strong>Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w">              </span><span class="c1"># Only stats</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

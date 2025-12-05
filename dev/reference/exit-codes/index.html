@@ -2802,10 +2802,10 @@
 <h3 id="quiet-modes">Quiet Modes<a class="headerlink" href="#quiet-modes" title="Permanent link">&para;</a></h3>
 <p>Exit codes are preserved under all quiet/silent combinations. Use the new toggles to control output without changing exit semantics:</p>
 <ul>
-<li><code>-q/--no-events</code>: suppress events only.</li>
+<li><code>-q/--quiet</code>: suppress events only.</li>
 <li><code>--no-diagnostics</code>: suppress diagnostics and summaries (fatal line still emitted).</li>
 <li><code>--silent</code>: suppress pipeline terminal emitters (events/diagnostics/stats/terminal metrics); script output still allowed; metrics files still write.</li>
-<li><code>-m/--metrics</code> / <code>-s/--stats</code>: suppress events and script output while emitting the selected channel (data-only modes).</li>
+<li><code>-m/--metrics</code> / <code>-s/--stats</code>: data-only modes that already suppress events (no need for <code>-q</code>) and script output while emitting the selected channel.</li>
 </ul>
 <h2 id="using-exit-codes-in-scripts">Using Exit Codes in Scripts<a class="headerlink" href="#using-exit-codes-in-scripts" title="Permanent link">&para;</a></h2>
 <h3 id="comprehensive-example">Comprehensive Example<a class="headerlink" href="#comprehensive-example" title="Permanent link">&para;</a></h3>

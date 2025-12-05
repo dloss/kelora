@@ -2972,7 +2972,7 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>benchmarks/bench_100k.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,component
 </code></pre></div></p>
-<p>Kelora trails <code>awk</code> and angle-grinder by <strong>≈12×</strong> because it parses into typed columns, validates timestamps, and keeps metadata for later stages; klp’s Python regex pipeline is even slower than Kelora here, so reach for it only when you need its advanced templating. Stick with those lighter tools for quick-and-dirty splits, but prefer Kelora when you immediately need type conversion, schema-aware errors, or downstream scripting. You can trim Kelora’s cost by projecting only the fields you need with <code>-k</code> and disabling expensive formatters (<code>-F none</code>).</p>
+<p>Kelora trails <code>awk</code> and angle-grinder by <strong>≈12×</strong> because it parses into typed columns, validates timestamps, and keeps metadata for later stages; klp's Python regex pipeline is even slower than Kelora here, so reach for it only when you need its advanced templating. Stick with those lighter tools for quick-and-dirty splits, but prefer Kelora when you immediately need type conversion, schema-aware errors, or downstream scripting. You can trim Kelora's cost by projecting only the fields you need with <code>-k</code> and disabling output with <code>-q</code>.</p>
 <hr />
 <h3 id="3-json-filtering">3. JSON Filtering<a class="headerlink" href="#3-json-filtering" title="Permanent link">&para;</a></h3>
 <p><strong>Task:</strong> Filter 100,000 JSON logs where <code>level == 'ERROR'</code></p>
@@ -3137,7 +3137,7 @@ Every run records the system info and scenario tables under <code>benchmarks/com
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>benchmarks/bench_100k.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s2">&quot;track_count(e.component)&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span>--metrics<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>-q
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span>--metrics
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1"># angle-grinder - aggregation</span>
 <a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>agrind<span class="w"> </span><span class="s1">&#39;* | json | where level == &quot;ERROR&quot; | count by component | sort by _count desc&#39;</span><span class="w"> </span><span class="se">\</span>

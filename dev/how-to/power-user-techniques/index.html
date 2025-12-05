@@ -3529,8 +3529,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/production-errors.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.error_pattern = e.message.normalized()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_pattern)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--no-events
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_pattern)&#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Failed to connect to &lt;ipv4&gt; = 4
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Timeout on request &lt;uuid&gt; = 3
@@ -4017,8 +4016,7 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;response_time&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let bucket = (e.response_time / 0.5).floor() * 0.5;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_bucket(&quot;response_ms&quot;, bucket)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--no-events
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_bucket(&quot;response_ms&quot;, bucket)&#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>response_ms  = #{&quot;0&quot;: 11, &quot;0.5&quot;: 1, &quot;1&quot;: 1, &quot;1.5&quot;: 1, &quot;2.5&quot;: 1, &quot;5&quot;: 1}
 </code></pre></div>
@@ -4059,8 +4057,7 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status&quot;, e.status / 100 * 100)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--no-events
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status&quot;, e.status / 100 * 100)&#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>status       = #{&quot;200&quot;: 15, &quot;300&quot;: 1, &quot;400&quot;: 3, &quot;500&quot;: 1}
 </code></pre></div>

@@ -2615,10 +2615,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#-q-no-events" class="md-nav__link">
+  <a href="#-q-quiet" class="md-nav__link">
     <span class="md-ellipsis">
       
-        -q / --no-events
+        -q / --quiet
       
     </span>
   </a>
@@ -4703,10 +4703,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#-q-no-events" class="md-nav__link">
+  <a href="#-q-quiet" class="md-nav__link">
     <span class="md-ellipsis">
       
-        -q / --no-events
+        -q / --quiet
       
     </span>
   </a>
@@ -6196,10 +6196,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--verbose<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="outputquiet-controls">Output/Quiet Controls<a class="headerlink" href="#outputquiet-controls" title="Permanent link">&para;</a></h3>
-<h4 id="-q-no-events"><code>-q</code> / <code>--no-events</code><a class="headerlink" href="#-q-no-events" title="Permanent link">&para;</a></h4>
-<p>Suppress formatter output (events). Diagnostics, stats, metrics, and script output remain unless further flags are used. Same effect as <code>-F none</code>.</p>
+<h4 id="-q-quiet"><code>-q</code> / <code>--quiet</code><a class="headerlink" href="#-q-quiet" title="Permanent link">&para;</a></h4>
+<p>Suppress formatter output (events). Diagnostics, stats, metrics, and script output remain unless further flags are used.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-q<span class="w"> </span>app.log<span class="w">                         </span><span class="c1"># No events, diagnostics still emit</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kelora<span class="w"> </span>--no-events<span class="w"> </span>-s<span class="w"> </span>-m<span class="w"> </span>app.log<span class="w">          </span><span class="c1"># Stats + metrics, no events</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>kelora<span class="w"> </span>-s<span class="w"> </span>app.log<span class="w">                         </span><span class="c1"># Stats only (events suppressed automatically)</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>kelora<span class="w"> </span>-m<span class="w"> </span>app.log<span class="w">                         </span><span class="c1"># Metrics only (events suppressed automatically)</span>
 </code></pre></div>
 <h4 id="-no-diagnostics"><code>--no-diagnostics</code><a class="headerlink" href="#-no-diagnostics" title="Permanent link">&para;</a></h4>
 <p>Suppress diagnostics and error summaries; a single fatal line is still emitted on errors. Does not affect events.</p>
@@ -6316,11 +6317,10 @@
 <li><code>tsv</code> - Tab-separated values with header</li>
 <li><code>csvnh</code> - CSV without header</li>
 <li><code>tsvnh</code> - TSV without header</li>
-<li><code>none</code> - No event output (only metrics/stats)</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>app.log
 <a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>app.log
-<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>none<span class="w"> </span>--stats<span class="w"> </span>app.log
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-j_1"><code>-J</code><a class="headerlink" href="#-j_1" title="Permanent link">&para;</a></h4>
 <p>Shortcut for <code>-F json</code>.</p>
@@ -6419,7 +6419,7 @@
 <h2 id="metrics-and-statistics">Metrics and Statistics<a class="headerlink" href="#metrics-and-statistics" title="Permanent link">&para;</a></h2>
 <h3 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h3>
 <h4 id="-s-statsformat"><code>-s, --stats[=FORMAT]</code><a class="headerlink" href="#-s-statsformat" title="Permanent link">&para;</a></h4>
-<p>Show stats only (suppress events). Use <code>-s</code> for default table format, or <code>--stats=FORMAT</code> for explicit format.</p>
+<p>Show stats only (implies <code>-q/--quiet</code>). Use <code>-s</code> for default table format, or <code>--stats=FORMAT</code> for explicit format.</p>
 <p>Formats: <code>table</code>, <code>json</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-s<span class="w"> </span>app.log<span class="w">                    </span><span class="c1"># Default table format</span>
 <a id="__codelineno-68-2" name="__codelineno-68-2" href="#__codelineno-68-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="o">=</span>json<span class="w"> </span>app.log<span class="w">          </span><span class="c1"># JSON format</span>
@@ -6432,7 +6432,7 @@
 <p>Disable processing statistics explicitly (default: off).</p>
 <h3 id="tracked-metrics">Tracked Metrics<a class="headerlink" href="#tracked-metrics" title="Permanent link">&para;</a></h3>
 <h4 id="-m-metricsformat"><code>-m, --metrics[=FORMAT]</code><a class="headerlink" href="#-m-metricsformat" title="Permanent link">&para;</a></h4>
-<p>Show metrics only (suppress events). Use <code>-m</code> for default full table format, or <code>--metrics=FORMAT</code> for explicit format.</p>
+<p>Show metrics only (implies <code>-q/--quiet</code>). Use <code>-m</code> for default full table format, or <code>--metrics=FORMAT</code> for explicit format.</p>
 <p>Formats: <code>short</code> (first 5 items), <code>full</code> (default), <code>json</code></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>-m<span class="w"> </span>app.log<span class="w">               </span><span class="c1"># Default full table</span>
 <a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="o">=</span>short<span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Abbreviated (first 5)</span>

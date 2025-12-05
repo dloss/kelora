@@ -3601,7 +3601,7 @@
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">[aliases]</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="na">myerrors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-j --levels error --exclude-keys password,token</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="na">quickcheck</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-j -F none --stats</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="na">quickcheck</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-j --stats</span>
 </code></pre></div></p>
 <h3 id="project-configuration-team-shared">Project Configuration (Team Shared)<a class="headerlink" href="#project-configuration-team-shared" title="Permanent link">&para;</a></h3>
 <p>Location: <code>.kelora.ini</code> in project root</p>
@@ -3667,7 +3667,7 @@
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">analyze-api = -j --filter &#39;e.service =</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;api&quot;</span><span class="na">&#39; \</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">              </span><span class="na">--exec &#39;track_count(e.level)&#39; \</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">              </span><span class="na">--exec &#39;track_sum(&quot;total_duration&quot;, e.duration_ms)&#39; \</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">              </span><span class="na">--metrics -F none</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">              </span><span class="na">--metrics</span>
 </code></pre></div>
 <p><strong>Tip:</strong> Use backslash <code>\</code> for line continuation in INI files.</p>
 <hr />
@@ -4186,7 +4186,7 @@
 <a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="k">[aliases]</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="na">api-errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--filter &#39;e.status &gt;= 400&#39; --keys ip,status,method,path</span>
 <a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="na">slow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--filter &#39;e.request_time.to_float() &gt; 1.0&#39; --keys ip,request_time,path</span>
-<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="na">traffic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--exec &#39;track_count(e.method)</span><span class="c1">; track_count(e.status.to_string())&#39; --metrics -F none</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="na">traffic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--exec &#39;track_count(e.method)</span><span class="c1">; track_count(e.status.to_string())&#39; --metrics</span>
 </code></pre></div>
 </details>
 
