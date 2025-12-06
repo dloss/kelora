@@ -191,6 +191,7 @@ window.pluck(field)                  Extract field values from window array (req
 window.pluck_as_nums(field)          Extract numeric field values from window array (requires --window)
 
 TRACKING/METRICS FUNCTIONS (requires --metrics):
+track_avg(key, value)                Track average of numeric values for key (skips () values)
 track_bottom(key, item, n)           Track bottom N least frequent items (counts occurrences)
 track_bottom(key, item, n, score)    Track bottom N items by lowest scores (ranks by numeric value)
 track_bucket(key, bucket)            Track values in buckets for histograms (skips () values)
@@ -382,6 +383,10 @@ kelora web_access.log --metrics=json \
 # Save metrics to JSON file
 kelora -j api_logs.jsonl --metrics --metrics-file stats.json \
   --exec 'track_count(e.level); track_sum("bytes", e.bytes)' --silent
+
+# Track average response time
+kelora -j api_logs.jsonl -m \
+  --exec 'track_avg("avg_latency_ms", e.latency_ms)'
 
 # Top/bottom tracking: frequency vs scored
 # 3 params = count occurrences (most/least COMMON)

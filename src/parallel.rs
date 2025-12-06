@@ -359,6 +359,54 @@ impl GlobalTracker {
                         target.insert(key.clone(), merged);
                         continue;
                     }
+                    "avg" => {
+                        // Merge average tracking by combining sums and counts
+                        if let (Some(existing_map), Some(new_map)) = (
+                            existing.clone().try_cast::<rhai::Map>(),
+                            value.clone().try_cast::<rhai::Map>(),
+                        ) {
+                            let existing_sum = existing_map
+                                .get("sum")
+                                .and_then(|v| {
+                                    if v.is_float() {
+                                        v.as_float().ok()
+                                    } else if v.is_int() {
+                                        v.as_int().ok().map(|i| i as f64)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .unwrap_or(0.0);
+                            let existing_count = existing_map
+                                .get("count")
+                                .and_then(|v| v.as_int().ok())
+                                .unwrap_or(0);
+
+                            let new_sum = new_map
+                                .get("sum")
+                                .and_then(|v| {
+                                    if v.is_float() {
+                                        v.as_float().ok()
+                                    } else if v.is_int() {
+                                        v.as_int().ok().map(|i| i as f64)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .unwrap_or(0.0);
+                            let new_count = new_map
+                                .get("count")
+                                .and_then(|v| v.as_int().ok())
+                                .unwrap_or(0);
+
+                            let mut merged = rhai::Map::new();
+                            merged.insert("sum".into(), Dynamic::from(existing_sum + new_sum));
+                            merged
+                                .insert("count".into(), Dynamic::from(existing_count + new_count));
+                            target.insert(key.clone(), Dynamic::from(merged));
+                            continue;
+                        }
+                    }
                     "min" => {
                         if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
                             target.insert(key.clone(), Dynamic::from(a.min(b)));

@@ -569,6 +569,173 @@ fn test_track_sum_handles_float_values() {
 }
 
 #[test]
+fn test_track_avg_basic() {
+    let input = r#"{"value":10}
+{"value":20}
+{"value":30}"#;
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    let metrics_file_path = temp_file.path().to_str().unwrap();
+
+    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_avg(\"average_value\", e.value)",
+            "--metrics-file",
+            metrics_file_path,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let metrics_content =
+        std::fs::read_to_string(metrics_file_path).expect("Failed to read metrics file");
+    let metrics_json: serde_json::Value =
+        serde_json::from_str(&metrics_content).expect("Metrics file should contain valid JSON");
+
+    let avg_value = metrics_json["average_value"]
+        .as_f64()
+        .expect("Should have average value");
+    assert!(
+        (avg_value - 20.0).abs() < f64::EPSILON,
+        "Average should be 20.0, got {}",
+        avg_value
+    );
+}
+
+#[test]
+fn test_track_avg_with_float_values() {
+    let input = r#"{"value":1.5}
+{"value":2.0}
+{"value":2.5}"#;
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    let metrics_file_path = temp_file.path().to_str().unwrap();
+
+    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_avg(\"avg_value\", e.value)",
+            "--metrics-file",
+            metrics_file_path,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let metrics_content =
+        std::fs::read_to_string(metrics_file_path).expect("Failed to read metrics file");
+    let metrics_json: serde_json::Value =
+        serde_json::from_str(&metrics_content).expect("Metrics file should contain valid JSON");
+
+    let avg_value = metrics_json["avg_value"]
+        .as_f64()
+        .expect("Should have average value");
+    assert!(
+        (avg_value - 2.0).abs() < f64::EPSILON,
+        "Average should be 2.0, got {}",
+        avg_value
+    );
+}
+
+#[test]
+fn test_track_avg_with_unit() {
+    let input = r#"{"score": "100"}
+{"score": ""}
+{"score": "50"}
+{"score": "200"}"#;
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    let metrics_file_path = temp_file.path().to_str().unwrap();
+
+    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "let s = e.score.to_int(); track_avg(\"avg_score\", s);",
+            "--metrics-file",
+            metrics_file_path,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let metrics_content =
+        std::fs::read_to_string(metrics_file_path).expect("Failed to read metrics file");
+    let metrics_json: serde_json::Value =
+        serde_json::from_str(&metrics_content).expect("Metrics file should contain valid JSON");
+
+    let avg_score = metrics_json["avg_score"]
+        .as_f64()
+        .expect("Should have average score");
+
+    // Empty string to_int() returns Unit, which should be skipped
+    // So average of 100 + 50 + 200 = 350 / 3 = 116.666...
+    let expected_avg = 350.0 / 3.0;
+    assert!(
+        (avg_score - expected_avg).abs() < 0.001,
+        "Average should be approximately 116.67, got {}",
+        avg_score
+    );
+}
+
+#[test]
+fn test_track_avg_parallel_mode() {
+    let input = r#"{"value":10}
+{"value":20}
+{"value":30}
+{"value":40}
+{"value":50}"#;
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    let metrics_file_path = temp_file.path().to_str().unwrap();
+
+    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_avg(\"avg_value\", e.value)",
+            "--metrics-file",
+            metrics_file_path,
+            "--parallel",
+            "--batch-size",
+            "2",
+        ],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "kelora should exit successfully in parallel mode"
+    );
+
+    let metrics_content =
+        std::fs::read_to_string(metrics_file_path).expect("Failed to read metrics file");
+    let metrics_json: serde_json::Value =
+        serde_json::from_str(&metrics_content).expect("Metrics file should contain valid JSON");
+
+    let avg_value = metrics_json["avg_value"]
+        .as_f64()
+        .expect("Should have average value");
+
+    // Average of 10 + 20 + 30 + 40 + 50 = 150 / 5 = 30.0
+    assert!(
+        (avg_value - 30.0).abs() < f64::EPSILON,
+        "Average should be 30.0 in parallel mode, got {}",
+        avg_value
+    );
+}
+
+#[test]
 fn test_metrics_parallel_consistency() {
     // Test that parallel mode produces correct metrics with different batch sizes
     let input = r#"{"level":"info","message":"test1"}
