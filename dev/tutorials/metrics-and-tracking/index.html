@@ -2628,7 +2628,7 @@ any time you want a quick histogram after a batch run.</p>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Detected format: json
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Throughput: 2517 lines/s in 7ms
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Throughput: 2788 lines/s in 7ms
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Timestamp: timestamp (auto-detected) - 20/20 parsed (100.0%).
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN,high
@@ -2671,14 +2671,18 @@ response sizes and latency as rolling aggregates.</p>
 <p><strong>Available aggregation functions:</strong></p>
 <ul>
 <li><code>track_sum(key, value)</code> - Accumulates totals (throughput, volume)</li>
+<li><code>track_avg(key, value)</code> - Calculates averages automatically (stores sum and count internally)</li>
 <li><code>track_min(key, value)</code> - Tracks minimum value seen</li>
 <li><code>track_max(key, value)</code> - Tracks maximum value seen</li>
 <li><code>track_count(key)</code> - Counts occurrences of key</li>
 <li><code>track_inc(key, amount)</code> - Increment counter by amount (not shown above)</li>
 </ul>
-<p><strong>Note:</strong> There's no <code>track_avg()</code> function. Calculate averages in <code>--end</code> stage:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>--end &#39;let avg = metrics.total_duration / metrics.duration_count; print(&quot;Average: &quot; + avg)&#39;
+<p><strong>Quick example of <code>track_avg()</code>:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a># Track average response time automatically
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora -j api_logs.jsonl -m \
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  --exec &#39;if e.has(&quot;duration_ms&quot;) { track_avg(&quot;avg_latency&quot;, e.duration_ms) }&#39;
 </code></pre></div></p>
+<p>The <code>track_avg()</code> function internally stores both sum and count, then computes the average during output. This works correctly even in parallel mode.</p>
 <h2 id="step-3-histograms-with-track_bucket">Step 3 – Histograms with track_bucket()<a class="headerlink" href="#step-3-histograms-with-track_bucket" title="Permanent link">&para;</a></h2>
 <p>Build histograms by grouping values into buckets—perfect for latency distributions.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command</label><label for="__tabbed_4_2">Output</label></div>
@@ -3023,15 +3027,15 @@ clean text summary that you can redirect or feed into alerts.</p>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>monitoring   = 1
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>scheduler    = 3
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>{
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  &quot;disk&quot;: 1,
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;monitoring&quot;: 1,
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;api&quot;: 7,
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;auth&quot;: 2,
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;database&quot;: 2,
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;cache&quot;: 1,
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;scheduler&quot;: 3,
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;admin&quot;: 2,
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;health&quot;: 1
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  &quot;scheduler&quot;: 3,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  &quot;auth&quot;: 2,
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  &quot;monitoring&quot;: 1,
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  &quot;database&quot;: 2,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  &quot;disk&quot;: 1,
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  &quot;api&quot;: 7,
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>  &quot;admin&quot;: 2,
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  &quot;health&quot;: 1,
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  &quot;cache&quot;: 1
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>}
 </code></pre></div>
 </div>
@@ -3157,6 +3161,11 @@ human-readable histogram once processing finishes.</p>
 <td><code>track_sum("bandwidth", e.bytes)</code></td>
 </tr>
 <tr>
+<td><code>track_avg(key, value)</code></td>
+<td>Average numeric values</td>
+<td><code>track_avg("avg_latency", e.duration)</code></td>
+</tr>
+<tr>
 <td><code>track_min(key, value)</code></td>
 <td>Minimum value</td>
 <td><code>track_min("fastest", e.duration)</code></td>
@@ -3178,14 +3187,14 @@ human-readable histogram once processing finishes.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Note:</strong> Calculate averages using <code>sum / count</code> in the <code>--end</code> stage.</p>
+<p><strong>Note:</strong> <code>track_avg()</code> automatically computes averages by storing sum and count internally. For manual calculation, you can still use <code>sum / count</code> in the <code>--end</code> stage.</p>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>You've learned:</p>
 <ul>
 <li>✅ Track counts with <code>track_count()</code> and increment with <code>track_inc()</code></li>
-<li>✅ Aggregate numbers with <code>track_sum()</code>, <code>track_min()</code>, <code>track_max()</code></li>
-<li>✅ Calculate averages in <code>--end</code> stage from sum and count</li>
+<li>✅ Aggregate numbers with <code>track_sum()</code>, <code>track_avg()</code>, <code>track_min()</code>, <code>track_max()</code></li>
 <li>✅ Build histograms with <code>track_bucket()</code></li>
+<li>✅ Rank items with <code>track_top()</code> and <code>track_bottom()</code></li>
 <li>✅ Count unique values with <code>track_unique()</code></li>
 <li>✅ View metrics with <code>-m</code>, <code>--metrics=full</code>, and <code>--metrics=json</code></li>
 <li>✅ Persist metrics with <code>--metrics-file</code></li>
