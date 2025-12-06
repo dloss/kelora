@@ -374,6 +374,20 @@ impl ErrorEnhancer {
 
                 Some(hints.join(" "))
             }
+            EvalAltResult::ErrorRuntime(msg, _) => {
+                // Detect custom error messages involving Unit type "()"
+                let msg_str = msg.to_string();
+                if msg_str.contains("got ()") {
+                    Some(
+                        "Received (), which means a field is missing or returned no value. \
+                         Use e.get_path('field.path', default) to provide defaults, \
+                         or e.has_path('field.path') to check if a field exists first."
+                            .to_string(),
+                    )
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -3034,6 +3048,34 @@ mod tests {
         assert!(
             out.contains("status"),
             "output should surface available fields even when verbosity is zero"
+        );
+    }
+
+    #[test]
+    fn runtime_error_with_unit_type_suggests_get_path() {
+        let config = DebugConfig::new(0);
+        let enhancer = ErrorEnhancer::new(config);
+        let scope = Scope::new();
+
+        let err = EvalAltResult::ErrorRuntime(
+            "track_count requires a string key; got ()".into(),
+            rhai::Position::NONE,
+        );
+        let ctx = ExecutionContext::default();
+        let out = enhancer.enhance_error(&err, &scope, "track_count(e.endpoint)", "exec", &ctx);
+
+        eprintln!("enhanced error:\n{}", out);
+        assert!(
+            out.contains("field is missing"),
+            "output should explain that () means a missing field"
+        );
+        assert!(
+            out.contains("get_path"),
+            "output should suggest get_path for handling missing fields"
+        );
+        assert!(
+            out.contains("has_path"),
+            "output should suggest has_path for checking field existence"
         );
     }
 
