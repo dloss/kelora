@@ -290,18 +290,16 @@ cat > /tmp/monitoring.jsonl << 'EOF'
 {"timestamp": "2024-01-15T10:09:00Z", "host": "server1", "cpu": 59}
 EOF
 
-# Detect gaps > 2 minutes between events
+# Detect gaps > 2 minutes between events using a 2-event window
 kelora -j /tmp/monitoring.jsonl \
-    --begin 'state.last_ts = ()' \
-    -e 'if state.last_ts != () {
-            let gap = meta.parsed_ts - state.last_ts;
-            e.gap_seconds = gap.as_seconds();
+    --window 2 \
+    -e 'if window.len() >= 2 {
+            let gap = meta.parsed_ts - to_datetime(window[1].timestamp);
             if gap.as_seconds() > 120 {
                 e.alert = "GAP DETECTED";
                 e.gap_duration = gap.to_string();
             }
-        }
-        state.last_ts = meta.parsed_ts' \
+        }' \
     --filter 'e.has("alert")' \
     -k timestamp,gap_duration,alert
 ```
@@ -312,11 +310,13 @@ timestamp='2024-01-15T10:08:00Z' gap_duration='6m' alert='GAP DETECTED'
 ```
 
 This example:
-- Uses `state` to track the previous event's timestamp
-- Compares `meta.parsed_ts` against the stored value
+- Uses `--window 2` to access the previous event via `window[1]`
+- Compares `meta.parsed_ts` (current, pre-parsed) against the previous event's timestamp
 - Detects a 6-minute gap where monitoring stopped reporting
 - Can't be done with `--since`/`--until` (filters absolute time ranges)
 - Can't be done with `--span` (aggregates by time windows, not gaps between events)
+
+**Note:** The window contains event snapshots before exec modifications, so we use `meta.parsed_ts` for the current event and `to_datetime(window[1].timestamp)` for the previous event.
 
 ### Another Example: Request Rate Bucketing by Hour
 
@@ -335,8 +335,7 @@ EOF
 
 # Count requests per hour using meta.parsed_ts
 kelora -j /tmp/api_requests.jsonl \
-    -e 'e.hour = meta.parsed_ts.hour();
-        track_count("requests_by_hour_" + e.hour)' \
+    -e 'track_count("requests_by_hour_" + meta.parsed_ts.hour())' \
     -m
 ```
 
