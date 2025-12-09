@@ -1373,7 +1373,13 @@ fn main() -> Result<()> {
     };
 
     // Create configuration from CLI and set stages (using lib config directly)
-    let mut config = KeloraConfig::from_cli(&cli)?;
+    let mut config = match KeloraConfig::from_cli(&cli) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            stderr.writeln(&format!("kelora: {:#}", e)).unwrap_or(());
+            std::process::exit(ExitCode::InvalidUsage as i32);
+        }
+    };
     // Set the ordered stages directly
     config.processing.stages = ordered_stages;
     let diagnostics_allowed = !config.processing.silent && !config.processing.suppress_diagnostics;
@@ -1402,7 +1408,13 @@ fn main() -> Result<()> {
     }
 
     // Set processed begin/end scripts with includes applied
-    let (processed_begin, processed_end) = cli.get_processed_begin_end(&matches)?;
+    let (processed_begin, processed_end) = match cli.get_processed_begin_end(&matches) {
+        Ok(scripts) => scripts,
+        Err(e) => {
+            stderr.writeln(&format!("kelora: {:#}", e)).unwrap_or(());
+            std::process::exit(ExitCode::GeneralError as i32);
+        }
+    };
     config.processing.begin = processed_begin;
     config.processing.end = processed_end;
 
