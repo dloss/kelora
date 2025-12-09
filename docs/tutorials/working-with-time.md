@@ -254,19 +254,113 @@ echo '{"log": "Event at 2024-01-15 10:30:00"}' | \
     -e 'e.event_time = to_datetime(e.log.extract_regex(r"at (.+)$", 1), "%Y-%m-%d %H:%M:%S", "Europe/Berlin")'
 ```
 
-## Step 8: DateTime Operations
+## Step 8: Using Pre-Parsed Timestamps with `meta.parsed_ts`
+
+Kelora automatically parses timestamps during ingestion and exposes them via `meta.parsed_ts` as a DateTime object. This is more efficient than calling `to_datetime()` repeatedly:
+
+```bash
+# Extract time components using meta.parsed_ts (faster!)
+echo '{"timestamp": "2024-01-15T10:30:45Z"}' | \
+    kelora -j \
+    -e 'e.hour = meta.parsed_ts.hour();
+        e.day = meta.parsed_ts.day();
+        e.month = meta.parsed_ts.month();
+        e.year = meta.parsed_ts.year()' \
+    -k hour,day,month,year
+```
+
+**Why use `meta.parsed_ts`?**
+
+- ✅ Already parsed - no conversion overhead
+- ✅ Uses Kelora's detected timestamp field automatically
+- ✅ Respects `--ts-field` and `--ts-format` options
+- ✅ One source of truth for all time operations
+
+### Real-World Example: Detecting Monitoring Gaps
+
+A practical use case that can't be done with `--since`/`--until` or `--span` alone: finding gaps in time-series data where events stop arriving:
+
+```bash
+# Create sample monitoring data with a gap
+cat > /tmp/monitoring.jsonl << 'EOF'
+{"timestamp": "2024-01-15T10:00:00Z", "host": "server1", "cpu": 45}
+{"timestamp": "2024-01-15T10:01:00Z", "host": "server1", "cpu": 48}
+{"timestamp": "2024-01-15T10:02:00Z", "host": "server1", "cpu": 52}
+{"timestamp": "2024-01-15T10:08:00Z", "host": "server1", "cpu": 61}
+{"timestamp": "2024-01-15T10:09:00Z", "host": "server1", "cpu": 59}
+EOF
+
+# Detect gaps > 2 minutes between events
+kelora -j /tmp/monitoring.jsonl \
+    --begin 'state.last_ts = ()' \
+    -e 'if state.last_ts != () {
+            let gap = meta.parsed_ts - state.last_ts;
+            e.gap_seconds = gap.as_seconds();
+            if gap.as_seconds() > 120 {
+                e.alert = "GAP DETECTED";
+                e.gap_duration = gap.to_string();
+            }
+        }
+        state.last_ts = meta.parsed_ts' \
+    --filter 'e.has("alert")' \
+    -k timestamp,gap_duration,alert
+```
+
+**Output:**
+```
+timestamp='2024-01-15T10:08:00Z' gap_duration='6m' alert='GAP DETECTED'
+```
+
+This example:
+- Uses `state` to track the previous event's timestamp
+- Compares `meta.parsed_ts` against the stored value
+- Detects a 6-minute gap where monitoring stopped reporting
+- Can't be done with `--since`/`--until` (filters absolute time ranges)
+- Can't be done with `--span` (aggregates by time windows, not gaps between events)
+
+### Another Example: Request Rate Bucketing by Hour
+
+Analyze request patterns by hour of day (useful for capacity planning):
+
+```bash
+# Sample API logs
+cat > /tmp/api_requests.jsonl << 'EOF'
+{"timestamp": "2024-01-15T08:30:00Z", "endpoint": "/api/users", "status": 200}
+{"timestamp": "2024-01-15T08:45:00Z", "endpoint": "/api/orders", "status": 200}
+{"timestamp": "2024-01-15T14:15:00Z", "endpoint": "/api/users", "status": 200}
+{"timestamp": "2024-01-15T14:30:00Z", "endpoint": "/api/products", "status": 200}
+{"timestamp": "2024-01-15T14:35:00Z", "endpoint": "/api/users", "status": 500}
+{"timestamp": "2024-01-15T20:10:00Z", "endpoint": "/api/orders", "status": 200}
+EOF
+
+# Count requests per hour using meta.parsed_ts
+kelora -j /tmp/api_requests.jsonl \
+    -e 'e.hour = meta.parsed_ts.hour();
+        track_count("requests_by_hour_" + e.hour)' \
+    -m
+```
+
+**Output:**
+```
+requests_by_hour_8  = 2
+requests_by_hour_14 = 3
+requests_by_hour_20 = 1
+```
+
+This shows traffic patterns across the day, helping identify peak hours for capacity planning.
+
+## Step 9: DateTime Operations
 
 Extract components and format timestamps:
 
 ```bash
-# Extract time components
+# Extract time components (using meta.parsed_ts is more efficient)
 echo '{"timestamp": "2024-01-15T10:30:45Z"}' | \
     kelora -j \
-    -e 'let dt = to_datetime(e.timestamp);
-        e.hour = dt.hour();
-        e.day = dt.day();
-        e.month = dt.month();
-        e.year = dt.year()' \
+    -e 'e.hour = meta.parsed_ts.hour();
+        e.day = meta.parsed_ts.day();
+        e.month = meta.parsed_ts.month();
+        e.year = meta.parsed_ts.year()' \
     -k hour,day,month,year
 
 # Format timestamp
@@ -294,7 +388,7 @@ echo '{"timestamp": "2024-01-15T10:30:45Z"}' | \
 - `.to_timezone(name)` - Named timezone conversion
 - `.timezone_name()` - Get timezone name
 
-## Step 9: Duration Calculations
+## Step 10: Duration Calculations
 
 Calculate time differences between events:
 
@@ -338,7 +432,7 @@ echo '{"timestamp": "2024-01-15T10:00:00Z"}' | \
 - `.as_minutes()`, `.as_hours()`, `.as_days()`
 - `.to_string()` - Human-readable format
 
-## Step 10: Real-World Example - Request Duration Analysis
+## Step 11: Real-World Example - Request Duration Analysis
 
 Analyze API request durations with proper time handling:
 
@@ -361,7 +455,7 @@ kelora -j api_logs.json \
     -k formatted_time,endpoint,duration_human
 ```
 
-## Step 11: Time-Based Filtering with Business Hours
+## Step 12: Time-Based Filtering with Business Hours
 
 Filter logs during business hours across timezones:
 
@@ -381,7 +475,7 @@ kelora -j app.log \
     --filter 'e.is_weekend'
 ```
 
-## Step 12: Comparing Timestamps
+## Step 13: Comparing Timestamps
 
 Use datetime comparison in filters:
 
@@ -409,7 +503,7 @@ kelora -j app.log \
 - `>`, `<` - Greater/less than
 - `>=`, `<=` - Greater/less or equal
 
-## Step 13: Current Time Function
+## Step 14: Current Time Function
 
 Use `now()` for relative time calculations:
 
@@ -524,21 +618,28 @@ kelora -j --since 1h app.log
 kelora -j app.log -e 'let dt = to_datetime(e.timestamp)' --filter 'now() - dt < to_duration("1h")'
 ```
 
-### Store Parsed DateTime in Variable
+### Prefer `meta.parsed_ts` Over `to_datetime()`
 
 ```bash
-# Good - parse once, use multiple times
+# Best - use pre-parsed timestamp (already a DateTime object)
 kelora -j app.log \
-    -e 'let dt = to_datetime(e.timestamp);
-        e.hour = dt.hour();
-        e.day = dt.day();
-        e.formatted = dt.format("%Y-%m-%d")'
+    -e 'e.hour = meta.parsed_ts.hour();
+        e.day = meta.parsed_ts.day();
+        e.formatted = meta.parsed_ts.format("%Y-%m-%d")'
 
-# Less efficient - parse multiple times
+# Good - parse once, use multiple times (only if you need a non-detected field)
+kelora -j app.log \
+    -e 'let dt = to_datetime(e.custom_time);
+        e.hour = dt.hour();
+        e.day = dt.day()'
+
+# Avoid - parse multiple times (wasteful)
 kelora -j app.log \
     -e 'e.hour = to_datetime(e.timestamp).hour();
         e.day = to_datetime(e.timestamp).day()'
 ```
+
+**Key principle:** Use `meta.parsed_ts` for the primary timestamp field (the one Kelora detects/filters on). Only use `to_datetime()` for additional timestamp fields in your events.
 
 ### Use ISO Format for Interoperability
 
