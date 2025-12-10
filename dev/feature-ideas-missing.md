@@ -234,25 +234,44 @@ if mem_delta > 500 {
 
 ---
 
-### 7. Streaming Approximate Percentiles (`track_p50()`, `track_p95()`, `track_p99()`)
+### 7. Streaming Approximate Percentiles (`track_percentiles()`)
 
 **What:** Calculate percentiles on-the-fly without storing all values - essential for latency monitoring at scale.
 
-**Why useful:** Current `percentile()` requires collecting all values in an array. For millions of events, this is memory-prohibitive. Streaming approximation (using t-digest or similar) solves this.
+**Why useful:** Current `percentile()` requires collecting all values in an array. For millions of events, this is memory-prohibitive. Streaming approximation using t-digest solves this.
+
+**API Design:** `track_percentiles()` (plural) is the ONLY `track_*()` function that auto-suffixes metric names, because:
+- You almost always want multiple percentiles (p50, p95, p99)
+- They're parameterized by the percentile value
+- Auto-suffixing prevents awkward repetition: `track_percentiles("api_latency_p95", e.dur, 95)`
+- Plural name signals the special behavior
 
 **Example:**
 ```rhai
-// Track API latency percentiles
-track_p95("api_latency", e.duration_ms)
-track_p99("api_latency", e.duration_ms)
+// Track multiple percentiles - creates api_latency_p50, api_latency_p95, api_latency_p99
+track_percentiles("api_latency", e.duration_ms, [50, 95, 99])
+
+// Single percentile (use array with one element)
+track_percentiles("api_latency", e.duration_ms, [95])
+// → creates api_latency_p95
 
 // Per-endpoint tracking
-track_p50("endpoint_" + e.path, e.response_time)
+track_percentiles("latency_" + e.path, e.response_time, [95, 99])
+// → creates latency_/api/users_p95, latency_/api/users_p99
 
-// Metrics output shows: api_latency_p95: 245ms, api_latency_p99: 890ms
+// Metrics output:
+//   api_latency_p50 = 123
+//   api_latency_p95 = 245
+//   api_latency_p99 = 890
 ```
 
-**Implementation:** t-digest algorithm or simpler histogram-based approach, ~150-200 lines in `tracking.rs`.
+**Implementation:**
+- t-digest algorithm (1-2% accuracy, industry standard)
+- Each percentile gets own t-digest: `api_latency_p95`, `api_latency_p99`
+- Fully parallel-safe: each metric merges independently
+- ~200-250 lines in `tracking.rs`
+
+**Accuracy:** 1-2% relative error (e.g., true p95=250ms → reports 248-252ms). Good enough for operational monitoring, not for SLO compliance billing.
 
 ---
 
@@ -306,26 +325,25 @@ if sample_every(100) {
 
 ## String & Parsing Functions
 
-### 10. Regex Multi-Field Extraction (`extract_fields()`)
+### 10. Regex Multi-Field Extraction (`absorb_regex()`)
 
 **What:** Extract multiple named capture groups from a regex into event fields in one operation.
 
-**Why useful:** Common pattern: parse unstructured text into structured fields. Currently needs multiple `extract_regex()` calls. This does it in one shot.
+**Why useful:** Common pattern: parse unstructured text into structured fields. Currently needs multiple `extract_regex()` calls. This does it in one shot. Consistent with existing `absorb_kv()` function.
 
 **Example:**
 ```rhai
-// Parse custom log format in one go
-e.extract_fields(
-    r"User (?P<user>\w+) from (?P<ip>[\d.]+) (?P<action>\w+) (?P<resource>.*)",
-    ["user", "ip", "action", "resource"]
+// Parse custom log format in one go - modifies event in-place
+e.absorb_regex(
+    r"User (?P<user>\w+) from (?P<ip>[\d.]+) (?P<action>\w+) (?P<resource>.*)"
 )
 // Now e.user, e.ip, e.action, e.resource are all populated
 
-// Parse error messages
-e.extract_fields(
-    r"Error (?P<code>\d+): (?P<message>.*) at (?P<location>.*)",
-    ["error_code", "error_msg", "location"]
+// Parse error messages from a field
+e.msg.absorb_regex(
+    r"Error (?P<code>\d+): (?P<message>.*) at (?P<location>.*)"
 )
+// Extract named groups and add to event: e.code, e.message, e.location
 ```
 
 **Implementation:** Use existing regex infrastructure, ~60 lines in `strings.rs`.
@@ -388,25 +406,28 @@ if added.len() > 0 {
 ## Summary by Category
 
 ### High Priority (Simple + High Impact)
-- **Time Bucketing** - Essential for grouping by time intervals
-- **Deduplication** - Critical for real-world log processing
-- **Sequence Numbers** - Simple but surprisingly useful
-- **Counter Sampling** - Complements existing bucket sampling
+- **Time Bucketing (`dt.round_to()`)** - Essential for grouping by time intervals
+- **Multi-Field Extraction (`absorb_regex()`)** - Parse unstructured text in one shot
+- **Streaming Percentiles (`track_percentiles()`)** - Parallel-safe, memory-efficient latency tracking
+- **Counter Sampling (`sample_every()`)** - Complements existing bucket sampling
 - **First/Last Tracking** - Common pattern, easy to implement
 
 ### Medium Priority (More Complex but Very Useful)
-- **Burst Detection** - Security and monitoring use cases
-- **Rate Calculation** - Performance monitoring essential
-- **Delta Tracking** - Counter monitoring and anomaly detection
+- **Burst Detection** - Security and monitoring use cases (sequential only)
+- **Delta Tracking** - Counter monitoring and anomaly detection (sequential only)
 - **Moving Average** - Noise reduction and trend detection
-- **Multi-Field Extraction** - Parsing efficiency
-
-### Advanced Features (Require More Design)
-- **Streaming Percentiles** - Memory-efficient metrics at scale
-- **Event Correlation** - Distributed tracing patterns
-- **Threshold Tracking** - Heavy hitter detection
 - **Set Operations** - Collection comparison utilities
 - **Smart Truncation** - Polish for text handling
+
+### Sequential-Mode Only (Cannot Work in Parallel)
+- **Deduplication (`track_seen()`)** - Requires global state lookup
+- **Sequence Numbers (`track_sequence()`)** - Inherently serial
+- **Event Correlation (`track_correlation()`)** - Paired events may hit different workers
+- **Rate Calculation (`track_rate()`)** - Requires event ordering by time
+
+### Advanced Features (Require More Design)
+- **Threshold Tracking** - Heavy hitter detection with auto-pruning
+- **Cardinality Estimation (`track_unique()`)** - HyperLogLog for parallel-safe unique counts
 
 ## Implementation Notes
 
@@ -421,12 +442,33 @@ Features that require `--metrics` flag:
 - All `track_*` functions (consistent with existing tracking functions)
 
 Features that work only in sequential mode:
+- `track_seen()` (requires global state lookup)
+- `track_sequence()` (sequences are inherently serial)
 - `track_correlation()` (requires consistent state)
 - `track_burst()` (time-window tracking needs ordering)
+- `track_rate()` (requires event ordering)
+- `track_delta()` (requires consecutive events)
+- `track_moving_avg()` (needs ordered sliding window)
 
-Features compatible with `--parallel`:
+Features fully compatible with `--parallel`:
 - `dt.round_to()` (stateless transformation)
+- `absorb_regex()` (stateless parsing)
+- `track_percentiles()` (t-digest merges, fully parallel-safe)
 - `sample_every()` (with thread-local counters)
-- `extract_fields()` (stateless parsing)
 - `truncate_words()` (stateless string operation)
 - Array set operations (stateless)
+- `track_if_above()` (threshold filtering, mergeable)
+
+## Special Note on Auto-Suffixing
+
+After analyzing all existing `track_*()` usage patterns, **auto-suffixing is NOT applied to existing functions** because:
+- 90% of usage is single-operation counting where suffix adds noise: `track_count("requests")` → `requests` is clearer than `requests_count`
+- Users already encode semantics in names: `latency_total_ms`, `latency_p99`, `latency_samples`
+- Pipe namespace patterns would break: `metric|service_sum` puts suffix in wrong place
+
+**ONLY `track_percentiles()` auto-suffixes** because:
+- Plural name signals the behavior
+- Percentiles are always multi-valued (p50, p95, p99 together)
+- Prevents awkward repetition: `track_percentiles("api_latency", e.dur, [95, 99])` is cleaner than manually repeating the key three times
+
+See `dev/auto-suffix-examples-review.md` for detailed analysis of existing patterns.
