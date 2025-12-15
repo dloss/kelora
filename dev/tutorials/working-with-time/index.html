@@ -786,10 +786,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-10-real-world-example-request-duration-analysis" class="md-nav__link">
+  <a href="#step-10-time-bucketing-for-aggregation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 10: Real-World Example - Request Duration Analysis
+        Step 10: Time Bucketing for Aggregation
       
     </span>
   </a>
@@ -797,10 +797,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-11-time-based-filtering-with-business-hours" class="md-nav__link">
+  <a href="#step-11-real-world-example-request-duration-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 11: Time-Based Filtering with Business Hours
+        Step 11: Real-World Example - Request Duration Analysis
       
     </span>
   </a>
@@ -808,10 +808,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-12-comparing-timestamps" class="md-nav__link">
+  <a href="#step-12-time-based-filtering-with-business-hours" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 12: Comparing Timestamps
+        Step 12: Time-Based Filtering with Business Hours
       
     </span>
   </a>
@@ -819,10 +819,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-13-current-time-function" class="md-nav__link">
+  <a href="#step-13-comparing-timestamps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 13: Current Time Function
+        Step 13: Comparing Timestamps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-14-current-time-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 14: Current Time Function
       
     </span>
   </a>
@@ -2595,10 +2606,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-10-real-world-example-request-duration-analysis" class="md-nav__link">
+  <a href="#step-10-time-bucketing-for-aggregation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 10: Real-World Example - Request Duration Analysis
+        Step 10: Time Bucketing for Aggregation
       
     </span>
   </a>
@@ -2606,10 +2617,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-11-time-based-filtering-with-business-hours" class="md-nav__link">
+  <a href="#step-11-real-world-example-request-duration-analysis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 11: Time-Based Filtering with Business Hours
+        Step 11: Real-World Example - Request Duration Analysis
       
     </span>
   </a>
@@ -2617,10 +2628,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-12-comparing-timestamps" class="md-nav__link">
+  <a href="#step-12-time-based-filtering-with-business-hours" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 12: Comparing Timestamps
+        Step 12: Time-Based Filtering with Business Hours
       
     </span>
   </a>
@@ -2628,10 +2639,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-13-current-time-function" class="md-nav__link">
+  <a href="#step-13-comparing-timestamps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 13: Current Time Function
+        Step 13: Comparing Timestamps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-14-current-time-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 14: Current Time Function
       
     </span>
   </a>
@@ -2935,7 +2957,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: json
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 3 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 3 total, 3 output, 0 filtered (0.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 2568 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 2512 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts, timestamp, time (auto-detected) - 3/3 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2024-01-15T10:30:00+00:00 to 2024-01-15T10:32:00+00:00 (2m)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Keys seen: message,time,timestamp,ts
@@ -3199,58 +3221,115 @@
 <li><code>.as_minutes()</code>, <code>.as_hours()</code>, <code>.as_days()</code></li>
 <li><code>.to_string()</code> - Human-readable format</li>
 </ul>
-<h2 id="step-10-real-world-example-request-duration-analysis">Step 10: Real-World Example - Request Duration Analysis<a class="headerlink" href="#step-10-real-world-example-request-duration-analysis" title="Permanent link">&para;</a></h2>
+<h2 id="step-10-time-bucketing-for-aggregation">Step 10: Time Bucketing for Aggregation<a class="headerlink" href="#step-10-time-bucketing-for-aggregation" title="Permanent link">&para;</a></h2>
+<p>Group events into time buckets for histograms and time-series analysis using <code>round_to()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Create sample timestamped data</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>requests.jsonl<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="s">{&quot;timestamp&quot;: &quot;2024-01-15T10:03:45Z&quot;, &quot;status&quot;: 200}</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="s">{&quot;timestamp&quot;: &quot;2024-01-15T10:07:23Z&quot;, &quot;status&quot;: 200}</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="s">{&quot;timestamp&quot;: &quot;2024-01-15T10:08:12Z&quot;, &quot;status&quot;: 500}</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="s">{&quot;timestamp&quot;: &quot;2024-01-15T10:13:56Z&quot;, &quot;status&quot;: 200}</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="s">{&quot;timestamp&quot;: &quot;2024-01-15T10:17:34Z&quot;, &quot;status&quot;: 404}</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="s">{&quot;timestamp&quot;: &quot;2024-01-15T10:22:01Z&quot;, &quot;status&quot;: 200}</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="s">EOF</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="c1"># Group requests into 5-minute buckets</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>kelora<span class="w"> </span>-j<span class="w"> </span>requests.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="s1">        e.bucket = dt.round_to(&quot;5m&quot;).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">    </span>-m<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;requests_per_5min&quot;, e.bucket)&#39;</span>
+</code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>requests_per_5min:
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  2024-01-15T10:00:00+00:00: 2
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  2024-01-15T10:05:00+00:00: 2
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  2024-01-15T10:10:00+00:00: 1
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  2024-01-15T10:15:00+00:00: 1
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  2024-01-15T10:20:00+00:00: 1
+</code></pre></div></p>
+<p><strong>Different time granularities:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Hourly buckets for daily patterns</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api_logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="s1">        e.hour = dt.round_to(&quot;1h&quot;).format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>-m<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.hour)&#39;</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># Daily buckets for weekly trends</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api_logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.date = to_datetime(e.timestamp).round_to(&quot;1d&quot;).format(&quot;%Y-%m-%d&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span>-m<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;requests_per_day&quot;, e.date)&#39;</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="c1"># 15-minute buckets for fine-grained analysis</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api_logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.bucket = to_datetime(e.timestamp).round_to(&quot;15m&quot;).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="w">    </span>-m<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;errors&quot;, e.bucket)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+</code></pre></div>
+<p><strong>How <code>round_to()</code> works:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Rounds DOWN to the nearest interval boundary (floor operation)
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>let dt = to_datetime(&quot;2024-01-15T10:34:56Z&quot;);
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>dt.round_to(&quot;5m&quot;)   // → 2024-01-15T10:30:00Z
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>dt.round_to(&quot;1h&quot;)   // → 2024-01-15T10:00:00Z
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>dt.round_to(&quot;1d&quot;)   // → 2024-01-15T00:00:00Z
+</code></pre></div>
+<p><strong>Common use cases:</strong>
+- <strong>Latency histograms</strong> - Group response times into time windows
+- <strong>Traffic patterns</strong> - Analyze request volume over time
+- <strong>Error trending</strong> - Track error rates by hour/day
+- <strong>Capacity planning</strong> - Identify peak usage periods</p>
+<h2 id="step-11-real-world-example-request-duration-analysis">Step 11: Real-World Example - Request Duration Analysis<a class="headerlink" href="#step-11-real-world-example-request-duration-analysis" title="Permanent link">&para;</a></h2>
 <p>Analyze API request durations with proper time handling:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Sample log data</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>cat<span class="w"> </span>api_logs.json
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/users&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">45</span><span class="o">}</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:05Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/orders&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">230</span><span class="o">}</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:10Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/users&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">1200</span><span class="o">}</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:15Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/products&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">89</span><span class="o">}</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># Analyze slow requests in the last hour</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api_logs.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">    </span>--since<span class="w"> </span>1h<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="s1">        e.duration_human = humanize_duration(e.duration_ms);</span>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="s1">        e.hour = dt.hour();</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="s1">        e.formatted_time = dt.format(&quot;%H:%M:%S&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">    </span>-k<span class="w"> </span>formatted_time,endpoint,duration_human
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Sample log data</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>cat<span class="w"> </span>api_logs.json
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/users&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">45</span><span class="o">}</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:05Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/orders&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">230</span><span class="o">}</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:10Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/users&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">1200</span><span class="o">}</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="o">{</span><span class="s2">&quot;timestamp&quot;</span>:<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:15Z&quot;</span>,<span class="w"> </span><span class="s2">&quot;endpoint&quot;</span>:<span class="w"> </span><span class="s2">&quot;/api/products&quot;</span>,<span class="w"> </span><span class="s2">&quot;duration_ms&quot;</span>:<span class="w"> </span><span class="m">89</span><span class="o">}</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># Analyze slow requests in the last hour</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api_logs.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span>--since<span class="w"> </span>1h<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="s1">        e.duration_human = humanize_duration(e.duration_ms);</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="s1">        e.hour = dt.hour();</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="s1">        e.formatted_time = dt.format(&quot;%H:%M:%S&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="w">    </span>-k<span class="w"> </span>formatted_time,endpoint,duration_human
 </code></pre></div>
-<h2 id="step-11-time-based-filtering-with-business-hours">Step 11: Time-Based Filtering with Business Hours<a class="headerlink" href="#step-11-time-based-filtering-with-business-hours" title="Permanent link">&para;</a></h2>
+<h2 id="step-12-time-based-filtering-with-business-hours">Step 12: Time-Based Filtering with Business Hours<a class="headerlink" href="#step-12-time-based-filtering-with-business-hours" title="Permanent link">&para;</a></h2>
 <p>Filter logs during business hours across timezones:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Filter for events during business hours (9 AM - 5 PM)</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span>--input-tz<span class="w"> </span>America/New_York<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="s1">        e.hour = dt.hour()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.hour &gt;= 9 &amp;&amp; e.hour &lt; 17&#39;</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="c1"># Weekend vs weekday analysis</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="s1">        let dow = dt.format(&quot;%w&quot;).to_int();</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="s1">        e.is_weekend = dow == 0 || dow == 6&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.is_weekend&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Filter for events during business hours (9 AM - 5 PM)</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--input-tz<span class="w"> </span>America/New_York<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="s1">        e.hour = dt.hour()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.hour &gt;= 9 &amp;&amp; e.hour &lt; 17&#39;</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="c1"># Weekend vs weekday analysis</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="s1">        let dow = dt.format(&quot;%w&quot;).to_int();</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="s1">        e.is_weekend = dow == 0 || dow == 6&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.is_weekend&#39;</span>
 </code></pre></div>
-<h2 id="step-12-comparing-timestamps">Step 12: Comparing Timestamps<a class="headerlink" href="#step-12-comparing-timestamps" title="Permanent link">&para;</a></h2>
+<h2 id="step-13-comparing-timestamps">Step 13: Comparing Timestamps<a class="headerlink" href="#step-13-comparing-timestamps" title="Permanent link">&para;</a></h2>
 <p>Use datetime comparison in filters:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Events after a specific time</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;timestamp&quot;: &quot;2024-01-15T10:30:00Z&quot;, &quot;message&quot;: &quot;Event 1&quot;}</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="s1">{&quot;timestamp&quot;: &quot;2024-01-15T11:00:00Z&quot;, &quot;message&quot;: &quot;Event 2&quot;}</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="s1">{&quot;timestamp&quot;: &quot;2024-01-15T11:30:00Z&quot;, &quot;message&quot;: &quot;Event 3&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="s1">        let cutoff = to_datetime(&quot;2024-01-15T11:00:00Z&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;dt &gt; cutoff&#39;</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># Events within time window</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="s1">        let start = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="s1">        let end = to_datetime(&quot;2024-01-15T11:00:00Z&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;dt &gt;= start &amp;&amp; dt &lt;= end&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Events after a specific time</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;timestamp&quot;: &quot;2024-01-15T10:30:00Z&quot;, &quot;message&quot;: &quot;Event 1&quot;}</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="s1">{&quot;timestamp&quot;: &quot;2024-01-15T11:00:00Z&quot;, &quot;message&quot;: &quot;Event 2&quot;}</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="s1">{&quot;timestamp&quot;: &quot;2024-01-15T11:30:00Z&quot;, &quot;message&quot;: &quot;Event 3&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="s1">        let cutoff = to_datetime(&quot;2024-01-15T11:00:00Z&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;dt &gt; cutoff&#39;</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="c1"># Events within time window</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="s1">        let start = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="s1">        let end = to_datetime(&quot;2024-01-15T11:00:00Z&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;dt &gt;= start &amp;&amp; dt &lt;= end&#39;</span>
 </code></pre></div>
 <p><strong>Comparison operators:</strong></p>
 <ul>
@@ -3258,150 +3337,150 @@
 <li><code>&gt;</code>, <code>&lt;</code> - Greater/less than</li>
 <li><code>&gt;=</code>, <code>&lt;=</code> - Greater/less or equal</li>
 </ul>
-<h2 id="step-13-current-time-function">Step 13: Current Time Function<a class="headerlink" href="#step-13-current-time-function" title="Permanent link">&para;</a></h2>
+<h2 id="step-14-current-time-function">Step 14: Current Time Function<a class="headerlink" href="#step-14-current-time-function" title="Permanent link">&para;</a></h2>
 <p>Use <code>now()</code> for relative time calculations:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Find events in last 5 minutes using script</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="s1">        let cutoff = now() - to_duration(&quot;5m&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;dt &gt; cutoff&#39;</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Add processing timestamp</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.processed_at = now().to_iso()&#39;</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="c1"># Calculate event age</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="s1">        let age = now() - dt;</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="s1">        e.age_minutes = age.as_minutes()&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Find events in last 5 minutes using script</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="s1">        let cutoff = now() - to_duration(&quot;5m&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;dt &gt; cutoff&#39;</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Add processing timestamp</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.processed_at = now().to_iso()&#39;</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="c1"># Calculate event age</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="s1">        let age = now() - dt;</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="s1">        e.age_minutes = age.as_minutes()&#39;</span>
 </code></pre></div>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="pattern-1-parse-non-standard-timestamps">Pattern 1: Parse Non-Standard Timestamps<a class="headerlink" href="#pattern-1-parse-non-standard-timestamps" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Custom application format</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S,%3f&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span>--input-tz<span class="w"> </span>UTC
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Custom application format</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S,%3f&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>--input-tz<span class="w"> </span>UTC
 </code></pre></div>
 <h3 id="pattern-2-filter-by-time-range">Pattern 2: Filter by Time Range<a class="headerlink" href="#pattern-2-filter-by-time-range" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Last hour of errors</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--since<span class="w"> </span>1h<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>-l<span class="w"> </span>error
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Last hour of errors</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>--since<span class="w"> </span>1h<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span>-l<span class="w"> </span>error
 </code></pre></div>
 <h3 id="pattern-3-convert-timezone-for-display">Pattern 3: Convert Timezone for Display<a class="headerlink" href="#pattern-3-convert-timezone-for-display" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Show timestamps in local timezone</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-z
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Show timestamps in UTC</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-Z
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Show timestamps in local timezone</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-z
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Show timestamps in UTC</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-Z
 </code></pre></div>
 <h3 id="pattern-4-calculate-request-duration">Pattern 4: Calculate Request Duration<a class="headerlink" href="#pattern-4-calculate-request-duration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Add duration between start and end timestamps</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let start = to_datetime(e.start_time);</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="s1">        let end = to_datetime(e.end_time);</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="s1">        let duration = end - start;</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="s1">        e.duration_ms = duration.as_milliseconds()&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Add duration between start and end timestamps</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let start = to_datetime(e.start_time);</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="s1">        let end = to_datetime(e.end_time);</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="s1">        let duration = end - start;</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="s1">        e.duration_ms = duration.as_milliseconds()&#39;</span>
 </code></pre></div>
 <h3 id="pattern-5-business-hours-analysis">Pattern 5: Business Hours Analysis<a class="headerlink" href="#pattern-5-business-hours-analysis" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Filter for business hours in specific timezone</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--input-tz<span class="w"> </span>America/New_York<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="s1">        let hour = dt.hour()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;hour &gt;= 9 &amp;&amp; hour &lt; 17&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Filter for business hours in specific timezone</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--input-tz<span class="w"> </span>America/New_York<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="s1">        let hour = dt.hour()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;hour &gt;= 9 &amp;&amp; hour &lt; 17&#39;</span>
 </code></pre></div>
 <h3 id="pattern-6-humanize-durations">Pattern 6: Humanize Durations<a class="headerlink" href="#pattern-6-humanize-durations" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Convert milliseconds to human-readable format</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.duration_human = humanize_duration(e.response_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,endpoint,duration_human
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Convert milliseconds to human-readable format</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.duration_human = humanize_duration(e.response_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,endpoint,duration_human
 </code></pre></div>
 <h2 id="tips-and-best-practices">Tips and Best Practices<a class="headerlink" href="#tips-and-best-practices" title="Permanent link">&para;</a></h2>
 <h3 id="always-specify-timezone-for-naive-timestamps">Always Specify Timezone for Naive Timestamps<a class="headerlink" href="#always-specify-timezone-for-naive-timestamps" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Good - explicit timezone</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>app.log
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Avoid - relies on defaults</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Good - explicit timezone</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>app.log
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Avoid - relies on defaults</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="use-ts-format-for-custom-formats">Use --ts-format for Custom Formats<a class="headerlink" href="#use-ts-format-for-custom-formats" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Good - explicit format</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%b %d %H:%M:%S&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1"># Avoid - relies on auto-detection</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Good - explicit format</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%b %d %H:%M:%S&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Avoid - relies on auto-detection</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="filter-early-with-since-until">Filter Early with --since/--until<a class="headerlink" href="#filter-early-with-since-until" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Good - filter at input stage</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>app.log
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Less efficient - filter in script</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp)&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;now() - dt &lt; to_duration(&quot;1h&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Good - filter at input stage</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>app.log
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Less efficient - filter in script</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp)&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;now() - dt &lt; to_duration(&quot;1h&quot;)&#39;</span>
 </code></pre></div>
 <h3 id="store-parsed-datetime-in-variable">Store Parsed DateTime in Variable<a class="headerlink" href="#store-parsed-datetime-in-variable" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Good - parse once, use multiple times</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="s1">        e.hour = dt.hour();</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="s1">        e.day = dt.day();</span>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="s1">        e.formatted = dt.format(&quot;%Y-%m-%d&quot;)&#39;</span>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="c1"># Less efficient - parse multiple times</span>
-<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = to_datetime(e.timestamp).hour();</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="s1">        e.day = to_datetime(e.timestamp).day()&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Good - parse once, use multiple times</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;let dt = to_datetime(e.timestamp);</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="s1">        e.hour = dt.hour();</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="s1">        e.day = dt.day();</span>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="s1">        e.formatted = dt.format(&quot;%Y-%m-%d&quot;)&#39;</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="c1"># Less efficient - parse multiple times</span>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = to_datetime(e.timestamp).hour();</span>
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a><span class="s1">        e.day = to_datetime(e.timestamp).day()&#39;</span>
 </code></pre></div>
 <h3 id="use-iso-format-for-interoperability">Use ISO Format for Interoperability<a class="headerlink" href="#use-iso-format-for-interoperability" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Good - ISO 8601 format</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.timestamp = to_datetime(e.ts).to_iso()&#39;</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Less portable - custom format</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.timestamp = to_datetime(e.ts).format(&quot;%Y-%m-%d %H:%M:%S&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Good - ISO 8601 format</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.timestamp = to_datetime(e.ts).to_iso()&#39;</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="c1"># Less portable - custom format</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.timestamp = to_datetime(e.ts).format(&quot;%Y-%m-%d %H:%M:%S&quot;)&#39;</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="timestamps-not-being-detected">Timestamps Not Being Detected<a class="headerlink" href="#timestamps-not-being-detected" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Time filtering not working.</p>
 <p><strong>Solution:</strong> Check field names and add explicit timestamp field:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Debug: Show detected timestamp</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Point Kelora at your timestamp field explicitly</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:my_time level *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>--ts-field<span class="w"> </span>my_time
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Debug: Show detected timestamp</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># Point Kelora at your timestamp field explicitly</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:my_time level *message&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span>1h<span class="w"> </span>--ts-field<span class="w"> </span>my_time
 </code></pre></div></p>
 <h3 id="timezone-confusion">Timezone Confusion<a class="headerlink" href="#timezone-confusion" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Timestamps showing unexpected times.</p>
 <p><strong>Solution:</strong> Verify input timezone and display options:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Check what timezone is being used</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-z
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Verify timestamp includes timezone info</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-F<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Check what timezone is being used</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--input-tz<span class="w"> </span>UTC<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-z
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Verify timestamp includes timezone info</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--normalize-ts<span class="w"> </span>app.log<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-F<span class="w"> </span>json
 </code></pre></div></p>
 <h3 id="custom-format-not-parsing">Custom Format Not Parsing<a class="headerlink" href="#custom-format-not-parsing" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> <code>--ts-format</code> not working.</p>
 <p><strong>Solution:</strong> Test format with sample data:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Test format with verbose errors</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;2024-01-15 10:30:45,123 Test&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) *message&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span>--ts-field<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">    </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S,%3f&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="w">    </span>--verbose
-<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>
-<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="c1"># Check format string escaping</span>
-<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Ensure proper quoting</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Test format with verbose errors</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;2024-01-15 10:30:45,123 Test&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:timestamp(2) *message&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span>--ts-field<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">    </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S,%3f&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="w">    </span>--verbose
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a><span class="c1"># Check format string escaping</span>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>kelora<span class="w"> </span>--ts-format<span class="w"> </span><span class="s1">&#39;%Y-%m-%d %H:%M:%S&#39;</span><span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Ensure proper quoting</span>
 </code></pre></div></p>
 <h3 id="duration-calculations-wrong">Duration Calculations Wrong<a class="headerlink" href="#duration-calculations-wrong" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Negative or incorrect durations.</p>
 <p><strong>Solution:</strong> Verify timestamp order and timezone consistency:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Check both timestamps are parsed correctly</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;print(&quot;Start: &quot; + e.start_time + &quot;, End: &quot; + e.end_time);</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="s1">        let start = to_datetime(e.start_time);</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="s1">        let end = to_datetime(e.end_time);</span>
-<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="s1">        e.duration = (end - start).as_seconds()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="w">    </span>-n<span class="w"> </span><span class="m">3</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Check both timestamps are parsed correctly</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;print(&quot;Start: &quot; + e.start_time + &quot;, End: &quot; + e.end_time);</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="s1">        let start = to_datetime(e.start_time);</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="s1">        let end = to_datetime(e.end_time);</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="s1">        e.duration = (end - start).as_seconds()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="w">    </span>-n<span class="w"> </span><span class="m">3</span>
 </code></pre></div></p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <p>Now that you understand time handling in Kelora, explore:</p>
