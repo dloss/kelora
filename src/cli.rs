@@ -566,6 +566,10 @@ pub struct Cli {
     )]
     pub metrics_file: Option<String>,
 
+    /// Show script execution statistics at termination (timing per stage)
+    #[arg(long = "script-stats", help_heading = "Metrics and Stats")]
+    pub script_stats: bool,
+
     /// Specify custom configuration file path
     #[arg(long = "config-file", help_heading = "Configuration Options")]
     pub config_file: Option<String>,

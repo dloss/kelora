@@ -49,8 +49,33 @@ pub struct ProcessingStats {
     pub detected_format: Option<String>, // Format detected for this processing session
 }
 
+// Script execution statistics
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ScriptStageId {
+    pub stage_type: String,  // "filter", "exec", "begin", "end", "span_close"
+    pub stage_number: usize, // 0 for single stages, 1-based for multiple
+    pub script_name: Option<String>, // Filename if loaded from file
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ScriptStageStat {
+    pub calls: usize,
+    pub total_time: Duration,
+}
+
+impl ScriptStageStat {
+    pub fn avg_time(&self) -> Duration {
+        if self.calls > 0 {
+            self.total_time / self.calls as u32
+        } else {
+            Duration::ZERO
+        }
+    }
+}
+
 // Allow disabling stats collection when diagnostics/stats are suppressed
 static COLLECT_STATS: AtomicBool = AtomicBool::new(true);
+static COLLECT_SCRIPT_STATS: AtomicBool = AtomicBool::new(false);
 
 // File open failures use atomic counter since they can happen on any thread (e.g., decompression threads)
 static FILES_FAILED_TO_OPEN: AtomicUsize = AtomicUsize::new(0);
@@ -84,6 +109,7 @@ fn failed_file_samples() -> Vec<String> {
 // Thread-local storage for statistics (following track_count pattern)
 thread_local! {
     static THREAD_STATS: RefCell<ProcessingStats> = RefCell::new(ProcessingStats::new());
+    static SCRIPT_STATS: RefCell<IndexMap<ScriptStageId, ScriptStageStat>> = RefCell::new(IndexMap::new());
 }
 
 // Public API functions for stats collection (following track_count pattern)
@@ -785,6 +811,169 @@ impl ProcessingStats {
 
         format!("Processing completed with {}", parts.join(", "))
     }
+}
+
+// ============================================================================
+// Script Stats API
+// ============================================================================
+
+pub fn set_collect_script_stats(enabled: bool) {
+    COLLECT_SCRIPT_STATS.store(enabled, Ordering::Relaxed);
+}
+
+pub fn script_stats_enabled() -> bool {
+    COLLECT_SCRIPT_STATS.load(Ordering::Relaxed)
+}
+
+/// Record script execution time for a stage
+pub fn script_stats_record(stage_id: ScriptStageId, duration: Duration) {
+    if !script_stats_enabled() {
+        return;
+    }
+    SCRIPT_STATS.with(|stats| {
+        let mut stats = stats.borrow_mut();
+        let entry = stats.entry(stage_id).or_default();
+        entry.calls += 1;
+        entry.total_time += duration;
+    });
+}
+
+/// Get all script stats from current thread
+pub fn get_thread_script_stats() -> IndexMap<ScriptStageId, ScriptStageStat> {
+    SCRIPT_STATS.with(|stats| stats.borrow().clone())
+}
+
+/// Format script stats for display
+pub fn format_script_stats(stats_map: &IndexMap<ScriptStageId, ScriptStageStat>) -> String {
+    if stats_map.is_empty() {
+        return "Script stats: (no scripts executed)".to_string();
+    }
+
+    let mut output = String::from("Script stats:\n");
+    let mut total_time = Duration::ZERO;
+
+    // Count how many stages of each type exist and assign type-relative numbers
+    let mut stage_type_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
+    let mut stage_type_indices: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
+    let mut stage_relative_numbers: std::collections::HashMap<
+        (String, usize, Option<String>),
+        usize,
+    > = std::collections::HashMap::new();
+
+    for stage_id in stats_map.keys() {
+        *stage_type_counts
+            .entry(stage_id.stage_type.clone())
+            .or_insert(0) += 1;
+    }
+
+    for stage_id in stats_map.keys() {
+        let current_index = stage_type_indices
+            .entry(stage_id.stage_type.clone())
+            .or_insert(0);
+        *current_index += 1;
+        stage_relative_numbers.insert(
+            (
+                stage_id.stage_type.clone(),
+                stage_id.stage_number,
+                stage_id.script_name.clone(),
+            ),
+            *current_index,
+        );
+    }
+
+    for (stage_id, stat) in stats_map.iter() {
+        total_time += stat.total_time;
+
+        // Check if there are multiple stages of this type
+        let has_multiple = stage_type_counts
+            .get(&stage_id.stage_type)
+            .copied()
+            .unwrap_or(1)
+            > 1;
+
+        // Get type-relative number
+        let relative_num = stage_relative_numbers
+            .get(&(
+                stage_id.stage_type.clone(),
+                stage_id.stage_number,
+                stage_id.script_name.clone(),
+            ))
+            .copied()
+            .unwrap_or(1);
+
+        // Format stage label
+        let stage_label = if let Some(ref script_name) = stage_id.script_name {
+            // File-based script: show filename
+            if has_multiple {
+                format!("  --{} ({}):", stage_id.stage_type, script_name)
+            } else {
+                format!("  --{}:", stage_id.stage_type)
+            }
+        } else if has_multiple {
+            // Multiple stages of same type: show type-relative number
+            format!("  --{} ({}):", stage_id.stage_type, relative_num)
+        } else {
+            // Single stage
+            format!("  --{}:", stage_id.stage_type)
+        };
+
+        // Format time (use ms for times < 1s, s otherwise)
+        let time_str = if stat.total_time.as_secs() == 0 {
+            format!("{} ms", stat.total_time.as_millis())
+        } else {
+            format!("{:.2} s", stat.total_time.as_secs_f64())
+        };
+
+        // Format average time (use ns for times < 1us, us for < 1ms, ms otherwise)
+        let avg = stat.avg_time();
+        let avg_str = if avg.as_nanos() < 1_000 {
+            format!("{} ns", avg.as_nanos())
+        } else if avg.as_micros() < 1_000 {
+            format!("{} µs", avg.as_micros())
+        } else if avg.as_millis() < 1_000 {
+            format!("{} ms", avg.as_millis())
+        } else {
+            format!("{:.3} s", avg.as_secs_f64())
+        };
+
+        // Format call count with thousand separators
+        let calls_str = format_with_separators(stat.calls);
+
+        output.push_str(&format!(
+            "{:<30} {} ({} calls, {}/call)\n",
+            stage_label, time_str, calls_str, avg_str
+        ));
+    }
+
+    // Add total if there are multiple stages
+    if stats_map.len() > 1 {
+        output.push('\n');
+        let total_str = if total_time.as_secs() == 0 {
+            format!("{} ms", total_time.as_millis())
+        } else {
+            format!("{:.2} s", total_time.as_secs_f64())
+        };
+        output.push_str(&format!("  Total:                         {}\n", total_str));
+    }
+
+    output.trim_end().to_string()
+}
+
+/// Format number with thousand separators (e.g., 12,483,771)
+fn format_with_separators(n: usize) -> String {
+    let s = n.to_string();
+    let mut result = String::new();
+
+    for (count, c) in s.chars().rev().enumerate() {
+        if count > 0 && count % 3 == 0 {
+            result.push(',');
+        }
+        result.push(c);
+    }
+
+    result.chars().rev().collect()
 }
 
 #[cfg(test)]

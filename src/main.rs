@@ -330,6 +330,9 @@ fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         || (!config.processing.silent && !config.processing.suppress_diagnostics);
     set_collect_stats(collect_stats);
 
+    // Enable script stats collection if requested
+    stats::set_collect_script_stats(config.output.script_stats);
+
     // Start statistics collection if enabled
     if collect_stats {
         stats_start_timer();
@@ -1892,6 +1895,13 @@ fn main() -> Result<()> {
                 }
             }
 
+            // Print script stats if enabled (always to stderr)
+            if config.output.script_stats {
+                let script_stats = stats::get_thread_script_stats();
+                let formatted_script_stats = stats::format_script_stats(&script_stats);
+                stderr.writeln(&formatted_script_stats).unwrap_or(());
+            }
+
             emit_parse_failure_warning(
                 &config,
                 Some(&pipeline_result.tracking_data),
@@ -1942,6 +1952,13 @@ fn main() -> Result<()> {
                 formatted = formatted.trim_start_matches('\n').to_string();
             }
             stderr.writeln(&formatted).unwrap_or(());
+        }
+
+        // Print script stats if enabled (always to stderr)
+        if config.output.script_stats {
+            let script_stats = stats::get_thread_script_stats();
+            let formatted_script_stats = stats::format_script_stats(&script_stats);
+            stderr.writeln(&formatted_script_stats).unwrap_or(());
         }
 
         // Exit with the correct code based on which signal was received

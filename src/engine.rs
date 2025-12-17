@@ -2379,6 +2379,13 @@ impl RhaiEngine {
             scope.push("state", state_map.clone());
         }
 
+        // Record script timing if enabled
+        let start = if crate::stats::script_stats_enabled() {
+            Some(std::time::Instant::now())
+        } else {
+            None
+        };
+
         let _ = self
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
@@ -2394,6 +2401,16 @@ impl RhaiEngine {
                 );
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
+
+        // Record timing after execution
+        if let Some(start) = start {
+            let stage_id = crate::stats::ScriptStageId {
+                stage_type: "begin".to_string(),
+                stage_number: 0,
+                script_name: None,
+            };
+            crate::stats::script_stats_record(stage_id, start.elapsed());
+        }
 
         // Reset begin phase flag
         crate::rhai_functions::conf::set_begin_phase(false);
@@ -2439,6 +2456,13 @@ impl RhaiEngine {
             scope.push("state", state_map.clone());
         }
 
+        // Record script timing if enabled
+        let start = if crate::stats::script_stats_enabled() {
+            Some(std::time::Instant::now())
+        } else {
+            None
+        };
+
         let _ = self
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
@@ -2454,6 +2478,16 @@ impl RhaiEngine {
                 );
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
+
+        // Record timing after execution
+        if let Some(start) = start {
+            let stage_id = crate::stats::ScriptStageId {
+                stage_type: "end".to_string(),
+                stage_number: 0,
+                script_name: None,
+            };
+            crate::stats::script_stats_record(stage_id, start.elapsed());
+        }
 
         self.assert_conf_not_mutated(&scope)
             .map_err(anyhow::Error::from)?;
@@ -2493,6 +2527,13 @@ impl RhaiEngine {
 
         crate::rhai_functions::file_ops::clear_pending_ops();
 
+        // Record script timing if enabled
+        let start = if crate::stats::script_stats_enabled() {
+            Some(std::time::Instant::now())
+        } else {
+            None
+        };
+
         let _ = self
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
@@ -2508,6 +2549,16 @@ impl RhaiEngine {
                 );
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
+
+        // Record timing after execution
+        if let Some(start) = start {
+            let stage_id = crate::stats::ScriptStageId {
+                stage_type: "span-close".to_string(),
+                stage_number: 0,
+                script_name: None,
+            };
+            crate::stats::script_stats_record(stage_id, start.elapsed());
+        }
 
         self.assert_conf_not_mutated(&scope)
             .map_err(anyhow::Error::from)?;

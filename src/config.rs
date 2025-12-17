@@ -54,6 +54,7 @@ pub struct OutputConfig {
     pub metrics: Option<crate::cli::MetricsFormat>,
     pub metrics_with_events: bool,
     pub metrics_file: Option<String>,
+    pub script_stats: bool,
     pub mark_gaps: Option<chrono::Duration>,
     /// Timestamp formatting configuration (display-only)
     pub timestamp_formatting: TimestampFormatConfig,
@@ -838,6 +839,7 @@ impl KeloraConfig {
                 metrics: metrics_format,
                 metrics_with_events,
                 metrics_file,
+                script_stats: cli.script_stats,
                 mark_gaps: None,
                 timestamp_formatting: create_timestamp_format_config(cli, default_timezone.clone()),
             },
@@ -934,6 +936,7 @@ impl Default for KeloraConfig {
                 metrics: None,
                 metrics_with_events: false,
                 metrics_file: None,
+                script_stats: false,
                 mark_gaps: None,
                 timestamp_formatting: TimestampFormatConfig::default(),
             },

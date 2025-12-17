@@ -61,6 +61,13 @@ impl FilterStage {
 
         file_ops::clear_pending_ops();
 
+        // Record script timing if enabled
+        let start = if crate::stats::script_stats_enabled() {
+            Some(std::time::Instant::now())
+        } else {
+            None
+        };
+
         let eval_result = if ctx.window.is_empty() {
             ctx.rhai.execute_compiled_filter(
                 &self.compiled_filter,
@@ -77,6 +84,16 @@ impl FilterStage {
                 &mut ctx.internal_tracker,
             )
         };
+
+        // Record timing after execution
+        if let Some(start) = start {
+            let stage_id = crate::stats::ScriptStageId {
+                stage_type: "filter".to_string(),
+                stage_number: self.stage_number,
+                script_name: None, // TODO: add script_name field to FilterStage
+            };
+            crate::stats::script_stats_record(stage_id, start.elapsed());
+        }
 
         match eval_result {
             Ok(value) => {
@@ -331,6 +348,13 @@ impl ScriptStage for ExecStage {
 
         file_ops::clear_pending_ops();
 
+        // Record script timing if enabled
+        let start = if crate::stats::script_stats_enabled() {
+            Some(std::time::Instant::now())
+        } else {
+            None
+        };
+
         let result = if ctx.window.is_empty() {
             // No window context - use standard method
             ctx.rhai.execute_compiled_exec(
@@ -349,6 +373,16 @@ impl ScriptStage for ExecStage {
                 &mut ctx.internal_tracker,
             )
         };
+
+        // Record timing after execution
+        if let Some(start) = start {
+            let stage_id = crate::stats::ScriptStageId {
+                stage_type: "exec".to_string(),
+                stage_number: self.stage_number,
+                script_name: None, // TODO: add script_name field to ExecStage
+            };
+            crate::stats::script_stats_record(stage_id, start.elapsed());
+        }
 
         match result {
             Ok(()) => {
