@@ -852,70 +852,13 @@ pub fn format_script_stats(stats_map: &IndexMap<ScriptStageId, ScriptStageStat>)
     let mut output = String::from("Script stats:\n");
     let mut total_time = Duration::ZERO;
 
-    // Count how many stages of each type exist and assign type-relative numbers
-    let mut stage_type_counts: std::collections::HashMap<String, usize> =
-        std::collections::HashMap::new();
-    let mut stage_type_indices: std::collections::HashMap<String, usize> =
-        std::collections::HashMap::new();
-    let mut stage_relative_numbers: std::collections::HashMap<
-        (String, usize, Option<String>),
-        usize,
-    > = std::collections::HashMap::new();
-
-    for stage_id in stats_map.keys() {
-        *stage_type_counts
-            .entry(stage_id.stage_type.clone())
-            .or_insert(0) += 1;
-    }
-
-    for stage_id in stats_map.keys() {
-        let current_index = stage_type_indices
-            .entry(stage_id.stage_type.clone())
-            .or_insert(0);
-        *current_index += 1;
-        stage_relative_numbers.insert(
-            (
-                stage_id.stage_type.clone(),
-                stage_id.stage_number,
-                stage_id.script_name.clone(),
-            ),
-            *current_index,
-        );
-    }
-
     for (stage_id, stat) in stats_map.iter() {
         total_time += stat.total_time;
 
-        // Check if there are multiple stages of this type
-        let has_multiple = stage_type_counts
-            .get(&stage_id.stage_type)
-            .copied()
-            .unwrap_or(1)
-            > 1;
-
-        // Get type-relative number
-        let relative_num = stage_relative_numbers
-            .get(&(
-                stage_id.stage_type.clone(),
-                stage_id.stage_number,
-                stage_id.script_name.clone(),
-            ))
-            .copied()
-            .unwrap_or(1);
-
-        // Format stage label
+        // Format stage label (filename if present, otherwise just stage type)
         let stage_label = if let Some(ref script_name) = stage_id.script_name {
-            // File-based script: show filename
-            if has_multiple {
-                format!("  --{} ({}):", stage_id.stage_type, script_name)
-            } else {
-                format!("  --{}:", stage_id.stage_type)
-            }
-        } else if has_multiple {
-            // Multiple stages of same type: show type-relative number
-            format!("  --{} ({}):", stage_id.stage_type, relative_num)
+            format!("  --{} ({}):", stage_id.stage_type, script_name)
         } else {
-            // Single stage
             format!("  --{}:", stage_id.stage_type)
         };
 
