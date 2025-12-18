@@ -941,6 +941,41 @@ Persist metrics map to disk as JSON.
 kelora -j --exec 'track_count(e.service)' --metrics-file metrics.json app.log
 ```
 
+#### `--script-stats`
+
+Show script execution statistics at termination (timing per stage).
+
+Displays timing information for all script stages (filter, exec, begin, end, span-close) to help identify performance bottlenecks and quantify scripting overhead.
+
+**Output includes:**
+- Total time per stage
+- Call count per stage
+- Average time per call
+- Overall totals (when multiple stages exist)
+
+**Features:**
+- Zero overhead when disabled (single branch check)
+- Works with `--parallel` mode
+- Output to stderr at termination
+
+```bash
+kelora -j --filter 'e.level == "ERROR"' --exec 'e.norm = normalize(e.msg)' --script-stats app.log
+```
+
+**Example output:**
+```
+Script stats:
+  --filter:  842 ms (12,483,771 calls, 67 ns/call)
+  --exec:    1.2 s  (11,279,658 calls, 106 ns/call)
+
+  Total:     2.04 s (24,763,429 calls, 82 ns/call)
+```
+
+**Use cases:**
+- Identify slow scripts (high avg time per call)
+- Quantify scripting overhead (total time vs processing time)
+- Decide when to move logic to helper functions
+
 ## Configuration Options
 
 ### Configuration File
