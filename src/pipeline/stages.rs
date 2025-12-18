@@ -90,7 +90,7 @@ impl FilterStage {
             let stage_id = crate::stats::ScriptStageId {
                 stage_type: "filter".to_string(),
                 stage_number: self.stage_number,
-                script_name: None, // TODO: add script_name field to FilterStage
+                script_name: None,
             };
             crate::stats::script_stats_record(stage_id, start.elapsed());
         }
@@ -379,7 +379,7 @@ impl ScriptStage for ExecStage {
             let stage_id = crate::stats::ScriptStageId {
                 stage_type: "exec".to_string(),
                 stage_number: self.stage_number,
-                script_name: None, // TODO: add script_name field to ExecStage
+                script_name: None,
             };
             crate::stats::script_stats_record(stage_id, start.elapsed());
         }
