@@ -851,9 +851,11 @@ pub fn format_script_stats(stats_map: &IndexMap<ScriptStageId, ScriptStageStat>)
 
     let mut output = String::from("Script stats:\n");
     let mut total_time = Duration::ZERO;
+    let mut total_calls = 0;
 
     for (stage_id, stat) in stats_map.iter() {
         total_time += stat.total_time;
+        total_calls += stat.calls;
 
         // Format stage label (filename if present, otherwise just stage type)
         let stage_label = if let Some(ref script_name) = stage_id.script_name {
@@ -898,7 +900,30 @@ pub fn format_script_stats(stats_map: &IndexMap<ScriptStageId, ScriptStageStat>)
         } else {
             format!("{:.2} s", total_time.as_secs_f64())
         };
-        output.push_str(&format!("  Total:                         {}\n", total_str));
+
+        // Calculate overall average
+        let overall_avg = if total_calls > 0 {
+            total_time / total_calls as u32
+        } else {
+            Duration::ZERO
+        };
+
+        let overall_avg_str = if overall_avg.as_nanos() < 1_000 {
+            format!("{} ns", overall_avg.as_nanos())
+        } else if overall_avg.as_micros() < 1_000 {
+            format!("{} µs", overall_avg.as_micros())
+        } else if overall_avg.as_millis() < 1_000 {
+            format!("{} ms", overall_avg.as_millis())
+        } else {
+            format!("{:.3} s", overall_avg.as_secs_f64())
+        };
+
+        let total_calls_str = format_with_separators(total_calls);
+
+        output.push_str(&format!(
+            "  Total:                         {} ({} calls, {}/call)\n",
+            total_str, total_calls_str, overall_avg_str
+        ));
     }
 
     output.trim_end().to_string()
