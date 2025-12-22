@@ -1370,6 +1370,52 @@ track_bottom("tiny_requests", e.request_id, 5, e.bytes)
 !!! note "Parallel Mode Behavior"
     In parallel mode, each worker maintains its own top/bottom N. During merge, the lists are combined, re-sorted, and trimmed to N. Final results are deterministic.
 
+#### `track_percentiles(key, value [, [percentiles]])`
+Track streaming percentiles using the t-digest algorithm for memory-efficient percentile estimation. Automatically creates suffixed metrics for each percentile (e.g., `latency_p50`, `latency_p95`, `latency_p99.9`). **This is the only `track_*()` function that auto-suffixes** because percentiles are inherently multi-valued. Skips Unit `()` values. Works correctly in parallel mode.
+
+**Default percentiles:** `[0.90, 0.95, 0.99]` when no array provided.
+
+**Percentile notation:** Use 0.0-1.0 range (quantile notation):
+- `0.50` = 50th percentile (median) → creates `key_p50`
+- `0.95` = 95th percentile → creates `key_p95`
+- `0.999` = 99.9th percentile → creates `key_p99.9`
+
+**Memory efficiency:** Uses ~4KB per metric regardless of event count (vs. storing all values). Suitable for millions of events.
+
+**Accuracy:** ~1-2% relative error, suitable for operational monitoring.
+
+```rhai
+// Default percentiles [0.90, 0.95, 0.99]
+track_percentiles("api_latency", e.response_time)
+// Creates: api_latency_p90, api_latency_p95, api_latency_p99
+
+// Custom percentiles
+track_percentiles("latency", e.duration_ms, [0.50, 0.95, 0.99])
+// Creates: latency_p50, latency_p95, latency_p99
+
+// High-precision percentiles
+track_percentiles("latency", e.duration_ms, [0.999, 0.9999])
+// Creates: latency_p99.9, latency_p99.99
+
+// Per-endpoint tracking
+track_percentiles("latency_" + e.endpoint, e.response_time, [0.95, 0.99])
+
+// Safe with conversions that may fail
+let latency = e.latency_str.to_float()  // Returns () on error
+track_percentiles("api_p95", latency)   // Skips () values
+```
+
+!!! tip "When to Use Percentiles vs. Average"
+    Use `track_percentiles()` instead of `track_avg()` when:
+
+    - You need tail latency metrics (p95, p99) for SLO monitoring
+    - Data has outliers that would skew the average
+    - You need multiple percentile values (median, p95, p99)
+    - Working with latency, response time, or duration metrics
+
+!!! note "Parallel Mode Behavior"
+    In parallel mode, each worker maintains its own t-digest. During merge, digests are combined using the t-digest merge algorithm, preserving accuracy. Final percentile values are deterministic.
+
 ---
 
 ## File Output Functions
