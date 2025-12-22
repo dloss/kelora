@@ -643,7 +643,7 @@ fn track_percentiles_impl(
         return Err("track_percentiles requires a non-empty array of percentiles".into());
     }
 
-    // Parse and validate percentiles
+    // Parse and validate percentiles (0.0-1.0 range, representing quantiles)
     let mut valid_percentiles = Vec::new();
     let mut seen = HashSet::new();
 
@@ -660,10 +660,10 @@ fn track_percentiles_impl(
             return Err("track_percentiles percentile must be a number".into());
         };
 
-        // Validate range [0, 100]
-        if !(0.0..=100.0).contains(&percentile) {
+        // Validate range [0.0, 1.0] (quantile notation)
+        if !(0.0..=1.0).contains(&percentile) {
             return Err(format!(
-                "track_percentiles percentile must be in range [0, 100], got {}",
+                "track_percentiles percentile must be in range [0.0, 1.0], got {}",
                 percentile
             )
             .into());
@@ -684,11 +684,17 @@ fn track_percentiles_impl(
 
     // Track each percentile independently (auto-suffixing behavior)
     for percentile in valid_percentiles {
-        // Format percentile as integer if whole number, otherwise as decimal
-        let percentile_str = if percentile.fract() == 0.0 {
-            format!("p{}", percentile as i64)
+        // Convert to percentage for suffix (0.95 → 95, 0.999 → 99.9)
+        let percentage = percentile * 100.0;
+
+        // Format percentile: remove trailing zeros and decimal point if whole number
+        let percentile_str = if percentage.fract() == 0.0 {
+            format!("p{}", percentage as i64)
         } else {
-            format!("p{}", percentile)
+            // Format with minimal decimal places, remove trailing zeros
+            let formatted = format!("{:.10}", percentage);
+            let trimmed = formatted.trim_end_matches('0').trim_end_matches('.');
+            format!("p{}", trimmed)
         };
 
         let metric_key = format!("{}_{}", key, percentile_str);
@@ -1181,6 +1187,48 @@ pub fn register_functions(engine: &mut Engine) {
             Ok(())
         },
     );
+
+    // Default percentiles overloads (when no array provided, use [0.90, 0.95, 0.99])
+    engine.register_fn("track_percentiles", |key: &str, value: i64| {
+        let default_percentiles = vec![
+            Dynamic::from(0.90_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_percentiles_impl(key, value as f64, default_percentiles)
+    });
+
+    engine.register_fn("track_percentiles", |key: &str, value: i32| {
+        let default_percentiles = vec![
+            Dynamic::from(0.90_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_percentiles_impl(key, value as f64, default_percentiles)
+    });
+
+    engine.register_fn("track_percentiles", |key: &str, value: f64| {
+        let default_percentiles = vec![
+            Dynamic::from(0.90_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_percentiles_impl(key, value, default_percentiles)
+    });
+
+    engine.register_fn("track_percentiles", |key: &str, value: f32| {
+        let default_percentiles = vec![
+            Dynamic::from(0.90_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_percentiles_impl(key, value as f64, default_percentiles)
+    });
+
+    // Unit overload for default percentiles
+    engine.register_fn("track_percentiles", |_key: &str, _value: ()| {
+        // Silently ignore Unit values - no tracking occurs
+    });
 
     engine.register_fn("track_unique", |key: &str, value: &str| {
         let updated = with_user_tracking(|state| {
@@ -3303,19 +3351,19 @@ mod tests {
 
         // Track some values
         engine
-            .eval::<()>(r#"track_percentiles("latency", 100, [50, 95, 99])"#)
+            .eval::<()>(r#"track_percentiles("latency", 100, [0.50, 0.95, 0.99])"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_percentiles("latency", 200, [50, 95, 99])"#)
+            .eval::<()>(r#"track_percentiles("latency", 200, [0.50, 0.95, 0.99])"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_percentiles("latency", 150, [50, 95, 99])"#)
+            .eval::<()>(r#"track_percentiles("latency", 150, [0.50, 0.95, 0.99])"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_percentiles("latency", 300, [50, 95, 99])"#)
+            .eval::<()>(r#"track_percentiles("latency", 300, [0.50, 0.95, 0.99])"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_percentiles("latency", 250, [50, 95, 99])"#)
+            .eval::<()>(r#"track_percentiles("latency", 250, [0.50, 0.95, 0.99])"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -3342,7 +3390,7 @@ mod tests {
 
         // Track single percentile
         engine
-            .eval::<()>(r#"track_percentiles("response_time", 123.45, [95])"#)
+            .eval::<()>(r#"track_percentiles("response_time", 123.45, [0.95])"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -3362,7 +3410,7 @@ mod tests {
 
         // Track with duplicate percentiles
         engine
-            .eval::<()>(r#"track_percentiles("test", 100, [95, 95, 99, 95])"#)
+            .eval::<()>(r#"track_percentiles("test", 100, [0.95, 0.95, 0.99, 0.95])"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -3382,10 +3430,10 @@ mod tests {
         register_functions(&mut engine);
 
         // Out of range percentile
-        let result = engine.eval::<()>(r#"track_percentiles("test", 100, [101])"#);
+        let result = engine.eval::<()>(r#"track_percentiles("test", 100, [1.01])"#);
         assert!(result.is_err());
 
-        let result = engine.eval::<()>(r#"track_percentiles("test", 100, [-5])"#);
+        let result = engine.eval::<()>(r#"track_percentiles("test", 100, [-0.5])"#);
         assert!(result.is_err());
 
         clear_tracking_state();
@@ -3412,15 +3460,83 @@ mod tests {
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
-        // Unit values should be silently ignored
+        // Unit values should be silently ignored (with array)
         engine
-            .eval::<()>(r#"track_percentiles("test", (), [95])"#)
+            .eval::<()>(r#"track_percentiles("test", (), [0.95])"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
 
         // No metric should be created for unit value
         assert!(!state.contains_key("test_p95"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_default() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Use default percentiles [0.90, 0.95, 0.99]
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 100)"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 200)"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // Check that default percentiles were created
+        assert!(state.contains_key("latency_p90"));
+        assert!(state.contains_key("latency_p95"));
+        assert!(state.contains_key("latency_p99"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_decimal_suffix() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Test decimal percentiles (0.999 → p99.9)
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 100, [0.999, 0.9999])"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // Check decimal suffixes
+        assert!(state.contains_key("latency_p99.9"));
+        assert!(state.contains_key("latency_p99.99"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_unit_value_default() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Unit values should be silently ignored (default)
+        engine
+            .eval::<()>(r#"track_percentiles("test", ())"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // No metrics should be created
+        assert!(!state.contains_key("test_p90"));
+        assert!(!state.contains_key("test_p95"));
+        assert!(!state.contains_key("test_p99"));
 
         clear_tracking_state();
     }
