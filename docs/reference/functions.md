@@ -72,6 +72,22 @@ Extract URL from text (nth: 1=first, -1=last).
 e.link = e.message.extract_url()                      // First URL
 ```
 
+#### `text.extract_email([nth])`
+Extract email address from text (nth: 1=first, -1=last).
+
+```rhai
+e.contact = e.message.extract_email()                 // First email
+e.sender = e.log.extract_email(1)                     // First email
+e.recipient = e.log.extract_email(-1)                 // Last email
+```
+
+#### `text.extract_emails()`
+Extract all email addresses as array.
+
+```rhai
+e.all_contacts = e.message.extract_emails()           // ["alice@example.com", "bob@test.org"]
+```
+
 #### `text.extract_domain()`
 Extract domain from URL or email address.
 

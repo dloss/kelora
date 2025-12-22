@@ -55,16 +55,20 @@ kelora -j examples/security_audit.jsonl \
 - Extract domains or other aggregates before dropping the original field if analysts still need grouped statistics.
 
 ## Step 4: Scrub Free-Form Text
-Sanitise values embedded in log messages using regex replacement.
+Sanitise values embedded in log messages using extraction and replacement.
 
 ```bash
+# Extract email addresses before redacting
 kelora -j examples/security_audit.jsonl \
-  -e 'e.message = e.message.replace(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[EMAIL]")' \
+  -e 'if e.message.extract_email() != "" {
+        e.email_domain = e.message.extract_email().after("@");
+        e.message = e.message.replace(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[EMAIL]")
+      }' \
   -e 'e.message = e.message.replace(r"(?i)api[_-]?key=\\w+", "api_key=[REDACTED]")' \
   -F json
 ```
 
-Consider building a short library of patterns that match your organisation’s identifiers (customer numbers, ticket IDs, etc.).
+Use `extract_email()`, `extract_ip()`, or `extract_url()` to identify sensitive data in unstructured text before masking. Consider building a short library of patterns that match your organisation's identifiers (customer numbers, ticket IDs, etc.).
 
 ## Step 5: Validate the Result
 Run automated checks to ensure sensitive patterns no longer appear.

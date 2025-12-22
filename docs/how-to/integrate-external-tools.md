@@ -249,7 +249,9 @@ kelora -f combined access.log \
 - `parse_email()` - Extract email parts
 - `parse_path()` - Parse filesystem paths
 - `extract_domain()` - Extract domains from URLs
+- `extract_email()` / `extract_emails()` - Extract email addresses from text
 - `extract_ip()` / `extract_ips()` - Extract IP addresses
+- `extract_url()` - Extract URLs from text
 
 [jc documentation](https://kellyjonbrazil.github.io/jc/)
 
