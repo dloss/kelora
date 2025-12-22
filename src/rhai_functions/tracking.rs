@@ -3,6 +3,7 @@ use rhai::{Dynamic, Engine};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use tdigests::TDigest;
 
 /// Snapshot of tracking state separated into user-visible metrics and internal-only data.
 #[derive(Debug, Clone, Default)]
@@ -586,6 +587,144 @@ pub fn extract_error_summary_from_tracking(
     Some(summary)
 }
 
+/// Helper function to serialize a TDigest to bytes for storage in Dynamic
+/// We store centroids as the serialization format
+fn serialize_tdigest(digest: &TDigest) -> Vec<u8> {
+    let centroids = digest.centroids();
+    let mut bytes = Vec::new();
+
+    // Store number of centroids (8 bytes)
+    let count = centroids.len();
+    bytes.extend_from_slice(&count.to_le_bytes());
+
+    // Store each centroid (mean: f64, weight: f64 = 16 bytes each)
+    for centroid in centroids {
+        bytes.extend_from_slice(&centroid.mean.to_le_bytes());
+        bytes.extend_from_slice(&centroid.weight.to_le_bytes());
+    }
+
+    bytes
+}
+
+/// Helper function to deserialize a TDigest from bytes stored in Dynamic
+fn deserialize_tdigest(bytes: &[u8]) -> Option<TDigest> {
+    if bytes.len() < 8 {
+        return None;
+    }
+
+    // Read number of centroids
+    let count = usize::from_le_bytes(bytes[0..8].try_into().ok()?);
+
+    if bytes.len() < 8 + count * 16 {
+        return None;
+    }
+
+    // Reconstruct centroids
+    let mut centroids = Vec::with_capacity(count);
+    for i in 0..count {
+        let offset = 8 + i * 16;
+        let mean = f64::from_le_bytes(bytes[offset..offset + 8].try_into().ok()?);
+        let weight = f64::from_le_bytes(bytes[offset + 8..offset + 16].try_into().ok()?);
+        centroids.push(tdigests::Centroid::new(mean, weight));
+    }
+
+    // Reconstruct t-digest from centroids
+    Some(TDigest::from_centroids(centroids))
+}
+
+/// Implementation of track_percentiles for a given numeric type
+fn track_percentiles_impl(
+    key: &str,
+    value: f64,
+    percentiles: rhai::Array,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    // Validate percentiles array is not empty
+    if percentiles.is_empty() {
+        return Err("track_percentiles requires a non-empty array of percentiles".into());
+    }
+
+    // Parse and validate percentiles
+    let mut valid_percentiles = Vec::new();
+    let mut seen = HashSet::new();
+
+    for p in percentiles {
+        let percentile = if p.is_int() {
+            p.as_int().map_err(|_| -> Box<rhai::EvalAltResult> {
+                "track_percentiles percentile must be a number".into()
+            })? as f64
+        } else if p.is_float() {
+            p.as_float().map_err(|_| -> Box<rhai::EvalAltResult> {
+                "track_percentiles percentile must be a number".into()
+            })?
+        } else {
+            return Err("track_percentiles percentile must be a number".into());
+        };
+
+        // Validate range [0, 100]
+        if !(0.0..=100.0).contains(&percentile) {
+            return Err(format!(
+                "track_percentiles percentile must be in range [0, 100], got {}",
+                percentile
+            )
+            .into());
+        }
+
+        // Deduplicate
+        if !seen.contains(&percentile.to_bits()) {
+            seen.insert(percentile.to_bits());
+            valid_percentiles.push(percentile);
+        }
+    }
+
+    // Filter out NaN and Infinity
+    if !value.is_finite() {
+        // Silently skip invalid values (like track_min does with Unit)
+        return Ok(());
+    }
+
+    // Track each percentile independently (auto-suffixing behavior)
+    for percentile in valid_percentiles {
+        // Format percentile as integer if whole number, otherwise as decimal
+        let percentile_str = if percentile.fract() == 0.0 {
+            format!("p{}", percentile as i64)
+        } else {
+            format!("p{}", percentile)
+        };
+
+        let metric_key = format!("{}_{}", key, percentile_str);
+
+        with_user_tracking(|state| {
+            // Create a new digest with just this value
+            let new_digest = TDigest::from_values(vec![value]);
+
+            // Get existing digest or use the new one
+            let digest = if let Some(existing) = state.get(&metric_key) {
+                // Try to deserialize existing digest and merge
+                if let Ok(bytes) = existing.clone().into_blob() {
+                    if let Some(existing_digest) = deserialize_tdigest(&bytes) {
+                        existing_digest.merge(&new_digest)
+                    } else {
+                        new_digest
+                    }
+                } else {
+                    new_digest
+                }
+            } else {
+                new_digest
+            };
+
+            // Serialize and store
+            let bytes = serialize_tdigest(&digest);
+            state.insert(metric_key.clone(), Dynamic::from_blob(bytes));
+        });
+
+        // Record operation metadata for parallel merging
+        record_operation_metadata(&metric_key, "percentiles");
+    }
+
+    Ok(())
+}
+
 pub fn register_functions(engine: &mut Engine) {
     // Track functions using thread-local storage - clean user API
     // Store operation metadata for proper parallel merging
@@ -998,6 +1137,50 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("track_max", |_key: &str, _value: ()| {
         // Silently ignore Unit values - no tracking occurs
     });
+
+    // track_percentiles - streaming percentile estimation using t-digest
+    // Auto-suffixes metric names with percentile (e.g., "latency_p95", "latency_p99")
+    // This is the ONLY track_* function that auto-suffixes because percentiles are always multi-valued
+
+    engine.register_fn(
+        "track_percentiles",
+        |key: &str, value: i64, percentiles: rhai::Array| {
+            track_percentiles_impl(key, value as f64, percentiles)
+        },
+    );
+
+    engine.register_fn(
+        "track_percentiles",
+        |key: &str, value: i32, percentiles: rhai::Array| {
+            track_percentiles_impl(key, value as f64, percentiles)
+        },
+    );
+
+    engine.register_fn(
+        "track_percentiles",
+        |key: &str, value: f64, percentiles: rhai::Array| {
+            track_percentiles_impl(key, value, percentiles)
+        },
+    );
+
+    engine.register_fn(
+        "track_percentiles",
+        |key: &str, value: f32, percentiles: rhai::Array| {
+            track_percentiles_impl(key, value as f64, percentiles)
+        },
+    );
+
+    // Unit overload - no-op for missing/empty values
+    engine.register_fn(
+        "track_percentiles",
+        |_key: &str,
+         _value: (),
+         _percentiles: rhai::Array|
+         -> Result<(), Box<rhai::EvalAltResult>> {
+            // Silently ignore Unit values - no tracking occurs
+            Ok(())
+        },
+    );
 
     engine.register_fn("track_unique", |key: &str, value: &str| {
         let updated = with_user_tracking(|state| {
@@ -1983,6 +2166,24 @@ pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: 
             }
         }
 
+        // Handle percentiles (t-digest blob)
+        if let Ok(blob) = value.clone().into_blob() {
+            // This is a t-digest - deserialize and compute the percentile
+            if let Some(digest) = deserialize_tdigest(&blob) {
+                // Extract percentile from key name (e.g., "api_latency_p95" -> 95.0)
+                if let Some(p_pos) = key.rfind("_p") {
+                    if let Ok(percentile) = key[p_pos + 2..].parse::<f64>() {
+                        // Compute the percentile value
+                        let quantile = percentile / 100.0;
+                        let value = digest.estimate_quantile(quantile);
+                        output.push_str(&format!("{:<12} = {:.2}\n", key, value));
+                        continue;
+                    }
+                }
+            }
+            // If we can't deserialize or parse, fall through to default handling
+        }
+
         // Handle regular values (count, max, etc.)
         if value.is_int() {
             output.push_str(&format!("{:<12} = {}\n", key, value.as_int().unwrap_or(0)));
@@ -2084,6 +2285,27 @@ pub fn format_metrics_json(
                     json_obj.insert(key.clone(), serde_json::Value::Null);
                 }
                 continue;
+            }
+        }
+
+        // Handle percentiles (t-digest blob)
+        if let Ok(blob) = value.clone().into_blob() {
+            // This is a t-digest - deserialize and compute the percentile
+            if let Some(digest) = deserialize_tdigest(&blob) {
+                // Extract percentile from key name (e.g., "api_latency_p95" -> 95.0)
+                if let Some(p_pos) = key.rfind("_p") {
+                    if let Ok(percentile) = key[p_pos + 2..].parse::<f64>() {
+                        // Compute the percentile value
+                        let quantile = percentile / 100.0;
+                        let percentile_value = digest.estimate_quantile(quantile);
+                        if let Some(num) = serde_json::Number::from_f64(percentile_value) {
+                            json_obj.insert(key.clone(), serde_json::Value::Number(num));
+                        } else {
+                            json_obj.insert(key.clone(), serde_json::Value::Null);
+                        }
+                        continue;
+                    }
+                }
             }
         }
 
@@ -3068,6 +3290,137 @@ mod tests {
             third.get("key").unwrap().clone().into_string().unwrap(),
             "zebra"
         );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_basic() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track some values
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 100, [50, 95, 99])"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 200, [50, 95, 99])"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 150, [50, 95, 99])"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 300, [50, 95, 99])"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_percentiles("latency", 250, [50, 95, 99])"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // Check that all three percentile metrics were created
+        assert!(state.contains_key("latency_p50"));
+        assert!(state.contains_key("latency_p95"));
+        assert!(state.contains_key("latency_p99"));
+
+        // Check that they're blobs (serialized t-digest)
+        assert!(state.get("latency_p50").unwrap().is_blob());
+        assert!(state.get("latency_p95").unwrap().is_blob());
+        assert!(state.get("latency_p99").unwrap().is_blob());
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_single() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track single percentile
+        engine
+            .eval::<()>(r#"track_percentiles("response_time", 123.45, [95])"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        assert!(state.contains_key("response_time_p95"));
+        assert!(state.get("response_time_p95").unwrap().is_blob());
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_dedup() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track with duplicate percentiles
+        engine
+            .eval::<()>(r#"track_percentiles("test", 100, [95, 95, 99, 95])"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // Should only create two metrics (deduped)
+        assert!(state.contains_key("test_p95"));
+        assert!(state.contains_key("test_p99"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_invalid_percentile() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Out of range percentile
+        let result = engine.eval::<()>(r#"track_percentiles("test", 100, [101])"#);
+        assert!(result.is_err());
+
+        let result = engine.eval::<()>(r#"track_percentiles("test", 100, [-5])"#);
+        assert!(result.is_err());
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_empty_array() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Empty percentiles array
+        let result = engine.eval::<()>(r#"track_percentiles("test", 100, [])"#);
+        assert!(result.is_err());
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_percentiles_unit_value() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Unit values should be silently ignored
+        engine
+            .eval::<()>(r#"track_percentiles("test", (), [95])"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // No metric should be created for unit value
+        assert!(!state.contains_key("test_p95"));
 
         clear_tracking_state();
     }

@@ -8,6 +8,7 @@ use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
+use tdigests::TDigest;
 
 use crate::event::Event;
 use crate::formatters::GapTracker;
@@ -117,6 +118,50 @@ pub struct ProcessedEvent {
     pub captured_messages: Vec<crate::rhai_functions::strings::CapturedMessage>,
     pub timestamp: Option<DateTime<Utc>>,
     pub file_ops: Vec<FileOp>,
+}
+
+/// Helper function to serialize a TDigest to bytes for storage in Dynamic (parallel module)
+fn serialize_tdigest_parallel(digest: &TDigest) -> Vec<u8> {
+    let centroids = digest.centroids();
+    let mut bytes = Vec::new();
+
+    // Store number of centroids (8 bytes)
+    let count = centroids.len();
+    bytes.extend_from_slice(&count.to_le_bytes());
+
+    // Store each centroid (mean: f64, weight: f64 = 16 bytes each)
+    for centroid in centroids {
+        bytes.extend_from_slice(&centroid.mean.to_le_bytes());
+        bytes.extend_from_slice(&centroid.weight.to_le_bytes());
+    }
+
+    bytes
+}
+
+/// Helper function to deserialize a TDigest from bytes stored in Dynamic (parallel module)
+fn deserialize_tdigest_parallel(bytes: &[u8]) -> Option<TDigest> {
+    if bytes.len() < 8 {
+        return None;
+    }
+
+    // Read number of centroids
+    let count = usize::from_le_bytes(bytes[0..8].try_into().ok()?);
+
+    if bytes.len() < 8 + count * 16 {
+        return None;
+    }
+
+    // Reconstruct centroids
+    let mut centroids = Vec::with_capacity(count);
+    for i in 0..count {
+        let offset = 8 + i * 16;
+        let mean = f64::from_le_bytes(bytes[offset..offset + 8].try_into().ok()?);
+        let weight = f64::from_le_bytes(bytes[offset + 8..offset + 16].try_into().ok()?);
+        centroids.push(tdigests::Centroid::new(mean, weight));
+    }
+
+    // Reconstruct t-digest from centroids
+    Some(TDigest::from_centroids(centroids))
 }
 
 /// Thread-safe statistics tracker for merging worker states
@@ -693,6 +738,26 @@ impl GlobalTracker {
                             }
                             target.insert(key.clone(), Dynamic::from(merged));
                             continue;
+                        }
+                    }
+                    "percentiles" => {
+                        // Merge t-digest sketches from different workers
+                        if let (Ok(existing_blob), Ok(new_blob)) =
+                            (existing.clone().into_blob(), value.clone().into_blob())
+                        {
+                            // Deserialize both t-digests
+                            if let (Some(existing_digest), Some(new_digest)) = (
+                                deserialize_tdigest_parallel(&existing_blob),
+                                deserialize_tdigest_parallel(&new_blob),
+                            ) {
+                                // Merge the digests using the merge method
+                                let merged_digest = existing_digest.merge(&new_digest);
+
+                                // Serialize and store
+                                let bytes = serialize_tdigest_parallel(&merged_digest);
+                                target.insert(key.clone(), Dynamic::from_blob(bytes));
+                                continue;
+                            }
                         }
                     }
                     _ => {}

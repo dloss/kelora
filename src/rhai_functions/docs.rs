@@ -201,6 +201,7 @@ track_bucket(key, bucket)            Track values in buckets for histograms (ski
 track_count(key)                     Increment counter for key by 1 (string key; use to_string() for numbers)
 track_max(key, value)                Track maximum value for key (skips () values)
 track_min(key, value)                Track minimum value for key (skips () values)
+track_percentiles(key, value, [p])   Track streaming percentiles using t-digest (auto-suffixes: key_p50, key_p95, etc)
 track_sum(key, value)                Accumulate numeric values for key (skips () values)
 track_top(key, item, n)              Track top N most frequent items (counts occurrences)
 track_top(key, item, n, score)       Track top N items by highest scores (ranks by numeric value)
@@ -403,6 +404,11 @@ kelora -j api_logs.jsonl --metrics --metrics-file stats.json \
 # Track average response time
 kelora -j api_logs.jsonl -m \
   --exec 'track_avg("avg_latency_ms", e.latency_ms)'
+
+# Track percentiles (streaming, memory-efficient, parallel-safe)
+kelora -j api_logs.jsonl -m \
+  --exec 'track_percentiles("latency", e.response_time, [50, 95, 99])'
+# Creates: latency_p50, latency_p95, latency_p99
 
 # Top/bottom tracking: frequency vs scored
 # 3 params = count occurrences (most/least COMMON)

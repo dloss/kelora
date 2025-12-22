@@ -64,6 +64,9 @@ argon2 = "0.5"  # Argon2 password hashing for pseudonymization
 hkdf = "0.12"  # HKDF key derivation for pseudonymization
 hmac = "0.12"  # HMAC message authentication for pseudonymization
 
+# Rhai built-in functions - statistics
+tdigests = "1.0"  # T-digest algorithm for streaming percentile estimation exposed to Rhai scripts
+
 # Rhai built-in functions - networking
 url = "2.5"  # URL parsing and manipulation exposed to Rhai scripts
 ipnet = "2.9"  # IP address and network parsing/matching exposed to Rhai scripts
