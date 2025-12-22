@@ -27,6 +27,8 @@ text.escape_html()                   Escape HTML special characters (&, <, >, ",
 text.escape_json()                   Escape JSON special characters
 text.extract_regexes(pattern [,group]) Extract all regex matches as array
 text.extract_domain()                Extract domain from URL or email address
+text.extract_email([nth])            Extract email address from text (nth: 1=first, -1=last)
+text.extract_emails()                Extract all email addresses as array
 text.extract_ip([nth])               Extract IP address from text (nth: 1=first, -1=last)
 text.extract_ips()                   Extract all IP addresses as array
 text.extract_json([nth])             Extract JSON object/array from text (nth: 0=first, 1=second, etc.)

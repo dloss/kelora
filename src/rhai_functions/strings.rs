@@ -38,6 +38,7 @@ static COMBINED_PARSER: Lazy<CombinedParser> =
 const IPV4_PATTERN: &str = r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b";
 const URL_PATTERN: &str = r##"https?://[^\s<>"]+[^\s<>".,;!?]"##;
 const URL_DOMAIN_PATTERN: &str = r##"https?://([^/\s<>"]+)"##;
+const EMAIL_PATTERN: &str = r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b";
 const EMAIL_DOMAIN_PATTERN: &str = r##"[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"##;
 
 static IPV4_REGEX: Lazy<Regex> =
@@ -46,6 +47,8 @@ static URL_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(URL_PATTERN).expect("failed to compile URL regex"));
 static URL_DOMAIN_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(URL_DOMAIN_PATTERN).expect("failed to compile URL domain regex"));
+static EMAIL_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(EMAIL_PATTERN).expect("failed to compile email regex"));
 static EMAIL_DOMAIN_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(EMAIL_DOMAIN_PATTERN).expect("failed to compile email domain regex"));
 
@@ -2193,6 +2196,49 @@ pub fn register_functions(engine: &mut Engine) {
         };
 
         matches[idx].as_str().to_string()
+    });
+
+    engine.register_fn("extract_email", |text: &str| -> String {
+        EMAIL_REGEX
+            .find(text)
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_default()
+    });
+
+    engine.register_fn("extract_email", |text: &str, nth: i64| -> String {
+        if nth == 0 {
+            return String::new();
+        }
+
+        let matches: Vec<_> = EMAIL_REGEX.find_iter(text).collect();
+
+        if matches.is_empty() {
+            return String::new();
+        }
+
+        // Handle negative indexing (from the end)
+        let idx = if nth < 0 {
+            let abs_nth = (-nth) as usize;
+            if abs_nth > matches.len() {
+                return String::new();
+            }
+            matches.len() - abs_nth
+        } else {
+            let nth_usize = nth as usize;
+            if nth_usize < 1 || nth_usize > matches.len() {
+                return String::new();
+            }
+            nth_usize - 1 // Convert to 0-indexed
+        };
+
+        matches[idx].as_str().to_string()
+    });
+
+    engine.register_fn("extract_emails", |text: &str| -> rhai::Array {
+        EMAIL_REGEX
+            .find_iter(text)
+            .map(|m| Dynamic::from(m.as_str().to_string()))
+            .collect()
     });
 
     engine.register_fn("extract_domain", |text: &str| -> String {
@@ -4798,6 +4844,141 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].clone().into_string().unwrap(), "192.168.1.1");
+    }
+
+    #[test]
+    fn test_extract_email_function() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        let mut scope = Scope::new();
+        scope.push("text", "Contact alice@example.com for help");
+
+        // Extract single email
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email()"##)
+            .unwrap();
+        assert_eq!(result, "alice@example.com");
+
+        // No email found
+        scope.push("no_email", "No email address here");
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"no_email.extract_email()"##)
+            .unwrap();
+        assert_eq!(result, "");
+
+        // Multiple emails, returns first
+        scope.push("multi", "Email alice@example.com or bob@test.org");
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"multi.extract_email()"##)
+            .unwrap();
+        assert_eq!(result, "alice@example.com");
+    }
+
+    #[test]
+    fn test_extract_email_function_with_nth() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        let mut scope = Scope::new();
+        scope.push(
+            "text",
+            "Contact alice@example.com, bob@test.org, or carol@company.co.uk",
+        );
+
+        // First email
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email(1)"##)
+            .unwrap();
+        assert_eq!(result, "alice@example.com");
+
+        // Second email
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email(2)"##)
+            .unwrap();
+        assert_eq!(result, "bob@test.org");
+
+        // Third email
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email(3)"##)
+            .unwrap();
+        assert_eq!(result, "carol@company.co.uk");
+
+        // Last email (negative indexing)
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email(-1)"##)
+            .unwrap();
+        assert_eq!(result, "carol@company.co.uk");
+
+        // Second to last email
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email(-2)"##)
+            .unwrap();
+        assert_eq!(result, "bob@test.org");
+
+        // Out of range
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email(4)"##)
+            .unwrap();
+        assert_eq!(result, "");
+
+        // nth=0 edge case
+        let result: String = engine
+            .eval_with_scope(&mut scope, r##"text.extract_email(0)"##)
+            .unwrap();
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_extract_emails_function() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        let mut scope = Scope::new();
+        scope.push(
+            "text",
+            "Email alice@example.com, bob@test.org, or carol@company.co.uk",
+        );
+
+        // Extract all emails
+        let result: rhai::Array = engine
+            .eval_with_scope(&mut scope, r##"text.extract_emails()"##)
+            .unwrap();
+        assert_eq!(result.len(), 3);
+        assert_eq!(
+            result[0].clone().into_string().unwrap(),
+            "alice@example.com"
+        );
+        assert_eq!(result[1].clone().into_string().unwrap(), "bob@test.org");
+        assert_eq!(
+            result[2].clone().into_string().unwrap(),
+            "carol@company.co.uk"
+        );
+
+        // No emails found
+        scope.push("no_emails", "No email addresses here");
+        let result: rhai::Array = engine
+            .eval_with_scope(&mut scope, r##"no_emails.extract_emails()"##)
+            .unwrap();
+        assert_eq!(result.len(), 0);
+
+        // Various email formats
+        scope.push(
+            "various",
+            "test.user+tag@example.com and admin_user@sub.domain.org",
+        );
+        let result: rhai::Array = engine
+            .eval_with_scope(&mut scope, r##"various.extract_emails()"##)
+            .unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(
+            result[0].clone().into_string().unwrap(),
+            "test.user+tag@example.com"
+        );
+        assert_eq!(
+            result[1].clone().into_string().unwrap(),
+            "admin_user@sub.domain.org"
+        );
     }
 
     #[test]
