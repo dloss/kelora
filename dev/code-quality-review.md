@@ -77,13 +77,45 @@ let n = existing_arr.len().max(new_arr.len());
 
 ---
 
-### 4. Top/Bottom Duplication (`src/parallel.rs:520-747`)
+### 4. Top/Bottom Duplication (`src/parallel.rs:520-747`) ✅ FIXED
 
 **Problem:** 230 lines of nearly identical code. Only differences: sort direction and min/max.
 
-**Fix:** Extract to single `merge_top_bottom(direction, use_min)` function.
+**Fix Applied:**
+```rust
+// Created helper function merge_top_bottom_arrays that consolidates the logic:
+fn merge_top_bottom_arrays(
+    existing_arr: rhai::Array,
+    new_arr: rhai::Array,
+    is_top: bool,
+) -> rhai::Array {
+    // Shared logic for both top and bottom tracking
+    // Uses is_top to determine:
+    // - Sort direction (descending vs ascending)
+    // - Weighted mode operation (max vs min)
+}
 
-**Effort:** 4-6h
+// Replaced both cases with simple calls:
+"top" => {
+    let result_arr = Self::merge_top_bottom_arrays(existing_arr, new_arr, true);
+    target.insert(key.clone(), Dynamic::from(result_arr));
+}
+
+"bottom" => {
+    let result_arr = Self::merge_top_bottom_arrays(existing_arr, new_arr, false);
+    target.insert(key.clone(), Dynamic::from(result_arr));
+}
+```
+
+**Result:** Eliminated ~210 lines of duplication by consolidating into a single well-documented helper function. Both "top" and "bottom" cases now call the same function with different parameters. Code is more maintainable and easier to modify.
+
+**Verification:**
+- All 811 unit tests pass
+- Specific track_top tests pass (6 tests)
+- Specific track_bottom tests pass (2 tests)
+- Clippy shows no warnings
+
+**Effort:** 4h ✅ COMPLETED
 
 ---
 
