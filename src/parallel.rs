@@ -540,6 +540,153 @@ impl GlobalTracker {
             .collect()
     }
 
+    /// Merge numeric values (int or float) using addition
+    fn merge_numeric_add(existing: &Dynamic, value: &Dynamic) -> Dynamic {
+        if existing.is_float() || value.is_float() {
+            let a = if existing.is_float() {
+                existing.as_float().unwrap_or(0.0)
+            } else {
+                existing.as_int().unwrap_or(0) as f64
+            };
+            let b = if value.is_float() {
+                value.as_float().unwrap_or(0.0)
+            } else {
+                value.as_int().unwrap_or(0) as f64
+            };
+            Dynamic::from(a + b)
+        } else {
+            let a = existing.as_int().unwrap_or(0);
+            let b = value.as_int().unwrap_or(0);
+            Dynamic::from(a + b)
+        }
+    }
+
+    /// Merge average tracking by combining sums and counts
+    fn merge_avg(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        let existing_map = existing.clone().try_cast::<rhai::Map>()?;
+        let new_map = value.clone().try_cast::<rhai::Map>()?;
+
+        let existing_sum = existing_map
+            .get("sum")
+            .and_then(|v| {
+                if v.is_float() {
+                    v.as_float().ok()
+                } else if v.is_int() {
+                    v.as_int().ok().map(|i| i as f64)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(0.0);
+        let existing_count = existing_map
+            .get("count")
+            .and_then(|v| v.as_int().ok())
+            .unwrap_or(0);
+
+        let new_sum = new_map
+            .get("sum")
+            .and_then(|v| {
+                if v.is_float() {
+                    v.as_float().ok()
+                } else if v.is_int() {
+                    v.as_int().ok().map(|i| i as f64)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or(0.0);
+        let new_count = new_map
+            .get("count")
+            .and_then(|v| v.as_int().ok())
+            .unwrap_or(0);
+
+        let mut merged = rhai::Map::new();
+        merged.insert("sum".into(), Dynamic::from(existing_sum + new_sum));
+        merged.insert("count".into(), Dynamic::from(existing_count + new_count));
+        Some(Dynamic::from(merged))
+    }
+
+    /// Merge min values (returns smallest)
+    fn merge_min(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
+            Some(Dynamic::from(a.min(b)))
+        } else {
+            None
+        }
+    }
+
+    /// Merge max values (returns largest)
+    fn merge_max(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
+            Some(Dynamic::from(a.max(b)))
+        } else {
+            None
+        }
+    }
+
+    /// Merge unique arrays (no duplicates)
+    fn merge_unique(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        let existing_arr = existing.clone().into_array().ok()?;
+        let new_arr = value.clone().into_array().ok()?;
+
+        let mut merged = existing_arr;
+        for item in new_arr {
+            if !merged.iter().any(|v| v.to_string() == item.to_string()) {
+                merged.push(item);
+            }
+        }
+        Some(Dynamic::from(merged))
+    }
+
+    /// Merge bucket maps (sum counts per bucket)
+    fn merge_bucket(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        let existing_map = existing.clone().try_cast::<rhai::Map>()?;
+        let new_map = value.clone().try_cast::<rhai::Map>()?;
+
+        let mut merged = existing_map;
+        for (bucket_key, bucket_value) in new_map {
+            if let Ok(bucket_count) = bucket_value.as_int() {
+                let existing_count = merged
+                    .get(&bucket_key)
+                    .and_then(|v| v.as_int().ok())
+                    .unwrap_or(0);
+                merged.insert(bucket_key, Dynamic::from(existing_count + bucket_count));
+            }
+        }
+        Some(Dynamic::from(merged))
+    }
+
+    /// Merge error_examples arrays (limit to 3 unique items)
+    fn merge_error_examples(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        let existing_arr = existing.clone().into_array().ok()?;
+        let new_arr = value.clone().into_array().ok()?;
+
+        let mut merged = existing_arr;
+        for item in new_arr {
+            if merged.len() < 3 && !merged.iter().any(|v| v.to_string() == item.to_string()) {
+                merged.push(item);
+            }
+        }
+        Some(Dynamic::from(merged))
+    }
+
+    /// Merge percentiles (t-digest sketches)
+    fn merge_percentiles(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        let existing_blob = existing.clone().into_blob().ok()?;
+        let new_blob = value.clone().into_blob().ok()?;
+
+        // Deserialize both t-digests
+        let existing_digest = deserialize_tdigest_parallel(&existing_blob)?;
+        let new_digest = deserialize_tdigest_parallel(&new_blob)?;
+
+        // Merge the digests using the merge method
+        let merged_digest = existing_digest.merge(&new_digest);
+
+        // Serialize and store
+        let bytes = serialize_tdigest_parallel(&merged_digest);
+        Some(Dynamic::from_blob(bytes))
+    }
+
     fn merge_state_with_lookup<F>(
         target: &mut HashMap<String, Dynamic>,
         worker_state: &HashMap<String, Dynamic>,
@@ -563,143 +710,38 @@ impl GlobalTracker {
                     .unwrap_or_else(|| "replace".to_string());
 
                 match operation.as_str() {
-                    "count" => {
-                        if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
-                            target.insert(key.clone(), Dynamic::from(a + b));
-                            continue;
-                        }
-                        let merged = if existing.is_float() || value.is_float() {
-                            let a = if existing.is_float() {
-                                existing.as_float().unwrap_or(0.0)
-                            } else {
-                                existing.as_int().unwrap_or(0) as f64
-                            };
-                            let b = if value.is_float() {
-                                value.as_float().unwrap_or(0.0)
-                            } else {
-                                value.as_int().unwrap_or(0) as f64
-                            };
-                            Dynamic::from(a + b)
-                        } else {
-                            value.clone()
-                        };
-                        target.insert(key.clone(), merged);
-                        continue;
-                    }
-                    "sum" => {
-                        let merged = if existing.is_float() || value.is_float() {
-                            let a = if existing.is_float() {
-                                existing.as_float().unwrap_or(0.0)
-                            } else {
-                                existing.as_int().unwrap_or(0) as f64
-                            };
-                            let b = if value.is_float() {
-                                value.as_float().unwrap_or(0.0)
-                            } else {
-                                value.as_int().unwrap_or(0) as f64
-                            };
-                            Dynamic::from(a + b)
-                        } else {
-                            let a = existing.as_int().unwrap_or(0);
-                            let b = value.as_int().unwrap_or(0);
-                            Dynamic::from(a + b)
-                        };
+                    "count" | "sum" => {
+                        let merged = Self::merge_numeric_add(existing, value);
                         target.insert(key.clone(), merged);
                         continue;
                     }
                     "avg" => {
-                        // Merge average tracking by combining sums and counts
-                        if let (Some(existing_map), Some(new_map)) = (
-                            existing.clone().try_cast::<rhai::Map>(),
-                            value.clone().try_cast::<rhai::Map>(),
-                        ) {
-                            let existing_sum = existing_map
-                                .get("sum")
-                                .and_then(|v| {
-                                    if v.is_float() {
-                                        v.as_float().ok()
-                                    } else if v.is_int() {
-                                        v.as_int().ok().map(|i| i as f64)
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .unwrap_or(0.0);
-                            let existing_count = existing_map
-                                .get("count")
-                                .and_then(|v| v.as_int().ok())
-                                .unwrap_or(0);
-
-                            let new_sum = new_map
-                                .get("sum")
-                                .and_then(|v| {
-                                    if v.is_float() {
-                                        v.as_float().ok()
-                                    } else if v.is_int() {
-                                        v.as_int().ok().map(|i| i as f64)
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .unwrap_or(0.0);
-                            let new_count = new_map
-                                .get("count")
-                                .and_then(|v| v.as_int().ok())
-                                .unwrap_or(0);
-
-                            let mut merged = rhai::Map::new();
-                            merged.insert("sum".into(), Dynamic::from(existing_sum + new_sum));
-                            merged
-                                .insert("count".into(), Dynamic::from(existing_count + new_count));
-                            target.insert(key.clone(), Dynamic::from(merged));
+                        if let Some(merged) = Self::merge_avg(existing, value) {
+                            target.insert(key.clone(), merged);
                             continue;
                         }
                     }
                     "min" => {
-                        if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
-                            target.insert(key.clone(), Dynamic::from(a.min(b)));
+                        if let Some(merged) = Self::merge_min(existing, value) {
+                            target.insert(key.clone(), merged);
                             continue;
                         }
                     }
                     "max" => {
-                        if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
-                            target.insert(key.clone(), Dynamic::from(a.max(b)));
+                        if let Some(merged) = Self::merge_max(existing, value) {
+                            target.insert(key.clone(), merged);
                             continue;
                         }
                     }
                     "unique" => {
-                        if let (Ok(existing_arr), Ok(new_arr)) =
-                            (existing.clone().into_array(), value.clone().into_array())
-                        {
-                            let mut merged = existing_arr;
-                            for item in new_arr {
-                                if !merged.iter().any(|v| v.to_string() == item.to_string()) {
-                                    merged.push(item);
-                                }
-                            }
-                            target.insert(key.clone(), Dynamic::from(merged));
+                        if let Some(merged) = Self::merge_unique(existing, value) {
+                            target.insert(key.clone(), merged);
                             continue;
                         }
                     }
                     "bucket" => {
-                        if let (Some(existing_map), Some(new_map)) = (
-                            existing.clone().try_cast::<rhai::Map>(),
-                            value.clone().try_cast::<rhai::Map>(),
-                        ) {
-                            let mut merged = existing_map;
-                            for (bucket_key, bucket_value) in new_map {
-                                if let Ok(bucket_count) = bucket_value.as_int() {
-                                    let existing_count = merged
-                                        .get(&bucket_key)
-                                        .and_then(|v| v.as_int().ok())
-                                        .unwrap_or(0);
-                                    merged.insert(
-                                        bucket_key,
-                                        Dynamic::from(existing_count + bucket_count),
-                                    );
-                                }
-                            }
-                            target.insert(key.clone(), Dynamic::from(merged));
+                        if let Some(merged) = Self::merge_bucket(existing, value) {
+                            target.insert(key.clone(), merged);
                             continue;
                         }
                     }
@@ -724,39 +766,15 @@ impl GlobalTracker {
                         }
                     }
                     "error_examples" => {
-                        if let (Ok(existing_arr), Ok(new_arr)) =
-                            (existing.clone().into_array(), value.clone().into_array())
-                        {
-                            let mut merged = existing_arr;
-                            for item in new_arr {
-                                if merged.len() < 3
-                                    && !merged.iter().any(|v| v.to_string() == item.to_string())
-                                {
-                                    merged.push(item);
-                                }
-                            }
-                            target.insert(key.clone(), Dynamic::from(merged));
+                        if let Some(merged) = Self::merge_error_examples(existing, value) {
+                            target.insert(key.clone(), merged);
                             continue;
                         }
                     }
                     "percentiles" => {
-                        // Merge t-digest sketches from different workers
-                        if let (Ok(existing_blob), Ok(new_blob)) =
-                            (existing.clone().into_blob(), value.clone().into_blob())
-                        {
-                            // Deserialize both t-digests
-                            if let (Some(existing_digest), Some(new_digest)) = (
-                                deserialize_tdigest_parallel(&existing_blob),
-                                deserialize_tdigest_parallel(&new_blob),
-                            ) {
-                                // Merge the digests using the merge method
-                                let merged_digest = existing_digest.merge(&new_digest);
-
-                                // Serialize and store
-                                let bytes = serialize_tdigest_parallel(&merged_digest);
-                                target.insert(key.clone(), Dynamic::from_blob(bytes));
-                                continue;
-                            }
+                        if let Some(merged) = Self::merge_percentiles(existing, value) {
+                            target.insert(key.clone(), merged);
+                            continue;
                         }
                     }
                     _ => {}
