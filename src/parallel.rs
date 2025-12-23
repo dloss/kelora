@@ -526,6 +526,9 @@ impl GlobalTracker {
                         if let (Ok(existing_arr), Ok(new_arr)) =
                             (existing.clone().into_array(), value.clone().into_array())
                         {
+                            // Capture N from original array sizes before consuming arrays
+                            let n = existing_arr.len().max(new_arr.len());
+
                             // Merge arrays from both workers
                             let mut merged_map: std::collections::HashMap<String, f64> =
                                 std::collections::HashMap::new();
@@ -602,14 +605,6 @@ impl GlobalTracker {
                                 }
                             });
 
-                            // Determine N from original array sizes (use max of both)
-                            let n = existing
-                                .clone()
-                                .into_array()
-                                .unwrap()
-                                .len()
-                                .max(value.clone().into_array().unwrap().len());
-
                             // Trim to top N
                             if items.len() > n {
                                 items.truncate(n);
@@ -638,6 +633,9 @@ impl GlobalTracker {
                         if let (Ok(existing_arr), Ok(new_arr)) =
                             (existing.clone().into_array(), value.clone().into_array())
                         {
+                            // Capture N from original array sizes before consuming arrays
+                            let n = existing_arr.len().max(new_arr.len());
+
                             // Merge arrays from both workers
                             let mut merged_map: std::collections::HashMap<String, f64> =
                                 std::collections::HashMap::new();
@@ -713,14 +711,6 @@ impl GlobalTracker {
                                     other => other,
                                 }
                             });
-
-                            // Determine N from original array sizes (use max of both)
-                            let n = existing
-                                .clone()
-                                .into_array()
-                                .unwrap()
-                                .len()
-                                .max(value.clone().into_array().unwrap().len());
 
                             // Trim to bottom N
                             if items.len() > n {

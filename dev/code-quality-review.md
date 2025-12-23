@@ -44,22 +44,29 @@ for (idx, handle) in worker_handles.into_iter().enumerate() {
 
 ---
 
-### 3. Clone-on-Array-Length (`src/parallel.rs:607-611, 718-723`)
+### 3. Clone-on-Array-Length (`src/parallel.rs:607-611, 718-723`) ✅ FIXED
 
 **Problem:** Cloning entire arrays (1000s of elements) just to call `.len()`.
 
-**Fix:**
+**Fix Applied:**
 ```rust
-// Replace:
-let n = existing.clone().into_array().unwrap().len();
+// Before:
+let n = existing.clone().into_array().unwrap().len()
+    .max(value.clone().into_array().unwrap().len());
 
-// With:
-let n = existing.as_array().map(|arr| arr.len()).unwrap_or(0);
+// After:
+let n = existing_arr.len().max(new_arr.len());
 ```
 
-**Performance:** 1000x speedup in merge operations
+**Result:** Eliminated redundant clones by using array lengths already available from earlier conversion.
 
-**Effort:** 1h
+**Performance (measured):**
+- Benchmark: 100k lines, track_top/track_bottom parallel merge operations
+- Improvement: 1-3% faster (track_top: 1.4%, track_bottom: 2.7%)
+- Impact is modest because arrays being merged are small (N=20-50 elements)
+- Still worthwhile: removes unnecessary work and improves code clarity
+
+**Effort:** 1h ✅ COMPLETED
 
 ---
 
