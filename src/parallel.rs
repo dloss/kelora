@@ -2006,7 +2006,11 @@ impl ParallelProcessor {
         Ok(())
     }
 
-    fn handle_file_aware_line(line: String, filename: Option<String>, ctx: FileAwareLineContext<'_>) -> Result<()> {
+    fn handle_file_aware_line(
+        line: String,
+        filename: Option<String>,
+        ctx: FileAwareLineContext<'_>,
+    ) -> Result<()> {
         *ctx.line_num += 1;
 
         // Check if we've hit the head limit (stops processing early)
@@ -2077,8 +2081,9 @@ impl ParallelProcessor {
                 *ctx.pending_deadline = None;
             }
 
-            *ctx.current_headers = Self::create_csv_parser_for_file(ctx.input_format, &line, ctx.strict)
-                .map(|parser| parser.get_headers());
+            *ctx.current_headers =
+                Self::create_csv_parser_for_file(ctx.input_format, &line, ctx.strict)
+                    .map(|parser| parser.get_headers());
             *ctx.last_filename = filename.clone();
 
             if matches!(
