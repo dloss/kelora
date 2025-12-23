@@ -119,11 +119,6 @@ pub fn to_float_or(value: Dynamic, default: Dynamic) -> Dynamic {
 /// Convert value to integer with explicit thousands separator
 /// Usage: to_int(',') for US format with comma thousands separator
 pub fn to_int_with_format(value: Dynamic, thousands_sep: ImmutableString) -> Dynamic {
-    // Validate separator length (must be 0 or 1 char)
-    if thousands_sep.len() > 1 {
-        return Dynamic::UNIT; // Invalid: multi-char separator
-    }
-
     // Try existing conversion first (for already-numeric values)
     if let Ok(num) = value.as_int() {
         return Dynamic::from(num);
@@ -147,11 +142,6 @@ pub fn to_int_or_with_format(
     thousands_sep: ImmutableString,
     default: Dynamic,
 ) -> Dynamic {
-    // Validate separator length (must be 0 or 1 char)
-    if thousands_sep.len() > 1 {
-        return default; // Invalid: multi-char separator
-    }
-
     // Try existing conversion first (for already-numeric values)
     if let Ok(num) = value.as_int() {
         return Dynamic::from(num);
@@ -175,11 +165,6 @@ pub fn to_float_with_format(
     thousands_sep: ImmutableString,
     decimal_sep: ImmutableString,
 ) -> Dynamic {
-    // Validate separator lengths (must be 0 or 1 char)
-    if thousands_sep.len() > 1 || decimal_sep.len() > 1 {
-        return Dynamic::UNIT; // Invalid: multi-char separator
-    }
-
     // Try existing conversion first (for already-numeric values)
     if let Ok(num) = value.as_float() {
         return Dynamic::from(num);
@@ -211,11 +196,6 @@ pub fn to_float_or_with_format(
     decimal_sep: ImmutableString,
     default: Dynamic,
 ) -> Dynamic {
-    // Validate separator lengths (must be 0 or 1 char)
-    if thousands_sep.len() > 1 || decimal_sep.len() > 1 {
-        return default; // Invalid: multi-char separator
-    }
-
     // Try existing conversion first (for already-numeric values)
     if let Ok(num) = value.as_float() {
         return Dynamic::from(num);
