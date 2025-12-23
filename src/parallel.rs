@@ -61,6 +61,20 @@ struct FileAwareLineContext<'a> {
     last_filename: &'a mut Option<String>,
 }
 
+/// Configuration for batcher threads
+struct BatcherConfig {
+    batch_size: usize,
+    batch_timeout: Duration,
+    global_tracker: GlobalTracker,
+    ignore_lines: Option<regex::Regex>,
+    keep_lines: Option<regex::Regex>,
+    skip_lines: usize,
+    head_lines: Option<usize>,
+    section_config: Option<crate::config::SectionConfig>,
+    input_format: crate::config::InputFormat,
+    ctrl_rx: Receiver<Ctrl>,
+}
+
 /// Configuration for parallel processing
 #[derive(Debug, Clone)]
 pub struct ParallelConfig {
@@ -891,31 +905,25 @@ impl ParallelProcessor {
 
         let batch_handle = {
             let batch_sender = batch_sender.clone();
-            let batch_size = self.config.batch_size;
-            let ignore_lines = config.input.ignore_lines.clone();
-            let keep_lines = config.input.keep_lines.clone();
-            let skip_lines = config.input.skip_lines;
-            let head_lines = config.input.head_lines;
-            let section_config = config.input.section.clone();
-            let global_tracker_clone = self.global_tracker.clone();
-            let input_format = config.input.format.clone();
-            let ctrl_for_batcher = ctrl_rx.clone();
+            let batcher_config = BatcherConfig {
+                batch_size: self.config.batch_size,
+                batch_timeout,
+                global_tracker: self.global_tracker.clone(),
+                ignore_lines: config.input.ignore_lines.clone(),
+                keep_lines: config.input.keep_lines.clone(),
+                skip_lines: config.input.skip_lines,
+                head_lines: config.input.head_lines,
+                section_config: config.input.section.clone(),
+                input_format: config.input.format.clone(),
+                ctrl_rx: ctrl_rx.clone(),
+            };
 
             thread::spawn(move || {
                 Self::batcher_thread(
                     line_receiver,
                     batch_sender,
-                    batch_size,
-                    batch_timeout,
-                    global_tracker_clone,
-                    ignore_lines,
-                    keep_lines,
-                    skip_lines,
-                    head_lines,
-                    section_config,
-                    input_format,
+                    batcher_config,
                     preprocessing_line_count,
-                    ctrl_for_batcher,
                 )
             })
         };
@@ -1097,33 +1105,22 @@ impl ParallelProcessor {
 
         let batch_handle = {
             let batch_sender = batch_sender.clone();
-            let batch_size = self.config.batch_size;
-            let ignore_lines = config.input.ignore_lines.clone();
-            let keep_lines = config.input.keep_lines.clone();
-            let skip_lines = config.input.skip_lines;
-            let head_lines = config.input.head_lines;
-            let section_config = config.input.section.clone();
-            let global_tracker_clone = self.global_tracker.clone();
-            let input_format = config.input.format.clone();
             let strict = config.processing.strict;
-            let ctrl_for_batcher = ctrl_rx.clone();
+            let batcher_config = BatcherConfig {
+                batch_size: self.config.batch_size,
+                batch_timeout,
+                global_tracker: self.global_tracker.clone(),
+                ignore_lines: config.input.ignore_lines.clone(),
+                keep_lines: config.input.keep_lines.clone(),
+                skip_lines: config.input.skip_lines,
+                head_lines: config.input.head_lines,
+                section_config: config.input.section.clone(),
+                input_format: config.input.format.clone(),
+                ctrl_rx: ctrl_rx.clone(),
+            };
 
             thread::spawn(move || {
-                Self::file_aware_batcher_thread(
-                    line_receiver,
-                    batch_sender,
-                    batch_size,
-                    batch_timeout,
-                    global_tracker_clone,
-                    ignore_lines,
-                    keep_lines,
-                    skip_lines,
-                    head_lines,
-                    section_config,
-                    input_format,
-                    strict,
-                    ctrl_for_batcher,
-                )
+                Self::file_aware_batcher_thread(line_receiver, batch_sender, batcher_config, strict)
             })
         };
 
@@ -1360,22 +1357,26 @@ impl ParallelProcessor {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn batcher_thread(
         line_receiver: Receiver<LineMessage>,
         batch_sender: Sender<Batch>,
-        batch_size: usize,
-        batch_timeout: Duration,
-        global_tracker: GlobalTracker,
-        ignore_lines: Option<regex::Regex>,
-        keep_lines: Option<regex::Regex>,
-        skip_lines: usize,
-        head_lines: Option<usize>,
-        section_config: Option<crate::config::SectionConfig>,
-        input_format: crate::config::InputFormat,
+        config: BatcherConfig,
         preprocessing_line_count: usize,
-        ctrl_rx: Receiver<Ctrl>,
     ) -> Result<()> {
+        // Extract config values
+        let BatcherConfig {
+            batch_size,
+            batch_timeout,
+            global_tracker,
+            ignore_lines,
+            keep_lines,
+            skip_lines,
+            head_lines,
+            section_config,
+            input_format,
+            ctrl_rx,
+        } = config;
+
         let mut batch_id = 0u64;
         let mut current_batch = Vec::with_capacity(batch_size);
         let mut line_num = preprocessing_line_count;
@@ -1636,22 +1637,26 @@ impl ParallelProcessor {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn file_aware_batcher_thread(
         line_receiver: Receiver<LineMessage>,
         batch_sender: Sender<Batch>,
-        batch_size: usize,
-        batch_timeout: Duration,
-        global_tracker: GlobalTracker,
-        ignore_lines: Option<regex::Regex>,
-        keep_lines: Option<regex::Regex>,
-        skip_lines: usize,
-        head_lines: Option<usize>,
-        section_config: Option<crate::config::SectionConfig>,
-        input_format: crate::config::InputFormat,
+        config: BatcherConfig,
         strict: bool,
-        ctrl_rx: Receiver<Ctrl>,
     ) -> Result<()> {
+        // Extract config values
+        let BatcherConfig {
+            batch_size,
+            batch_timeout,
+            global_tracker,
+            ignore_lines,
+            keep_lines,
+            skip_lines,
+            head_lines,
+            section_config,
+            input_format,
+            ctrl_rx,
+        } = config;
+
         let mut batch_id = 0u64;
         let mut current_batch = Vec::with_capacity(batch_size);
         let mut current_filenames = Vec::with_capacity(batch_size);

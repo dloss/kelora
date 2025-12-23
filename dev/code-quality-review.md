@@ -180,17 +180,44 @@ fn handle_file_aware_line(line: String, filename: Option<String>, ctx: FileAware
 
 **Result:** Reduced `handle_file_aware_line` from 22 parameters to 3, following the same pattern as `PlainLineContext` already established in the codebase. Function is now more maintainable and easier to modify.
 
+**Additional Fix Applied (Batcher Functions):**
+```rust
+// Created BatcherConfig struct to group common configuration:
+struct BatcherConfig {
+    batch_size: usize,
+    batch_timeout: Duration,
+    global_tracker: GlobalTracker,
+    ignore_lines: Option<regex::Regex>,
+    keep_lines: Option<regex::Regex>,
+    skip_lines: usize,
+    head_lines: Option<usize>,
+    section_config: Option<crate::config::SectionConfig>,
+    input_format: crate::config::InputFormat,
+    ctrl_rx: Receiver<Ctrl>,
+}
+
+// Refactored both batcher functions:
+// Before: batcher_thread(...13 parameters...)
+// After:  batcher_thread(line_receiver, batch_sender, config: BatcherConfig, preprocessing_line_count)
+
+// Before: file_aware_batcher_thread(...13 parameters...)
+// After:  file_aware_batcher_thread(line_receiver, batch_sender, config: BatcherConfig, strict)
+```
+
+**Result (Batcher Functions):** Reduced both `batcher_thread` and `file_aware_batcher_thread` from 13 parameters to 4, significantly improving maintainability. Both functions now use a shared configuration struct.
+
 **Verification:**
 - All 811 unit tests pass
 - Clippy shows no warnings
 - Follows existing codebase patterns
+- No `#[allow(clippy::too_many_arguments)]` needed for these functions anymore
 
 **Remaining work:**
-- `src/parallel.rs:1366, 1642, 2602, 2811` (8+ params each)
-- `src/main.rs:1120` (8+ params)
-- `src/rhai_functions/tracking.rs:159` (8+ params)
+- `src/parallel.rs:2579, 2788` - worker_process_batch/event_batch (7 params each, borderline)
+- `src/main.rs:1121` - process_line_sequential (12 params)
+- `src/rhai_functions/tracking.rs:160` - track_error (9 params)
 
-**Effort:** 2h ✅ COMPLETED (for handle_file_aware_line)
+**Effort:** 4h ✅ COMPLETED (handle_file_aware_line + batcher functions)
 
 ---
 
