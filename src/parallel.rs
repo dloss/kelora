@@ -183,8 +183,41 @@ impl GlobalTracker {
         }
     }
 
+    /// Lock processing stats with poison recovery
+    fn lock_stats(&self) -> std::sync::MutexGuard<'_, ProcessingStats> {
+        match self.processing_stats.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                eprintln!("⚠️  Worker thread panicked, recovering processing stats");
+                poisoned.into_inner()
+            }
+        }
+    }
+
+    /// Lock user tracked state with poison recovery
+    fn lock_user_tracked(&self) -> std::sync::MutexGuard<'_, HashMap<String, Dynamic>> {
+        match self.user_tracked.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                eprintln!("⚠️  Worker thread panicked, recovering user tracked state");
+                poisoned.into_inner()
+            }
+        }
+    }
+
+    /// Lock internal tracked state with poison recovery
+    fn lock_internal_tracked(&self) -> std::sync::MutexGuard<'_, HashMap<String, Dynamic>> {
+        match self.internal_tracked.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                eprintln!("⚠️  Worker thread panicked, recovering internal tracked state");
+                poisoned.into_inner()
+            }
+        }
+    }
+
     pub fn merge_worker_stats(&self, worker_stats: &ProcessingStats) -> Result<()> {
-        let mut global_stats = self.processing_stats.lock().unwrap();
+        let mut global_stats = self.lock_stats();
         // Don't merge lines_read - that's handled by reader thread
         // Merge error counts (needed for --stats display and termination case)
         global_stats.lines_errors += worker_stats.lines_errors;
@@ -232,7 +265,7 @@ impl GlobalTracker {
         &self,
         metrics: &HashMap<String, Dynamic>,
     ) -> Result<()> {
-        let mut stats = self.processing_stats.lock().unwrap();
+        let mut stats = self.lock_stats();
 
         let output = metrics
             .get("__kelora_stats_output")
@@ -311,7 +344,7 @@ impl GlobalTracker {
     }
 
     pub fn get_final_stats(&self) -> ProcessingStats {
-        let mut stats = self.processing_stats.lock().unwrap().clone();
+        let mut stats = self.lock_stats().clone();
         // Ensure we have the latest processing time
         if let Some(start_time) = self.start_time {
             stats.processing_time = start_time.elapsed();
@@ -320,13 +353,13 @@ impl GlobalTracker {
     }
 
     pub fn set_total_lines_read(&self, total_lines: usize) -> Result<()> {
-        let mut global_stats = self.processing_stats.lock().unwrap();
+        let mut global_stats = self.lock_stats();
         global_stats.lines_read = total_lines;
         Ok(())
     }
 
     pub fn add_lines_filtered(&self, count: usize) -> Result<()> {
-        let mut global_stats = self.processing_stats.lock().unwrap();
+        let mut global_stats = self.lock_stats();
         global_stats.lines_filtered += count;
         Ok(())
     }
@@ -337,7 +370,7 @@ impl GlobalTracker {
         internal_state: HashMap<String, Dynamic>,
     ) -> Result<()> {
         {
-            let mut global_user = self.user_tracked.lock().unwrap();
+            let mut global_user = self.lock_user_tracked();
             Self::merge_state_with_lookup(
                 &mut global_user,
                 &user_state,
@@ -347,7 +380,7 @@ impl GlobalTracker {
         }
 
         {
-            let mut global_internal = self.internal_tracked.lock().unwrap();
+            let mut global_internal = self.lock_internal_tracked();
             Self::merge_state_with_lookup(
                 &mut global_internal,
                 &internal_state,
@@ -782,8 +815,8 @@ impl GlobalTracker {
     }
 
     pub fn get_final_snapshot(&self) -> TrackingSnapshot {
-        let user = self.user_tracked.lock().unwrap().clone();
-        let internal = self.internal_tracked.lock().unwrap().clone();
+        let user = self.lock_user_tracked().clone();
+        let internal = self.lock_internal_tracked().clone();
         TrackingSnapshot::from_parts(user, internal)
     }
 }
@@ -3240,7 +3273,7 @@ impl ParallelProcessor {
                     // Print current parallel stats from coordinator
                     let mut current_stats = global_tracker.get_final_stats();
                     // Extract discovered keys/levels from current internal tracking
-                    let internal_tracking = global_tracker.internal_tracked.lock().unwrap().clone();
+                    let internal_tracking = global_tracker.lock_internal_tracked().clone();
                     current_stats.extract_discovered_from_tracking(&internal_tracking);
                     let stats_message = config.format_stats_message(
                         &current_stats
