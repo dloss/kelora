@@ -1025,19 +1025,29 @@ impl ParallelProcessor {
         };
 
         // Wait for all threads to complete
-        io_handle.join().unwrap()?;
-        batch_handle.join().unwrap()?;
+        io_handle
+            .join()
+            .unwrap_or_else(|e| panic!("IO thread panicked: {:?}", e))?;
+        batch_handle
+            .join()
+            .unwrap_or_else(|e| panic!("Batch processing thread panicked: {:?}", e))?;
 
         // Join chunker thread if it was spawned
         if let Some(handle) = chunker_handle {
-            handle.join().unwrap()?;
+            handle
+                .join()
+                .unwrap_or_else(|e| panic!("Chunker thread panicked: {:?}", e))?;
         }
 
-        for handle in worker_handles {
-            handle.join().unwrap()?;
+        for (idx, handle) in worker_handles.into_iter().enumerate() {
+            handle
+                .join()
+                .unwrap_or_else(|e| panic!("Worker thread {} panicked: {:?}", idx, e))?;
         }
 
-        sink_handle.join().unwrap()?;
+        sink_handle
+            .join()
+            .unwrap_or_else(|e| panic!("Sink thread panicked: {:?}", e))?;
 
         Ok(())
     }
@@ -1222,19 +1232,29 @@ impl ParallelProcessor {
         };
 
         // Wait for all threads to complete
-        io_handle.join().unwrap()?;
-        batch_handle.join().unwrap()?;
+        io_handle
+            .join()
+            .unwrap_or_else(|e| panic!("IO thread panicked: {:?}", e))?;
+        batch_handle
+            .join()
+            .unwrap_or_else(|e| panic!("Batch processing thread panicked: {:?}", e))?;
 
         // Join chunker thread if it was spawned
         if let Some(handle) = chunker_handle {
-            handle.join().unwrap()?;
+            handle
+                .join()
+                .unwrap_or_else(|e| panic!("Chunker thread panicked: {:?}", e))?;
         }
 
-        for handle in worker_handles {
-            handle.join().unwrap()?;
+        for (idx, handle) in worker_handles.into_iter().enumerate() {
+            handle
+                .join()
+                .unwrap_or_else(|e| panic!("Worker thread {} panicked: {:?}", idx, e))?;
         }
 
-        sink_handle.join().unwrap()?;
+        sink_handle
+            .join()
+            .unwrap_or_else(|e| panic!("Sink thread panicked: {:?}", e))?;
 
         Ok(())
     }
