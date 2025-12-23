@@ -546,7 +546,7 @@ fn parse_duration(arg: &str) -> Result<chrono::Duration, String> {
     let (num_str, unit) = if let Some(pos) = rest.find(|c: char| !c.is_ascii_digit()) {
         let num_part = &rest[..pos];
         let unit_part = rest[pos..].trim_start();
-        if unit_part.is_empty() || !unit_part.chars().next().unwrap().is_alphabetic() {
+        if !matches!(unit_part.chars().next(), Some(c) if c.is_alphabetic()) {
             return Err("Relative time must have a valid unit (h, m, d, etc.)".to_string());
         }
         (num_part, unit_part)

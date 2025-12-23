@@ -179,13 +179,28 @@ let n = existing_arr.len().max(new_arr.len());
 
 ---
 
-### 11. Edge Cases
+### 11. Edge Cases ✅ FIXED
 
-**`src/timestamp.rs:549`** - Unwrap after empty check could fail on unusual Unicode.
+**`src/timestamp.rs:549`** - ✅ FIXED: Unwrap after empty check could fail on unusual Unicode.
 
-**`src/cli.rs`** - 40+ `.to_str().unwrap()` calls fail on non-UTF-8 paths.
+**Fix Applied:**
+```rust
+// Before:
+if unit_part.is_empty() || !unit_part.chars().next().unwrap().is_alphabetic() {
+    return Err("Relative time must have a valid unit (h, m, d, etc.)".to_string());
+}
 
-**Effort:** 2-4h combined
+// After:
+if !matches!(unit_part.chars().next(), Some(c) if c.is_alphabetic()) {
+    return Err("Relative time must have a valid unit (h, m, d, etc.)".to_string());
+}
+```
+
+**Result:** Replaced unsafe `.unwrap()` with safer `matches!` pattern that handles both empty and non-alphabetic cases without panicking.
+
+**Note:** The `.to_str().unwrap()` calls in `src/cli.rs` are in test code only and are acceptable for test scenarios.
+
+**Effort:** 1h ✅ COMPLETED
 
 ---
 
