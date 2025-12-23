@@ -75,15 +75,18 @@ text.starting_with(prefix [,nth])    Return substring from prefix to end (nth: 1
 text.strip([chars])                  Remove whitespace or specified characters
 text.sub_string(start [,length])     Extract substring from position (builtin)
 text.to_float()                      Convert text to float (returns () on error)
-text.to_float(thousands, decimal)    Parse with explicit separators (e.g., ',', '.')
+text.to_float(thousands, decimal)    Parse with explicit separators
+                                     - thousands: remove ANY char in string (e.g., ',', ',. ', ",.'")
+                                     - decimal: single char or empty (multi-char returns error)
                                      Examples: "1,234.56".to_float(',', '.') → 1234.56 (US)
                                                "1.234,56".to_float('.', ',') → 1234.56 (EU)
-                                               "1 234,56".to_float(' ', ',') → 1234.56 (FR)
+                                               "1,234'567.89".to_float(",'", '.') → 1234567.89 (mixed)
 text.to_int()                        Convert text to integer (returns () on error)
-text.to_int(thousands)               Parse with explicit thousands separator
+text.to_int(thousands)               Parse with thousands separator removal
+                                     - thousands: remove ANY char in string (e.g., ',', '. ', ",.'")
                                      Examples: "1,234,567".to_int(',') → 1234567 (US)
                                                "1.234.567".to_int('.') → 1234567 (EU)
-                                               "2 000 000".to_int(' ') → 2000000 (FR)
+                                               "1,234'567".to_int(",'") → 1234567 (mixed)
 text.or_empty()                      Convert empty string/array/map to () for removal/filtering
 text.to_lower()                      Convert to lowercase (builtin)
 text.to_upper()                      Convert to uppercase (builtin)
@@ -182,14 +185,18 @@ round(x)                             Round to nearest integer
 
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)
-to_int(value, thousands)             Parse integer with thousands separator
+to_int(value, thousands)             Parse integer, removing ANY char in thousands string
                                      Example: "1,234,567".to_int(',') → 1234567
+                                              "1,234'567".to_int(",'") → 1234567 (removes both)
 to_float(value)                      Convert value to float (returns () on error)
 to_float(value, thousands, decimal)  Parse float with explicit separators
+                                     - thousands: remove ANY char in string
+                                     - decimal: single char or empty (multi-char → error)
                                      Example: "1,234.56".to_float(',', '.') → 1234.56
+                                              "1.234,56".to_float('.', ',') → 1234.56 (EU)
 to_bool(value)                       Convert value to boolean (returns () on error)
 to_int_or(value, default)            Convert value to integer with fallback
-to_int_or(value, thousands, default) Parse integer with separator and fallback
+to_int_or(value, thousands, default) Parse integer with thousands removal and fallback
 to_float_or(value, default)          Convert value to float with fallback
 to_float_or(value, thousands, decimal, default)
                                      Parse float with separators and fallback
@@ -492,6 +499,9 @@ COMMON IDIOMS:
 # Default value if missing     → e.referer ?? "direct"
 # Nested field with default    → e.get_path("user.profile.tier", "free")
 # Safe type conversion         → to_int_or(e.port, 8080)
+# Parse formatted numbers      → e.amount.to_float(',', '.')  (US: "1,234.56" → 1234.56)
+#                              → e.amount.to_float('.', ',')  (EU: "1.234,56" → 1234.56)
+#                              → e.count.to_int(",'")         (mixed: "1,234'567" → 1234567)
 # Check field exists & not ()  → e.has("user_id")
 # Check nested field exists    → e.has_path("response.body.status")
 # Remove sensitive fields      → e.password = (); e.ssn = ()
