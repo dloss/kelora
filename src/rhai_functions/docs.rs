@@ -75,7 +75,15 @@ text.starting_with(prefix [,nth])    Return substring from prefix to end (nth: 1
 text.strip([chars])                  Remove whitespace or specified characters
 text.sub_string(start [,length])     Extract substring from position (builtin)
 text.to_float()                      Convert text to float (returns () on error)
+text.to_float(thousands, decimal)    Parse with explicit separators (e.g., ',', '.')
+                                     Examples: "1,234.56".to_float(',', '.') → 1234.56 (US)
+                                               "1.234,56".to_float('.', ',') → 1234.56 (EU)
+                                               "1 234,56".to_float(' ', ',') → 1234.56 (FR)
 text.to_int()                        Convert text to integer (returns () on error)
+text.to_int(thousands)               Parse with explicit thousands separator
+                                     Examples: "1,234,567".to_int(',') → 1234567 (US)
+                                               "1.234.567".to_int('.') → 1234567 (EU)
+                                               "2 000 000".to_int(' ') → 2000000 (FR)
 text.or_empty()                      Convert empty string/array/map to () for removal/filtering
 text.to_lower()                      Convert to lowercase (builtin)
 text.to_upper()                      Convert to uppercase (builtin)
@@ -174,10 +182,17 @@ round(x)                             Round to nearest integer
 
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)
+to_int(value, thousands)             Parse integer with thousands separator
+                                     Example: "1,234,567".to_int(',') → 1234567
 to_float(value)                      Convert value to float (returns () on error)
+to_float(value, thousands, decimal)  Parse float with explicit separators
+                                     Example: "1,234.56".to_float(',', '.') → 1234.56
 to_bool(value)                       Convert value to boolean (returns () on error)
 to_int_or(value, default)            Convert value to integer with fallback
+to_int_or(value, thousands, default) Parse integer with separator and fallback
 to_float_or(value, default)          Convert value to float with fallback
+to_float_or(value, thousands, decimal, default)
+                                     Parse float with separators and fallback
 to_bool_or(value, default)           Convert value to boolean with fallback
 
 UTILITY FUNCTIONS:

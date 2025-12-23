@@ -1088,12 +1088,47 @@ e.status = to_int(e.status_string)
 e.score = to_float(e.score_string)
 ```
 
+#### `to_int(value, thousands_sep)` / `to_float(value, thousands_sep, decimal_sep)`
+Parse formatted numbers with explicit separators.
+
+**Parameters:**
+- `thousands_sep` - The thousands/grouping separator (single char or empty string)
+- `decimal_sep` - The decimal separator (single char or empty string)
+
+**Examples:**
+
+```rhai
+// US format (comma thousands, dot decimal)
+e.price = "1,234.56".to_float(',', '.')     // → 1234.56
+e.count = "1,234,567".to_int(',')           // → 1234567
+
+// EU format (dot thousands, comma decimal)
+e.price = "1.234,56".to_float('.', ',')     // → 1234.56
+e.count = "1.234.567".to_int('.')           // → 1234567
+
+// French format (space thousands, comma decimal)
+e.price = "1 234,56".to_float(' ', ',')     // → 1234.56
+e.count = "2 000 000".to_int(' ')           // → 2000000
+
+// No thousands separator (empty string)
+e.price = "1234.56".to_float("", '.')       // → 1234.56
+```
+
 #### `to_int_or(value, default)` / `to_float_or(value, default)` / `to_bool_or(value, default)`
 Convert value to type with fallback.
 
 ```rhai
 e.status = e.status_string.to_int_or(0)
 e.score = e.score_string.to_float_or(0.0)
+```
+
+#### `to_int_or(value, thousands_sep, default)` / `to_float_or(value, thousands_sep, decimal_sep, default)`
+Parse formatted numbers with separators and fallback.
+
+```rhai
+// With error handling
+e.amount = e.value.to_float_or(',', '.', 0.0)   // Default to 0.0 if invalid
+e.count = e.total.to_int_or(',', 0)             // Default to 0 if invalid
 ```
 
 #### `value.or_empty()`

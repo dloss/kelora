@@ -116,6 +116,156 @@ pub fn to_float_or(value: Dynamic, default: Dynamic) -> Dynamic {
     default
 }
 
+/// Convert value to integer with explicit thousands separator
+/// Usage: to_int(',') for US format with comma thousands separator
+pub fn to_int_with_format(value: Dynamic, thousands_sep: ImmutableString) -> Dynamic {
+    // Validate separator length (must be 0 or 1 char)
+    if thousands_sep.len() > 1 {
+        return Dynamic::UNIT; // Invalid: multi-char separator
+    }
+
+    // Try existing conversion first (for already-numeric values)
+    if let Ok(num) = value.as_int() {
+        return Dynamic::from(num);
+    }
+
+    // Clean and parse string
+    if let Some(s) = value.read_lock::<ImmutableString>() {
+        let cleaned = clean_number_string_int(s.as_str(), thousands_sep.as_str());
+        if let Ok(num) = cleaned.parse::<i64>() {
+            return Dynamic::from(num);
+        }
+    }
+
+    Dynamic::UNIT
+}
+
+/// Convert value to integer with explicit thousands separator and default fallback
+/// Usage: to_int_or(',', 0) for US format with comma thousands separator
+pub fn to_int_or_with_format(
+    value: Dynamic,
+    thousands_sep: ImmutableString,
+    default: Dynamic,
+) -> Dynamic {
+    // Validate separator length (must be 0 or 1 char)
+    if thousands_sep.len() > 1 {
+        return default; // Invalid: multi-char separator
+    }
+
+    // Try existing conversion first (for already-numeric values)
+    if let Ok(num) = value.as_int() {
+        return Dynamic::from(num);
+    }
+
+    // Clean and parse string
+    if let Some(s) = value.read_lock::<ImmutableString>() {
+        let cleaned = clean_number_string_int(s.as_str(), thousands_sep.as_str());
+        if let Ok(num) = cleaned.parse::<i64>() {
+            return Dynamic::from(num);
+        }
+    }
+
+    default
+}
+
+/// Convert value to float with explicit format
+/// Usage: to_float(',', '.') for US format (comma thousands, dot decimal)
+pub fn to_float_with_format(
+    value: Dynamic,
+    thousands_sep: ImmutableString,
+    decimal_sep: ImmutableString,
+) -> Dynamic {
+    // Validate separator lengths (must be 0 or 1 char)
+    if thousands_sep.len() > 1 || decimal_sep.len() > 1 {
+        return Dynamic::UNIT; // Invalid: multi-char separator
+    }
+
+    // Try existing conversion first (for already-numeric values)
+    if let Ok(num) = value.as_float() {
+        return Dynamic::from(num);
+    }
+    if let Ok(num) = value.as_int() {
+        return Dynamic::from(num as f64);
+    }
+
+    // Clean and parse string
+    if let Some(s) = value.read_lock::<ImmutableString>() {
+        let cleaned = clean_number_string_float(
+            s.as_str(),
+            thousands_sep.as_str(),
+            decimal_sep.as_str(),
+        );
+        if let Ok(num) = cleaned.parse::<f64>() {
+            return Dynamic::from(num);
+        }
+    }
+
+    Dynamic::UNIT
+}
+
+/// Convert value to float with explicit format and default fallback
+/// Usage: to_float_or(',', '.', 0.0) for US format with default
+pub fn to_float_or_with_format(
+    value: Dynamic,
+    thousands_sep: ImmutableString,
+    decimal_sep: ImmutableString,
+    default: Dynamic,
+) -> Dynamic {
+    // Validate separator lengths (must be 0 or 1 char)
+    if thousands_sep.len() > 1 || decimal_sep.len() > 1 {
+        return default; // Invalid: multi-char separator
+    }
+
+    // Try existing conversion first (for already-numeric values)
+    if let Ok(num) = value.as_float() {
+        return Dynamic::from(num);
+    }
+    if let Ok(num) = value.as_int() {
+        return Dynamic::from(num as f64);
+    }
+
+    // Clean and parse string
+    if let Some(s) = value.read_lock::<ImmutableString>() {
+        let cleaned = clean_number_string_float(
+            s.as_str(),
+            thousands_sep.as_str(),
+            decimal_sep.as_str(),
+        );
+        if let Ok(num) = cleaned.parse::<f64>() {
+            return Dynamic::from(num);
+        }
+    }
+
+    default
+}
+
+/// Helper to clean number string for integer parsing
+fn clean_number_string_int(s: &str, thousands_sep: &str) -> String {
+    // Remove thousands separator (if not empty)
+    if !thousands_sep.is_empty() {
+        s.replace(thousands_sep, "")
+    } else {
+        s.to_string()
+    }
+}
+
+/// Helper to clean number string for float parsing
+fn clean_number_string_float(s: &str, thousands_sep: &str, decimal_sep: &str) -> String {
+    let mut result = s.to_string();
+
+    // Remove thousands separator (if not empty)
+    if !thousands_sep.is_empty() {
+        result = result.replace(thousands_sep, "");
+    }
+
+    // Replace decimal separator with standard dot (if not empty and not already '.')
+    if !decimal_sep.is_empty() && decimal_sep != "." {
+        result = result.replace(decimal_sep, ".");
+    }
+
+    result
+}
+
 /// Extract value from a nested path with default fallback
 /// Usage: get_path(e, "user.role", "guest")
 /// Supports dot notation and bracket notation: "user.items[0].name"
@@ -342,6 +492,12 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("to_int_or", to_int_or);
     engine.register_fn("to_float_or", to_float_or);
     engine.register_fn("to_bool_or", to_bool_or);
+
+    // Conversion functions - with explicit format (NEW overloads)
+    engine.register_fn("to_int", to_int_with_format);
+    engine.register_fn("to_int_or", to_int_or_with_format);
+    engine.register_fn("to_float", to_float_with_format);
+    engine.register_fn("to_float_or", to_float_or_with_format);
 }
 
 #[cfg(test)]
