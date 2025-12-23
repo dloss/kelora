@@ -76,7 +76,8 @@ pub struct Cli {
     #[arg(long = "no-input", help_heading = "Input Options")]
     pub no_input: bool,
 
-    /// Input format. Supports standard formats (json, line, csv, etc.), regex:<pattern> for regex parsing with named groups, cols:<spec> for column parsing, and csv/tsv with type annotations.
+    /// Input format. Available formats: auto (default), json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>.
+    /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
     /// Examples: -f json, -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
     #[arg(
         short = 'f',
