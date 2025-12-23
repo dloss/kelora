@@ -2542,7 +2542,7 @@ Quick Examples:
   tail -f app.log | kelora -j -l error,warn
 
 Common Options:
-  -f, --input-format <FORMAT>   Choose parser (auto, json, logfmt, combined, line, cols:<spec>, regex:<pattern>)
+  -f, --input-format <FORMAT>   Choose parser (auto, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>)
   -j                            Shortcut for -f json
   --filter <expr>               Keep events where expression is true (can repeat; run in the order given)
   -l, --levels <levels>         Keep only these log levels (comma-separated)
