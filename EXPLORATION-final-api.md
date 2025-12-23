@@ -11,9 +11,9 @@ Add optional separator parameters to existing `to_float()` and `to_int()` functi
 ```rhai
 // FLOATS
 text.to_float()                              // Existing: strict parsing
-text.to_float(decimal_sep, thousands_sep)    // NEW: explicit format
+text.to_float(thousands_sep, decimal_sep)    // NEW: explicit format
 text.to_float_or(default)                    // Existing: with default
-text.to_float_or(decimal_sep, thousands_sep, default)  // NEW: format + default
+text.to_float_or(thousands_sep, decimal_sep, default)  // NEW: format + default
 
 // INTEGERS
 text.to_int()                                // Existing: strict parsing
@@ -23,8 +23,11 @@ text.to_int_or(thousands_sep, default)       // NEW: format + default
 ```
 
 **Parameter names:**
-- `decimal_sep` - The decimal separator character (e.g., `'.'` or `','`)
 - `thousands_sep` - The thousands/grouping separator (e.g., `','`, `'.'`, `' '`, `'_'`)
+- `decimal_sep` - The decimal separator character (e.g., `'.'` or `','`)
+
+**Parameter order rationale:** Matches left-to-right reading of formatted numbers.
+In `"1,234.56"` you encounter thousands separator first, then decimal separator.
 
 ---
 
@@ -42,55 +45,55 @@ text.to_int_or(thousands_sep, default)       // NEW: format + default
 ### US Format (comma thousands, dot decimal)
 
 ```rhai
-"1,234.56".to_float('.', ',')        // → 1234.56
-"1,234,567.89".to_float('.', ',')    // → 1234567.89
+"1,234.56".to_float(',', '.')        // → 1234.56
+"1,234,567.89".to_float(',', '.')    // → 1234567.89
 "1,234".to_int(',')                  // → 1234
 "999,999,999".to_int(',')            // → 999999999
 
 // With defaults
-"1,234.56".to_float_or('.', ',', 0.0)      // → 1234.56
-"invalid".to_float_or('.', ',', 0.0)       // → 0.0
+"1,234.56".to_float_or(',', '.', 0.0)      // → 1234.56
+"invalid".to_float_or(',', '.', 0.0)       // → 0.0
 ```
 
 ### EU Format (dot thousands, comma decimal)
 
 ```rhai
-"1.234,56".to_float(',', '.')        // → 1234.56
-"1.234.567,89".to_float(',', '.')    // → 1234567.89
+"1.234,56".to_float('.', ',')        // → 1234.56
+"1.234.567,89".to_float('.', ',')    // → 1234567.89
 "1.234".to_int('.')                  // → 1234
 "999.999.999".to_int('.')            // → 999999999
 
 // With defaults
-"1.234,56".to_float_or(',', '.', 0.0)      // → 1234.56
+"1.234,56".to_float_or('.', ',', 0.0)      // → 1234.56
 ```
 
 ### French/Swiss Format (space thousands, comma decimal)
 
 ```rhai
-"1 234,56".to_float(',', ' ')        // → 1234.56
-"1 234 567,89".to_float(',', ' ')    // → 1234567.89
+"1 234,56".to_float(' ', ',')        // → 1234.56
+"1 234 567,89".to_float(' ', ',')    // → 1234567.89
 "2 000 000".to_int(' ')              // → 2000000
 
 // With defaults
-"1 234,56".to_float_or(',', ' ', 0.0)      // → 1234.56
+"1 234,56".to_float_or(' ', ',', 0.0)      // → 1234.56
 ```
 
 ### Programming Logs (underscore separator)
 
 ```rhai
-"3_222_444.67".to_float('.', '_')    // → 3222444.67
+"3_222_444.67".to_float('_', '.')    // → 3222444.67
 "3_222_444".to_int('_')              // → 3222444
-"1_000_000.5".to_float('.', '_')     // → 1000000.5
+"1_000_000.5".to_float('_', '.')     // → 1000000.5
 ```
 
 ### Custom/Weird Formats
 
 ```rhai
-// Hypothetical: semicolon decimal, colon thousands
-"1:234;56".to_float(';', ':')        // → 1234.56
+// Hypothetical: colon thousands, semicolon decimal
+"1:234;56".to_float(':', ';')        // → 1234.56
 
 // No thousands separator (just decimal)
-"1234,56".to_float(',', '')          // → 1234.56 (empty string = no thousands sep)
+"1234,56".to_float('', ',')          // → 1234.56 (empty string = no thousands sep)
 ```
 
 ---
@@ -99,24 +102,24 @@ text.to_int_or(thousands_sep, default)       // NEW: format + default
 
 ```rhai
 // US financial logs
-e.price = e.price_str.to_float('.', ',')
+e.price = e.price_str.to_float(',', '.')
 e.quantity = e.qty_str.to_int(',')
 
 // EU server logs
-e.response_time = e.time_ms.to_float(',', '.')
+e.response_time = e.time_ms.to_float('.', ',')
 e.request_count = e.requests.to_int('.')
 
 // Mixed format handling
 if e.locale == "US" {
-    e.amount = e.value.to_float('.', ',')
-} else if e.locale == "EU" {
     e.amount = e.value.to_float(',', '.')
+} else if e.locale == "EU" {
+    e.amount = e.value.to_float('.', ',')
 } else {
     e.amount = e.value.to_float()  // Standard format
 }
 
 // With error handling
-e.total = e.messy_value.to_float_or('.', ',', 0.0)
+e.total = e.messy_value.to_float_or(',', '.', 0.0)
 e.count = e.user_count.to_int_or(',', 0)
 ```
 
@@ -124,17 +127,19 @@ e.count = e.user_count.to_int_or(',', 0)
 
 ## Parameter Order Rationale
 
-### For to_float(): `(decimal_sep, thousands_sep)`
+### For to_float(): `(thousands_sep, decimal_sep)`
 
-**Why decimal first?**
-- More important (determines the actual number)
-- Thousands separator is optional in many contexts
-- Reads naturally: "decimal point is comma, thousands separator is dot"
+**Why thousands first?**
+- Matches left-to-right reading of the number string
+- In `"1,234.56"` you encounter `,` before `.`
+- Natural visual order: `to_float(',', '.')` mirrors `"1,234.56"`
+- Intuitive: parameters appear in the same sequence as in the input
 
 **Examples:**
 ```rhai
-.to_float(',', '.')     // "Decimal is comma, thousands is dot" = EU
-.to_float('.', ',')     // "Decimal is dot, thousands is comma" = US
+"1,234.56".to_float(',', '.')   // comma first, dot second (matches string order!)
+"1.234,56".to_float('.', ',')   // dot first, comma second (matches string order!)
+"1 234,56".to_float(' ', ',')   // space first, comma second (matches string order!)
 ```
 
 ### For to_int(): `(thousands_sep)` only
@@ -177,11 +182,11 @@ e.count = e.user_count.to_int_or(',', 0)
 // src/rhai_functions/safety.rs
 
 /// Convert value to float with explicit format
-/// Usage: to_float('.', ',') for US format
+/// Usage: to_float(',', '.') for US format
 pub fn to_float_with_format(
     value: Dynamic,
-    decimal_sep: char,
     thousands_sep: char,
+    decimal_sep: char,
 ) -> Dynamic {
     // Try existing conversion first
     if let Ok(num) = value.as_float() {
@@ -242,12 +247,12 @@ pub fn register_functions(engine: &mut Engine) {
 ```
 CONVERSION FUNCTIONS:
 text.to_float()                      Convert text to float (returns () on error)
-text.to_float(decimal_sep, thousands_sep)
+text.to_float(thousands_sep, decimal_sep)
                                      Parse with explicit separators
                                      Examples:
-                                       "1,234.56".to_float('.', ',')   → 1234.56 (US)
-                                       "1.234,56".to_float(',', '.')   → 1234.56 (EU)
-                                       "1 234,56".to_float(',', ' ')   → 1234.56 (FR)
+                                       "1,234.56".to_float(',', '.')   → 1234.56 (US)
+                                       "1.234,56".to_float('.', ',')   → 1234.56 (EU)
+                                       "1 234,56".to_float(' ', ',')   → 1234.56 (FR)
 
 text.to_int()                        Convert text to integer (returns () on error)
 text.to_int(thousands_sep)           Parse with explicit thousands separator
@@ -257,7 +262,7 @@ text.to_int(thousands_sep)           Parse with explicit thousands separator
                                        "2 000 000".to_int(' ')   → 2000000 (FR)
 
 text.to_float_or(default)            Convert to float with default fallback
-text.to_float_or(decimal_sep, thousands_sep, default)
+text.to_float_or(thousands_sep, decimal_sep, default)
                                      Parse with separators and default
 
 text.to_int_or(default)              Convert to int with default fallback
@@ -269,19 +274,19 @@ text.to_int_or(thousands_sep, default)
 
 ```rhai
 // Parse formatted numbers
-e.us_price = e.price.to_float('.', ',')        // US: "1,234.56" → 1234.56
-e.eu_price = e.preis.to_float(',', '.')        // EU: "1.234,56" → 1234.56
+e.us_price = e.price.to_float(',', '.')        // US: "1,234.56" → 1234.56
+e.eu_price = e.preis.to_float('.', ',')        // EU: "1.234,56" → 1234.56
 e.fr_count = e.nombre.to_int(' ')              // FR: "2 000 000" → 2000000
 
 // With error handling
-e.amount = e.value.to_float_or('.', ',', 0.0)  // Default to 0.0 if invalid
+e.amount = e.value.to_float_or(',', '.', 0.0)  // Default to 0.0 if invalid
 e.total = e.count.to_int_or(',', 0)            // Default to 0 if invalid
 
 // Conditional format handling
 if e.locale == "US" {
-    e.value = e.amount.to_float('.', ',')
-} else {
     e.value = e.amount.to_float(',', '.')
+} else {
+    e.value = e.amount.to_float('.', ',')
 }
 ```
 
@@ -293,21 +298,21 @@ if e.locale == "US" {
 #[test]
 fn test_to_float_with_format() {
     // US format
-    assert_eq!(to_float_with_format("1,234.56", '.', ','), 1234.56);
-    assert_eq!(to_float_with_format("1,234,567.89", '.', ','), 1234567.89);
+    assert_eq!(to_float_with_format("1,234.56", ',', '.'), 1234.56);
+    assert_eq!(to_float_with_format("1,234,567.89", ',', '.'), 1234567.89);
 
     // EU format
-    assert_eq!(to_float_with_format("1.234,56", ',', '.'), 1234.56);
-    assert_eq!(to_float_with_format("1.234.567,89", ',', '.'), 1234567.89);
+    assert_eq!(to_float_with_format("1.234,56", '.', ','), 1234.56);
+    assert_eq!(to_float_with_format("1.234.567,89", '.', ','), 1234567.89);
 
     // French format
-    assert_eq!(to_float_with_format("1 234,56", ',', ' '), 1234.56);
+    assert_eq!(to_float_with_format("1 234,56", ' ', ','), 1234.56);
 
     // Underscore
-    assert_eq!(to_float_with_format("3_222_444.67", '.', '_'), 3222444.67);
+    assert_eq!(to_float_with_format("3_222_444.67", '_', '.'), 3222444.67);
 
     // Invalid
-    assert!(to_float_with_format("invalid", '.', ',').is_unit());
+    assert!(to_float_with_format("invalid", ',', '.').is_unit());
 }
 
 #[test]
@@ -338,9 +343,9 @@ fn test_to_int_with_format() {
 
 ```rhai
 // NEW overloads
-text.to_float(decimal_sep, thousands_sep)
+text.to_float(thousands_sep, decimal_sep)
 text.to_int(thousands_sep)
-text.to_float_or(decimal_sep, thousands_sep, default)
+text.to_float_or(thousands_sep, decimal_sep, default)
 text.to_int_or(thousands_sep, default)
 
 // Existing (unchanged)
