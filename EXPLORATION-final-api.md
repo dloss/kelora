@@ -23,12 +23,13 @@ text.to_int_or(thousands_sep, default)       // NEW: format + default
 ```
 
 **Parameter names:**
-- `thousands_sep` - The thousands/grouping separator. Single char (e.g., `','`, `'.'`, `' '`, `'_'`) or empty string `""` (no separator)
-- `decimal_sep` - The decimal separator character. Single char (e.g., `'.'` or `','`) or empty string `""` (no separator)
+- `thousands_sep` - The thousands/grouping separator (any string, including empty `""`)
+- `decimal_sep` - The decimal separator (any string, including empty `""`)
 
-**Parameter constraints:**
-- Must be exactly 1 character OR empty string `""`
-- Multi-character strings are invalid → returns `()` (error)
+**Parameter behavior:**
+- Any string length accepted (single-char, multi-char, or empty)
+- Treated as literal string for find/replace operations
+- Empty string `""` means "no separator" (skip that operation)
 
 **Parameter order rationale:** Matches left-to-right reading of formatted numbers.
 In `"1,234.56"` you encounter thousands separator first, then decimal separator.
@@ -37,21 +38,20 @@ In `"1,234.56"` you encounter thousands separator first, then decimal separator.
 
 ## Behavior
 
-**Validation:**
-1. Check that `thousands_sep` and `decimal_sep` are either:
-   - Exactly 1 character long, OR
-   - Empty string `""`
-2. If invalid (multi-char string) → return `()` immediately
-
-**Conversion:**
-1. **Remove all occurrences** of `thousands_sep` (if not empty)
-2. **Replace all occurrences** of `decimal_sep` with `'.'` (if not empty)
+**Processing steps:**
+1. **Remove all occurrences** of `thousands_sep` (if not empty string)
+2. **Replace all occurrences** of `decimal_sep` with `'.'` (if not empty string)
 3. **Parse** the cleaned string as float/int
 4. **Return** number or `()` on error (or default if using `_or` variant)
 
-**Empty string handling:**
-- `thousands_sep = ""` → Don't remove anything (no thousands separator)
-- `decimal_sep = ""` → Don't replace anything (decimal is already `'.'`)
+**Separator handling:**
+- Any string length accepted (literal string replacement)
+- Empty string `""` → skip that operation
+- Multi-char separators work: `"1,,234".to_int(",,")` → `1234`
+
+**Examples:**
+- `"1,234.56"` with `(',', '.')` → remove `,`, replace `.` with `.` → `"1234.56"` → `1234.56`
+- `"1::234;;56"` with `('::', ';;')` → remove `::`, replace `;;` with `.` → `"1234.56"` → `1234.56`
 
 ---
 
@@ -104,28 +104,30 @@ In `"1,234.56"` you encounter thousands separator first, then decimal separator.
 ### Custom/Weird Formats
 
 ```rhai
-// Hypothetical: colon thousands, semicolon decimal
+// Single-char separators
 "1:234;56".to_float(':', ';')        // → 1234.56
 
-// No thousands separator (just decimal)
-"1234,56".to_float("", ',')          // → 1234.56 (empty = no thousands sep)
-"1234.56".to_float("", '.')          // → 1234.56 (empty = no thousands sep)
+// Multi-char separators (now supported!)
+"1,,234..56".to_float(",,", "..")    // → 1234.56
+"1:::234;;;56".to_float(":::", ";;;") // → 1234.56
+"1__234__567".to_int("__")           // → 1234567
+
+// No thousands separator (empty string)
+"1234,56".to_float("", ',')          // → 1234.56 (empty = skip removal)
+"1234.56".to_float("", '.')          // → 1234.56
 
 // No decimal separator (already standard)
 "1,234".to_int(',')                  // → 1234
-"1,234.0".to_float(',', "")          // → 1234.0 (empty = decimal already '.')
+"1,234.0".to_float(',', "")          // → 1234.0 (empty = skip replacement)
 ```
 
 ### Invalid Input (Returns `()`)
 
 ```rhai
-// Multi-character separators are invalid
-"1,234.56".to_float(",,", '.')       // → () (invalid: multi-char separator)
-"1,234.56".to_float(',', "..")       // → () (invalid: multi-char separator)
-
 // Malformed numbers
 "invalid".to_float(',', '.')         // → () (can't parse)
 "".to_float(',', '.')                // → () (empty string)
+"abc123".to_int(',')                 // → () (not a number)
 ```
 
 ---
@@ -220,12 +222,7 @@ pub fn to_float_with_format(
     thousands_sep: ImmutableString,
     decimal_sep: ImmutableString,
 ) -> Dynamic {
-    // Validate separator lengths (must be 0 or 1 char)
-    if thousands_sep.len() > 1 || decimal_sep.len() > 1 {
-        return Dynamic::UNIT; // Invalid: multi-char separator
-    }
-
-    // Try existing conversion first
+    // Try existing conversion first (for already-numeric values)
     if let Ok(num) = value.as_float() {
         return Dynamic::from(num);
     }
@@ -235,7 +232,7 @@ pub fn to_float_with_format(
 
     // Clean and parse string
     if let Some(s) = value.read_lock::<ImmutableString>() {
-        let cleaned = clean_number_string(
+        let cleaned = clean_number_string_float(
             s.as_str(),
             thousands_sep.as_str(),
             decimal_sep.as_str()
@@ -248,8 +245,8 @@ pub fn to_float_with_format(
     Dynamic::UNIT
 }
 
-/// Helper to clean number string
-fn clean_number_string(s: &str, thousands_sep: &str, decimal_sep: &str) -> String {
+/// Helper to clean number string for float parsing
+fn clean_number_string_float(s: &str, thousands_sep: &str, decimal_sep: &str) -> String {
     let mut result = s.to_string();
 
     // Remove thousands separator (if not empty)
@@ -357,9 +354,9 @@ fn test_to_float_with_format() {
     assert_eq!(to_float_with_format("1234,56", "", ","), 1234.56);
     assert_eq!(to_float_with_format("1,234.0", ",", ""), 1234.0);
 
-    // Invalid: multi-char separators
-    assert!(to_float_with_format("1,234.56", ",,", ".").is_unit());
-    assert!(to_float_with_format("1,234.56", ",", "..").is_unit());
+    // Multi-char separators (now supported!)
+    assert_eq!(to_float_with_format("1,,234..56", ",,", ".."), 1234.56);
+    assert_eq!(to_float_with_format("1:::234;;;56", ":::", ";;;"), 1234.56);
 
     // Invalid: malformed numbers
     assert!(to_float_with_format("invalid", ",", ".").is_unit());
@@ -384,8 +381,9 @@ fn test_to_int_with_format() {
     // Empty string (no separator)
     assert_eq!(to_int_with_format("1234567", ""), 1234567);
 
-    // Invalid: multi-char separator
-    assert!(to_int_with_format("1,234", ",,").is_unit());
+    // Multi-char separator (now supported!)
+    assert_eq!(to_int_with_format("1__234__567", "__"), 1234567);
+    assert_eq!(to_int_with_format("1,,234", ",,"), 1234);
 
     // Invalid: malformed numbers
     assert!(to_int_with_format("invalid", ",").is_unit());
