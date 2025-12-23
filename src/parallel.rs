@@ -61,6 +61,22 @@ struct FileAwareLineContext<'a> {
     last_filename: &'a mut Option<String>,
 }
 
+/// Configuration for batcher thread - groups all configuration parameters
+/// to reduce parameter count from 13 to 4
+struct BatcherThreadConfig {
+    batch_sender: Sender<Batch>,
+    batch_size: usize,
+    batch_timeout: Duration,
+    global_tracker: GlobalTracker,
+    ignore_lines: Option<regex::Regex>,
+    keep_lines: Option<regex::Regex>,
+    skip_lines: usize,
+    head_lines: Option<usize>,
+    section_config: Option<crate::config::SectionConfig>,
+    input_format: crate::config::InputFormat,
+    preprocessing_line_count: usize,
+}
+
 /// Configuration for parallel processing
 #[derive(Debug, Clone)]
 pub struct ParallelConfig {
@@ -904,17 +920,19 @@ impl ParallelProcessor {
             thread::spawn(move || {
                 Self::batcher_thread(
                     line_receiver,
-                    batch_sender,
-                    batch_size,
-                    batch_timeout,
-                    global_tracker_clone,
-                    ignore_lines,
-                    keep_lines,
-                    skip_lines,
-                    head_lines,
-                    section_config,
-                    input_format,
-                    preprocessing_line_count,
+                    BatcherThreadConfig {
+                        batch_sender,
+                        batch_size,
+                        batch_timeout,
+                        global_tracker: global_tracker_clone,
+                        ignore_lines,
+                        keep_lines,
+                        skip_lines,
+                        head_lines,
+                        section_config,
+                        input_format,
+                        preprocessing_line_count,
+                    },
                     ctrl_for_batcher,
                 )
             })
@@ -1360,30 +1378,21 @@ impl ParallelProcessor {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn batcher_thread(
         line_receiver: Receiver<LineMessage>,
-        batch_sender: Sender<Batch>,
-        batch_size: usize,
-        batch_timeout: Duration,
-        global_tracker: GlobalTracker,
-        ignore_lines: Option<regex::Regex>,
-        keep_lines: Option<regex::Regex>,
-        skip_lines: usize,
-        head_lines: Option<usize>,
-        section_config: Option<crate::config::SectionConfig>,
-        input_format: crate::config::InputFormat,
-        preprocessing_line_count: usize,
+        config: BatcherThreadConfig,
         ctrl_rx: Receiver<Ctrl>,
     ) -> Result<()> {
         let mut batch_id = 0u64;
-        let mut current_batch = Vec::with_capacity(batch_size);
-        let mut line_num = preprocessing_line_count;
+        let mut current_batch = Vec::with_capacity(config.batch_size);
+        let mut line_num = config.preprocessing_line_count;
         let mut batch_start_line = 1usize;
         let mut pending_deadline: Option<Instant> = None;
         let mut skipped_lines_count = 0usize;
         let mut filtered_lines = 0usize;
-        let mut section_selector = section_config.map(crate::pipeline::SectionSelector::new);
+        let mut section_selector = config
+            .section_config
+            .map(crate::pipeline::SectionSelector::new);
 
         let ctrl_rx = ctrl_rx;
 
@@ -1393,7 +1402,7 @@ impl ParallelProcessor {
                 if deadline <= now {
                     if !current_batch.is_empty() {
                         Self::send_batch(
-                            &batch_sender,
+                            &config.batch_sender,
                             &mut current_batch,
                             batch_id,
                             batch_start_line,
@@ -1413,7 +1422,7 @@ impl ParallelProcessor {
                             Ok(Ctrl::Shutdown { immediate }) => {
                                 if !current_batch.is_empty() && !immediate {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1427,7 +1436,7 @@ impl ParallelProcessor {
                             Err(_) => {
                                 if !current_batch.is_empty() {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1443,32 +1452,32 @@ impl ParallelProcessor {
                                 Self::handle_plain_line(
                                     line,
                                     PlainLineContext {
-                                        batch_sender: &batch_sender,
+                                        batch_sender: &config.batch_sender,
                                         current_batch: &mut current_batch,
-                                        batch_size,
-                                        batch_timeout,
+                                        batch_size: config.batch_size,
+                                        batch_timeout: config.batch_timeout,
                                         batch_id: &mut batch_id,
                                         batch_start_line: &mut batch_start_line,
                                         line_num: &mut line_num,
                                         skipped_lines_count: &mut skipped_lines_count,
                                         filtered_lines: &mut filtered_lines,
-                                        skip_lines,
-                                        head_lines,
+                                        skip_lines: config.skip_lines,
+                                        head_lines: config.head_lines,
                                         section_selector: &mut section_selector,
-                                        input_format: &input_format,
-                                        ignore_lines: &ignore_lines,
-                                        keep_lines: &keep_lines,
+                                        input_format: &config.input_format,
+                                        ignore_lines: &config.ignore_lines,
+                                        keep_lines: &config.keep_lines,
                                         pending_deadline: &mut pending_deadline,
                                     },
                                 )?;
 
                                 // Check if we've reached the head limit after processing this line
-                                if let Some(head_limit) = head_lines {
+                                if let Some(head_limit) = config.head_lines {
                                     if line_num >= head_limit {
                                         // Flush remaining batch and stop
                                         if !current_batch.is_empty() {
                                             Self::send_batch(
-                                                &batch_sender,
+                                                &config.batch_sender,
                                                 &mut current_batch,
                                                 batch_id,
                                                 batch_start_line,
@@ -1488,7 +1497,7 @@ impl ParallelProcessor {
                             Ok(LineMessage::Eof) => {
                                 if !current_batch.is_empty() {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1499,7 +1508,7 @@ impl ParallelProcessor {
                             Err(_) => {
                                 if !current_batch.is_empty() {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1512,7 +1521,7 @@ impl ParallelProcessor {
                     recv(timeout) -> _ => {
                         if !current_batch.is_empty() {
                             Self::send_batch(
-                                &batch_sender,
+                                &config.batch_sender,
                                 &mut current_batch,
                                 batch_id,
                                 batch_start_line,
@@ -1530,7 +1539,7 @@ impl ParallelProcessor {
                             Ok(Ctrl::Shutdown { immediate }) => {
                                 if !current_batch.is_empty() && !immediate {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1544,7 +1553,7 @@ impl ParallelProcessor {
                             Err(_) => {
                                 if !current_batch.is_empty() {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1560,32 +1569,32 @@ impl ParallelProcessor {
                                 Self::handle_plain_line(
                                     line,
                                     PlainLineContext {
-                                        batch_sender: &batch_sender,
+                                        batch_sender: &config.batch_sender,
                                         current_batch: &mut current_batch,
-                                        batch_size,
-                                        batch_timeout,
+                                        batch_size: config.batch_size,
+                                        batch_timeout: config.batch_timeout,
                                         batch_id: &mut batch_id,
                                         batch_start_line: &mut batch_start_line,
                                         line_num: &mut line_num,
                                         skipped_lines_count: &mut skipped_lines_count,
                                         filtered_lines: &mut filtered_lines,
-                                        skip_lines,
-                                        head_lines,
+                                        skip_lines: config.skip_lines,
+                                        head_lines: config.head_lines,
                                         section_selector: &mut section_selector,
-                                        input_format: &input_format,
-                                        ignore_lines: &ignore_lines,
-                                        keep_lines: &keep_lines,
+                                        input_format: &config.input_format,
+                                        ignore_lines: &config.ignore_lines,
+                                        keep_lines: &config.keep_lines,
                                         pending_deadline: &mut pending_deadline,
                                     },
                                 )?;
 
                                 // Check if we've reached the head limit after processing this line
-                                if let Some(head_limit) = head_lines {
+                                if let Some(head_limit) = config.head_lines {
                                     if line_num >= head_limit {
                                         // Flush remaining batch and stop
                                         if !current_batch.is_empty() {
                                             Self::send_batch(
-                                                &batch_sender,
+                                                &config.batch_sender,
                                                 &mut current_batch,
                                                 batch_id,
                                                 batch_start_line,
@@ -1605,7 +1614,7 @@ impl ParallelProcessor {
                             Ok(LineMessage::Eof) => {
                                 if !current_batch.is_empty() {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1616,7 +1625,7 @@ impl ParallelProcessor {
                             Err(_) => {
                                 if !current_batch.is_empty() {
                                     Self::send_batch(
-                                        &batch_sender,
+                                        &config.batch_sender,
                                         &mut current_batch,
                                         batch_id,
                                         batch_start_line,
@@ -1630,8 +1639,8 @@ impl ParallelProcessor {
             }
         }
 
-        global_tracker.set_total_lines_read(line_num)?;
-        global_tracker.add_lines_filtered(filtered_lines)?;
+        config.global_tracker.set_total_lines_read(line_num)?;
+        config.global_tracker.add_lines_filtered(filtered_lines)?;
 
         Ok(())
     }

@@ -146,39 +146,53 @@ fn merge_top_bottom_arrays(
 
 ### 7. Too Many Parameters ✅ FIXED (Partial)
 
-**Problem:** `src/parallel.rs:2014` - `handle_file_aware_line` had 22 parameters!
+**Problem:** Multiple functions with excessive parameters (8+ params):
+- `src/parallel.rs:2014` - `handle_file_aware_line` had 22 parameters!
+- `src/parallel.rs:1366` - `batcher_thread` had 13 parameters
+- `src/parallel.rs:1642` - `file_aware_batcher_thread` (13 params)
+- `src/parallel.rs:2602, 2811` (8+ params each)
+- `src/main.rs:1120` (12+ params)
+- `src/rhai_functions/tracking.rs:159` (9+ params)
 
 **Fix Applied:**
-```rust
-// Created FileAwareLineContext struct to group all parameters:
-struct FileAwareLineContext<'a> {
-    batch_sender: &'a Sender<Batch>,
-    current_batch: &'a mut Vec<String>,
-    current_filenames: &'a mut Vec<Option<String>>,
-    batch_size: usize,
-    batch_timeout: Duration,
-    batch_id: &'a mut u64,
-    batch_start_line: &'a mut usize,
-    line_num: &'a mut usize,
-    skipped_lines_count: &'a mut usize,
-    filtered_lines: &'a mut usize,
-    skip_lines: usize,
-    head_lines: Option<usize>,
-    section_selector: &'a mut Option<crate::pipeline::SectionSelector>,
-    input_format: &'a crate::config::InputFormat,
-    strict: bool,
-    ignore_lines: &'a Option<regex::Regex>,
-    keep_lines: &'a Option<regex::Regex>,
-    pending_deadline: &'a mut Option<Instant>,
-    current_headers: &'a mut Option<Vec<String>>,
-    last_filename: &'a mut Option<String>,
-}
 
-// Refactored function signature from 22 parameters to just 3:
+1. **handle_file_aware_line** (22 → 3 parameters):
+```rust
+// Created FileAwareLineContext struct to group all parameters
+struct FileAwareLineContext<'a> { /* 20 fields */ }
 fn handle_file_aware_line(line: String, filename: Option<String>, ctx: FileAwareLineContext<'_>) -> Result<()>
 ```
 
-**Result:** Reduced `handle_file_aware_line` from 22 parameters to 3, following the same pattern as `PlainLineContext` already established in the codebase. Function is now more maintainable and easier to modify.
+2. **batcher_thread** (13 → 3 parameters): ✅ NEW
+```rust
+// Created BatcherThreadConfig struct to group configuration parameters
+struct BatcherThreadConfig {
+    batch_sender: Sender<Batch>,
+    batch_size: usize,
+    batch_timeout: Duration,
+    global_tracker: GlobalTracker,
+    ignore_lines: Option<regex::Regex>,
+    keep_lines: Option<regex::Regex>,
+    skip_lines: usize,
+    head_lines: Option<usize>,
+    section_config: Option<crate::config::SectionConfig>,
+    input_format: crate::config::InputFormat,
+    preprocessing_line_count: usize,
+}
+
+fn batcher_thread(
+    line_receiver: Receiver<LineMessage>,
+    config: BatcherThreadConfig,
+    ctrl_rx: Receiver<Ctrl>,
+) -> Result<()>
+```
+
+**Result:**
+- Reduced `handle_file_aware_line` from 22 to 3 parameters
+- Reduced `batcher_thread` from 13 to 3 parameters
+- Both follow consistent patterns with context/config structs
+- Code is more maintainable and easier to modify
+- Removed `#[allow(clippy::too_many_arguments)]` from `batcher_thread`
 
 **Verification:**
 - All 811 unit tests pass
@@ -186,11 +200,12 @@ fn handle_file_aware_line(line: String, filename: Option<String>, ctx: FileAware
 - Follows existing codebase patterns
 
 **Remaining work:**
-- `src/parallel.rs:1366, 1642, 2602, 2811` (8+ params each)
-- `src/main.rs:1120` (8+ params)
-- `src/rhai_functions/tracking.rs:159` (8+ params)
+- `src/parallel.rs:1642` - `file_aware_batcher_thread` (13 params)
+- `src/parallel.rs:2602, 2811` (8+ params each)
+- `src/main.rs:1120` (12+ params)
+- `src/rhai_functions/tracking.rs:159` (9+ params - has justifying comment)
 
-**Effort:** 2h ✅ COMPLETED (for handle_file_aware_line)
+**Effort:** 4h ✅ COMPLETED (handle_file_aware_line: 2h, batcher_thread: 2h)
 
 ---
 
