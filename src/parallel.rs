@@ -37,6 +37,30 @@ struct PlainLineContext<'a> {
     pending_deadline: &'a mut Option<Instant>,
 }
 
+/// Context for processing file-aware lines (with filename tracking)
+struct FileAwareLineContext<'a> {
+    batch_sender: &'a Sender<Batch>,
+    current_batch: &'a mut Vec<String>,
+    current_filenames: &'a mut Vec<Option<String>>,
+    batch_size: usize,
+    batch_timeout: Duration,
+    batch_id: &'a mut u64,
+    batch_start_line: &'a mut usize,
+    line_num: &'a mut usize,
+    skipped_lines_count: &'a mut usize,
+    filtered_lines: &'a mut usize,
+    skip_lines: usize,
+    head_lines: Option<usize>,
+    section_selector: &'a mut Option<crate::pipeline::SectionSelector>,
+    input_format: &'a crate::config::InputFormat,
+    strict: bool,
+    ignore_lines: &'a Option<regex::Regex>,
+    keep_lines: &'a Option<regex::Regex>,
+    pending_deadline: &'a mut Option<Instant>,
+    current_headers: &'a mut Option<Vec<String>>,
+    last_filename: &'a mut Option<String>,
+}
+
 /// Configuration for parallel processing
 #[derive(Debug, Clone)]
 pub struct ParallelConfig {
@@ -1701,30 +1725,29 @@ impl ParallelProcessor {
                     recv(line_receiver) -> msg => {
                         match msg {
                             Ok(LineMessage::Line { line, filename }) => {
-                                Self::handle_file_aware_line(
-                                    line,
-                                    filename,
-                                    &batch_sender,
-                                    &mut current_batch,
-                                    &mut current_filenames,
+                                let ctx = FileAwareLineContext {
+                                    batch_sender: &batch_sender,
+                                    current_batch: &mut current_batch,
+                                    current_filenames: &mut current_filenames,
                                     batch_size,
                                     batch_timeout,
-                                    &mut batch_id,
-                                    &mut batch_start_line,
-                                    &mut line_num,
-                                    &mut skipped_lines_count,
-                                    &mut filtered_lines,
+                                    batch_id: &mut batch_id,
+                                    batch_start_line: &mut batch_start_line,
+                                    line_num: &mut line_num,
+                                    skipped_lines_count: &mut skipped_lines_count,
+                                    filtered_lines: &mut filtered_lines,
                                     skip_lines,
                                     head_lines,
-                                    &mut section_selector,
-                                    &input_format,
+                                    section_selector: &mut section_selector,
+                                    input_format: &input_format,
                                     strict,
-                                    &ignore_lines,
-                                    &keep_lines,
-                                    &mut pending_deadline,
-                                    &mut current_headers,
-                                    &mut last_filename,
-                                )?;
+                                    ignore_lines: &ignore_lines,
+                                    keep_lines: &keep_lines,
+                                    pending_deadline: &mut pending_deadline,
+                                    current_headers: &mut current_headers,
+                                    last_filename: &mut last_filename,
+                                };
+                                Self::handle_file_aware_line(line, filename, ctx)?;
 
                                 // Check if we've reached the head limit after processing this line
                                 if let Some(head_limit) = head_lines {
@@ -1833,30 +1856,29 @@ impl ParallelProcessor {
                     recv(line_receiver) -> msg => {
                         match msg {
                             Ok(LineMessage::Line { line, filename }) => {
-                                Self::handle_file_aware_line(
-                                    line,
-                                    filename,
-                                    &batch_sender,
-                                    &mut current_batch,
-                                    &mut current_filenames,
+                                let ctx = FileAwareLineContext {
+                                    batch_sender: &batch_sender,
+                                    current_batch: &mut current_batch,
+                                    current_filenames: &mut current_filenames,
                                     batch_size,
                                     batch_timeout,
-                                    &mut batch_id,
-                                    &mut batch_start_line,
-                                    &mut line_num,
-                                    &mut skipped_lines_count,
-                                    &mut filtered_lines,
+                                    batch_id: &mut batch_id,
+                                    batch_start_line: &mut batch_start_line,
+                                    line_num: &mut line_num,
+                                    skipped_lines_count: &mut skipped_lines_count,
+                                    filtered_lines: &mut filtered_lines,
                                     skip_lines,
                                     head_lines,
-                                    &mut section_selector,
-                                    &input_format,
+                                    section_selector: &mut section_selector,
+                                    input_format: &input_format,
                                     strict,
-                                    &ignore_lines,
-                                    &keep_lines,
-                                    &mut pending_deadline,
-                                    &mut current_headers,
-                                    &mut last_filename,
-                                )?;
+                                    ignore_lines: &ignore_lines,
+                                    keep_lines: &keep_lines,
+                                    pending_deadline: &mut pending_deadline,
+                                    current_headers: &mut current_headers,
+                                    last_filename: &mut last_filename,
+                                };
+                                Self::handle_file_aware_line(line, filename, ctx)?;
 
                                 // Check if we've reached the head limit after processing this line
                                 if let Some(head_limit) = head_lines {
@@ -1984,132 +2006,108 @@ impl ParallelProcessor {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
-    fn handle_file_aware_line(
-        line: String,
-        filename: Option<String>,
-        batch_sender: &Sender<Batch>,
-        current_batch: &mut Vec<String>,
-        current_filenames: &mut Vec<Option<String>>,
-        batch_size: usize,
-        batch_timeout: Duration,
-        batch_id: &mut u64,
-        batch_start_line: &mut usize,
-        line_num: &mut usize,
-        skipped_lines_count: &mut usize,
-        filtered_lines: &mut usize,
-        skip_lines: usize,
-        head_lines: Option<usize>,
-        section_selector: &mut Option<crate::pipeline::SectionSelector>,
-        input_format: &crate::config::InputFormat,
-        strict: bool,
-        ignore_lines: &Option<regex::Regex>,
-        keep_lines: &Option<regex::Regex>,
-        pending_deadline: &mut Option<Instant>,
-        current_headers: &mut Option<Vec<String>>,
-        last_filename: &mut Option<String>,
-    ) -> Result<()> {
-        *line_num += 1;
+    fn handle_file_aware_line(line: String, filename: Option<String>, ctx: FileAwareLineContext<'_>) -> Result<()> {
+        *ctx.line_num += 1;
 
         // Check if we've hit the head limit (stops processing early)
-        if let Some(head_limit) = head_lines {
-            if *line_num > head_limit {
+        if let Some(head_limit) = ctx.head_lines {
+            if *ctx.line_num > head_limit {
                 // Signal that we should stop processing by returning early
                 return Ok(());
             }
         }
 
-        if *skipped_lines_count < skip_lines {
-            *skipped_lines_count += 1;
-            *filtered_lines += 1;
+        if *ctx.skipped_lines_count < ctx.skip_lines {
+            *ctx.skipped_lines_count += 1;
+            *ctx.filtered_lines += 1;
             return Ok(());
         }
 
         // Apply section selection if configured
-        if let Some(selector) = section_selector {
+        if let Some(selector) = ctx.section_selector {
             if !selector.should_include_line(&line) {
-                *filtered_lines += 1;
+                *ctx.filtered_lines += 1;
                 return Ok(());
             }
         }
 
-        if line.is_empty() && !matches!(input_format, crate::config::InputFormat::Line) {
+        if line.is_empty() && !matches!(ctx.input_format, crate::config::InputFormat::Line) {
             return Ok(());
         }
 
-        if let Some(ref keep_regex) = keep_lines {
+        if let Some(ref keep_regex) = ctx.keep_lines {
             if !keep_regex.is_match(&line) {
-                *filtered_lines += 1;
+                *ctx.filtered_lines += 1;
                 return Ok(());
             }
         }
 
-        if let Some(ref ignore_regex) = ignore_lines {
+        if let Some(ref ignore_regex) = ctx.ignore_lines {
             if ignore_regex.is_match(&line) {
-                *filtered_lines += 1;
+                *ctx.filtered_lines += 1;
                 return Ok(());
             }
         }
 
-        let filename_changed = match (&filename, &*last_filename) {
+        let filename_changed = match (&filename, &*ctx.last_filename) {
             (Some(new), Some(prev)) => new != prev,
             (None, None) => false,
             _ => true,
         };
 
         if matches!(
-            input_format,
+            ctx.input_format,
             crate::config::InputFormat::Csv(_)
                 | crate::config::InputFormat::Tsv(_)
                 | crate::config::InputFormat::Csvnh
                 | crate::config::InputFormat::Tsvnh
         ) && filename_changed
         {
-            if !current_batch.is_empty() {
+            if !ctx.current_batch.is_empty() {
                 Self::send_batch_with_filenames_and_headers(
-                    batch_sender,
-                    current_batch,
-                    current_filenames,
-                    *batch_id,
-                    *batch_start_line,
-                    current_headers.clone(),
+                    ctx.batch_sender,
+                    ctx.current_batch,
+                    ctx.current_filenames,
+                    *ctx.batch_id,
+                    *ctx.batch_start_line,
+                    ctx.current_headers.clone(),
                 )?;
-                *batch_id += 1;
-                *batch_start_line = *line_num + 1;
-                *pending_deadline = None;
+                *ctx.batch_id += 1;
+                *ctx.batch_start_line = *ctx.line_num + 1;
+                *ctx.pending_deadline = None;
             }
 
-            *current_headers = Self::create_csv_parser_for_file(input_format, &line, strict)
+            *ctx.current_headers = Self::create_csv_parser_for_file(ctx.input_format, &line, ctx.strict)
                 .map(|parser| parser.get_headers());
-            *last_filename = filename.clone();
+            *ctx.last_filename = filename.clone();
 
             if matches!(
-                input_format,
+                ctx.input_format,
                 crate::config::InputFormat::Csv(_) | crate::config::InputFormat::Tsv(_)
             ) {
                 return Ok(());
             }
         } else if filename_changed {
-            *last_filename = filename.clone();
+            *ctx.last_filename = filename.clone();
         }
 
-        current_batch.push(line);
-        current_filenames.push(filename);
+        ctx.current_batch.push(line);
+        ctx.current_filenames.push(filename);
 
-        if current_batch.len() >= batch_size || batch_timeout.is_zero() {
+        if ctx.current_batch.len() >= ctx.batch_size || ctx.batch_timeout.is_zero() {
             Self::send_batch_with_filenames_and_headers(
-                batch_sender,
-                current_batch,
-                current_filenames,
-                *batch_id,
-                *batch_start_line,
-                current_headers.clone(),
+                ctx.batch_sender,
+                ctx.current_batch,
+                ctx.current_filenames,
+                *ctx.batch_id,
+                *ctx.batch_start_line,
+                ctx.current_headers.clone(),
             )?;
-            *batch_id += 1;
-            *batch_start_line = *line_num + 1;
-            *pending_deadline = None;
+            *ctx.batch_id += 1;
+            *ctx.batch_start_line = *ctx.line_num + 1;
+            *ctx.pending_deadline = None;
         } else {
-            *pending_deadline = Some(Instant::now() + batch_timeout);
+            *ctx.pending_deadline = Some(Instant::now() + ctx.batch_timeout);
         }
 
         Ok(())

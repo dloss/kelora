@@ -144,18 +144,53 @@ fn merge_top_bottom_arrays(
 
 ---
 
-### 7. Too Many Parameters
+### 7. Too Many Parameters ✅ FIXED (Partial)
 
-**Worst offender:** `src/parallel.rs:2014` - 18 parameters!
+**Problem:** `src/parallel.rs:2014` - `handle_file_aware_line` had 22 parameters!
 
-**Also:**
+**Fix Applied:**
+```rust
+// Created FileAwareLineContext struct to group all parameters:
+struct FileAwareLineContext<'a> {
+    batch_sender: &'a Sender<Batch>,
+    current_batch: &'a mut Vec<String>,
+    current_filenames: &'a mut Vec<Option<String>>,
+    batch_size: usize,
+    batch_timeout: Duration,
+    batch_id: &'a mut u64,
+    batch_start_line: &'a mut usize,
+    line_num: &'a mut usize,
+    skipped_lines_count: &'a mut usize,
+    filtered_lines: &'a mut usize,
+    skip_lines: usize,
+    head_lines: Option<usize>,
+    section_selector: &'a mut Option<crate::pipeline::SectionSelector>,
+    input_format: &'a crate::config::InputFormat,
+    strict: bool,
+    ignore_lines: &'a Option<regex::Regex>,
+    keep_lines: &'a Option<regex::Regex>,
+    pending_deadline: &'a mut Option<Instant>,
+    current_headers: &'a mut Option<Vec<String>>,
+    last_filename: &'a mut Option<String>,
+}
+
+// Refactored function signature from 22 parameters to just 3:
+fn handle_file_aware_line(line: String, filename: Option<String>, ctx: FileAwareLineContext<'_>) -> Result<()>
+```
+
+**Result:** Reduced `handle_file_aware_line` from 22 parameters to 3, following the same pattern as `PlainLineContext` already established in the codebase. Function is now more maintainable and easier to modify.
+
+**Verification:**
+- All 811 unit tests pass
+- Clippy shows no warnings
+- Follows existing codebase patterns
+
+**Remaining work:**
 - `src/parallel.rs:1366, 1642, 2602, 2811` (8+ params each)
 - `src/main.rs:1120` (8+ params)
 - `src/rhai_functions/tracking.rs:159` (8+ params)
 
-**Fix:** Group into context structs (`LineContext`, `ProcessingContext`, `OutputContext`)
-
-**Effort:** 6-10h
+**Effort:** 2h ✅ COMPLETED (for handle_file_aware_line)
 
 ---
 
