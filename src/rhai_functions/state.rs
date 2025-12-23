@@ -1,9 +1,9 @@
 //! Global state management for Rhai scripts
 //!
 //! Provides a mutable `state` map in sequential mode for tracking information
-//! across events. In parallel mode, accessing state will panic with an error message.
+//! across events. In parallel mode, accessing state returns an error.
 
-use rhai::{Dynamic, Engine, Map};
+use rhai::{Dynamic, Engine, EvalAltResult, Map, Position};
 use std::fmt;
 use std::sync::{Arc, RwLock};
 
@@ -34,7 +34,7 @@ impl fmt::Display for StateMap {
     }
 }
 
-/// Dummy type used in parallel mode that panics on any access
+/// Dummy type used in parallel mode that returns errors on any access
 #[derive(Debug, Clone)]
 pub struct StateNotAvailable;
 
@@ -140,52 +140,109 @@ pub fn register(engine: &mut Engine) {
     // Register StateNotAvailable type
     engine.register_type::<StateNotAvailable>();
 
-    // Register panic-inducing operations for StateNotAvailable
+    // Register error-returning operations for StateNotAvailable
     engine
-        .register_indexer_get(|_state: &mut StateNotAvailable, _key: &str| -> Dynamic {
-            panic!("'state' is not available in --parallel mode (requires sequential processing)");
-        })
-        .register_indexer_set(
-            |_state: &mut StateNotAvailable, _key: &str, _value: Dynamic| -> () {
-                panic!(
+        .register_indexer_get(
+            |_state: &mut StateNotAvailable, _key: &str| -> Result<Dynamic, Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
                     "'state' is not available in --parallel mode (requires sequential processing)"
-                );
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
+            },
+        )
+        .register_indexer_set(
+            |_state: &mut StateNotAvailable,
+             _key: &str,
+             _value: Dynamic|
+             -> Result<(), Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
+                    "'state' is not available in --parallel mode (requires sequential processing)"
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
             },
         )
         .register_fn(
             "contains",
-            |_state: &mut StateNotAvailable, _key: &str| -> bool {
-                panic!(
+            |_state: &mut StateNotAvailable, _key: &str| -> Result<bool, Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
                     "'state' is not available in --parallel mode (requires sequential processing)"
-                );
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
             },
         )
-        .register_fn("len", |_state: &mut StateNotAvailable| -> i64 {
-            panic!("'state' is not available in --parallel mode (requires sequential processing)");
-        })
-        .register_fn("is_empty", |_state: &mut StateNotAvailable| -> bool {
-            panic!("'state' is not available in --parallel mode (requires sequential processing)");
-        })
-        .register_fn("keys", |_state: &mut StateNotAvailable| -> Vec<Dynamic> {
-            panic!("'state' is not available in --parallel mode (requires sequential processing)");
-        })
-        .register_fn("clear", |_state: &mut StateNotAvailable| {
-            panic!("'state' is not available in --parallel mode (requires sequential processing)");
-        })
+        .register_fn(
+            "len",
+            |_state: &mut StateNotAvailable| -> Result<i64, Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
+                    "'state' is not available in --parallel mode (requires sequential processing)"
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
+            },
+        )
+        .register_fn(
+            "is_empty",
+            |_state: &mut StateNotAvailable| -> Result<bool, Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
+                    "'state' is not available in --parallel mode (requires sequential processing)"
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
+            },
+        )
+        .register_fn(
+            "keys",
+            |_state: &mut StateNotAvailable| -> Result<Vec<Dynamic>, Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
+                    "'state' is not available in --parallel mode (requires sequential processing)"
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
+            },
+        )
+        .register_fn(
+            "clear",
+            |_state: &mut StateNotAvailable| -> Result<(), Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
+                    "'state' is not available in --parallel mode (requires sequential processing)"
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
+            },
+        )
         .register_fn(
             "get",
-            |_state: &mut StateNotAvailable, _key: &str| -> Dynamic {
-                panic!(
+            |_state: &mut StateNotAvailable, _key: &str| -> Result<Dynamic, Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
                     "'state' is not available in --parallel mode (requires sequential processing)"
-                );
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
             },
         )
         .register_fn(
             "insert",
-            |_state: &mut StateNotAvailable, _key: &str, _value: Dynamic| {
-                panic!(
+            |_state: &mut StateNotAvailable,
+             _key: &str,
+             _value: Dynamic|
+             -> Result<(), Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
                     "'state' is not available in --parallel mode (requires sequential processing)"
-                );
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
             },
         );
 }

@@ -300,6 +300,7 @@ fn test_state_not_available_in_parallel_mode() {
             "-f",
             "json",
             "--parallel",
+            "--strict",
             "--exec",
             r#"state["count"] = (state["count"] ?? 0) + 1"#,
         ],
