@@ -3296,7 +3296,7 @@
 <p>Common uses: deduplication, session reconstruction, state machines, cross-event correlation. For simple counting, use <code>track_*()</code> functions instead.</p>
 <p>See <a href="../reference/script-variables/#state">Script Variables</a> and <code>examples/state_examples.rhai</code>.</p>
 <h3 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h3>
-<p>Auto-collected processing metrics displayed with <code>--stats</code>. Includes events parsed, filtered, output; discovered levels and field names; errors; time span. Different from user-defined metrics. See <a href="../concepts/pipeline-model/#internal-statistics-stats">Processing Architecture</a>.</p>
+<p>Auto-collected processing metrics displayed with <code>--stats</code>. Includes events parsed, filtered, output; discovered levels and field names (both input and output when they differ); errors; time span. Different from user-defined metrics. See <a href="../concepts/pipeline-model/#internal-statistics-stats">Processing Architecture</a>.</p>
 <h3 id="streaming">Streaming<a class="headerlink" href="#streaming" title="Permanent link">&para;</a></h3>
 <p>Processing mode where events are read, processed, and output one at a time without buffering the entire file in memory. Default mode (sequential). Enables real-time analysis of live logs. See <a href="../concepts/performance-model/">Performance Model</a>.</p>
 <h3 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h3>
