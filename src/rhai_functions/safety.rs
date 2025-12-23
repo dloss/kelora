@@ -165,6 +165,11 @@ pub fn to_float_with_format(
     thousands_sep: ImmutableString,
     decimal_sep: ImmutableString,
 ) -> Dynamic {
+    // Validate decimal_sep: must be single char or empty
+    if decimal_sep.chars().count() > 1 {
+        return Dynamic::UNIT;
+    }
+
     // Try existing conversion first (for already-numeric values)
     if let Ok(num) = value.as_float() {
         return Dynamic::from(num);
@@ -175,11 +180,8 @@ pub fn to_float_with_format(
 
     // Clean and parse string
     if let Some(s) = value.read_lock::<ImmutableString>() {
-        let cleaned = clean_number_string_float(
-            s.as_str(),
-            thousands_sep.as_str(),
-            decimal_sep.as_str(),
-        );
+        let cleaned =
+            clean_number_string_float(s.as_str(), thousands_sep.as_str(), decimal_sep.as_str());
         if let Ok(num) = cleaned.parse::<f64>() {
             return Dynamic::from(num);
         }
@@ -196,6 +198,11 @@ pub fn to_float_or_with_format(
     decimal_sep: ImmutableString,
     default: Dynamic,
 ) -> Dynamic {
+    // Validate decimal_sep: must be single char or empty
+    if decimal_sep.chars().count() > 1 {
+        return default;
+    }
+
     // Try existing conversion first (for already-numeric values)
     if let Ok(num) = value.as_float() {
         return Dynamic::from(num);
@@ -206,11 +213,8 @@ pub fn to_float_or_with_format(
 
     // Clean and parse string
     if let Some(s) = value.read_lock::<ImmutableString>() {
-        let cleaned = clean_number_string_float(
-            s.as_str(),
-            thousands_sep.as_str(),
-            decimal_sep.as_str(),
-        );
+        let cleaned =
+            clean_number_string_float(s.as_str(), thousands_sep.as_str(), decimal_sep.as_str());
         if let Ok(num) = cleaned.parse::<f64>() {
             return Dynamic::from(num);
         }
@@ -220,27 +224,37 @@ pub fn to_float_or_with_format(
 }
 
 /// Helper to clean number string for integer parsing
+/// Removes any character that appears in thousands_sep
 fn clean_number_string_int(s: &str, thousands_sep: &str) -> String {
-    // Remove thousands separator (if not empty)
-    if !thousands_sep.is_empty() {
-        s.replace(thousands_sep, "")
-    } else {
-        s.to_string()
+    if thousands_sep.is_empty() {
+        return s.to_string();
     }
+
+    // Remove any character that appears in thousands_sep
+    thousands_sep
+        .chars()
+        .fold(s.to_string(), |acc, c| acc.replace(c, ""))
 }
 
 /// Helper to clean number string for float parsing
+/// Removes any character that appears in thousands_sep
+/// Replaces decimal_sep (must be single char or empty) with '.'
+/// Note: decimal replacement happens BEFORE thousands removal to avoid conflicts
 fn clean_number_string_float(s: &str, thousands_sep: &str, decimal_sep: &str) -> String {
     let mut result = s.to_string();
 
-    // Remove thousands separator (if not empty)
-    if !thousands_sep.is_empty() {
-        result = result.replace(thousands_sep, "");
-    }
-
-    // Replace decimal separator with standard dot (if not empty and not already '.')
+    // Replace decimal separator with standard dot FIRST (if not empty and not already '.')
+    // This must happen before thousands removal to avoid conflicts when the same
+    // character appears in both (e.g., comma in "1,234 567,89" with thousands=", " and decimal=",")
     if !decimal_sep.is_empty() && decimal_sep != "." {
         result = result.replace(decimal_sep, ".");
+    }
+
+    // Remove any character that appears in thousands_sep (if not empty)
+    if !thousands_sep.is_empty() {
+        result = thousands_sep
+            .chars()
+            .fold(result, |acc, c| acc.replace(c, ""));
     }
 
     result
@@ -871,5 +885,108 @@ mod tests {
             }
             _ => panic!("Expected complex path tokens"),
         }
+    }
+
+    #[test]
+    fn test_to_int_with_multi_char_thousands_sep() {
+        // Test removing any character in thousands_sep string
+        let result = to_int_with_format(Dynamic::from("1,234'567"), ImmutableString::from(",'"));
+        assert_eq!(result.as_int().unwrap(), 1234567);
+
+        // Test with multiple separator chars (space and comma)
+        let result = to_int_with_format(Dynamic::from("1,234 567"), ImmutableString::from(", "));
+        assert_eq!(result.as_int().unwrap(), 1234567);
+
+        // Test with underscore and dash
+        let result = to_int_with_format(Dynamic::from("1_234-567"), ImmutableString::from("_-"));
+        assert_eq!(result.as_int().unwrap(), 1234567);
+    }
+
+    #[test]
+    fn test_to_float_with_multi_char_thousands_sep() {
+        // Test removing any character in thousands_sep string (comma and apostrophe)
+        let result = to_float_with_format(
+            Dynamic::from("1,234'567.89"),
+            ImmutableString::from(",'"),
+            ImmutableString::from("."),
+        );
+        assert!((result.as_float().unwrap() - 1234567.89).abs() < 0.001);
+
+        // Test with space and apostrophe for thousands, comma for decimal
+        // Note: Can't use dot in thousands_sep when comma is decimal (they'd conflict)
+        let result = to_float_with_format(
+            Dynamic::from("1'234 567,89"),
+            ImmutableString::from("' "),
+            ImmutableString::from(","),
+        );
+        assert!((result.as_float().unwrap() - 1234567.89).abs() < 0.001);
+
+        // Test with underscore and dash for thousands
+        let result = to_float_with_format(
+            Dynamic::from("1_234-567.89"),
+            ImmutableString::from("_-"),
+            ImmutableString::from("."),
+        );
+        assert!((result.as_float().unwrap() - 1234567.89).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_to_float_rejects_multi_char_decimal_sep() {
+        // Multi-char decimal_sep should return UNIT
+        let result = to_float_with_format(
+            Dynamic::from("1234.56"),
+            ImmutableString::from(","),
+            ImmutableString::from(".,"),
+        );
+        assert!(result.is_unit());
+
+        // Multi-char decimal_sep with default should return default
+        let result = to_float_or_with_format(
+            Dynamic::from("1234.56"),
+            ImmutableString::from(","),
+            ImmutableString::from(".,"),
+            Dynamic::from(999.0),
+        );
+        assert_eq!(result.as_float().unwrap(), 999.0);
+    }
+
+    #[test]
+    fn test_to_int_or_with_multi_char_thousands_sep() {
+        // Test with default fallback
+        let result = to_int_or_with_format(
+            Dynamic::from("1,234'567"),
+            ImmutableString::from(",'"),
+            Dynamic::from(0i64),
+        );
+        assert_eq!(result.as_int().unwrap(), 1234567);
+
+        // Test invalid input with default
+        let result = to_int_or_with_format(
+            Dynamic::from("invalid"),
+            ImmutableString::from(",'"),
+            Dynamic::from(999i64),
+        );
+        assert_eq!(result.as_int().unwrap(), 999);
+    }
+
+    #[test]
+    fn test_to_float_or_with_multi_char_thousands_sep() {
+        // Test with default fallback
+        let result = to_float_or_with_format(
+            Dynamic::from("1,234'567.89"),
+            ImmutableString::from(",'"),
+            ImmutableString::from("."),
+            Dynamic::from(0.0),
+        );
+        assert!((result.as_float().unwrap() - 1234567.89).abs() < 0.001);
+
+        // Test invalid input with default
+        let result = to_float_or_with_format(
+            Dynamic::from("invalid"),
+            ImmutableString::from(",'"),
+            ImmutableString::from("."),
+            Dynamic::from(999.0),
+        );
+        assert_eq!(result.as_float().unwrap(), 999.0);
     }
 }
