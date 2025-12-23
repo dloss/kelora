@@ -239,22 +239,22 @@ fn clean_number_string_int(s: &str, thousands_sep: &str) -> String {
 /// Helper to clean number string for float parsing
 /// Removes any character that appears in thousands_sep
 /// Replaces decimal_sep (must be single char or empty) with '.'
-/// Note: decimal replacement happens BEFORE thousands removal to avoid conflicts
+/// Note: thousands removal happens FIRST, then decimal replacement
 fn clean_number_string_float(s: &str, thousands_sep: &str, decimal_sep: &str) -> String {
     let mut result = s.to_string();
 
-    // Replace decimal separator with standard dot FIRST (if not empty and not already '.')
-    // This must happen before thousands removal to avoid conflicts when the same
-    // character appears in both (e.g., comma in "1,234 567,89" with thousands=", " and decimal=",")
-    if !decimal_sep.is_empty() && decimal_sep != "." {
-        result = result.replace(decimal_sep, ".");
-    }
-
-    // Remove any character that appears in thousands_sep (if not empty)
+    // Remove thousands separators FIRST (if not empty)
+    // This must happen before decimal replacement to avoid removing the converted decimal
+    // Example: "1.234,56" with thousands="." and decimal="," → remove dots → "1234,56" → replace comma → "1234.56"
     if !thousands_sep.is_empty() {
         result = thousands_sep
             .chars()
             .fold(result, |acc, c| acc.replace(c, ""));
+    }
+
+    // Then replace decimal separator with standard dot (if not empty and not already '.')
+    if !decimal_sep.is_empty() && decimal_sep != "." {
+        result = result.replace(decimal_sep, ".");
     }
 
     result
@@ -948,6 +948,29 @@ mod tests {
             Dynamic::from(999.0),
         );
         assert_eq!(result.as_float().unwrap(), 999.0);
+    }
+
+    #[test]
+    fn test_to_float_processing_order_eu_format() {
+        // Critical test: EU format where decimal char appears in thousands_sep
+        // This verifies that thousands removal happens BEFORE decimal replacement
+        // "1.234,56" with thousands="." and decimal=","
+        // Correct order: remove dots → "1234,56" → replace comma → "1234.56"
+        // Wrong order: replace comma → "1.234.56" → remove dots → "123456" (WRONG!)
+        let result = to_float_with_format(
+            Dynamic::from("1.234,56"),
+            ImmutableString::from("."),
+            ImmutableString::from(","),
+        );
+        assert!((result.as_float().unwrap() - 1234.56).abs() < 0.001);
+
+        // Test with larger EU number
+        let result = to_float_with_format(
+            Dynamic::from("1.234.567,89"),
+            ImmutableString::from("."),
+            ImmutableString::from(","),
+        );
+        assert!((result.as_float().unwrap() - 1234567.89).abs() < 0.001);
     }
 
     #[test]
