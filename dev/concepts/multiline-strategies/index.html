@@ -1578,6 +1578,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#strategy-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#built-in-strategies" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2209,6 +2220,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#strategy-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#built-in-strategies" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2385,6 +2407,12 @@ making it hard to correlate context.</p>
 <p>Multiline increases per-event memory usage. When processing large files, keep an
 eye on chunk size via <code>--stats</code> and consider tuning <code>--batch-size</code>/<code>--batch-timeout</code>
 when using <code>--parallel</code>.</p>
+<h2 id="strategy-overview">Strategy Overview<a class="headerlink" href="#strategy-overview" title="Permanent link">&para;</a></h2>
+<p>The diagram below illustrates how each multiline strategy groups input lines into
+structured events. Each strategy detects event boundaries differently—timestamp
+prefixes, indentation patterns, regex matches, or treating the entire input as one
+block. Choose the approach that matches your log format.</p>
+<p><img alt="Kelora multiline strategy comparison showing timestamp, indent, regex, and full-buffer approaches" src="../../images/multiline-strategies-diagram.png" /></p>
 <h2 id="built-in-strategies">Built-in Strategies<a class="headerlink" href="#built-in-strategies" title="Permanent link">&para;</a></h2>
 <p>Kelora ships four strategies. Only one can be active at a time.</p>
 <h3 id="1-timestamp-headers-multiline-timestamp">1. Timestamp Headers (<code>--multiline timestamp</code>)<a class="headerlink" href="#1-timestamp-headers-multiline-timestamp" title="Permanent link">&para;</a></h3>
