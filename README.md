@@ -28,6 +28,8 @@ Jan 15 10:00:28 ERROR Authentication failed user=admin ip=192.168.1.50 reason=in
 
 Kelora also handles live streams: `tail -f app.log | kelora -j -l error,warn`.
 
+**Interactive Mode:** Run `kelora` without arguments to enter an interactive REPL with readline support, automatic glob expansion, and command history—especially helpful on Windows where shell quoting is difficult.
+
 ## When to Use Kelora
 
 Kelora trades speed for programmability—slower than grep/awk/jq, but adds stateful scripting for complex transformations. Use it when your logs are **messy** (stick to one format per file/stream, but pull out embedded JSON/logfmt fields), need **stateful logic** (counters, windowed metrics, lookup tables), or are **chaining multiple tools**. For simple text search use `grep`, for JSON queries use `jq`.

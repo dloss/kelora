@@ -44,6 +44,38 @@ kelora examples/quickstart.log -f 'cols:ts(3) level *msg' -l error \
 
 Extract key-value pairs from error messages into structured JSON fields. Notice how `order=1234`, `gateway=stripe`, `user=admin`, and other embedded data are now proper JSON fields. The `--normalize-ts` flag also converts the syslog timestamp (`Jan 15 10:00:00`) into full ISO 8601 format, ready for analysis or ingestion into other tools.
 
+## Interactive Mode
+
+Run `kelora` without any arguments to enter **interactive mode**—a readline-based REPL where you can type commands without worrying about shell quoting:
+
+```bash
+kelora
+```
+
+This is especially helpful on Windows where command-line quoting is notoriously difficult. Features include:
+
+- **Shell-like parsing** - Handles quotes properly without shell escaping issues
+- **Automatic glob expansion** - `*.log` and `test?.json` patterns work automatically
+- **Command history** - Press Up/Down arrows to recall previous commands
+- **Easy cancellation** - Ctrl-C returns to the prompt instead of exiting
+- **Built-in help** - Type `help` for a quick reference
+
+Example interactive session:
+```
+Kelora Interactive Mode
+Type commands as you would on the command line.
+  - Type 'exit' or 'quit' to exit, or press Ctrl-D
+  - Press Ctrl-C to cancel running commands
+  - Use 'help' for kelora help, or try '--help' for full options
+  - Glob patterns like *.log are automatically expanded
+
+kelora> -j examples/audit.jsonl -l error
+{"timestamp":"2025-01-15T10:02:30Z","level":"ERROR","user_id":103,"email":"***","ms":45}
+kelora> -f logfmt examples/*.log --stats
+...
+kelora> exit
+```
+
 ## Get Help
 
 ```bash

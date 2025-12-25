@@ -63,7 +63,7 @@ pub enum StatsFormat {
 #[command(name = "kelora")]
 #[command(about = "A command-line log analysis tool with embedded Rhai scripting")]
 #[command(
-    long_about = "A command-line log analysis tool with embedded Rhai scripting\n\nMODES:\n  (default)   Sequential processing - best for streaming/interactive use\n  --parallel  Parallel processing - best for high-throughput batch analysis\n\nCOMMON EXAMPLES:\n  kelora access.log --levels error,critical\n  kelora -j app.json --exec 'e.duration_ms = e.end_time - e.start_time'\n  kelora nginx.log -f combined --keys method,status,path\n\nNeed a quick reference?  kelora -h\n\nSee also: --help-rhai for scripting stages, --help-functions for the full built-in catalogue"
+    long_about = "A command-line log analysis tool with embedded Rhai scripting\n\nINTERACTIVE MODE:\n  Run 'kelora' without arguments to enter interactive mode - a readline-based REPL\n  with command history, automatic glob expansion, and proper quote handling.\n  Especially helpful on Windows where shell quoting is difficult.\n\nMODES:\n  (default)   Sequential processing - best for streaming/interactive use\n  --parallel  Parallel processing - best for high-throughput batch analysis\n\nCOMMON EXAMPLES:\n  kelora access.log --levels error,critical\n  kelora -j app.json --exec 'e.duration_ms = e.end_time - e.start_time'\n  kelora nginx.log -f combined --keys method,status,path\n\nNeed a quick reference?  kelora -h\n\nSee also: --help-rhai for scripting stages, --help-functions for the full built-in catalogue"
 )]
 #[command(author = "Dirk Loss <mail@dirk-loss.de>")]
 #[command(version)]

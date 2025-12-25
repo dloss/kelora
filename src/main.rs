@@ -2549,6 +2549,7 @@ fn print_quick_help() {
 Usage:
   kelora [OPTIONS] [FILES]...
   kelora [OPTIONS] < input.log
+  kelora            # Run without arguments to enter interactive mode
   kelora --help     # Full CLI reference (all options)
 
 Quick Examples:
@@ -2572,6 +2573,11 @@ Common Options:
   -n, --take <N>                Limit output to first N events
   -s, --stats                   Show only the statistics, with discovered fields
   -m, --metrics                 Show only the tracked metrics
+
+Interactive Mode:
+  kelora                     Run without arguments to enter interactive mode
+                             (readline-based REPL with history, glob expansion,
+                             and proper quoting - especially helpful on Windows)
 
 More Help:
   kelora --help              Full CLI reference (all 100+ options grouped by category)
