@@ -8,6 +8,16 @@ license = "MIT"
 repository = "https://github.com/dloss/kelora"
 keywords = ["logging", "parser", "cli", "logfmt", "json"]
 categories = ["command-line-utilities", "parsing"]
+exclude = [
+    "docs/",
+    "dev/",
+    "benchmarks/",
+    "fuzz/",
+    ".github/",
+    ".cargo/",
+    "entitlements.plist",
+    "Justfile",
+]
 
 [dependencies]
 # CLI and configuration
