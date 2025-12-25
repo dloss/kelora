@@ -13,8 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Automatic glob expansion (*.log, test?.json, etc.)
   - Command history saved to `~/.config/kelora/interactive_history.txt`
   - Ctrl-C returns to prompt instead of exiting
-  - Ctrl-D or typing 'exit'/'quit' to exit
-  - Built-in 'help' command for quick reference
+  - Ctrl-D or typing `:exit`/`:quit` to exit
+  - Built-in `:help` command for quick reference
+  - REPL commands prefixed with `:` to avoid conflicts with filenames
   - Especially helpful on Windows where command-line quoting is difficult
 
 ## [1.1.1] - 2025-12-25

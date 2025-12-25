@@ -21,9 +21,9 @@ pub fn run_interactive_mode() -> Result<()> {
 
     println!("Kelora Interactive Mode");
     println!("Type commands as you would on the command line.");
-    println!("  - Type 'exit' or 'quit' to exit, or press Ctrl-D");
+    println!("  - Type ':exit' or ':quit' to exit, or press Ctrl-D");
     println!("  - Press Ctrl-C to cancel running commands");
-    println!("  - Use 'help' for kelora help, or try '--help' for full options");
+    println!("  - Use ':help' for interactive help, or '--help' for full kelora options");
     println!("  - Glob patterns like *.log are automatically expanded\n");
 
     loop {
@@ -40,20 +40,23 @@ pub fn run_interactive_mode() -> Result<()> {
                 // Add to history
                 let _ = rl.add_history_entry(trimmed);
 
-                // Check for exit commands
-                if trimmed == "exit" || trimmed == "quit" {
+                // Check for REPL commands (colon-prefixed)
+                if trimmed == ":exit" || trimmed == ":quit" {
                     break;
                 }
 
-                // Handle special commands
-                if trimmed == "help" {
+                if trimmed == ":help" {
                     println!("Interactive mode help:");
                     println!("  - Enter kelora commands without the 'kelora' prefix");
                     println!("  - Example: -j access.log --filter 'e.status >= 500'");
                     println!("  - Use quotes for arguments with spaces");
                     println!("  - Glob patterns are automatically expanded (*.log, test?.json)");
                     println!("  - Type '--help' to see all kelora options");
-                    println!("  - Type 'exit' or 'quit' to leave interactive mode");
+                    println!("  - Type ':exit' or ':quit' to leave interactive mode");
+                    println!("\nREPL commands (prefixed with ':'):");
+                    println!("  :help   Show this help message");
+                    println!("  :exit   Exit interactive mode");
+                    println!("  :quit   Exit interactive mode");
                     continue;
                 }
 
