@@ -19,6 +19,7 @@ mod decompression;
 mod engine;
 mod event;
 mod formatters;
+mod interactive;
 mod parallel;
 mod parsers;
 mod pipeline;
@@ -2409,9 +2410,27 @@ fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli) {
 
     // Config file defaults and aliases are already applied in process_args above
 
-    // Show usage if on TTY and no input files provided (unless --no-input is specified)
+    // Check if we should enter interactive mode
+    // Interactive mode is activated when:
+    // - stdin is a TTY (not piped input)
+    // - no input files are provided
+    // - --no-input is not specified
+    // - no other arguments are provided (just the program name)
     if crate::tty::is_stdin_tty() && cli.files.is_empty() && !cli.no_input {
-        // Print error message to stderr following clap's error style
+        // Check if this is truly no arguments (interactive mode) or just missing input files
+        let raw_args: Vec<String> = std::env::args().collect();
+
+        // If only program name, enter interactive mode
+        if raw_args.len() == 1 {
+            // Enter interactive mode
+            if let Err(e) = crate::interactive::run_interactive_mode() {
+                eprintln!("Interactive mode error: {}", e);
+                std::process::exit(1);
+            }
+            std::process::exit(0);
+        }
+
+        // Otherwise, show error (user provided flags but no input files)
         eprintln!("error: no input files or stdin provided");
         eprintln!();
         eprintln!("{}", Cli::command().render_usage());

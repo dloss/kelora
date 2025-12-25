@@ -50,6 +50,11 @@ lazy_static = "1.4"  # Static initialization for compiled regexes and constants
 lru = "0.16"  # LRU cache for optimizing repeated operations
 fastrand = "2.0"  # Fast random number generation for sampling
 
+# Interactive mode
+rustyline = "14.0"  # Readline implementation for interactive mode
+glob = "0.3"  # File pattern expansion for interactive mode
+dirs = "5.0"  # Directory paths for storing interactive history
+
 # Rhai built-in functions - encoding/decoding
 base64 = "0.22"  # Base64 encoding/decoding exposed to Rhai scripts
 hex = "0.4"  # Hex encoding/decoding exposed to Rhai scripts
