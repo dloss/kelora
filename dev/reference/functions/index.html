@@ -7520,16 +7520,16 @@
 </div>
 <h4 id="track_percentileskey-value-percentiles"><code>track_percentiles(key, value [, [percentiles]])</code><a class="headerlink" href="#track_percentileskey-value-percentiles" title="Permanent link">&para;</a></h4>
 <p>Track streaming percentiles using the t-digest algorithm for memory-efficient percentile estimation. Automatically creates suffixed metrics for each percentile (e.g., <code>latency_p50</code>, <code>latency_p95</code>, <code>latency_p99.9</code>). <strong>This is the only <code>track_*()</code> function that auto-suffixes</strong> because percentiles are inherently multi-valued. Skips Unit <code>()</code> values. Works correctly in parallel mode.</p>
-<p><strong>Default percentiles:</strong> <code>[0.90, 0.95, 0.99]</code> when no array provided.</p>
+<p><strong>Default percentiles:</strong> <code>[0.50, 0.95, 0.99]</code> when no array provided.</p>
 <p><strong>Percentile notation:</strong> Use 0.0-1.0 range (quantile notation):
 - <code>0.50</code> = 50th percentile (median) → creates <code>key_p50</code>
 - <code>0.95</code> = 95th percentile → creates <code>key_p95</code>
 - <code>0.999</code> = 99.9th percentile → creates <code>key_p99.9</code></p>
 <p><strong>Memory efficiency:</strong> Uses ~4KB per metric regardless of event count (vs. storing all values). Suitable for millions of events.</p>
 <p><strong>Accuracy:</strong> ~1-2% relative error, suitable for operational monitoring.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>// Default percentiles [0.90, 0.95, 0.99]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>// Default percentiles [0.50, 0.95, 0.99]
 <a id="__codelineno-138-2" name="__codelineno-138-2" href="#__codelineno-138-2"></a>track_percentiles(&quot;api_latency&quot;, e.response_time)
-<a id="__codelineno-138-3" name="__codelineno-138-3" href="#__codelineno-138-3"></a>// Creates: api_latency_p90, api_latency_p95, api_latency_p99
+<a id="__codelineno-138-3" name="__codelineno-138-3" href="#__codelineno-138-3"></a>// Creates: api_latency_p50, api_latency_p95, api_latency_p99
 <a id="__codelineno-138-4" name="__codelineno-138-4" href="#__codelineno-138-4"></a>
 <a id="__codelineno-138-5" name="__codelineno-138-5" href="#__codelineno-138-5"></a>// Custom percentiles
 <a id="__codelineno-138-6" name="__codelineno-138-6" href="#__codelineno-138-6"></a>track_percentiles(&quot;latency&quot;, e.duration_ms, [0.50, 0.95, 0.99])

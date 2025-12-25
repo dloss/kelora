@@ -3310,8 +3310,12 @@
 <ul>
 <li><code>track_count(key)</code> - Count occurrences</li>
 <li><code>track_sum(key, value)</code> - Sum values</li>
-<li><code>track_unique(key, value)</code> - Collect unique values</li>
+<li><code>track_avg(key, value)</code> - Average values</li>
+<li><code>track_percentiles(key, value, [percentiles])</code> - Streaming percentiles (P50/P95/P99)</li>
 <li><code>track_min/max(key, value)</code> - Track extremes</li>
+<li><code>track_unique(key, value)</code> - Collect unique values</li>
+<li><code>track_bucket(key, bucket_value)</code> - Histogram buckets</li>
+<li><code>track_top/bottom(key, item, n, [score])</code> - Top/bottom N items</li>
 </ul>
 <p>See <a href="../tutorials/metrics-and-tracking/">Metrics and Tracking Tutorial</a>.</p>
 <h3 id="transform">Transform<a class="headerlink" href="#transform" title="Permanent link">&para;</a></h3>
