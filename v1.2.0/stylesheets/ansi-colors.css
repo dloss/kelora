@@ -1,0 +1,23 @@
+/* Custom ANSI colors for light mode - darker/muted for readability on white backgrounds */
+[data-md-color-scheme="default"] {
+  --ansi-red: #c71d00;        /* Darker red */
+  --ansi-green: #008000;      /* Darker green */
+  --ansi-blue: #0451a5;       /* Darker blue */
+  --ansi-yellow: #b8860b;     /* Darker yellow (dark goldenrod) */
+  --ansi-magenta: #8b008b;    /* Darker magenta */
+  --ansi-cyan: #008b8b;       /* Darker cyan (dark cyan) */
+  --ansi-black: #282a36;      /* Keep black as-is */
+  --ansi-white: #444444;      /* Dark grey instead of white */
+}
+
+/* Keep bright/vivid colors for dark mode */
+[data-md-color-scheme="slate"] {
+  --ansi-red: #ff5555;
+  --ansi-green: #50fa7b;
+  --ansi-blue: #265285;
+  --ansi-yellow: #ffb86c;
+  --ansi-magenta: #bd93f9;
+  --ansi-cyan: #8be9fd;
+  --ansi-black: #282a36;
+  --ansi-white: #f8f8f2;
+}
