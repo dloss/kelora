@@ -2373,7 +2373,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: cols
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 11 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 11 total, 4 output, 7 filtered (63.6%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 7865 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 7600 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts (auto-detected) - 11/11 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora warning: Year-less timestamp format detected (15 parses)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Format lacks year (e.g., &quot;Dec 31 23:59:59&quot;)
@@ -2410,18 +2410,13 @@
 <li><strong>REPL commands</strong> - Commands like <code>:help</code>, <code>:exit</code>, <code>:quit</code> are prefixed with <code>:</code> to avoid conflicts with filenames</li>
 </ul>
 <p>Example interactive session:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Kelora Interactive Mode
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Type commands as you would on the command line.
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  - Type &#39;:exit&#39; or &#39;:quit&#39; to exit, or press Ctrl-D
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  - Press Ctrl-C to cancel running commands
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  - Use &#39;:help&#39; for interactive help, or &#39;--help&#39; for full kelora options
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  - Glob patterns like *.log are automatically expanded
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>kelora&gt; -j examples/audit.jsonl -l error
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>{&quot;timestamp&quot;:&quot;2025-01-15T10:02:30Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;user_id&quot;:103,&quot;email&quot;:&quot;***&quot;,&quot;ms&quot;:45}
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>kelora&gt; -f logfmt examples/*.log --stats
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>...
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>kelora&gt; :exit
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Kelora Interactive Mode — :quit to exit, :help for help
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>kelora&gt; -j examples/audit.jsonl -l error
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>{&quot;timestamp&quot;:&quot;2025-01-15T10:02:30Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;user_id&quot;:103,&quot;email&quot;:&quot;***&quot;,&quot;ms&quot;:45}
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kelora&gt; -f logfmt examples/*.log --stats
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>...
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>kelora&gt; :exit
 </code></pre></div></p>
 <h2 id="get-help">Get Help<a class="headerlink" href="#get-help" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
