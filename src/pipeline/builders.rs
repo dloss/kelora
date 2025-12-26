@@ -79,6 +79,7 @@ pub struct PipelineBuilder {
     context_config: crate::config::ContextConfig,
     span: Option<crate::config::SpanConfig>,
     strict: bool,
+    heat_range: Option<(f64, f64)>,
 }
 
 impl PipelineBuilder {
@@ -126,6 +127,7 @@ impl PipelineBuilder {
             context_config: crate::config::ContextConfig::disabled(),
             span: None,
             strict: false,
+            heat_range: None,
         }
     }
 
@@ -376,6 +378,17 @@ impl PipelineBuilder {
                     Box::new(crate::formatters::KeymapFormatter::new(Some(
                         self.keys[0].clone(),
                     )))
+                }
+                crate::OutputFormat::Heatmap => {
+                    if self.keys.len() != 1 {
+                        return Err(anyhow::anyhow!(
+                            "heatmap output format requires --keys to specify exactly one field"
+                        ));
+                    }
+                    Box::new(crate::formatters::HeatmapFormatter::new(
+                        Some(self.keys[0].clone()),
+                        self.heat_range,
+                    ))
                 }
                 crate::OutputFormat::Csv => {
                     if self.keys.is_empty() {
@@ -840,6 +853,17 @@ impl PipelineBuilder {
                         self.keys[0].clone(),
                     )))
                 }
+                crate::OutputFormat::Heatmap => {
+                    if self.keys.len() != 1 {
+                        return Err(anyhow::anyhow!(
+                            "heatmap output format requires --keys to specify exactly one field"
+                        ));
+                    }
+                    Box::new(crate::formatters::HeatmapFormatter::new(
+                        Some(self.keys[0].clone()),
+                        self.heat_range,
+                    ))
+                }
                 crate::OutputFormat::Csv => {
                     if self.keys.is_empty() {
                         return Err(anyhow::anyhow!(
@@ -1114,6 +1138,7 @@ pub fn create_pipeline_builder_from_config(
         .with_cols_sep(config.input.cols_sep.clone());
     builder.keys = config.output.get_effective_keys();
     builder.exclude_keys = config.output.exclude_keys.clone();
+    builder.heat_range = config.output.heat_range;
     builder.levels = config.processing.levels.clone();
     builder.exclude_levels = config.processing.exclude_levels.clone();
     builder.multiline = config.input.multiline.clone();

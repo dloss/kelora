@@ -352,6 +352,12 @@ fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         ));
     }
 
+    if use_parallel && matches!(config.output.format, config::OutputFormat::Heatmap) {
+        return Err(anyhow::anyhow!(
+            "heatmap output format is not supported with --parallel or thread overrides"
+        ));
+    }
+
     if use_parallel {
         run_pipeline_parallel(config, output, ctrl_rx)
     } else {

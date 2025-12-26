@@ -7,6 +7,7 @@ use rhai::Dynamic;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::Duration as StdDuration;
+use tdigests::TDigest;
 
 use once_cell::sync::Lazy;
 
@@ -1663,6 +1664,205 @@ impl pipeline::Formatter for KeymapFormatter {
     }
 }
 
+// Heatmap formatter - visualizes numeric field distribution using 0-9 digits
+struct HeatmapEntry {
+    timestamp: String,
+    value: Option<f64>,
+}
+
+pub struct HeatmapFormatter {
+    state: Mutex<HeatmapState>,
+    terminal_width: usize,
+    buffer_width_override: Option<usize>,
+    field_name: String,
+    heat_range: Option<(f64, f64)>,
+}
+
+struct HeatmapState {
+    entries: Vec<HeatmapEntry>,
+    digest: Option<TDigest>,
+}
+
+impl HeatmapState {
+    fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+            digest: None,
+        }
+    }
+}
+
+impl HeatmapFormatter {
+    const FALLBACK_TERMINAL_WIDTH: usize = 80;
+    const NUM_BUCKETS: usize = 10;
+
+    pub fn new(field_name: Option<String>, heat_range: Option<(f64, f64)>) -> Self {
+        let detected_width = crate::tty::get_terminal_width();
+        let terminal_width = if detected_width == 0 {
+            Self::FALLBACK_TERMINAL_WIDTH
+        } else {
+            detected_width
+        };
+
+        Self {
+            state: Mutex::new(HeatmapState::new()),
+            terminal_width,
+            buffer_width_override: None,
+            field_name: field_name.unwrap_or_else(|| "value".to_string()),
+            heat_range,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn with_width(
+        width: usize,
+        field_name: Option<String>,
+        heat_range: Option<(f64, f64)>,
+    ) -> Self {
+        Self {
+            state: Mutex::new(HeatmapState::new()),
+            terminal_width: 80,
+            buffer_width_override: Some(width),
+            field_name: field_name.unwrap_or_else(|| "value".to_string()),
+            heat_range,
+        }
+    }
+
+    fn available_width(&self, timestamp: Option<&String>) -> usize {
+        if let Some(override_width) = self.buffer_width_override {
+            return override_width;
+        }
+
+        let timestamp_len = timestamp.map(|ts| ts.len() + 1).unwrap_or(0);
+
+        if self.terminal_width > timestamp_len {
+            self.terminal_width - timestamp_len
+        } else {
+            1
+        }
+    }
+
+    fn extract_numeric_value(&self, event: &Event) -> Option<f64> {
+        event.fields.get(&self.field_name).and_then(|value| {
+            if value.is_float() {
+                value.as_float().ok()
+            } else if value.is_int() {
+                value.as_int().ok().map(|i| i as f64)
+            } else {
+                None
+            }
+        })
+    }
+
+    fn value_to_bucket(&self, value: f64, min: f64, max: f64) -> char {
+        if !value.is_finite() {
+            return '.';
+        }
+
+        if (max - min).abs() < f64::EPSILON {
+            return '5';
+        }
+
+        let normalized = ((value - min) / (max - min)).clamp(0.0, 1.0);
+        let bucket = (normalized * (Self::NUM_BUCKETS - 1) as f64).round() as usize;
+        char::from_digit(bucket as u32, 10).unwrap_or('.')
+    }
+}
+
+impl pipeline::Formatter for HeatmapFormatter {
+    fn format(&self, event: &Event) -> String {
+        let mut state = self.state.lock().expect("heatmap formatter mutex poisoned");
+
+        let timestamp = compact_map_utils::extract_timestamp(event);
+        let value = self.extract_numeric_value(event);
+
+        if let Some(v) = value {
+            if v.is_finite() {
+                let new_digest = TDigest::from_values(vec![v]);
+                state.digest = Some(if let Some(existing) = state.digest.take() {
+                    existing.merge(&new_digest)
+                } else {
+                    new_digest
+                });
+            }
+        }
+
+        state.entries.push(HeatmapEntry { timestamp, value });
+
+        String::new()
+    }
+
+    fn finish(&self) -> Option<String> {
+        let state = self.state.lock().expect("heatmap formatter mutex poisoned");
+
+        if state.entries.is_empty() {
+            return None;
+        }
+
+        let (min, max) = if let Some((heat_min, heat_max)) = self.heat_range {
+            (heat_min, heat_max)
+        } else if let Some(ref digest) = state.digest {
+            let quantile_min = digest.estimate_quantile(0.0);
+            let quantile_max = digest.estimate_quantile(1.0);
+            (quantile_min, quantile_max)
+        } else {
+            // No numeric values found, use default range
+            (0.0, 1.0)
+        };
+
+        let mut output = String::new();
+        let mut current_timestamp: Option<String> = None;
+        let mut buffer = String::new();
+        let mut visible_len = 0;
+
+        for entry in &state.entries {
+            if current_timestamp.is_none() {
+                current_timestamp = Some(entry.timestamp.clone());
+            }
+
+            let available_width = self.available_width(current_timestamp.as_ref());
+
+            let display_char = if let Some(value) = entry.value {
+                self.value_to_bucket(value, min, max)
+            } else {
+                '.'
+            };
+
+            buffer.push(display_char);
+            visible_len += 1;
+
+            if visible_len >= available_width {
+                if !output.is_empty() {
+                    output.push('\n');
+                }
+                output.push_str(&compact_map_utils::format_line(
+                    current_timestamp.as_ref(),
+                    &buffer,
+                ));
+                buffer.clear();
+                visible_len = 0;
+                current_timestamp = Some(entry.timestamp.clone());
+            }
+        }
+
+        if visible_len > 0 {
+            if !output.is_empty() {
+                output.push('\n');
+            }
+            output.push_str(&compact_map_utils::format_line(
+                current_timestamp.as_ref(),
+                &buffer,
+            ));
+        }
+
+        if output.is_empty() {
+            None
+        } else {
+            Some(output)
+        }
+    }
+}
+
 // CSV formatter - outputs CSV format with required field order
 pub struct CsvFormatter {
     delimiter: char,
@@ -2510,6 +2710,115 @@ mod tests {
         event4.set_field("method".to_string(), Dynamic::from("DELETE"));
         let line = formatter.format(&event4);
         assert_eq!(line, "1970-01-01T00:00:00.000Z GPPD");
+    }
+
+    #[test]
+    fn test_heatmap_formatter_basic() {
+        let formatter = HeatmapFormatter::with_width(5, Some("value".to_string()), None);
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        // Add events with values 0, 25, 50, 75, 100
+        let mut event1 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event1.set_field("value".to_string(), Dynamic::from(0.0));
+        assert!(formatter.format(&event1).is_empty());
+
+        let mut event2 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event2.set_field("value".to_string(), Dynamic::from(25.0));
+        assert!(formatter.format(&event2).is_empty());
+
+        let mut event3 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event3.set_field("value".to_string(), Dynamic::from(50.0));
+        assert!(formatter.format(&event3).is_empty());
+
+        let mut event4 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event4.set_field("value".to_string(), Dynamic::from(75.0));
+        assert!(formatter.format(&event4).is_empty());
+
+        let mut event5 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event5.set_field("value".to_string(), Dynamic::from(100.0));
+        assert!(formatter.format(&event5).is_empty());
+
+        // Heatmap outputs all at once in finish()
+        let output = formatter.finish().expect("should have output");
+        assert!(output.contains("1970-01-01T00:00:00.000Z"));
+        assert_eq!(output.lines().count(), 1);
+    }
+
+    #[test]
+    fn test_heatmap_formatter_with_range() {
+        let formatter =
+            HeatmapFormatter::with_width(3, Some("value".to_string()), Some((0.0, 100.0)));
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        let mut event1 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event1.set_field("value".to_string(), Dynamic::from(0.0));
+        formatter.format(&event1);
+
+        let mut event2 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event2.set_field("value".to_string(), Dynamic::from(50.0));
+        formatter.format(&event2);
+
+        let mut event3 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event3.set_field("value".to_string(), Dynamic::from(100.0));
+        formatter.format(&event3);
+
+        let output = formatter.finish().expect("should have output");
+        assert_eq!(output, "1970-01-01T00:00:00.000Z 059");
+    }
+
+    #[test]
+    fn test_heatmap_formatter_missing_values() {
+        let formatter = HeatmapFormatter::with_width(3, Some("value".to_string()), None);
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        let mut event1 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event1.set_field("value".to_string(), Dynamic::from(10.0));
+        formatter.format(&event1);
+
+        // Event without value field
+        let event2 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        formatter.format(&event2);
+
+        let mut event3 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event3.set_field("value".to_string(), Dynamic::from(20.0));
+        formatter.format(&event3);
+
+        let output = formatter.finish().expect("should have output");
+        // Middle character should be '.' for missing value
+        assert!(output.contains('.'));
     }
 
     #[test]
