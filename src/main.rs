@@ -352,9 +352,9 @@ fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         ));
     }
 
-    if use_parallel && matches!(config.output.format, config::OutputFormat::Heatmap) {
+    if use_parallel && matches!(config.output.format, config::OutputFormat::Tailmap) {
         return Err(anyhow::anyhow!(
-            "heatmap output format is not supported with --parallel or thread overrides"
+            "tailmap output format is not supported with --parallel or thread overrides"
         ));
     }
 

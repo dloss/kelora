@@ -57,8 +57,6 @@ pub struct OutputConfig {
     pub mark_gaps: Option<chrono::Duration>,
     /// Timestamp formatting configuration (display-only)
     pub timestamp_formatting: TimestampFormatConfig,
-    /// Heatmap value range (min, max) for bucketing
-    pub heat_range: Option<(f64, f64)>,
 }
 
 /// Ordered script stages that preserve CLI order
@@ -239,7 +237,7 @@ pub enum OutputFormat {
     Inspect,
     Levelmap,
     Keymap,
-    Heatmap,
+    Tailmap,
     Csv,
     Tsv,
     Csvnh,
@@ -844,7 +842,6 @@ impl KeloraConfig {
                 metrics_file,
                 mark_gaps: None,
                 timestamp_formatting: create_timestamp_format_config(cli, default_timezone.clone()),
-                heat_range: cli.heat_range,
             },
             processing: ProcessingConfig {
                 begin: cli.begin.clone(),
@@ -941,7 +938,6 @@ impl Default for KeloraConfig {
                 metrics_file: None,
                 mark_gaps: None,
                 timestamp_formatting: TimestampFormatConfig::default(),
-                heat_range: None,
             },
             processing: ProcessingConfig {
                 begin: None,
@@ -1302,7 +1298,7 @@ impl From<crate::OutputFormat> for OutputFormat {
             crate::OutputFormat::Inspect => OutputFormat::Inspect,
             crate::OutputFormat::Levelmap => OutputFormat::Levelmap,
             crate::OutputFormat::Keymap => OutputFormat::Keymap,
-            crate::OutputFormat::Heatmap => OutputFormat::Heatmap,
+            crate::OutputFormat::Tailmap => OutputFormat::Tailmap,
             crate::OutputFormat::Csv => OutputFormat::Csv,
             crate::OutputFormat::Tsv => OutputFormat::Tsv,
             crate::OutputFormat::Csvnh => OutputFormat::Csvnh,
@@ -1320,7 +1316,7 @@ impl From<OutputFormat> for crate::OutputFormat {
             OutputFormat::Inspect => crate::OutputFormat::Inspect,
             OutputFormat::Levelmap => crate::OutputFormat::Levelmap,
             OutputFormat::Keymap => crate::OutputFormat::Keymap,
-            OutputFormat::Heatmap => crate::OutputFormat::Heatmap,
+            OutputFormat::Tailmap => crate::OutputFormat::Tailmap,
             OutputFormat::Csv => crate::OutputFormat::Csv,
             OutputFormat::Tsv => crate::OutputFormat::Tsv,
             OutputFormat::Csvnh => crate::OutputFormat::Csvnh,

@@ -1664,26 +1664,26 @@ impl pipeline::Formatter for KeymapFormatter {
     }
 }
 
-// Heatmap formatter - visualizes numeric field distribution using 0-9 digits
-struct HeatmapEntry {
+// Tailmap formatter - visualizes numeric field distribution focused on tail latencies
+// Uses percentile-based bucketing: '_' (< p90), '1' (p90-p95), '2' (p95-p99), '3' (>= p99), '.' (missing)
+struct TailmapEntry {
     timestamp: String,
     value: Option<f64>,
 }
 
-pub struct HeatmapFormatter {
-    state: Mutex<HeatmapState>,
+pub struct TailmapFormatter {
+    state: Mutex<TailmapState>,
     terminal_width: usize,
     buffer_width_override: Option<usize>,
     field_name: String,
-    heat_range: Option<(f64, f64)>,
 }
 
-struct HeatmapState {
-    entries: Vec<HeatmapEntry>,
+struct TailmapState {
+    entries: Vec<TailmapEntry>,
     digest: Option<TDigest>,
 }
 
-impl HeatmapState {
+impl TailmapState {
     fn new() -> Self {
         Self {
             entries: Vec::new(),
@@ -1692,11 +1692,10 @@ impl HeatmapState {
     }
 }
 
-impl HeatmapFormatter {
+impl TailmapFormatter {
     const FALLBACK_TERMINAL_WIDTH: usize = 80;
-    const NUM_BUCKETS: usize = 10;
 
-    pub fn new(field_name: Option<String>, heat_range: Option<(f64, f64)>) -> Self {
+    pub fn new(field_name: Option<String>) -> Self {
         let detected_width = crate::tty::get_terminal_width();
         let terminal_width = if detected_width == 0 {
             Self::FALLBACK_TERMINAL_WIDTH
@@ -1705,26 +1704,20 @@ impl HeatmapFormatter {
         };
 
         Self {
-            state: Mutex::new(HeatmapState::new()),
+            state: Mutex::new(TailmapState::new()),
             terminal_width,
             buffer_width_override: None,
             field_name: field_name.unwrap_or_else(|| "value".to_string()),
-            heat_range,
         }
     }
 
     #[cfg(test)]
-    pub fn with_width(
-        width: usize,
-        field_name: Option<String>,
-        heat_range: Option<(f64, f64)>,
-    ) -> Self {
+    pub fn with_width(width: usize, field_name: Option<String>) -> Self {
         Self {
-            state: Mutex::new(HeatmapState::new()),
+            state: Mutex::new(TailmapState::new()),
             terminal_width: 80,
             buffer_width_override: Some(width),
             field_name: field_name.unwrap_or_else(|| "value".to_string()),
-            heat_range,
         }
     }
 
@@ -1754,60 +1747,31 @@ impl HeatmapFormatter {
         })
     }
 
-    fn value_to_bucket_percentile(&self, value: f64, digest: &TDigest) -> char {
+    fn value_to_bucket(&self, value: f64, digest: &TDigest) -> char {
         if !value.is_finite() {
             return '.';
         }
 
-        // Percentile thresholds for 50/50 split (bottom 50% = '.', top 50% = 0-9)
-        // Focus resolution on the tail for performance analysis
-        let thresholds = [
-            0.50,  // p50 - median
-            0.75,  // p75
-            0.80,  // p80
-            0.85,  // p85
-            0.90,  // p90
-            0.925, // p92.5
-            0.95,  // p95 (common SLA threshold)
-            0.975, // p97.5
-            0.99,  // p99 (key threshold)
-            0.995, // p99.5
-        ];
+        // Tail-focused percentile thresholds: p90, p95, p99
+        let p90 = digest.estimate_quantile(0.90);
+        let p95 = digest.estimate_quantile(0.95);
+        let p99 = digest.estimate_quantile(0.99);
 
-        // Find which bucket this value falls into
-        for (i, &percentile) in thresholds.iter().enumerate() {
-            let threshold_value = digest.estimate_quantile(percentile);
-            if value < threshold_value {
-                if i == 0 {
-                    return '.'; // Below p50
-                } else {
-                    return char::from_digit((i - 1) as u32, 10).unwrap_or('.');
-                }
-            }
+        if value < p90 {
+            '_' // Bottom 90% - normal
+        } else if value < p95 {
+            '1' // p90-p95 - slow
+        } else if value < p99 {
+            '2' // p95-p99 - slower
+        } else {
+            '3' // >= p99 - worst
         }
-
-        // Value is >= p99.5, return '9'
-        '9'
-    }
-
-    fn value_to_bucket_linear(&self, value: f64, min: f64, max: f64) -> char {
-        if !value.is_finite() {
-            return '.';
-        }
-
-        if (max - min).abs() < f64::EPSILON {
-            return '5';
-        }
-
-        let normalized = ((value - min) / (max - min)).clamp(0.0, 1.0);
-        let bucket = (normalized * (Self::NUM_BUCKETS - 1) as f64).round() as usize;
-        char::from_digit(bucket as u32, 10).unwrap_or('.')
     }
 }
 
-impl pipeline::Formatter for HeatmapFormatter {
+impl pipeline::Formatter for TailmapFormatter {
     fn format(&self, event: &Event) -> String {
-        let mut state = self.state.lock().expect("heatmap formatter mutex poisoned");
+        let mut state = self.state.lock().expect("tailmap formatter mutex poisoned");
 
         let timestamp = compact_map_utils::extract_timestamp(event);
         let value = self.extract_numeric_value(event);
@@ -1823,21 +1787,23 @@ impl pipeline::Formatter for HeatmapFormatter {
             }
         }
 
-        state.entries.push(HeatmapEntry { timestamp, value });
+        state.entries.push(TailmapEntry { timestamp, value });
 
         String::new()
     }
 
     fn finish(&self) -> Option<String> {
-        let state = self.state.lock().expect("heatmap formatter mutex poisoned");
+        let state = self.state.lock().expect("tailmap formatter mutex poisoned");
 
         if state.entries.is_empty() {
             return None;
         }
 
-        // Use percentile-based bucketing if we have a digest (auto-detected range)
-        // Use linear bucketing if user specified --heat-range
-        let use_percentile = self.heat_range.is_none() && state.digest.is_some();
+        // Need digest to compute percentiles
+        let Some(ref digest) = state.digest else {
+            // No valid values to compute percentiles from - all missing
+            return None;
+        };
 
         let mut output = String::new();
         let mut current_timestamp: Option<String> = None;
@@ -1852,16 +1818,7 @@ impl pipeline::Formatter for HeatmapFormatter {
             let available_width = self.available_width(current_timestamp.as_ref());
 
             let display_char = if let Some(value) = entry.value {
-                if use_percentile {
-                    // Percentile-based bucketing (50/50 split with tail focus)
-                    self.value_to_bucket_percentile(value, state.digest.as_ref().unwrap())
-                } else if let Some((min, max)) = self.heat_range {
-                    // Linear bucketing with user-specified range
-                    self.value_to_bucket_linear(value, min, max)
-                } else {
-                    // No data, show as missing
-                    '.'
-                }
+                self.value_to_bucket(value, digest)
             } else {
                 '.'
             };
@@ -2751,12 +2708,12 @@ mod tests {
     }
 
     #[test]
-    fn test_heatmap_formatter_percentile_bucketing() {
-        let formatter = HeatmapFormatter::with_width(20, Some("value".to_string()), None);
+    fn test_tailmap_formatter_percentile_bucketing() {
+        let formatter = TailmapFormatter::with_width(20, Some("value".to_string()));
         let ts = Utc.timestamp_millis_opt(0).unwrap();
 
         // Create a dataset with known percentile distribution
-        // Values: 1-100, so p50=50, p75=75, p90=90, p95=95, p99=99
+        // Values: 1-100, so p90=90, p95=95, p99=99
         for i in 1..=100 {
             let mut event = Event {
                 parsed_ts: Some(ts),
@@ -2769,9 +2726,6 @@ mod tests {
         let output = formatter.finish().expect("should have output");
         assert!(output.contains("1970-01-01T00:00:00.000Z"));
 
-        // With percentile bucketing (50/50 split):
-        // Values 1-50 should be '.' (below p50)
-        // Values above p50 should map to digits 0-9 based on tail percentiles
         // Collect all characters from all lines
         let mut all_chars = String::new();
         for line in output.lines() {
@@ -2783,26 +2737,42 @@ mod tests {
         // Should have exactly 100 characters (one per value)
         assert_eq!(all_chars.len(), 100);
 
-        // Should have ~50 dots for bottom 50%
-        let dot_count = all_chars.chars().filter(|&c| c == '.').count();
-        assert!(
-            (45..=55).contains(&dot_count),
-            "Expected ~50 dots for bottom half, got {}",
-            dot_count
-        );
+        // Expected distribution for values 1-100:
+        // '_' for < p90 (values 1-89): ~89 characters
+        // '1' for p90-p95 (values 90-94): ~5 characters
+        // '2' for p95-p99 (values 95-98): ~4 characters
+        // '3' for >= p99 (values 99-100): ~2 characters
+        let underscore_count = all_chars.chars().filter(|&c| c == '_').count();
+        let one_count = all_chars.chars().filter(|&c| c == '1').count();
+        let two_count = all_chars.chars().filter(|&c| c == '2').count();
+        let three_count = all_chars.chars().filter(|&c| c == '3').count();
 
-        // Should have digits for top 50%
-        let digit_count = all_chars.chars().filter(|c| c.is_ascii_digit()).count();
+        // Allow some tolerance for percentile estimation
         assert!(
-            (45..=55).contains(&digit_count),
-            "Expected ~50 digits for top half, got {}",
-            digit_count
+            (85..=92).contains(&underscore_count),
+            "Expected ~89 underscores for bottom 90%, got {}",
+            underscore_count
+        );
+        assert!(
+            (3..=7).contains(&one_count),
+            "Expected ~5 ones for p90-p95, got {}",
+            one_count
+        );
+        assert!(
+            (2..=6).contains(&two_count),
+            "Expected ~4 twos for p95-p99, got {}",
+            two_count
+        );
+        assert!(
+            (1..=4).contains(&three_count),
+            "Expected ~2 threes for >= p99, got {}",
+            three_count
         );
     }
 
     #[test]
-    fn test_heatmap_formatter_basic() {
-        let formatter = HeatmapFormatter::with_width(5, Some("value".to_string()), None);
+    fn test_tailmap_formatter_basic() {
+        let formatter = TailmapFormatter::with_width(5, Some("value".to_string()));
         let ts = Utc.timestamp_millis_opt(0).unwrap();
 
         // Add events with values 0, 25, 50, 75, 100
@@ -2841,46 +2811,48 @@ mod tests {
         event5.set_field("value".to_string(), Dynamic::from(100.0));
         assert!(formatter.format(&event5).is_empty());
 
-        // Heatmap outputs all at once in finish()
+        // Tailmap outputs all at once in finish()
         let output = formatter.finish().expect("should have output");
         assert!(output.contains("1970-01-01T00:00:00.000Z"));
         assert_eq!(output.lines().count(), 1);
     }
 
     #[test]
-    fn test_heatmap_formatter_with_range() {
-        let formatter =
-            HeatmapFormatter::with_width(3, Some("value".to_string()), Some((0.0, 100.0)));
+    fn test_tailmap_formatter_tail_distribution() {
+        // Test that tailmap correctly identifies tail values
+        let formatter = TailmapFormatter::with_width(10, Some("value".to_string()));
         let ts = Utc.timestamp_millis_opt(0).unwrap();
 
-        let mut event1 = Event {
-            parsed_ts: Some(ts),
-            ..Event::default()
-        };
-        event1.set_field("value".to_string(), Dynamic::from(0.0));
-        formatter.format(&event1);
-
-        let mut event2 = Event {
-            parsed_ts: Some(ts),
-            ..Event::default()
-        };
-        event2.set_field("value".to_string(), Dynamic::from(50.0));
-        formatter.format(&event2);
-
-        let mut event3 = Event {
-            parsed_ts: Some(ts),
-            ..Event::default()
-        };
-        event3.set_field("value".to_string(), Dynamic::from(100.0));
-        formatter.format(&event3);
+        // Create values where we know the percentiles:
+        // 1-9 are bottom 90% (should be '_')
+        // Value 10 is exactly p90 (should be '1')
+        for i in 1..=10 {
+            let mut event = Event {
+                parsed_ts: Some(ts),
+                ..Event::default()
+            };
+            event.set_field("value".to_string(), Dynamic::from(i as f64));
+            formatter.format(&event);
+        }
 
         let output = formatter.finish().expect("should have output");
-        assert_eq!(output, "1970-01-01T00:00:00.000Z 059");
+        let all_chars: String = output
+            .lines()
+            .filter_map(|line| line.split_whitespace().nth(1))
+            .collect();
+
+        // Most should be underscore (bottom 90%)
+        let underscore_count = all_chars.chars().filter(|&c| c == '_').count();
+        assert!(
+            underscore_count >= 8,
+            "Expected at least 8 underscores, got {}",
+            underscore_count
+        );
     }
 
     #[test]
-    fn test_heatmap_formatter_missing_values() {
-        let formatter = HeatmapFormatter::with_width(3, Some("value".to_string()), None);
+    fn test_tailmap_formatter_missing_values() {
+        let formatter = TailmapFormatter::with_width(3, Some("value".to_string()));
         let ts = Utc.timestamp_millis_opt(0).unwrap();
 
         let mut event1 = Event {

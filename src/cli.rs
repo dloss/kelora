@@ -33,7 +33,7 @@ pub enum OutputFormat {
     Inspect,
     Levelmap,
     Keymap,
-    Heatmap,
+    Tailmap,
     Csv,
     Tsv,
     Csvnh,
@@ -359,15 +359,6 @@ pub struct Cli {
         help_heading = "Output Options"
     )]
     pub output_format: OutputFormat,
-
-    /// Heatmap value range (min:max) for bucketing
-    #[arg(
-        long = "heat-range",
-        help_heading = "Output Options",
-        value_parser = parse_heat_range,
-        help = "Specify min:max range for heatmap bucketing (e.g., '0:100'). Auto-detected if not specified."
-    )]
-    pub heat_range: Option<(f64, f64)>,
 
     /// Shortcut for -F json
     #[arg(
@@ -913,40 +904,6 @@ impl Cli {
 
         Ok((processed_begin, processed_end))
     }
-}
-
-/// Parse heat range in format "min:max"
-fn parse_heat_range(s: &str) -> Result<(f64, f64), String> {
-    let parts: Vec<&str> = s.split(':').collect();
-    if parts.len() != 2 {
-        return Err(format!(
-            "heat-range must be in format 'min:max', got '{}'",
-            s
-        ));
-    }
-
-    let min = parts[0]
-        .trim()
-        .parse::<f64>()
-        .map_err(|_| format!("invalid min value '{}' in heat-range", parts[0]))?;
-
-    let max = parts[1]
-        .trim()
-        .parse::<f64>()
-        .map_err(|_| format!("invalid max value '{}' in heat-range", parts[1]))?;
-
-    if !min.is_finite() || !max.is_finite() {
-        return Err("heat-range values must be finite numbers".to_string());
-    }
-
-    if min >= max {
-        return Err(format!(
-            "heat-range min ({}) must be less than max ({})",
-            min, max
-        ));
-    }
-
-    Ok((min, max))
 }
 
 /// Parse and validate format value - supports standard formats, cols:<spec>, regex:<pattern>, and csv/tsv with type annotations
