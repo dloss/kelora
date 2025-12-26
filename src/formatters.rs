@@ -2600,6 +2600,54 @@ mod tests {
     }
 
     #[test]
+    fn test_keymap_formatter_non_string_fields() {
+        let formatter = KeymapFormatter::with_width(5, Some("value".to_string()));
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        // Test with integer
+        let mut event1 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event1.set_field("value".to_string(), Dynamic::from(42_i64));
+        assert!(formatter.format(&event1).is_empty());
+
+        // Test with float
+        let mut event2 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event2.set_field("value".to_string(), Dynamic::from(9.87));
+        assert!(formatter.format(&event2).is_empty());
+
+        // Test with boolean true
+        let mut event3 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event3.set_field("value".to_string(), Dynamic::from(true));
+        assert!(formatter.format(&event3).is_empty());
+
+        // Test with boolean false
+        let mut event4 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event4.set_field("value".to_string(), Dynamic::from(false));
+        assert!(formatter.format(&event4).is_empty());
+
+        // Test with negative number
+        let mut event5 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event5.set_field("value".to_string(), Dynamic::from(-99_i64));
+        let line = formatter.format(&event5);
+        // Should show: 4, 9, t, f, - (first chars of "42", "9.87", "true", "false", "-99")
+        assert_eq!(line, "1970-01-01T00:00:00.000Z 49tf-");
+    }
+
+    #[test]
     fn test_hide_formatter() {
         let mut event = Event::default();
         event.set_field("level".to_string(), Dynamic::from("INFO".to_string()));
