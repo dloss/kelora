@@ -1552,6 +1552,204 @@ impl pipeline::Formatter for LevelmapFormatter {
     }
 }
 
+struct KeymapState {
+    current_timestamp: Option<String>,
+    buffer: String,
+    visible_len: usize,
+}
+
+impl KeymapState {
+    fn new(initial_capacity: usize) -> Self {
+        let base_capacity = initial_capacity.max(1) * 4;
+        Self {
+            current_timestamp: None,
+            buffer: String::with_capacity(base_capacity),
+            visible_len: 0,
+        }
+    }
+
+    fn reset(&mut self) {
+        self.current_timestamp = None;
+        self.buffer.clear();
+        self.visible_len = 0;
+    }
+
+    fn push_rendered(&mut self, rendered: &str) {
+        self.buffer.push_str(rendered);
+        self.visible_len += 1;
+    }
+}
+
+pub struct KeymapFormatter {
+    state: Mutex<KeymapState>,
+    terminal_width: usize,
+    buffer_width_override: Option<usize>,
+    field_name: String,
+}
+
+impl KeymapFormatter {
+    const FALLBACK_TERMINAL_WIDTH: usize = 80;
+
+    pub fn new(field_name: Option<String>) -> Self {
+        let detected_width = crate::tty::get_terminal_width();
+        let terminal_width = if detected_width == 0 {
+            Self::FALLBACK_TERMINAL_WIDTH
+        } else {
+            detected_width
+        };
+
+        Self {
+            state: Mutex::new(KeymapState::new(terminal_width)),
+            terminal_width,
+            buffer_width_override: None,
+            field_name: field_name.unwrap_or_else(|| "level".to_string()),
+        }
+    }
+
+    #[cfg(test)]
+    pub fn with_width(width: usize, field_name: Option<String>) -> Self {
+        let effective_width = width.max(1);
+        Self {
+            state: Mutex::new(KeymapState::new(effective_width)),
+            terminal_width: effective_width,
+            buffer_width_override: Some(effective_width),
+            field_name: field_name.unwrap_or_else(|| "level".to_string()),
+        }
+    }
+
+    fn format_line(timestamp: Option<&String>, buffer: &str) -> String {
+        match timestamp {
+            Some(ts) if !ts.is_empty() => format!("{} {}", ts, buffer),
+            _ => buffer.to_string(),
+        }
+    }
+
+    fn available_width(&self, timestamp: Option<&String>) -> usize {
+        if let Some(override_width) = self.buffer_width_override {
+            return override_width.max(1);
+        }
+
+        let terminal_width = self.terminal_width.max(1);
+        let reserved = timestamp
+            .filter(|ts| !ts.is_empty())
+            .map(|ts| ts.len().saturating_add(1))
+            .unwrap_or(0);
+
+        terminal_width.saturating_sub(reserved).max(1)
+    }
+
+    fn extract_field_string(&self, event: &Event) -> Option<String> {
+        if let Some(value) = event.fields.get(&self.field_name) {
+            Self::dynamic_to_trimmed_string(value)
+        } else {
+            None
+        }
+    }
+
+    fn dynamic_to_trimmed_string(value: &Dynamic) -> Option<String> {
+        if let Ok(s) = value.clone().into_string() {
+            let trimmed = s.trim();
+            if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed.to_string())
+            }
+        } else {
+            let fallback = value.to_string();
+            let trimmed = fallback.trim();
+            if trimmed.is_empty() || trimmed == "()" {
+                None
+            } else {
+                Some(trimmed.to_string())
+            }
+        }
+    }
+
+    fn extract_timestamp(event: &Event) -> String {
+        if let Some(ts) = event.parsed_ts {
+            return Self::format_timestamp(ts);
+        }
+
+        for key in crate::event::TIMESTAMP_FIELD_NAMES {
+            if let Some(value) = event.fields.get(*key) {
+                if let Some(ts) = value.clone().try_cast::<DateTime<Utc>>() {
+                    return Self::format_timestamp(ts);
+                }
+
+                if let Some(ts) = value.clone().try_cast::<DateTime<FixedOffset>>() {
+                    return Self::format_timestamp(ts.with_timezone(&Utc));
+                }
+
+                if let Ok(string_value) = value.clone().into_string() {
+                    let trimmed = string_value.trim();
+                    if !trimmed.is_empty() {
+                        return trimmed.to_string();
+                    }
+                } else {
+                    let fallback = value.to_string();
+                    let trimmed = fallback.trim();
+                    if !trimmed.is_empty() && trimmed != "()" {
+                        return trimmed.to_string();
+                    }
+                }
+            }
+        }
+
+        if let Some(line_num) = event.line_num {
+            format!("line {}", line_num)
+        } else {
+            "unknown".to_string()
+        }
+    }
+
+    fn format_timestamp(ts: DateTime<Utc>) -> String {
+        ts.to_rfc3339_opts(SecondsFormat::Millis, true)
+    }
+}
+
+impl pipeline::Formatter for KeymapFormatter {
+    fn format(&self, event: &Event) -> String {
+        let mut state = self.state.lock().expect("keymap formatter mutex poisoned");
+
+        if state.current_timestamp.is_none() {
+            state.current_timestamp = Some(Self::extract_timestamp(event));
+        }
+
+        let available_width = self.available_width(state.current_timestamp.as_ref());
+
+        let field_string = self.extract_field_string(event);
+        let display_char = field_string
+            .as_deref()
+            .and_then(|s| s.chars().next())
+            .unwrap_or('.');
+        state.push_rendered(&display_char.to_string());
+
+        if state.visible_len >= available_width {
+            let line = Self::format_line(state.current_timestamp.as_ref(), &state.buffer);
+            state.reset();
+            line
+        } else {
+            String::new()
+        }
+    }
+
+    fn finish(&self) -> Option<String> {
+        let mut state = self.state.lock().expect("keymap formatter mutex poisoned");
+        if state.visible_len == 0 {
+            return None;
+        }
+
+        let line = Self::format_line(state.current_timestamp.as_ref(), &state.buffer);
+        state.reset();
+
+        if line.is_empty() {
+            None
+        } else {
+            Some(line)
+        }
+    }
+}
+
 // CSV formatter - outputs CSV format with required field order
 pub struct CsvFormatter {
     delimiter: char,
@@ -2307,6 +2505,98 @@ mod tests {
 
         let line = formatter.format(&event);
         assert_eq!(line, "1970-01-01T00:00:00.000Z ?");
+    }
+
+    #[test]
+    fn test_keymap_formatter_emits_full_line() {
+        let formatter = KeymapFormatter::with_width(3, Some("status".to_string()));
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        let mut event1 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event1.set_field("status".to_string(), Dynamic::from("ok"));
+        assert!(formatter.format(&event1).is_empty());
+
+        let mut event2 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event2.set_field("status".to_string(), Dynamic::from("error"));
+        assert!(formatter.format(&event2).is_empty());
+
+        let mut event3 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event3.set_field("status".to_string(), Dynamic::from("warn"));
+        let line = formatter.format(&event3);
+        assert_eq!(line, "1970-01-01T00:00:00.000Z oew");
+
+        assert!(formatter.finish().is_none());
+
+        let ts2 = Utc.timestamp_millis_opt(1_000).unwrap();
+        let mut event4 = Event {
+            parsed_ts: Some(ts2),
+            ..Event::default()
+        };
+        event4.set_field("status".to_string(), Dynamic::from("pending"));
+        assert!(formatter.format(&event4).is_empty());
+
+        let trailing = formatter
+            .finish()
+            .expect("should flush trailing keymap line");
+        assert_eq!(trailing, "1970-01-01T00:00:01.000Z p");
+    }
+
+    #[test]
+    fn test_keymap_formatter_empty_field() {
+        let formatter = KeymapFormatter::with_width(1, Some("status".to_string()));
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        let event = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+
+        let line = formatter.format(&event);
+        assert_eq!(line, "1970-01-01T00:00:00.000Z .");
+    }
+
+    #[test]
+    fn test_keymap_formatter_custom_field() {
+        let formatter = KeymapFormatter::with_width(4, Some("method".to_string()));
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        let mut event1 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event1.set_field("method".to_string(), Dynamic::from("GET"));
+        assert!(formatter.format(&event1).is_empty());
+
+        let mut event2 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event2.set_field("method".to_string(), Dynamic::from("POST"));
+        assert!(formatter.format(&event2).is_empty());
+
+        let mut event3 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event3.set_field("method".to_string(), Dynamic::from("PUT"));
+        assert!(formatter.format(&event3).is_empty());
+
+        let mut event4 = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event4.set_field("method".to_string(), Dynamic::from("DELETE"));
+        let line = formatter.format(&event4);
+        assert_eq!(line, "1970-01-01T00:00:00.000Z GPPD");
     }
 
     #[test]

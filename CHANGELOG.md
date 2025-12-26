@@ -4,6 +4,12 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Keymap output format** (`-F keymap`) - Compact visual format showing the first character of a specified field (requires `--keymap-key` to specify which field). Shows `.` for empty/missing fields. Similar to levelmap but works with any field.
+
 ## [1.2.1] - 2025-12-25
 
 ### Added

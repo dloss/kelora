@@ -57,6 +57,8 @@ pub struct OutputConfig {
     pub mark_gaps: Option<chrono::Duration>,
     /// Timestamp formatting configuration (display-only)
     pub timestamp_formatting: TimestampFormatConfig,
+    /// Field name for keymap format
+    pub keymap_key: Option<String>,
 }
 
 /// Ordered script stages that preserve CLI order
@@ -236,6 +238,7 @@ pub enum OutputFormat {
     Logfmt,
     Inspect,
     Levelmap,
+    Keymap,
     Csv,
     Tsv,
     Csvnh,
@@ -840,6 +843,7 @@ impl KeloraConfig {
                 metrics_file,
                 mark_gaps: None,
                 timestamp_formatting: create_timestamp_format_config(cli, default_timezone.clone()),
+                keymap_key: cli.keymap_key.clone(),
             },
             processing: ProcessingConfig {
                 begin: cli.begin.clone(),
@@ -936,6 +940,7 @@ impl Default for KeloraConfig {
                 metrics_file: None,
                 mark_gaps: None,
                 timestamp_formatting: TimestampFormatConfig::default(),
+                keymap_key: None,
             },
             processing: ProcessingConfig {
                 begin: None,
@@ -1295,6 +1300,7 @@ impl From<crate::OutputFormat> for OutputFormat {
             crate::OutputFormat::Logfmt => OutputFormat::Logfmt,
             crate::OutputFormat::Inspect => OutputFormat::Inspect,
             crate::OutputFormat::Levelmap => OutputFormat::Levelmap,
+            crate::OutputFormat::Keymap => OutputFormat::Keymap,
             crate::OutputFormat::Csv => OutputFormat::Csv,
             crate::OutputFormat::Tsv => OutputFormat::Tsv,
             crate::OutputFormat::Csvnh => OutputFormat::Csvnh,
@@ -1311,6 +1317,7 @@ impl From<OutputFormat> for crate::OutputFormat {
             OutputFormat::Logfmt => crate::OutputFormat::Logfmt,
             OutputFormat::Inspect => crate::OutputFormat::Inspect,
             OutputFormat::Levelmap => crate::OutputFormat::Levelmap,
+            OutputFormat::Keymap => crate::OutputFormat::Keymap,
             OutputFormat::Csv => crate::OutputFormat::Csv,
             OutputFormat::Tsv => crate::OutputFormat::Tsv,
             OutputFormat::Csvnh => crate::OutputFormat::Csvnh,

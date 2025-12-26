@@ -79,6 +79,7 @@ pub struct PipelineBuilder {
     context_config: crate::config::ContextConfig,
     span: Option<crate::config::SpanConfig>,
     strict: bool,
+    keymap_key: Option<String>,
 }
 
 impl PipelineBuilder {
@@ -126,6 +127,7 @@ impl PipelineBuilder {
             context_config: crate::config::ContextConfig::disabled(),
             span: None,
             strict: false,
+            keymap_key: None,
         }
     }
 
@@ -366,6 +368,16 @@ impl PipelineBuilder {
                 crate::OutputFormat::Logfmt => Box::new(crate::formatters::LogfmtFormatter::new()),
                 crate::OutputFormat::Levelmap => {
                     Box::new(crate::formatters::LevelmapFormatter::new(use_colors))
+                }
+                crate::OutputFormat::Keymap => {
+                    if self.keymap_key.is_none() {
+                        return Err(anyhow::anyhow!(
+                            "keymap output format requires --keymap-key to specify the field name"
+                        ));
+                    }
+                    Box::new(crate::formatters::KeymapFormatter::new(
+                        self.keymap_key.clone(),
+                    ))
                 }
                 crate::OutputFormat::Csv => {
                     if self.keys.is_empty() {
@@ -820,6 +832,16 @@ impl PipelineBuilder {
                 crate::OutputFormat::Levelmap => {
                     Box::new(crate::formatters::LevelmapFormatter::new(use_colors))
                 }
+                crate::OutputFormat::Keymap => {
+                    if self.keymap_key.is_none() {
+                        return Err(anyhow::anyhow!(
+                            "keymap output format requires --keymap-key to specify the field name"
+                        ));
+                    }
+                    Box::new(crate::formatters::KeymapFormatter::new(
+                        self.keymap_key.clone(),
+                    ))
+                }
                 crate::OutputFormat::Csv => {
                     if self.keys.is_empty() {
                         return Err(anyhow::anyhow!(
@@ -1109,6 +1131,7 @@ pub fn create_pipeline_builder_from_config(
     builder.span = config.processing.span.clone();
     builder.context_config = config.processing.context.clone();
     builder.strict = config.processing.strict;
+    builder.keymap_key = config.output.keymap_key.clone();
     builder
 }
 

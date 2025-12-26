@@ -346,6 +346,12 @@ fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         ));
     }
 
+    if use_parallel && matches!(config.output.format, config::OutputFormat::Keymap) {
+        return Err(anyhow::anyhow!(
+            "keymap output format is not supported with --parallel or thread overrides"
+        ));
+    }
+
     if use_parallel {
         run_pipeline_parallel(config, output, ctrl_rx)
     } else {
@@ -2568,7 +2574,7 @@ Common Options:
   -l, --levels <levels>         Keep only these log levels (comma-separated)
   -e, --exec <expr>             Transform events or emit metrics (can repeat; run in the order given)
   -k, --keys <fields>           Pick or reorder output fields
-  -F, --output-format <FORMAT>  Output format (default/json/logfmt/inspect/levelmap/csv/tsv/csvnh/tsvnh)
+  -F, --output-format <FORMAT>  Output format (default/json/logfmt/inspect/levelmap/keymap/csv/tsv/csvnh/tsvnh)
   -q, --quiet                   Suppress event output (-s/--stats and -m/--metrics imply this)
   -n, --take <N>                Limit output to first N events
   -s, --stats                   Show only the statistics, with discovered fields
@@ -3046,6 +3052,7 @@ json      - JSON Lines (one object per line)
 logfmt    - Key-value pairs
 inspect   - Debug format with type information
 levelmap  - Compact visual with timestamps and level indicators
+keymap    - Compact visual showing first character of specified field (--keymap-key required)
 csv       - Comma-separated with header row
 tsv       - Tab-separated with header row
 csvnh     - CSV without header
