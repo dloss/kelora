@@ -1754,7 +1754,43 @@ impl HeatmapFormatter {
         })
     }
 
-    fn value_to_bucket(&self, value: f64, min: f64, max: f64) -> char {
+    fn value_to_bucket_percentile(&self, value: f64, digest: &TDigest) -> char {
+        if !value.is_finite() {
+            return '.';
+        }
+
+        // Percentile thresholds for 50/50 split (bottom 50% = '.', top 50% = 0-9)
+        // Focus resolution on the tail for performance analysis
+        let thresholds = [
+            0.50,  // p50 - median
+            0.75,  // p75
+            0.80,  // p80
+            0.85,  // p85
+            0.90,  // p90
+            0.925, // p92.5
+            0.95,  // p95 (common SLA threshold)
+            0.975, // p97.5
+            0.99,  // p99 (key threshold)
+            0.995, // p99.5
+        ];
+
+        // Find which bucket this value falls into
+        for (i, &percentile) in thresholds.iter().enumerate() {
+            let threshold_value = digest.estimate_quantile(percentile);
+            if value < threshold_value {
+                if i == 0 {
+                    return '.'; // Below p50
+                } else {
+                    return char::from_digit((i - 1) as u32, 10).unwrap_or('.');
+                }
+            }
+        }
+
+        // Value is >= p99.5, return '9'
+        '9'
+    }
+
+    fn value_to_bucket_linear(&self, value: f64, min: f64, max: f64) -> char {
         if !value.is_finite() {
             return '.';
         }
@@ -1799,16 +1835,9 @@ impl pipeline::Formatter for HeatmapFormatter {
             return None;
         }
 
-        let (min, max) = if let Some((heat_min, heat_max)) = self.heat_range {
-            (heat_min, heat_max)
-        } else if let Some(ref digest) = state.digest {
-            let quantile_min = digest.estimate_quantile(0.0);
-            let quantile_max = digest.estimate_quantile(1.0);
-            (quantile_min, quantile_max)
-        } else {
-            // No numeric values found, use default range
-            (0.0, 1.0)
-        };
+        // Use percentile-based bucketing if we have a digest (auto-detected range)
+        // Use linear bucketing if user specified --heat-range
+        let use_percentile = self.heat_range.is_none() && state.digest.is_some();
 
         let mut output = String::new();
         let mut current_timestamp: Option<String> = None;
@@ -1823,7 +1852,16 @@ impl pipeline::Formatter for HeatmapFormatter {
             let available_width = self.available_width(current_timestamp.as_ref());
 
             let display_char = if let Some(value) = entry.value {
-                self.value_to_bucket(value, min, max)
+                if use_percentile {
+                    // Percentile-based bucketing (50/50 split with tail focus)
+                    self.value_to_bucket_percentile(value, state.digest.as_ref().unwrap())
+                } else if let Some((min, max)) = self.heat_range {
+                    // Linear bucketing with user-specified range
+                    self.value_to_bucket_linear(value, min, max)
+                } else {
+                    // No data, show as missing
+                    '.'
+                }
             } else {
                 '.'
             };
@@ -2710,6 +2748,56 @@ mod tests {
         event4.set_field("method".to_string(), Dynamic::from("DELETE"));
         let line = formatter.format(&event4);
         assert_eq!(line, "1970-01-01T00:00:00.000Z GPPD");
+    }
+
+    #[test]
+    fn test_heatmap_formatter_percentile_bucketing() {
+        let formatter = HeatmapFormatter::with_width(20, Some("value".to_string()), None);
+        let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+        // Create a dataset with known percentile distribution
+        // Values: 1-100, so p50=50, p75=75, p90=90, p95=95, p99=99
+        for i in 1..=100 {
+            let mut event = Event {
+                parsed_ts: Some(ts),
+                ..Event::default()
+            };
+            event.set_field("value".to_string(), Dynamic::from(i as f64));
+            assert!(formatter.format(&event).is_empty());
+        }
+
+        let output = formatter.finish().expect("should have output");
+        assert!(output.contains("1970-01-01T00:00:00.000Z"));
+
+        // With percentile bucketing (50/50 split):
+        // Values 1-50 should be '.' (below p50)
+        // Values above p50 should map to digits 0-9 based on tail percentiles
+        // Collect all characters from all lines
+        let mut all_chars = String::new();
+        for line in output.lines() {
+            if let Some(chars) = line.split_whitespace().nth(1) {
+                all_chars.push_str(chars);
+            }
+        }
+
+        // Should have exactly 100 characters (one per value)
+        assert_eq!(all_chars.len(), 100);
+
+        // Should have ~50 dots for bottom 50%
+        let dot_count = all_chars.chars().filter(|&c| c == '.').count();
+        assert!(
+            (45..=55).contains(&dot_count),
+            "Expected ~50 dots for bottom half, got {}",
+            dot_count
+        );
+
+        // Should have digits for top 50%
+        let digit_count = all_chars.chars().filter(|c| c.is_ascii_digit()).count();
+        assert!(
+            (45..=55).contains(&digit_count),
+            "Expected ~50 digits for top half, got {}",
+            digit_count
+        );
     }
 
     #[test]
