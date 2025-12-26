@@ -57,8 +57,6 @@ pub struct OutputConfig {
     pub mark_gaps: Option<chrono::Duration>,
     /// Timestamp formatting configuration (display-only)
     pub timestamp_formatting: TimestampFormatConfig,
-    /// Field name for keymap format
-    pub keymap_key: Option<String>,
 }
 
 /// Ordered script stages that preserve CLI order
@@ -843,7 +841,6 @@ impl KeloraConfig {
                 metrics_file,
                 mark_gaps: None,
                 timestamp_formatting: create_timestamp_format_config(cli, default_timezone.clone()),
-                keymap_key: cli.keymap_key.clone(),
             },
             processing: ProcessingConfig {
                 begin: cli.begin.clone(),
@@ -940,7 +937,6 @@ impl Default for KeloraConfig {
                 metrics_file: None,
                 mark_gaps: None,
                 timestamp_formatting: TimestampFormatConfig::default(),
-                keymap_key: None,
             },
             processing: ProcessingConfig {
                 begin: None,

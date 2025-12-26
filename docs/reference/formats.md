@@ -363,7 +363,7 @@ Specify output format with `-F, --output-format <format>`.
 | `logfmt` | Key-value pairs (logfmt format) |
 | `inspect` | Debug format with type information |
 | `levelmap` | Events grouped by log level |
-| `keymap` | Shows first character of specified field (requires `--keymap-key`) |
+| `keymap` | Shows first character of specified field (requires `--keys` with exactly one field) |
 | `csv` | CSV with header row |
 | `tsv` | Tab-separated values with header row |
 | `csvnh` | CSV without header |
@@ -381,7 +381,7 @@ The `levelmap` format provides a compact visual representation of logs, showing 
 
 The `keymap` format works similarly to `levelmap` but displays the first character of any specified field instead of being limited to log levels. This is useful for visualizing patterns in custom fields like HTTP methods, status codes, user types, etc.
 
-- Requires `--keymap-key <field>` to specify which field to use
+- Requires `--keys` (or `-k`) with exactly one field name
 - Shows the first character of the field value (converted to string for non-string fields)
 - Displays `.` for empty or missing field values
 - Groups events by timestamp like `levelmap`
@@ -391,8 +391,8 @@ The `keymap` format works similarly to `levelmap` but displays the first charact
 ```bash
 kelora -j app.log -F json                      # Output as JSON
 kelora -j app.log -F csv --keys ts,level,msg   # Output as CSV
-kelora -F keymap --keymap-key method access.log  # Show HTTP method patterns
-kelora -F keymap --keymap-key status api.log   # Show status field patterns
+kelora -F keymap -k method access.log          # Show HTTP method patterns
+kelora -F keymap --keys status api.log         # Show status field patterns
 kelora -j app.log --stats                      # Only stats
 ```
 

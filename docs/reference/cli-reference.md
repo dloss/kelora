@@ -687,7 +687,7 @@ Output format. Default: `default`
 - `logfmt` - Key-value pairs (logfmt format)
 - `inspect` - Debug format with type information
 - `levelmap` - Grouped by log level
-- `keymap` - Shows first character of specified field (requires `--keymap-key`)
+- `keymap` - Shows first character of specified field (requires `--keys` with exactly one field)
 - `csv` - CSV with header
 - `tsv` - Tab-separated values with header
 - `csvnh` - CSV without header
@@ -696,19 +696,8 @@ Output format. Default: `default`
 ```bash
 kelora -j -F json app.log
 kelora -j -F csv app.log
-kelora -F keymap --keymap-key status app.log
+kelora -F keymap -k status app.log
 kelora -j --stats app.log
-```
-
-#### `--keymap-key <field>`
-
-Specify the field name to use with the `keymap` output format. Required when using `-F keymap`.
-
-The keymap format displays the first character of the specified field value for each event, or `.` if the field is empty or missing. Events are grouped by timestamp similar to `levelmap`.
-
-```bash
-kelora -F keymap --keymap-key method access.log    # Show first char of HTTP method
-kelora -F keymap --keymap-key status api.log       # Show first char of status field
 ```
 
 #### `-J`

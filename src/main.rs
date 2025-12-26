@@ -3052,7 +3052,7 @@ json      - JSON Lines (one object per line)
 logfmt    - Key-value pairs
 inspect   - Debug format with type information
 levelmap  - Compact visual with timestamps and level indicators
-keymap    - Compact visual showing first character of specified field (--keymap-key required)
+keymap    - Compact visual showing first character of specified field (-k/--keys required, exactly one field)
 csv       - Comma-separated with header row
 tsv       - Tab-separated with header row
 csvnh     - CSV without header

@@ -367,14 +367,6 @@ pub struct Cli {
     )]
     pub json_output: bool,
 
-    /// Field name for keymap format (defaults to 'level' if not specified)
-    #[arg(
-        long = "keymap-key",
-        help_heading = "Output Options",
-        help = "Field name to use for keymap format (shows first character)"
-    )]
-    pub keymap_key: Option<String>,
-
     /// Output only core fields
     #[arg(short = 'c', long = "core", help_heading = "Output Options")]
     pub core: bool,
