@@ -3803,14 +3803,7 @@ mod tests {
             .clone()
             .try_cast::<rhai::Map>()
             .unwrap();
-        assert_eq!(
-            avg_map
-                .get("sum")
-                .unwrap()
-                .as_float()
-                .unwrap_or(0.0),
-            450.0
-        );
+        assert_eq!(avg_map.get("sum").unwrap().as_float().unwrap_or(0.0), 450.0);
         assert_eq!(avg_map.get("count").unwrap().as_int().unwrap_or(0), 3);
 
         clear_tracking_state();
@@ -3879,17 +3872,12 @@ mod tests {
 
         // Track with different numeric types
         engine.eval::<()>(r#"track_stats("mixed", 100)"#).unwrap(); // i64
-        engine
-            .eval::<()>(r#"track_stats("mixed", 150.5)"#)
-            .unwrap(); // f64
+        engine.eval::<()>(r#"track_stats("mixed", 150.5)"#).unwrap(); // f64
 
         let state = get_thread_tracking_state();
 
         // Verify count
-        assert_eq!(
-            state.get("mixed_count").unwrap().as_int().unwrap_or(0),
-            2
-        );
+        assert_eq!(state.get("mixed_count").unwrap().as_int().unwrap_or(0), 2);
 
         // Verify sum (should handle mixed int/float)
         let sum = state.get("mixed_sum").unwrap().as_float().unwrap_or(0.0);
