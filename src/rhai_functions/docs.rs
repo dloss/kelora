@@ -182,6 +182,9 @@ mod(a, b) / a % b                    Modulo operation with division-by-zero prot
 rand()                               Random float between 0 and 1
 rand_int(min, max)                   Random integer between min and max (inclusive)
 round(x)                             Round to nearest integer
+sample_every(n)                      Sample every Nth event (returns true on Nth, 2Nth, 3Nth calls)
+                                     Fast counter-based sampling (thread-local, approximate in parallel mode)
+                                     For deterministic sampling, use: text.bucket() % n == 0
 
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)

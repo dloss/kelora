@@ -1076,6 +1076,29 @@ if rand() < 0.1 {                                     // 10% sampling
 e.random_id = rand_int(1000, 9999)
 ```
 
+#### `sample_every(n)`
+Sample every Nth event - returns `true` on calls N, 2N, 3N, etc.
+
+Fast counter-based sampling (thread-local, approximate in parallel mode). Each unique N value maintains its own counter. For deterministic sampling across parallel threads, use `bucket()` instead.
+
+```rhai
+// Keep only every 100th event (1% sampling)
+if !sample_every(100) { skip() }
+
+// Keep every 10th event (10% sampling)
+if sample_every(10) {
+    e.sampled = true
+}
+
+// Different N values have independent counters
+sample_every(10)    // Returns true on calls 10, 20, 30...
+sample_every(100)   // Returns true on calls 100, 200, 300...
+```
+
+**Comparison with `bucket()`:**
+- `sample_every(n)` - Fast counter, approximate in parallel mode, non-deterministic
+- `e.field.bucket() % n == 0` - Hash-based, deterministic across runs/threads, slightly slower
+
 ---
 
 ## Type Conversion Functions
