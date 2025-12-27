@@ -1230,6 +1230,195 @@ pub fn register_functions(engine: &mut Engine) {
         // Silently ignore Unit values - no tracking occurs
     });
 
+    // track_stats - comprehensive statistics tracking (min, max, avg, count, sum, percentiles)
+    // Auto-suffixes metric names with _min, _max, _avg, _count, _sum, _pXX
+    // This is a convenience function that combines track_min, track_max, track_avg, and track_percentiles
+
+    /// Implementation of track_stats for a given numeric type
+    fn track_stats_impl(
+        key: &str,
+        value: f64,
+        percentiles: rhai::Array,
+    ) -> Result<(), Box<rhai::EvalAltResult>> {
+        // Filter out NaN and Infinity
+        if !value.is_finite() {
+            // Silently skip invalid values (consistent with other track_* functions)
+            return Ok(());
+        }
+
+        // Track min
+        let min_key = format!("{}_min", key);
+        with_user_tracking(|state| {
+            let current = state
+                .get(&min_key)
+                .cloned()
+                .unwrap_or(Dynamic::from(f64::INFINITY));
+            let current_val = if current.is_int() {
+                current.as_int().unwrap_or(i64::MAX) as f64
+            } else {
+                current.as_float().unwrap_or(f64::INFINITY)
+            };
+            if value < current_val {
+                state.insert(min_key.clone(), Dynamic::from(value));
+            }
+        });
+        record_operation_metadata(&min_key, "min");
+
+        // Track max
+        let max_key = format!("{}_max", key);
+        with_user_tracking(|state| {
+            let current = state
+                .get(&max_key)
+                .cloned()
+                .unwrap_or(Dynamic::from(f64::NEG_INFINITY));
+            let current_val = if current.is_int() {
+                current.as_int().unwrap_or(i64::MIN) as f64
+            } else {
+                current.as_float().unwrap_or(f64::NEG_INFINITY)
+            };
+            if value > current_val {
+                state.insert(max_key.clone(), Dynamic::from(value));
+            }
+        });
+        record_operation_metadata(&max_key, "max");
+
+        // Track avg (stores sum and count for proper parallel merging)
+        let avg_key = format!("{}_avg", key);
+        with_user_tracking(|state| {
+            let current = state.get(&avg_key).cloned();
+            let (new_sum, new_count) = if let Some(existing) = current {
+                if let Some(map) = existing.try_cast::<rhai::Map>() {
+                    let existing_sum = map
+                        .get("sum")
+                        .and_then(|v| {
+                            if v.is_float() {
+                                v.as_float().ok()
+                            } else if v.is_int() {
+                                v.as_int().ok().map(|i| i as f64)
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or(0.0);
+                    let existing_count =
+                        map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
+                    (existing_sum + value, existing_count + 1)
+                } else {
+                    (value, 1)
+                }
+            } else {
+                (value, 1)
+            };
+
+            let mut map = rhai::Map::new();
+            map.insert("sum".into(), Dynamic::from(new_sum));
+            map.insert("count".into(), Dynamic::from(new_count));
+            state.insert(avg_key.clone(), Dynamic::from(map));
+        });
+        record_operation_metadata(&avg_key, "avg");
+
+        // Track count (as a separate metric for convenience)
+        let count_key = format!("{}_count", key);
+        with_user_tracking(|state| {
+            let updated = merge_numeric(state.get(&count_key).cloned(), Dynamic::from(1_i64));
+            state.insert(count_key.clone(), updated);
+        });
+        record_operation_metadata(&count_key, "count");
+
+        // Track sum (as a separate metric for convenience)
+        let sum_key = format!("{}_sum", key);
+        with_user_tracking(|state| {
+            let updated = merge_numeric(state.get(&sum_key).cloned(), Dynamic::from(value));
+            state.insert(sum_key.clone(), updated);
+        });
+        record_operation_metadata(&sum_key, "sum");
+
+        // Track percentiles using the existing implementation
+        track_percentiles_impl(key, value, percentiles)?;
+
+        Ok(())
+    }
+
+    engine.register_fn(
+        "track_stats",
+        |key: &str, value: i64, percentiles: rhai::Array| {
+            track_stats_impl(key, value as f64, percentiles)
+        },
+    );
+
+    engine.register_fn(
+        "track_stats",
+        |key: &str, value: i32, percentiles: rhai::Array| {
+            track_stats_impl(key, value as f64, percentiles)
+        },
+    );
+
+    engine.register_fn(
+        "track_stats",
+        |key: &str, value: f64, percentiles: rhai::Array| track_stats_impl(key, value, percentiles),
+    );
+
+    engine.register_fn(
+        "track_stats",
+        |key: &str, value: f32, percentiles: rhai::Array| {
+            track_stats_impl(key, value as f64, percentiles)
+        },
+    );
+
+    // Unit overload - no-op for missing/empty values
+    engine.register_fn(
+        "track_stats",
+        |_key: &str,
+         _value: (),
+         _percentiles: rhai::Array|
+         -> Result<(), Box<rhai::EvalAltResult>> {
+            // Silently ignore Unit values - no tracking occurs
+            Ok(())
+        },
+    );
+
+    // Default percentiles overloads (when no array provided, use [0.50, 0.95, 0.99])
+    engine.register_fn("track_stats", |key: &str, value: i64| {
+        let default_percentiles = vec![
+            Dynamic::from(0.50_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_stats_impl(key, value as f64, default_percentiles)
+    });
+
+    engine.register_fn("track_stats", |key: &str, value: i32| {
+        let default_percentiles = vec![
+            Dynamic::from(0.50_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_stats_impl(key, value as f64, default_percentiles)
+    });
+
+    engine.register_fn("track_stats", |key: &str, value: f64| {
+        let default_percentiles = vec![
+            Dynamic::from(0.50_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_stats_impl(key, value, default_percentiles)
+    });
+
+    engine.register_fn("track_stats", |key: &str, value: f32| {
+        let default_percentiles = vec![
+            Dynamic::from(0.50_f64),
+            Dynamic::from(0.95_f64),
+            Dynamic::from(0.99_f64),
+        ];
+        track_stats_impl(key, value as f64, default_percentiles)
+    });
+
+    // Unit overload for default percentiles
+    engine.register_fn("track_stats", |_key: &str, _value: ()| {
+        // Silently ignore Unit values - no tracking occurs
+    });
+
     engine.register_fn("track_unique", |key: &str, value: &str| {
         let updated = with_user_tracking(|state| {
             // Get existing set or create new one
@@ -3537,6 +3726,174 @@ mod tests {
         assert!(!state.contains_key("test_p50"));
         assert!(!state.contains_key("test_p95"));
         assert!(!state.contains_key("test_p99"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_stats_basic() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track some stats with default percentiles
+        engine
+            .eval::<()>(r#"track_stats("response_time", 100)"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_stats("response_time", 200)"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_stats("response_time", 150)"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // Check that all metrics were created with proper suffixes
+        assert!(state.contains_key("response_time_min"));
+        assert!(state.contains_key("response_time_max"));
+        assert!(state.contains_key("response_time_avg"));
+        assert!(state.contains_key("response_time_count"));
+        assert!(state.contains_key("response_time_sum"));
+        assert!(state.contains_key("response_time_p50"));
+        assert!(state.contains_key("response_time_p95"));
+        assert!(state.contains_key("response_time_p99"));
+
+        // Verify min/max values
+        assert_eq!(
+            state
+                .get("response_time_min")
+                .unwrap()
+                .as_float()
+                .unwrap_or(0.0),
+            100.0
+        );
+        assert_eq!(
+            state
+                .get("response_time_max")
+                .unwrap()
+                .as_float()
+                .unwrap_or(0.0),
+            200.0
+        );
+
+        // Verify count and sum
+        assert_eq!(
+            state
+                .get("response_time_count")
+                .unwrap()
+                .as_int()
+                .unwrap_or(0),
+            3
+        );
+        assert_eq!(
+            state
+                .get("response_time_sum")
+                .unwrap()
+                .as_float()
+                .unwrap_or(0.0),
+            450.0
+        );
+
+        // Verify avg (stored as map with sum and count)
+        let avg_map = state
+            .get("response_time_avg")
+            .unwrap()
+            .clone()
+            .try_cast::<rhai::Map>()
+            .unwrap();
+        assert_eq!(
+            avg_map
+                .get("sum")
+                .unwrap()
+                .as_float()
+                .unwrap_or(0.0),
+            450.0
+        );
+        assert_eq!(avg_map.get("count").unwrap().as_int().unwrap_or(0), 3);
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_stats_custom_percentiles() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track with custom percentiles
+        engine
+            .eval::<()>(r#"track_stats("latency", 100, [0.50, 0.90, 0.99, 0.999])"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_stats("latency", 200, [0.50, 0.90, 0.99, 0.999])"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // Check that custom percentiles were created
+        assert!(state.contains_key("latency_p50"));
+        assert!(state.contains_key("latency_p90"));
+        assert!(state.contains_key("latency_p99"));
+        assert!(state.contains_key("latency_p99.9"));
+
+        // Also check basic stats
+        assert!(state.contains_key("latency_min"));
+        assert!(state.contains_key("latency_max"));
+        assert!(state.contains_key("latency_avg"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_stats_unit_value() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Unit values should be silently ignored
+        engine.eval::<()>(r#"track_stats("test", ())"#).unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // No metrics should be created
+        assert!(!state.contains_key("test_min"));
+        assert!(!state.contains_key("test_max"));
+        assert!(!state.contains_key("test_avg"));
+        assert!(!state.contains_key("test_count"));
+        assert!(!state.contains_key("test_sum"));
+        assert!(!state.contains_key("test_p50"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_stats_multiple_types() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track with different numeric types
+        engine.eval::<()>(r#"track_stats("mixed", 100)"#).unwrap(); // i64
+        engine
+            .eval::<()>(r#"track_stats("mixed", 150.5)"#)
+            .unwrap(); // f64
+
+        let state = get_thread_tracking_state();
+
+        // Verify count
+        assert_eq!(
+            state.get("mixed_count").unwrap().as_int().unwrap_or(0),
+            2
+        );
+
+        // Verify sum (should handle mixed int/float)
+        let sum = state.get("mixed_sum").unwrap().as_float().unwrap_or(0.0);
+        assert!((sum - 250.5).abs() < 0.001);
 
         clear_tracking_state();
     }

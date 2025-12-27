@@ -224,6 +224,7 @@ track_count(key)                     Increment counter for key by 1 (string key;
 track_max(key, value)                Track maximum value for key (skips () values)
 track_min(key, value)                Track minimum value for key (skips () values)
 track_percentiles(key, value [,[p]]) Track streaming percentiles using t-digest (default [0.50,0.95,0.99]; auto-suffixes)
+track_stats(key, value [,[p]])       Track comprehensive stats: min, max, avg, count, sum, percentiles (auto-suffixes)
 track_sum(key, value)                Accumulate numeric values for key (skips () values)
 track_top(key, item, n)              Track top N most frequent items (counts occurrences)
 track_top(key, item, n, score)       Track top N items by highest scores (ranks by numeric value)
@@ -437,6 +438,19 @@ kelora -j api_logs.jsonl -m \
 kelora -j api_logs.jsonl -m \
   --exec 'track_percentiles("latency", e.response_time, [0.50, 0.95, 0.999])'
 # Creates: latency_p50, latency_p95, latency_p99.9
+
+# Comprehensive statistics (convenience function combining min/max/avg/percentiles)
+# Default percentiles [0.50, 0.95, 0.99]:
+kelora -j api_logs.jsonl -m \
+  --exec 'track_stats("response_time", e.duration_ms)'
+# Creates: response_time_min, response_time_max, response_time_avg,
+#          response_time_count, response_time_sum,
+#          response_time_p50, response_time_p95, response_time_p99
+
+# Custom percentiles with track_stats:
+kelora -j api_logs.jsonl -m \
+  --exec 'track_stats("latency", e.duration, [0.50, 0.90, 0.99, 0.999])'
+# Creates all basic stats plus: latency_p50, latency_p90, latency_p99, latency_p99.9
 
 # Top/bottom tracking: frequency vs scored
 # 3 params = count occurrences (most/least COMMON)
