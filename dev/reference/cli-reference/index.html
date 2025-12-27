@@ -6298,6 +6298,7 @@
 <li><code>inspect</code> - Debug format with type information</li>
 <li><code>levelmap</code> - Grouped by log level</li>
 <li><code>keymap</code> - Shows first character of specified field (requires <code>--keys</code> with exactly one field)</li>
+<li><code>tailmap</code> - Visualizes numeric field distribution with percentile thresholds (requires <code>--keys</code> with exactly one numeric field)</li>
 <li><code>csv</code> - CSV with header</li>
 <li><code>tsv</code> - Tab-separated values with header</li>
 <li><code>csvnh</code> - CSV without header</li>
@@ -6306,7 +6307,8 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>app.log
 <a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>app.log
 <a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>status<span class="w"> </span>app.log
-<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
+<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log
+<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--stats<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-j_1"><code>-J</code><a class="headerlink" href="#-j_1" title="Permanent link">&para;</a></h4>
 <p>Shortcut for <code>-F json</code>.</p>

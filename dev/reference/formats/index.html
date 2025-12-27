@@ -2976,6 +2976,10 @@
 <td>Shows first character of specified field (requires <code>--keys</code> with exactly one field)</td>
 </tr>
 <tr>
+<td><code>tailmap</code></td>
+<td>Visualizes numeric field distributions with percentile thresholds (requires <code>--keys</code> with exactly one numeric field)</td>
+</tr>
+<tr>
 <td><code>csv</code></td>
 <td>CSV with header row</td>
 </tr>
@@ -3006,12 +3010,28 @@
 <li>Groups events by timestamp like <code>levelmap</code></li>
 <li>Not compatible with <code>--parallel</code> mode</li>
 </ul>
+<p><strong>Tailmap Format:</strong></p>
+<p>The <code>tailmap</code> format visualizes numeric field distributions over time using tail-focused percentile thresholds (p90, p95, p99). This is ideal for performance monitoring, latency analysis, and identifying outliers.</p>
+<ul>
+<li>Requires <code>--keys</code> (or <code>-k</code>) with exactly one numeric field name</li>
+<li>Uses symbols: <code>_</code> (below p90), <code>1</code> (p90-p95), <code>2</code> (p95-p99), <code>3</code> (above p99), <code>.</code> (missing)</li>
+<li>Shows a summary with field statistics and percentile thresholds</li>
+<li>Groups events by timestamp for timeline visualization</li>
+<li>Not compatible with <code>--parallel</code> mode</li>
+</ul>
+<p><strong>Use cases:</strong>
+- API response time analysis
+- Database query performance monitoring
+- Request latency tracking
+- Any time-series numeric data where tail latencies matter</p>
 <p><strong>Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>method<span class="w"> </span>access.log<span class="w">          </span><span class="c1"># Show HTTP method patterns</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>--keys<span class="w"> </span>status<span class="w"> </span>api.log<span class="w">         </span><span class="c1"># Show status field patterns</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log<span class="w">     </span><span class="c1"># Visualize response time distribution</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>query_time_ms<span class="w"> </span>db.log<span class="w">  </span><span class="c1"># Show database query performance</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
