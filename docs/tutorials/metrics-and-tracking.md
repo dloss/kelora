@@ -9,6 +9,7 @@ feed into dashboards.
 - Track counts, sums, buckets, and unique values with Rhai helpers
 - Combine `--metrics`, `--stats`, `--begin`, and `--end` for structured reports
 - Use `track_percentiles()` for streaming P50/P95/P99 latency analysis
+- Use `track_stats()` for comprehensive statistics (min, max, avg, percentiles) in one call
 - Use sliding windows for moving averages and rolling calculations
 - Persist metrics to disk for downstream processing
 
@@ -391,6 +392,85 @@ for raw values.
 | Moving average of last N events | `--window` + manual calc | Need sliding/rolling calculations |
 | One-shot percentiles at end of stream | `--window` (unbounded) | Simple, exact percentiles on small datasets |
 
+---
+
+## Step 6.5 – Comprehensive Stats with track_stats()
+
+When you need the **complete statistical picture** of a metric (min, max, avg, percentiles), use `track_stats()` as a convenience function instead of calling multiple `track_*()` functions. This is especially useful for latency analysis, API monitoring, and performance dashboards.
+
+=== "Command"
+
+    ```bash
+    kelora -j examples/simple_json.jsonl \
+      -e 'if e.has("duration_ms") {
+              track_stats("response_time", e.duration_ms)
+          }' \
+      --metrics
+    ```
+
+=== "Output"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora -j examples/simple_json.jsonl \
+      -e 'if e.has("duration_ms") { track_stats("response_time", e.duration_ms) }' \
+      --metrics
+    ```
+
+A single call to `track_stats("response_time", e.duration_ms)` creates:
+
+- `response_time_min` - Minimum value seen
+- `response_time_max` - Maximum value seen
+- `response_time_avg` - Average (stored as sum+count internally)
+- `response_time_count` - Total count
+- `response_time_sum` - Total sum
+- `response_time_p50` - Median (50th percentile)
+- `response_time_p95` - 95th percentile
+- `response_time_p99` - 99th percentile
+
+### Custom Percentiles with track_stats()
+
+You can specify custom percentiles just like with `track_percentiles()`:
+
+=== "Command"
+
+    ```bash
+    kelora -j examples/simple_json.jsonl \
+      -e 'if e.has("duration_ms") {
+              track_stats("latency", e.duration_ms, [0.50, 0.90, 0.99, 0.999])
+          }' \
+      --metrics
+    ```
+
+=== "Output"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora -j examples/simple_json.jsonl \
+      -e 'if e.has("duration_ms") { track_stats("latency", e.duration_ms, [0.50, 0.90, 0.99, 0.999]) }' \
+      --metrics
+    ```
+
+This creates all basic stats plus `latency_p50`, `latency_p90`, `latency_p99`, and `latency_p99.9`.
+
+### When to Use track_stats() vs. Individual Functions
+
+**Use `track_stats()`** when:
+
+- You want the complete statistical picture in one call
+- Analyzing latency, response time, or duration metrics
+- Building dashboards that need min/max/avg/percentiles
+- Prototyping or exploring data characteristics
+
+**Use individual functions** (`track_min`, `track_max`, `track_avg`, `track_percentiles`) when:
+
+- You only need specific statistics (saves memory)
+- Fine-grained control over which metrics are tracked
+- Avoiding percentile overhead (~4KB per metric)
+
+!!! tip "Performance Note"
+    `track_stats()` internally calls the same logic as individual tracking functions, so performance is similar. The main memory overhead comes from percentile tracking (~4KB per metric). If you don't need percentiles, use `track_min()`, `track_max()`, and `track_avg()` instead.
+
+---
+
 ## Step 7 – Custom Reports with `--end`
 
 Sometimes you need a formatted report instead of raw maps. Store a short Rhai
@@ -575,6 +655,7 @@ human-readable histogram once processing finishes.
 | `track_min(key, value)` | Minimum value | `track_min("fastest", e.duration)` |
 | `track_max(key, value)` | Maximum value | `track_max("slowest", e.duration)` |
 | `track_percentiles(key, value, [percentiles])` | Streaming percentiles (P50/P95/P99 default) | `track_percentiles("latency", e.duration_ms)` |
+| `track_stats(key, value, [percentiles])` | **Comprehensive stats:** min, max, avg, count, sum, percentiles | `track_stats("response_time", e.duration_ms)` |
 | `track_bucket(key, bucket)` | Histogram buckets | `track_bucket("status", (e.status/100)*100)` |
 | `track_top(key, item, n)` | Top N most frequent items | `track_top("errors", e.message, 10)` |
 | `track_top(key, item, n, score)` | Top N by highest scores | `track_top("slowest", e.endpoint, 10, e.latency)` |
@@ -583,7 +664,8 @@ human-readable histogram once processing finishes.
 
 **Notes:**
 - `track_avg()` automatically computes averages by storing sum and count internally
-- `track_percentiles()` auto-suffixes metrics (e.g., `latency_p95`, `latency_p99`) and is the only `track_*()` function that does this
+- `track_percentiles()` and `track_stats()` auto-suffix metrics (e.g., `latency_p95`, `latency_p99`)
+- `track_stats()` is a convenience function that creates `_min`, `_max`, `_avg`, `_count`, `_sum`, and `_pXX` metrics
 - Use percentiles for tail latency (P95, P99) and averages for typical behavior
 
 ## Summary
@@ -596,6 +678,7 @@ You've learned:
 - ✅ Rank items with `track_top()` and `track_bottom()`
 - ✅ Count unique values with `track_unique()`
 - ✅ Track streaming percentiles with `track_percentiles()` for P50/P95/P99 analysis
+- ✅ Get comprehensive stats with `track_stats()` (min, max, avg, count, sum, percentiles in one call)
 - ✅ View metrics with `-m`, `--metrics=full`, and `--metrics=json`
 - ✅ Persist metrics with `--metrics-file`
 - ✅ Generate custom reports in `--end` stage

@@ -1453,6 +1453,62 @@ track_percentiles("api_p95", latency)   // Skips () values
 
 ---
 
+#### `track_stats(key, value [, [percentiles]])`
+**Convenience function** that tracks comprehensive statistics in a single call: min, max, avg, count, sum, and percentiles. Automatically creates suffixed metrics for each statistic. Ideal for getting the complete statistical picture of a metric without calling multiple `track_*()` functions. Skips Unit `()` values. Works correctly in parallel mode.
+
+**Auto-created metrics:**
+- `{key}_min` - Minimum value
+- `{key}_max` - Maximum value
+- `{key}_avg` - Average (stored as sum+count for parallel merging)
+- `{key}_count` - Total count
+- `{key}_sum` - Total sum
+- `{key}_p50`, `{key}_p95`, `{key}_p99` - Percentiles (default)
+
+**Default percentiles:** `[0.50, 0.95, 0.99]` when no array provided.
+
+**Percentile notation:** Same as `track_percentiles()` - use 0.0-1.0 range (quantile notation).
+
+```rhai
+// Default percentiles [0.50, 0.95, 0.99]
+track_stats("response_time", e.duration_ms)
+// Creates: response_time_min, response_time_max, response_time_avg,
+//          response_time_count, response_time_sum,
+//          response_time_p50, response_time_p95, response_time_p99
+
+// Custom percentiles
+track_stats("latency", e.duration, [0.50, 0.90, 0.99, 0.999])
+// Creates all basic stats plus: latency_p50, latency_p90, latency_p99, latency_p99.9
+
+// Per-endpoint comprehensive tracking
+track_stats("api_" + e.endpoint, e.response_time)
+
+// Safe with conversions that may fail
+let duration = e.duration_str.to_float()  // Returns () on error
+track_stats("request_ms", duration)        // Skips () values
+```
+
+!!! tip "When to Use track_stats() vs. Individual Functions"
+    **Use `track_stats()`** when:
+
+    - You want the complete statistical picture (min, max, avg, percentiles)
+    - Analyzing latency, response time, or duration metrics
+    - Building dashboards that need multiple statistical views
+    - Prototyping or exploring data characteristics
+
+    **Use individual `track_min/max/avg/percentiles`** when:
+
+    - You only need specific statistics (performance optimization)
+    - Fine-grained control over which metrics are tracked
+    - Minimizing memory usage (percentiles use ~4KB per metric)
+
+!!! note "Performance Considerations"
+    `track_stats()` internally calls the same logic as individual tracking functions, so it has the same performance characteristics. The main overhead is from percentile tracking (~4KB memory per metric). If you don't need percentiles, use `track_min()`, `track_max()`, and `track_avg()` instead.
+
+!!! note "Parallel Mode Behavior"
+    All generated metrics use existing merge operations (min, max, avg, count, sum, percentiles), so `track_stats()` works correctly in parallel mode with no special handling required.
+
+---
+
 ## File Output Functions
 
 All file output functions require the `--allow-fs-writes` flag.
