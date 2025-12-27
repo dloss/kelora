@@ -1070,10 +1070,10 @@ e.bucket = e.id % 10
 Random number generation.
 
 ```rhai
-if rand() < 0.1 {                                     // 10% sampling
-    e.sampled = true
-}
-e.random_id = rand_int(1000, 9999)
+e.random_id = rand_int(1000, 9999)                    // Random ID assignment
+
+// For sampling, prefer sample_every() instead:
+// if sample_every(10) { e.sampled = true }           // Better: counter-based
 ```
 
 #### `sample_every(n)`
