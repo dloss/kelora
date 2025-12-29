@@ -158,6 +158,26 @@ e.cols = e.line.col("1,3,5")                          // Columns 1, 3, 5
 e.range = e.line.col("2:5", "\t")                     // Columns 2-5, tab-separated
 ```
 
+#### `text.cols(col1, col2 [, col3, ...] [, separator])`
+Extract multiple columns as an array. Supports up to 6 column indices (1-indexed). Returns an array of column values.
+
+```rhai
+// Extract columns 1, 3, 5 as array
+let values = e.line.cols(1, 3, 5)                     // ["value1", "value3", "value5"]
+e.user = values[0]
+e.action = values[1]
+
+// With custom separator
+let data = e.line.cols(2, 4, "\t")                    // Tab-separated columns
+
+// Practical example: Apache log parsing
+let parts = e.log.cols(1, 4, 7, 9)                    // IP, timestamp, path, status
+e.ip = parts[0]
+e.timestamp = parts[1]
+e.path = parts[2]
+e.status = parts[3]
+```
+
 ### Parsing Functions
 
 #### `text.parse_json()`
@@ -446,11 +466,13 @@ e.right = "end...".rclip()                            // → "end"
 ```
 
 #### `text.upper()` / `text.lower()`
-Case conversion.
+Case conversion. **Note:** Both `upper()`/`lower()` and `to_upper()`/`to_lower()` are available - use whichever you prefer (Rhai builtins vs Python-style).
 
 ```rhai
 e.normalized = e.country_code.upper()                 // "us" → "US"
-e.lowercase = e.name.lower()
+e.also_upper = e.code.to_upper()                      // Same as upper()
+e.lowercase = e.name.lower()                          // "Hello" → "hello"
+e.also_lower = e.name.to_lower()                      // Same as lower()
 ```
 
 #### `text.replace(pattern, replacement)`
@@ -1033,6 +1055,13 @@ e.readable = duration.to_string()                     // "1h 30m"
 e.humanized = humanize_duration(5400000)              // "1h 30m"
 ```
 
+#### `duration.to_debug()`
+Format duration with full precision for debugging. Useful for inspecting exact duration values.
+
+```rhai
+e.debug_duration = duration.to_debug()                // Full precision debug output
+```
+
 ---
 
 ## Math Functions
@@ -1264,6 +1293,20 @@ if e.endpoint == "/health" {
 }
 ```
 
+#### `status_class(status_code)`
+Convert HTTP status code to class string ("1xx", "2xx", "3xx", "4xx", "5xx", or "unknown").
+
+```rhai
+e.status_category = status_class(e.status)            // 404 → "4xx", 200 → "2xx"
+e.is_error = status_class(e.code) == "5xx"
+
+// Track errors by class
+track_count(status_class(e.status))
+
+// Group status codes for analysis
+e.status_group = status_class(e.response_code)        // 503 → "5xx"
+```
+
 #### `type_of(value)`
 Get type name as string.
 
@@ -1288,6 +1331,208 @@ e.error_burst = recent_statuses.filter(|s| s >= 500).len() >= 3
 // Compare current vs recent average
 let recent_vals = window.pluck_as_nums("value")
 e.spike = e.value > (recent_vals.reduce(|s, x| s + x, 0) / recent_vals.len()) * 2
+```
+
+---
+
+## State Management Functions
+
+The global `state` object provides a mutable map for tracking information across events. **Only available in sequential mode** - accessing `state` in `--parallel` mode will raise an error.
+
+!!! warning "Parallel Mode"
+    State management is **not available** when using `--parallel`. All state operations will raise errors. Use `--metrics` tracking functions for parallel-safe aggregation.
+
+### Basic Operations
+
+#### `state["key"]` / `state[key] = value`
+Get or set values using indexer syntax.
+
+```rhai
+// Initialize counter
+state["count"] = 0
+
+// Increment counter
+state["count"] = state["count"] + 1
+
+// Track unique IPs
+if !state.contains("seen_ips") {
+    state["seen_ips"] = []
+}
+state["seen_ips"].push(e.ip)
+```
+
+#### `state.get(key)` / `state.set(key, value)`
+Get or set values using method syntax. `get()` returns `()` if key doesn't exist.
+
+```rhai
+let count = state.get("count")                        // Returns () if not found
+state.set("total_bytes", 0)
+
+// Safer pattern with default
+let current = state.get("count") ?? 0
+state.set("count", current + 1)
+```
+
+#### `state.contains(key)`
+Check if a key exists in state.
+
+```rhai
+if !state.contains("initialized") {
+    state["initialized"] = true
+    state["start_time"] = now()
+}
+```
+
+### Map Operations
+
+#### `state.keys()` / `state.values()`
+Get arrays of all keys or values.
+
+```rhai
+let all_keys = state.keys()                           // ["count", "total", "seen_ips"]
+let all_values = state.values()                       // [42, 1024, [...]]
+
+// Iterate over all state entries
+for key in state.keys() {
+    print(key + ": " + state[key].to_string())
+}
+```
+
+#### `state.len()` / `state.is_empty()`
+Get number of entries or check if empty.
+
+```rhai
+if state.is_empty() {
+    state["initialized"] = true
+}
+
+let num_keys = state.len()                            // Number of entries
+```
+
+#### `state.remove(key)`
+Remove a key from state and return its value (or `()` if not found).
+
+```rhai
+let old_value = state.remove("temp_data")             // Remove and get value
+state.remove("cache")                                 // Just remove
+```
+
+#### `state.clear()`
+Remove all entries from state.
+
+```rhai
+// Reset state
+state.clear()
+```
+
+### Bulk Operations
+
+#### `state.mixin(map)`
+Merge a map into state, overwriting existing keys.
+
+```rhai
+// Initialize multiple values
+state.mixin(#{
+    count: 0,
+    total_bytes: 0,
+    seen_users: []
+})
+
+// Merge new data
+state.mixin(e.metadata)                               // Add all metadata fields
+```
+
+#### `state.fill_with(map)`
+Replace entire state with a new map.
+
+```rhai
+// Reset state with new values
+state.fill_with(#{
+    count: 0,
+    start_time: now()
+})
+```
+
+#### `state += map`
+Operator form of `mixin()` - merge map into state.
+
+```rhai
+state += #{ new_field: 42, another: "value" }
+```
+
+### Conversion
+
+#### `state.to_map()`
+Convert state to a regular map for use with other functions.
+
+```rhai
+// Export state as JSON
+let state_json = state.to_map().to_json()
+print(state_json)
+
+// Export as logfmt
+let state_logfmt = state.to_map().to_logfmt()
+
+// Use in conditions
+let snapshot = state.to_map()
+if snapshot.contains("error_count") && snapshot["error_count"] > 100 {
+    exit(1)
+}
+```
+
+### Practical Examples
+
+**Counter Pattern:**
+```rhai
+// Initialize on first event
+if state.is_empty() {
+    state["event_count"] = 0
+    state["error_count"] = 0
+}
+
+// Increment counters
+state["event_count"] = state["event_count"] + 1
+if e.level == "ERROR" {
+    state["error_count"] = state["error_count"] + 1
+}
+
+// Output summary at end
+--end 'print("Events: " + state["event_count"] + ", Errors: " + state["error_count"])'
+```
+
+**Deduplication Pattern:**
+```rhai
+// Initialize seen set
+if !state.contains("seen_ids") {
+    state["seen_ids"] = #{}  // Use map as set
+}
+
+// Skip duplicates
+if state["seen_ids"].contains(e.request_id) {
+    skip()
+}
+state["seen_ids"][e.request_id] = true
+```
+
+**Session Tracking:**
+```rhai
+// Track active sessions
+if !state.contains("sessions") {
+    state["sessions"] = #{}
+}
+
+let session_id = e.session_id
+if !state["sessions"].contains(session_id) {
+    state["sessions"][session_id] = #{
+        start: e.timestamp,
+        events: 0
+    }
+}
+
+// Update session
+let session = state["sessions"][session_id]
+session["events"] = session["events"] + 1
+session["last_seen"] = e.timestamp
 ```
 
 ---

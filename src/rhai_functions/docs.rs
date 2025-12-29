@@ -11,6 +11,7 @@ text.between(start, end [,nth])      Text between start and end delimiters (nth:
 text.bucket()                        Fast hash for sampling/grouping (returns INT for modulo operations)
 text.clip()                          Remove leading/trailing non-alphanumeric characters
 text.col(spec [,separator])          Extract columns by index/range/list (e.g., '1', '1,3,5', '1:4')
+text.cols(col1, col2 [,...] [,sep])  Extract multiple columns as array (up to 6 columns)
 text.contains(pattern)               Check if text contains pattern (builtin)
 text.like(pattern)                   Glob match (*, ?) against entire string
 text.ilike(pattern)                  Glob match with Unicode case folding (*, ?)
@@ -89,7 +90,9 @@ text.to_int(thousands)               Parse with thousands separator removal
                                                "1,234'567".to_int(",'") → 1234567 (mixed)
 text.or_empty()                      Convert empty string/array/map to () for removal/filtering
 text.to_lower()                      Convert to lowercase (builtin)
-text.to_upper()                      Convert to uppercase (builtin)
+text.to_upper()                      Convert to uppercase (builtin; also available as upper())
+text.lower()                         Convert to lowercase (alias for to_lower(); for Python users)
+text.upper()                         Convert to uppercase (alias for to_upper(); for Python users)
 text.trim()                          Remove whitespace from start and end (builtin)
 text.unescape_html()                 Unescape HTML entities to text
 text.unescape_json()                 Unescape JSON escape sequences
@@ -168,6 +171,7 @@ duration.as_minutes()                Convert duration to minutes
 duration.as_hours()                  Convert duration to hours
 duration.as_days()                   Convert duration to days
 duration.to_string()                 Format duration as human-readable string (e.g., "1h 30m")
+duration.to_debug()                  Format duration with full precision for debugging
 duration1 + duration2                Add durations
 duration1 - duration2                Subtract durations (always returns positive result)
 duration1 == duration2               Compare durations for equality
@@ -214,9 +218,26 @@ print(message)                       Print to stdout (suppressed with --no-scrip
 pseudonym(value, domain)             Generate domain-separated pseudonym (requires KELORA_SECRET)
 read_file(path)                      Read file contents as string
 read_lines(path)                     Read file as array of lines
+status_class(status_code)            Convert HTTP status code to class string ("2xx", "4xx", etc.)
 type_of(value)                       Get type name as string (builtin)
 window.pluck(field)                  Extract field values from window array (requires --window)
 window.pluck_as_nums(field)          Extract numeric field values from window array (requires --window)
+
+STATE MANAGEMENT (sequential mode only; errors in --parallel mode):
+state["key"]                         Get/set state value via indexer (state["count"] = 0)
+state.get(key)                       Get value from state (returns () if not found)
+state.set(key, value)                Set value in state
+state.contains(key)                  Check if key exists in state
+state.remove(key)                    Remove key from state (returns removed value or ())
+state.clear()                        Remove all entries from state
+state.keys()                         Get array of all keys in state
+state.values()                       Get array of all values in state
+state.len()                          Get number of entries in state
+state.is_empty()                     Check if state is empty
+state.mixin(map)                     Merge map into state (overwrites existing keys)
+state.fill_with(map)                 Replace entire state with new map
+state.to_map()                       Convert state to regular map (for use with to_logfmt(), etc.)
+state += map                         Merge map into state (operator form)
 
 TRACKING/METRICS FUNCTIONS (requires --metrics):
 track_avg(key, value)                Track average of numeric values for key (skips () values)
