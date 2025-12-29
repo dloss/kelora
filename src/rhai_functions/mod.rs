@@ -20,6 +20,7 @@ pub mod normalize;
 pub mod process;
 pub mod random;
 pub mod safety;
+pub mod serializers;
 pub mod span;
 pub mod state;
 pub mod strings;
@@ -48,6 +49,7 @@ pub fn register_all_functions(engine: &mut Engine) {
     emit::register_functions(engine);
     file_ops::register_functions(engine);
     hashing::register_functions(engine);
+    serializers::register_functions(engine);
     span::register_functions(engine);
     state::register(engine);
 }
