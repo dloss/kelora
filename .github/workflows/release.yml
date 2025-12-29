@@ -34,6 +34,10 @@ jobs:
     needs: audit
     runs-on: ${{ matrix.os }}
     environment: release
+    permissions:
+      contents: write
+      id-token: write      # Required for build provenance attestation
+      attestations: write  # Required for build provenance attestation
     strategy:
       matrix:
         include:
@@ -79,6 +83,12 @@ jobs:
             $STRIP target/${{ matrix.target }}/release/kelora${{ matrix.ext }} || true
           fi
         shell: bash
+
+      # Build provenance attestation (SLSA)
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: 'target/${{ matrix.target }}/release/kelora${{ matrix.ext }}'
 
       # macOS signing steps (optional - only if you have Apple Developer certificates)
       - name: Import Code-Signing Certificate
@@ -170,6 +180,10 @@ jobs:
     needs: audit
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      contents: write
+      id-token: write      # Required for build provenance attestation
+      attestations: write  # Required for build provenance attestation
     strategy:
       matrix:
         openbsd_release: ["7.8", "7.7"]
@@ -191,6 +205,12 @@ jobs:
             cd target/x86_64-unknown-openbsd/release
             tar -czf kelora-x86_64-unknown-openbsd-${{ matrix.openbsd_release }}.tar.gz kelora
 
+      # Build provenance attestation (SLSA)
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: 'target/x86_64-unknown-openbsd/release/kelora'
+
       - name: Upload OpenBSD release asset
         uses: softprops/action-gh-release@v2
         with:
@@ -205,6 +225,10 @@ jobs:
     needs: audit
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      contents: write
+      id-token: write      # Required for build provenance attestation
+      attestations: write  # Required for build provenance attestation
     strategy:
       matrix:
         freebsd_release: ["14.3", "13.5"]
@@ -225,6 +249,12 @@ jobs:
             cargo build --locked --release --target x86_64-unknown-freebsd
             cd target/x86_64-unknown-freebsd/release
             tar -czf kelora-x86_64-unknown-freebsd-${{ matrix.freebsd_release }}.tar.gz kelora
+
+      # Build provenance attestation (SLSA)
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: 'target/x86_64-unknown-freebsd/release/kelora'
 
       - name: Upload FreeBSD release asset
         uses: softprops/action-gh-release@v2

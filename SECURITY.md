@@ -68,6 +68,35 @@ Every commit and pull request must pass:
 - `cargo clippy --all-targets --all-features -- -D warnings` (static analysis)
 - `cargo test --all-features` (all tests must pass)
 
+## Verifying Release Binaries
+
+Release binaries include build provenance attestations (SLSA Level 2). These attestations cryptographically prove that binaries were built by GitHub Actions from the exact source code, not on a compromised machine.
+
+### How to Verify
+
+Requires [GitHub CLI](https://cli.github.com/):
+
+```bash
+# Download and extract
+wget https://github.com/dloss/kelora/releases/download/v0.8.0/kelora-x86_64-unknown-linux-musl.tar.gz
+tar -xzf kelora-x86_64-unknown-linux-musl.tar.gz
+
+# Verify
+gh attestation verify kelora --owner dloss
+```
+
+Verification checks:
+- Binary hash matches build output
+- Attestation signed by GitHub (via Sigstore)
+- Built on GitHub Actions (not local machine)
+- Exact commit and workflow used
+
+### Notes
+
+- Verification requires `gh` CLI and network access
+- Only applies to GitHub Releases (not `cargo install` builds)
+- See https://slsa.dev for more on supply chain security
+
 ## Known Security Advisories
 
 Kelora currently ignores one advisory in `deny.toml`:
