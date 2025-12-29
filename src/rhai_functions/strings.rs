@@ -1,8 +1,7 @@
-use crate::event::{json_to_dynamic, Event};
+use crate::event::Event;
 use crate::parsers::{CefParser, CombinedParser, LogfmtParser, SyslogParser};
 use crate::pipeline::EventParser;
-use base64::engine::general_purpose::{URL_SAFE, URL_SAFE_NO_PAD};
-use base64::Engine as _;
+// Note: base64 imports removed - JWT parsing moved to jwt.rs
 use once_cell::sync::Lazy;
 use regex::Regex;
 use rhai::{Array, Dynamic, Engine, Map};
@@ -887,98 +886,7 @@ fn parse_content_disposition_impl(input: &str) -> Map {
     result
 }
 
-fn is_base64url_char(ch: char) -> bool {
-    matches!(ch, 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '=')
-}
-
-fn decode_jwt_segment(segment: &str) -> Option<Vec<u8>> {
-    if segment.len() > MAX_PARSE_LEN {
-        return None;
-    }
-    match URL_SAFE_NO_PAD.decode(segment.as_bytes()) {
-        Ok(bytes) => Some(bytes),
-        Err(_) => {
-            let mut padded = segment.to_string();
-            // Base64 requires lengths in multiples of 4; older Rust on OpenBSD lacks is_multiple_of.
-            #[allow(unknown_lints, clippy::manual_is_multiple_of)]
-            while padded.len() % 4 != 0 {
-                padded.push('=');
-                if padded.len() > MAX_PARSE_LEN {
-                    return None;
-                }
-            }
-            URL_SAFE.decode(padded.as_bytes()).ok()
-        }
-    }
-}
-
-fn jwt_segment_to_map(segment: &str) -> Map {
-    if let Some(bytes) = decode_jwt_segment(segment) {
-        if bytes.len() <= MAX_PARSE_LEN {
-            if let Ok(json) = serde_json::from_slice::<serde_json::Value>(&bytes) {
-                let dynamic = crate::event::json_to_dynamic(&json);
-                if let Some(map) = dynamic.try_cast::<Map>() {
-                    return map;
-                }
-            }
-        }
-    }
-    Map::new()
-}
-
-fn parse_jwt_impl(input: &str) -> Map {
-    let trimmed = input.trim();
-    if trimmed.is_empty() || trimmed.len() > MAX_PARSE_LEN {
-        return Map::new();
-    }
-
-    let parts: Vec<&str> = trimmed.split('.').collect();
-    if parts.len() < 2 || parts.len() > 3 {
-        return Map::new();
-    }
-
-    if parts[0].is_empty() || parts[1].is_empty() {
-        return Map::new();
-    }
-
-    if !parts[0].chars().all(is_base64url_char) || !parts[1].chars().all(is_base64url_char) {
-        return Map::new();
-    }
-
-    let header_map = jwt_segment_to_map(parts[0]);
-    let claims_map = jwt_segment_to_map(parts[1]);
-
-    let signature_segment = if parts.len() == 3 { parts[2] } else { "" };
-
-    let mut result = Map::new();
-    result.insert("header".into(), Dynamic::from(header_map.clone()));
-    result.insert("claims".into(), Dynamic::from(claims_map.clone()));
-    result.insert(
-        "signature_b64u".into(),
-        Dynamic::from(signature_segment.to_string()),
-    );
-
-    if let Some(alg) = header_map
-        .get("alg")
-        .and_then(|v| v.clone().into_string().ok())
-    {
-        result.insert("alg".into(), Dynamic::from(alg));
-    }
-    if let Some(kid) = header_map
-        .get("kid")
-        .and_then(|v| v.clone().into_string().ok())
-    {
-        result.insert("kid".into(), Dynamic::from(kid));
-    }
-    if let Some(typ) = header_map
-        .get("typ")
-        .and_then(|v| v.clone().into_string().ok())
-    {
-        result.insert("typ".into(), Dynamic::from(typ));
-    }
-
-    result
-}
+// Note: JWT parsing functions (parse_jwt) are in jwt.rs
 
 fn parse_syslog_impl(line: &str) -> Map {
     parse_event_with(&*SYSLOG_PARSER, line)
@@ -996,55 +904,7 @@ fn parse_combined_impl(line: &str) -> Map {
     parse_event_with(&*COMBINED_PARSER, line)
 }
 
-/// Mask IP address for privacy (replace last N octets with 'X')
-fn mask_ip_impl(ip: &str, octets_to_mask: usize) -> String {
-    // IPv4 pattern validation
-    let parts: Vec<&str> = ip.split('.').collect();
-    if parts.len() != 4 {
-        return ip.to_string(); // Return unchanged if not valid IPv4
-    }
-
-    // Validate each octet is numeric
-    for part in &parts {
-        if part.parse::<u8>().is_err() {
-            return ip.to_string(); // Return unchanged if not numeric
-        }
-    }
-
-    let mut result = parts.clone();
-    let mask_count = octets_to_mask.clamp(1, 4);
-
-    // Replace last N octets with 'X'
-    for item in result.iter_mut().skip(4 - mask_count) {
-        *item = "X";
-    }
-
-    result.join(".")
-}
-
-/// Check if IP address is in private range
-fn is_private_ip_impl(ip: &str) -> bool {
-    let parts: Vec<&str> = ip.split('.').collect();
-    if parts.len() != 4 {
-        return false; // Not valid IPv4
-    }
-
-    // Parse octets
-    let octets: Result<Vec<u8>, _> = parts.iter().map(|s| s.parse::<u8>()).collect();
-    let octets = match octets {
-        Ok(o) => o,
-        Err(_) => return false,
-    };
-
-    // Check private ranges
-    match octets[0] {
-        10 => true,                                // 10.0.0.0/8
-        172 => octets[1] >= 16 && octets[1] <= 31, // 172.16.0.0/12
-        192 => octets[1] == 168,                   // 192.168.0.0/16
-        127 => true,                               // 127.0.0.0/8 (loopback)
-        _ => false,
-    }
-}
+// Note: mask_ip and is_private_ip are in ip_utils.rs
 
 /// Parse key-value pairs from a string (like logfmt format)
 ///
@@ -1087,209 +947,7 @@ fn parse_kv_impl(text: &str, sep: Option<&str>, kv_sep: &str) -> rhai::Map {
     map
 }
 
-/// Extract JSON objects or arrays from text
-///
-/// Searches through the text for valid JSON objects `{...}` or arrays `[...]`
-/// and returns the nth occurrence (0-indexed).
-///
-/// # Arguments
-/// * `text` - The input string to search for JSON
-/// * `nth` - Which occurrence to extract (0 = first, 1 = second, etc.)
-///
-/// # Returns
-/// A Rhai Dynamic containing the parsed JSON (Map for objects, Array for arrays),
-/// or an empty string if not found or parsing fails
-fn extract_json_impl(text: &str, nth: i64) -> Dynamic {
-    if text.is_empty() || nth < 0 {
-        return Dynamic::from(String::new());
-    }
-
-    let nth_usize = nth as usize;
-    let mut found_count = 0;
-    let bytes = text.as_bytes();
-    let len = bytes.len();
-
-    // Iterate through each character looking for JSON start markers
-    let mut i = 0;
-    while i < len {
-        let ch = bytes[i] as char;
-
-        // Check if this is a potential JSON start
-        if ch != '{' && ch != '[' {
-            i += 1;
-            continue;
-        }
-
-        let start_char = ch;
-        let end_char = if ch == '{' { '}' } else { ']' };
-
-        // Try to find matching closing bracket/brace
-        // We need to handle nested structures
-        let mut depth = 0;
-        let mut in_string = false;
-        let mut escape_next = false;
-        let mut end_pos = None;
-
-        #[allow(clippy::needless_range_loop)]
-        for j in i..len {
-            let current = bytes[j] as char;
-
-            if escape_next {
-                escape_next = false;
-                continue;
-            }
-
-            if current == '\\' && in_string {
-                escape_next = true;
-                continue;
-            }
-
-            if current == '"' {
-                in_string = !in_string;
-                continue;
-            }
-
-            if in_string {
-                continue;
-            }
-
-            if current == start_char {
-                depth += 1;
-            } else if current == end_char {
-                depth -= 1;
-                if depth == 0 {
-                    end_pos = Some(j + 1);
-                    break;
-                }
-            }
-        }
-
-        // If we found a complete structure, try to parse it
-        if let Some(end) = end_pos {
-            let candidate = &text[i..end];
-
-            // Try to parse as JSON
-            if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(candidate) {
-                // Check if it's an object or array
-                if json_value.is_object() || json_value.is_array() {
-                    if found_count == nth_usize {
-                        // This is the one we want!
-                        return json_to_dynamic(&json_value);
-                    }
-                    found_count += 1;
-                }
-            }
-
-            // Move past this structure
-            i = end;
-        } else {
-            // No matching closing bracket found, move to next character
-            i += 1;
-        }
-    }
-
-    // Not found
-    Dynamic::from(String::new())
-}
-
-/// Extract all JSON objects or arrays from text as strings
-///
-/// Searches through the text for all valid JSON objects `{...}` or arrays `[...]`
-/// and returns them as an array of strings.
-///
-/// # Arguments
-/// * `text` - The input string to search for JSON
-///
-/// # Returns
-/// A Rhai Array containing all found JSON strings (raw JSON text)
-fn extract_jsons_impl(text: &str) -> Array {
-    let mut results = Array::new();
-
-    if text.is_empty() {
-        return results;
-    }
-
-    let bytes = text.as_bytes();
-    let len = bytes.len();
-
-    // Iterate through each character looking for JSON start markers
-    let mut i = 0;
-    while i < len {
-        let ch = bytes[i] as char;
-
-        // Check if this is a potential JSON start
-        if ch != '{' && ch != '[' {
-            i += 1;
-            continue;
-        }
-
-        let start_char = ch;
-        let end_char = if ch == '{' { '}' } else { ']' };
-
-        // Try to find matching closing bracket/brace
-        // We need to handle nested structures
-        let mut depth = 0;
-        let mut in_string = false;
-        let mut escape_next = false;
-        let mut end_pos = None;
-
-        #[allow(clippy::needless_range_loop)]
-        for j in i..len {
-            let current = bytes[j] as char;
-
-            if escape_next {
-                escape_next = false;
-                continue;
-            }
-
-            if current == '\\' && in_string {
-                escape_next = true;
-                continue;
-            }
-
-            if current == '"' {
-                in_string = !in_string;
-                continue;
-            }
-
-            if in_string {
-                continue;
-            }
-
-            if current == start_char {
-                depth += 1;
-            } else if current == end_char {
-                depth -= 1;
-                if depth == 0 {
-                    end_pos = Some(j + 1);
-                    break;
-                }
-            }
-        }
-
-        // If we found a complete structure, try to parse it
-        if let Some(end) = end_pos {
-            let candidate = &text[i..end];
-
-            // Try to parse as JSON to validate
-            if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(candidate) {
-                // Check if it's an object or array
-                if json_value.is_object() || json_value.is_array() {
-                    // Add the raw JSON string to results
-                    results.push(Dynamic::from(candidate.to_string()));
-                }
-            }
-
-            // Move past this structure
-            i = end;
-        } else {
-            // No matching closing bracket found, move to next character
-            i += 1;
-        }
-    }
-
-    results
-}
+// Note: extract_json and extract_jsons are in json_extract.rs
 
 pub fn register_functions(engine: &mut Engine) {
     // Note: print() function is now handled via engine.on_print() in engine.rs
@@ -1698,7 +1356,7 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("parse_user_agent", parse_user_agent_impl);
     engine.register_fn("parse_media_type", parse_media_type_impl);
     engine.register_fn("parse_content_disposition", parse_content_disposition_impl);
-    engine.register_fn("parse_jwt", parse_jwt_impl);
+    // Note: parse_jwt is registered in jwt.rs
     engine.register_fn("parse_syslog", parse_syslog_impl);
     engine.register_fn("parse_cef", parse_cef_impl);
     engine.register_fn("parse_logfmt", parse_logfmt_impl);
@@ -1943,18 +1601,7 @@ pub fn register_functions(engine: &mut Engine) {
         },
     );
 
-    // JSON extraction methods
-    engine.register_fn("extract_json", |text: &str| -> Dynamic {
-        extract_json_impl(text, 0)
-    });
-
-    engine.register_fn("extract_json", |text: &str, nth: i64| -> Dynamic {
-        extract_json_impl(text, nth)
-    });
-
-    engine.register_fn("extract_jsons", |text: &str| -> rhai::Array {
-        extract_jsons_impl(text)
-    });
+    // Note: extract_json and extract_jsons are registered in json_extract.rs
 
     engine.register_fn("split_re", |text: &str, pattern: &str| -> rhai::Array {
         match regex::Regex::new(pattern) {
@@ -2020,17 +1667,7 @@ pub fn register_functions(engine: &mut Engine) {
             .collect()
     });
 
-    engine.register_fn("mask_ip", |ip: &str| -> String {
-        mask_ip_impl(ip, 1) // Default: mask last octet
-    });
-
-    engine.register_fn("mask_ip", |ip: &str, octets: i64| -> String {
-        mask_ip_impl(ip, octets.clamp(1, 4) as usize) // Clamp between 1-4
-    });
-
-    engine.register_fn("is_private_ip", |ip: &str| -> bool {
-        is_private_ip_impl(ip)
-    });
+    // Note: mask_ip and is_private_ip are registered in ip_utils.rs
 
     engine.register_fn("extract_url", |text: &str| -> String {
         URL_REGEX
@@ -3109,59 +2746,7 @@ mod tests {
         assert!(empty.is_empty());
     }
 
-    #[test]
-    fn test_parse_jwt_function() {
-        let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
-
-        let mut scope = Scope::new();
-        scope.push(
-            "jwt",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.\
-             eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.\
-             SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-        );
-
-        let result: rhai::Map = engine
-            .eval_with_scope(&mut scope, r#"parse_jwt(jwt)"#)
-            .unwrap();
-
-        assert_eq!(
-            result.get("alg").unwrap().clone().into_string().unwrap(),
-            "HS256"
-        );
-        assert_eq!(
-            result.get("typ").unwrap().clone().into_string().unwrap(),
-            "JWT"
-        );
-        assert_eq!(
-            result
-                .get("signature_b64u")
-                .unwrap()
-                .clone()
-                .into_string()
-                .unwrap(),
-            "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-        );
-
-        let claims = result
-            .get("claims")
-            .unwrap()
-            .clone()
-            .try_cast::<rhai::Map>()
-            .unwrap();
-        assert_eq!(
-            claims.get("sub").unwrap().clone().into_string().unwrap(),
-            "1234567890"
-        );
-        assert!(claims.get("admin").unwrap().clone().as_bool().unwrap());
-
-        scope.push("invalid_jwt", "ab$cd.efg");
-        let invalid: rhai::Map = engine
-            .eval_with_scope(&mut scope, r#"parse_jwt(invalid_jwt)"#)
-            .unwrap();
-        assert!(invalid.is_empty());
-    }
+    // Note: test_parse_jwt_function moved to jwt.rs
 
     #[test]
     fn test_parse_syslog_function() {
@@ -4475,122 +4060,7 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_mask_ip_function() {
-        let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
-
-        let mut scope = Scope::new();
-        scope.push("ip", "192.168.1.100");
-
-        // Default masking (last octet)
-        let result: String = engine
-            .eval_with_scope(&mut scope, r##"ip.mask_ip()"##)
-            .unwrap();
-        assert_eq!(result, "192.168.1.X");
-
-        // Mask 2 octets
-        let result: String = engine
-            .eval_with_scope(&mut scope, r##"ip.mask_ip(2)"##)
-            .unwrap();
-        assert_eq!(result, "192.168.X.X");
-
-        // Mask 3 octets
-        let result: String = engine
-            .eval_with_scope(&mut scope, r##"ip.mask_ip(3)"##)
-            .unwrap();
-        assert_eq!(result, "192.X.X.X");
-
-        // Mask all 4 octets
-        let result: String = engine
-            .eval_with_scope(&mut scope, r##"ip.mask_ip(4)"##)
-            .unwrap();
-        assert_eq!(result, "X.X.X.X");
-
-        // Invalid input (returns unchanged)
-        scope.push("invalid", "not.an.ip.address");
-        let result: String = engine
-            .eval_with_scope(&mut scope, r##"invalid.mask_ip()"##)
-            .unwrap();
-        assert_eq!(result, "not.an.ip.address");
-
-        // Out of range values get clamped
-        let result: String = engine
-            .eval_with_scope(&mut scope, r##"ip.mask_ip(0)"##)
-            .unwrap();
-        assert_eq!(result, "192.168.1.X"); // Clamped to minimum 1
-
-        let result: String = engine
-            .eval_with_scope(&mut scope, r##"ip.mask_ip(10)"##)
-            .unwrap();
-        assert_eq!(result, "X.X.X.X"); // Clamped to maximum 4
-    }
-
-    #[test]
-    fn test_is_private_ip_function() {
-        let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
-
-        let mut scope = Scope::new();
-
-        // Private IP ranges
-        scope.push("private1", "10.0.0.1");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"private1.is_private_ip()"##)
-            .unwrap();
-        assert!(result);
-
-        scope.push("private2", "172.16.0.1");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"private2.is_private_ip()"##)
-            .unwrap();
-        assert!(result);
-
-        scope.push("private3", "192.168.1.1");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"private3.is_private_ip()"##)
-            .unwrap();
-        assert!(result);
-
-        scope.push("loopback", "127.0.0.1");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"loopback.is_private_ip()"##)
-            .unwrap();
-        assert!(result);
-
-        // Public IP addresses
-        scope.push("public1", "8.8.8.8");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"public1.is_private_ip()"##)
-            .unwrap();
-        assert!(!result);
-
-        scope.push("public2", "1.1.1.1");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"public2.is_private_ip()"##)
-            .unwrap();
-        assert!(!result);
-
-        // Edge cases for 172.x.x.x range
-        scope.push("edge1", "172.15.0.1");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"edge1.is_private_ip()"##)
-            .unwrap();
-        assert!(!result); // 172.15.x.x is not in private range
-
-        scope.push("edge2", "172.32.0.1");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"edge2.is_private_ip()"##)
-            .unwrap();
-        assert!(!result); // 172.32.x.x is not in private range
-
-        // Invalid IP addresses
-        scope.push("invalid", "not.an.ip");
-        let result: bool = engine
-            .eval_with_scope(&mut scope, r##"invalid.is_private_ip()"##)
-            .unwrap();
-        assert!(!result);
-    }
+    // Note: test_mask_ip_function and test_is_private_ip_function moved to ip_utils.rs
 
     #[test]
     fn test_extract_url_function() {
