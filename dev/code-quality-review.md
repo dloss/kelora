@@ -1,127 +1,10 @@
-# Code Quality Review - Dec 2025
+# Code Quality Review - Pending Items
 
-Quick identification of hacky/brittle areas needing attention.
-
-## 🔴 Critical Issues
-
-### 1. Mutex Poison Handling (`src/parallel.rs`) ✅ FIXED
-
-**Problem:** `.lock().unwrap()` causes cascading failures if any thread panics.
-
-**Fix Applied:**
-```rust
-// Added three helper methods to GlobalTracker:
-fn lock_stats(&self) -> std::sync::MutexGuard<'_, ProcessingStats> {
-    match self.processing_stats.lock() {
-        Ok(guard) => guard,
-        Err(poisoned) => {
-            eprintln!("⚠️  Worker thread panicked, recovering processing stats");
-            poisoned.into_inner()
-        }
-    }
-}
-// ... similar for lock_user_tracked() and lock_internal_tracked()
-
-// Replaced all production code instances (9 total) with safe helper methods
-```
-
-**Result:** All mutex locks in production code now gracefully recover from poisoned state instead of cascading panic. Test code retains `.unwrap()` as appropriate for test failures.
-
-**Effort:** 2h ✅ COMPLETED
-
----
-
-### 2. Thread Join Unwraps (`src/parallel.rs:1028-1040, 1225-1237`) ✅ FIXED
-
-**Problem:** No context on which thread failed when joining.
-
-**Fix Applied:**
-```rust
-// Added descriptive error messages to all thread joins:
-io_handle.join()
-    .unwrap_or_else(|e| panic!("IO thread panicked: {:?}", e))?;
-batch_handle.join()
-    .unwrap_or_else(|e| panic!("Batch processing thread panicked: {:?}", e))?;
-// ... similar for chunker, worker (with index), and sink threads
-```
-
-**Result:** All thread join operations now include specific error context identifying which thread panicked, making debugging significantly easier.
-
-**Effort:** 1h ✅ COMPLETED
-
----
-
-### 3. Clone-on-Array-Length (`src/parallel.rs:607-611, 718-723`) ✅ FIXED
-
-**Problem:** Cloning entire arrays (1000s of elements) just to call `.len()`.
-
-**Fix Applied:**
-```rust
-// Before:
-let n = existing.clone().into_array().unwrap().len()
-    .max(value.clone().into_array().unwrap().len());
-
-// After:
-let n = existing_arr.len().max(new_arr.len());
-```
-
-**Result:** Eliminated redundant clones by using array lengths already available from earlier conversion.
-
-**Performance (measured):**
-- Benchmark: 100k lines, track_top/track_bottom parallel merge operations
-- Improvement: 1-3% faster (track_top: 1.4%, track_bottom: 2.7%)
-- Impact is modest because arrays being merged are small (N=20-50 elements)
-- Still worthwhile: removes unnecessary work and improves code clarity
-
-**Effort:** 1h ✅ COMPLETED
-
----
-
-### 4. Top/Bottom Duplication (`src/parallel.rs:520-747`) ✅ FIXED
-
-**Problem:** 230 lines of nearly identical code. Only differences: sort direction and min/max.
-
-**Fix Applied:**
-```rust
-// Created helper function merge_top_bottom_arrays that consolidates the logic:
-fn merge_top_bottom_arrays(
-    existing_arr: rhai::Array,
-    new_arr: rhai::Array,
-    is_top: bool,
-) -> rhai::Array {
-    // Shared logic for both top and bottom tracking
-    // Uses is_top to determine:
-    // - Sort direction (descending vs ascending)
-    // - Weighted mode operation (max vs min)
-}
-
-// Replaced both cases with simple calls:
-"top" => {
-    let result_arr = Self::merge_top_bottom_arrays(existing_arr, new_arr, true);
-    target.insert(key.clone(), Dynamic::from(result_arr));
-}
-
-"bottom" => {
-    let result_arr = Self::merge_top_bottom_arrays(existing_arr, new_arr, false);
-    target.insert(key.clone(), Dynamic::from(result_arr));
-}
-```
-
-**Result:** Eliminated ~210 lines of duplication by consolidating into a single well-documented helper function. Both "top" and "bottom" cases now call the same function with different parameters. Code is more maintainable and easier to modify.
-
-**Verification:**
-- All 811 unit tests pass
-- Specific track_top tests pass (6 tests)
-- Specific track_bottom tests pass (2 tests)
-- Clippy shows no warnings
-
-**Effort:** 4h ✅ COMPLETED
-
----
+Quick identification of remaining issues needing attention.
 
 ## 🟠 Serious Issues
 
-### 5. Monolithic Files
+### 1. Monolithic Files
 
 - `src/rhai_functions/strings.rs`: **6,550 lines** (3x recommended max)
 - `src/parallel.rs`: 4,011 lines
@@ -134,111 +17,7 @@ fn merge_top_bottom_arrays(
 
 ---
 
-### 6. Complex Function (`src/parallel.rs`) ✅ FIXED (Partial)
-
-**Problem:** `merge_state_with_lookup()` was 438 lines, handled 11+ operations in one large match statement.
-
-**Fix Applied:**
-```rust
-// Created 8 dedicated helper methods to extract complex merge operations:
-fn merge_numeric_add(existing: &Dynamic, value: &Dynamic) -> Dynamic
-fn merge_avg(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic>
-fn merge_min(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic>
-fn merge_max(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic>
-fn merge_unique(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic>
-fn merge_bucket(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic>
-fn merge_error_examples(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic>
-fn merge_percentiles(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic>
-
-// Simplified the match statement to use helper methods:
-match operation.as_str() {
-    "count" | "sum" => {
-        let merged = Self::merge_numeric_add(existing, value);
-        target.insert(key.clone(), merged);
-        continue;
-    }
-    "avg" => {
-        if let Some(merged) = Self::merge_avg(existing, value) {
-            target.insert(key.clone(), merged);
-            continue;
-        }
-    }
-    // ... similar pattern for other operations
-}
-```
-
-**Result:**
-- Reduced `merge_state_with_lookup()` from 226 lines to ~80 lines
-- Extracted ~150 lines of complex logic into focused, testable helper methods
-- Each helper method has a clear single responsibility
-- Match statement is now concise and easy to understand
-- Code is more maintainable and easier to modify
-
-**Verification:**
-- All 811 unit tests pass
-- Clippy shows no warnings
-- Formatting applied successfully
-
-**Note:** "top" and "bottom" operations continue to use the existing `merge_top_bottom_arrays()` helper (already extracted in issue #4).
-
-**Effort:** 2h ✅ COMPLETED
-
----
-
-### 7. Too Many Parameters ✅ FIXED (Partial)
-
-**Problem:** Multiple functions with excessive parameters (8+ params):
-- `src/parallel.rs:2014` - `handle_file_aware_line` had 22 parameters!
-- `src/parallel.rs:1366` - `batcher_thread` had 13 parameters
-- `src/parallel.rs:1642` - `file_aware_batcher_thread` (13 params)
-- `src/parallel.rs:2602, 2811` (8+ params each)
-- `src/main.rs:1120` (12+ params)
-- `src/rhai_functions/tracking.rs:159` (9+ params)
-
-**Fix Applied:**
-
-1. **handle_file_aware_line** (22 → 3 parameters):
-```rust
-// Created FileAwareLineContext struct to group all parameters
-struct FileAwareLineContext<'a> { /* 20 fields */ }
-fn handle_file_aware_line(line: String, filename: Option<String>, ctx: FileAwareLineContext<'_>) -> Result<()>
-```
-
-2. **batcher_thread** (13 → 3 parameters): ✅ NEW
-```rust
-// Created BatcherThreadConfig struct to group configuration parameters
-struct BatcherThreadConfig {
-    batch_sender: Sender<Batch>,
-    batch_size: usize,
-    batch_timeout: Duration,
-    global_tracker: GlobalTracker,
-    ignore_lines: Option<regex::Regex>,
-    keep_lines: Option<regex::Regex>,
-    skip_lines: usize,
-    head_lines: Option<usize>,
-    section_config: Option<crate::config::SectionConfig>,
-    input_format: crate::config::InputFormat,
-    preprocessing_line_count: usize,
-}
-
-fn batcher_thread(
-    line_receiver: Receiver<LineMessage>,
-    config: BatcherThreadConfig,
-    ctrl_rx: Receiver<Ctrl>,
-) -> Result<()>
-```
-
-**Result:**
-- Reduced `handle_file_aware_line` from 22 to 3 parameters
-- Reduced `batcher_thread` from 13 to 3 parameters
-- Both follow consistent patterns with context/config structs
-- Code is more maintainable and easier to modify
-- Removed `#[allow(clippy::too_many_arguments)]` from `batcher_thread`
-
-**Verification:**
-- All 811 unit tests pass
-- Clippy shows no warnings
-- Follows existing codebase patterns
+### 2. Too Many Parameters (Remaining)
 
 **Remaining work:**
 - `src/parallel.rs:1642` - `file_aware_batcher_thread` (13 params)
@@ -246,11 +25,13 @@ fn batcher_thread(
 - `src/main.rs:1120` (12+ params)
 - `src/rhai_functions/tracking.rs:159` (9+ params - has justifying comment)
 
-**Effort:** 4h ✅ COMPLETED (handle_file_aware_line: 2h, batcher_thread: 2h)
+**Recommendation:** Create context/config structs following patterns established for `handle_file_aware_line` and `batcher_thread`.
+
+**Effort:** 4-6h
 
 ---
 
-### 8. Excessive Cloning
+### 3. Excessive Cloning
 
 **Stats:**
 - Total codebase: 1,094 `.clone()` calls
@@ -266,9 +47,9 @@ fn batcher_thread(
 
 ## 🟡 Moderate Issues
 
-### 9. Global Mutable State (`src/rhai_functions/file_ops.rs:38-52`)
+### 4. Global Mutable State
 
-5 global statics make testing difficult. Also `CSV_FORMATTER_HEADER_REGISTRY` in `formatters.rs:1667`.
+`src/rhai_functions/file_ops.rs:38-52` - 5 global statics make testing difficult. Also `CSV_FORMATTER_HEADER_REGISTRY` in `formatters.rs:1667`.
 
 **Fix:** Use dependency injection instead of globals.
 
@@ -276,58 +57,7 @@ fn batcher_thread(
 
 ---
 
-### 10. Panic as Control Flow (`src/rhai_functions/state.rs:146-186`) ✅ FIXED
-
-**Problem:** 9 intentional `panic!()` calls when state functions used in parallel mode.
-
-**Fix Applied:**
-```rust
-// Replaced all panic!() calls with proper Result-based error handling:
-.register_indexer_get(
-    |_state: &mut StateNotAvailable, _key: &str| -> Result<Dynamic, Box<EvalAltResult>> {
-        Err(EvalAltResult::ErrorRuntime(
-            "'state' is not available in --parallel mode (requires sequential processing)"
-                .into(),
-            Position::NONE,
-        )
-        .into())
-    },
-)
-// ... similar for all 9 functions (indexer_get, indexer_set, contains, len, is_empty, keys, clear, get, insert)
-```
-
-**Result:** All state access operations in parallel mode now return proper Rhai errors instead of panicking. Error messages are clear and helpful. Updated test to use `--strict` mode to catch this programming error.
-
-**Effort:** 2h ✅ COMPLETED
-
----
-
-### 11. Edge Cases ✅ FIXED
-
-**`src/timestamp.rs:549`** - ✅ FIXED: Unwrap after empty check could fail on unusual Unicode.
-
-**Fix Applied:**
-```rust
-// Before:
-if unit_part.is_empty() || !unit_part.chars().next().unwrap().is_alphabetic() {
-    return Err("Relative time must have a valid unit (h, m, d, etc.)".to_string());
-}
-
-// After:
-if !matches!(unit_part.chars().next(), Some(c) if c.is_alphabetic()) {
-    return Err("Relative time must have a valid unit (h, m, d, etc.)".to_string());
-}
-```
-
-**Result:** Replaced unsafe `.unwrap()` with safer `matches!` pattern that handles both empty and non-alphabetic cases without panicking.
-
-**Note:** The `.to_str().unwrap()` calls in `src/cli.rs` are in test code only and are acceptable for test scenarios.
-
-**Effort:** 1h ✅ COMPLETED
-
----
-
-### 12. Integration Tests
+### 5. Integration Tests
 
 Missing tests for:
 - Mutex poisoning recovery
@@ -352,36 +82,28 @@ Missing tests for:
 
 ## 📋 Recommended Order
 
-**Week 1-2 (Critical):**
-1. Fix clone-on-length (1h) - easy win
-2. Mutex poison handling (4-8h)
-3. Thread join context (1-2h)
-4. Top/bottom deduplication (4-6h)
+**Phase 1 (Maintainability):**
+1. Reduce remaining function parameters (4-6h)
+2. Split large files (8-12h)
 
-**Week 3-4 (Maintainability):**
-5. Extract merge operations (8-12h)
-6. Reduce function parameters (6-10h)
+**Phase 2 (Performance):**
+3. Profile and optimize clones (8-16h)
 
-**Week 5-6 (Performance):**
-7. Profile and optimize clones (8-16h)
-8. Split large files (8-12h)
+**Phase 3 (Quality):**
+4. Global state refactoring (6-10h)
+5. Integration tests (8-12h)
 
-**Week 7-8 (Quality):**
-9. Error handling improvements (2-4h)
-10. Global state refactoring (6-10h)
-11. Integration tests (8-12h)
-
-**Total:** 59-97 hours (~2-3 months part-time)
+**Total:** 34-56 hours (~1-2 months part-time)
 
 ---
 
-## 🎯 Quick Start
+## Recent Fixes (Completed)
 
-```bash
-# Start with easiest critical fix:
-git checkout -b fix/clone-on-length
-# Edit src/parallel.rs:607-611 and 718-723
-# Change .clone().into_array() to .as_array()
-just test && just bench
-git commit -m "Fix clone-on-length in merge operations"
-```
+- ✅ Mutex poison handling with graceful recovery
+- ✅ Thread join error context improvements
+- ✅ Clone-on-array-length optimization
+- ✅ Top/bottom duplication elimination
+- ✅ Complex merge function extraction
+- ✅ Panic as control flow fixed (state.rs)
+- ✅ Edge case unwrap safety (timestamp.rs)
+- ✅ Function parameter reduction for `handle_file_aware_line` and `batcher_thread`
