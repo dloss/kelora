@@ -6,25 +6,17 @@ use base64::Engine as _;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use rhai::{Array, Dynamic, Engine, Map};
-use std::cell::RefCell;
 use std::convert::TryFrom;
 use std::path::Path;
 use url::Url;
 
-/// Represents a captured message with its target stream
-#[derive(Debug, Clone)]
-pub enum CapturedMessage {
-    Stdout(String),
-    Stderr(String),
-}
-
-thread_local! {
-    static CAPTURED_PRINTS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
-    static CAPTURED_EPRINTS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
-    static CAPTURED_MESSAGES: RefCell<Vec<CapturedMessage>> = const { RefCell::new(Vec::new()) };
-    static PARALLEL_MODE: RefCell<bool> = const { RefCell::new(false) };
-    static SUPPRESS_SIDE_EFFECTS: RefCell<bool> = const { RefCell::new(false) };
-}
+// Re-export capture module functions for backward compatibility
+pub use crate::rhai_functions::capture::{
+    capture_eprint, capture_print, capture_stderr, capture_stdout, clear_captured_eprints,
+    clear_captured_prints, is_parallel_mode, is_suppress_side_effects, set_parallel_mode,
+    set_suppress_side_effects, take_captured_eprints, take_captured_messages, take_captured_prints,
+    CapturedMessage,
+};
 
 const MAX_PARSE_LEN: usize = 1_048_576;
 
@@ -1002,90 +994,6 @@ fn parse_logfmt_impl(line: &str) -> Map {
 
 fn parse_combined_impl(line: &str) -> Map {
     parse_event_with(&*COMBINED_PARSER, line)
-}
-
-/// Capture a print statement in thread-local storage for parallel processing
-pub fn capture_print(message: String) {
-    CAPTURED_PRINTS.with(|prints| {
-        prints.borrow_mut().push(message);
-    });
-}
-
-/// Capture an eprint statement in thread-local storage for parallel processing
-pub fn capture_eprint(message: String) {
-    CAPTURED_EPRINTS.with(|eprints| {
-        eprints.borrow_mut().push(message);
-    });
-}
-
-/// Get all captured prints and clear the buffer
-pub fn take_captured_prints() -> Vec<String> {
-    CAPTURED_PRINTS.with(|prints| std::mem::take(&mut *prints.borrow_mut()))
-}
-
-/// Get all captured eprints and clear the buffer
-pub fn take_captured_eprints() -> Vec<String> {
-    CAPTURED_EPRINTS.with(|eprints| std::mem::take(&mut *eprints.borrow_mut()))
-}
-
-/// Capture a message in the ordered message system for parallel processing
-pub fn capture_message(message: CapturedMessage) {
-    CAPTURED_MESSAGES.with(|messages| {
-        messages.borrow_mut().push(message);
-    });
-}
-
-/// Capture a stdout message in the ordered system
-pub fn capture_stdout(message: String) {
-    capture_message(CapturedMessage::Stdout(message));
-}
-
-/// Capture a stderr message in the ordered system  
-pub fn capture_stderr(message: String) {
-    capture_message(CapturedMessage::Stderr(message));
-}
-
-/// Get all captured messages in order and clear the buffer
-pub fn take_captured_messages() -> Vec<CapturedMessage> {
-    CAPTURED_MESSAGES.with(|messages| std::mem::take(&mut *messages.borrow_mut()))
-}
-
-/// Clear captured prints without returning them
-pub fn clear_captured_prints() {
-    CAPTURED_PRINTS.with(|prints| {
-        prints.borrow_mut().clear();
-    });
-}
-
-/// Clear captured eprints without returning them
-pub fn clear_captured_eprints() {
-    CAPTURED_EPRINTS.with(|eprints| {
-        eprints.borrow_mut().clear();
-    });
-}
-
-/// Set whether we're in parallel processing mode
-pub fn set_parallel_mode(enabled: bool) {
-    PARALLEL_MODE.with(|mode| {
-        *mode.borrow_mut() = enabled;
-    });
-}
-
-/// Check if we're in parallel processing mode
-pub fn is_parallel_mode() -> bool {
-    PARALLEL_MODE.with(|mode| *mode.borrow())
-}
-
-/// Set whether to suppress side effects (print, eprint, etc.)
-pub fn set_suppress_side_effects(suppress: bool) {
-    SUPPRESS_SIDE_EFFECTS.with(|flag| {
-        *flag.borrow_mut() = suppress;
-    });
-}
-
-/// Check if side effects should be suppressed
-pub fn is_suppress_side_effects() -> bool {
-    SUPPRESS_SIDE_EFFECTS.with(|flag| *flag.borrow())
 }
 
 /// Mask IP address for privacy (replace last N octets with 'X')

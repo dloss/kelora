@@ -2,6 +2,7 @@ use rhai::Engine;
 
 pub mod absorb;
 pub mod arrays;
+pub mod capture;
 pub mod columns;
 pub mod conf;
 pub mod datetime;
