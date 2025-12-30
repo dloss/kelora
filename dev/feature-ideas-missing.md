@@ -1,12 +1,15 @@
 # Missing Feature Ideas for Kelora
 
-This document contains creative, useful features that fit Kelora's design principles and architecture but haven't been implemented yet. All suggestions are:
+This document contains features that fit Kelora's design principles and architecture but haven't been implemented yet. All suggestions are:
 
 - ✅ Simple to implement (30-200 lines each)
 - ✅ Fit the streaming pipeline architecture
+- ✅ **Work in parallel mode** (Kelora's key performance advantage)
 - ✅ Actually missing (not currently possible without verbose workarounds)
 - ✅ Broadly useful for common log analysis patterns
 - ✅ Follow Kelora's existing conventions
+
+**Note:** Sequential-only features have been removed from this list. Features requiring global state or event ordering defeat Kelora's parallel processing advantage and are better handled by post-processing tools.
 
 ## Datetime & Time-Based Features
 
@@ -28,275 +31,6 @@ track_count(bucket_time.to_string())
 
 **Implementation:** Simple datetime manipulation using existing Duration types. ~60 lines in `datetime.rs`.
 
----
-
-### 9. Burst/Session Detection (`track_burst()`)
-
-**What:** Detect when events cluster within a time window - identify attack bursts, user sessions, batch processing windows.
-
-**Why useful:** Common security/monitoring pattern. "Alert when >50 failed logins in 5 minutes" is currently complex. This makes it trivial.
-
-**Example:**
-```rhai
-// Detect authentication attacks
-burst_size = track_burst("failed_login_" + e.ip, "5m")
-if burst_size > 50 {
-    e.alert = "POSSIBLE_BRUTE_FORCE"
-    e.burst_size = burst_size
-}
-
-// Identify batch processing windows
-batch_events = track_burst("job_" + e.job_id, "10s")
-e.batch_position = batch_events
-
-// Auto-reset after idle period
-user_session_size = track_burst("user_" + e.user_id, "30m")
-```
-
-**Implementation:** Time-windowed counter with expiration, ~100 lines in `tracking.rs`.
-
----
-
-## Tracking & State Management
-
-### 2. Event Deduplication (`track_seen()`)
-
-**What:** Track whether a value has been seen before, perfect for deduplicating events based on request IDs, hashes, or combinations of fields.
-
-**Why useful:** Log shippers often produce duplicates. Currently you'd need to manually maintain a hash set in the state map. A built-in function would make this trivial.
-
-**Example:**
-```rhai
-// Skip duplicate request IDs
-if track_seen("request_ids", e.request_id) {
-    skip()
-}
-
-// Dedupe by content hash
-content_hash = e.to_json().hash()
-if !track_seen("events", content_hash) {
-    e  // Only emit first occurrence
-}
-```
-
-**Implementation:** Uses internal HashSet in tracking state. ~80 lines in `tracking.rs`.
-
----
-
-### 6. First/Last Value Tracking (`track_first()` / `track_last()`)
-
-**What:** Remember the first or last seen value for a key - useful for baseline comparisons, time range detection, and status changes.
-
-**Why useful:** Common pattern in monitoring: "what was the initial value?" or "what's the latest status?" Currently requires manual state management.
-
-**Example:**
-```rhai
-// Track when each service first appeared
-first_seen = track_first("service_start_" + e.service, e.timestamp)
-e.uptime_since = first_seen
-
-// Compare current vs initial memory
-baseline_mem = track_first("baseline_memory", e.memory_mb)
-e.mem_growth = e.memory_mb - baseline_mem
-
-// Track latest status per host
-latest_status = track_last("host_" + e.hostname, e.status)
-if latest_status == "degraded" && e.status == "healthy" {
-    print("✅ " + e.hostname + " recovered")
-}
-```
-
-**Implementation:** Simple key-value store in tracking state, ~40 lines.
-
----
-
-### 8. Auto-Incrementing Sequence Numbers (`track_sequence()`)
-
-**What:** Add monotonic sequence IDs to events - critical for detecting missing events, ordering guarantees, or adding synthetic keys.
-
-**Why useful:** When correlating across systems or detecting gaps in event streams. Dead simple feature that's surprisingly useful.
-
-**Example:**
-```rhai
-// Add sequence number to every event
-e.seq = track_sequence("global")
-
-// Per-service sequences
-e.service_seq = track_sequence("seq_" + e.service_name)
-
-// Detect gaps: if seq jumped by >1, events were lost
-prev = track_last("prev_seq", e.seq)
-if e.seq - prev > 1 {
-    print("⚠️ Missing " + (e.seq - prev - 1) + " events!")
-}
-```
-
-**Implementation:** Simple counter in tracking state, ~25 lines.
-
----
-
-### 13. Event Correlation Tracker (`track_correlation()`)
-
-**What:** Match paired events (request/response, start/end) and emit when both arrive.
-
-**Why useful:** Distributed systems generate paired events. Correlating them reveals latency, completion rates, and failures. Currently requires complex state management.
-
-**Example:**
-```rhai
-// Match HTTP requests with responses
-if e.event_type == "request" {
-    track_correlation("http_" + e.request_id, e, "request")
-} else if e.event_type == "response" {
-    pair = track_correlation("http_" + e.request_id, e, "response")
-    if pair != () {
-        // Emit combined event with both request and response
-        #{
-            request_id: e.request_id,
-            latency: e.timestamp - pair.timestamp,
-            status: e.status,
-            endpoint: pair.endpoint
-        }
-    }
-}
-```
-
-**Implementation:** State storage with timeout/cleanup, ~120 lines in `tracking.rs`.
-
----
-
-### 15. Threshold-Based Heavy Hitters (`track_if_above()`)
-
-**What:** Only track items that appear above a threshold - automatic filtering of rare values.
-
-**Why useful:** When tracking top items, you don't want to waste memory on singletons. This auto-prunes low-frequency values.
-
-**Example:**
-```rhai
-// Only track IPs with >10 requests (ignore one-offs)
-track_if_above("frequent_ips", e.ip, 10)
-
-// Track only popular endpoints
-track_if_above("hot_paths", e.path, 100)
-
-// Auto-filter noise, metrics shows only significant items
-```
-
-**Implementation:** Delayed insertion until threshold met, ~70 lines in `tracking.rs`.
-
----
-
-## Statistical & Metrics Functions
-
-### 3. Rate/Throughput Calculation (`track_rate()`)
-
-**What:** Automatically calculate events per second/minute/hour for performance monitoring.
-
-**Why useful:** Understanding throughput is critical for monitoring. Currently you'd need complex window logic or manual timestamp tracking. This would make it one-liner.
-
-**Example:**
-```rhai
-// Track overall throughput
-track_rate("total_eps")  // events per second
-
-// Track per-endpoint rates
-track_rate("endpoint_" + e.path, "1m")  // per minute
-
-// At end, metrics shows: endpoint_/api/users: 145.2/min
-```
-
-**Implementation:** Tracks timestamps internally, calculates rolling rate. ~100 lines in `tracking.rs`.
-
----
-
-### 5. Field Change Detection (`track_delta()`)
-
-**What:** Track numeric changes between consecutive events - perfect for monitoring counters, detecting anomalies, or calculating derivatives.
-
-**Why useful:** Many systems log cumulative counters (bytes processed, requests served). You often want the delta between readings. Currently requires manual state tracking.
-
-**Example:**
-```rhai
-// Track request count increases
-delta = track_delta("api_requests", e.total_requests)
-if delta > 1000 {
-    print("🔥 Spike detected: " + delta + " requests")
-}
-
-// Monitor memory growth
-mem_delta = track_delta("memory_" + e.service, e.memory_mb)
-if mem_delta > 500 {
-    e.mem_increase = mem_delta
-    e  // Flag events with big memory jumps
-}
-```
-
-**Implementation:** Stores previous value in state, returns difference. ~60 lines in `tracking.rs`.
-
----
-
-### 7. Streaming Approximate Percentiles (`track_percentiles()`)
-
-**What:** Calculate percentiles on-the-fly without storing all values - essential for latency monitoring at scale.
-
-**Why useful:** Current `percentile()` requires collecting all values in an array. For millions of events, this is memory-prohibitive. Streaming approximation using t-digest solves this.
-
-**API Design:** `track_percentiles()` (plural) is the ONLY `track_*()` function that auto-suffixes metric names, because:
-- You almost always want multiple percentiles (p50, p95, p99)
-- They're parameterized by the percentile value
-- Auto-suffixing prevents awkward repetition: `track_percentiles("api_latency_p95", e.dur, 95)`
-- Plural name signals the special behavior
-
-**Example:**
-```rhai
-// Track multiple percentiles - creates api_latency_p50, api_latency_p95, api_latency_p99
-track_percentiles("api_latency", e.duration_ms, [50, 95, 99])
-
-// Single percentile (use array with one element)
-track_percentiles("api_latency", e.duration_ms, [95])
-// → creates api_latency_p95
-
-// Per-endpoint tracking
-track_percentiles("latency_" + e.path, e.response_time, [95, 99])
-// → creates latency_/api/users_p95, latency_/api/users_p99
-
-// Metrics output:
-//   api_latency_p50 = 123
-//   api_latency_p95 = 245
-//   api_latency_p99 = 890
-```
-
-**Implementation:**
-- t-digest algorithm (1-2% accuracy, industry standard)
-- Each percentile gets own t-digest: `api_latency_p95`, `api_latency_p99`
-- Fully parallel-safe: each metric merges independently
-- ~200-250 lines in `tracking.rs`
-
-**Accuracy:** 1-2% relative error (e.g., true p95=250ms → reports 248-252ms). Good enough for operational monitoring, not for SLO compliance billing.
-
----
-
-### 11. Moving Average for Smoothing (`track_moving_avg()`)
-
-**What:** Calculate moving average over the last N values - smooth out spikes and see trends.
-
-**Why useful:** Raw metrics are noisy. Moving averages reveal patterns. Great for dashboards and anomaly detection.
-
-**Example:**
-```rhai
-// Smooth response times over last 100 requests
-smooth_latency = track_moving_avg("api_latency", e.duration_ms, 100)
-if e.duration_ms > smooth_latency * 3 {
-    e.anomaly = "LATENCY_SPIKE"
-}
-
-// Track rolling error rate
-errors = track_moving_avg("error_rate", e.is_error ? 1 : 0, 1000)
-if errors > 0.05 {
-    print("⚠️ Error rate above 5%: " + (errors * 100) + "%")
-}
-```
-
-**Implementation:** Circular buffer in tracking state, ~80 lines in `tracking.rs`.
 
 ---
 
@@ -325,25 +59,7 @@ if sample_prob(0.10) {
 
 ## String & Parsing Functions
 
-### 10. Regex Multi-Field Extraction (All Matches) (`absorb_regexes()`)
-
-**What:** Extract named capture groups from all regex matches into event fields (as arrays).
-
-**Why useful:** `absorb_regex()` already handles the first match. This adds "all matches" for repeated patterns without manual loops or `extract_regexes()` + `emit_each()` plumbing.
-
-**Example:**
-```rhai
-// Repeated patterns -> arrays per named capture
-e.absorb_regexes("line", r"user=(?P<user>\w+) ip=(?P<ip>[\d.]+)")
-// line: "user=alice ip=1.2.3.4 user=bob ip=5.6.7.8"
-// e.user = ["alice","bob"], e.ip = ["1.2.3.4","5.6.7.8"]
-```
-
-**Implementation:** Use existing regex infrastructure, ~80 lines in `strings.rs`.
-
----
-
-### 12. Smart Text Truncation (`truncate_words()`)
+### 2. Smart Text Truncation (`truncate_words()`)
 
 **What:** Truncate strings but preserve word boundaries - avoid cutting mid-word for cleaner output.
 
@@ -368,7 +84,7 @@ e.preview = e.description.truncate_words(100, "...")
 
 ## Array & Collection Functions
 
-### 14. Array Set Operations (`intersect()`, `difference()`, `union()`)
+### 3. Array Set Operations (`intersect()`, `difference()`, `union()`)
 
 **What:** Set operations on arrays - find common elements, differences, combinations.
 
@@ -398,7 +114,7 @@ if added.len() > 0 {
 
 ## Integration & Output Features
 
-### 16. Output Format Templates (`--template`)
+### 4. Output Format Templates (`--template`)
 
 **What:** Built-in templates for common log aggregation formats (Loki streams, GELF, etc.) - converts Kelora JSON to destination-specific formats.
 
@@ -423,32 +139,7 @@ kelora -j app.jsonl --template @my-format.json > output.json
 
 ---
 
-### 17. Minimal HTTP Output Sink (Maybe Not) (`--http-post`)
-
-**What:** Send output directly to an HTTP endpoint - like `-o file.json` but for URLs. No retries, buffering, auth, or delivery guarantees (that's shipper territory).
-
-**Why useful:** Currently every integration example pipes to curl. A tiny HTTP sink reduces boilerplate for basic use cases while keeping Kelora a processor, not a shipper.
-
-**Why maybe not:** Even a "dumb" HTTP sink blurs the line between processor and shipper, and it invites pressure for retries/auth/backoff. If we want zero network access in core, this should be omitted or implemented as an external wrapper script instead.
-
-**Example:**
-```bash
-# Post JSON lines to VictoriaLogs
-kelora -j app.jsonl -J --http-post http://victorialogs:9428/insert/jsonl
-
-# Send to custom endpoint
-kelora -j app.jsonl --template gelf \
-  --http-post http://graylog:12201/gelf
-
-# Batch mode - buffer N events before POST
-kelora -j app.jsonl -J --http-post http://aggregator/ingest --http-batch 1000
-```
-
-**Implementation:** Simple HTTP client in output module, ~100 lines. Only basic POST, no auth/retry/queue (use proper shippers for production).
-
----
-
-### 18. Nested JSON Path Extraction (`emit_each_path()`)
+### 5. Nested JSON Path Extraction (`emit_each_path()`)
 
 **What:** Extract and unwrap nested arrays in one operation, then fan them out as events.
 
@@ -478,109 +169,42 @@ emit_each_path("hits.hits[]._source")
 
 ---
 
-### 19. Format-Specific Helper Functions
+## Summary
 
-**What:** Helper methods for common log aggregation formats - reduce boilerplate when preparing data for ingestion.
+All features in this document are **parallel-safe** and align with Kelora's streaming architecture.
 
-**Why useful:** Integrations require specific field mappings (GELF needs `short_message`, Loki needs stream labels). Helpers encode these conventions.
+### Priority 1: High Impact, Simple Implementation
+1. **Time Bucketing (`dt.floor_to()` / `dt.ceil_to()`)** - Essential for time-based grouping (~60 lines)
+2. **Probabilistic Sampling (`sample_prob()`)** - Completes sampling toolkit (~20 lines)
+3. **Output Format Templates (`--template`)** - Eliminates jq for integrations (~150 lines)
 
-**Example:**
-```rhai
-// GELF format builder
-gelf = e.to_gelf(#{ host: "myserver" })
-// Returns a new map with short_message, full_message, host, timestamp in GELF format
-
-// Loki stream grouping
-loki_stream = e.to_loki_stream(#{ labels: ["service", "level"] })
-// Returns a new map formatted for Loki API
-
-// OpenTelemetry Logs format
-otel_log = e.to_otel_log()
-// Returns a new map in OTLP log record shape
-
-// Elastic Common Schema
-ecs_event = e.to_ecs()
-// Returns a new map mapped to ECS naming (e.message → message, e.level → log.level)
-```
-
-**Implementation:** Format-specific methods in `conversions.rs`, ~150 lines total. Each helper is 20-30 lines.
-
----
-
-## Summary by Category
-
-### High Priority (Simple + High Impact)
-- **Time Bucketing (`dt.floor_to()` / `dt.ceil_to()`)** - Essential for grouping by time intervals
-- **Multi-Field Extraction (`absorb_regexes()`)** - Capture repeated patterns without manual loops
-- **Streaming Percentiles (`track_percentiles()`)** - Parallel-safe, memory-efficient latency tracking
-- **Probabilistic Sampling (`sample_prob()`)** - Complements bucket and counter sampling
-- **First/Last Tracking** - Common pattern, easy to implement
-- **Output Format Templates (`--template`)** - Eliminate jq dependency for integrations
-- **Nested JSON Extraction (`emit_each_path()`)** - Simplify query response processing
-
-### Medium Priority (More Complex but Very Useful)
-- **Burst Detection** - Security and monitoring use cases (sequential only)
-- **Delta Tracking** - Counter monitoring and anomaly detection (sequential only)
-- **Moving Average** - Noise reduction and trend detection
-- **Set Operations** - Collection comparison utilities
-- **Smart Truncation** - Polish for text handling
-- **HTTP Output Sink (`--http-post`)** - Reduce curl boilerplate for integrations (maybe not; see integration note)
-- **Format Helpers (`to_gelf()`, etc.)** - Encode integration conventions
-
-### Sequential-Mode Only (Cannot Work in Parallel)
-- **Deduplication (`track_seen()`)** - Requires global state lookup
-- **Sequence Numbers (`track_sequence()`)** - Inherently serial
-- **Event Correlation (`track_correlation()`)** - Paired events may hit different workers
-- **Rate Calculation (`track_rate()`)** - Requires event ordering by time
-
-### Advanced Features (Require More Design)
-- **Threshold Tracking** - Heavy hitter detection with auto-pruning
-- **Cardinality Estimation (`track_unique_approx()`)** - HyperLogLog for parallel-safe unique counts
+### Priority 2: Useful Additions
+4. **Array Set Operations** - Collection utilities (~50 lines)
+5. **Nested JSON Extraction (`emit_each_path()`)** - Simplifies query response processing (~120 lines)
+6. **Smart Truncation (`truncate_words()`)** - Clean text handling (~40 lines)
 
 ## Implementation Notes
 
-All features:
-- Use existing infrastructure (tracking state, datetime wrappers, etc.)
+All features in this document:
+- Work in **parallel mode** (Kelora's key performance advantage)
+- Use existing infrastructure (datetime wrappers, string utilities, etc.)
 - Follow Kelora's conventions (method-style calls, error handling)
 - Require no external dependencies
 - Fit within the streaming pipeline model
-- Work in both sequential and parallel modes (where applicable)
+- Are stateless transformations or output operations
 
-Features that require `--metrics` flag:
-- All `track_*` functions (consistent with existing tracking functions)
+### Why Sequential-Only Features Were Removed
 
-Features that work only in sequential mode:
-- `track_seen()` (requires global state lookup)
-- `track_sequence()` (sequences are inherently serial)
-- `track_correlation()` (requires consistent state)
-- `track_burst()` (time-window tracking needs ordering)
-- `track_rate()` (requires event ordering)
-- `track_delta()` (requires consecutive events)
-- `track_moving_avg()` (needs ordered sliding window)
+Features requiring global state, event ordering, or consecutive events defeat Kelora's parallel processing advantage. Examples of **removed** sequential-only features:
+- `track_seen()` - Deduplication requires global state lookup
+- `track_sequence()` - Sequences are inherently serial
+- `track_correlation()` - Paired events may hit different workers
+- `track_burst()` - Time-window tracking needs ordering
+- `track_rate()` - Requires event ordering by time
+- `track_delta()` - Requires consecutive events
+- `track_moving_avg()` - Needs ordered sliding window
+- `track_first()` / `track_last()` - Can't merge results across workers
 
-Features fully compatible with `--parallel`:
-- `dt.floor_to()` / `dt.ceil_to()` (stateless transformation)
-- `absorb_regexes()` (stateless parsing)
-- `track_percentiles()` (t-digest merges, fully parallel-safe)
-- `sample_prob()` (stateless, RNG-based)
-- `truncate_words()` (stateless string operation)
-- Array set operations (stateless)
-- `track_if_above()` (threshold filtering, mergeable)
-- `--template` (stateless output formatting)
-- `emit_each_path()` (stateless JSON extraction + fan-out)
-- Format helpers (`to_gelf()`, etc.) (stateless conversions)
-- `--http-post` (independent output per worker, if included)
-
-## Special Note on Auto-Suffixing
-
-After analyzing all existing `track_*()` usage patterns, **auto-suffixing is NOT applied to existing functions** because:
-- 90% of usage is single-operation counting where suffix adds noise: `track_count("requests")` → `requests` is clearer than `requests_count`
-- Users already encode semantics in names: `latency_total_ms`, `latency_p99`, `latency_samples`
-- Pipe namespace patterns would break: `metric|service_sum` puts suffix in wrong place
-
-**ONLY `track_percentiles()` auto-suffixes** because:
-- Plural name signals the behavior
-- Percentiles are always multi-valued (p50, p95, p99 together)
-- Prevents awkward repetition: `track_percentiles("api_latency", e.dur, [95, 99])` is cleaner than manually repeating the key three times
-
-See `dev/auto-suffix-examples-review.md` for detailed analysis of existing patterns.
+Users needing these patterns should either:
+- Use post-processing tools better suited for stateful operations
+- Accept `--no-parallel` performance trade-off for small datasets
