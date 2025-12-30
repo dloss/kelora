@@ -3,7 +3,6 @@ use crate::parsers::{CefParser, CombinedParser, LogfmtParser, SyslogParser};
 use crate::pipeline::EventParser;
 // Note: base64 imports removed - JWT parsing moved to jwt.rs
 use once_cell::sync::Lazy;
-use regex::Regex;
 use rhai::{Array, Dynamic, Engine, Map};
 use std::convert::TryFrom;
 use std::path::Path;
@@ -25,23 +24,6 @@ static SYSLOG_PARSER: Lazy<SyslogParser> =
 static CEF_PARSER: Lazy<CefParser> = Lazy::new(CefParser::new);
 static COMBINED_PARSER: Lazy<CombinedParser> =
     Lazy::new(|| CombinedParser::new().expect("failed to initialize combined parser"));
-
-const IPV4_PATTERN: &str = r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b";
-const URL_PATTERN: &str = r##"https?://[^\s<>"]+[^\s<>".,;!?]"##;
-const URL_DOMAIN_PATTERN: &str = r##"https?://([^/\s<>"]+)"##;
-const EMAIL_PATTERN: &str = r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b";
-const EMAIL_DOMAIN_PATTERN: &str = r##"[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"##;
-
-static IPV4_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(IPV4_PATTERN).expect("failed to compile IPv4 regex"));
-static URL_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(URL_PATTERN).expect("failed to compile URL regex"));
-static URL_DOMAIN_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(URL_DOMAIN_PATTERN).expect("failed to compile URL domain regex"));
-static EMAIL_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(EMAIL_PATTERN).expect("failed to compile email regex"));
-static EMAIL_DOMAIN_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(EMAIL_DOMAIN_PATTERN).expect("failed to compile email domain regex"));
 
 fn event_to_map(event: Event) -> Map {
     let mut map = Map::new();
@@ -1623,147 +1605,8 @@ pub fn register_functions(engine: &mut Engine) {
         },
     );
 
-    // Network/IP methods
-    engine.register_fn("extract_ip", |text: &str| -> String {
-        IPV4_REGEX
-            .find(text)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_default()
-    });
-
-    engine.register_fn("extract_ip", |text: &str, nth: i64| -> String {
-        if nth == 0 {
-            return String::new();
-        }
-
-        let matches: Vec<_> = IPV4_REGEX.find_iter(text).collect();
-
-        if matches.is_empty() {
-            return String::new();
-        }
-
-        // Handle negative indexing (from the end)
-        let idx = if nth < 0 {
-            let abs_nth = (-nth) as usize;
-            if abs_nth > matches.len() {
-                return String::new();
-            }
-            matches.len() - abs_nth
-        } else {
-            let nth_usize = nth as usize;
-            if nth_usize < 1 || nth_usize > matches.len() {
-                return String::new();
-            }
-            nth_usize - 1 // Convert to 0-indexed
-        };
-
-        matches[idx].as_str().to_string()
-    });
-
-    engine.register_fn("extract_ips", |text: &str| -> rhai::Array {
-        IPV4_REGEX
-            .find_iter(text)
-            .map(|m| Dynamic::from(m.as_str().to_string()))
-            .collect()
-    });
-
-    // Note: mask_ip and is_private_ip are registered in ip_utils.rs
-
-    engine.register_fn("extract_url", |text: &str| -> String {
-        URL_REGEX
-            .find(text)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_default()
-    });
-
-    engine.register_fn("extract_url", |text: &str, nth: i64| -> String {
-        if nth == 0 {
-            return String::new();
-        }
-
-        let matches: Vec<_> = URL_REGEX.find_iter(text).collect();
-
-        if matches.is_empty() {
-            return String::new();
-        }
-
-        // Handle negative indexing (from the end)
-        let idx = if nth < 0 {
-            let abs_nth = (-nth) as usize;
-            if abs_nth > matches.len() {
-                return String::new();
-            }
-            matches.len() - abs_nth
-        } else {
-            let nth_usize = nth as usize;
-            if nth_usize < 1 || nth_usize > matches.len() {
-                return String::new();
-            }
-            nth_usize - 1 // Convert to 0-indexed
-        };
-
-        matches[idx].as_str().to_string()
-    });
-
-    engine.register_fn("extract_email", |text: &str| -> String {
-        EMAIL_REGEX
-            .find(text)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_default()
-    });
-
-    engine.register_fn("extract_email", |text: &str, nth: i64| -> String {
-        if nth == 0 {
-            return String::new();
-        }
-
-        let matches: Vec<_> = EMAIL_REGEX.find_iter(text).collect();
-
-        if matches.is_empty() {
-            return String::new();
-        }
-
-        // Handle negative indexing (from the end)
-        let idx = if nth < 0 {
-            let abs_nth = (-nth) as usize;
-            if abs_nth > matches.len() {
-                return String::new();
-            }
-            matches.len() - abs_nth
-        } else {
-            let nth_usize = nth as usize;
-            if nth_usize < 1 || nth_usize > matches.len() {
-                return String::new();
-            }
-            nth_usize - 1 // Convert to 0-indexed
-        };
-
-        matches[idx].as_str().to_string()
-    });
-
-    engine.register_fn("extract_emails", |text: &str| -> rhai::Array {
-        EMAIL_REGEX
-            .find_iter(text)
-            .map(|m| Dynamic::from(m.as_str().to_string()))
-            .collect()
-    });
-
-    engine.register_fn("extract_domain", |text: &str| -> String {
-        // Try URL first, then email domain
-        if let Some(caps) = URL_DOMAIN_REGEX.captures(text) {
-            if let Some(domain) = caps.get(1) {
-                return domain.as_str().to_string();
-            }
-        }
-
-        if let Some(caps) = EMAIL_DOMAIN_REGEX.captures(text) {
-            if let Some(domain) = caps.get(1) {
-                return domain.as_str().to_string();
-            }
-        }
-
-        String::new()
-    });
+    // Note: extract_ip/url/email/domain functions are in extractors.rs
+    // Note: mask_ip and is_private_ip are in network.rs
 }
 
 #[cfg(test)]
@@ -1771,10 +1614,11 @@ mod tests {
     use super::*;
     use rhai::Scope;
 
-    /// Helper to register both string and serializer functions for tests
+    /// Helper to register string, serializer, and extractor functions for tests
     fn register_all_string_functions(engine: &mut rhai::Engine) {
         register_functions(engine);
         crate::rhai_functions::serializers::register_functions(engine);
+        crate::rhai_functions::extractors::register_functions(engine);
     }
 
     #[test]
@@ -3815,7 +3659,7 @@ mod tests {
     #[test]
     fn test_extract_ip_function() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push("text", "Server 192.168.1.100 responded");
@@ -3844,7 +3688,7 @@ mod tests {
     #[test]
     fn test_extract_ip_function_with_nth() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push("text", "From 10.0.0.1 to 192.168.1.1 via 172.16.0.1");
@@ -3895,7 +3739,7 @@ mod tests {
     #[test]
     fn test_extract_ips_function() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push("text", "From 10.0.0.1 to 172.16.0.1 via 192.168.1.1");
@@ -3928,7 +3772,7 @@ mod tests {
     #[test]
     fn test_extract_email_function() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push("text", "Contact alice@example.com for help");
@@ -3957,7 +3801,7 @@ mod tests {
     #[test]
     fn test_extract_email_function_with_nth() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push(
@@ -4011,7 +3855,7 @@ mod tests {
     #[test]
     fn test_extract_emails_function() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push(
@@ -4065,7 +3909,7 @@ mod tests {
     #[test]
     fn test_extract_url_function() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push("text", "Visit https://example.com/path for more info");
@@ -4111,7 +3955,7 @@ mod tests {
     #[test]
     fn test_extract_url_function_with_nth() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push(
@@ -4165,7 +4009,7 @@ mod tests {
     #[test]
     fn test_extract_domain_function() {
         let mut engine = rhai::Engine::new();
-        register_functions(&mut engine);
+        register_all_string_functions(&mut engine);
 
         let mut scope = Scope::new();
         scope.push("text", "Visit https://example.com/path for more info");

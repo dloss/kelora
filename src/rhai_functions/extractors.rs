@@ -7,8 +7,8 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use rhai::{Array, Dynamic, Engine};
 
-// Regex patterns
-const IPV4_PATTERN: &str = r"\b\d{1,3}(?:\.\d{1,3}){3}\b";
+// Regex patterns (IPv4 validates 0-255 range for each octet)
+const IPV4_PATTERN: &str = r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b";
 const URL_PATTERN: &str = r##"https?://[^\s<>"]+[^\s<>".,;!?]"##;
 const URL_DOMAIN_PATTERN: &str = r##"https?://([^/\s<>"]+)"##;
 const EMAIL_PATTERN: &str = r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b";
