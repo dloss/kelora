@@ -4,10 +4,10 @@
 use rhai::Engine;
 
 mod core;
-mod find;
 mod output;
 mod regex;
 mod slice;
+mod substring;
 mod trim;
 
 // Re-export capture module functions for backward compatibility
@@ -23,7 +23,7 @@ pub fn register_functions(engine: &mut Engine) {
     output::register_functions(engine);
     core::register_functions(engine);
     slice::register_functions(engine);
-    find::register_functions(engine);
+    substring::register_functions(engine);
     trim::register_functions(engine);
     regex::register_functions(engine);
 }
