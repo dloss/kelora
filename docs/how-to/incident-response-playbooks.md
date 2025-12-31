@@ -21,6 +21,19 @@ Real-world scenarios for using Kelora during production incidents. Each playbook
 
 **Scenario**: Monitoring alerts show P95 latency jumped from 100ms to 2000ms. You need to find which endpoints are slow and when it started.
 
+### Reconnaissance (10 seconds)
+
+Get the lay of the land first:
+
+```bash
+kelora api.jsonl --stats
+```
+
+**What to look for:**
+- Time span - Does log window cover the incident?
+- Event count - Do you have enough data?
+- Keys seen - What fields are available for analysis?
+
 ### Quick Triage (30 seconds)
 
 Get immediate stats on response times:
@@ -55,7 +68,8 @@ When did the latency spike start?
 ```bash
 kelora api.jsonl \
   --filter 'e.response_time_ms > 500' \
-  --exec 'track_bucket("minute", e.timestamp.substring(0, 16))' \
+  --exec 'e.bucket = to_datetime(e.timestamp).round_to("5m").to_iso()' \
+  --exec 'track_bucket("time", e.bucket)' \
   --metrics
 ```
 
@@ -63,6 +77,22 @@ kelora api.jsonl \
 - Buckets show time distribution of slow requests
 - Sharp increase = deployment or configuration change
 - Gradual increase = resource exhaustion or load
+
+### Visualize Latency Distribution (1 minute)
+
+Use tailmap to see percentile-based visualization over time:
+
+```bash
+kelora api.jsonl -F tailmap --keys response_time_ms
+```
+
+**Reading tailmap output:**
+- `_` = below p90 (fast)
+- `1` = p90-p95 (slow)
+- `2` = p95-p99 (slower)
+- `3` = above p99 (slowest)
+
+Look for vertical bars of `2` and `3` to pinpoint when latency spiked.
 
 ### Deep Dive: Correlate with Status Codes
 
@@ -160,8 +190,10 @@ kelora auth.log \
   --filter 'e.line.contains("failed") || e.line.contains("invalid")' \
   --exec 'e.absorb_kv("line")' \
   --exec 'track_top("ip", e.get_path("ip", "unknown"), 20); track_count(e.get_path("user", "unknown"))' \
-  --metrics
+  --metrics=short
 ```
+
+**Note:** Using `--metrics=short` for compact output during time-sensitive incidents.
 
 **What to look for:**
 - Top IPs with hundreds of attempts = brute force
@@ -202,6 +234,27 @@ kelora auth.log \
   --exec 'track_count(e.get_path("ip", ""))' \
   --metrics | grep -E '^\s+[0-9]+\.[0-9]+' | awk '{if ($2 > 10) print $1}'
 ```
+
+### Identify Attack Sources (2 minutes)
+
+Classify IPs as internal vs external threats:
+
+```bash
+kelora auth.log \
+  --filter 'e.line.contains("failed")' \
+  --exec 'e.absorb_kv("line")' \
+  --exec '
+    let ip = e.get_path("ip", "");
+    e.ip_type = if ip.is_private_ip() { "internal" } else { "external" };
+    track_top("attacks", ip + " [" + e.ip_type + "]", 30)
+  ' \
+  --metrics
+```
+
+**What to look for:**
+- External IPs = Internet-based attack, add to firewall
+- Internal IPs = Compromised account or insider threat
+- Mix of both = Potentially botnet or distributed attack
 
 **Example using sample data:**
 
@@ -490,10 +543,26 @@ kelora api.jsonl \
 Monitor live logs as incident unfolds:
 
 ```bash
+# Real-time error tracking with periodic updates
 tail -f /var/log/app.log | kelora -j \
   --filter 'e.level == "ERROR"' \
   --exec 'track_count("errors"); track_top("msg", e.message, 5)' \
   --metrics-every 10
+```
+
+**For Kubernetes pods:**
+```bash
+kubectl logs -f deployment/api-server | kelora -j -l error,warn \
+  --exec 'track_stats("latency", e.response_time_ms)' \
+  --metrics-every 5
+```
+
+**For Docker containers:**
+```bash
+docker logs -f container_name 2>&1 | kelora -f line \
+  --filter 'e.line.matches("ERROR|FATAL")' \
+  --exec 'e.absorb_kv("line")' \
+  -J
 ```
 
 ### Export for Further Analysis
@@ -501,13 +570,26 @@ tail -f /var/log/app.log | kelora -j \
 Save filtered data for deeper investigation:
 
 ```bash
+# Export events to JSON
 kelora app.jsonl \
   --since "2025-01-20T14:00:00Z" \
   --filter 'e.level == "ERROR"' \
   -F json > incident-errors.jsonl
+
+# Export metrics to JSON file (while suppressing terminal output)
+kelora app.jsonl \
+  --exec 'track_stats("latency", e.response_time_ms); track_top("endpoint", e.endpoint, 20)' \
+  --metrics-file incident-metrics.json \
+  --silent
+
+# Export to CSV for spreadsheet analysis
+kelora api.jsonl \
+  --filter 'e.status >= 500' \
+  -k timestamp,endpoint,status,user_id,error_message \
+  -F csv > server-errors.csv
 ```
 
-Then analyze with other tools or load into a database.
+Then analyze with other tools, load into a database, or share with team.
 
 ### Parallel Processing for Large Archives
 
@@ -520,6 +602,28 @@ kelora huge-archive.log.gz --parallel \
   --metrics
 ```
 
+### Sampling for Extremely Large Datasets
+
+When logs are too big to process quickly, use deterministic sampling:
+
+```bash
+# Analyze 10% of requests (consistent sampling by request_id)
+kelora huge-logs.jsonl \
+  --filter 'e.request_id.bucket() % 10 == 0' \
+  --exec 'track_stats("latency", e.response_time_ms)' \
+  --metrics
+
+# Sample every 100th event (fast counter-based)
+kelora huge-logs.jsonl \
+  --filter 'sample_every(100)' \
+  --exec 'track_top("endpoint", e.endpoint, 20)' \
+  --metrics
+```
+
+**When to use each:**
+- `bucket() % N` - Deterministic by field value (same IDs always included)
+- `sample_every(N)` - Fast counter-based (1 in N events)
+
 ---
 
 ## Playbook Cheat Sheet
@@ -527,45 +631,65 @@ kelora huge-archive.log.gz --parallel \
 Copy these to your incident runbook:
 
 ```bash
-# 1. QUICK STATS
+# 1. RECONNAISSANCE - Always start here
 kelora app.jsonl --stats
 
-# 2. ERROR PATTERNS
+# 2. ERROR PATTERN DISCOVERY
 kelora app.jsonl -l error --drain -k message
 
 # 3. TOP OFFENDERS
 kelora app.jsonl -e 'track_top("key", e.field, 20)' -m
 
-# 4. TIME DISTRIBUTION
-kelora app.jsonl -e 'track_bucket("hour", e.timestamp.substring(0,13))' -m
+# 4. TIME DISTRIBUTION (proper datetime bucketing)
+kelora app.jsonl -e 'e.bucket = to_datetime(e.timestamp).round_to("5m").to_iso()' \
+  -e 'track_bucket("time", e.bucket)' -m
 
-# 5. PERCENTILE ANALYSIS
+# 5. COMPREHENSIVE STATS
 kelora app.jsonl -e 'track_stats("metric", e.value)' -m
 
-# 6. FIELD DISCOVERY
-kelora app.jsonl --stats | grep "Keys seen"
+# 6. VISUALIZE LATENCY OVER TIME
+kelora api.jsonl -F tailmap --keys response_time_ms
 
-# 7. EXTRACT SUBSET
-kelora app.jsonl --since TIME --until TIME -l error -J > errors.jsonl
+# 7. EXPORT METRICS TO FILE
+kelora app.jsonl -e 'track_stats("latency", e.ms)' \
+  --metrics-file incident.json --silent
 
-# 8. LIVE MONITORING
-tail -f app.log | kelora -j -l error,warn
+# 8. SAFE FIELD ACCESS
+kelora app.jsonl --filter 'e.get_path("nested.field", 0) > 100'
+
+# 9. IP CLASSIFICATION
+kelora auth.log -e 'e.ip_type = if e.ip.is_private_ip() { "internal" } else { "external" }'
+
+# 10. SAMPLING LARGE LOGS
+kelora huge.log --filter 'sample_every(100)' -e 'track_count("total")' -m
+
+# 11. LIVE KUBERNETES MONITORING
+kubectl logs -f deploy/app | kelora -j -l error,warn -m \
+  -e 'track_stats("latency", e.response_time_ms)' --metrics-every 10
+
+# 12. EXTRACT SUBSET WITH TIME RANGE
+kelora app.jsonl --since 2h --until now -l error -J > recent-errors.jsonl
 ```
 
 ---
 
 ## Tips for Effective Incident Response
 
-1. **Start with `--stats`**: Get the lay of the land before diving deep
+1. **Always start with `--stats`**: Reconnaissance first - understand time span, field availability, and data volume
 2. **Use `--drain` early**: Quickly understand log patterns without reading every line
-3. **Filter progressively**: Start broad, narrow down with additional `--filter` flags
-4. **Track everything**: Combine multiple `track_*()` calls in one pass for efficiency
-5. **Save intermediate results**: Use `-J > filtered.jsonl` to create subsets for iteration
-6. **Leverage time ranges**: `--since` and `--until` focus analysis on incident window
-7. **Normalize timestamps**: `--normalize-ts` makes time-based comparisons easier
-8. **Use `-k` to reduce noise**: Show only relevant fields during investigation
-9. **Parallel for speed**: Add `--parallel` when processing GB+ files
-10. **Document your queries**: Save working commands to your incident template
+3. **Visualize with tailmap**: `kelora api.jsonl -F tailmap --keys response_time_ms` shows latency distribution at a glance
+4. **Safe field access**: Use `e.get_path("field.path", default)` instead of direct access to avoid missing field errors
+5. **Proper time bucketing**: Use `to_datetime().round_to("5m")` instead of `substring()` for robust time analysis
+6. **Filter progressively**: Start broad, narrow down with additional `--filter` flags
+7. **Track everything in one pass**: Combine multiple `track_*()` calls for efficiency
+8. **Export for collaboration**: Use `--metrics-file incident.json --silent` to save metrics without terminal clutter
+9. **Classify IPs**: Use `is_private_ip()` to distinguish internal vs external threats
+10. **Sample huge datasets**: Use `sample_every(100)` or `bucket() % 10 == 0` for multi-TB logs
+11. **Use compact output**: `--metrics=short` during time-sensitive incidents
+12. **Live streaming**: Kubernetes: `kubectl logs -f` | Docker: `docker logs -f` | Files: `tail -f`
+13. **Leverage time ranges**: `--since 2h` and `--until now` for recent events
+14. **Parallel for speed**: Add `--parallel` when processing GB+ files (metrics still work!)
+15. **Document your queries**: Save working commands to your incident runbook
 
 ---
 
