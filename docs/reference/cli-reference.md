@@ -67,6 +67,33 @@ kelora -                          # Explicitly read stdin
 | `--help-examples` | Practical log analysis patterns |
 | `--help-time` | Timestamp format reference (chrono format strings) |
 | `--help-multiline` | Multi-line event detection strategies |
+| `--completions <SHELL>` | Generate shell completion script (bash, zsh, fish, powershell, elvish) |
+
+### Shell Completions
+
+#### `--completions <SHELL>`
+
+Generate shell completion script for tab-completion of flags and options.
+
+**Supported shells:** `bash`, `zsh`, `fish`, `powershell`, `elvish`
+
+**Installation:**
+
+```bash
+# Bash
+kelora --completions bash > ~/.local/share/bash-completion/completions/kelora
+
+# Zsh (add ~/.zfunc to fpath in .zshrc first)
+kelora --completions zsh > ~/.zfunc/_kelora
+
+# Fish
+kelora --completions fish > ~/.config/fish/completions/kelora.fish
+
+# PowerShell (add to $PROFILE)
+kelora --completions powershell >> $PROFILE
+```
+
+After installation, restart your shell or source the completion file. Tab completion will work for all flags and enum values (formats, shells, etc.).
 
 ## Input Options
 
