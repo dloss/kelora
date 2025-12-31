@@ -3,6 +3,61 @@ pub fn generate_help_text() -> &'static str {
     r#"
 Available Rhai Functions:
 
+================================================================================
+QUICK FUNCTION LOOKUP - Most Commonly Used
+================================================================================
+
+INCIDENT RESPONSE & DEBUGGING:
+  e.get_path("field.path", default)  Safe nested field access (use this!)
+  e.has("field")                     Check if field exists and not ()
+  track_stats("name", value)         Track min/max/avg/percentiles
+  track_top("name", item, N)         Track top N most frequent items
+  --drain -k message                 Template mining (CLI flag, not a function)
+
+PARSING MESSY LOGS:
+  e.absorb_kv("field")               Extract key=value pairs from text
+  e.absorb_json("field")             Parse embedded JSON from field
+  text.extract_regex(pattern, group) Extract data with regex
+  text.parse_json()                  Parse JSON string to map
+  text.parse_url()                   Parse URL into components
+
+TEXT EXTRACTION:
+  text.extract_ip()                  Pull out IP addresses
+  text.extract_email()               Pull out email addresses
+  text.extract_json()                Pull out JSON objects
+  text.between(start, end)           Text between two delimiters
+
+FILTERING & MATCHING:
+  text.contains(pattern)             Substring search
+  text.matches(pattern)              Regex search (cached)
+  text.like("*pattern*")             Glob match with wildcards
+  array.contains(value)              Check array membership
+
+TIME & DATES:
+  to_datetime(text)                  Parse timestamp to DateTime
+  dt.round_to("5m")                  Round to time interval
+  dt.format("%Y-%m-%d")              Custom timestamp format
+  --normalize-ts                     Normalize timestamps (CLI flag)
+
+DATA TRANSFORMATION:
+  text.to_int() / to_float()         Convert to numbers
+  text.upper() / lower()             Case conversion
+  text.trim() / strip()              Remove whitespace
+  e.rename_field("old", "new")       Rename fields
+
+METRICS & TRACKING:
+  track_count(key)                   Count occurrences
+  track_avg(key, value)              Average values
+  track_percentiles(key, value)      P50/P95/P99 percentiles
+  track_unique(key, value)           Count unique values
+  track_bucket(key, bucket)          Histogram buckets
+
+See full reference below for all 150+ functions...
+
+================================================================================
+COMPLETE FUNCTION REFERENCE
+================================================================================
+
 STRING FUNCTIONS:
 text.after(delimiter [,nth])         Text after occurrence of delimiter (nth: 1=first, -1=last)
 text.before(delimiter [,nth])        Text before occurrence of delimiter (nth: 1=first, -1=last)
@@ -295,6 +350,39 @@ For other help topics: kelora -h
 pub fn generate_examples_text() -> &'static str {
     r###"
 Common Log Analysis Patterns:
+
+================================================================================
+PRODUCTION INCIDENT RESPONSE - See Full Playbooks
+================================================================================
+
+For production incidents, see docs/how-to/incident-response-playbooks.md
+which provides complete copy-paste ready commands for:
+
+  API Latency Spikes          Error Rate Investigation
+  Authentication Failures     Database Slow Queries
+  Resource Exhaustion         Deployment Correlation
+  Rate Limit Abuse            Distributed Tracing
+
+Quick incident response examples:
+
+# Find slow API requests with stats
+kelora api.jsonl --filter 'e.response_time_ms > 500' \
+  --exec 'track_stats("slow", e.response_time_ms); track_top("endpoint", e.endpoint, 10)' -m
+
+# Error template mining
+kelora app.jsonl -l error --drain -k message
+
+# Authentication failure analysis
+kelora auth.log --filter 'e.status == 401' \
+  --exec 'track_top("ip", e.ip, 20); track_count(e.user)' -m
+
+# Find deployment correlations (before vs after)
+kelora app.jsonl --until "2025-01-20T14:00:00Z" -l error,warn --stats
+kelora app.jsonl --since "2025-01-20T14:00:00Z" -l error,warn --stats
+
+================================================================================
+COMMON PATTERNS
+================================================================================
 
 GETTING STARTED:
 # Preview first 100 lines to understand structure
