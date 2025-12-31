@@ -8,14 +8,6 @@ Usage:
   kelora            # Run without arguments to enter interactive mode
   kelora --help     # Full CLI reference (all options)
 
-When to Use Kelora:
-  ✓ Messy logs with embedded key=value or JSON
-  ✓ Stateful analysis (counters, percentiles, lookup tables)
-  ✓ Incident response (latency spikes, error investigation)
-  ✓ Complex transformations beyond grep/jq capabilities
-  ✗ Simple text search → use grep instead
-  ✗ Pure JSON queries → use jq instead
-
 Quick Examples:
   kelora -f logfmt -l error simple_logfmt.log
   kelora web_access_large.log.gz --stats
@@ -54,13 +46,6 @@ More Help:
   kelora --help-time         Timestamp format reference
   kelora --help-multiline    Multiline event strategies
   kelora --help-regex        Regex format parsing guide
-
-Incident Response:
-  See docs/how-to/incident-response-playbooks.md for copy-paste commands:
-    • API latency spikes          • Error rate investigation
-    • Authentication failures      • Database slow queries
-    • Resource exhaustion          • Deployment correlation
-    • Rate limit abuse             • Distributed tracing
 "#;
     println!("{}", help_text);
 }
