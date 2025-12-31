@@ -6,7 +6,7 @@
 use anyhow::Result;
 use clap::{ArgMatches, CommandFactory, FromArgMatches};
 
-use crate::cli::{Cli, OutputFormat};
+use crate::cli::{Cli, OutputFormat, ShellCompletion};
 use crate::config_file::ConfigFile;
 use crate::help;
 use crate::platform::{ExitCode, SafeStderr};
@@ -109,6 +109,52 @@ pub fn extract_save_alias_arg(args: &[String]) -> Option<String> {
         }
     }
     None
+}
+
+/// Extract --completions argument from raw args
+fn extract_completions_arg(args: &[String]) -> Option<ShellCompletion> {
+    for i in 0..args.len() {
+        if args[i] == "--completions" && i + 1 < args.len() {
+            return match args[i + 1].to_lowercase().as_str() {
+                "bash" => Some(ShellCompletion::Bash),
+                "zsh" => Some(ShellCompletion::Zsh),
+                "fish" => Some(ShellCompletion::Fish),
+                "powershell" => Some(ShellCompletion::PowerShell),
+                "elvish" => Some(ShellCompletion::Elvish),
+                _ => None,
+            };
+        }
+        // Also handle --completions=shell format
+        if let Some(shell) = args[i].strip_prefix("--completions=") {
+            return match shell.to_lowercase().as_str() {
+                "bash" => Some(ShellCompletion::Bash),
+                "zsh" => Some(ShellCompletion::Zsh),
+                "fish" => Some(ShellCompletion::Fish),
+                "powershell" => Some(ShellCompletion::PowerShell),
+                "elvish" => Some(ShellCompletion::Elvish),
+                _ => None,
+            };
+        }
+    }
+    None
+}
+
+/// Generate shell completion script and print to stdout
+fn generate_completions(shell: ShellCompletion) {
+    use clap_complete::{generate, Shell};
+
+    let mut cmd = Cli::command();
+    let name = cmd.get_name().to_string();
+
+    let shell = match shell {
+        ShellCompletion::Bash => Shell::Bash,
+        ShellCompletion::Zsh => Shell::Zsh,
+        ShellCompletion::Fish => Shell::Fish,
+        ShellCompletion::PowerShell => Shell::PowerShell,
+        ShellCompletion::Elvish => Shell::Elvish,
+    };
+
+    generate(shell, &mut cmd, name, &mut std::io::stdout());
 }
 
 /// Check if the given alias_name appears in any `-a` or `--alias` reference in the args
@@ -355,6 +401,12 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli) {
     // Check for --help-formats
     if raw_args.iter().any(|arg| arg == "--help-formats") {
         help::print_formats_help();
+        std::process::exit(0);
+    }
+
+    // Check for --completions
+    if let Some(shell) = extract_completions_arg(&raw_args) {
+        generate_completions(shell);
         std::process::exit(0);
     }
 

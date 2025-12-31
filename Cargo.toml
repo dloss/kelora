@@ -22,6 +22,7 @@ exclude = [
 [dependencies]
 # CLI and configuration
 clap = { version = "4.0", features = ["derive"] }  # Command-line argument parsing and help generation
+clap_complete = "4.5"  # Shell completion script generation
 
 # Core functionality
 rhai = { version = "1.23", features = ["sync", "debugging", "internals"] }  # Embedded scripting engine for log filtering and transformation

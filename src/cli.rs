@@ -60,6 +60,16 @@ pub enum StatsFormat {
     Json,
 }
 
+#[derive(clap::ValueEnum, Clone, Copy, Debug)]
+pub enum ShellCompletion {
+    Bash,
+    Zsh,
+    Fish,
+    #[value(name = "powershell")]
+    PowerShell,
+    Elvish,
+}
+
 // CLI structure - contains all command-line arguments and options
 #[derive(Parser)]
 #[command(name = "kelora")]
@@ -620,6 +630,10 @@ pub struct Cli {
     /// Show format reference and exit
     #[arg(long = "help-formats", help_heading = "Help Options")]
     pub help_formats: bool,
+
+    /// Generate shell completion script and exit
+    #[arg(long = "completions", value_enum, help_heading = "Help Options")]
+    pub completions: Option<ShellCompletion>,
 }
 
 impl Cli {
