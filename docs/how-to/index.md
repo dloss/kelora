@@ -6,6 +6,7 @@ Pick the scenario that matches your job-to-be-done and follow the playbook. Each
 - [Debug Issues Systematically](debug-issues.md) - Diagnose problems, use debugging tools, and fix common issues
 
 ## Operational Response
+- [Incident Response Playbooks](incident-response-playbooks.md) - Copy-paste commands for common production incidents (latency spikes, error investigation, auth failures, resource exhaustion)
 - [Triage Production Errors](find-errors-in-logs.md)
 - [Build a Service Health Snapshot](monitor-application-health.md)
 - [Design Streaming Alerts](build-streaming-alerts.md)

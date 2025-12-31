@@ -83,6 +83,7 @@ nav:
       - Configuration and Reusability: tutorials/configuration-and-reusability.md
   - How-To Guides:
       - Overview: how-to/index.md
+      - Incident Response Playbooks: how-to/incident-response-playbooks.md
       - Debug Issues Systematically: how-to/debug-issues.md
       - Triage Production Errors: how-to/find-errors-in-logs.md
       - Analyze Web Traffic: how-to/analyze-web-traffic.md
