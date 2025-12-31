@@ -218,12 +218,19 @@ pub fn format_templates_output(templates: &[DrainTemplate]) -> String {
     let mut output = String::new();
     output.push_str(&format!("templates ({} items):\n", templates.len()));
 
-    for (idx, template) in templates.iter().enumerate() {
+    // Find max count width for right-alignment
+    let max_count_width = templates
+        .iter()
+        .map(|t| t.count.to_string().len())
+        .max()
+        .unwrap_or(1);
+
+    for template in templates {
         output.push_str(&format!(
-            "  #{:<3} {:<40} {}\n",
-            idx + 1,
+            "  {:>width$}: {}\n",
+            template.count,
             template.template,
-            template.count
+            width = max_count_width
         ));
     }
 
@@ -263,6 +270,7 @@ mod tests {
         ];
         let output = format_templates_output(&templates);
         assert!(output.starts_with("templates (2 items):"));
-        assert!(output.contains("#1"));
+        assert!(output.contains("3: a <*> b"));
+        assert!(output.contains("1: x y z"));
     }
 }
