@@ -85,8 +85,8 @@ Now parse the format and filter to errors:
     kelora examples/incident_story.log \
       --since "2024-06-19T12:32:00Z" \
       --until "2024-06-19T12:37:00Z" \
-      --filter 'e.level == "ERROR"' \
       --exec 'e.absorb_kv("line")' \
+      --filter 'e.level == "ERROR"' \
       -k timestamp,level,pod,detail
     ```
 
@@ -96,15 +96,15 @@ Now parse the format and filter to errors:
     kelora examples/incident_story.log \
       --since "2024-06-19T12:32:00Z" \
       --until "2024-06-19T12:37:00Z" \
-      --filter 'e.level == "ERROR"' \
       --exec 'e.absorb_kv("line")' \
+      --filter 'e.level == "ERROR"' \
       -k timestamp,level,pod,detail
     ```
 
 **Pipeline flow:**
 1. `--since`/`--until`: Isolate time window
-2. `--filter`: Keep only ERROR level
-3. `--exec`: Parse key=value pairs from the line
+2. `--exec`: Parse key=value pairs from the line first
+3. `--filter`: Then keep only ERROR level (can access parsed fields)
 4. `-k`: Display specific fields
 
 ### Step 3: Add Metrics for Summary
@@ -117,9 +117,9 @@ Combine with metrics to get error statistics:
     kelora examples/incident_story.log \
       --since "2024-06-19T12:32:00Z" \
       --until "2024-06-19T12:37:00Z" \
+      --exec 'e.absorb_kv("line")' \
       --filter 'e.level == "ERROR"' \
       --exec '
-        e.absorb_kv("line");
         track_count("total_errors");
         track_top("error_source", e.get_path("pod", "unknown"), 10);
       ' \
@@ -132,9 +132,9 @@ Combine with metrics to get error statistics:
     kelora examples/incident_story.log \
       --since "2024-06-19T12:32:00Z" \
       --until "2024-06-19T12:37:00Z" \
+      --exec 'e.absorb_kv("line")' \
       --filter 'e.level == "ERROR"' \
       --exec '
-        e.absorb_kv("line");
         track_count("total_errors");
         track_top("error_source", e.get_path("pod", "unknown"), 10);
       ' \
@@ -157,7 +157,7 @@ Use multiline joining to reconstruct complete stack traces:
 
     ```bash
     kelora examples/multiline_stacktrace.log \
-      --multiline-join '^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
       --filter 'e.line.contains("ERROR")' \
       --take 3
     ```
@@ -166,96 +166,86 @@ Use multiline joining to reconstruct complete stack traces:
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/multiline_stacktrace.log \
-      --multiline-join '^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
       --filter 'e.line.contains("ERROR")' \
       --take 3
     ```
 
 **What's happening:**
-- `--multiline-join`: Lines not matching the timestamp pattern are joined to the previous event
+- `--multiline`: Lines not matching the timestamp pattern are joined to the previous event
 - Stack traces become part of the error event's `line` field
 - Now we have complete context for each error
 
 ### Step 2: Parse and Extract Error Details
 
-Parse the timestamp and level, then extract error types:
+Parse the timestamp and level from the reconstructed line, then extract error types:
 
 === "Command"
 
     ```bash
     kelora examples/multiline_stacktrace.log \
-      --multiline-join '^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
-      -f 'cols:ts(19) level *msg' \
-      --filter 'e.level == "ERROR"' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --filter 'e.line.contains("ERROR")' \
       --exec '
+        // Extract timestamp and level from first line
+        let parts = e.line.substring(0, 25).split(" ");
+        e.timestamp = parts[0] + " " + parts[1];
+        e.level = parts[2];
+
         // Extract error type from stack trace
-        let lines = e.msg.split("\n");
-        e.error_type = if lines.len() > 1 {
-          lines[1].trim()
-        } else {
-          "Unknown"
-        };
+        let lines = e.line.split(" ");
+        e.error_summary = parts.len() > 3 ? parts[3] : "Unknown";
       ' \
-      -k timestamp,error_type
+      -k timestamp,level,error_summary \
+      --take 3
     ```
 
 === "Output"
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/multiline_stacktrace.log \
-      --multiline-join '^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
-      -f 'cols:ts(19) level *msg' \
-      --filter 'e.level == "ERROR"' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --filter 'e.line.contains("ERROR")' \
       --exec '
+        // Extract timestamp and level from first line
+        let parts = e.line.substring(0, 25).split(" ");
+        e.timestamp = parts[0] + " " + parts[1];
+        e.level = parts[2];
+
         // Extract error type from stack trace
-        let lines = e.msg.split("\n");
-        e.error_type = if lines.len() > 1 {
-          lines[1].trim()
-        } else {
-          "Unknown"
-        };
+        let lines = e.line.split(" ");
+        e.error_summary = parts.len() > 3 ? parts[3] : "Unknown";
       ' \
-      -k timestamp,error_type
+      -k timestamp,level,error_summary \
+      --take 3
     ```
 
 ### Step 3: Aggregate with Drain Pattern Discovery
 
-Use drain to find common error patterns:
+Use drain to find common error patterns in the reconstructed stack traces:
 
 === "Command"
 
     ```bash
     kelora examples/multiline_stacktrace.log \
-      --multiline-join '^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
-      -f 'cols:ts(19) level *msg' \
-      --filter 'e.level == "ERROR"' \
-      --exec '
-        // Extract just the error message line for drain
-        let lines = e.msg.split("\n");
-        e.error_msg = lines[0];
-      ' \
-      --drain -k error_msg
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --filter 'e.line.contains("ERROR")' \
+      --drain -k line
     ```
 
 === "Output"
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/multiline_stacktrace.log \
-      --multiline-join '^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
-      -f 'cols:ts(19) level *msg' \
-      --filter 'e.level == "ERROR"' \
-      --exec '
-        // Extract just the error message line for drain
-        let lines = e.msg.split("\n");
-        e.error_msg = lines[0];
-      ' \
-      --drain -k error_msg
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --filter 'e.line.contains("ERROR")' \
+      --drain -k line
     ```
 
 **Complete workflow:**
 1. Reconstruct multi-line stack traces
-2. Parse columns to extract structured fields
-3. Transform to extract error types
+2. Filter to ERROR events
+3. Extract error message from reconstructed line
 4. Use drain to discover patterns
 
 ---
@@ -514,7 +504,7 @@ kelora examples/mixed_format.log \
   --exec '
     // Try to parse as JSON
     if e.line.starts_with("{") {
-      let parsed = try_json(e.line);
+      let parsed = e.line.parse_json();
       if parsed != () {
         e.level = parsed.get_path("level", "UNKNOWN");
         e.message = parsed.get_path("message", "");
@@ -671,9 +661,9 @@ kelora -j examples/api_logs.jsonl \
 kelora stack-traces.log --filter 'e.line.contains("ERROR")'
 # Stack traces are split across events
 ```
-**✅ Solution:** Use `--multiline-join` to reconstruct:
+**✅ Solution:** Use `--multiline` to reconstruct:
 ```bash
-kelora stack-traces.log --multiline-join '^[0-9]{4}-' --filter 'e.line.contains("ERROR")'
+kelora stack-traces.log --multiline 'regex:match=^[0-9]{4}-' --filter 'e.line.contains("ERROR")'
 ```
 
 ---
@@ -853,7 +843,7 @@ You've learned to compose powerful log analysis pipelines:
 | Pattern | Use Case | Example |
 |---------|----------|---------|
 | Time + Filter + Metrics | Incident analysis | `--since X --filter Y --exec 'track_*()' -m` |
-| Multiline + Parse + Drain | Stack trace analysis | `--multiline-join ... --drain` |
+| Multiline + Parse + Drain | Stack trace analysis | `--multiline 'regex:match=...' --drain` |
 | Filter + Enrich + Filter | Progressive refinement | `--filter X --exec 'e.field=...' --filter Y` |
 | Service + Metrics + Span | Per-service rollups | `--filter 'service==X' --exec 'track_*()' --span 1m` |
 | Export + Metrics | External + local analysis | `-F json > file.json --metrics-file m.json` |
