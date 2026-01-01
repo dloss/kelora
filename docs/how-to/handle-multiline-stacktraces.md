@@ -90,13 +90,15 @@ kelora config.json --multiline all -J
     -l error
   ```
 
-- **Extract stack trace metadata**  
+- **Extract stack trace metadata**
   ```bash
-  kelora --multiline timestamp app.log \
+  kelora --multiline timestamp --multiline-join=newline app.log \
     --filter 'e.line.contains("Traceback")' \
     -e 'e.frames = e.line.split("\\n").len()' \
     -k timestamp,frames,line
   ```
+
+  **Note:** Use `--multiline-join=newline` to preserve line breaks in the grouped stack trace. The default `--multiline-join=space` joins lines with spaces, which would prevent counting frames via `split("\\n")`.
 
 - **Combine with context flags**  
   After grouping, use `--before-context` / `--after-context` to include neighbouring events.

@@ -157,7 +157,7 @@ Use multiline joining to reconstruct complete stack traces:
 
     ```bash
     kelora examples/multiline_stacktrace.log \
-      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --take 3
     ```
@@ -166,14 +166,15 @@ Use multiline joining to reconstruct complete stack traces:
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/multiline_stacktrace.log \
-      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --take 3
     ```
 
 **What's happening:**
 - `--multiline`: Lines not matching the timestamp pattern are joined to the previous event
-- Stack traces become part of the error event's `line` field
+- `--multiline-join=newline`: Preserves line breaks in the grouped stack trace
+- Stack traces become part of the error event's `line` field with formatting intact
 - Now we have complete context for each error
 
 ### Step 2: Parse and Extract Error Details
@@ -184,7 +185,7 @@ Parse the timestamp and level from the reconstructed line, then extract error ty
 
     ```bash
     kelora examples/multiline_stacktrace.log \
-      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --exec '
         // Extract timestamp and level from first line
@@ -193,7 +194,7 @@ Parse the timestamp and level from the reconstructed line, then extract error ty
         e.level = parts[2];
 
         // Extract error type from stack trace
-        let lines = e.line.split(" ");
+        let lines = e.line.split("\n");
         e.error_summary = parts.len() > 3 ? parts[3] : "Unknown";
       ' \
       -k timestamp,level,error_summary \
@@ -204,7 +205,7 @@ Parse the timestamp and level from the reconstructed line, then extract error ty
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/multiline_stacktrace.log \
-      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --exec '
         // Extract timestamp and level from first line
@@ -213,7 +214,7 @@ Parse the timestamp and level from the reconstructed line, then extract error ty
         e.level = parts[2];
 
         // Extract error type from stack trace
-        let lines = e.line.split(" ");
+        let lines = e.line.split("\n");
         e.error_summary = parts.len() > 3 ? parts[3] : "Unknown";
       ' \
       -k timestamp,level,error_summary \
@@ -228,7 +229,7 @@ Use drain to find common error patterns in the reconstructed stack traces:
 
     ```bash
     kelora examples/multiline_stacktrace.log \
-      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --drain -k line
     ```
@@ -237,15 +238,15 @@ Use drain to find common error patterns in the reconstructed stack traces:
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/multiline_stacktrace.log \
-      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' \
+      --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --drain -k line
     ```
 
 **Complete workflow:**
-1. Reconstruct multi-line stack traces
+1. Reconstruct multi-line stack traces with preserved line breaks
 2. Filter to ERROR events
-3. Extract error message from reconstructed line
+3. Extract error message from reconstructed multiline block
 4. Use drain to discover patterns
 
 ---
@@ -661,10 +662,11 @@ kelora -j examples/api_logs.jsonl \
 kelora stack-traces.log --filter 'e.line.contains("ERROR")'
 # Stack traces are split across events
 ```
-**✅ Solution:** Use `--multiline` to reconstruct:
+**✅ Solution:** Use `--multiline` with `--multiline-join=newline` to reconstruct:
 ```bash
-kelora stack-traces.log --multiline 'regex:match=^[0-9]{4}-' --filter 'e.line.contains("ERROR")'
+kelora stack-traces.log --multiline 'regex:match=^[0-9]{4}-' --multiline-join=newline --filter 'e.line.contains("ERROR")'
 ```
+_Note: `--multiline-join=newline` preserves line breaks in the grouped stack trace, keeping the structure intact._
 
 ---
 

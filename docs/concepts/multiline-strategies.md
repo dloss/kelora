@@ -59,7 +59,7 @@ adaptive timestamp parser; you can hint a specific format with
 
     ```bash
     kelora -f raw examples/multiline_stacktrace.log \
-      --multiline timestamp \
+      --multiline timestamp --multiline-join=newline \
       --filter 'e.raw.contains("Traceback")' \
       -F json --take 1
     ```
@@ -68,14 +68,14 @@ adaptive timestamp parser; you can hint a specific format with
 
     ```bash exec="on" source="above" result="ansi"
     kelora -f raw examples/multiline_stacktrace.log \
-      --multiline timestamp \
+      --multiline timestamp --multiline-join=newline \
       --filter 'e.raw.contains("Traceback")' \
       -F json --take 1
     ```
 
-The event now contains the full Python traceback until the next timestamped
-header. Pair this strategy with `--ts-format` if you also need chronological
-filtering later in the pipeline.
+The event now contains the full Python traceback with preserved line breaks until the next timestamped
+header. Use `--multiline-join=newline` to keep the stack trace structure intact for display or further processing.
+Pair this strategy with `--ts-format` if you also need chronological filtering later in the pipeline.
 
 ### 2. Indentation Continuations (`--multiline indent`)
 
@@ -86,7 +86,7 @@ and similar outputs where continuation lines are indented.
 
     ```bash
     kelora -f raw examples/multiline_stacktrace.log \
-      --multiline indent \
+      --multiline indent --multiline-join=newline \
       --filter 'e.raw.contains("SQLException")' \
       -F json --take 1
     ```
@@ -95,13 +95,13 @@ and similar outputs where continuation lines are indented.
 
     ```bash exec="on" source="above" result="ansi"
     kelora -f raw examples/multiline_stacktrace.log \
-      --multiline indent \
+      --multiline indent --multiline-join=newline \
       --filter 'e.raw.contains("SQLException")' \
       -F json --take 1
     ```
 
-In this example the stack trace block remains an atomic event. If the first line
-of a block is not indented (for example, `Traceback ...`), combine strategies by
+In this example the stack trace block remains an atomic event with preserved line breaks.
+If the first line of a block is not indented (for example, `Traceback ...`), combine strategies by
 preferring `timestamp` or switching to `regex` (see below) so the header line is
 included.
 
@@ -114,7 +114,7 @@ records with guard strings such as `BEGIN`/`END` or XML tags.
 
     ```bash
     kelora -f raw examples/multiline_boundary.log \
-      --multiline 'regex:match=^BEGIN:end=^END' \
+      --multiline 'regex:match=^BEGIN:end=^END' --multiline-join=newline \
       --filter 'e.raw.contains("database_backup")' \
       -F json --take 1
     ```
@@ -123,7 +123,7 @@ records with guard strings such as `BEGIN`/`END` or XML tags.
 
     ```bash exec="on" source="above" result="ansi"
     kelora -f raw examples/multiline_boundary.log \
-      --multiline 'regex:match=^BEGIN:end=^END' \
+      --multiline 'regex:match=^BEGIN:end=^END' --multiline-join=newline \
       --filter 'e.raw.contains("database_backup")' \
       -F json --take 1
     ```
@@ -141,15 +141,29 @@ Use with care: the entire input must fit in memory.
 kelora -f raw big.json --multiline all --exec 'print(e.raw.len())'
 ```
 
+## Controlling Line Joining
+
+By default, `--multiline` joins grouped lines with spaces (`--multiline-join=space`).
+To preserve the original line structure in stack traces or other multi-line content:
+
+```bash
+--multiline-join=newline   # Preserve line breaks (use for stack traces, logs with continuations)
+--multiline-join=space     # Join with spaces (default, good for simple log continuation)
+--multiline-join=empty     # Concatenate directly (no separator)
+```
+
+**When to use `newline`:** If you need to `split("\n")` the multiline block, count lines, or preserve formatting for display.
+
+**When to use `space`:** When line breaks are not semantically important and you want a compact single-line representation.
+
 ## Choosing the Right Parser
 
-- **`-f raw`** preserves newlines (`\n`) so you can post-process blocks with
-  `split("\n")`, regex extractions, or write them to disk unchanged.
+- **`-f raw`** stores the entire aggregated block in the `raw` field without further processing. Use this when you want to preserve all text exactly as grouped (combine with `--multiline-join=newline` if you need to preserve line breaks).
 
 - **Structured parsers** (`-f json`, `-f logfmt`, `-f cols:...`) expect a single
   logical record. Use multiline to restore that logical record before parsing.
 
-- After parsing, you can still keep the original text by copying the raw block
+- After parsing, you can still keep the original text by copying the aggregated block
   into another field inside an exec script.
 
 ## Observability and Debugging
