@@ -1276,7 +1276,8 @@ e.template = r.template;
 ```
 
 Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration, num.
+md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
+timestamp, date, time, num.
 
 Optional `options` map keys:
 

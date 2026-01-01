@@ -991,7 +991,8 @@ kelora -j --exec 'track_count(e.service)' --metrics-file metrics.json app.log
 Summarize log templates using Drain (summary-only). Requires `--keys` with exactly one field.
 Sequential mode only (not supported with `--parallel`).
 Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration, num.
+md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
+timestamp, date, time, num.
 
 ```bash
 kelora -j app.log --drain -k message

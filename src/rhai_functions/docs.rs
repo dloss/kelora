@@ -228,7 +228,7 @@ drain_template(text [,options])      Add line to Drain model; returns {template,
 drain_templates()                    Return array of {template, count} for current Drain model
                                      Default filters: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid,
                                      mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
-                                     hexnum, duration, num
+                                     hexnum, duration, timestamp, date, time, num
                                      Options: depth, max_children, similarity, filters
 
 STATE MANAGEMENT (sequential mode only; errors in --parallel mode):
