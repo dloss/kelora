@@ -30,13 +30,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Interactive mode: CTRL-C to exit** - Double-tap CTRL-C to quickly exit (Node.js REPL style). First press shows hint, second press exits. Counter resets on any input to prevent accidental exits.
 - **Interactive mode: `:help` now suggests `-h`** - Points users to quick reference (`-h`) instead of full help (`--help`) for a less overwhelming first experience.
 - **Rhai error messages** - Improved raw string syntax error hints
+- **Regex functions now warn on invalid patterns** - Functions like `extract_regex()`, `extract_regexes()`, `split_re()`, and `replace_re()` now emit one-time warnings to stderr when receiving invalid regex patterns. Fully backward compatible - existing scripts continue to work identically with fallback values.
 - **Internal refactoring** - Improved codebase organization with modular structure for formatters, pipeline processing, parallel execution, format detection, help text, and Rhai functions
-- **Documentation improvements** - Added documentation for previously undocumented Rhai functions and cleaned up developer documentation
+- **Documentation improvements** - Added documentation for previously undocumented Rhai functions, cleaned up developer documentation, and fixed errors in examples and tutorials (composed pipelines, multiline patterns, incident response playbooks)
 - **README** - Updated with docs logo
 - **Dependencies** - Updated to latest versions
 
 ### Fixed
 
+- **SIGTERM handling for Rhai scripts** - Scripts now respond to SIGTERM signals properly using Rhai's `on_progress` callback. Previously, scripts with infinite loops would hang indefinitely when receiving SIGTERM. The fix adds periodic checks (~every 100-1000 operations) with negligible overhead, resulting in sub-10ms response time to termination signals.
 - Stats parse error counts now correctly tracked
 - CSV header type hints now properly applied in pipeline
 - End-stage window availability documentation corrected
