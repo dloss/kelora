@@ -543,18 +543,22 @@ kelora api.jsonl \
 Monitor live logs as incident unfolds:
 
 ```bash
-# Real-time error tracking with periodic updates
+# Real-time error tracking with periodic updates (every 10 events)
 tail -f /var/log/app.log | kelora -j \
   --filter 'e.level == "ERROR"' \
   --exec 'track_count("errors"); track_top("msg", e.message, 5)' \
-  --metrics-every 10
+  --span 10 \
+  --span-close 'eprint(span.metrics.to_json())' \
+  -q
 ```
 
 **For Kubernetes pods:**
 ```bash
 kubectl logs -f deployment/api-server | kelora -j -l error,warn \
   --exec 'track_stats("latency", e.response_time_ms)' \
-  --metrics-every 5
+  --span 1m \
+  --span-close 'eprint(span.metrics.to_json())' \
+  -q
 ```
 
 **For Docker containers:**
@@ -664,8 +668,9 @@ kelora auth.log -e 'e.ip_type = if e.ip.is_private_ip() { "internal" } else { "e
 kelora huge.log --filter 'sample_every(100)' -e 'track_count("total")' -m
 
 # 11. LIVE KUBERNETES MONITORING
-kubectl logs -f deploy/app | kelora -j -l error,warn -m \
-  -e 'track_stats("latency", e.response_time_ms)' --metrics-every 10
+kubectl logs -f deploy/app | kelora -j -l error,warn -q \
+  -e 'track_stats("latency", e.response_time_ms)' \
+  --span 1m --span-close 'eprint(span.metrics.to_json())'
 
 # 12. EXTRACT SUBSET WITH TIME RANGE
 kelora app.jsonl --since 2h --until now -l error -J > recent-errors.jsonl
