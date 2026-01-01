@@ -12,7 +12,7 @@ Real-world scenarios for using Kelora during production incidents. Each playbook
 | Database slow queries | `kelora db.jsonl --filter 'e.query_time_ms > 1000' --exec 'track_stats("query_time", e.query_time_ms); track_top("query_type", e.query, 10)' -m` | [Playbook 4](#4-database-performance-degradation) |
 | Resource exhaustion | `kelora app.log --filter 'e.line.contains("pool") || e.line.contains("exhausted")' -e 'e.absorb_kv("line")' -J` | [Playbook 5](#5-resource-exhaustion) |
 | Deployment correlation | `kelora app.jsonl --since "2025-01-20T14:00:00Z" --until "2025-01-20T15:00:00Z" -l error,warn --stats` | [Playbook 6](#6-deployment-correlation) |
-| Rate limit abuse | `kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_bucket("hour", e.timestamp.substring(0,13))' -m` | [Playbook 7](#7-rate-limit-investigation) |
+| Rate limit abuse | `kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso())' -m` | [Playbook 7](#7-rate-limit-investigation) |
 | Trace request across services | `kelora *.jsonl --filter 'e.request_id == "abc123"' --normalize-ts -k timestamp,service,message,status` | [Playbook 8](#8-distributed-trace-analysis) |
 
 ---
@@ -110,7 +110,7 @@ kelora api.jsonl \
 ```bash
 kelora examples/api_latency_incident.jsonl \
   --filter 'e.response_time_ms > 100' \
-  --exec 'track_stats("slow", e.response_time_ms); track_top("endpoint", e.endpoint, 5); track_bucket("5min", e.timestamp.substring(0, 15))' \
+  --exec 'track_stats("slow", e.response_time_ms); track_top("endpoint", e.endpoint, 5); track_bucket("5min", to_datetime(e.timestamp).round_to("5m").to_iso())' \
   --metrics
 ```
 
@@ -138,7 +138,7 @@ kelora app.jsonl --filter 'e.level == "ERROR"' --drain -k message
 ```bash
 kelora app.jsonl \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_count(e.error_type); track_top("service", e.service, 10); track_bucket("minute", e.timestamp.substring(0, 16))' \
+  --exec 'track_count(e.error_type); track_top("service", e.service, 10); track_bucket("minute", to_datetime(e.timestamp).round_to("1m").to_iso())' \
   --metrics
 ```
 
@@ -219,7 +219,7 @@ When did the attack start, and is it ongoing?
 ```bash
 kelora auth.log \
   --filter 'e.line.contains("failed")' \
-  --exec 'track_bucket("hour", e.timestamp.substring(0, 13)); track_count("total_failures")' \
+  --exec 'track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso()); track_count("total_failures")' \
   --metrics
 ```
 
@@ -356,7 +356,7 @@ When did resource exhaustion start?
 ```bash
 kelora app.log \
   --filter 'e.line.contains("pool") || e.line.contains("exhausted")' \
-  --exec 'track_bucket("minute", e.timestamp.substring(0, 16))' \
+  --exec 'track_bucket("minute", to_datetime(e.timestamp).round_to("1m").to_iso())' \
   --metrics
 ```
 
@@ -417,7 +417,7 @@ kelora app.jsonl \
   --since "2025-01-20T13:30:00Z" \
   --until "2025-01-20T14:30:00Z" \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_bucket("5min", e.timestamp.substring(0, 15))' \
+  --exec 'track_bucket("5min", to_datetime(e.timestamp).round_to("5m").to_iso())' \
   --metrics
 ```
 
@@ -469,7 +469,7 @@ Are rate limits being hit constantly or during specific times?
 ```bash
 kelora api.jsonl \
   --filter 'e.status == 429' \
-  --exec 'track_bucket("hour", e.timestamp.substring(0, 13)); track_count("total_429s")' \
+  --exec 'track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso()); track_count("total_429s")' \
   --metrics
 ```
 
