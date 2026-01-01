@@ -52,20 +52,70 @@ printf '{"val": 1}\n{"val": 2}\n{"val": 3}\n{"val": 4}\n{"val": 5}' > /tmp/test.
 
 **Expected**: `--window 3` should maintain a window of exactly 3 events.
 
-### 3. Invalid Regex Silently Returns Empty Result
+### 3. Invalid Regex Patterns Silently Return Fallback Values
 
 **Severity**: Moderate
-**Impact**: Silent failures in scripts
+**Impact**: Silent failures in scripts, debugging nightmare, potential data loss
 
-**Description**: When `extract_regex()` is called with an invalid regex pattern, it silently returns an empty result instead of raising an error.
+**Description**: All regex functions in Rhai silently swallow regex compilation errors and return "neutral" fallback values. This makes it impossible to distinguish between "regex didn't match" and "regex was invalid".
+
+**Root Cause** (in `src/rhai_functions/strings/regex.rs`):
+```rust
+// All regex functions follow this pattern:
+match Regex::new(pattern) {
+    Ok(re) => { /* normal operation */ }
+    Err(_) => String::new(),  // Silent failure!
+}
+```
+
+**Affected Functions and Their Fallback Values**:
+
+| Function | Invalid Regex Returns | Valid Non-Match Returns | Distinguishable? |
+|----------|----------------------|------------------------|------------------|
+| `extract_regex` | `""` (empty string) | `""` (empty string) | **NO** |
+| `extract_regexes` | `[]` (empty array) | `[]` (empty array) | **NO** |
+| `split_re` | `[original_text]` | varies | Partially |
+| `replace_re` | `original_text` | `original_text` | **NO** |
+| `extract_re_maps` | `[]` (empty array) | `[]` (empty array) | **NO** |
 
 **Reproduction**:
 ```bash
-echo '{"msg": "test"}' | ./target/release/kelora -f json --exec 'extract_regex(e.msg, "[invalid")'
-# No error, just continues with empty result
+# Unclosed bracket - INVALID regex, silently returns empty
+echo '{"msg": "test data"}' | ./target/release/kelora -f json \
+  --exec 'e.result = extract_regex(e.msg, "[a-z")'
+# Output: msg='test data' result=''  (no error!)
+
+# Unclosed group - INVALID regex, silently returns empty
+echo '{"msg": "test data"}' | ./target/release/kelora -f json \
+  --exec 'e.result = extract_regex(e.msg, "(test")'
+# Output: msg='test data' result=''  (no error!)
+
+# Invalid repetition {2,1} where min > max - INVALID regex
+echo '{"msg": "aaa"}' | ./target/release/kelora -f json \
+  --exec 'e.result = extract_regex(e.msg, "a{2,1}")'
+# Output: msg='aaa' result=''  (no error!)
+
+# For comparison - valid regex that simply doesn't match
+echo '{"msg": "test data"}' | ./target/release/kelora -f json \
+  --exec 'e.result = extract_regex(e.msg, "xyz")'
+# Output: msg='test data' result=''  (same as invalid regex!)
 ```
 
-**Expected**: Should report a regex compilation error.
+**Real-World Impact**:
+- A typo in a regex pattern silently drops all matches
+- Users cannot tell if their regex is wrong or just not matching
+- No way to validate regex patterns before processing millions of logs
+- Debugging requires manual regex testing outside of kelora
+
+**Suggested Fixes**:
+1. **Option A (Breaking)**: Return `Result` type and let scripts handle errors
+2. **Option B (Non-breaking)**: Add `try_extract_regex()` that returns error info
+3. **Option C (Pragmatic)**: Add `--strict-regex` flag to fail on invalid patterns
+4. **Option D (Minimal)**: Add `is_valid_regex(pattern)` function for validation
+
+**Expected Behavior**: Invalid regex should either:
+- Raise a runtime error (like division by zero does), OR
+- Provide a way to detect the failure (return type or validation function)
 
 ---
 
