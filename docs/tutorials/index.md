@@ -18,4 +18,5 @@ Step-by-step walkthroughs for building Kelora pipelines from scratch. Start here
 ## Advanced
 
 - [Span Aggregation: Time-Based and Count-Based Windows](span-aggregation.md) — Windowed rollups and time-series
+- [Composed Pipelines: Building Powerful Workflows](composed-pipelines.md) — Combine features into sophisticated analysis patterns
 - [Configuration and Reusability](configuration-and-reusability.md) — Aliases, includes, and shared workflows
