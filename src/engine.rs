@@ -128,6 +128,7 @@ fn maps_equal(lhs: &rhai::Map, rhs: &rhai::Map) -> bool {
     })
 }
 
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 pub struct DebugTracker {
     pub config: DebugConfig,
@@ -1454,6 +1455,16 @@ impl Clone for RhaiEngine {
         // compile time when their arguments are constants. These functions MUST run at runtime.
         engine.set_optimization_level(rhai::OptimizationLevel::Simple);
 
+        // Check for shutdown signal during script execution (cooperative cancellation)
+        engine.on_progress(|_| {
+            if crate::platform::SHOULD_TERMINATE.load(Ordering::Relaxed) {
+                // Abort script execution by returning a termination sentinel
+                Some(rhai::Dynamic::UNIT)
+            } else {
+                None
+            }
+        });
+
         // Apply the same on_print override as in new(), respecting suppress_side_effects
         let suppress_side_effects = self.suppress_side_effects;
         engine.on_print(move |text| {
@@ -1924,6 +1935,16 @@ impl RhaiEngine {
         // like track_count("key"), print("msg"), emit_each(), etc. by trying to evaluate them at
         // compile time when their arguments are constants. These functions MUST run at runtime.
         engine.set_optimization_level(rhai::OptimizationLevel::Simple);
+
+        // Check for shutdown signal during script execution (cooperative cancellation)
+        engine.on_progress(|_| {
+            if crate::platform::SHOULD_TERMINATE.load(Ordering::Relaxed) {
+                // Abort script execution by returning a termination sentinel
+                Some(rhai::Dynamic::UNIT)
+            } else {
+                None
+            }
+        });
 
         // Override the built-in print function to support capture in parallel mode
         // Note: suppress_side_effects is false by default in new()
