@@ -2359,7 +2359,15 @@ impl RhaiEngine {
 
     // Individual compilation methods for pipeline stages
     pub fn compile_filter(&mut self, filter: &str) -> Result<CompiledExpression> {
-        let ast = self.engine.compile_expression(filter).map_err(|e| {
+        self.compile_filter_with_includes(filter, &[])
+    }
+
+    pub fn compile_filter_with_includes(
+        &mut self,
+        filter: &str,
+        includes: &[crate::config::IncludeFile],
+    ) -> Result<CompiledExpression> {
+        let mut ast = self.engine.compile_expression(filter).map_err(|e| {
             let msg = Self::format_rhai_diagnostic(
                 e.into(),
                 "filter compilation",
@@ -2371,6 +2379,34 @@ impl RhaiEngine {
             );
             anyhow::anyhow!(msg)
         })?;
+
+        for include in includes {
+            let mut include_ast = self.engine.compile(&include.content).map_err(|e| {
+                let msg = Self::format_rhai_diagnostic(
+                    e.into(),
+                    "filter include compilation",
+                    "include script",
+                    &include.content,
+                    None,
+                    None,
+                    self.use_emoji,
+                );
+                anyhow::anyhow!("{} (in {})", msg, include.path)
+            })?;
+
+            include_ast.set_source(include.path.clone());
+
+            if !include_ast.statements().is_empty() {
+                return Err(anyhow::anyhow!(
+                    "--include file '{}' cannot contain statements when used with --filter; only function definitions are allowed",
+                    include.path
+                ));
+            }
+
+            let include_functions = include_ast.clone_functions_only();
+            ast = ast.merge(&include_functions);
+        }
+
         let native_predicate = build_native_predicate(&ast);
         let field_accesses = extract_field_accesses(&ast);
         let var_usage = detect_variable_usage(&ast);
@@ -3696,6 +3732,47 @@ mod tests {
             .expect("filter should compile");
         assert!(compiled.uses_meta, "combined filter should use meta");
         assert!(!compiled.uses_conf, "combined filter should not use conf");
+    }
+
+    #[test]
+    fn filter_includes_can_define_helpers() {
+        let mut engine = RhaiEngine::new();
+        let includes = vec![crate::config::IncludeFile {
+            path: "helpers.rhai".to_string(),
+            content: "fn is_error(level) { level == \"ERROR\" }".to_string(),
+        }];
+
+        let compiled = engine
+            .compile_filter_with_includes("is_error(e.level)", &includes)
+            .expect("filter should compile with includes");
+
+        let mut event = build_event_with_line("line");
+        event.set_field("level".to_string(), Dynamic::from("ERROR"));
+
+        let mut metrics = HashMap::new();
+        let mut internal = HashMap::new();
+        let result = engine
+            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .expect("filter should execute");
+        assert!(result);
+    }
+
+    #[test]
+    fn filter_includes_reject_statements() {
+        let mut engine = RhaiEngine::new();
+        let includes = vec![crate::config::IncludeFile {
+            path: "helpers.rhai".to_string(),
+            content: "let x = 1;".to_string(),
+        }];
+
+        let err = engine
+            .compile_filter_with_includes("e.level == \"ERROR\"", &includes);
+        match err {
+            Ok(_) => panic!("filters should reject include statements"),
+            Err(err) => {
+                assert!(err.to_string().contains("cannot contain statements"));
+            }
+        }
     }
 
     #[test]

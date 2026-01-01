@@ -715,6 +715,21 @@ fn preprocess_script_with_includes(script: &str, includes: &[String]) -> Result<
     Ok(result)
 }
 
+fn load_include_files(includes: &[String]) -> Result<Vec<crate::config::IncludeFile>> {
+    includes
+        .iter()
+        .map(|include_path| {
+            let content = std::fs::read_to_string(include_path).map_err(|e| {
+                anyhow::anyhow!("Failed to read include file '{}': {}", include_path, e)
+            })?;
+            Ok(crate::config::IncludeFile {
+                path: include_path.clone(),
+                content,
+            })
+        })
+        .collect()
+}
+
 /// Get includes that apply to begin/end stages based on CLI position
 /// For begin: includes that appear before any script stage
 /// For end: includes that appear after all script stages
@@ -838,17 +853,14 @@ impl Cli {
                 let script = filter_values[pos].clone();
                 let empty_includes = Vec::new();
                 let includes = include_map.get(&index).unwrap_or(&empty_includes);
-                // For now, filters don't support includes
-                if !includes.is_empty() {
-                    eprintln!(
-                        "{}",
-                        crate::config::format_error_message_auto(
-                            "--include is not supported with --filter (filters must be pure expressions)"
-                        )
-                    );
-                    std::process::exit(2);
-                }
-                stages_with_indices.push((index, ScriptStageType::Filter(script)));
+                let include_files = load_include_files(includes)?;
+                stages_with_indices.push((
+                    index,
+                    ScriptStageType::Filter {
+                        script,
+                        includes: include_files,
+                    },
+                ));
             }
         }
 
@@ -1097,7 +1109,7 @@ mod tests {
         assert_eq!(stages.len(), 4);
         assert!(matches!(
             &stages[0],
-            ScriptStageType::Filter(script) if script == "e.status >= 400"
+            ScriptStageType::Filter { script, .. } if script == "e.status >= 400"
         ));
         assert!(matches!(
             &stages[1],
@@ -1105,7 +1117,7 @@ mod tests {
         ));
         assert!(matches!(
             &stages[2],
-            ScriptStageType::Filter(script) if script == "e.status < 500"
+            ScriptStageType::Filter { script, .. } if script == "e.status < 500"
         ));
         assert!(
             matches!(&stages[3], ScriptStageType::Exec(script) if script.contains("meta.count"))
@@ -1324,6 +1336,38 @@ mod tests {
             assert!(script.contains("e.value = shared_util();"));
         } else {
             panic!("Expected Exec stage");
+        }
+    }
+
+    #[test]
+    fn include_with_filter_stage() {
+        let mut include_file = NamedTempFile::new().expect("temp file");
+        writeln!(include_file, "fn is_error(level) {{ level == \"ERROR\" }}")
+            .expect("write include");
+        let include_path = include_file.path().to_str().unwrap().to_string();
+
+        let args = vec![
+            "kelora".to_string(),
+            "-I".to_string(),
+            include_path,
+            "--filter".to_string(),
+            "is_error(e.level)".to_string(),
+        ];
+
+        let (cli, matches) = parse_cli(&args);
+        let stages = cli
+            .get_ordered_script_stages(&matches)
+            .expect("stages should be parsed");
+
+        assert_eq!(stages.len(), 1);
+        if let ScriptStageType::Filter { script, includes } = &stages[0] {
+            assert_eq!(includes.len(), 1);
+            assert!(includes[0]
+                .content
+                .contains("fn is_error(level) { level == \"ERROR\" }"));
+            assert_eq!(script, "is_error(e.level)");
+        } else {
+            panic!("Expected Filter stage");
         }
     }
 

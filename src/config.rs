@@ -65,13 +65,22 @@ pub struct OutputConfig {
 /// Ordered script stages that preserve CLI order
 #[derive(Debug, Clone)]
 pub enum ScriptStageType {
-    Filter(String),
+    Filter {
+        script: String,
+        includes: Vec<IncludeFile>,
+    },
     Exec(String),
     Assert(String),
     LevelFilter {
         include: Vec<String>,
         exclude: Vec<String>,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct IncludeFile {
+    pub path: String,
+    pub content: String,
 }
 
 /// Error reporting configuration

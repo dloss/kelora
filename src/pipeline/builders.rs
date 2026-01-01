@@ -463,7 +463,7 @@ impl PipelineBuilder {
 
         let has_script_filters = stages
             .iter()
-            .any(|stage| matches!(stage, crate::config::ScriptStageType::Filter(_)));
+            .any(|stage| matches!(stage, crate::config::ScriptStageType::Filter { .. }));
         let has_inline_level_stage = stages
             .iter()
             .any(|stage| matches!(stage, crate::config::ScriptStageType::LevelFilter { .. }));
@@ -475,8 +475,8 @@ impl PipelineBuilder {
 
         for stage in stages {
             match stage {
-                crate::config::ScriptStageType::Filter(filter) => {
-                    let filter_stage = FilterStage::new(filter, &mut rhai_engine)?
+                crate::config::ScriptStageType::Filter { script, includes } => {
+                    let filter_stage = FilterStage::new(script, includes, &mut rhai_engine)?
                         .with_stage_number(stage_number)
                         .with_context(self.context_config.clone());
                     script_stages.push(Box::new(filter_stage));
@@ -987,7 +987,7 @@ impl PipelineBuilder {
 
         let has_script_filters = stages
             .iter()
-            .any(|stage| matches!(stage, crate::config::ScriptStageType::Filter(_)));
+            .any(|stage| matches!(stage, crate::config::ScriptStageType::Filter { .. }));
         let has_inline_level_stage = stages
             .iter()
             .any(|stage| matches!(stage, crate::config::ScriptStageType::LevelFilter { .. }));
@@ -999,8 +999,8 @@ impl PipelineBuilder {
 
         for stage in stages {
             match stage {
-                crate::config::ScriptStageType::Filter(filter) => {
-                    let filter_stage = FilterStage::new(filter, &mut rhai_engine)?
+                crate::config::ScriptStageType::Filter { script, includes } => {
+                    let filter_stage = FilterStage::new(script, includes, &mut rhai_engine)?
                         .with_stage_number(stage_number)
                         .with_context(self.context_config.clone());
                     script_stages.push(Box::new(filter_stage));

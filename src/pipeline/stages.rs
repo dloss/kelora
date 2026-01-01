@@ -25,8 +25,12 @@ pub struct FilterStage {
 }
 
 impl FilterStage {
-    pub fn new(filter: String, engine: &mut RhaiEngine) -> Result<Self> {
-        let compiled_filter = engine.compile_filter(&filter)?;
+    pub fn new(
+        filter: String,
+        includes: Vec<crate::config::IncludeFile>,
+        engine: &mut RhaiEngine,
+    ) -> Result<Self> {
+        let compiled_filter = engine.compile_filter_with_includes(&filter, &includes)?;
         Ok(Self {
             compiled_filter,
             stage_number: 0,
@@ -1274,7 +1278,11 @@ mod tests {
     #[test]
     fn filter_stage_marks_overlapping_matches_as_match() {
         let mut engine = crate::engine::RhaiEngine::new();
-        let mut stage = FilterStage::new("e.method == \"HEAD\"".to_string(), &mut engine)
+        let mut stage = FilterStage::new(
+            "e.method == \"HEAD\"".to_string(),
+            Vec::new(),
+            &mut engine,
+        )
             .expect("filter compilation should succeed")
             .with_context(crate::config::ContextConfig::new(1, 1));
 
@@ -1382,7 +1390,11 @@ mod tests {
     #[test]
     fn filter_stage_marks_overlapping_context_with_both_marker() {
         let mut engine = crate::engine::RhaiEngine::new();
-        let mut stage = FilterStage::new("e.method == \"DELETE\"".to_string(), &mut engine)
+        let mut stage = FilterStage::new(
+            "e.method == \"DELETE\"".to_string(),
+            Vec::new(),
+            &mut engine,
+        )
             .expect("filter compilation should succeed")
             .with_context(crate::config::ContextConfig::new(1, 1));
 
