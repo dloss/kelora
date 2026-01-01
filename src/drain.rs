@@ -129,7 +129,8 @@ fn custom_grok_definitions() -> Vec<(&'static str, &'static str)> {
         ("KELORA_MD5", r"[a-fA-F0-9]{32}"),
         ("KELORA_SHA1", r"[a-fA-F0-9]{40}"),
         ("KELORA_SHA256", r"[a-fA-F0-9]{64}"),
-        ("KELORA_PATH", r"(?:/[A-Za-z0-9._-]+)+"),
+        // Require at least 2 path components to avoid matching ratios like "20/20"
+        ("KELORA_PATH", r"/[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)+"),
         ("KELORA_OAUTH", r"ya29\.[0-9A-Za-z_-]+"),
         ("KELORA_FUNCTION", r"[A-Za-z0-9_.]+\([^)]*\)"),
         ("KELORA_HEXCOLOR", r"#[0-9A-Fa-f]{6}"),
@@ -139,6 +140,15 @@ fn custom_grok_definitions() -> Vec<(&'static str, &'static str)> {
         ),
         ("KELORA_HEXNUM", r"0x[0-9A-Fa-f]+"),
         ("KELORA_DURATION", r"\d+(?:\.\d+)?(?:us|ms|[smhd])"),
+        // ISO8601 timestamps: 2025-01-15T10:00:00Z (T-separator, single token)
+        (
+            "KELORA_ISO8601",
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?",
+        ),
+        // Date only: 2025-01-15 (for space-separated timestamps)
+        ("KELORA_DATE", r"\d{4}-\d{2}-\d{2}"),
+        // Time only: 10:00:00 or 10:00:00.123 (for space-separated timestamps)
+        ("KELORA_TIME", r"\d{2}:\d{2}:\d{2}(?:\.\d+)?"),
         ("KELORA_NUM", r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?"),
     ]
 }
@@ -163,6 +173,10 @@ fn default_filter_patterns() -> Vec<&'static str> {
         "%{KELORA_VERSION:version}",
         "%{KELORA_HEXNUM:hexnum}",
         "%{KELORA_DURATION:duration}",
+        // Timestamps before NUM so they're matched as a unit
+        "%{KELORA_ISO8601:timestamp}",
+        "%{KELORA_DATE:date}",
+        "%{KELORA_TIME:time}",
         "%{KELORA_NUM:num}",
     ]
 }
