@@ -6600,7 +6600,8 @@
 <p>Summarize log templates using Drain (summary-only). Requires <code>--keys</code> with exactly one field.
 Sequential mode only (not supported with <code>--parallel</code>).
 Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration, num.</p>
+md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
+timestamp, date, time, num.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
 <a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>line
 </code></pre></div>
