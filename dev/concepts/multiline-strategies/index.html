@@ -1678,6 +1678,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#controlling-line-joining" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling Line Joining
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#choosing-the-right-parser" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2320,6 +2331,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#controlling-line-joining" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Controlling Line Joining
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#choosing-the-right-parser" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2452,25 +2474,25 @@ adaptive timestamp parser; you can hint a specific format with
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;2024-01-15 10:01:00 ERROR Failed to process requestTraceback (most recent call last):  File \&quot;/app/server.py\&quot;, line 42, in handle_request    result = process_data(request.body)  File \&quot;/app/processor.py\&quot;, line 15, in process_data    return json.loads(data)ValueError: Invalid JSON format at line 3&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;2024-01-15 10:01:00 ERROR Failed to process request\nTraceback (most recent call last):\n  File \&quot;/app/server.py\&quot;, line 42, in handle_request\n    result = process_data(request.body)\n  File \&quot;/app/processor.py\&quot;, line 15, in process_data\n    return json.loads(data)\nValueError: Invalid JSON format at line 3&quot;}
 </code></pre></div>
 </div>
 </div>
 </div>
-<p>The event now contains the full Python traceback until the next timestamped
-header. Pair this strategy with <code>--ts-format</code> if you also need chronological
-filtering later in the pipeline.</p>
+<p>The event now contains the full Python traceback with preserved line breaks until the next timestamped
+header. Use <code>--multiline-join=newline</code> to keep the stack trace structure intact for display or further processing.
+Pair this strategy with <code>--ts-format</code> if you also need chronological filtering later in the pipeline.</p>
 <h3 id="2-indentation-continuations-multiline-indent">2. Indentation Continuations (<code>--multiline indent</code>)<a class="headerlink" href="#2-indentation-continuations-multiline-indent" title="Permanent link">&para;</a></h3>
 <p>Combine lines that start with leading whitespace. This matches Java stack traces
 and similar outputs where continuation lines are indented.</p>
@@ -2478,24 +2500,24 @@ and similar outputs where continuation lines are indented.</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;SQLException&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span>indent<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;SQLException&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;java.sql.SQLException: Connection timeout\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\tat com.example.api.UserController.getUser(UserController.java:45)\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;java.sql.SQLException: Connection timeout\n\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\n\tat com.example.api.UserController.getUser(UserController.java:45)\n\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)&quot;}
 </code></pre></div>
 </div>
 </div>
 </div>
-<p>In this example the stack trace block remains an atomic event. If the first line
-of a block is not indented (for example, <code>Traceback ...</code>), combine strategies by
+<p>In this example the stack trace block remains an atomic event with preserved line breaks.
+If the first line of a block is not indented (for example, <code>Traceback ...</code>), combine strategies by
 preferring <code>timestamp</code> or switching to <code>regex</code> (see below) so the header line is
 included.</p>
 <h3 id="3-regex-boundaries-multiline-regexmatchend">3. Regex Boundaries (<code>--multiline regex:match=...[:end=...]</code>)<a class="headerlink" href="#3-regex-boundaries-multiline-regexmatchend" title="Permanent link">&para;</a></h3>
@@ -2505,18 +2527,18 @@ records with guard strings such as <code>BEGIN</code>/<code>END</code> or XML ta
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_boundary.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^BEGIN:end=^END&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^BEGIN:end=^END&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;database_backup&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>examples/multiline_boundary.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^BEGIN:end=^END&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^BEGIN:end=^END&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.raw.contains(&quot;database_backup&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;BEGINtype: database_backuptimestamp: 2024-01-15T10:00:00Zstatus: startedtarget: postgresql://productionEND&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;raw&quot;:&quot;BEGIN\ntype: database_backup\ntimestamp: 2024-01-15T10:00:00Z\nstatus: started\ntarget: postgresql://production\nEND&quot;}
 </code></pre></div>
 </div>
 </div>
@@ -2529,18 +2551,26 @@ for one-off conversions (for example piping a whole JSON array into a script).
 Use with care: the entire input must fit in memory.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>big.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(e.raw.len())&#39;</span>
 </code></pre></div>
+<h2 id="controlling-line-joining">Controlling Line Joining<a class="headerlink" href="#controlling-line-joining" title="Permanent link">&para;</a></h2>
+<p>By default, <code>--multiline</code> joins grouped lines with spaces (<code>--multiline-join=space</code>).
+To preserve the original line structure in stack traces or other multi-line content:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>--multiline-join<span class="o">=</span>newline<span class="w">   </span><span class="c1"># Preserve line breaks (use for stack traces, logs with continuations)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>--multiline-join<span class="o">=</span>space<span class="w">     </span><span class="c1"># Join with spaces (default, good for simple log continuation)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>--multiline-join<span class="o">=</span>empty<span class="w">     </span><span class="c1"># Concatenate directly (no separator)</span>
+</code></pre></div>
+<p><strong>When to use <code>newline</code>:</strong> If you need to <code>split("\n")</code> the multiline block, count lines, or preserve formatting for display.</p>
+<p><strong>When to use <code>space</code>:</strong> When line breaks are not semantically important and you want a compact single-line representation.</p>
 <h2 id="choosing-the-right-parser">Choosing the Right Parser<a class="headerlink" href="#choosing-the-right-parser" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
-<p><strong><code>-f raw</code></strong> preserves newlines (<code>\n</code>) so you can post-process blocks with
-  <code>split("\n")</code>, regex extractions, or write them to disk unchanged.</p>
+<p><strong><code>-f raw</code></strong> stores the entire aggregated block in the <code>raw</code> field without further processing. Use this when you want to preserve all text exactly as grouped (combine with <code>--multiline-join=newline</code> if you need to preserve line breaks).</p>
 </li>
 <li>
 <p><strong>Structured parsers</strong> (<code>-f json</code>, <code>-f logfmt</code>, <code>-f cols:...</code>) expect a single
   logical record. Use multiline to restore that logical record before parsing.</p>
 </li>
 <li>
-<p>After parsing, you can still keep the original text by copying the raw block
+<p>After parsing, you can still keep the original text by copying the aggregated block
   into another field inside an exec script.</p>
 </li>
 </ul>

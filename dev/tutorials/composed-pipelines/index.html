@@ -2548,7 +2548,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: line
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 6 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 6 total, 0 output, 6 filtered (100.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 1322 lines/s in 4ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 1351 lines/s in 4ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: (none found, 6 events) - 0/0 parsed (0.0%); 6 missing. Hint: Try --ts-field or --ts-format.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Keys seen: line
 </code></pre></div>
@@ -2637,27 +2637,28 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>line=&#39;2024-01-15 10:01:00 ERROR Failed to process requestTraceback (most recent call last):  File &quot;/app/server.py&quot;, line 42, in handle_request    result = process_data(request.body)  File &quot;/app/processor.py&quot;, line 15, in process_data    return json.loads(data)ValueError: Invalid JSON format at line 3&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>line=&#39;2024-01-15 10:02:00 ERROR Database connection failedjava.sql.SQLException: Connection timeout\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\tat com.example.api.UserController.getUser(UserController.java:45)\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)Caused by: java.net.SocketTimeoutException: Read timed out\tat java.net.SocketInputStream.socketRead0(Native Method)\tat java.net.SocketInputStream.read(SocketInputStream.java:150)&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>line=&#39;2024-01-15 10:03:00 ERROR Unhandled exception in worker threadRuntimeError: Maximum retry attempts exceeded  File &quot;/app/worker.py&quot;, line 67, in run    self.process_job(job)  File &quot;/app/worker.py&quot;, line 98, in process_job    raise RuntimeError(&quot;Maximum retry attempts exceeded&quot;)&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>line=&#39;2024-01-15 10:01:00 ERROR Failed to process request\nTraceback (most recent call last):\n  File &quot;/app/server.py&quot;, line 42, in handle_request\n    result = process_data(request.body)\n  File &quot;/app/processor.py&quot;, line 15, in process_data\n    return json.loads(data)\nValueError: Invalid JSON format at line 3&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>line=&#39;2024-01-15 10:02:00 ERROR Database connection failed\njava.sql.SQLException: Connection timeout\n\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\n\tat com.example.api.UserController.getUser(UserController.java:45)\n\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)\nCaused by: java.net.SocketTimeoutException: Read timed out\n\tat java.net.SocketInputStream.socketRead0(Native Method)\n\tat java.net.SocketInputStream.read(SocketInputStream.java:150)&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>line=&#39;2024-01-15 10:03:00 ERROR Unhandled exception in worker thread\nRuntimeError: Maximum retry attempts exceeded\n  File &quot;/app/worker.py&quot;, line 67, in run\n    self.process_job(job)\n  File &quot;/app/worker.py&quot;, line 98, in process_job\n    raise RuntimeError(&quot;Maximum retry attempts exceeded&quot;)&#39;
 </code></pre></div>
 </div>
 </div>
 </div>
 <p><strong>What's happening:</strong>
 - <code>--multiline</code>: Lines not matching the timestamp pattern are joined to the previous event
-- Stack traces become part of the error event's <code>line</code> field
+- <code>--multiline-join=newline</code>: Preserves line breaks in the grouped stack trace
+- Stack traces become part of the error event's <code>line</code> field with formatting intact
 - Now we have complete context for each error</p>
 <h3 id="step-2-parse-and-extract-error-details">Step 2: Parse and Extract Error Details<a class="headerlink" href="#step-2-parse-and-extract-error-details" title="Permanent link">&para;</a></h3>
 <p>Parse the timestamp and level from the reconstructed line, then extract error types:</p>
@@ -2665,7 +2666,7 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">    // Extract timestamp and level from first line</span>
@@ -2674,7 +2675,7 @@
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    e.level = parts[2];</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    // Extract error type from stack trace</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    let lines = e.line.split(&quot; &quot;);</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    let lines = e.line.split(&quot;\n&quot;);</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">    e.error_summary = parts.len() &gt; 3 ? parts[3] : &quot;Unknown&quot;;</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,error_summary<span class="w"> </span><span class="se">\</span>
@@ -2697,29 +2698,35 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>line
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>line
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>templates (3 items):
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  1: &lt;num&gt; &lt;num&gt; ERROR Database connection failedjava.sql.SQLException: Connection timeout  at &lt;fqdn&gt; &lt;fqdn&gt; &lt;fqdn&gt; by: java.net.SocketTimeoutException: Read timed out at &lt;num&gt; Method)    at &lt;function&gt;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  1: &lt;num&gt; &lt;num&gt; ERROR Failed to process requestTraceback (most recent call last):  File &lt;path&gt; line &lt;num&gt; in handle_request    result = &lt;function&gt;  File &lt;path&gt; line &lt;num&gt; in process_data    return &lt;function&gt; Invalid JSON format at line &lt;num&gt;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  1: &lt;num&gt; &lt;num&gt; ERROR Unhandled exception in worker threadRuntimeError: Maximum retry attempts exceeded  File &lt;path&gt; line &lt;num&gt; in run    &lt;function&gt;  File &lt;path&gt; line &lt;num&gt; in process_job    raise RuntimeError(&quot;Maximum retry attempts exceeded&quot;)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  1: &lt;num&gt; &lt;num&gt; ERROR Database connection failed
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>java.sql.SQLException: Connection timeout
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    at &lt;fqdn&gt; &lt;fqdn&gt; &lt;fqdn&gt; by: java.net.SocketTimeoutException: Read timed out
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    at &lt;num&gt; Method)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    at &lt;function&gt;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  1: &lt;num&gt; &lt;num&gt; ERROR Failed to process request
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Traceback (most recent call last):  File &lt;path&gt; line &lt;num&gt; in handle_request    result = &lt;function&gt;  File &lt;path&gt; line &lt;num&gt; in process_data    return &lt;function&gt; Invalid JSON format at line &lt;num&gt;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  1: &lt;num&gt; &lt;num&gt; ERROR Unhandled exception in worker thread
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>RuntimeError: Maximum retry attempts exceeded  File &lt;path&gt; line &lt;num&gt; in run    &lt;function&gt;  File &lt;path&gt; line &lt;num&gt; in process_job    raise RuntimeError(&quot;Maximum retry attempts exceeded&quot;)
 </code></pre></div>
 </div>
 </div>
 </div>
 <p><strong>Complete workflow:</strong>
-1. Reconstruct multi-line stack traces
+1. Reconstruct multi-line stack traces with preserved line breaks
 2. Filter to ERROR events
-3. Extract error message from reconstructed line
+3. Extract error message from reconstructed multiline block
 4. Use drain to discover patterns</p>
 <hr />
 <h2 id="pattern-3-service-isolation-span-based-rollup">Pattern 3: Service Isolation + Span-Based Rollup<a class="headerlink" href="#pattern-3-service-isolation-span-based-rollup" title="Permanent link">&para;</a></h2>
@@ -3205,9 +3212,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>stack-traces.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1"># Stack traces are split across events</span>
 </code></pre></div>
-<strong>✅ Solution:</strong> Use <code>--multiline</code> to reconstruct:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>stack-traces.log<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
-</code></pre></div></p>
+<strong>✅ Solution:</strong> Use <code>--multiline</code> with <code>--multiline-join=newline</code> to reconstruct:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>stack-traces.log<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
+</code></pre></div>
+<em>Note: <code>--multiline-join=newline</code> preserves line breaks in the grouped stack trace, keeping the structure intact.</em></p>
 <hr />
 <p><strong>❌ Problem:</strong> Wrong filter order processes too much data
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;expensive_transform(e)&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>

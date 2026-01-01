@@ -2398,17 +2398,18 @@
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Extract stack trace metadata</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<p><strong>Extract stack trace metadata</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.frames = e.line.split(&quot;\\n&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,frames,line
 </code></pre></div></p>
 </li>
-<li>
-<p><strong>Combine with context flags</strong><br />
-  After grouping, use <code>--before-context</code> / <code>--after-context</code> to include neighbouring events.</p>
-</li>
+</ul>
+<p><strong>Note:</strong> Use <code>--multiline-join=newline</code> to preserve line breaks in the grouped stack trace. The default <code>--multiline-join=space</code> joins lines with spaces, which would prevent counting frames via <code>split("\\n")</code>.</p>
+<ul>
+<li><strong>Combine with context flags</strong><br />
+  After grouping, use <code>--before-context</code> / <code>--after-context</code> to include neighbouring events.</li>
 </ul>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
