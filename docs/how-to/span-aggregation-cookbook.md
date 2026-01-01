@@ -77,7 +77,7 @@ kelora -j examples/simple_json.jsonl \
   --span-close 'print(span.id + ": " + span.size.to_string())'
 ```
 
-- `meta.span_status` is one of `active`, `late`, or `unassigned`.
+- `meta.span_status` is one of `"included"`, `"late"`, `"unassigned"`, or `"filtered"`.
 - Use `--strict` if missing timestamps should abort the run instead of being skipped.
 
 ## Step 5: Export or Chain Spans
