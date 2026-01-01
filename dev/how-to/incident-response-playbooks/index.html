@@ -3370,7 +3370,7 @@
 </tr>
 <tr>
 <td>Rate limit abuse</td>
-<td><code>kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_bucket("hour", e.timestamp.substring(0,13))' -m</code></td>
+<td><code>kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso())' -m</code></td>
 <td><a href="#7-rate-limit-investigation">Playbook 7</a></td>
 </tr>
 <tr>
@@ -3441,7 +3441,7 @@
 <p><strong>Example using sample data:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>examples/api_latency_incident.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 100&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;slow&quot;, e.response_time_ms); track_top(&quot;endpoint&quot;, e.endpoint, 5); track_bucket(&quot;5min&quot;, e.timestamp.substring(0, 15))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;slow&quot;, e.response_time_ms); track_top(&quot;endpoint&quot;, e.endpoint, 5); track_bucket(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <hr />
@@ -3458,7 +3458,7 @@
 <h3 id="find-error-hotspots-1-minute">Find Error Hotspots (1 minute)<a class="headerlink" href="#find-error-hotspots-1-minute" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_type); track_top(&quot;service&quot;, e.service, 10); track_bucket(&quot;minute&quot;, e.timestamp.substring(0, 16))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_type); track_top(&quot;service&quot;, e.service, 10); track_bucket(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="extract-stack-traces-2-minutes">Extract Stack Traces (2 minutes)<a class="headerlink" href="#extract-stack-traces-2-minutes" title="Permanent link">&para;</a></h3>
@@ -3511,7 +3511,7 @@
 <p>When did the attack start, and is it ongoing?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, e.timestamp.substring(0, 13)); track_count(&quot;total_failures&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_count(&quot;total_failures&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="extract-attacker-ips-for-blocking-1-minute">Extract Attacker IPs for Blocking (1 minute)<a class="headerlink" href="#extract-attacker-ips-for-blocking-1-minute" title="Permanent link">&para;</a></h3>
@@ -3601,7 +3601,7 @@
 <p>When did resource exhaustion start?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;pool&quot;) || e.line.contains(&quot;exhausted&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;minute&quot;, e.timestamp.substring(0, 16))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <p><strong>Example using sample data:</strong></p>
@@ -3640,7 +3640,7 @@
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-20T13:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-20T14:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;5min&quot;, e.timestamp.substring(0, 15))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <hr />
@@ -3673,7 +3673,7 @@
 <p>Are rate limits being hit constantly or during specific times?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 429&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, e.timestamp.substring(0, 13)); track_count(&quot;total_429s&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_count(&quot;total_429s&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <hr />
