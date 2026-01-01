@@ -18,8 +18,9 @@ kelora -f json examples/simple_json.jsonl --filter 'e.level == "ERROR"' --exec '
 # Web access log parsing
 kelora examples/web_access.log --filter 'e.status >= 400'
 
-# Using Rhai helper functions
-kelora --include examples/helpers.rhai examples/api_logs.jsonl --exec 'if is_problem(e) { e } else { () }'
+# Using Rhai helper functions for enrichment
+kelora --include examples/helpers.rhai examples/api_logs.jsonl \
+  --exec 'e.severity = classify_severity(e.level, e.get_path("response_time", 0.0))'
 ```
 
 Then run `kelora --help-examples` for common patterns and usage recipes.
@@ -183,8 +184,13 @@ Reusable Rhai functions that you can include in your pipelines with `--include`:
 Common utility functions for log analysis:
 
 ```bash
+# Enrich events with computed severity
 kelora --include examples/helpers.rhai examples/api_logs.jsonl \
-  --exec 'if is_problem(e) { e } else { () }'
+  --exec 'e.severity = classify_severity(e.level, e.get_path("response_time", 0.0))'
+
+# Mask sensitive fields
+kelora --include examples/helpers.rhai examples/api_logs.jsonl \
+  --exec 'if e.has("email") { e.email = mask_sensitive(e.email); }'
 ```
 
 Functions:
@@ -192,6 +198,8 @@ Functions:
 - `classify_severity(level, value)` - Categorize severity
 - `extract_domain(text)` - Extract domain from URL/email
 - `mask_sensitive(value)` - Mask sensitive data
+
+**Note:** For filtering, prefer `--filter` with inline expressions. Use `e = ()` in `--exec` only when you need helper functions for complex logic that can't be expressed inline.
 
 ### `enrich_events.rhai`
 
@@ -220,8 +228,9 @@ kelora -f json examples/api_logs.jsonl
 # Chain operations
 kelora examples/web_access.log --filter 'e.status >= 400' --exec '#{ip: e.client_ip, path: e.path}'
 
-# Include helper scripts
-kelora --include examples/helpers.rhai examples/api_logs.jsonl --exec 'if is_problem(e) { e } else { () }'
+# Include helper scripts for enrichment
+kelora --include examples/helpers.rhai examples/api_logs.jsonl \
+  --exec 'e.domain = extract_domain(e.get_path("email", ""))'
 
 # Compressed files work too
 kelora examples/web_access_large.log.gz
