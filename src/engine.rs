@@ -1035,6 +1035,39 @@ fn extract_field_accesses(ast: &AST) -> Vec<FieldAccess> {
         .collect()
 }
 
+/// Flags indicating which scope variables are used by an expression
+#[derive(Clone, Copy, Default)]
+struct VariableUsage {
+    uses_meta: bool,
+    uses_conf: bool,
+    uses_line: bool,
+}
+
+/// Detect which scope variables (meta, conf, line) are used in the AST
+fn detect_variable_usage(ast: &AST) -> VariableUsage {
+    let mut usage = VariableUsage::default();
+
+    ast.walk(&mut |path| {
+        if let Some(node) = path.first() {
+            let node_str = format!("{:?}", node);
+
+            // Check for Variable references
+            if node_str.contains("Variable(meta)") {
+                usage.uses_meta = true;
+            }
+            if node_str.contains("Variable(conf)") {
+                usage.uses_conf = true;
+            }
+            if node_str.contains("Variable(line)") {
+                usage.uses_line = true;
+            }
+        }
+        true
+    });
+
+    usage
+}
+
 fn build_native_predicate(ast: &AST) -> Option<NativePredicate> {
     let statements = ast.statements();
     if statements.len() != 1 {
@@ -1483,6 +1516,12 @@ pub struct CompiledExpression {
     expr: String,
     field_accesses: Vec<FieldAccess>,
     native_predicate: Option<NativePredicate>,
+    /// Whether this expression uses the `meta` variable
+    uses_meta: bool,
+    /// Whether this expression uses the `conf` variable
+    uses_conf: bool,
+    /// Whether this expression uses the `line` variable
+    uses_line: bool,
 }
 
 impl CompiledExpression {
@@ -2254,11 +2293,15 @@ impl RhaiEngine {
         })?;
         let native_predicate = build_native_predicate(&ast);
         let field_accesses = extract_field_accesses(&ast);
+        let var_usage = detect_variable_usage(&ast);
         Ok(CompiledExpression {
             ast,
             expr: filter.to_string(),
             field_accesses,
             native_predicate,
+            uses_meta: var_usage.uses_meta,
+            uses_conf: var_usage.uses_conf,
+            uses_line: var_usage.uses_line,
         })
     }
 
@@ -2276,11 +2319,15 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let var_usage = detect_variable_usage(&ast);
         Ok(CompiledExpression {
             ast,
             expr: exec.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_meta: var_usage.uses_meta,
+            uses_conf: var_usage.uses_conf,
+            uses_line: var_usage.uses_line,
         })
     }
 
@@ -2298,11 +2345,15 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let var_usage = detect_variable_usage(&ast);
         Ok(CompiledExpression {
             ast,
             expr: begin.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_meta: var_usage.uses_meta,
+            uses_conf: var_usage.uses_conf,
+            uses_line: var_usage.uses_line,
         })
     }
 
@@ -2320,11 +2371,15 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let var_usage = detect_variable_usage(&ast);
         Ok(CompiledExpression {
             ast,
             expr: end.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_meta: var_usage.uses_meta,
+            uses_conf: var_usage.uses_conf,
+            uses_line: var_usage.uses_line,
         })
     }
 
@@ -2342,11 +2397,15 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let var_usage = detect_variable_usage(&ast);
         Ok(CompiledExpression {
             ast,
             expr: script.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_meta: var_usage.uses_meta,
+            uses_conf: var_usage.uses_conf,
+            uses_line: var_usage.uses_line,
         })
     }
 
@@ -2377,7 +2436,12 @@ impl RhaiEngine {
         }
 
         Self::set_thread_tracking_state(metrics, internal);
-        let mut scope = self.create_scope_for_event(event);
+        let mut scope = self.create_scope_for_event_optimized(
+            event,
+            compiled.uses_line,
+            compiled.uses_meta,
+            compiled.uses_conf,
+        );
 
         // Debug statistics tracking
         if !stats_recorded {
@@ -2467,7 +2531,12 @@ impl RhaiEngine {
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
         Self::set_thread_tracking_state(metrics, internal);
-        let mut scope = self.create_scope_for_event(event);
+        let mut scope = self.create_scope_for_event_optimized(
+            event,
+            compiled.uses_line,
+            compiled.uses_meta,
+            compiled.uses_conf,
+        );
 
         // Debug statistics tracking
         debug_stats_increment_script_executions();
@@ -2898,59 +2967,78 @@ impl RhaiEngine {
     }
 
     fn create_scope_for_event(&self, event: &Event) -> Scope<'_> {
+        // Full scope creation - includes all variables
+        self.create_scope_for_event_optimized(event, true, true, true)
+    }
+
+    /// Create a scope for event evaluation, optionally skipping unused variables
+    fn create_scope_for_event_optimized(
+        &self,
+        event: &Event,
+        needs_line: bool,
+        needs_meta: bool,
+        needs_conf: bool,
+    ) -> Scope<'_> {
         let mut scope = self.scope_template.clone();
 
-        // Update built-in variables
-        scope.set_value("line", event.original_line.clone());
+        // Update built-in variables - only if needed
+        if needs_line {
+            scope.set_value("line", event.original_line.clone());
+        }
 
         // Update event map for fields with invalid identifiers
+        // Note: We always build the event map since most scripts use `e.*`
         let mut event_map = rhai::Map::new();
         for (k, v) in &event.fields {
             event_map.insert(k.clone().into(), v.clone());
         }
         scope.set_value("e", event_map);
 
-        // Update metadata
-        let mut meta_map = rhai::Map::new();
-        if let Some(line_num) = event.line_num {
-            meta_map.insert("line_num".into(), Dynamic::from(line_num as i64));
-        }
-        if let Some(filename) = &event.filename {
-            meta_map.insert("filename".into(), Dynamic::from(filename.clone()));
-        }
-        if let Some(status) = event.span.status {
-            meta_map.insert("span_status".into(), Dynamic::from(status.as_str()));
-        }
-        if let Some(span_id) = &event.span.span_id {
-            meta_map.insert("span_id".into(), Dynamic::from(span_id.clone()));
-        }
-        if let Some(span_start) = event.span.span_start {
-            meta_map.insert(
-                "span_start".into(),
-                Dynamic::from(DateTimeWrapper::from_utc(span_start)),
-            );
-        }
-        if let Some(span_end) = event.span.span_end {
-            meta_map.insert(
-                "span_end".into(),
-                Dynamic::from(DateTimeWrapper::from_utc(span_end)),
-            );
-        }
-        if let Some(parsed_ts) = event.parsed_ts {
-            meta_map.insert(
-                "parsed_ts".into(),
-                Dynamic::from(DateTimeWrapper::from_utc(parsed_ts)),
-            );
+        // Update metadata - only if needed
+        if needs_meta {
+            let mut meta_map = rhai::Map::new();
+            if let Some(line_num) = event.line_num {
+                meta_map.insert("line_num".into(), Dynamic::from(line_num as i64));
+            }
+            if let Some(filename) = &event.filename {
+                meta_map.insert("filename".into(), Dynamic::from(filename.clone()));
+            }
+            if let Some(status) = event.span.status {
+                meta_map.insert("span_status".into(), Dynamic::from(status.as_str()));
+            }
+            if let Some(span_id) = &event.span.span_id {
+                meta_map.insert("span_id".into(), Dynamic::from(span_id.clone()));
+            }
+            if let Some(span_start) = event.span.span_start {
+                meta_map.insert(
+                    "span_start".into(),
+                    Dynamic::from(DateTimeWrapper::from_utc(span_start)),
+                );
+            }
+            if let Some(span_end) = event.span.span_end {
+                meta_map.insert(
+                    "span_end".into(),
+                    Dynamic::from(DateTimeWrapper::from_utc(span_end)),
+                );
+            }
+            if let Some(parsed_ts) = event.parsed_ts {
+                meta_map.insert(
+                    "parsed_ts".into(),
+                    Dynamic::from(DateTimeWrapper::from_utc(parsed_ts)),
+                );
+            }
+
+            // Add raw line to metadata
+            meta_map.insert("line".into(), Dynamic::from(event.original_line.clone()));
+
+            scope.set_value("meta", meta_map);
         }
 
-        // Add raw line to metadata
-        meta_map.insert("line".into(), Dynamic::from(event.original_line.clone()));
-
-        scope.set_value("meta", meta_map);
-
-        // Set the frozen conf map
-        if let Some(ref conf_map) = self.conf_map {
-            scope.set_value("conf", conf_map.clone());
+        // Set the frozen conf map - only if needed
+        if needs_conf {
+            if let Some(ref conf_map) = self.conf_map {
+                scope.set_value("conf", conf_map.clone());
+            }
         }
 
         self.push_state_to_scope(&mut scope);
@@ -3389,6 +3477,46 @@ mod tests {
             .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
             .expect("native filter should succeed");
         assert!(!result, "'/var/log/app.txt' should not end with '.log'");
+    }
+
+    #[test]
+    fn variable_usage_detection() {
+        let mut engine = RhaiEngine::new();
+
+        // Filter using only e.* - should not need meta, conf, or line
+        let compiled = engine
+            .compile_filter("e.level == \"ERROR\"")
+            .expect("filter should compile");
+        assert!(!compiled.uses_meta, "simple filter should not use meta");
+        assert!(!compiled.uses_conf, "simple filter should not use conf");
+        assert!(!compiled.uses_line, "simple filter should not use line");
+
+        // Filter using meta
+        let compiled = engine
+            .compile_filter("meta.line_num > 100")
+            .expect("filter should compile");
+        assert!(compiled.uses_meta, "filter with meta.* should use meta");
+        assert!(!compiled.uses_conf, "filter should not use conf");
+
+        // Filter using conf
+        let compiled = engine
+            .compile_filter("conf.threshold > 5")
+            .expect("filter should compile");
+        assert!(compiled.uses_conf, "filter with conf.* should use conf");
+        assert!(!compiled.uses_meta, "filter should not use meta");
+
+        // Filter using line
+        let compiled = engine
+            .compile_filter("line.len() > 100")
+            .expect("filter should compile");
+        assert!(compiled.uses_line, "filter with line should use line");
+
+        // Combined usage
+        let compiled = engine
+            .compile_filter("e.level == \"ERROR\" && meta.line_num > 0")
+            .expect("filter should compile");
+        assert!(compiled.uses_meta, "combined filter should use meta");
+        assert!(!compiled.uses_conf, "combined filter should not use conf");
     }
 
     #[test]
