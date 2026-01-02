@@ -1035,6 +1035,38 @@ fn build_native_predicate(ast: &AST) -> Option<NativePredicate> {
     Some(NativePredicate { root })
 }
 
+/// Check if the AST uses any tracking functions (track_count, track_sum, etc.)
+/// that require thread-local state synchronization.
+fn uses_tracking_functions(ast: &AST) -> bool {
+    let mut uses_tracking = false;
+
+    ast.walk(&mut |path| {
+        if let Some(node) = path.first() {
+            let node_str = format!("{:?}", node);
+            // Check for any track_* function calls
+            if node_str.contains("\"track_count\"")
+                || node_str.contains("\"track_sum\"")
+                || node_str.contains("\"track_avg\"")
+                || node_str.contains("\"track_min\"")
+                || node_str.contains("\"track_max\"")
+                || node_str.contains("\"track_first\"")
+                || node_str.contains("\"track_last\"")
+                || node_str.contains("\"track_unique\"")
+                || node_str.contains("\"track_rate\"")
+                || node_str.contains("\"track_histogram\"")
+                || node_str.contains("\"track_set\"")
+                || node_str.contains("\"track_list\"")
+                || node_str.contains("\"merge_metrics\"")
+            {
+                uses_tracking = true;
+            }
+        }
+        true
+    });
+
+    uses_tracking
+}
+
 fn parse_native_node(expr: &Expr) -> Option<NativeNode> {
     match expr {
         Expr::And(list, _) => {
@@ -1396,6 +1428,9 @@ pub struct CompiledExpression {
     expr: String,
     field_accesses: Vec<FieldAccess>,
     native_predicate: Option<NativePredicate>,
+    /// Whether this expression uses tracking functions (track_count, etc.)
+    /// If false, we can skip thread-local state synchronization.
+    uses_tracking: bool,
 }
 
 impl CompiledExpression {
@@ -2162,11 +2197,13 @@ impl RhaiEngine {
         })?;
         let native_predicate = build_native_predicate(&ast);
         let field_accesses = extract_field_accesses(&ast);
+        let uses_tracking = uses_tracking_functions(&ast);
         Ok(CompiledExpression {
             ast,
             expr: filter.to_string(),
             field_accesses,
             native_predicate,
+            uses_tracking,
         })
     }
 
@@ -2184,11 +2221,13 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let uses_tracking = uses_tracking_functions(&ast);
         Ok(CompiledExpression {
             ast,
             expr: exec.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_tracking,
         })
     }
 
@@ -2206,11 +2245,13 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let uses_tracking = uses_tracking_functions(&ast);
         Ok(CompiledExpression {
             ast,
             expr: begin.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_tracking,
         })
     }
 
@@ -2228,11 +2269,13 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let uses_tracking = uses_tracking_functions(&ast);
         Ok(CompiledExpression {
             ast,
             expr: end.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_tracking,
         })
     }
 
@@ -2250,11 +2293,13 @@ impl RhaiEngine {
             anyhow::anyhow!(msg)
         })?;
         let field_accesses = extract_field_accesses(&ast);
+        let uses_tracking = uses_tracking_functions(&ast);
         Ok(CompiledExpression {
             ast,
             expr: script.to_string(),
             field_accesses,
             native_predicate: None,
+            uses_tracking,
         })
     }
 
@@ -2267,9 +2312,14 @@ impl RhaiEngine {
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
         let mut stats_recorded = false;
+        // Skip expensive thread-local state sync when no tracking functions are used
+        let needs_tracking_sync = compiled.uses_tracking;
 
+        // Native predicate fast path (e.g., e.level == "INFO")
         if let Some(native) = &compiled.native_predicate {
-            Self::set_thread_tracking_state(metrics, internal);
+            if needs_tracking_sync {
+                Self::set_thread_tracking_state(metrics, internal);
+            }
             debug_stats_increment_events_processed();
             debug_stats_increment_script_executions();
             stats_recorded = true;
@@ -2278,13 +2328,17 @@ impl RhaiEngine {
                 if result {
                     debug_stats_increment_events_passed();
                 }
-                *metrics = Self::get_thread_tracking_state();
-                *internal = Self::get_thread_internal_state();
+                if needs_tracking_sync {
+                    *metrics = Self::get_thread_tracking_state();
+                    *internal = Self::get_thread_internal_state();
+                }
                 return Ok(result);
             }
         }
 
-        Self::set_thread_tracking_state(metrics, internal);
+        if needs_tracking_sync {
+            Self::set_thread_tracking_state(metrics, internal);
+        }
         let mut scope = self.create_scope_for_event(event);
 
         // Debug statistics tracking
@@ -2362,8 +2416,10 @@ impl RhaiEngine {
             debug_stats_increment_events_passed();
         }
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        if needs_tracking_sync {
+            *metrics = Self::get_thread_tracking_state();
+            *internal = Self::get_thread_internal_state();
+        }
         Ok(result)
     }
 
@@ -2374,7 +2430,11 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
-        Self::set_thread_tracking_state(metrics, internal);
+        // Skip expensive thread-local state sync when no tracking functions are used
+        let needs_tracking_sync = compiled.uses_tracking;
+        if needs_tracking_sync {
+            Self::set_thread_tracking_state(metrics, internal);
+        }
         let mut scope = self.create_scope_for_event(event);
 
         // Debug statistics tracking
@@ -2443,8 +2503,10 @@ impl RhaiEngine {
         }
 
         self.update_event_from_scope(event, &scope);
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
+        if needs_tracking_sync {
+            *metrics = Self::get_thread_tracking_state();
+            *internal = Self::get_thread_internal_state();
+        }
         Ok(())
     }
 
