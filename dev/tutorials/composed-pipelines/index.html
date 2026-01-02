@@ -13,6 +13,10 @@
         <link rel="canonical" href="https://dloss.github.io/kelora/dev/tutorials/composed-pipelines/">
       
       
+        <link rel="prev" href="../configuration-and-reusability/">
+      
+      
+        <link rel="next" href="../../how-to/">
       
       
         
@@ -23,7 +27,7 @@
     
     
       
-        <title>Composed Pipelines: Building Powerful Log Analysis Workflows - Kelora</title>
+        <title>Composed Pipelines - Kelora</title>
       
     
     
@@ -117,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Composed Pipelines: Building Powerful Log Analysis Workflows
+              Composed Pipelines
             
           </span>
         </div>
@@ -266,10 +270,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../" class="md-tabs__link">
           
   
@@ -444,26 +450,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -481,7 +492,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -767,6 +778,530 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composed Pipelines
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composed Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-youll-learn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You'll Learn
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-1-time-window-isolation-error-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 1: Time Window Isolation + Error Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pattern 1: Time Window Isolation + Error Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-isolate-the-time-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Isolate the Time Section
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-filter-to-errors-extract-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Filter to Errors + Extract Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-metrics-for-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Metrics for Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-2-multiline-reconstruction-pattern-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 2: Multiline Reconstruction + Pattern Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pattern 2: Multiline Reconstruction + Pattern Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-reconstruct-stack-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Reconstruct Stack Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-parse-and-extract-error-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Parse and Extract Error Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-aggregate-with-drain-pattern-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Aggregate with Drain Pattern Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-3-service-isolation-span-based-rollup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 3: Service Isolation + Span-Based Rollup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pattern 3: Service Isolation + Span-Based Rollup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-isolate-service-and-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Isolate Service and Level
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-add-metrics-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Add Metrics Tracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-span-based-time-rollup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add Span-Based Time Rollup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-4-progressive-filtering-multi-stage-transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 4: Progressive Filtering + Multi-Stage Transformation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pattern 4: Progressive Filtering + Multi-Stage Transformation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-initial-filter-for-slow-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Initial Filter for Slow Requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-add-computed-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Add Computed Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-filter-to-critical-cases-aggregate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Filter to Critical Cases + Aggregate
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-5-format-detection-mixed-content-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 5: Format Detection + Mixed Content Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pattern 5: Format Detection + Mixed Content Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#approach-1-process-each-format-separately" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approach 1: Process Each Format Separately
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#approach-2-fallback-parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approach 2: Fallback Parsing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-6-complete-incident-analysis-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 6: Complete Incident Analysis Workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-7-export-pipeline-at-multiple-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 7: Export Pipeline at Multiple Stages
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pattern 7: Export Pipeline at Multiple Stages">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#export-filtered-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export Filtered Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-metrics-to-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export Metrics to JSON
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined-events-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combined: Events + Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-mistakes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Mistakes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips &amp; Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composition-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composition Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging Pipelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reusability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reusability
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2499,8 +3034,6 @@
 <li><strong>Aggregate</strong> with metrics and span rollups</li>
 </ol>
 <p>This tutorial shows how to compose these capabilities into complete workflows that answer complex questions.</p>
-<p><img alt="Composed Pipeline Overview" src="../images/composed-pipeline-overview.png#only-light" />
-<img alt="Composed Pipeline Overview" src="../images/composed-pipeline-overview-dark.png#only-dark" /></p>
 <h2 id="what-youll-learn">What You'll Learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Isolate log sections by time, service, or severity</li>
@@ -2548,17 +3081,19 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: line
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 6 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 6 total, 0 output, 6 filtered (100.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 1328 lines/s in 4ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 1260 lines/s in 4ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: (none found, 6 events) - 0/0 parsed (0.0%); 6 missing. Hint: Try --ts-field or --ts-format.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Keys seen: line
 </code></pre></div>
 </div>
 </div>
 </div>
-<p><strong>What to look for:</strong>
-- Event count in the window
-- Time span confirmation
-- Field availability</p>
+<p><strong>What to look for:</strong></p>
+<ul>
+<li>Event count in the window</li>
+<li>Time span confirmation</li>
+<li>Field availability</li>
+</ul>
 <h3 id="step-2-filter-to-errors-extract-structure">Step 2: Filter to Errors + Extract Structure<a class="headerlink" href="#step-2-filter-to-errors-extract-structure" title="Permanent link">&para;</a></h3>
 <p>Now parse the format and filter to errors:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command</label><label for="__tabbed_2_2">Output</label></div>
@@ -2585,11 +3120,13 @@
 </div>
 </div>
 </div>
-<p><strong>Pipeline flow:</strong>
-1. <code>--since</code>/<code>--until</code>: Isolate time window
-2. <code>--exec</code>: Parse key=value pairs from the line first
-3. <code>--filter</code>: Then keep only ERROR level (can access parsed fields)
-4. <code>-k</code>: Display specific fields</p>
+<p><strong>Pipeline flow:</strong></p>
+<ol>
+<li><code>--since</code>/<code>--until</code>: Isolate time window</li>
+<li><code>--exec</code>: Parse key=value pairs from the line first</li>
+<li><code>--filter</code>: Then keep only ERROR level (can access parsed fields)</li>
+<li><code>-k</code>: Display specific fields</li>
+</ol>
 <h3 id="step-3-add-metrics-for-summary">Step 3: Add Metrics for Summary<a class="headerlink" href="#step-3-add-metrics-for-summary" title="Permanent link">&para;</a></h3>
 <p>Combine with metrics to get error statistics:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command</label><label for="__tabbed_3_2">Output</label></div>
@@ -2655,11 +3192,13 @@
 </div>
 </div>
 </div>
-<p><strong>What's happening:</strong>
-- <code>--multiline</code>: Lines not matching the timestamp pattern are joined to the previous event
-- <code>--multiline-join=newline</code>: Preserves line breaks in the grouped stack trace
-- Stack traces become part of the error event's <code>line</code> field with formatting intact
-- Now we have complete context for each error</p>
+<p><strong>What's happening:</strong></p>
+<ul>
+<li><code>--multiline</code>: Lines not matching the timestamp pattern are joined to the previous event</li>
+<li><code>--multiline-join=newline</code>: Preserves line breaks in the grouped stack trace</li>
+<li>Stack traces become part of the error event's <code>line</code> field with formatting intact</li>
+<li>Now we have complete context for each error</li>
+</ul>
 <h3 id="step-2-parse-and-extract-error-details">Step 2: Parse and Extract Error Details<a class="headerlink" href="#step-2-parse-and-extract-error-details" title="Permanent link">&para;</a></h3>
 <p>Parse the timestamp and level from the reconstructed line, then extract error types:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Command</label><label for="__tabbed_5_2">Output</label></div>
@@ -2669,25 +3208,37 @@
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">    // Extract timestamp and level from first line</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">    let parts = e.line.substring(0, 25).split(&quot; &quot;);</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    e.timestamp = parts[0] + &quot; &quot; + parts[1];</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    e.level = parts[2];</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">    // Extract timestamp/level from the first line only</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">    let header = e.line.split(&quot;\n&quot;)[0];</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    e.timestamp = header.col(&quot;0:2&quot;); // date + time</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    e.level = header.col(&quot;2&quot;);</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    // Extract error type from stack trace</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    let lines = e.line.split(&quot;\n&quot;);</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">    e.error_summary = parts.len() &gt; 3 ? parts[3] : &quot;Unknown&quot;;</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,error_summary<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    // Extract error message from the first line</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    e.error_summary = header.col(&quot;3:&quot;);</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,error_summary<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora:<span class="w"> </span>Pipeline<span class="w"> </span>error:<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>compilation<span class="w"> </span>error
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>At<span class="w"> </span><span class="m">9</span>:39<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nb">exec</span><span class="w"> </span>script
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="m">9</span><span class="w"> </span><span class="p">|</span><span class="w">     </span>e.error_summary<span class="w"> </span><span class="o">=</span><span class="w"> </span>parts.len<span class="o">()</span><span class="w"> </span>&gt;<span class="w"> </span><span class="m">3</span><span class="w"> </span>?<span class="w"> </span>parts<span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w"> </span>:<span class="w"> </span><span class="s2">&quot;Unknown&quot;</span><span class="p">;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="p">|</span><span class="w">                                       </span>^
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>Rhai:<span class="w"> </span>Syntax<span class="w"> </span>error:<span class="w"> </span>Unknown<span class="w"> </span>operator:<span class="w"> </span><span class="s1">&#39;?&#39;</span><span class="w"> </span><span class="o">(</span>line<span class="w"> </span><span class="m">9</span>,<span class="w"> </span>position<span class="w"> </span><span class="m">39</span><span class="o">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    // Extract timestamp/level from the first line only</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    let header = e.line.split(&quot;\n&quot;)[0];</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    e.timestamp = header.col(&quot;0:2&quot;); // date + time</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    e.level = header.col(&quot;2&quot;);</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    // Extract error message from the first line</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    e.error_summary = header.col(&quot;3:&quot;);</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,error_summary<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15 10:01:00&#39; level=&#39;ERROR&#39; error_summary=&#39;Failed to process request&#39;
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15 10:02:00&#39; level=&#39;ERROR&#39; error_summary=&#39;Database connection failed&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15 10:03:00&#39; level=&#39;ERROR&#39; error_summary=&#39;Unhandled exception in worker thread&#39;
 </code></pre></div>
 </div>
 </div>
@@ -2723,11 +3274,13 @@
 </div>
 </div>
 </div>
-<p><strong>Complete workflow:</strong>
-1. Reconstruct multi-line stack traces with preserved line breaks
-2. Filter to ERROR events
-3. Extract error message from reconstructed multiline block
-4. Use drain to discover patterns</p>
+<p><strong>Complete workflow:</strong></p>
+<ol>
+<li>Reconstruct multi-line stack traces with preserved line breaks</li>
+<li>Filter to ERROR events</li>
+<li>Extract error message from reconstructed multiline block</li>
+<li>Use drain to discover patterns</li>
+</ol>
 <hr />
 <h2 id="pattern-3-service-isolation-span-based-rollup">Pattern 3: Service Isolation + Span-Based Rollup<a class="headerlink" href="#pattern-3-service-isolation-span-based-rollup" title="Permanent link">&para;</a></h2>
 <p><strong>Scenario</strong>: Analyze API errors per service with 1-minute rollups to identify problem services.</p>
@@ -2853,11 +3406,13 @@
 </div>
 </div>
 </div>
-<p><strong>Composed pipeline:</strong>
-1. Filter to specific service and level
-2. Track error metrics per event
-3. Group into 1-minute windows
-4. Emit per-minute summaries with aggregates</p>
+<p><strong>Composed pipeline:</strong></p>
+<ol>
+<li>Filter to specific service and level</li>
+<li>Track error metrics per event</li>
+<li>Group into 1-minute windows</li>
+<li>Emit per-minute summaries with aggregates</li>
+</ol>
 <hr />
 <h2 id="pattern-4-progressive-filtering-multi-stage-transformation">Pattern 4: Progressive Filtering + Multi-Stage Transformation<a class="headerlink" href="#pattern-4-progressive-filtering-multi-stage-transformation" title="Permanent link">&para;</a></h2>
 <p><strong>Scenario</strong>: Find slow API requests, enrich with computed fields, then analyze by endpoint.</p>
@@ -2989,11 +3544,13 @@
 </div>
 </div>
 </div>
-<p><strong>Multi-stage approach:</strong>
-1. First filter: Identify slow requests (&gt;1s)
-2. First exec: Classify into latency buckets
-3. Second filter: Narrow to critical cases
-4. Second exec: Track metrics on critical subset</p>
+<p><strong>Multi-stage approach:</strong></p>
+<ol>
+<li>First filter: Identify slow requests (&gt;1s)</li>
+<li>First exec: Classify into latency buckets</li>
+<li>Second filter: Narrow to critical cases</li>
+<li>Second exec: Track metrics on critical subset</li>
+</ol>
 <p>This progressive refinement lets you work with smaller datasets at each stage.</p>
 <hr />
 <h2 id="pattern-5-format-detection-mixed-content-handling">Pattern 5: Format Detection + Mixed Content Handling<a class="headerlink" href="#pattern-5-format-detection-mixed-content-handling" title="Permanent link">&para;</a></h2>
@@ -3042,29 +3599,17 @@
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-15T10:24:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-15T10:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot; || e.get_path(&quot;response_time&quot;, 0.0) &gt; 2.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="s1">    // Classify issue type</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="s1">    e.issue_type = if e.level == &quot;ERROR&quot; {</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="s1">      &quot;error&quot;</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="s1">    } else {</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="s1">      &quot;latency&quot;</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="s1">    };</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>
-<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="s1">    // Track by type and service</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="s1">    track_count(e.issue_type);</span>
-<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="s1">    track_top(&quot;service_issue&quot;, e.service + &quot;:&quot; + e.issue_type, 10);</span>
-<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="s1">    track_stats(&quot;response_time&quot;, e.get_path(&quot;response_time&quot;, 0.0));</span>
-<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="s1">    let m = span.metrics;</span>
-<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="s1">    print(`\n=== Window: ${span.start.to_iso()} ===$()`);</span>
-<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="s1">    print(`  Total issues: ${span.size}`);</span>
-<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="s1">    print(`  Errors: ${m.get_path(&quot;error&quot;, 0)}`);</span>
-<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a><span class="s1">    print(`  Latency: ${m.get_path(&quot;latency&quot;, 0)}`);</span>
-<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a><span class="s1">    print(`  Avg response: ${m.get_path(&quot;response_time_avg&quot;, 0)}s`);</span>
-<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="s1">    print(`  P95 response: ${m.get_path(&quot;response_time_p95&quot;, 0)}s`);</span>
-<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span>--exec-file<span class="w"> </span>examples/incident_workflow_exec.rhai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="s1">    let m = span.metrics;</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="s1">    print(`\n=== Window: ${span.start.to_iso()} ===$()`);</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="s1">    print(`  Total issues: ${span.size}`);</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="s1">    print(`  Errors: ${m.get_path(&quot;error&quot;, 0)}`);</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="s1">    print(`  Latency: ${m.get_path(&quot;latency&quot;, 0)}`);</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="s1">    print(`  Avg response: ${m.get_path(&quot;response_time_avg&quot;, 0)}s`);</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="s1">    print(`  P95 response: ${m.get_path(&quot;response_time_p95&quot;, 0)}s`);</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -3072,29 +3617,17 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-15T10:24:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-15T10:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot; || e.get_path(&quot;response_time&quot;, 0.0) &gt; 2.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    // Classify issue type</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    e.issue_type = if e.level == &quot;ERROR&quot; {</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">      &quot;error&quot;</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    } else {</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      &quot;latency&quot;</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    };</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">    // Track by type and service</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    track_count(e.issue_type);</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">    track_top(&quot;service_issue&quot;, e.service + &quot;:&quot; + e.issue_type, 10);</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="s1">    track_stats(&quot;response_time&quot;, e.get_path(&quot;response_time&quot;, 0.0));</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="s1">    let m = span.metrics;</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="s1">    print(`\n=== Window: ${span.start.to_iso()} ===$()`);</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="s1">    print(`  Total issues: ${span.size}`);</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="s1">    print(`  Errors: ${m.get_path(&quot;error&quot;, 0)}`);</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="s1">    print(`  Latency: ${m.get_path(&quot;latency&quot;, 0)}`);</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="s1">    print(`  Avg response: ${m.get_path(&quot;response_time_avg&quot;, 0)}s`);</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="s1">    print(`  P95 response: ${m.get_path(&quot;response_time_p95&quot;, 0)}s`);</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--exec-file<span class="w"> </span>examples/incident_workflow_exec.rhai<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    let m = span.metrics;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    print(`\n=== Window: ${span.start.to_iso()} ===$()`);</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    print(`  Total issues: ${span.size}`);</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    print(`  Errors: ${m.get_path(&quot;error&quot;, 0)}`);</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    print(`  Latency: ${m.get_path(&quot;latency&quot;, 0)}`);</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">    print(`  Avg response: ${m.get_path(&quot;response_time_avg&quot;, 0)}s`);</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    print(`  P95 response: ${m.get_path(&quot;response_time_p95&quot;, 0)}s`);</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>\n=== Window: 2025-01-15T10:22:00+00:00 ===$()
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  Total issues: 0
@@ -3165,13 +3698,15 @@
 </div>
 </div>
 </div>
-<p><strong>Complete pipeline stages:</strong>
-1. <strong>Isolation</strong>: Time window (--since/--until)
-2. <strong>Filtering</strong>: Errors or slow requests
-3. <strong>Classification</strong>: Compute issue types
-4. <strong>Metrics</strong>: Track by category and service
-5. <strong>Aggregation</strong>: 2-minute window rollups
-6. <strong>Summary</strong>: Per-window statistics</p>
+<p><strong>Complete pipeline stages:</strong></p>
+<ol>
+<li><strong>Isolation</strong>: Time window (--since/--until)</li>
+<li><strong>Filtering</strong>: Errors or slow requests</li>
+<li><strong>Classification</strong>: Compute issue types</li>
+<li><strong>Metrics</strong>: Track by category and service</li>
+<li><strong>Aggregation</strong>: 2-minute window rollups</li>
+<li><strong>Summary</strong>: Per-window statistics</li>
+</ol>
 <hr />
 <h2 id="pattern-7-export-pipeline-at-multiple-stages">Pattern 7: Export Pipeline at Multiple Stages<a class="headerlink" href="#pattern-7-export-pipeline-at-multiple-stages" title="Permanent link">&para;</a></h2>
 <p><strong>Scenario</strong>: Export filtered data for external tools while also computing local metrics.</p>
@@ -3202,10 +3737,12 @@
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>events.jsonl
 </code></pre></div>
-<p><strong>Use cases:</strong>
-- Forward events to external systems (Elasticsearch, S3)
-- Save metrics for trending/dashboards
-- Share analysis results with team</p>
+<p><strong>Use cases:</strong></p>
+<ul>
+<li>Forward events to external systems (Elasticsearch, S3)</li>
+<li>Save metrics for trending/dashboards</li>
+<li>Share analysis results with team</li>
+</ul>
 <hr />
 <h2 id="common-mistakes">Common Mistakes<a class="headerlink" href="#common-mistakes" title="Permanent link">&para;</a></h2>
 <p><strong>❌ Problem:</strong> Forgetting multiline reconstruction loses context
@@ -3315,26 +3852,12 @@
 <a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="c1"># Shows all fields and their types</span>
 </code></pre></div></p>
 <h3 id="reusability">Reusability<a class="headerlink" href="#reusability" title="Permanent link">&para;</a></h3>
-<p>Save common pipelines as shell functions:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># In ~/.bashrc or ~/.zshrc</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>kelora-errors<span class="o">()</span><span class="w"> </span><span class="o">{</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">  </span>kelora<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;); track_top(&quot;service&quot;, e.service, 10)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="w">    </span>--metrics
-<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="o">}</span>
-<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>
-<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="c1"># Usage</span>
-<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>kelora-errors<span class="w"> </span>app.log
+<p>Use Kelora's alias system for reusable pipelines:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># In .kelora.ini</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="k">[aliases]</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="na">errors = --filter &#39;e.level =</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ERROR&quot;</span><span class="na">&#39; --exec &#39;track_count(&quot;total&quot;); track_top(&quot;service&quot;, e.service, 10)&#39; --metrics</span>
 </code></pre></div>
-<p>Or use Kelora's configuration system:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># In .kelora.ini</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="k">[alias.errors]</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="na">filter = e.level =</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ERROR&quot;</span>
-<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="na">exec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">track_count(&quot;total&quot;)</span><span class="c1">; track_top(&quot;service&quot;, e.service, 10)</span>
-<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="na">metrics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span>
-</code></pre></div>
-<p>Then run: <code>kelora +errors app.log</code></p>
+<p>Then run: <code>kelora -a errors app.log</code></p>
 <hr />
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p>You've learned to compose powerful log analysis pipelines:</p>

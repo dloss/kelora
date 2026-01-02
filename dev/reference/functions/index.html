@@ -778,6 +778,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/composed-pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composed Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -7264,23 +7292,23 @@
 </code></pre></div>
 <h3 id="column-extraction">Column Extraction<a class="headerlink" href="#column-extraction" title="Permanent link">&para;</a></h3>
 <h4 id="textcolspec-separator"><code>text.col(spec [, separator])</code><a class="headerlink" href="#textcolspec-separator" title="Permanent link">&para;</a></h4>
-<p>Extract columns by index/range/list (e.g., '1', '1,3,5', '1:4').</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>e.first = e.line.col(&quot;1&quot;)                             // First column (1-indexed)
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.cols = e.line.col(&quot;1,3,5&quot;)                          // Columns 1, 3, 5
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>e.range = e.line.col(&quot;2:5&quot;, &quot;\t&quot;)                     // Columns 2-5, tab-separated
+<p>Extract columns by index/range/list (e.g., '0', '0,2,4', '1:4'). Indices are 0-based.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>e.first = e.line.col(&quot;0&quot;)                             // First column (0-indexed)
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.cols = e.line.col(&quot;0,2,4&quot;)                          // Columns 0, 2, 4
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>e.range = e.line.col(&quot;1:4&quot;, &quot;\t&quot;)                     // Columns 1-3, tab-separated
 </code></pre></div>
 <h4 id="textcolscol1-col2-col3-separator"><code>text.cols(col1, col2 [, col3, ...] [, separator])</code><a class="headerlink" href="#textcolscol1-col2-col3-separator" title="Permanent link">&para;</a></h4>
-<p>Extract multiple columns as an array. Supports up to 6 column indices (1-indexed). Returns an array of column values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Extract columns 1, 3, 5 as array
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>let values = e.line.cols(1, 3, 5)                     // [&quot;value1&quot;, &quot;value3&quot;, &quot;value5&quot;]
+<p>Extract multiple columns as an array. Supports up to 6 column indices (0-indexed). Returns an array of column values.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Extract columns 0, 2, 4 as array
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>let values = e.line.cols(0, 2, 4)                     // [&quot;value0&quot;, &quot;value2&quot;, &quot;value4&quot;]
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>e.user = values[0]
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>e.action = values[1]
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>// With custom separator
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>let data = e.line.cols(2, 4, &quot;\t&quot;)                    // Tab-separated columns
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>let data = e.line.cols(1, 3, &quot;\t&quot;)                    // Tab-separated columns
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>// Practical example: Apache log parsing
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>let parts = e.log.cols(1, 4, 7, 9)                    // IP, timestamp, path, status
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>let parts = e.log.cols(0, 3, 6, 8)                    // IP, timestamp, path, status
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>e.ip = parts[0]
 <a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>e.timestamp = parts[1]
 <a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>e.path = parts[2]
