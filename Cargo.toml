@@ -100,3 +100,8 @@ proptest = "1.5"  # Property-based testing for fuzzing parser edge cases
 name = "micro_search"
 path = "benchmarks/bench_micro_search.rs"
 harness = false
+
+[[bench]]
+name = "rhai_startup"
+path = "benchmarks/bench_rhai_startup.rs"
+harness = false
