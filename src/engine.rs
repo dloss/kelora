@@ -1,7 +1,7 @@
 #![allow(dead_code)] // Debugging/tracing scaffolding kept for verbose dev builds and future CLI toggles
 use anyhow::Result;
 use indexmap::IndexMap;
-use rhai::{Dynamic, Engine, EvalAltResult, Expr, FnCallExpr, Scope, Stmt, Token, AST};
+use rhai::{BinaryExpr, Dynamic, Engine, EvalAltResult, Expr, FnCallExpr, Scope, Stmt, Token, AST};
 use std::collections::HashMap;
 
 use rhai::debugger::{DebuggerCommand, DebuggerEvent};
@@ -951,6 +951,21 @@ enum NativeNode {
         lhs: NativeValueExpr,
         rhs: NativeValueExpr,
     },
+    /// String method calls like e.field.contains("x")
+    StringMethod {
+        op: StringOp,
+        /// The string value to operate on (e.g., e.message)
+        target: NativeValueExpr,
+        /// The argument (e.g., "error" in contains("error"))
+        arg: NativeValueExpr,
+    },
+}
+
+#[derive(Clone, Copy)]
+enum StringOp {
+    Contains,
+    StartsWith,
+    EndsWith,
 }
 
 #[derive(Clone)]
@@ -1073,8 +1088,63 @@ fn parse_native_node(expr: &Expr) -> Option<NativeNode> {
         Expr::BoolConstant(value, _) => Some(NativeNode::Value(NativeValueExpr::Literal(
             NativeValue::Bool(*value),
         ))),
+        // Handle method calls like e.message.contains("error")
+        Expr::Dot(binary, _, _) => parse_string_method(binary),
         _ => parse_value_expr(expr).map(NativeNode::Value),
     }
+}
+
+/// Parse string method calls like e.field.contains("pattern")
+/// AST structure for `e.level.starts_with("ERR")`:
+/// Dot { lhs: Variable(e), rhs: Dot { lhs: Property(level), rhs: MethodCall(...) } }
+fn parse_string_method(binary: &BinaryExpr) -> Option<NativeNode> {
+    // For e.field.method(arg), the structure is:
+    // Dot { lhs: Variable(e), rhs: Dot { lhs: Property(field), rhs: MethodCall } }
+    // We need to find the innermost Dot that has a MethodCall as rhs
+
+    // Try to extract method call info by walking the Dot chain
+    let (field_path, method_name, arg) = extract_method_call(binary)?;
+
+    // Map method name to operation
+    let op = match method_name.as_str() {
+        "contains" => StringOp::Contains,
+        "starts_with" => StringOp::StartsWith,
+        "ends_with" => StringOp::EndsWith,
+        _ => return None,
+    };
+
+    let target = NativeValueExpr::Field(field_path);
+    Some(NativeNode::StringMethod { op, target, arg })
+}
+
+/// Extract method call info from a Dot expression chain
+/// Returns (field_path, method_name, arg) if successful
+fn extract_method_call(binary: &BinaryExpr) -> Option<(String, String, NativeValueExpr)> {
+    // Check if this is a direct method call: Dot { lhs: field_expr, rhs: MethodCall }
+    if let Expr::MethodCall(call, _) = &binary.rhs {
+        if call.args.len() == 1 {
+            let arg = parse_value_expr(&call.args[0])?;
+            let field_path = extract_field_path(&binary.lhs)?;
+            return Some((field_path, call.name.to_string(), arg));
+        }
+    }
+
+    // Check if rhs is another Dot containing a MethodCall
+    if let Expr::Dot(inner_binary, _, _) = &binary.rhs {
+        // Recursively check the inner Dot
+        if let Some((mut path, method, arg)) = extract_method_call(inner_binary) {
+            // Prepend the lhs field to the path
+            let lhs_path = extract_field_path(&binary.lhs)?;
+            if path.is_empty() {
+                path = lhs_path;
+            } else if !lhs_path.is_empty() {
+                path = format!("{}.{}", lhs_path, path);
+            }
+            return Some((path, method, arg));
+        }
+    }
+
+    None
 }
 
 fn parse_compare_node(op: CompareOp, call: &FnCallExpr) -> Option<NativeNode> {
@@ -1184,6 +1254,23 @@ fn eval_native_node(node: &NativeNode, event: &Event) -> Option<bool> {
             let lhs_val = eval_value_expr(lhs, event)?;
             let rhs_val = eval_value_expr(rhs, event)?;
             compare_values(&lhs_val, &rhs_val, *op)
+        }
+        NativeNode::StringMethod { op, target, arg } => {
+            let target_val = eval_value_expr(target, event)?;
+            let arg_val = eval_value_expr(arg, event)?;
+
+            // Both must be strings
+            let (target_str, arg_str) = match (&target_val, &arg_val) {
+                (NativeValue::Str(t), NativeValue::Str(a)) => (t.as_str(), a.as_str()),
+                _ => return None,
+            };
+
+            let result = match op {
+                StringOp::Contains => target_str.contains(arg_str),
+                StringOp::StartsWith => target_str.starts_with(arg_str),
+                StringOp::EndsWith => target_str.ends_with(arg_str),
+            };
+            Some(result)
         }
     }
 }
@@ -1993,6 +2080,11 @@ impl RhaiEngine {
 
     pub fn get_execution_tracer(&self) -> &Option<ExecutionTracer> {
         &self.execution_tracer
+    }
+
+    /// Get the compiled filters (for benchmarking)
+    pub fn compiled_filters(&self) -> &[CompiledExpression] {
+        &self.compiled_filters
     }
 
     pub fn set_state_available(&mut self, available: bool) {
@@ -3200,13 +3292,103 @@ mod tests {
     }
 
     #[test]
-    fn native_filter_skips_function_calls() {
+    fn native_filter_handles_string_methods() {
         let mut engine = RhaiEngine::new();
+
+        // String methods now have native predicate support
+        let compiled = engine
+            .compile_filter("e.level.starts_with(\"ERR\")")
+            .expect("filter should compile");
+        assert!(
+            compiled.native_predicate.is_some(),
+            "starts_with should have native predicate"
+        );
+
+        // Test contains
+        let compiled = engine
+            .compile_filter("e.message.contains(\"error\")")
+            .expect("filter should compile");
+        assert!(
+            compiled.native_predicate.is_some(),
+            "contains should have native predicate"
+        );
+
+        // Test ends_with
+        let compiled = engine
+            .compile_filter("e.path.ends_with(\".log\")")
+            .expect("filter should compile");
+        assert!(
+            compiled.native_predicate.is_some(),
+            "ends_with should have native predicate"
+        );
+
+        // Unsupported methods should still fall back to Rhai
+        let compiled = engine
+            .compile_filter("e.message.to_upper()")
+            .expect("filter should compile");
+        assert!(
+            compiled.native_predicate.is_none(),
+            "to_upper should NOT have native predicate"
+        );
+    }
+
+    #[test]
+    fn native_string_methods_evaluate_correctly() {
+        let mut engine = RhaiEngine::new();
+
+        // Test starts_with
         let compiled = engine
             .compile_filter("e.level.starts_with(\"ERR\")")
             .expect("filter should compile");
 
-        assert!(compiled.native_predicate.is_none());
+        let mut event = build_event_with_line("test");
+        event.set_field("level".to_string(), Dynamic::from("ERROR"));
+        let mut metrics = HashMap::new();
+        let mut internal = HashMap::new();
+        let result = engine
+            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .expect("native filter should succeed");
+        assert!(result, "ERROR should start with ERR");
+
+        event.set_field("level".to_string(), Dynamic::from("WARNING"));
+        let result = engine
+            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .expect("native filter should succeed");
+        assert!(!result, "WARNING should not start with ERR");
+
+        // Test contains
+        let compiled = engine
+            .compile_filter("e.message.contains(\"fail\")")
+            .expect("filter should compile");
+
+        event.set_field("message".to_string(), Dynamic::from("connection failed"));
+        let result = engine
+            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .expect("native filter should succeed");
+        assert!(result, "'connection failed' should contain 'fail'");
+
+        event.set_field("message".to_string(), Dynamic::from("success"));
+        let result = engine
+            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .expect("native filter should succeed");
+        assert!(!result, "'success' should not contain 'fail'");
+
+        // Test ends_with
+        let compiled = engine
+            .compile_filter("e.path.ends_with(\".log\")")
+            .expect("filter should compile");
+
+        event.set_field("path".to_string(), Dynamic::from("/var/log/app.log"));
+        let result = engine
+            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .expect("native filter should succeed");
+        assert!(result, "'/var/log/app.log' should end with '.log'");
+
+        event.set_field("path".to_string(), Dynamic::from("/var/log/app.txt"));
+        let result = engine
+            .execute_compiled_filter(&compiled, &event, &mut metrics, &mut internal)
+            .expect("native filter should succeed");
+        assert!(!result, "'/var/log/app.txt' should not end with '.log'");
     }
 
     #[test]

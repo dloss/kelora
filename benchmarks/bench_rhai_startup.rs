@@ -12,10 +12,19 @@ fn make_test_event() -> Event {
     event.line_num = Some(1);
     event.filename = Some("/var/log/app.log".to_string());
     event.fields.insert("level".into(), Dynamic::from("INFO"));
-    event.fields.insert("message".into(), Dynamic::from("User login successful"));
-    event.fields.insert("user_id".into(), Dynamic::from(12345_i64));
-    event.fields.insert("session_id".into(), Dynamic::from("abc-def-123"));
-    event.fields.insert("timestamp".into(), Dynamic::from("2024-01-15T10:30:45.123Z"));
+    event
+        .fields
+        .insert("message".into(), Dynamic::from("User login successful"));
+    event
+        .fields
+        .insert("user_id".into(), Dynamic::from(12345_i64));
+    event
+        .fields
+        .insert("session_id".into(), Dynamic::from("abc-def-123"));
+    event.fields.insert(
+        "timestamp".into(),
+        Dynamic::from("2024-01-15T10:30:45.123Z"),
+    );
     event.fields.insert("logger".into(), Dynamic::from("main"));
     event
 }
@@ -24,7 +33,9 @@ fn make_test_event() -> Event {
 fn make_large_event() -> Event {
     let mut event = make_test_event();
     for i in 0..50 {
-        event.fields.insert(format!("field_{}", i).into(), Dynamic::from(i as i64));
+        event
+            .fields
+            .insert(format!("field_{}", i), Dynamic::from(i as i64));
     }
     event
 }
@@ -296,16 +307,20 @@ fn bench_eval_simple_filter(c: &mut Criterion) {
     c.bench_function("eval_simple_filter", |b| {
         b.iter(|| {
             let mut scope = scope_template.clone();
-            black_box(engine.eval_ast_with_scope::<bool>(&mut scope, &ast).unwrap());
+            black_box(
+                engine
+                    .eval_ast_with_scope::<bool>(&mut scope, &ast)
+                    .unwrap(),
+            );
         });
     });
 }
 
 fn bench_eval_complex_filter(c: &mut Criterion) {
     let engine = Engine::new();
-    let ast = engine.compile_expression(
-        r#"e.level == "ERROR" || (e.level == "WARN" && e.user_id > 1000)"#
-    ).unwrap();
+    let ast = engine
+        .compile_expression(r#"e.level == "ERROR" || (e.level == "WARN" && e.user_id > 1000)"#)
+        .unwrap();
 
     let mut scope_template = Scope::new();
     scope_template.push("line", "test line");
@@ -317,16 +332,20 @@ fn bench_eval_complex_filter(c: &mut Criterion) {
     c.bench_function("eval_complex_filter", |b| {
         b.iter(|| {
             let mut scope = scope_template.clone();
-            black_box(engine.eval_ast_with_scope::<bool>(&mut scope, &ast).unwrap());
+            black_box(
+                engine
+                    .eval_ast_with_scope::<bool>(&mut scope, &ast)
+                    .unwrap(),
+            );
         });
     });
 }
 
 fn bench_eval_with_string_method(c: &mut Criterion) {
     let engine = Engine::new();
-    let ast = engine.compile_expression(
-        r#"e.message.contains("error") || e.message.starts_with("FATAL")"#
-    ).unwrap();
+    let ast = engine
+        .compile_expression(r#"e.message.contains("error") || e.message.starts_with("FATAL")"#)
+        .unwrap();
 
     let mut scope_template = Scope::new();
     scope_template.push("line", "test line");
@@ -337,7 +356,11 @@ fn bench_eval_with_string_method(c: &mut Criterion) {
     c.bench_function("eval_with_string_method", |b| {
         b.iter(|| {
             let mut scope = scope_template.clone();
-            black_box(engine.eval_ast_with_scope::<bool>(&mut scope, &ast).unwrap());
+            black_box(
+                engine
+                    .eval_ast_with_scope::<bool>(&mut scope, &ast)
+                    .unwrap(),
+            );
         });
     });
 }
@@ -369,7 +392,11 @@ fn bench_e2e_filter_simple(c: &mut Criterion) {
             }
             scope.set_value("e", event_map);
 
-            black_box(engine.eval_ast_with_scope::<bool>(&mut scope, &ast).unwrap());
+            black_box(
+                engine
+                    .eval_ast_with_scope::<bool>(&mut scope, &ast)
+                    .unwrap(),
+            );
         });
     });
 }
@@ -443,7 +470,11 @@ fn bench_breakdown_eval_only(c: &mut Criterion) {
         b.iter(|| {
             // Just clone and eval - minimal scope work
             let mut scope = scope_template.clone();
-            black_box(engine.eval_ast_with_scope::<bool>(&mut scope, &ast).unwrap());
+            black_box(
+                engine
+                    .eval_ast_with_scope::<bool>(&mut scope, &ast)
+                    .unwrap(),
+            );
         });
     });
 }
@@ -456,7 +487,7 @@ fn bench_dynamic_clone_string(c: &mut Criterion) {
     let d = Dynamic::from("This is a typical log message content here");
     c.bench_function("dynamic_clone_string", |b| {
         b.iter(|| {
-            black_box(d.clone());
+            let _ = black_box(d.clone());
         });
     });
 }
@@ -465,7 +496,7 @@ fn bench_dynamic_clone_int(c: &mut Criterion) {
     let d = Dynamic::from(12345_i64);
     c.bench_function("dynamic_clone_int", |b| {
         b.iter(|| {
-            black_box(d.clone());
+            let _ = black_box(d.clone());
         });
     });
 }
@@ -479,7 +510,7 @@ fn bench_dynamic_clone_map(c: &mut Criterion) {
     let d = Dynamic::from(map);
     c.bench_function("dynamic_clone_map", |b| {
         b.iter(|| {
-            black_box(d.clone());
+            let _ = black_box(d.clone());
         });
     });
 }
@@ -543,6 +574,101 @@ criterion_group!(
     bench_dynamic_clone_map,
 );
 
+// =============================================================================
+// Native predicate benchmarks - compare native vs Rhai evaluation
+// =============================================================================
+
+fn bench_native_predicate_simple_eq(c: &mut Criterion) {
+    // Test native predicate for simple equality: e.level == "ERROR"
+    let mut rhai_engine = RhaiEngine::new();
+    let filter = rhai_engine.compile_filter(r#"e.level == "ERROR""#).unwrap();
+    let event = make_test_event();
+
+    c.bench_function("native_predicate_simple_eq", |b| {
+        b.iter(|| {
+            // This uses native predicate path (bypasses Rhai)
+            let mut metrics = std::collections::HashMap::new();
+            let mut internal = std::collections::HashMap::new();
+            black_box(
+                rhai_engine
+                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .unwrap(),
+            );
+        });
+    });
+}
+
+fn bench_native_predicate_string_contains(c: &mut Criterion) {
+    // Test native predicate for string method: e.message.contains("login")
+    let mut rhai_engine = RhaiEngine::new();
+    let filter = rhai_engine
+        .compile_filter(r#"e.message.contains("login")"#)
+        .unwrap();
+    let event = make_test_event();
+
+    c.bench_function("native_predicate_string_contains", |b| {
+        b.iter(|| {
+            let mut metrics = std::collections::HashMap::new();
+            let mut internal = std::collections::HashMap::new();
+            black_box(
+                rhai_engine
+                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .unwrap(),
+            );
+        });
+    });
+}
+
+fn bench_native_predicate_string_starts_with(c: &mut Criterion) {
+    // Test native predicate for starts_with: e.message.starts_with("User")
+    let mut rhai_engine = RhaiEngine::new();
+    let filter = rhai_engine
+        .compile_filter(r#"e.message.starts_with("User")"#)
+        .unwrap();
+    let event = make_test_event();
+
+    c.bench_function("native_predicate_string_starts_with", |b| {
+        b.iter(|| {
+            let mut metrics = std::collections::HashMap::new();
+            let mut internal = std::collections::HashMap::new();
+            black_box(
+                rhai_engine
+                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .unwrap(),
+            );
+        });
+    });
+}
+
+fn bench_native_predicate_combined(c: &mut Criterion) {
+    // Test combined: e.level == "INFO" && e.message.contains("login")
+    let mut rhai_engine = RhaiEngine::new();
+    let filter = rhai_engine
+        .compile_filter(r#"e.level == "INFO" && e.message.contains("login")"#)
+        .unwrap();
+    let event = make_test_event();
+
+    c.bench_function("native_predicate_combined", |b| {
+        b.iter(|| {
+            let mut metrics = std::collections::HashMap::new();
+            let mut internal = std::collections::HashMap::new();
+            black_box(
+                rhai_engine
+                    .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                    .unwrap(),
+            );
+        });
+    });
+}
+
+criterion_group!(
+    native_predicate_benches,
+    bench_native_predicate_simple_eq,
+    bench_native_predicate_string_contains,
+    bench_native_predicate_string_starts_with,
+    bench_native_predicate_combined,
+);
+
 criterion_main!(
     startup_benches,
     compilation_benches,
@@ -551,5 +677,6 @@ criterion_main!(
     eval_benches,
     e2e_benches,
     breakdown_benches,
-    dynamic_benches
+    dynamic_benches,
+    native_predicate_benches
 );
