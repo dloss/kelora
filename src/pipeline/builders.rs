@@ -1179,7 +1179,8 @@ pub fn create_pipeline_builder_from_config(
         other => (other.clone(), None),
     };
 
-    let drain_field = if config.output.drain && config.output.keys.len() == 1 {
+    let drain_enabled = config.output.drain.is_some();
+    let drain_field = if drain_enabled && config.output.keys.len() == 1 {
         Some(config.output.keys[0].clone())
     } else {
         None
@@ -1191,7 +1192,7 @@ pub fn create_pipeline_builder_from_config(
         .with_end(config.processing.end.clone())
         .with_input_format(input_format)
         .with_output_format(config.output.format.clone().into())
-        .with_drain(config.output.drain, drain_field)
+        .with_drain(drain_enabled, drain_field)
         .with_cols_spec(cols_spec)
         .with_cols_sep(config.input.cols_sep.clone());
     builder.keys = config.output.get_effective_keys();

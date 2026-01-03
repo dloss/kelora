@@ -60,6 +60,13 @@ pub enum StatsFormat {
     Json,
 }
 
+#[derive(clap::ValueEnum, Clone, Debug, Default)]
+pub enum DrainFormat {
+    #[default]
+    Table,
+    Json,
+}
+
 #[derive(clap::ValueEnum, Clone, Copy, Debug)]
 pub enum ShellCompletion {
     Bash,
@@ -591,10 +598,15 @@ pub struct Cli {
     /// Summarize log templates using Drain (summary-only, requires --keys with exactly one field).
     #[arg(
         long = "drain",
+        value_enum,
+        value_name = "FORMAT",
+        require_equals = true,
+        num_args = 0..=1,
+        default_missing_value = "table",
         help_heading = "Metrics and Stats",
-        help = "Summarize log templates using Drain (summary-only; requires --keys with exactly one field; sequential mode only)."
+        help = "Summarize log templates using Drain (summary-only; requires --keys with exactly one field; sequential mode only).\n\nFormats: table (default), json\n\nExamples:\n  --drain          Default table format\n  --drain=json     JSON output for scripting"
     )]
-    pub drain: bool,
+    pub drain: Option<DrainFormat>,
 
     /// Specify custom configuration file path
     #[arg(long = "config-file", help_heading = "Configuration Options")]

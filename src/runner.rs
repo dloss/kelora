@@ -64,7 +64,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
 
     let use_parallel = config.should_use_parallel();
 
-    if use_parallel && config.output.drain {
+    if use_parallel && config.output.drain.is_some() {
         return Err(anyhow::anyhow!(
             "--drain summary is not supported with --parallel or thread overrides"
         ));

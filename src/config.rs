@@ -54,7 +54,7 @@ pub struct OutputConfig {
     pub metrics: Option<crate::cli::MetricsFormat>,
     pub metrics_with_events: bool,
     pub metrics_file: Option<String>,
-    pub drain: bool,
+    pub drain: Option<crate::cli::DrainFormat>,
     pub mark_gaps: Option<chrono::Duration>,
     /// Timestamp formatting configuration (display-only)
     pub timestamp_formatting: TimestampFormatConfig,
@@ -777,7 +777,7 @@ impl KeloraConfig {
         };
         let metrics_with_events = cli.with_metrics;
         let suppress_events_for_metrics = metrics_format.is_some() && !metrics_with_events;
-        let suppress_events_for_drain = cli.drain;
+        let suppress_events_for_drain = cli.drain.is_some();
 
         // Combine suppressions from stats/metrics data-only modes
         if suppress_events_for_stats || suppress_events_for_metrics || suppress_events_for_drain {
@@ -860,7 +860,7 @@ impl KeloraConfig {
                 metrics: metrics_format,
                 metrics_with_events,
                 metrics_file,
-                drain: cli.drain,
+                drain: cli.drain.clone(),
                 mark_gaps: None,
                 timestamp_formatting: create_timestamp_format_config(cli, default_timezone.clone()),
             },
@@ -957,7 +957,7 @@ impl Default for KeloraConfig {
                 metrics: None,
                 metrics_with_events: false,
                 metrics_file: None,
-                drain: false,
+                drain: None,
                 mark_gaps: None,
                 timestamp_formatting: TimestampFormatConfig::default(),
             },

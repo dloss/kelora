@@ -308,7 +308,9 @@ pub fn drain_templates() -> Vec<DrainTemplate> {
     })
 }
 
-pub fn format_templates_output(templates: &[DrainTemplate]) -> String {
+/// Format templates for table output
+/// When verbose > 0, includes sample lines for each template
+pub fn format_templates_output(templates: &[DrainTemplate], verbose: u8) -> String {
     if templates.is_empty() {
         return "No templates found".to_string();
     }
@@ -342,8 +344,8 @@ pub fn format_templates_output(templates: &[DrainTemplate]) -> String {
             width = max_count_width
         ));
 
-        // Add sample on next line, indented and truncated
-        if !template.sample.is_empty() {
+        // Add sample on next line when verbose
+        if verbose > 0 && !template.sample.is_empty() {
             let sample = truncate_sample(&template.sample, 80);
             output.push_str(&format!(
                 "  {:>width$}  e.g. \"{}\"\n",
@@ -355,6 +357,29 @@ pub fn format_templates_output(templates: &[DrainTemplate]) -> String {
     }
 
     output.trim_end().to_string()
+}
+
+/// Format templates as JSON array
+pub fn format_templates_json(templates: &[DrainTemplate]) -> String {
+    let json_templates: Vec<serde_json::Value> = templates
+        .iter()
+        .map(|t| {
+            let mut obj = serde_json::json!({
+                "template": t.template,
+                "template_id": t.template_id,
+                "count": t.count,
+                "sample": t.sample,
+            });
+            if let Some(first) = t.first_line {
+                obj["first_line"] = serde_json::json!(first);
+            }
+            if let Some(last) = t.last_line {
+                obj["last_line"] = serde_json::json!(last);
+            }
+            obj
+        })
+        .collect();
+    serde_json::to_string_pretty(&json_templates).unwrap_or_else(|_| "[]".to_string())
 }
 
 /// Truncate a sample string for display, adding ellipsis if needed
@@ -462,7 +487,7 @@ mod tests {
     }
 
     #[test]
-    fn formats_templates_output_with_metadata() {
+    fn formats_templates_output_default() {
         let template1_id = generate_template_id("a <*> b");
         let template2_id = generate_template_id("x y z");
         let templates = vec![
@@ -483,13 +508,47 @@ mod tests {
                 last_line: Some(50),
             },
         ];
-        let output = format_templates_output(&templates);
+        // Default (verbose=0): no samples shown
+        let output = format_templates_output(&templates, 0);
         assert!(output.starts_with("templates (2 items):"));
         assert!(output.contains(&format!("[{}]", template1_id)));
         assert!(output.contains("L1-100")); // Line range for first template
         assert!(output.contains("L50")); // Single line for second template
-        assert!(output.contains("e.g. \"a 123 b\"")); // Sample for first
-        assert!(output.contains("e.g. \"x y z\"")); // Sample for second
+        assert!(!output.contains("e.g.")); // No samples in default mode
+    }
+
+    #[test]
+    fn formats_templates_output_verbose() {
+        let template1_id = generate_template_id("a <*> b");
+        let templates = vec![DrainTemplate {
+            template: "a <*> b".to_string(),
+            template_id: template1_id.clone(),
+            count: 3,
+            sample: "a 123 b".to_string(),
+            first_line: Some(1),
+            last_line: Some(100),
+        }];
+        // Verbose mode: samples shown
+        let output = format_templates_output(&templates, 1);
+        assert!(output.contains("e.g. \"a 123 b\""));
+    }
+
+    #[test]
+    fn formats_templates_json() {
+        let templates = vec![DrainTemplate {
+            template: "error <ipv4>".to_string(),
+            template_id: generate_template_id("error <ipv4>"),
+            count: 5,
+            sample: "error 192.168.1.1".to_string(),
+            first_line: Some(10),
+            last_line: Some(50),
+        }];
+        let json = format_templates_json(&templates);
+        assert!(json.contains("\"template\": \"error <ipv4>\""));
+        assert!(json.contains("\"count\": 5"));
+        assert!(json.contains("\"sample\": \"error 192.168.1.1\""));
+        assert!(json.contains("\"first_line\": 10"));
+        assert!(json.contains("\"last_line\": 50"));
     }
 
     #[test]
