@@ -2,6 +2,7 @@ use drain_rs::DrainTree;
 use grok::Grok;
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -42,6 +43,9 @@ pub struct DrainTemplate {
     pub template: String,
     pub template_id: String,
     pub count: usize,
+    pub sample: String,
+    pub first_line: Option<usize>,
+    pub last_line: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,12 +54,25 @@ pub struct DrainResult {
     pub template_id: String,
     pub count: usize,
     pub is_new: bool,
+    pub sample: String,
+    pub first_line: Option<usize>,
+    pub last_line: Option<usize>,
+}
+
+/// Metadata tracked per template (sample, first/last line numbers)
+#[derive(Debug, Clone)]
+struct TemplateMetadata {
+    sample: String,
+    first_line: Option<usize>,
+    last_line: Option<usize>,
 }
 
 #[derive(Debug)]
 struct DrainState {
     config: DrainConfig,
     tree: DrainTree,
+    /// Metadata tracked per template_id
+    metadata: HashMap<String, TemplateMetadata>,
 }
 
 impl DrainState {
@@ -73,10 +90,14 @@ impl DrainState {
             .min_similarity(config.similarity as f32)
             .filter_patterns(filter_patterns)
             .build_patterns(&mut grok);
-        Self { config, tree }
+        Self {
+            config,
+            tree,
+            metadata: HashMap::new(),
+        }
     }
 
-    fn ingest(&mut self, text: &str) -> Result<DrainResult, String> {
+    fn ingest(&mut self, text: &str, line_num: Option<usize>) -> Result<DrainResult, String> {
         let cluster = self
             .tree
             .add_log_line(text)
@@ -84,11 +105,31 @@ impl DrainState {
         let count = usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX);
         let template = cluster.as_string();
         let template_id = generate_template_id(&template);
+        let is_new = count == 1;
+
+        // Update or create metadata for this template
+        let meta = self
+            .metadata
+            .entry(template_id.clone())
+            .or_insert_with(|| TemplateMetadata {
+                sample: text.to_string(),
+                first_line: line_num,
+                last_line: line_num,
+            });
+
+        // Update last_line if we have a line number
+        if let Some(ln) = line_num {
+            meta.last_line = Some(ln);
+        }
+
         Ok(DrainResult {
             template,
             template_id,
             count,
-            is_new: count == 1,
+            is_new,
+            sample: meta.sample.clone(),
+            first_line: meta.first_line,
+            last_line: meta.last_line,
         })
     }
 
@@ -100,10 +141,14 @@ impl DrainState {
             .map(|cluster| {
                 let template = cluster.as_string();
                 let template_id = generate_template_id(&template);
+                let meta = self.metadata.get(&template_id);
                 DrainTemplate {
                     template,
                     template_id,
                     count: usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX),
+                    sample: meta.map(|m| m.sample.clone()).unwrap_or_default(),
+                    first_line: meta.and_then(|m| m.first_line),
+                    last_line: meta.and_then(|m| m.last_line),
                 }
             })
             .collect();
@@ -226,7 +271,11 @@ pub fn reset() {
     });
 }
 
-pub fn drain_template(text: &str, config: Option<DrainConfig>) -> Result<DrainResult, String> {
+pub fn drain_template(
+    text: &str,
+    config: Option<DrainConfig>,
+    line_num: Option<usize>,
+) -> Result<DrainResult, String> {
     DRAIN_STATE.with(|state| {
         let mut state = state.borrow_mut();
         match (state.as_ref(), &config) {
@@ -248,7 +297,7 @@ pub fn drain_template(text: &str, config: Option<DrainConfig>) -> Result<DrainRe
         let drain = state
             .as_mut()
             .ok_or_else(|| "Drain state not initialized".to_string())?;
-        drain.ingest(text)
+        drain.ingest(text, line_num)
     })
 }
 
@@ -275,16 +324,47 @@ pub fn format_templates_output(templates: &[DrainTemplate]) -> String {
         .unwrap_or(1);
 
     for template in templates {
+        // Format line range if available
+        let line_info = match (template.first_line, template.last_line) {
+            (Some(first), Some(last)) if first == last => format!(" L{}", first),
+            (Some(first), Some(last)) => format!(" L{}-{}", first, last),
+            (Some(first), None) => format!(" L{}", first),
+            (None, Some(last)) => format!(" L{}", last),
+            (None, None) => String::new(),
+        };
+
         output.push_str(&format!(
-            "  {:>width$}: [{}] {}\n",
+            "  {:>width$}: [{}]{} {}\n",
             template.count,
             template.template_id,
+            line_info,
             template.template,
             width = max_count_width
         ));
+
+        // Add sample on next line, indented and truncated
+        if !template.sample.is_empty() {
+            let sample = truncate_sample(&template.sample, 80);
+            output.push_str(&format!(
+                "  {:>width$}  e.g. \"{}\"\n",
+                "",
+                sample,
+                width = max_count_width
+            ));
+        }
     }
 
     output.trim_end().to_string()
+}
+
+/// Truncate a sample string for display, adding ellipsis if needed
+fn truncate_sample(s: &str, max_len: usize) -> String {
+    let s = s.replace('\n', "\\n").replace('\r', "\\r");
+    if s.len() <= max_len {
+        s
+    } else {
+        format!("{}...", &s[..max_len.saturating_sub(3)])
+    }
 }
 
 #[cfg(test)]
@@ -295,16 +375,64 @@ mod tests {
     fn clusters_similar_lines() {
         let mut drain = DrainState::new(DrainConfig::default());
         let a = drain
-            .ingest("failed to connect to 10.0.0.1")
+            .ingest("failed to connect to 10.0.0.1", Some(1))
             .expect("first ingest");
         let b = drain
-            .ingest("failed to connect to 10.0.0.2")
+            .ingest("failed to connect to 10.0.0.2", Some(5))
             .expect("second ingest");
 
         assert_eq!(a.template, "failed to connect to <ipv4>");
         assert_eq!(b.template, "failed to connect to <ipv4>");
         assert_eq!(a.template_id, b.template_id);
         assert_eq!(b.count, 2);
+    }
+
+    #[test]
+    fn tracks_sample_and_line_numbers() {
+        let mut drain = DrainState::new(DrainConfig::default());
+
+        // First occurrence at line 10
+        let a = drain
+            .ingest("error connecting to 192.168.1.1", Some(10))
+            .expect("first ingest");
+        assert!(a.is_new);
+        assert_eq!(a.sample, "error connecting to 192.168.1.1");
+        assert_eq!(a.first_line, Some(10));
+        assert_eq!(a.last_line, Some(10));
+
+        // Second occurrence at line 25
+        let b = drain
+            .ingest("error connecting to 192.168.1.2", Some(25))
+            .expect("second ingest");
+        assert!(!b.is_new);
+        assert_eq!(b.sample, "error connecting to 192.168.1.1"); // Still first sample
+        assert_eq!(b.first_line, Some(10)); // First line unchanged
+        assert_eq!(b.last_line, Some(25)); // Last line updated
+
+        // Check templates() includes metadata
+        let templates = drain.templates();
+        assert_eq!(templates.len(), 1);
+        assert_eq!(templates[0].sample, "error connecting to 192.168.1.1");
+        assert_eq!(templates[0].first_line, Some(10));
+        assert_eq!(templates[0].last_line, Some(25));
+    }
+
+    #[test]
+    fn handles_missing_line_numbers() {
+        let mut drain = DrainState::new(DrainConfig::default());
+
+        let a = drain
+            .ingest("test message 123", None)
+            .expect("first ingest");
+        assert_eq!(a.sample, "test message 123");
+        assert_eq!(a.first_line, None);
+        assert_eq!(a.last_line, None);
+
+        let b = drain
+            .ingest("test message 456", Some(50))
+            .expect("second ingest");
+        assert_eq!(b.first_line, None); // First line stays None
+        assert_eq!(b.last_line, Some(50)); // Last line gets updated
     }
 
     #[test]
@@ -334,7 +462,7 @@ mod tests {
     }
 
     #[test]
-    fn formats_templates_output() {
+    fn formats_templates_output_with_metadata() {
         let template1_id = generate_template_id("a <*> b");
         let template2_id = generate_template_id("x y z");
         let templates = vec![
@@ -342,16 +470,43 @@ mod tests {
                 template: "a <*> b".to_string(),
                 template_id: template1_id.clone(),
                 count: 3,
+                sample: "a 123 b".to_string(),
+                first_line: Some(1),
+                last_line: Some(100),
             },
             DrainTemplate {
                 template: "x y z".to_string(),
                 template_id: template2_id.clone(),
                 count: 1,
+                sample: "x y z".to_string(),
+                first_line: Some(50),
+                last_line: Some(50),
             },
         ];
         let output = format_templates_output(&templates);
         assert!(output.starts_with("templates (2 items):"));
-        assert!(output.contains(&format!("[{}] a <*> b", template1_id)));
-        assert!(output.contains(&format!("[{}] x y z", template2_id)));
+        assert!(output.contains(&format!("[{}]", template1_id)));
+        assert!(output.contains("L1-100")); // Line range for first template
+        assert!(output.contains("L50")); // Single line for second template
+        assert!(output.contains("e.g. \"a 123 b\"")); // Sample for first
+        assert!(output.contains("e.g. \"x y z\"")); // Sample for second
+    }
+
+    #[test]
+    fn truncates_long_samples() {
+        let long_sample = "a".repeat(200);
+        let truncated = truncate_sample(&long_sample, 80);
+        assert!(truncated.len() <= 80);
+        assert!(truncated.ends_with("..."));
+    }
+
+    #[test]
+    fn escapes_newlines_in_samples() {
+        let sample_with_newlines = "line1\nline2\r\nline3";
+        let escaped = truncate_sample(sample_with_newlines, 100);
+        assert!(!escaped.contains('\n'));
+        assert!(!escaped.contains('\r'));
+        assert!(escaped.contains("\\n"));
+        assert!(escaped.contains("\\r"));
     }
 }

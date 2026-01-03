@@ -907,7 +907,7 @@ impl ScriptStage for DrainStage {
             };
 
             if !text.is_empty() {
-                if let Err(err) = crate::drain::drain_template(&text, None) {
+                if let Err(err) = crate::drain::drain_template(&text, None, event.line_num) {
                     return ScriptResult::Error(err);
                 }
             }

@@ -224,12 +224,13 @@ window.pluck(field)                  Extract field values from window array (req
 window.pluck_as_nums(field)          Extract numeric field values from window array (requires --window)
 
 DRAIN TEMPLATE MINING (sequential mode only; errors in --parallel mode):
-drain_template(text [,options])      Add line to Drain model; returns {template, count, is_new}
-drain_templates()                    Return array of {template, count} for current Drain model
+drain_template(text [,options])      Add line to Drain model; returns {template, template_id, count,
+                                     is_new, sample, first_line, last_line}
+drain_templates()                    Return array of templates with same fields (except is_new)
                                      Default filters: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid,
                                      mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
                                      hexnum, duration, timestamp, date, time, num
-                                     Options: depth, max_children, similarity, filters
+                                     Options: depth, max_children, similarity, filters, line_num
 
 STATE MANAGEMENT (sequential mode only; errors in --parallel mode):
 state["key"]                         Get/set state value via indexer (state["count"] = 0)
