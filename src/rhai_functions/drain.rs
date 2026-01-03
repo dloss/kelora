@@ -141,6 +141,7 @@ fn drain_templates_list() -> Result<rhai::Array, Box<EvalAltResult>> {
     for template in templates {
         let mut map = Map::new();
         map.insert("template".into(), Dynamic::from(template.template));
+        map.insert("template_id".into(), Dynamic::from(template.template_id));
         map.insert("count".into(), Dynamic::from(template.count as i64));
         array.push(Dynamic::from(map));
     }
@@ -150,13 +151,19 @@ fn drain_templates_list() -> Result<rhai::Array, Box<EvalAltResult>> {
 fn drain_result_to_map(result: drain::DrainResult) -> Map {
     let mut map = Map::new();
     map.insert("template".into(), Dynamic::from(result.template));
+    map.insert("template_id".into(), Dynamic::from(result.template_id));
     map.insert("count".into(), Dynamic::from(result.count as i64));
     map.insert("is_new".into(), Dynamic::from(result.is_new));
     map
+}
+
+fn drain_template_id(template: &str) -> String {
+    drain::generate_template_id(template)
 }
 
 pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("drain_template", drain_template_simple);
     engine.register_fn("drain_template", drain_template_with_options);
     engine.register_fn("drain_templates", drain_templates_list);
+    engine.register_fn("drain_template_id", drain_template_id);
 }

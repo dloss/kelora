@@ -1,5 +1,6 @@
 use drain_rs::DrainTree;
 use grok::Grok;
+use sha2::{Digest, Sha256};
 use std::cell::RefCell;
 use std::convert::TryFrom;
 
@@ -39,12 +40,14 @@ impl DrainConfig {
 #[derive(Debug, Clone)]
 pub struct DrainTemplate {
     pub template: String,
+    pub template_id: String,
     pub count: usize,
 }
 
 #[derive(Debug, Clone)]
 pub struct DrainResult {
     pub template: String,
+    pub template_id: String,
     pub count: usize,
     pub is_new: bool,
 }
@@ -79,8 +82,11 @@ impl DrainState {
             .add_log_line(text)
             .ok_or_else(|| "Drain failed to match or create a cluster".to_string())?;
         let count = usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX);
+        let template = cluster.as_string();
+        let template_id = generate_template_id(&template);
         Ok(DrainResult {
-            template: cluster.as_string(),
+            template,
+            template_id,
             count,
             is_new: count == 1,
         })
@@ -91,9 +97,14 @@ impl DrainState {
             .tree
             .log_groups()
             .into_iter()
-            .map(|cluster| DrainTemplate {
-                template: cluster.as_string(),
-                count: usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX),
+            .map(|cluster| {
+                let template = cluster.as_string();
+                let template_id = generate_template_id(&template);
+                DrainTemplate {
+                    template,
+                    template_id,
+                    count: usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX),
+                }
             })
             .collect();
 
@@ -105,6 +116,16 @@ impl DrainState {
 
         templates
     }
+}
+
+/// Generate a stable, deterministic template ID from a template string.
+/// Uses SHA256 hash truncated to 16 hex characters (64 bits).
+pub fn generate_template_id(template: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(template.as_bytes());
+    let result = hasher.finalize();
+    // Take first 8 bytes (16 hex chars) for a compact yet collision-resistant ID
+    hex::encode(&result[..8])
 }
 
 fn to_u16(value: usize) -> u16 {
@@ -241,8 +262,9 @@ pub fn format_templates_output(templates: &[DrainTemplate]) -> String {
 
     for template in templates {
         output.push_str(&format!(
-            "  {:>width$}: {}\n",
+            "  {:>width$}: [{}] {}\n",
             template.count,
+            template.template_id,
             template.template,
             width = max_count_width
         ));
@@ -267,24 +289,45 @@ mod tests {
 
         assert_eq!(a.template, "failed to connect to <ipv4>");
         assert_eq!(b.template, "failed to connect to <ipv4>");
+        assert_eq!(a.template_id, b.template_id);
         assert_eq!(b.count, 2);
     }
 
     #[test]
+    fn template_id_is_stable() {
+        let template = "failed to connect to <ipv4>";
+        let id1 = generate_template_id(template);
+        let id2 = generate_template_id(template);
+        assert_eq!(id1, id2);
+        assert_eq!(id1.len(), 16); // 8 bytes = 16 hex chars
+    }
+
+    #[test]
+    fn different_templates_have_different_ids() {
+        let id1 = generate_template_id("failed to connect to <ipv4>");
+        let id2 = generate_template_id("connection successful to <ipv4>");
+        assert_ne!(id1, id2);
+    }
+
+    #[test]
     fn formats_templates_output() {
+        let template1_id = generate_template_id("a <*> b");
+        let template2_id = generate_template_id("x y z");
         let templates = vec![
             DrainTemplate {
                 template: "a <*> b".to_string(),
+                template_id: template1_id.clone(),
                 count: 3,
             },
             DrainTemplate {
                 template: "x y z".to_string(),
+                template_id: template2_id.clone(),
                 count: 1,
             },
         ];
         let output = format_templates_output(&templates);
         assert!(output.starts_with("templates (2 items):"));
-        assert!(output.contains("3: a <*> b"));
-        assert!(output.contains("1: x y z"));
+        assert!(output.contains(&format!("[{}] a <*> b", template1_id)));
+        assert!(output.contains(&format!("[{}] x y z", template2_id)));
     }
 }
