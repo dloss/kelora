@@ -49,7 +49,7 @@ pub enum FileOrder {
 
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum MetricsFormat {
-    Compact,
+    Short,
     Full,
     Json,
 }
@@ -571,7 +571,7 @@ pub struct Cli {
         num_args = 0..=1,
         default_missing_value = "full",
         help_heading = "Metrics and Stats",
-        help = "Show metrics only (implies -q/--quiet).\n\nFormats: compact (abbreviated), full (default), json\n\nExamples:\n  -m                 Full metrics table\n  --metrics=compact  Abbreviated (truncates large lists)\n  --metrics=json     JSON output"
+        help = "Show metrics only (implies -q/--quiet).\n\nFormats: short (first 5), full (default), json\n\nExamples:\n  -m               Full metrics table\n  --metrics=short  Abbreviated (first 5 items)\n  --metrics=json   JSON output"
     )]
     pub metrics: Option<MetricsFormat>,
 
