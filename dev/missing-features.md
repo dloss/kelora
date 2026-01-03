@@ -2,7 +2,7 @@
 
 Collected from first-time user experience testing. These are polish items - the core tool works well.
 
-## 1. Fuzzy Function Suggestions (High Value)
+## 1. Fuzzy Function Suggestions (High Value) ✅ IMPLEMENTED
 
 **Problem:** When a user types a wrong function name like `track_p99()`, they get:
 ```
@@ -20,7 +20,7 @@ Run 'kelora --help-functions | grep percentile' for details.
 
 ---
 
-## 2. Shell Completions (Low Effort, High Value)
+## 2. Shell Completions (Low Effort, High Value) ✅ IMPLEMENTED
 
 **Problem:** No tab completion for flags, formats, or file arguments.
 
@@ -72,12 +72,12 @@ kelora api.jsonl --keys --json
 
 ## Priority Summary
 
-| Feature | Effort | User Value | Notes |
-|---------|--------|------------|-------|
-| Fuzzy function suggestions | Medium | High | Saves debugging time |
-| Shell completions | Low | High | Clap has built-in support |
-| `--explain` dry-run | Medium | Medium | Power user feature |
-| `--keys` shortcut | Low | Low | Convenience alias |
+| Feature | Effort | User Value | Status |
+|---------|--------|------------|--------|
+| Fuzzy function suggestions | Medium | High | ✅ Done |
+| Shell completions | Low | High | ✅ Done |
+| `--explain` dry-run | Medium | Medium | ❌ Skip - unreliable estimates |
+| `--keys` shortcut | Low | Low | ❌ Skip - convenience bloat |
 
 ## Notes
 
