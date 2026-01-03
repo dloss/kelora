@@ -119,13 +119,27 @@ impl DrainState {
 }
 
 /// Generate a stable, deterministic template ID from a template string.
-/// Uses SHA256 hash truncated to 16 hex characters (64 bits).
+///
+/// Format: `v1:<hash>` where hash is SHA256 truncated to 16 hex characters.
+///
+/// The v1 algorithm:
+/// - Normalizes whitespace (splits and rejoins with single spaces)
+/// - Computes SHA256 hash of the normalized template
+/// - Returns first 8 bytes (64 bits) as hex with "v1:" prefix
+///
+/// The version prefix allows future algorithm changes without breaking
+/// existing saved IDs. This function's behavior must remain stable forever
+/// to support long-term template ID persistence and comparison.
 pub fn generate_template_id(template: &str) -> String {
+    // Normalize whitespace for consistent hashing across formatting variations
+    let normalized = template.split_whitespace().collect::<Vec<_>>().join(" ");
+
     let mut hasher = Sha256::new();
-    hasher.update(template.as_bytes());
+    hasher.update(normalized.as_bytes());
     let result = hasher.finalize();
-    // Take first 8 bytes (16 hex chars) for a compact yet collision-resistant ID
-    hex::encode(&result[..8])
+
+    // v1: prefix for version identification
+    format!("v1:{}", hex::encode(&result[..8]))
 }
 
 fn to_u16(value: usize) -> u16 {
@@ -299,7 +313,15 @@ mod tests {
         let id1 = generate_template_id(template);
         let id2 = generate_template_id(template);
         assert_eq!(id1, id2);
-        assert_eq!(id1.len(), 16); // 8 bytes = 16 hex chars
+        assert_eq!(id1.len(), 19); // "v1:" (3) + 16 hex chars = 19
+        assert!(id1.starts_with("v1:"));
+    }
+
+    #[test]
+    fn template_id_normalizes_whitespace() {
+        let id1 = generate_template_id("failed  to  connect");
+        let id2 = generate_template_id("failed to connect");
+        assert_eq!(id1, id2, "Whitespace should be normalized");
     }
 
     #[test]
@@ -307,6 +329,8 @@ mod tests {
         let id1 = generate_template_id("failed to connect to <ipv4>");
         let id2 = generate_template_id("connection successful to <ipv4>");
         assert_ne!(id1, id2);
+        assert!(id1.starts_with("v1:"));
+        assert!(id2.starts_with("v1:"));
     }
 
     #[test]
