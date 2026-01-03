@@ -565,9 +565,9 @@ fn handle_pipeline_success(
             // Route to stdout in data-only mode, stderr when showing with events
             let use_stdout = !config.output.metrics_with_events;
             match metrics_format {
-                MetricsFormat::Short | MetricsFormat::Full => {
+                MetricsFormat::Compact | MetricsFormat::Full => {
                     let metrics_level = match metrics_format {
-                        MetricsFormat::Short => 1,
+                        MetricsFormat::Compact => 1,
                         MetricsFormat::Full => 2,
                         _ => 1,
                     };
