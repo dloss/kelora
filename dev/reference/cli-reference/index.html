@@ -3586,10 +3586,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-drain" class="md-nav__link">
+  <a href="#-drainformat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --drain
+        --drain[=FORMAT]
       
     </span>
   </a>
@@ -5713,10 +5713,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-drain" class="md-nav__link">
+  <a href="#-drainformat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --drain
+        --drain[=FORMAT]
       
     </span>
   </a>
@@ -6652,14 +6652,26 @@
 <p>Persist metrics map to disk as JSON.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log
 </code></pre></div>
-<h4 id="-drain"><code>--drain</code><a class="headerlink" href="#-drain" title="Permanent link">&para;</a></h4>
+<h4 id="-drainformat"><code>--drain[=FORMAT]</code><a class="headerlink" href="#-drainformat" title="Permanent link">&para;</a></h4>
 <p>Summarize log templates using Drain (summary-only). Requires <code>--keys</code> with exactly one field.
-Sequential mode only (not supported with <code>--parallel</code>).
-Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
+Sequential mode only (not supported with <code>--parallel</code>).</p>
+<p><strong>Formats:</strong></p>
+<ul>
+<li><code>table</code> (default) - Clean output: count + template</li>
+<li><code>full</code> - Adds line ranges and sample messages</li>
+<li><code>json</code> - Complete metadata for programmatic use</li>
+</ul>
+<p>Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
 md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
 timestamp, date, time, num.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
-<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>line
+<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a><span class="c1"># Default table format</span>
+<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
+<a id="__codelineno-75-3" name="__codelineno-75-3" href="#__codelineno-75-3"></a>
+<a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a><span class="c1"># With line numbers and samples</span>
+<a id="__codelineno-75-5" name="__codelineno-75-5" href="#__codelineno-75-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="o">=</span>full<span class="w"> </span>-k<span class="w"> </span>message
+<a id="__codelineno-75-6" name="__codelineno-75-6" href="#__codelineno-75-6"></a>
+<a id="__codelineno-75-7" name="__codelineno-75-7" href="#__codelineno-75-7"></a><span class="c1"># JSON output</span>
+<a id="__codelineno-75-8" name="__codelineno-75-8" href="#__codelineno-75-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="o">=</span>json<span class="w"> </span>-k<span class="w"> </span>message
 </code></pre></div>
 <h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <h3 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h3>

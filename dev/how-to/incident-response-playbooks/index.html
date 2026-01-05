@@ -3505,8 +3505,16 @@
 <p><strong>Scenario</strong>: Error monitoring shows 500 errors/minute (normally 5/minute). Find what's breaking.</p>
 <h3 id="quick-triage-error-templates-30-seconds">Quick Triage: Error Templates (30 seconds)<a class="headerlink" href="#quick-triage-error-templates-30-seconds" title="Permanent link">&para;</a></h3>
 <p>Use drain to find common error patterns:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Clean pattern list</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># With line numbers and samples for context</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--drain<span class="o">=</span>full<span class="w"> </span>-k<span class="w"> </span>message
 </code></pre></div>
+<p><strong>Output formats:</strong>
+- <code>--drain</code> - Clean list showing counts and patterns
+- <code>--drain=full</code> - Adds line ranges and sample messages for each pattern
+- <code>--drain=json</code> - Export for further analysis</p>
 <p><strong>What to look for:</strong>
 - Template #1 with high count = root cause candidate
 - Many different templates = cascading failures
