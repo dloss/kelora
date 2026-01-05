@@ -353,7 +353,7 @@ pub fn format_templates_output(
 
             // Add sample
             if !template.sample.is_empty() {
-                let sample = truncate_sample(&template.sample, 80);
+                let sample = escape_sample(&template.sample);
                 output.push_str(&format!("     sample: \"{}\"\n", sample));
             }
 
@@ -387,14 +387,9 @@ pub fn format_templates_json(templates: &[DrainTemplate]) -> String {
     serde_json::to_string_pretty(&json_templates).unwrap_or_else(|_| "[]".to_string())
 }
 
-/// Truncate a sample string for display, adding ellipsis if needed
-fn truncate_sample(s: &str, max_len: usize) -> String {
-    let s = s.replace('\n', "\\n").replace('\r', "\\r");
-    if s.len() <= max_len {
-        s
-    } else {
-        format!("{}...", &s[..max_len.saturating_sub(3)])
-    }
+/// Escape control characters in sample strings for display
+fn escape_sample(s: &str) -> String {
+    s.replace('\n', "\\n").replace('\r', "\\r")
 }
 
 fn format_line_summary(first: Option<usize>, last: Option<usize>) -> Option<String> {
@@ -617,17 +612,9 @@ mod tests {
     }
 
     #[test]
-    fn truncates_long_samples() {
-        let long_sample = "a".repeat(200);
-        let truncated = truncate_sample(&long_sample, 80);
-        assert!(truncated.len() <= 80);
-        assert!(truncated.ends_with("..."));
-    }
-
-    #[test]
     fn escapes_newlines_in_samples() {
         let sample_with_newlines = "line1\nline2\r\nline3";
-        let escaped = truncate_sample(sample_with_newlines, 100);
+        let escaped = escape_sample(sample_with_newlines);
         assert!(!escaped.contains('\n'));
         assert!(!escaped.contains('\r'));
         assert!(escaped.contains("\\n"));
