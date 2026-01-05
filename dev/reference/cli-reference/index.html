@@ -3585,6 +3585,23 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Discovery">
+      <ul class="md-nav__list">
+        
           <li class="md-nav__item">
   <a href="#-drainformat" class="md-nav__link">
     <span class="md-ellipsis">
@@ -5712,6 +5729,23 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Discovery">
+      <ul class="md-nav__list">
+        
           <li class="md-nav__item">
   <a href="#-drainformat" class="md-nav__link">
     <span class="md-ellipsis">
@@ -6652,9 +6686,11 @@
 <p>Persist metrics map to disk as JSON.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log
 </code></pre></div>
+<h3 id="template-discovery">Template Discovery<a class="headerlink" href="#template-discovery" title="Permanent link">&para;</a></h3>
 <h4 id="-drainformat"><code>--drain[=FORMAT]</code><a class="headerlink" href="#-drainformat" title="Permanent link">&para;</a></h4>
 <p>Summarize log templates using Drain (summary-only). Requires <code>--keys</code> with exactly one field.
-Sequential mode only (not supported with <code>--parallel</code>).</p>
+Sequential mode only (not supported with <code>--parallel</code>).
+For manual or lightweight bucketing, <code>normalized()</code> can pre-normalize a field in Rhai before output or tracking.</p>
 <p><strong>Formats:</strong></p>
 <ul>
 <li><code>table</code> (default) - Clean output: count + template</li>
