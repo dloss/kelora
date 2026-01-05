@@ -6658,7 +6658,8 @@ Sequential mode only (not supported with <code>--parallel</code>).</p>
 <p><strong>Formats:</strong></p>
 <ul>
 <li><code>table</code> (default) - Clean output: count + template</li>
-<li><code>full</code> - Adds line ranges and sample messages</li>
+<li><code>full</code> - Adds line ranges, template IDs, and sample messages</li>
+<li><code>id</code> - Stable output: template_id + template (sorted by ID)</li>
 <li><code>json</code> - Complete metadata for programmatic use</li>
 </ul>
 <p>Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
@@ -6670,8 +6671,11 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a><span class="c1"># With line numbers and samples</span>
 <a id="__codelineno-75-5" name="__codelineno-75-5" href="#__codelineno-75-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="o">=</span>full<span class="w"> </span>-k<span class="w"> </span>message
 <a id="__codelineno-75-6" name="__codelineno-75-6" href="#__codelineno-75-6"></a>
-<a id="__codelineno-75-7" name="__codelineno-75-7" href="#__codelineno-75-7"></a><span class="c1"># JSON output</span>
-<a id="__codelineno-75-8" name="__codelineno-75-8" href="#__codelineno-75-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="o">=</span>json<span class="w"> </span>-k<span class="w"> </span>message
+<a id="__codelineno-75-7" name="__codelineno-75-7" href="#__codelineno-75-7"></a><span class="c1"># Stable ID list for diffs</span>
+<a id="__codelineno-75-8" name="__codelineno-75-8" href="#__codelineno-75-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="o">=</span>id<span class="w"> </span>-k<span class="w"> </span>message
+<a id="__codelineno-75-9" name="__codelineno-75-9" href="#__codelineno-75-9"></a>
+<a id="__codelineno-75-10" name="__codelineno-75-10" href="#__codelineno-75-10"></a><span class="c1"># JSON output</span>
+<a id="__codelineno-75-11" name="__codelineno-75-11" href="#__codelineno-75-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="o">=</span>json<span class="w"> </span>-k<span class="w"> </span>message
 </code></pre></div>
 <h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <h3 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h3>

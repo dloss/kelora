@@ -3629,13 +3629,17 @@
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a># With line numbers and samples for each pattern
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>kelora -j examples/app_monitoring.jsonl --drain=full -k message
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a># Export as JSON for further analysis
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>kelora -j examples/app_monitoring.jsonl --drain=json -k message
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a># Stable ID list for diffs
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>kelora -j examples/app_monitoring.jsonl --drain=id -k message
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a># Export as JSON for further analysis
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>kelora -j examples/app_monitoring.jsonl --drain=json -k message
 </code></pre></div></p>
 <p><strong>Output formats:</strong></p>
 <ul>
 <li><code>--drain</code> or <code>--drain=table</code> - Clean list: count + template</li>
-<li><code>--drain=full</code> - Adds line ranges and sample messages</li>
+<li><code>--drain=full</code> - Adds line ranges, template IDs, and sample messages</li>
+<li><code>--drain=id</code> - Stable output: template_id + template (sorted by ID)</li>
 <li><code>--drain=json</code> - Complete metadata for programmatic use</li>
 </ul>
 <p><strong>Example output (table format):</strong>
@@ -3646,8 +3650,9 @@
 </code></pre></div></p>
 <p><strong>Full format adds context:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>  6: Connection timeout to database host &lt;fqdn&gt;
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>     lines: 1-36
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>     sample: &quot;Connection timeout to database host db-primary-01.prod.internal:5432&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>     id: v1:5f3c7a9b1d2e4f6a
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>     lines: 1-36
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>     sample: &quot;Connection timeout to database host db-primary-01.prod.internal:5432&quot;
 </code></pre></div></p>
 <p><strong>Default Drain filters</strong> normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
 md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
