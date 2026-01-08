@@ -418,7 +418,8 @@ kelora -j app.log \
 - `track_sum(key, value)` - Sum values
 - `track_min(key, value)` - Track minimum value
 - `track_max(key, value)` - Track maximum value
-- `track_unique(key, value)` - Collect unique values
+- `track_unique(key, value)` - Collect unique values (exact, stores all)
+- `track_cardinality(key, value)` - Estimate unique count (HyperLogLog, ~1% error)
 - `track_bucket(key, bucket)` - Track values in buckets
 
 **Access in --end stage:**

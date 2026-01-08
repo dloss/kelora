@@ -103,7 +103,8 @@ Real-world gains depend on disk speed, decompression cost, and script workload.
   Prefer incremental processing or pre-splitting input.
 
 - `--metrics` keeps maps in memory until the run ends. Guard high-cardinality
-  structures (`track_unique`) with filters.
+  structures (`track_unique`) with filters, or use `track_cardinality()` for
+  memory-efficient unique counts (~12KB regardless of cardinality).
 - Stats/diagnostics cost CPU. Use `--silent` or `--no-diagnostics` to bypass
   per-event stats tracking when you only care about output files. This removes
   timestamp/key discovery and other counters from the hot path.

@@ -75,6 +75,13 @@ The structure and syntax of input log data. Common formats: JSON, logfmt, syslog
 
 ---
 
+## H
+
+### HyperLogLog
+A probabilistic data structure for estimating the cardinality (unique count) of a set using constant memory. Used by `track_cardinality()` to estimate unique values across billions of events with ~1% error using only ~12KB of memory. Use when `track_unique()` would consume too much memory for high-cardinality data. See [Metrics and Tracking Tutorial](tutorials/metrics-and-tracking.md#probabilistic-cardinality-with-hyperloglog).
+
+---
+
 ## L
 
 ### Level
@@ -187,7 +194,8 @@ The process of accumulating metrics across events using `track_*()` functions:
 - `track_avg(key, value)` - Average values
 - `track_percentiles(key, value, [percentiles])` - Streaming percentiles (P50/P95/P99)
 - `track_min/max(key, value)` - Track extremes
-- `track_unique(key, value)` - Collect unique values
+- `track_unique(key, value)` - Collect unique values (exact, stores all)
+- `track_cardinality(key, value)` - Estimate unique count (HyperLogLog, ~1% error, ~12KB)
 - `track_bucket(key, bucket_value)` - Histogram buckets
 - `track_top/bottom(key, item, n, [score])` - Top/bottom N items
 

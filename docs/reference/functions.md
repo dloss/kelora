@@ -1635,6 +1635,38 @@ track_bucket("latency", bucket)
 track_bucket("user_types", e.user_type.or_empty())  // Skips empty/missing
 ```
 
+#### `track_cardinality(key, value)` / `track_cardinality(key, value, error_rate)`
+Estimate unique count using HyperLogLog algorithm. Uses ~12KB of memory regardless of cardinality, with ~1% standard error by default. Skips Unit `()` values. Works correctly in parallel mode.
+
+**When to use:** For high-cardinality data (millions of unique values) where `track_unique()` would consume too much memory. Use `track_unique()` when you need the actual values or have low cardinality.
+
+```rhai
+// Basic usage - ~1% standard error, ~12KB memory
+track_cardinality("unique_ips", e.client_ip)
+track_cardinality("unique_sessions", e.session_id)
+
+// Custom error rate for higher precision (uses more memory)
+track_cardinality("unique_users", e.user_id, 0.005)  // 0.5% error
+
+// Safe with optional fields
+track_cardinality("unique_emails", e.email.or_empty())
+```
+
+**Output format:** Shows `≈` prefix in text output to indicate approximate value:
+```
+unique_ips   ≈ 1234567
+```
+
+**Error rate bounds:** 0.001 (0.1%) to 0.26 (26%). Lower error = more memory.
+
+!!! tip "track_cardinality vs track_unique"
+    | | `track_unique()` | `track_cardinality()` |
+    |-|------------------|----------------------|
+    | Memory | O(n) - grows with cardinality | O(1) - fixed ~12KB |
+    | Accuracy | Exact | ~1% error (configurable) |
+    | Scale | Thousands | Billions |
+    | Values stored | Yes (can list them) | No (count only) |
+
 #### `track_top(key, item, n)` / `track_top(key, item, n, value)`
 Track top N most frequent items (count mode) or highest-valued items (weighted mode). Skips Unit `()` values.
 

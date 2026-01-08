@@ -252,6 +252,36 @@ cardinality analysis.
 
 Use `metrics["services"].len()` later to compute the number of distinct members.
 
+### Probabilistic Cardinality with HyperLogLog
+
+For **high-cardinality data** (millions of unique values), `track_unique()` would consume too much memory since it stores every value. Use `track_cardinality()` instead—it uses the HyperLogLog algorithm to estimate unique counts with ~1% error using only ~12KB of memory:
+
+```rhai
+// Estimate unique IPs across millions of log lines
+track_cardinality("unique_ips", e.client_ip)
+
+// Estimate unique sessions
+track_cardinality("unique_sessions", e.session_id)
+
+// Custom error rate for higher precision (uses more memory)
+track_cardinality("unique_users", e.user_id, 0.005)  // 0.5% error
+```
+
+Output shows the `≈` symbol to indicate the value is an estimate:
+
+```
+unique_ips   ≈ 1234567
+```
+
+**When to use each:**
+
+| Scenario | Function | Why |
+|----------|----------|-----|
+| Low cardinality (< 100K), need actual values | `track_unique()` | Exact count, can list values |
+| High cardinality (millions+), count only | `track_cardinality()` | Fixed ~12KB memory, ~1% error |
+| Dashboard/monitoring unique users | `track_cardinality()` | Scale to billions |
+| Debugging—need to see which values | `track_unique()` | Lists all values |
+
 ### Viewing Metrics in Different Formats
 
 By default, `-m` shows all tracked items in table format. For large collections,
@@ -660,12 +690,14 @@ human-readable histogram once processing finishes.
 | `track_top(key, item, n)` | Top N most frequent items | `track_top("errors", e.message, 10)` |
 | `track_top(key, item, n, score)` | Top N by highest scores | `track_top("slowest", e.endpoint, 10, e.latency)` |
 | `track_bottom(key, item, n, score)` | Bottom N by lowest scores | `track_bottom("fastest", e.endpoint, 10, e.latency)` |
-| `track_unique(key, value)` | Unique values | `track_unique("users", e.user_id)` |
+| `track_unique(key, value)` | Unique values (exact, stores all) | `track_unique("users", e.user_id)` |
+| `track_cardinality(key, value)` | Unique count estimate (HyperLogLog, ~1% error) | `track_cardinality("unique_ips", e.client_ip)` |
 
 **Notes:**
 - `track_avg()` automatically computes averages by storing sum and count internally
 - `track_percentiles()` and `track_stats()` auto-suffix metrics (e.g., `latency_p95`, `latency_p99`)
 - `track_stats()` is a convenience function that creates `_min`, `_max`, `_avg`, `_count`, `_sum`, and `_pXX` metrics
+- `track_cardinality()` uses HyperLogLog for memory-efficient cardinality estimation (~12KB for billions of values)
 - Use percentiles for tail latency (P95, P99) and averages for typical behavior
 
 ## Summary
@@ -676,7 +708,7 @@ You've learned:
 - ✅ Aggregate numbers with `track_sum()`, `track_avg()`, `track_min()`, `track_max()`
 - ✅ Build histograms with `track_bucket()`
 - ✅ Rank items with `track_top()` and `track_bottom()`
-- ✅ Count unique values with `track_unique()`
+- ✅ Count unique values with `track_unique()` (exact) or `track_cardinality()` (approximate, memory-efficient)
 - ✅ Track streaming percentiles with `track_percentiles()` for P50/P95/P99 analysis
 - ✅ Get comprehensive stats with `track_stats()` (min, max, avg, count, sum, percentiles in one call)
 - ✅ View metrics with `-m`, `--metrics=full`, and `--metrics=json`
