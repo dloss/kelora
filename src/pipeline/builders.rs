@@ -1180,8 +1180,20 @@ pub fn create_pipeline_builder_from_config(
     };
 
     let drain_enabled = config.output.drain.is_some();
-    let drain_field = if drain_enabled && config.output.keys.len() == 1 {
-        Some(config.output.keys[0].clone())
+    let drain_field = if drain_enabled {
+        // Calculate effective keys after applying exclusions
+        let effective_keys: Vec<String> = config
+            .output
+            .keys
+            .iter()
+            .filter(|key| !config.output.exclude_keys.contains(key))
+            .cloned()
+            .collect();
+        if effective_keys.len() == 1 {
+            Some(effective_keys[0].clone())
+        } else {
+            None
+        }
     } else {
         None
     };

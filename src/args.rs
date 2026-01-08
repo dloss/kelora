@@ -95,10 +95,20 @@ pub fn validate_cli_args(cli: &Cli) -> Result<()> {
         }
     }
 
-    if cli.drain.is_some() && cli.keys.len() != 1 {
-        return Err(anyhow::anyhow!(
-            "--drain requires --keys to specify exactly one field (use -s to view available keys)"
-        ));
+    if cli.drain.is_some() {
+        // Calculate effective keys after applying exclusions
+        let effective_keys: Vec<String> = cli
+            .keys
+            .iter()
+            .filter(|key| !cli.exclude_keys.contains(key))
+            .cloned()
+            .collect();
+
+        if effective_keys.len() != 1 {
+            return Err(anyhow::anyhow!(
+                "--drain requires --keys to specify exactly one field after exclusions (use -s to view available keys)"
+            ));
+        }
     }
 
     Ok(())
