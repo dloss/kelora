@@ -84,6 +84,7 @@ hmac = "0.12"  # HMAC message authentication for pseudonymization
 
 # Rhai built-in functions - statistics
 tdigests = "1.0"  # T-digest algorithm for streaming percentile estimation exposed to Rhai scripts
+hyperloglog = { version = "1.0", features = ["with_serde"] }  # HyperLogLog algorithm for streaming cardinality estimation exposed to Rhai scripts
 
 # Rhai built-in functions - networking
 url = "2.5"  # URL parsing and manipulation exposed to Rhai scripts

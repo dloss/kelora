@@ -257,6 +257,8 @@ track_avg(key, value)                Track average of numeric values for key (sk
 track_bottom(key, item, n)           Track bottom N least frequent items (counts occurrences; skips () items)
 track_bottom(key, item, n, score)    Track bottom N items by lowest scores (ranks by numeric value; skips () items/values)
 track_bucket(key, bucket)            Track values in buckets for histograms (skips () values)
+track_cardinality(key, value)        Estimate unique count using HyperLogLog (~1% error, ~12KB; skips () values)
+track_cardinality(key, value, err)   Estimate unique count with custom error rate (0.001-0.26)
 track_count(key)                     Increment counter for key by 1 (string key; use to_string() for numbers)
 track_max(key, value)                Track maximum value for key (skips () values)
 track_min(key, value)                Track minimum value for key (skips () values)
@@ -465,6 +467,10 @@ kelora -j api_errors.jsonl -l error -m \
 # Track unique users (compact output)
 kelora -f combined web_access.log --metrics=short \
   --exec 'track_unique("users", e.user)'
+
+# Estimate unique IPs with HyperLogLog (for high-cardinality data)
+kelora -f combined web_access.log -m \
+  --exec 'track_cardinality("unique_ips", e.client_ip)'
 
 # Histogram of status codes by bucket (JSON output)
 kelora web_access.log --metrics=json \

@@ -4,6 +4,7 @@
 //! along with helper functions for TDigest serialization.
 
 use anyhow::Result;
+use hyperloglog::HyperLogLog;
 use rhai::Dynamic;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -55,6 +56,35 @@ pub(crate) fn deserialize_tdigest(bytes: &[u8]) -> Option<TDigest> {
 
     // Reconstruct t-digest from centroids
     Some(TDigest::from_centroids(centroids))
+}
+
+/// Magic bytes to identify HLL blobs (must match tracking.rs)
+const HLL_MAGIC: &[u8; 4] = b"HLL\x01";
+
+/// Helper function to serialize a HyperLogLog to bytes for storage in Dynamic
+pub(crate) fn serialize_hll(hll: &HyperLogLog) -> Vec<u8> {
+    let mut bytes = Vec::new();
+
+    // Magic bytes to identify this as HLL (4 bytes)
+    bytes.extend_from_slice(HLL_MAGIC);
+
+    // Serialize HLL using serde_json (must match tracking.rs)
+    if let Ok(json) = serde_json::to_vec(hll) {
+        bytes.extend_from_slice(&json);
+    }
+
+    bytes
+}
+
+/// Helper function to deserialize a HyperLogLog from bytes stored in Dynamic
+pub(crate) fn deserialize_hll(bytes: &[u8]) -> Option<HyperLogLog> {
+    // Check magic bytes
+    if bytes.len() < 4 || &bytes[0..4] != HLL_MAGIC {
+        return None;
+    }
+
+    // Deserialize HLL from JSON
+    serde_json::from_slice(&bytes[4..]).ok()
 }
 
 /// Thread-safe statistics tracker for merging worker states
@@ -558,6 +588,23 @@ impl GlobalTracker {
         Some(Dynamic::from_blob(bytes))
     }
 
+    fn merge_cardinality(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        let existing_blob = existing.clone().into_blob().ok()?;
+        let new_blob = value.clone().into_blob().ok()?;
+
+        // Deserialize both HyperLogLogs
+        let existing_hll = deserialize_hll(&existing_blob)?;
+        let new_hll = deserialize_hll(&new_blob)?;
+
+        // Merge the HLLs
+        let mut merged_hll = existing_hll;
+        merged_hll.merge(&new_hll);
+
+        // Serialize and store
+        let bytes = serialize_hll(&merged_hll);
+        Some(Dynamic::from_blob(bytes))
+    }
+
     fn merge_state_with_lookup<F>(
         target: &mut HashMap<String, Dynamic>,
         worker_state: &HashMap<String, Dynamic>,
@@ -644,6 +691,12 @@ impl GlobalTracker {
                     }
                     "percentiles" => {
                         if let Some(merged) = Self::merge_percentiles(existing, value) {
+                            target.insert(key.clone(), merged);
+                            continue;
+                        }
+                    }
+                    "cardinality" => {
+                        if let Some(merged) = Self::merge_cardinality(existing, value) {
                             target.insert(key.clone(), merged);
                             continue;
                         }

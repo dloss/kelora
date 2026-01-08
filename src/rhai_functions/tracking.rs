@@ -1,4 +1,5 @@
 use crate::stats::ProcessingStats;
+use hyperloglog::HyperLogLog;
 use rhai::{Dynamic, Engine};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -630,6 +631,112 @@ fn deserialize_tdigest(bytes: &[u8]) -> Option<TDigest> {
 
     // Reconstruct t-digest from centroids
     Some(TDigest::from_centroids(centroids))
+}
+
+/// Default error rate for HyperLogLog (~1.04% standard error)
+/// This corresponds to 2^14 = 16384 registers, using ~12KB of memory
+const HLL_DEFAULT_ERROR_RATE: f64 = 0.01;
+
+/// Fixed seed for HyperLogLog to ensure deterministic hashing across instances
+/// This is required for merging HLLs from different workers in parallel mode
+const HLL_SEED: u128 = 0x6b656c6f72615f686c6c5f73656564; // "kelora_hll_seed" in hex
+
+/// Magic bytes to identify HLL blobs (distinguishes from t-digest blobs)
+const HLL_MAGIC: &[u8; 4] = b"HLL\x01";
+
+/// Helper function to serialize a HyperLogLog to bytes for storage in Dynamic
+/// Uses serde with bincode-style format
+fn serialize_hll(hll: &HyperLogLog) -> Vec<u8> {
+    let mut bytes = Vec::new();
+
+    // Magic bytes to identify this as HLL (4 bytes)
+    bytes.extend_from_slice(HLL_MAGIC);
+
+    // Serialize HLL using serde_json (simple and reliable)
+    if let Ok(json) = serde_json::to_vec(hll) {
+        bytes.extend_from_slice(&json);
+    }
+
+    bytes
+}
+
+/// Helper function to deserialize a HyperLogLog from bytes stored in Dynamic
+fn deserialize_hll(bytes: &[u8]) -> Option<HyperLogLog> {
+    // Check magic bytes
+    if bytes.len() < 4 || &bytes[0..4] != HLL_MAGIC {
+        return None;
+    }
+
+    // Deserialize HLL from JSON
+    serde_json::from_slice(&bytes[4..]).ok()
+}
+
+/// Check if a blob is an HLL (vs t-digest or other)
+pub fn is_hll_blob(bytes: &[u8]) -> bool {
+    bytes.len() >= 4 && &bytes[0..4] == HLL_MAGIC
+}
+
+/// Create a new HyperLogLog with the default error rate and fixed seed
+fn new_hll() -> HyperLogLog {
+    HyperLogLog::new_deterministic(HLL_DEFAULT_ERROR_RATE, HLL_SEED)
+}
+
+/// Create a new HyperLogLog with a custom error rate and fixed seed
+fn new_hll_with_error(error_rate: f64) -> HyperLogLog {
+    HyperLogLog::new_deterministic(error_rate, HLL_SEED)
+}
+
+/// Implementation of track_cardinality for a hashable value
+fn track_cardinality_impl<V: std::hash::Hash>(key: &str, value: &V) {
+    with_user_tracking(|state| {
+        // Get existing HLL or create new one
+        let mut hll = if let Some(existing) = state.get(key) {
+            if let Ok(bytes) = existing.clone().into_blob() {
+                deserialize_hll(&bytes).unwrap_or_else(new_hll)
+            } else {
+                new_hll()
+            }
+        } else {
+            new_hll()
+        };
+
+        // Insert the new value
+        hll.insert(value);
+
+        // Serialize and store
+        let bytes = serialize_hll(&hll);
+        state.insert(key.to_string(), Dynamic::from_blob(bytes));
+    });
+
+    record_operation_metadata(key, "cardinality");
+}
+
+/// Implementation of track_cardinality with custom error rate
+fn track_cardinality_with_error_impl<V: std::hash::Hash>(key: &str, value: &V, error_rate: f64) {
+    // Clamp error rate to reasonable bounds (0.1% to 26%)
+    let error_rate = error_rate.clamp(0.001, 0.26);
+
+    with_user_tracking(|state| {
+        // Get existing HLL or create new one with specified error rate
+        let mut hll = if let Some(existing) = state.get(key) {
+            if let Ok(bytes) = existing.clone().into_blob() {
+                deserialize_hll(&bytes).unwrap_or_else(|| new_hll_with_error(error_rate))
+            } else {
+                new_hll_with_error(error_rate)
+            }
+        } else {
+            new_hll_with_error(error_rate)
+        };
+
+        // Insert the new value
+        hll.insert(value);
+
+        // Serialize and store
+        let bytes = serialize_hll(&hll);
+        state.insert(key.to_string(), Dynamic::from_blob(bytes));
+    });
+
+    record_operation_metadata(key, "cardinality");
 }
 
 /// Implementation of track_percentiles for a given numeric type
@@ -1561,6 +1668,87 @@ pub fn register_functions(engine: &mut Engine) {
         // Silently ignore Unit values - no tracking occurs
     });
 
+    // track_cardinality - probabilistic cardinality estimation using HyperLogLog
+    // Uses ~12KB of memory regardless of cardinality, with ~1% standard error
+    // For exact counts of small sets, use track_unique instead
+
+    engine.register_fn("track_cardinality", |key: &str, value: &str| {
+        let s = value.to_string();
+        track_cardinality_impl(key, &s);
+    });
+
+    engine.register_fn("track_cardinality", |key: &str, value: i64| {
+        track_cardinality_impl(key, &value);
+    });
+
+    engine.register_fn("track_cardinality", |key: &str, value: i32| {
+        let v = value as i64;
+        track_cardinality_impl(key, &v);
+    });
+
+    engine.register_fn("track_cardinality", |key: &str, value: f64| {
+        // Convert to bits for consistent hashing of floats
+        let bits = value.to_bits();
+        track_cardinality_impl(key, &bits);
+    });
+
+    engine.register_fn("track_cardinality", |key: &str, value: f32| {
+        let bits = (value as f64).to_bits();
+        track_cardinality_impl(key, &bits);
+    });
+
+    // Overloads with custom error rate (third parameter)
+    engine.register_fn(
+        "track_cardinality",
+        |key: &str, value: &str, error_rate: f64| {
+            let s = value.to_string();
+            track_cardinality_with_error_impl(key, &s, error_rate);
+        },
+    );
+
+    engine.register_fn(
+        "track_cardinality",
+        |key: &str, value: i64, error_rate: f64| {
+            track_cardinality_with_error_impl(key, &value, error_rate);
+        },
+    );
+
+    engine.register_fn(
+        "track_cardinality",
+        |key: &str, value: i32, error_rate: f64| {
+            let v = value as i64;
+            track_cardinality_with_error_impl(key, &v, error_rate);
+        },
+    );
+
+    engine.register_fn(
+        "track_cardinality",
+        |key: &str, value: f64, error_rate: f64| {
+            let bits = value.to_bits();
+            track_cardinality_with_error_impl(key, &bits, error_rate);
+        },
+    );
+
+    engine.register_fn(
+        "track_cardinality",
+        |key: &str, value: f32, error_rate: f64| {
+            let bits = (value as f64).to_bits();
+            track_cardinality_with_error_impl(key, &bits, error_rate);
+        },
+    );
+
+    // Unit overload - no-op for missing/empty values
+    engine.register_fn("track_cardinality", |_key: &str, _value: ()| {
+        // Silently ignore Unit values - no tracking occurs
+    });
+
+    engine.register_fn(
+        "track_cardinality",
+        |_key: &str, _value: (), _error_rate: f64| {
+            // Silently ignore Unit values - no tracking occurs
+        },
+    );
+
     engine.register_fn("track_bucket", |key: &str, bucket: &str| {
         let updated = with_user_tracking(|state| {
             // Get existing map or create new one
@@ -2479,9 +2667,18 @@ pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: 
             }
         }
 
-        // Handle percentiles (t-digest blob)
+        // Handle blobs (HyperLogLog or t-digest)
         if let Ok(blob) = value.clone().into_blob() {
-            // This is a t-digest - deserialize and compute the percentile
+            // Check if this is a HyperLogLog (cardinality estimate)
+            if is_hll_blob(&blob) {
+                if let Some(hll) = deserialize_hll(&blob) {
+                    let cardinality = hll.len();
+                    output.push_str(&format!("{:<12} ≈ {}\n", key, cardinality));
+                    continue;
+                }
+            }
+
+            // Otherwise, check if it's a t-digest (percentile estimate)
             if let Some(digest) = deserialize_tdigest(&blob) {
                 // Extract percentile from key name (e.g., "api_latency_p95" -> 95.0)
                 if let Some(p_pos) = key.rfind("_p") {
@@ -2601,9 +2798,21 @@ pub fn format_metrics_json(
             }
         }
 
-        // Handle percentiles (t-digest blob)
+        // Handle blobs (HyperLogLog or t-digest)
         if let Ok(blob) = value.clone().into_blob() {
-            // This is a t-digest - deserialize and compute the percentile
+            // Check if this is a HyperLogLog (cardinality estimate)
+            if is_hll_blob(&blob) {
+                if let Some(hll) = deserialize_hll(&blob) {
+                    let cardinality = hll.len() as i64;
+                    json_obj.insert(
+                        key.clone(),
+                        serde_json::Value::Number(serde_json::Number::from(cardinality)),
+                    );
+                    continue;
+                }
+            }
+
+            // Otherwise, check if it's a t-digest (percentile estimate)
             if let Some(digest) = deserialize_tdigest(&blob) {
                 // Extract percentile from key name (e.g., "api_latency_p95" -> 95.0)
                 if let Some(p_pos) = key.rfind("_p") {
@@ -4018,5 +4227,160 @@ mod tests {
         assert!((sum - 250.5).abs() < 0.001);
 
         clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_cardinality_basic() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track some unique string values
+        engine
+            .eval::<()>(r#"track_cardinality("users", "alice")"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_cardinality("users", "bob")"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_cardinality("users", "charlie")"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_cardinality("users", "alice")"#) // duplicate
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // Check that the metric was created
+        assert!(state.contains_key("users"));
+
+        // Check that it's a blob (serialized HLL)
+        let value = state.get("users").unwrap();
+        assert!(value.is_blob());
+
+        // Deserialize and check the cardinality estimate
+        let blob = value.clone().into_blob().unwrap();
+        assert!(is_hll_blob(&blob));
+        let hll = deserialize_hll(&blob).unwrap();
+        let cardinality = hll.len();
+
+        // HLL should estimate ~3 unique values (with some margin for error)
+        assert!((2.0..=4.0).contains(&cardinality));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_cardinality_integers() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track integer values
+        for i in 1..=100 {
+            engine
+                .eval::<()>(&format!(r#"track_cardinality("numbers", {})"#, i))
+                .unwrap();
+        }
+
+        let state = get_thread_tracking_state();
+        let blob = state.get("numbers").unwrap().clone().into_blob().unwrap();
+        let hll = deserialize_hll(&blob).unwrap();
+        let cardinality = hll.len();
+
+        // HLL should estimate close to 100 (within ~5% for default error rate)
+        assert!((90.0..=110.0).contains(&cardinality));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_cardinality_unit_value() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Unit values should be silently ignored
+        engine
+            .eval::<()>(r#"track_cardinality("test", ())"#)
+            .unwrap();
+
+        let state = get_thread_tracking_state();
+
+        // No metric should be created for unit values only
+        assert!(!state.contains_key("test"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_cardinality_with_custom_error_rate() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Track with custom error rate (0.5% for higher precision)
+        for i in 1..=100 {
+            engine
+                .eval::<()>(&format!(r#"track_cardinality("precise", {}, 0.005)"#, i))
+                .unwrap();
+        }
+
+        let state = get_thread_tracking_state();
+        let blob = state.get("precise").unwrap().clone().into_blob().unwrap();
+        let hll = deserialize_hll(&blob).unwrap();
+        let cardinality = hll.len();
+
+        // With 0.5% error rate, should be very close to 100
+        assert!((95.0..=105.0).contains(&cardinality));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_cardinality_operation_metadata() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine
+            .eval::<()>(r#"track_cardinality("ips", "192.168.1.1")"#)
+            .unwrap();
+
+        let internal = get_thread_internal_state();
+
+        // Check that operation metadata was recorded
+        assert!(internal.contains_key("__op_ips"));
+        assert_eq!(
+            internal
+                .get("__op_ips")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "cardinality"
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_hll_serialization_roundtrip() {
+        // Test that HLL serialization/deserialization works correctly
+        let mut hll = new_hll();
+        hll.insert(&"test1".to_string());
+        hll.insert(&"test2".to_string());
+        hll.insert(&"test3".to_string());
+
+        let bytes = serialize_hll(&hll);
+        assert!(is_hll_blob(&bytes));
+
+        let restored = deserialize_hll(&bytes).unwrap();
+        assert!((hll.len() - restored.len()).abs() < 0.001);
     }
 }
