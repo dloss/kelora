@@ -3376,7 +3376,8 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <li><code>track_sum(key, value)</code> - Sum values</li>
 <li><code>track_min(key, value)</code> - Track minimum value</li>
 <li><code>track_max(key, value)</code> - Track maximum value</li>
-<li><code>track_unique(key, value)</code> - Collect unique values</li>
+<li><code>track_unique(key, value)</code> - Collect unique values (exact, stores all)</li>
+<li><code>track_cardinality(key, value)</code> - Estimate unique count (HyperLogLog, ~1% error)</li>
 <li><code>track_bucket(key, bucket)</code> - Track values in buckets</li>
 </ul>
 <p><strong>Access in --end stage:</strong>

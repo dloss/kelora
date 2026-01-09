@@ -2073,6 +2073,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#h" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        H
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="H">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hyperloglog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HyperLogLog
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#l" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2895,6 +2923,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#h" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        H
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="H">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hyperloglog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HyperLogLog
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#l" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3315,6 +3371,10 @@
 <h3 id="format">Format<a class="headerlink" href="#format" title="Permanent link">&para;</a></h3>
 <p>The structure and syntax of input log data. Common formats: JSON, logfmt, syslog, CSV, Apache/Nginx combined format. Specified with <code>-f</code> or <code>--input-format</code>. See <a href="../reference/formats/">Format Reference</a>.</p>
 <hr />
+<h2 id="h">H<a class="headerlink" href="#h" title="Permanent link">&para;</a></h2>
+<h3 id="hyperloglog">HyperLogLog<a class="headerlink" href="#hyperloglog" title="Permanent link">&para;</a></h3>
+<p>A probabilistic data structure for estimating the cardinality (unique count) of a set using constant memory. Used by <code>track_cardinality()</code> to estimate unique values across billions of events with ~1% error using only ~12KB of memory. Use when <code>track_unique()</code> would consume too much memory for high-cardinality data. See <a href="../tutorials/metrics-and-tracking/#probabilistic-cardinality-with-hyperloglog">Metrics and Tracking Tutorial</a>.</p>
+<hr />
 <h2 id="l">L<a class="headerlink" href="#l" title="Permanent link">&para;</a></h2>
 <h3 id="level">Level<a class="headerlink" href="#level" title="Permanent link">&para;</a></h3>
 <p>The severity or importance of a log event. Common levels: DEBUG, INFO, WARN, ERROR, CRITICAL. Can be filtered with <code>-l</code> (include) or <code>-L</code> (exclude). Case-insensitive. See <a href="../tutorials/basics/#part-5-level-filtering-l-l">Basics Tutorial</a>.</p>
@@ -3397,7 +3457,8 @@
 <li><code>track_avg(key, value)</code> - Average values</li>
 <li><code>track_percentiles(key, value, [percentiles])</code> - Streaming percentiles (P50/P95/P99)</li>
 <li><code>track_min/max(key, value)</code> - Track extremes</li>
-<li><code>track_unique(key, value)</code> - Collect unique values</li>
+<li><code>track_unique(key, value)</code> - Collect unique values (exact, stores all)</li>
+<li><code>track_cardinality(key, value)</code> - Estimate unique count (HyperLogLog, ~1% error, ~12KB)</li>
 <li><code>track_bucket(key, bucket_value)</code> - Histogram buckets</li>
 <li><code>track_top/bottom(key, item, n, [score])</code> - Top/bottom N items</li>
 </ul>
