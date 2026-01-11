@@ -1623,6 +1623,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#choosing-a-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-multiline-processing-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2304,6 +2315,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#choosing-a-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-multiline-processing-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2494,6 +2516,11 @@ right strategy for your data set.</p>
 </ul>
 <p>Without multiline detection, Kelora parses each physical line as its own event,
 making it hard to correlate context.</p>
+<h2 id="choosing-a-strategy">Choosing a Strategy<a class="headerlink" href="#choosing-a-strategy" title="Permanent link">&para;</a></h2>
+<p><strong>Start with <code>timestamp</code></strong> if your logs have timestamp prefixes (works for 80% of application logs with stack traces).</p>
+<p><strong>Use <code>indent</code></strong> if continuation lines start with whitespace but the first line doesn't have a timestamp.</p>
+<p><strong>Use <code>regex</code></strong> only when you have explicit BEGIN/END markers or need custom boundary detection.</p>
+<p><strong>Use <code>all</code></strong> rarely—only for whole-file processing where the entire input is a single logical record.</p>
 <h2 id="how-multiline-processing-works">How Multiline Processing Works<a class="headerlink" href="#how-multiline-processing-works" title="Permanent link">&para;</a></h2>
 <ol>
 <li>

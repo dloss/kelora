@@ -1511,6 +1511,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-start-what-youll-use-most" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start: What You'll Use Most
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#layer-1-input-layer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2593,6 +2604,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-start-what-youll-use-most" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start: What You'll Use Most
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#layer-1-input-layer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3062,6 +3084,14 @@
 <p>This layered architecture enables efficient streaming with low memory usage while supporting both sequential and parallel processing modes.</p>
 <p><img alt="Kelora Pipeline Architecture" src="../pipeline-model.png#only-light" />
 <img alt="Kelora Pipeline Architecture" src="../pipeline-model-dark.png#only-dark" /></p>
+<h2 id="quick-start-what-youll-use-most">Quick Start: What You'll Use Most<a class="headerlink" href="#quick-start-what-youll-use-most" title="Permanent link">&para;</a></h2>
+<p><strong>For typical log analysis</strong>, you only interact with these stages:</p>
+<ol>
+<li><strong>Input</strong> - Kelora auto-detects format (JSON, logfmt, syslog, etc.) from your files</li>
+<li><strong>Event Processing</strong> - Use <code>--filter</code> and <code>--exec</code> in the order you specify them on the CLI</li>
+<li><strong>Output</strong> - Events stream to stdout in readable format</li>
+</ol>
+<p><strong>Read the full doc when:</strong> You need multiline handling for stack traces, parallel processing for large files, span aggregation for grouping events, or to understand why certain features interact the way they do.</p>
 <hr />
 <h2 id="layer-1-input-layer">Layer 1: Input Layer<a class="headerlink" href="#layer-1-input-layer" title="Permanent link">&para;</a></h2>
 <h3 id="input-sources">Input Sources<a class="headerlink" href="#input-sources" title="Permanent link">&para;</a></h3>
