@@ -19,6 +19,16 @@ right strategy for your data set.
 Without multiline detection, Kelora parses each physical line as its own event,
 making it hard to correlate context.
 
+## Choosing a Strategy
+
+**Start with `timestamp`** if your logs have timestamp prefixes (works for 80% of application logs with stack traces).
+
+**Use `indent`** if continuation lines start with whitespace but the first line doesn't have a timestamp.
+
+**Use `regex`** only when you have explicit BEGIN/END markers or need custom boundary detection.
+
+**Use `all`** rarely—only for whole-file processing where the entire input is a single logical record.
+
 ## How Multiline Processing Works
 
 1. **Pre-parse stage** – Multiline runs before the input parser. The chunker

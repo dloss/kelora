@@ -15,6 +15,16 @@ This layered architecture enables efficient streaming with low memory usage whil
 ![Kelora Pipeline Architecture](pipeline-model.png#only-light)
 ![Kelora Pipeline Architecture](pipeline-model-dark.png#only-dark)
 
+## Quick Start: What You'll Use Most
+
+**For typical log analysis**, you only interact with these stages:
+
+1. **Input** - Kelora auto-detects format (JSON, logfmt, syslog, etc.) from your files
+2. **Event Processing** - Use `--filter` and `--exec` in the order you specify them on the CLI
+3. **Output** - Events stream to stdout in readable format
+
+**Read the full doc when:** You need multiline handling for stack traces, parallel processing for large files, span aggregation for grouping events, or to understand why certain features interact the way they do.
+
 ---
 
 ## Layer 1: Input Layer

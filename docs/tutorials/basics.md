@@ -149,6 +149,8 @@ You'll encounter `e` throughout the documentation. Remember: `e` = the current e
 
 ## Part 4: Display Modifiers (`-b`, `-c`, `-k`, `-K`)
 
+Most workflows use `-k` to select specific fields. The other modifiers are useful in specific situations.
+
 ### Brief Mode (`-b`) - Values Only
 
 Omit field names, show only values for compact output:
