@@ -102,6 +102,7 @@ Beyond basic filtering and conversion, Kelora includes specialized functions tha
 
 - **[Deep flattening](how-to/power-user-techniques.md#deep-structure-flattening)** - Fan out nested JSON arrays to flat records (`emit_each()`)
 - **[Extract JSON from text](how-to/power-user-techniques.md#extract-json-from-unstructured-text)** - Pull structured data from unstructured log lines
+- **[Template mining](how-to/power-user-techniques.md#template-mining-with---drain)** - Automatic log pattern discovery and clustering using Drain algorithm
 - **[JWT parsing](how-to/power-user-techniques.md#jwt-parsing-without-verification)** - Extract claims without signature verification for debugging
 - **[Cryptographic pseudonymization](how-to/power-user-techniques.md#multiple-hash-algorithms)** - Privacy-preserving anonymization with Argon2id + HKDF + HMAC
 - **[Pattern normalization](how-to/power-user-techniques.md#pattern-normalization)** - Group error messages by replacing IPs, UUIDs, emails with placeholders
