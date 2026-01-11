@@ -2736,7 +2736,7 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="m">1</span>
 </code></pre></div>
 <h2 id="exit-code-1-processing-errors">Exit Code 1: Processing Errors<a class="headerlink" href="#exit-code-1-processing-errors" title="Permanent link">&para;</a></h2>
-<p>Indicates errors occurred during processing. Four types:</p>
+<p>Indicates errors occurred during processing. Five types:</p>
 <table>
 <thead>
 <tr>
@@ -2760,6 +2760,11 @@
 <td><strong>Exec errors</strong></td>
 <td><code>--exec</code> scripts failed during execution</td>
 <td>Runtime errors in Rhai code</td>
+</tr>
+<tr>
+<td><strong>Assertion failures</strong></td>
+<td><code>--assert</code> expressions evaluated to false</td>
+<td>Data quality violations, missing required fields</td>
 </tr>
 <tr>
 <td><strong>File I/O failures</strong></td>
@@ -2795,9 +2800,11 @@
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.missing_field.to_int()&#39;</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Exec error</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.invalid.to_int()&#39;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># File I/O error (some files failed)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>good.log<span class="w"> </span>missing.log
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># All return exit code 1</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Assertion failure</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--assert<span class="w"> </span><span class="s1">&#39;e.has(&quot;user_id&quot;)&#39;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># File I/O error (some files failed)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>good.log<span class="w"> </span>missing.log
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># All return exit code 1</span>
 </code></pre></div>
 <h2 id="exit-code-2-usage-errors">Exit Code 2: Usage Errors<a class="headerlink" href="#exit-code-2-usage-errors" title="Permanent link">&para;</a></h2>
 <p>Indicates <strong>command-line usage errors</strong> before processing begins:</p>

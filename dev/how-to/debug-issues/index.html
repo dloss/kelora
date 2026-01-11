@@ -1071,6 +1071,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#-assert-data-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --assert - Data Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#-keep-lines-ignore-lines-pre-filter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2366,6 +2377,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#-assert-data-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --assert - Data Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#-keep-lines-ignore-lines-pre-filter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2472,6 +2494,7 @@
 <li><strong>Check statistics</strong> - Use <code>--stats</code> to see how many events were filtered/errored</li>
 <li><strong>Test with small sample</strong> - Use <code>--take 10</code> for fast iteration</li>
 <li><strong>Use strict mode</strong> - Use <code>--strict</code> to fail-fast on errors during debugging</li>
+<li><strong>Validate data quality</strong> - Use <code>--assert</code> to check for required fields or invariants</li>
 </ol>
 <p><strong>Example debugging session:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. What fields are actually present?</span>
@@ -2565,13 +2588,44 @@
 <li><strong>Strict:</strong> Abort immediately on first error</li>
 </ul>
 <hr />
+<h3 id="-assert-data-validation"><code>--assert</code> - Data Validation<a class="headerlink" href="#-assert-data-validation" title="Permanent link">&para;</a></h3>
+<p>Validate events against boolean expressions. Events still pass through (unlike <code>--filter</code>), but violations are reported to stderr:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check all events have required field</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--assert<span class="w"> </span><span class="s1">&#39;e.has(&quot;user_id&quot;)&#39;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Validate transformations</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>data.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.name = e.name.lower()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">    </span>--assert<span class="w"> </span><span class="s1">&#39;e.name == e.name.lower()&#39;</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1"># Multiple validation rules</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span>--assert<span class="w"> </span><span class="s1">&#39;e.has(&quot;timestamp&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">    </span>--assert<span class="w"> </span><span class="s1">&#39;e.status &gt;= 0&#39;</span>
+</code></pre></div>
+<p><strong>Use when:</strong></p>
+<ul>
+<li>Validating log data quality</li>
+<li>Checking required fields exist</li>
+<li>Verifying transformations are correct</li>
+<li>Testing data pipelines</li>
+</ul>
+<p><strong>Behavior:</strong></p>
+<ul>
+<li>Events always pass through to output</li>
+<li>Violations reported immediately to stderr</li>
+<li>Exit code 1 if any assertions fail</li>
+<li>Use with <code>--stats</code> to see failure counts</li>
+<li>Combine with <code>--strict</code> for fail-fast validation</li>
+</ul>
+<hr />
 <h3 id="-keep-lines-ignore-lines-pre-filter"><code>--keep-lines</code> / <code>--ignore-lines</code> - Pre-filter<a class="headerlink" href="#-keep-lines-ignore-lines-pre-filter" title="Permanent link">&para;</a></h3>
 <p>Filter at line level before parsing (faster than post-parse filtering):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Only process lines containing ERROR</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--keep-lines<span class="w"> </span><span class="s1">&#39;ERROR&#39;</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Skip debug lines</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--ignore-lines<span class="w"> </span><span class="s1">&#39;DEBUG|TRACE&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Only process lines containing ERROR</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--keep-lines<span class="w"> </span><span class="s1">&#39;ERROR&#39;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Skip debug lines</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--ignore-lines<span class="w"> </span><span class="s1">&#39;DEBUG|TRACE&#39;</span>
 </code></pre></div>
 <p><strong>Use when:</strong></p>
 <ul>
@@ -2582,12 +2636,12 @@
 <hr />
 <h2 id="getting-more-help">Getting More Help<a class="headerlink" href="#getting-more-help" title="Permanent link">&para;</a></h2>
 <h3 id="built-in-help">Built-in Help<a class="headerlink" href="#built-in-help" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai scripting guide</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># All built-in functions</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kelora<span class="w"> </span>--help-time<span class="w">         </span><span class="c1"># Timestamp format reference</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>kelora<span class="w"> </span>--help-multiline<span class="w">    </span><span class="c1"># Multiline strategies</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai scripting guide</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># All built-in functions</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>kelora<span class="w"> </span>--help-time<span class="w">         </span><span class="c1"># Timestamp format reference</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>kelora<span class="w"> </span>--help-multiline<span class="w">    </span><span class="c1"># Multiline strategies</span>
 </code></pre></div>
 <h3 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2610,20 +2664,20 @@
 <li><strong>Field structure</strong> - Output of <code>-F inspect --take 3</code></li>
 </ol>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Command:
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  kelora -j app.log --filter &#39;e.status &gt;= 500&#39;
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>Sample input:
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  {&quot;timestamp&quot;: &quot;2024-01-15T10:00:00Z&quot;, &quot;status&quot;: &quot;500&quot;}
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>Error:
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>  Type mismatch: cannot compare String with Integer
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>Field structure (kelora -j app.log -F inspect --take 1):
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>  {&quot;status&quot;: String(&quot;500&quot;)}
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>Expected: Filter events with status &gt;= 500
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>Actual: Error on type comparison
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Command:
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  kelora -j app.log --filter &#39;e.status &gt;= 500&#39;
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>Sample input:
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  {&quot;timestamp&quot;: &quot;2024-01-15T10:00:00Z&quot;, &quot;status&quot;: &quot;500&quot;}
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>Error:
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>  Type mismatch: cannot compare String with Integer
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>Field structure (kelora -j app.log -F inspect --take 1):
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>  {&quot;status&quot;: String(&quot;500&quot;)}
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>Expected: Filter events with status &gt;= 500
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>Actual: Error on type comparison
 </code></pre></div>
 <hr />
 <h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
@@ -2633,6 +2687,7 @@
 <li><code>kelora -j app.log --verbose --stats</code> - See errors and statistics</li>
 <li><code>kelora -j app.log --take 10</code> - Test with small sample</li>
 <li><code>kelora -j --strict app.log</code> - Fail-fast mode for debugging</li>
+<li><code>kelora -j app.log --assert 'e.has("field")' --stats</code> - Validate data quality</li>
 </ol>
 <p><strong>Common fixes:</strong></p>
 <ul>

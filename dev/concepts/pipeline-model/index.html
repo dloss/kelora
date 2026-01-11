@@ -3205,12 +3205,12 @@ Buffers entire input as single event (use for structured files).</p>
 <p><strong>User-controlled stages execute exactly where you place them on the CLI:</strong></p>
 <ul>
 <li><code>--filter &lt;EXPR&gt;</code> – Boolean filter (true = keep, false = skip)</li>
-<li><code>--levels/-l &lt;LIST&gt;</code> – Include log levels (case-insensitive, repeatable)</li>
-<li><code>--exclude-levels/-L &lt;LIST&gt;</code> – Exclude log levels (case-insensitive, repeatable)</li>
+<li><code>--levels/-l &lt;LIST&gt;</code> – Include log levels (comma-separated for OR; use separate flags for progressive filtering)</li>
+<li><code>--exclude-levels/-L &lt;LIST&gt;</code> – Exclude log levels (comma-separated)</li>
 <li><code>--exec &lt;SCRIPT&gt;</code> – Transform/process event</li>
 <li><code>--exec-file &lt;PATH&gt;</code> – Execute script from file (alias: <code>-E</code>)</li>
 </ul>
-<p>You can mix and repeat these flags; each stage sees the output of the previous one.</p>
+<p>You can mix and repeat these flags; each stage sees the output of the previous one. For level filtering, use comma-separated values for OR logic (<code>--levels error,warn</code>). Consecutive <code>--levels</code> flags create AND filters (advanced).</p>
 <p>Inside <code>--exec</code>, call <code>skip()</code> to drop the current event immediately; later stages and output are skipped, and the event is counted as filtered.</p>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>

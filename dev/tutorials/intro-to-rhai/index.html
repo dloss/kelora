@@ -3079,45 +3079,46 @@
 <p>Let's see the structure with <code>-F inspect</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span>-F<span class="w"> </span>inspect
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>---
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp | string | &quot;2024-01-15T10:00:00Z&quot;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>level     | string | &quot;INFO&quot;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>message   | string | &quot;Application started&quot;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>service   | string | &quot;api&quot;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>version   | string | &quot;1.2.3&quot;
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>---
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp       | string | &quot;2024-01-15T10:00:10Z&quot;
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>level           | string | &quot;DEBUG&quot;
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>message         | string | &quot;Connection pool initialized&quot;
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>service         | string | &quot;database&quot;
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>max_connections | int    | 50
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>---
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>timestamp      | string | &quot;2024-01-15T10:01:00Z&quot;
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>level          | string | &quot;WARN&quot;
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>message        | string | &quot;High memory usage detected&quot;
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>service        | string | &quot;api&quot;
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>memory_percent | int    | 85
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>---
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp   | string | &quot;2024-01-15T10:01:30Z&quot;
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>level       | string | &quot;ERROR&quot;
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>message     | string | &quot;Query timeout&quot;
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>service     | string | &quot;database&quot;
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>query       | string | &quot;SELECT * FROM users&quot;
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>duration_ms | int    | 5000
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>---
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>timestamp | string | &quot;2024-01-15T10:02:00Z&quot;
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>level     | string | &quot;INFO&quot;
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>message   | string | &quot;Request received&quot;
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>service   | string | &quot;api&quot;
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>method    | string | &quot;GET&quot;
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>path      | string | &quot;/api/users&quot;
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>---
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>timestamp | string | &quot;2024-01-15T10:03:00Z&quot;
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>level     | string | &quot;ERROR&quot;
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>message   | string | &quot;Account locked&quot;
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>service   | string | &quot;auth&quot;
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>username  | string | &quot;admin&quot;
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>attempts  | int    | 5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>---
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp | string | &quot;2024-01-15T10:00:00Z&quot;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>level     | string | &quot;INFO&quot;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>message   | string | &quot;Application started&quot;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>service   | string | &quot;api&quot;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>version   | string | &quot;1.2.3&quot;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>---
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp       | string | &quot;2024-01-15T10:00:10Z&quot;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>level           | string | &quot;DEBUG&quot;
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>message         | string | &quot;Connection pool initialized&quot;
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>service         | string | &quot;database&quot;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>max_connections | int    | 50
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>---
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>timestamp      | string | &quot;2024-01-15T10:01:00Z&quot;
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>level          | string | &quot;WARN&quot;
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>message        | string | &quot;High memory usage detected&quot;
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>service        | string | &quot;api&quot;
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>memory_percent | int    | 85
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>---
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>timestamp   | string | &quot;2024-01-15T10:01:30Z&quot;
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>level       | string | &quot;ERROR&quot;
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>message     | string | &quot;Query timeout&quot;
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>service     | string | &quot;database&quot;
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>query       | string | &quot;SELECT * FROM users&quot;
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>duration_ms | int    | 5000
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>---
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>timestamp | string | &quot;2024-01-15T10:02:00Z&quot;
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>level     | string | &quot;INFO&quot;
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>message   | string | &quot;Request received&quot;
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>service   | string | &quot;api&quot;
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>method    | string | &quot;GET&quot;
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>path      | string | &quot;/api/users&quot;
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>---
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>timestamp | string | &quot;2024-01-15T10:03:00Z&quot;
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>level     | string | &quot;ERROR&quot;
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>message   | string | &quot;Account locked&quot;
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>service   | string | &quot;auth&quot;
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>username  | string | &quot;admin&quot;
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>attempts  | int    | 5
 </code></pre></div>
 <p><strong>Key insight:</strong> Field names become properties you can access in scripts.</p>
 <hr />
@@ -3127,18 +3128,20 @@
 <p>Keep only ERROR level events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; level=&#39;ERROR&#39; message=&#39;Account locked&#39; service=&#39;auth&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  username=&#39;admin&#39; attempts=5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; level=&#39;ERROR&#39; message=&#39;Account locked&#39; service=&#39;auth&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  username=&#39;admin&#39; attempts=5
 </code></pre></div>
 <p><strong>What happened:</strong> Only events where <code>e.level</code> equals <code>"ERROR"</code> are kept.</p>
 <h3 id="filter-by-numeric-comparison">Filter by Numeric Comparison<a class="headerlink" href="#filter-by-numeric-comparison" title="Permanent link">&para;</a></h3>
 <p>Keep only slow queries (duration &gt; 1000ms):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration_ms &gt; 1000&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
 </code></pre></div>
 <p><strong>Important:</strong> This only keeps events that <strong>have</strong> a <code>duration_ms</code> field. Events without it are skipped.</p>
 <h3 id="combine-conditions-with-logical-operators">Combine Conditions with Logical Operators<a class="headerlink" href="#combine-conditions-with-logical-operators" title="Permanent link">&para;</a></h3>
@@ -3146,8 +3149,9 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.level in [&quot;ERROR&quot;, &quot;WARN&quot;] &amp;&amp; e.service == &quot;database&quot;&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
 </code></pre></div>
 <p><strong>Operators:</strong></p>
 <ul>
@@ -3169,7 +3173,8 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration_s &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,service,duration_ms,duration_s
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; duration_ms=5000 duration_s=5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; duration_ms=5000 duration_s=5
 </code></pre></div>
 <p><strong>Key insight:</strong> <code>--exec</code> runs <strong>before</strong> <code>--filter</code>, so the new field is available for filtering.</p>
 <h3 id="modify-existing-fields">Modify Existing Fields<a class="headerlink" href="#modify-existing-fields" title="Permanent link">&para;</a></h3>
@@ -3177,18 +3182,19 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.level = e.level.to_upper()&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; level=&#39;INFO&#39; message=&#39;Application started&#39; service=&#39;api&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  version=&#39;1.2.3&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; level=&#39;DEBUG&#39; message=&#39;Connection pool initialized&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  service=&#39;database&#39; max_connections=50
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; level=&#39;WARN&#39; message=&#39;High memory usage detected&#39; service=&#39;api&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  memory_percent=85
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; level=&#39;INFO&#39; message=&#39;Request received&#39; service=&#39;api&#39; method=&#39;GET&#39;
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  path=&#39;/api/users&#39;
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; level=&#39;ERROR&#39; message=&#39;Account locked&#39; service=&#39;auth&#39;
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  username=&#39;admin&#39; attempts=5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; level=&#39;INFO&#39; message=&#39;Application started&#39; service=&#39;api&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  version=&#39;1.2.3&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:00:10Z&#39; level=&#39;DEBUG&#39; message=&#39;Connection pool initialized&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  service=&#39;database&#39; max_connections=50
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; level=&#39;WARN&#39; message=&#39;High memory usage detected&#39; service=&#39;api&#39;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  memory_percent=85
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; level=&#39;INFO&#39; message=&#39;Request received&#39; service=&#39;api&#39; method=&#39;GET&#39;
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  path=&#39;/api/users&#39;
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; level=&#39;ERROR&#39; message=&#39;Account locked&#39; service=&#39;auth&#39;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  username=&#39;admin&#39; attempts=5
 </code></pre></div>
 <hr />
 <h2 id="step-4-string-operations">Step 4: String Operations<a class="headerlink" href="#step-4-string-operations" title="Permanent link">&para;</a></h2>
@@ -3198,8 +3204,9 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.contains(&quot;timeout&quot;)&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; level=&#39;ERROR&#39; message=&#39;Query timeout&#39; service=&#39;database&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  query=&#39;SELECT * FROM users&#39; duration_ms=5000
 </code></pre></div>
 <h3 id="extract-parts-of-strings">Extract Parts of Strings<a class="headerlink" href="#extract-parts-of-strings" title="Permanent link">&para;</a></h3>
 <p>Extract just the error type from messages:</p>
@@ -3208,8 +3215,9 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.error_type = e.message.split(&quot; &quot;)[0]&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>-k<span class="w"> </span>timestamp,service,error_type,message
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; error_type=&#39;Query&#39; message=&#39;Query timeout&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; service=&#39;auth&#39; error_type=&#39;Account&#39; message=&#39;Account locked&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; error_type=&#39;Query&#39; message=&#39;Query timeout&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; service=&#39;auth&#39; error_type=&#39;Account&#39; message=&#39;Account locked&#39;
 </code></pre></div>
 <p><strong>Common string methods:</strong></p>
 <ul>
@@ -3229,12 +3237,13 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.severity = if e.level in [&quot;ERROR&quot;, &quot;CRITICAL&quot;] { &quot;high&quot; } else if e.level == &quot;WARN&quot; { &quot;medium&quot; } else { &quot;low&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-k<span class="w"> </span>level,severity,service,message
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>level=&#39;INFO&#39; severity=&#39;low&#39; service=&#39;api&#39; message=&#39;Application started&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>level=&#39;DEBUG&#39; severity=&#39;low&#39; service=&#39;database&#39; message=&#39;Connection pool initialized&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>level=&#39;WARN&#39; severity=&#39;medium&#39; service=&#39;api&#39; message=&#39;High memory usage detected&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;database&#39; message=&#39;Query timeout&#39;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>level=&#39;INFO&#39; severity=&#39;low&#39; service=&#39;api&#39; message=&#39;Request received&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;auth&#39; message=&#39;Account locked&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>level=&#39;INFO&#39; severity=&#39;low&#39; service=&#39;api&#39; message=&#39;Application started&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>level=&#39;DEBUG&#39; severity=&#39;low&#39; service=&#39;database&#39; message=&#39;Connection pool initialized&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>level=&#39;WARN&#39; severity=&#39;medium&#39; service=&#39;api&#39; message=&#39;High memory usage detected&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;database&#39; message=&#39;Query timeout&#39;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>level=&#39;INFO&#39; severity=&#39;low&#39; service=&#39;api&#39; message=&#39;Request received&#39;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;auth&#39; message=&#39;Account locked&#39;
 </code></pre></div>
 <p><strong>Syntax:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>if condition {
@@ -3258,8 +3267,9 @@
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">        e.invalid_num = e.invalid.to_int_or(999)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span>-k<span class="w"> </span>id,id_num,status,status_num,invalid,invalid_num
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>id=&#39;123&#39; id_num=123 status=&#39;200&#39; status_num=200 invalid=&#39;abc&#39; invalid_num=999
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id=&#39;456&#39; id_num=456 status=&#39;404&#39; status_num=404 invalid=&#39;xyz&#39; invalid_num=999
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id=&#39;123&#39; id_num=123 status=&#39;200&#39; status_num=200 invalid=&#39;abc&#39; invalid_num=999
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>id=&#39;456&#39; id_num=456 status=&#39;404&#39; status_num=404 invalid=&#39;xyz&#39; invalid_num=999
 </code></pre></div>
 <p><strong>Note:</strong> Multiple statements in one <code>-e</code> are separated by semicolons and share the same scope. Use this when operations are related or when you need to share <code>let</code> variables.</p>
 <p><strong>Safe conversion functions:</strong></p>
@@ -3284,7 +3294,8 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.duration_s &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>-k<span class="w"> </span>service,duration_s,message
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>service=&#39;database&#39; duration_s=5 message=&#39;Query timeout&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>service=&#39;database&#39; duration_s=5 message=&#39;Query timeout&#39;
 </code></pre></div>
 <p><strong>Rule:</strong> Fields must exist before you filter on them. Scripts run in CLI order.</p>
 <hr />
@@ -3295,12 +3306,13 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.slow = if e.has(&quot;duration_ms&quot;) { e.duration_ms &gt; 1000 } else { false }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-k<span class="w"> </span>service,slow,message
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>service=&#39;api&#39; slow=false message=&#39;Application started&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>service=&#39;database&#39; slow=false message=&#39;Connection pool initialized&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>service=&#39;api&#39; slow=false message=&#39;High memory usage detected&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>service=&#39;database&#39; slow=true message=&#39;Query timeout&#39;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>service=&#39;api&#39; slow=false message=&#39;Request received&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>service=&#39;auth&#39; slow=false message=&#39;Account locked&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>service=&#39;api&#39; slow=false message=&#39;Application started&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>service=&#39;database&#39; slow=false message=&#39;Connection pool initialized&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>service=&#39;api&#39; slow=false message=&#39;High memory usage detected&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>service=&#39;database&#39; slow=true message=&#39;Query timeout&#39;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>service=&#39;api&#39; slow=false message=&#39;Request received&#39;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>service=&#39;auth&#39; slow=false message=&#39;Account locked&#39;
 </code></pre></div>
 <p><strong>Pattern:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>if e.has(&quot;field_name&quot;) {
@@ -3317,12 +3329,13 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;id&quot;:&quot;42&quot;,&quot;count&quot;:&quot;100&quot;}</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="s1">{&quot;id&quot;:99,&quot;count&quot;:200}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>inspect
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>---
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id    | string | &quot;42&quot;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>count | string | &quot;100&quot;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>---
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>id    | int | 99
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>count | int | 200
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>---
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>id    | string | &quot;42&quot;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>count | string | &quot;100&quot;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>---
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>id    | int | 99
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>count | int | 200
 </code></pre></div>
 <p><strong>Output shows:</strong> Field name, type (string/int/etc.), and value. Notice how <code>id</code> and <code>count</code> are strings in the first event but integers in the second - this explains why <code>count &gt; 50</code> would fail on the first event!</p>
 <h3 id="use-verbose-to-see-errors">Use --verbose to See Errors<a class="headerlink" href="#use-verbose-to-see-errors" title="Permanent link">&para;</a></h3>
@@ -3332,8 +3345,9 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.num = e.value.to_int()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--verbose
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Executing stage 1 (exec)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>value=&#39;not_a_number&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora: Executing stage 1 (exec)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>value=&#39;not_a_number&#39;
 </code></pre></div>
 <p><strong>Debug workflow:</strong></p>
 <ol>
@@ -3353,8 +3367,9 @@
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.needs_attention&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>-k<span class="w"> </span>service,level,is_error,is_slow,message
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>service=&#39;database&#39; level=&#39;ERROR&#39; is_error=true is_slow=true message=&#39;Query timeout&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>service=&#39;auth&#39; level=&#39;ERROR&#39; is_error=true is_slow=false message=&#39;Account locked&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora: Config: /home/runner/.config/kelora/kelora.ini
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>service=&#39;database&#39; level=&#39;ERROR&#39; is_error=true is_slow=true message=&#39;Query timeout&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>service=&#39;auth&#39; level=&#39;ERROR&#39; is_error=true is_slow=false message=&#39;Account locked&#39;
 </code></pre></div>
 <p><strong>Pattern:</strong> Build up computed fields step-by-step, then filter on the final result.</p>
 <hr />
