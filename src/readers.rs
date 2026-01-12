@@ -14,9 +14,6 @@ pub struct PeekableLineReader<R: BufRead> {
     first_line_consumed: bool,
 }
 
-// Safe because PeekableLineReader only shares the underlying reader, which must be Send.
-unsafe impl<R: BufRead + Send> Send for PeekableLineReader<R> {}
-
 impl<R: BufRead> PeekableLineReader<R> {
     pub fn new(reader: R) -> Self {
         Self {

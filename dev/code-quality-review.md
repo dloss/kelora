@@ -72,7 +72,6 @@ Missing tests for:
 ## ✅ Positive Findings
 
 - 52 source files with `#[test]` markers
-- Only 2 `unsafe` blocks (both justified)
 - No TODO/FIXME in source
 - Active clippy linting
 - Comprehensive --help system

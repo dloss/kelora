@@ -20,9 +20,6 @@ pub enum DecompressionReader {
     Plain(PlainReader),
 }
 
-// Manually implement Send since all variants contain Send types
-unsafe impl Send for DecompressionReader {}
-
 // Manually implement Debug since zstd::Decoder doesn't implement it
 impl std::fmt::Debug for DecompressionReader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

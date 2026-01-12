@@ -46,9 +46,6 @@ Kelora implements multiple layers of security controls to ensure safe operation:
 
 ### Code Safety
 
-- **Minimal unsafe code:** Only 2 `unsafe` blocks in the entire codebase (all other unsafe code is forbidden)
-  - `src/decompression.rs` - Manual `Send` implementation for `DecompressionReader` (all variants contain `Send` types)
-  - `src/readers.rs` - Manual `Send` implementation for `PeekableLineReader` (underlying reader is `Send`)
 - **Clippy enforcement** with warnings-as-errors (`-D warnings`) blocks any lints from merging
 - **Memory safety:** Rust's ownership system prevents buffer overflows, use-after-free, and data races
 
