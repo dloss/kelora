@@ -641,6 +641,43 @@ e.p95 = e.latencies.percentile(95)
 e.median = e.values.percentile(50)
 ```
 
+#### `array.sum()`
+Calculate sum of all numeric values (int, float) in array. Non-numeric values (strings, booleans, etc.) are filtered out. No automatic string-to-number coercion. Returns 0.0 for empty arrays.
+
+```rhai
+e.total_bytes = e.requests.pluck_as_nums("bytes").sum()
+e.total_errors = [10, 20, 30].sum()                    // 60.0
+[10, 20.5, 30].sum()                                   // 60.5
+```
+
+#### `array.mean()`
+Calculate arithmetic mean (average) of numeric values (int, float). Non-numeric values are filtered out. No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.
+
+```rhai
+e.avg_latency = e.latencies.mean()
+e.avg_score = [10, 20, 30].mean()                      // 20.0
+```
+
+#### `array.variance()`
+Calculate population variance of numeric values (int, float). No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.
+
+```rhai
+e.latency_variance = e.latencies.variance()
+if e.latency_variance > 100.0 {
+    print("High variance detected")
+}
+```
+
+#### `array.stddev()`
+Calculate standard deviation (population) of numeric values (int, float). No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.
+
+```rhai
+e.latency_stddev = e.latencies.stddev()
+if e.latency_stddev > 10.0 {
+    print("High variation: " + e.latency_stddev)
+}
+```
+
 #### `array.reduce(|acc, item| expr, init)`
 Aggregate array into single value.
 

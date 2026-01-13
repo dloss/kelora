@@ -113,9 +113,13 @@ array.map(|item| expression)         Transform each element (builtin)
 array.pluck(field)                   Extract field from each map/object in array (skips missing/() values)
 array.pluck_as_nums(field)           Extract field as f64 from each map in array (skips invalid/missing)
 array.max()                          Find maximum value in array (no auto string-to-number coercion)
+array.mean()                         Calculate arithmetic mean of numeric array
 array.min()                          Find minimum value in array (no auto string-to-number coercion)
 array.parse_cols(spec [,sep])        Apply column spec to pre-split values
 array.percentile(pct)                Calculate percentile of numeric array
+array.stddev()                       Calculate standard deviation of numeric array
+array.sum()                          Calculate sum of numeric values in array
+array.variance()                     Calculate variance of numeric array
 array.pop()                          Remove and return last item (builtin)
 array.push(item)                     Add item to end of array (builtin)
 array.reduce(|acc, item| expr, init) Aggregate array into single value (builtin)
