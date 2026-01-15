@@ -7785,25 +7785,28 @@
 <a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a>e.median = e.values.percentile(50)
 </code></pre></div>
 <h4 id="arraysum"><code>array.sum()</code><a class="headerlink" href="#arraysum" title="Permanent link">&para;</a></h4>
-<p>Calculate sum of all numeric values (int, float) in array. Non-numeric values (strings, booleans, etc.) are filtered out. No automatic string-to-number coercion. Returns 0.0 for empty arrays.</p>
+<p>Calculate sum of all numeric values (int, float) in array. All elements must be actual numbers (i64, f64). Mixed-type arrays (numbers + strings/booleans) are rejected and return <code>()</code>. No automatic string-to-number coercion. Returns <code>()</code> for empty arrays.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>e.total_bytes = e.requests.pluck_as_nums(&quot;bytes&quot;).sum()
 <a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a>e.total_errors = [10, 20, 30].sum()                    // 60.0
 <a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a>[10, 20.5, 30].sum()                                   // 60.5
+<a id="__codelineno-66-4" name="__codelineno-66-4" href="#__codelineno-66-4"></a>[10, &quot;20&quot;, 30].sum()                                   // () - mixed types rejected
+<a id="__codelineno-66-5" name="__codelineno-66-5" href="#__codelineno-66-5"></a>[].sum()                                               // () - empty array
 </code></pre></div>
 <h4 id="arraymean"><code>array.mean()</code><a class="headerlink" href="#arraymean" title="Permanent link">&para;</a></h4>
-<p>Calculate arithmetic mean (average) of numeric values (int, float). Non-numeric values are filtered out. No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.</p>
+<p>Calculate arithmetic mean (average) of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays (numbers + strings/booleans) are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>e.avg_latency = e.latencies.mean()
 <a id="__codelineno-67-2" name="__codelineno-67-2" href="#__codelineno-67-2"></a>e.avg_score = [10, 20, 30].mean()                      // 20.0
+<a id="__codelineno-67-3" name="__codelineno-67-3" href="#__codelineno-67-3"></a>[10, &quot;20&quot;, 30].mean()                                  // ERROR - mixed types rejected
 </code></pre></div>
 <h4 id="arrayvariance"><code>array.variance()</code><a class="headerlink" href="#arrayvariance" title="Permanent link">&para;</a></h4>
-<p>Calculate population variance of numeric values (int, float). No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.</p>
+<p>Calculate population variance of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>e.latency_variance = e.latencies.variance()
 <a id="__codelineno-68-2" name="__codelineno-68-2" href="#__codelineno-68-2"></a>if e.latency_variance &gt; 100.0 {
 <a id="__codelineno-68-3" name="__codelineno-68-3" href="#__codelineno-68-3"></a>    print(&quot;High variance detected&quot;)
 <a id="__codelineno-68-4" name="__codelineno-68-4" href="#__codelineno-68-4"></a>}
 </code></pre></div>
 <h4 id="arraystddev"><code>array.stddev()</code><a class="headerlink" href="#arraystddev" title="Permanent link">&para;</a></h4>
-<p>Calculate standard deviation (population) of numeric values (int, float). No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.</p>
+<p>Calculate standard deviation (population) of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>e.latency_stddev = e.latencies.stddev()
 <a id="__codelineno-69-2" name="__codelineno-69-2" href="#__codelineno-69-2"></a>if e.latency_stddev &gt; 10.0 {
 <a id="__codelineno-69-3" name="__codelineno-69-3" href="#__codelineno-69-3"></a>    print(&quot;High variation: &quot; + e.latency_stddev)
