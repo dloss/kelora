@@ -642,24 +642,27 @@ e.median = e.values.percentile(50)
 ```
 
 #### `array.sum()`
-Calculate sum of all numeric values (int, float) in array. Non-numeric values (strings, booleans, etc.) are filtered out. No automatic string-to-number coercion. Returns 0.0 for empty arrays.
+Calculate sum of all numeric values (int, float) in array. All elements must be actual numbers (i64, f64). Mixed-type arrays (numbers + strings/booleans) are rejected and return `()`. No automatic string-to-number coercion. Returns `()` for empty arrays.
 
 ```rhai
 e.total_bytes = e.requests.pluck_as_nums("bytes").sum()
 e.total_errors = [10, 20, 30].sum()                    // 60.0
 [10, 20.5, 30].sum()                                   // 60.5
+[10, "20", 30].sum()                                   // () - mixed types rejected
+[].sum()                                               // () - empty array
 ```
 
 #### `array.mean()`
-Calculate arithmetic mean (average) of numeric values (int, float). Non-numeric values are filtered out. No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.
+Calculate arithmetic mean (average) of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays (numbers + strings/booleans) are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.
 
 ```rhai
 e.avg_latency = e.latencies.mean()
 e.avg_score = [10, 20, 30].mean()                      // 20.0
+[10, "20", 30].mean()                                  // ERROR - mixed types rejected
 ```
 
 #### `array.variance()`
-Calculate population variance of numeric values (int, float). No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.
+Calculate population variance of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.
 
 ```rhai
 e.latency_variance = e.latencies.variance()
@@ -669,7 +672,7 @@ if e.latency_variance > 100.0 {
 ```
 
 #### `array.stddev()`
-Calculate standard deviation (population) of numeric values (int, float). No automatic string-to-number coercion. Returns error for empty arrays or arrays with no numeric values.
+Calculate standard deviation (population) of numeric values (int, float). All elements must be actual numbers (i64, f64). Mixed-type arrays are rejected. No automatic string-to-number coercion. Returns error for empty arrays or non-numeric arrays.
 
 ```rhai
 e.latency_stddev = e.latencies.stddev()

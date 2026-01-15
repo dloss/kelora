@@ -1,4 +1,6 @@
-use rhai::{Array, Engine, EvalAltResult};
+use rhai::{Array, Dynamic, Engine, EvalAltResult};
+
+use super::arrays::{determine_array_type, ArrayType};
 
 pub fn register_functions(engine: &mut Engine) {
     // Register modulo function since % operator seems to be missing
@@ -32,19 +34,20 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("stddev", stddev_array);
 }
 
-/// Helper function to convert array values to f64
+/// Helper function to convert numeric array values to f64
 ///
-/// Only converts actual numeric types (int, float). Does NOT parse strings as numbers.
-/// This matches the behavior of min()/max() which don't do automatic coercion.
+/// Only works on arrays that have already been validated as ArrayType::Numeric.
+/// This ensures we only call it after type checking, matching min()/max() behavior.
 fn extract_numeric_values(arr: &Array) -> Vec<f64> {
     arr.iter()
-        .filter_map(|val| {
+        .map(|val| {
             if val.is_int() {
-                Some(val.as_int().unwrap() as f64)
+                val.as_int().unwrap() as f64
             } else if val.is_float() {
-                Some(val.as_float().unwrap())
+                val.as_float().unwrap()
             } else {
-                None
+                // Should never happen if called on validated numeric array
+                0.0
             }
         })
         .collect()
@@ -52,136 +55,163 @@ fn extract_numeric_values(arr: &Array) -> Vec<f64> {
 
 /// Calculate sum of numeric values in an array
 ///
-/// Returns the sum of all numeric values (int, float) in the array. Non-numeric
-/// values are filtered out. Does NOT parse strings as numbers (use pluck_as_nums()
-/// for that).
+/// Returns the sum of all numeric values (int, float) in the array. All elements
+/// must be actual numbers (i64, f64). Strings, booleans, and other types are NOT
+/// accepted. Mixed-type arrays return `()`. Does NOT parse numeric strings as numbers
+/// (use pluck_as_nums() for explicit coercion).
 ///
 /// # Arguments
 /// * `arr` - Array containing numeric values
 ///
 /// # Returns
-/// Sum as f64. Returns 0.0 for empty arrays or arrays with no numeric values.
+/// Sum as f64, or `()` if array is empty, contains non-numeric values, or has mixed types
 ///
 /// # Examples
 /// ```rhai
 /// [1, 2, 3, 4, 5].sum()                    // 15.0
 /// [1.5, 2.5, 3.0].sum()                    // 7.0
 /// [10, 20.5, 30].sum()                     // 60.5 (mixed int/float)
-/// [10, "20", 30].sum()                     // 40.0 (string ignored)
-/// ["abc", "def"].sum()                     // 0.0 (no numeric values)
-/// [].sum()                                 // 0.0 (empty array)
+/// [10, "20", 30].sum()                     // () (mixed types rejected)
+/// ["10", "20", "30"].sum()                 // () (strings not parsed)
+/// [].sum()                                 // () (empty array)
 ///
-/// // Useful for totals
+/// // Use pluck_as_nums() for explicit coercion
 /// e.total_bytes = e.requests.pluck_as_nums("bytes").sum();
-/// e.total = e.values.sum();
 /// ```
-fn sum_array(arr: Array) -> f64 {
-    extract_numeric_values(&arr).iter().sum()
+fn sum_array(arr: Array) -> Dynamic {
+    if arr.is_empty() {
+        return Dynamic::UNIT;
+    }
+
+    let array_type = determine_array_type(&arr);
+
+    match array_type {
+        ArrayType::Empty => Dynamic::UNIT,
+        ArrayType::Mixed => Dynamic::UNIT,  // Reject mixed types
+        ArrayType::String => Dynamic::UNIT, // Reject non-numeric arrays
+        ArrayType::Numeric => {
+            let sum: f64 = extract_numeric_values(&arr).iter().sum();
+            Dynamic::from(sum)
+        }
+    }
 }
 
 /// Calculate mean (average) of numeric values in an array
 ///
-/// Returns the arithmetic mean of all numeric values (int, float). Non-numeric
-/// values are filtered out. Does NOT parse strings as numbers. Returns an error
-/// for empty arrays or arrays with no numeric values.
+/// Returns the arithmetic mean of all numeric values (int, float). All elements
+/// must be actual numbers (i64, f64). Strings, booleans, and other types are NOT
+/// accepted. Does NOT parse numeric strings as numbers. Returns an error for
+/// empty arrays or arrays with mixed/non-numeric types.
 ///
 /// # Arguments
 /// * `arr` - Array containing numeric values
 ///
 /// # Returns
-/// Mean as f64, or error if array is empty or has no numeric values
+/// Mean as f64, or error if array is empty, contains non-numeric values, or has mixed types
 ///
 /// # Examples
 /// ```rhai
 /// [1, 2, 3, 4, 5].mean()                   // 3.0
 /// [10, 20, 30].mean()                      // 20.0
 /// [1.5, 2.5, 3.0].mean()                   // 2.333...
-/// [10, 20.5, 30].mean()                    // 20.166... (mixed int/float)
-/// [10, "20", 30].mean()                    // 20.0 (string ignored, avg of 10 and 30)
+/// [10, 20.5, 30].mean()                    // 20.166... (mixed int/float OK)
+/// [10, "20", 30].mean()                    // ERROR (mixed types rejected)
+/// [].mean()                                // ERROR (empty array)
 ///
-/// // Useful for averages
-/// e.avg_latency = e.latencies.mean();
-/// e.avg_score = e.scores.mean();
+/// // Use pluck_as_nums() for explicit coercion
+/// e.avg_latency = e.latencies.pluck_as_nums("ms").mean();
 /// ```
 fn mean_array(arr: Array) -> Result<f64, Box<EvalAltResult>> {
-    let values = extract_numeric_values(&arr);
-    if values.is_empty() {
-        return Err("Cannot calculate mean of empty array or array with no numeric values".into());
+    if arr.is_empty() {
+        return Err("Cannot calculate mean of empty array".into());
     }
-    let sum: f64 = values.iter().sum();
-    Ok(sum / values.len() as f64)
+
+    let array_type = determine_array_type(&arr);
+
+    match array_type {
+        ArrayType::Empty => Err("Cannot calculate mean of empty array".into()),
+        ArrayType::Mixed => Err("Cannot calculate mean of array with mixed types (numbers and non-numbers). Use pluck_as_nums() for type coercion.".into()),
+        ArrayType::String => Err("Cannot calculate mean of array with non-numeric values".into()),
+        ArrayType::Numeric => {
+            let values = extract_numeric_values(&arr);
+            let sum: f64 = values.iter().sum();
+            Ok(sum / values.len() as f64)
+        }
+    }
 }
 
 /// Calculate variance of numeric values in an array
 ///
 /// Returns the population variance (sum of squared deviations from mean divided by N).
-/// Only processes numeric values (int, float). Non-numeric values are filtered out.
-/// Does NOT parse strings as numbers. Returns an error for empty arrays or arrays
-/// with no numeric values.
+/// All elements must be actual numbers (i64, f64). Strings, booleans, and other types
+/// are NOT accepted. Does NOT parse numeric strings as numbers. Returns an error for
+/// empty arrays or arrays with mixed/non-numeric types.
 ///
 /// # Arguments
 /// * `arr` - Array containing numeric values
 ///
 /// # Returns
-/// Variance as f64, or error if array is empty or has no numeric values
+/// Variance as f64, or error if array is empty, contains non-numeric values, or has mixed types
 ///
 /// # Examples
 /// ```rhai
 /// [1, 2, 3, 4, 5].variance()               // 2.0
 /// [10, 20, 30].variance()                  // 66.666...
 /// [5, 5, 5, 5].variance()                  // 0.0 (no variation)
+/// [10, "20", 30].variance()                // ERROR (mixed types rejected)
 ///
-/// // Useful for measuring spread
-/// e.latency_variance = e.latencies.variance();
-/// if e.latency_variance > 100.0 {
-///     print("High latency variance detected");
-/// }
+/// // Use pluck_as_nums() for explicit coercion
+/// e.latency_variance = e.latencies.pluck_as_nums("ms").variance();
 /// ```
 fn variance_array(arr: Array) -> Result<f64, Box<EvalAltResult>> {
-    let values = extract_numeric_values(&arr);
-    if values.is_empty() {
-        return Err(
-            "Cannot calculate variance of empty array or array with no numeric values".into(),
-        );
+    if arr.is_empty() {
+        return Err("Cannot calculate variance of empty array".into());
     }
 
-    let mean: f64 = values.iter().sum::<f64>() / values.len() as f64;
-    let variance = values
-        .iter()
-        .map(|&val| {
-            let diff = val - mean;
-            diff * diff
-        })
-        .sum::<f64>()
-        / values.len() as f64;
+    let array_type = determine_array_type(&arr);
 
-    Ok(variance)
+    match array_type {
+        ArrayType::Empty => Err("Cannot calculate variance of empty array".into()),
+        ArrayType::Mixed => Err("Cannot calculate variance of array with mixed types (numbers and non-numbers). Use pluck_as_nums() for type coercion.".into()),
+        ArrayType::String => Err("Cannot calculate variance of array with non-numeric values".into()),
+        ArrayType::Numeric => {
+            let values = extract_numeric_values(&arr);
+            let mean: f64 = values.iter().sum::<f64>() / values.len() as f64;
+            let variance = values
+                .iter()
+                .map(|&val| {
+                    let diff = val - mean;
+                    diff * diff
+                })
+                .sum::<f64>()
+                / values.len() as f64;
+            Ok(variance)
+        }
+    }
 }
 
 /// Calculate standard deviation of numeric values in an array
 ///
 /// Returns the population standard deviation (square root of variance).
-/// Only processes numeric values (int, float). Non-numeric values are filtered out.
-/// Does NOT parse strings as numbers. Returns an error for empty arrays or arrays
-/// with no numeric values.
+/// All elements must be actual numbers (i64, f64). Strings, booleans, and other types
+/// are NOT accepted. Does NOT parse numeric strings as numbers. Returns an error for
+/// empty arrays or arrays with mixed/non-numeric types.
 ///
 /// # Arguments
 /// * `arr` - Array containing numeric values
 ///
 /// # Returns
-/// Standard deviation as f64, or error if array is empty or has no numeric values
+/// Standard deviation as f64, or error if array is empty, contains non-numeric values, or has mixed types
 ///
 /// # Examples
 /// ```rhai
 /// [1, 2, 3, 4, 5].stddev()                 // 1.414...
 /// [10, 20, 30].stddev()                    // 8.165...
 /// [5, 5, 5, 5].stddev()                    // 0.0 (no variation)
+/// [10, "20", 30].stddev()                  // ERROR (mixed types rejected)
 ///
-/// // Useful for measuring spread
-/// e.latency_stddev = e.latencies.stddev();
-/// if e.latency_stddev > 10.0 {
-///     print("High latency variation: " + e.latency_stddev);
-/// }
+/// // Use pluck_as_nums() for explicit coercion
+/// e.latency_stddev = e.latencies.pluck_as_nums("ms").stddev();
 /// ```
 fn stddev_array(arr: Array) -> Result<f64, Box<EvalAltResult>> {
     let variance = variance_array(arr)?;
@@ -345,7 +375,8 @@ mod tests {
             Dynamic::from(4i64),
             Dynamic::from(5i64),
         ];
-        assert_eq!(sum_array(arr), 15.0);
+        let result = sum_array(arr);
+        assert_eq!(result.as_float().unwrap(), 15.0);
     }
 
     #[test]
@@ -355,7 +386,8 @@ mod tests {
             Dynamic::from(2.5f64),
             Dynamic::from(3.0f64),
         ];
-        assert_eq!(sum_array(arr), 7.0);
+        let result = sum_array(arr);
+        assert_eq!(result.as_float().unwrap(), 7.0);
     }
 
     #[test]
@@ -365,46 +397,48 @@ mod tests {
             Dynamic::from(20.5f64),
             Dynamic::from(30i64),
         ];
-        assert_eq!(sum_array(arr), 60.5);
+        let result = sum_array(arr);
+        assert_eq!(result.as_float().unwrap(), 60.5);
     }
 
     #[test]
-    fn test_sum_filters_booleans() {
+    fn test_sum_mixed_types_rejected() {
         let arr: Array = vec![
             Dynamic::from(10i64),
             Dynamic::from(true),
             Dynamic::from(20i64),
             Dynamic::from(false),
         ];
-        // Booleans are filtered out, only 10 + 20 = 30
-        assert_eq!(sum_array(arr), 30.0);
+        // Mixed types (numbers + booleans) are rejected
+        assert!(sum_array(arr).is_unit());
     }
 
     #[test]
-    fn test_sum_filters_strings() {
+    fn test_sum_strings_rejected() {
         let arr: Array = vec![
             Dynamic::from(10i64),
             Dynamic::from("20".to_string()),
             Dynamic::from(30i64),
         ];
-        // Strings are filtered out, only 10 + 30 = 40
-        assert_eq!(sum_array(arr), 40.0);
+        // Mixed types (numbers + strings) are rejected
+        assert!(sum_array(arr).is_unit());
     }
 
     #[test]
-    fn test_sum_filters_non_numeric() {
+    fn test_sum_non_numeric_rejected() {
         let arr: Array = vec![
             Dynamic::from(10i64),
             Dynamic::from("not a number".to_string()),
             Dynamic::from(20i64),
         ];
-        assert_eq!(sum_array(arr), 30.0);
+        // Mixed types are rejected
+        assert!(sum_array(arr).is_unit());
     }
 
     #[test]
     fn test_sum_empty_array() {
         let arr: Array = vec![];
-        assert_eq!(sum_array(arr), 0.0);
+        assert!(sum_array(arr).is_unit());
     }
 
     #[test]
@@ -413,7 +447,8 @@ mod tests {
             Dynamic::from("abc".to_string()),
             Dynamic::from("def".to_string()),
         ];
-        assert_eq!(sum_array(arr), 0.0);
+        // Non-numeric arrays are rejected
+        assert!(sum_array(arr).is_unit());
     }
 
     #[test]
@@ -449,26 +484,27 @@ mod tests {
     }
 
     #[test]
-    fn test_mean_filters_booleans() {
+    fn test_mean_mixed_types_rejected() {
         let arr: Array = vec![
             Dynamic::from(10i64),
             Dynamic::from(true),
             Dynamic::from(30i64),
             Dynamic::from(false),
         ];
-        // Booleans are filtered out, mean of [10, 30] = 20.0
-        assert_eq!(mean_array(arr).unwrap(), 20.0);
+        // Mixed types (numbers + booleans) are rejected
+        assert!(mean_array(arr).is_err());
     }
 
     #[test]
-    fn test_mean_filters_non_numeric() {
+    fn test_mean_mixed_numbers_strings_rejected() {
         let arr: Array = vec![
             Dynamic::from(10i64),
             Dynamic::from("not a number".to_string()),
             Dynamic::from(20i64),
             Dynamic::from(30i64),
         ];
-        assert_eq!(mean_array(arr).unwrap(), 20.0);
+        // Mixed types (numbers + strings) are rejected
+        assert!(mean_array(arr).is_err());
     }
 
     #[test]
@@ -483,6 +519,7 @@ mod tests {
             Dynamic::from("abc".to_string()),
             Dynamic::from("def".to_string()),
         ];
+        // Non-numeric arrays are rejected
         assert!(mean_array(arr).is_err());
     }
 
@@ -583,18 +620,24 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_numeric_values_mixed() {
+    fn test_sum_numeric_strings_rejected() {
         let arr: Array = vec![
-            Dynamic::from(10i64),
-            Dynamic::from(20.5f64),
-            Dynamic::from(true),
-            Dynamic::from(false),
+            Dynamic::from("10".to_string()),
+            Dynamic::from("20".to_string()),
             Dynamic::from("30".to_string()),
-            Dynamic::from("not a number".to_string()),
-            Dynamic::from(40i64),
         ];
-        let values = extract_numeric_values(&arr);
-        // Only numeric values (int, float) are extracted, no string/boolean conversion
-        assert_eq!(values, vec![10.0, 20.5, 40.0]);
+        // Numeric strings are not parsed as numbers
+        assert!(sum_array(arr).is_unit());
+    }
+
+    #[test]
+    fn test_mean_numeric_strings_rejected() {
+        let arr: Array = vec![
+            Dynamic::from("10".to_string()),
+            Dynamic::from("20".to_string()),
+            Dynamic::from("30".to_string()),
+        ];
+        // Numeric strings are not parsed as numbers
+        assert!(mean_array(arr).is_err());
     }
 }

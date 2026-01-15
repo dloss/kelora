@@ -675,15 +675,15 @@ fn max_array(arr: Array) -> Dynamic {
 
 /// Enum to categorize array element types
 #[derive(Debug, PartialEq)]
-enum ArrayType {
+pub(crate) enum ArrayType {
     Empty,
-    Numeric, // All elements are numbers or numeric strings
-    String,  // All elements are non-numeric strings or booleans
-    Mixed,   // Contains incompatible types
+    Numeric, // All elements are actual numbers (i64, f64)
+    String,  // All elements are non-numeric (strings, booleans, etc.)
+    Mixed,   // Contains incompatible types (actual numbers + non-numeric)
 }
 
 /// Determine the type category of an array
-fn determine_array_type(arr: &Array) -> ArrayType {
+pub(crate) fn determine_array_type(arr: &Array) -> ArrayType {
     if arr.is_empty() {
         return ArrayType::Empty;
     }
@@ -712,7 +712,7 @@ fn determine_array_type(arr: &Array) -> ArrayType {
 }
 
 /// Check if a value is an actual numeric type (not a string that could be parsed as a number)
-fn is_actual_number(value: &Dynamic) -> bool {
+pub(crate) fn is_actual_number(value: &Dynamic) -> bool {
     value.is_int() || value.is_float()
 }
 
