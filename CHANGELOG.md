@@ -6,9 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.4.1]
+
+### Added
+
+- **Statistical functions for arrays:** New Rhai functions for array aggregation:
+  - `sum()` - Calculate sum of numeric array elements
+  - `mean()` - Calculate arithmetic mean of numeric array elements
+  - `variance()` - Calculate variance of numeric array elements
+  - `stddev()` - Calculate standard deviation of numeric array elements
+- **Log-analysis skill** - Agent assistance skill for analyzing logs and identifying patterns
+
 ### Changed
 
 - **Zero unsafe code:** Removed manual `Send` implementations from `DecompressionReader` and `PeekableLineReader`. The compiler now derives `Send` automatically since all contained types are `Send`. This eliminates the last 2 `unsafe` blocks from the codebase.
+- Log-analysis skill streamlined for minimal context usage
+- Documentation: Added Drain template mining to landing page
+- Documentation: Added quick-start guidance to high-traffic pages
+
+### Fixed
+
+- Statistical functions (`sum()`, `mean()`, `variance()`, `stddev()`) now reject mixed types like `min()`/`max()` for consistency
 
 ## [1.4.0] - 2026-01-11
 
