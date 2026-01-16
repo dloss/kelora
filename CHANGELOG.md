@@ -20,9 +20,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **Zero unsafe code:** Removed manual `Send` implementations from `DecompressionReader` and `PeekableLineReader`. The compiler now derives `Send` automatically since all contained types are `Send`. This eliminates the last 2 `unsafe` blocks from the codebase.
-- Log-analysis skill streamlined for minimal context usage
-- Documentation: Added Drain template mining to landing page
-- Documentation: Added quick-start guidance to high-traffic pages
 
 ### Fixed
 
