@@ -245,6 +245,40 @@ Functions:
 
 Example of event enrichment and transformation patterns.
 
+### `resolve_fields.rhai`
+
+Semantic field resolution for cross-format log analysis. Different log formats use different field names for the same concepts (e.g., `response_time` vs `latency` vs `duration_ms`). This module provides functions to resolve these concepts regardless of the actual field name used.
+
+```bash
+# Filter slow requests regardless of field naming convention
+kelora --include examples/resolve_fields.rhai -f json logs.jsonl \
+  --exec 'if resolve_duration(e) > 1000 { e } else { () }'
+
+# Aggregate by user across mixed log sources
+kelora --include examples/resolve_fields.rhai -f json *.jsonl \
+  --exec 'track_stats(resolve_user(e) ?? "unknown", resolve_duration(e) ?? 0)'
+
+# Check for errors using multiple indicators (fields, level, status)
+kelora --include examples/resolve_fields.rhai -f json logs.jsonl \
+  --filter 'has_error(e)'
+```
+
+Functions:
+- `resolve_duration(e)` / `resolve_duration_name(e)` - response_time, latency, elapsed, etc.
+- `resolve_user(e)` / `resolve_user_name(e)` - user_id, userId, username, etc.
+- `resolve_client_ip(e)` / `resolve_client_ip_name(e)` - ip, client_ip, remote_addr, etc.
+- `resolve_error(e)` / `resolve_error_name(e)` - error, exception, fault, etc.
+- `resolve_request_id(e)` / `resolve_request_id_name(e)` - request_id, trace_id, correlation_id, etc.
+- `resolve_status(e)` / `resolve_status_name(e)` - status, status_code, http_status, etc.
+- `has_error(e)` - Check if event has any error indicators (fields, level, or status code)
+- `resolve_field_concepts()` - List available concepts
+
+Copy and customize the file to add organization-specific field names.
+
+### `patterns.rhai`
+
+Pattern detection and extraction using curated regex patterns for common data types (IPs, emails, URLs, durations, UUIDs, etc.). See file header for usage examples.
+
 ## Finding the Right Example
 
 - **By format**: Look for `simple_<format>.*` files
