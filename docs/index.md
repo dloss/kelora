@@ -4,18 +4,7 @@
 
 Kelora is a scriptable log processor for the command line. Parse structured or semi-structured logs (one format per file/stream), filter with complex logic, and analyze streams using embedded [Rhai](https://rhai.rs) scripting—all in a single binary. It can also extract logfmt/JSON blobs embedded inside a single event.
 
-**Download pre-built binaries:**
-
-| Platform | Download |
-|----------|----------|
-| **Windows** (x64) | [kelora-x86_64-pc-windows-msvc.zip](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip) |
-| **macOS** (Apple Silicon) | [kelora-aarch64-apple-darwin.tar.gz](https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz) |
-| **macOS** (Intel) | [kelora-x86_64-apple-darwin.tar.gz](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz) |
-| **Linux** (x64) | [kelora-x86_64-unknown-linux-musl.tar.gz](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz) |
-| **Linux** (ARM64) | [kelora-aarch64-unknown-linux-musl.tar.gz](https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-unknown-linux-musl.tar.gz) |
-| **Other platforms** | [All releases](https://github.com/dloss/kelora/releases) (ARMv7, FreeBSD, OpenBSD) |
-
-Extract the archive and add the `kelora` binary to your PATH.
+**Download:** [Windows](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip) | [macOS (Intel)](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz) | [macOS (Apple Silicon)](https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz) | [Linux](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz) | [Other platforms](https://github.com/dloss/kelora/releases)
 
 **Or install via Cargo:**
 
