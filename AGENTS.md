@@ -95,7 +95,7 @@ Justfile                 # Build automation
 
 **Add Rhai Function:** Implement in `src/rhai_functions/`, register in `mod.rs`, **update `docs.rs`**, write tests
 
-**Performance Work:** Run `just bench` before/after, compare, use `just bench-update` if improved
+**Performance Work:** Run `just bench` before/after, compare, use `just bench-update` if improved. For profiling see `dev/profiling-guide.md`
 
 ## Quick Reference
 
