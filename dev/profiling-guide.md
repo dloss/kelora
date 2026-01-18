@@ -10,10 +10,11 @@ This guide shows how to profile Kelora to identify and implement performance opt
 # Install samply (fast, no sudo required)
 cargo install samply
 
-# Profile with interactive flamegraph
+# Profile realistic workload: regex filtering + field extraction
 samply record cargo run --release --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
-  --filter "e.level == 'ERROR'" > /dev/null
+  --exec "if regex_match(e.message, '(error|timeout|failed)') then e.alert = true end" \
+  > /dev/null
 ```
 
 ### Linux (CI/Production)
@@ -22,10 +23,11 @@ samply record cargo run --release --bin kelora -- \
 # Install flamegraph
 cargo install flamegraph
 
-# Profile with perf + flamegraph
+# Profile realistic workload: regex filtering + field extraction
 cargo flamegraph --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
-  --filter "e.level == 'ERROR'" > /dev/null
+  --exec "if regex_match(e.message, '(error|timeout|failed)') then e.alert = true end" \
+  > /dev/null
 ```
 
 ## Why Profile?
@@ -40,6 +42,27 @@ Benchmarks tell you **how long** operations take. Profiling shows **where** time
 - I/O vs CPU bound operations
 
 **Goal**: Find the 20% of code consuming 80% of runtime and optimize it.
+
+## Recommended Profiling Workloads
+
+Profile realistic use cases, not trivial examples. Good workloads to test:
+
+1. **Regex-heavy filtering** - Tests regex compilation, caching, pattern matching
+   - Example: `--exec "if regex_match(e.message, '(error|timeout)') then e.alert = true end"`
+
+2. **Field extraction and enrichment** - Tests Rhai execution, field access, string operations
+   - Example: `--exec "e.severity = classify(e.level); e.hash = hash_sha256(e.user)"`
+
+3. **Aggregation and metrics** - Tests state management, maps, counting
+   - Example: `--begin "let counts = #{}" --exec "counts[e.level] = (counts[e.level] ?? 0) + 1"`
+
+4. **Complex filtering** - Tests multiple field accesses, conditional logic
+   - Example: `--exec "if e.status >= 500 && e.response_time > 1000 then e.alert = 'critical' end"`
+
+5. **Parallel processing** - Tests thread contention, batching, channel overhead
+   - Example: `--parallel --threads 4 --exec "e.normalized = normalized(e.message)"`
+
+**Avoid**: Simple filters already optimized (e.g., `--filter "e.level == 'ERROR'"`) - these use native code paths.
 
 ## Known Kelora Hotspots
 
@@ -349,30 +372,51 @@ cp target/criterion /tmp/criterion-baseline -r
 
 ### Step 2: Profile Workload
 
-Choose a representative workload:
+Choose a representative workload that matches your optimization target:
 
 ```bash
-# JSON filtering (most common)
+# 1. Regex-heavy filtering (tests regex compilation, caching)
 samply record cargo run --release --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
-  --filter "e.level == 'ERROR'" \
+  --exec "
+    if regex_match(e.message, '(timeout|failed|error)') then
+      e.alert_level = regex_replace(e.message, '\\d+', 'N')
+    end
+  " \
   > /dev/null
 
-# Rhai execution
+# 2. Field extraction and enrichment (tests Rhai execution, field access)
 samply record cargo run --release --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
-  --exec "if e.level == 'ERROR' then e.severity = 'high' end" \
+  --exec "
+    e.severity = if e.level == 'ERROR' { 'high' } else { 'low' };
+    e.timestamp_hour = parse_timestamp(e.timestamp).format('%H');
+    e.user_id = hash_sha256(e.user);
+  " \
   > /dev/null
 
-# Parallel processing
+# 3. Aggregation/metrics (tests state management, maps)
+samply record cargo run --release --bin kelora -- \
+  -f json benchmarks/bench_500k.jsonl \
+  --begin "let counts = #{}" \
+  --exec "
+    let key = e.level;
+    counts[key] = (counts.get(key) ?? 0) + 1;
+  " \
+  --end "print(counts)" \
+  > /dev/null
+
+# 4. Parallel processing (tests thread contention, batching)
 samply record cargo run --release --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
   --parallel --threads 4 \
+  --exec "e.normalized = normalized(e.message)" \
   > /dev/null
 
-# Format parsing
+# 5. Format parsing comparison (tests parser paths)
 samply record cargo run --release --bin kelora -- \
   -f combined benchmarks/web_access.log \
+  --filter "e.status >= 400" \
   > /dev/null
 ```
 
@@ -522,9 +566,9 @@ just test
 
 6. **Implement fast-path for common filters**
    - **Where**: `src/engine.rs`
-   - **Effort**: Medium (detect simple filters, skip Rhai)
-   - **Gain**: 10-20% faster for `--filter "e.level == 'ERROR'"`
-   - **Profile**: `rhai::eval` dominating simple filters
+   - **Effort**: Medium (detect simple equality/comparison filters, skip Rhai)
+   - **Gain**: 10-20% faster for simple filters (e.g., level equality, numeric comparisons)
+   - **Profile**: `rhai::eval` >15% for trivial filters that could be native
 
 7. **Cache format detection**
    - **Where**: `src/formats/mod.rs`
@@ -557,10 +601,10 @@ just test
 ### Profile JSON Pipeline
 
 ```bash
-# Focus on JSON parsing path
+# Focus on JSON parsing path with field access
 cargo flamegraph --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
-  --filter "true" \
+  --exec "e.processed = e.level + ':' + e.message.substr(0, 50)" \
   > /dev/null
 ```
 
@@ -568,9 +612,10 @@ cargo flamegraph --bin kelora -- \
 - `serde_json::from_str`: 30-40%
 - `crossbeam::recv`: 5-10% (if parallel)
 - `write!`: 10-15% (output formatting)
-- `rhai::eval`: <5% (simple filter)
+- `rhai::eval`: 10-15% (field access + string ops)
 
 **Red flags**:
+- `serde_json::from_str` >50% (parsing dominates, consider simd-json)
 - `regex::Regex::new` appearing (should be cached)
 - `String::clone` >15% (too many allocations)
 - `IndexMap::insert` >10% (field storage overhead)
@@ -578,36 +623,44 @@ cargo flamegraph --bin kelora -- \
 ### Profile Rhai Execution
 
 ```bash
-# Focus on script evaluation
+# Focus on script evaluation with regex and field manipulation
 cargo flamegraph --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
+  --begin "let error_count = 0; let re = compile_regex('(timeout|failed)')" \
   --exec "
-    if e.level == 'ERROR' then
-      e.severity = 'high'
-      e.priority = 1
+    if e.level == 'ERROR' && regex_is_match(re, e.message) then
+      e.severity = 'critical';
+      e.fingerprint = hash_xxh3(e.message);
+      error_count += 1;
     end
   " \
+  --end "print('Errors: ' + error_count)" \
   > /dev/null
 ```
 
 **Expected profile**:
 - `rhai::eval`: 20-30%
 - `serde_json::from_str`: 25-35%
-- `rhai::call_fn`: 5-10%
+- `rhai::call_fn`: 5-10% (hash_xxh3, regex_is_match)
+- `regex::Regex::is_match`: 5-8% (precompiled in --begin)
 
 **Red flags**:
 - `rhai::Dynamic::clone` >10% (type conversion overhead)
 - `rhai::eval` >50% (consider native filter)
+- `regex::Regex::new` appearing (should use compile_regex in --begin)
 - `parse_json` appearing (avoid parsing in scripts)
 
 ### Profile Parallel Processing
 
 ```bash
-# Focus on threading overhead
+# Focus on threading overhead with field extraction
 cargo instruments -t sys --release --bin kelora -- \
   -f json benchmarks/bench_500k.jsonl \
   --parallel --threads 4 \
-  --filter "e.level == 'ERROR'" \
+  --exec "
+    e.normalized = normalized(e.message);
+    e.hash = hash_xxh3(e.user + e.message);
+  " \
   > /dev/null
 ```
 
@@ -615,11 +668,13 @@ cargo instruments -t sys --release --bin kelora -- \
 - All 4 worker threads at >90% utilization
 - `crossbeam::send`: <5%
 - No lock contention
+- `xxh3::hash` distributed across threads
 
 **Red flags**:
 - Unbalanced thread utilization (work-stealing needed)
-- High `crossbeam::send` (batch size too small)
-- Lock contention on `Mutex` (shared state problem)
+- High `crossbeam::send` >10% (batch size too small, tune --batch-size)
+- Lock contention on `Mutex` (shared state problem, avoid global state in --exec)
+- One thread idle (input bottleneck or small file)
 
 ### Profile Format Parsers
 
@@ -783,7 +838,7 @@ jobs:
         run: |
           cargo flamegraph --bin kelora -- \
             -f json benchmarks/bench_500k.jsonl \
-            --filter "e.level == 'ERROR'" \
+            --exec "if regex_match(e.message, '(error|timeout)') then e.alert = true end" \
             > /dev/null
           mv flamegraph.svg flamegraph-baseline.svg
 
