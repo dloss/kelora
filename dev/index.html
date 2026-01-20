@@ -502,10 +502,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-contextual-analysis-pipeline-order" class="md-nav__link">
+  <a href="#3-pattern-discovery-template-mining" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Contextual Analysis (Pipeline Order)
+        3. Pattern Discovery (Template Mining)
       
     </span>
   </a>
@@ -2276,10 +2276,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-contextual-analysis-pipeline-order" class="md-nav__link">
+  <a href="#3-pattern-discovery-template-mining" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Contextual Analysis (Pipeline Order)
+        3. Pattern Discovery (Template Mining)
       
     </span>
   </a>
@@ -2357,32 +2357,23 @@
 
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
 <p><strong>Turn messy logs into structured data.</strong></p>
-<p>Kelora is a scriptable log processor for the command line. Parse structured or semi-structured logs (one format per file/stream), filter with complex logic, and analyze streams using embedded <a href="https://rhai.rs">Rhai</a> scripting—all in a single binary. It can also extract logfmt/JSON blobs embedded inside a single event.</p>
-<p id="installation"><strong>Download:</strong> <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip">Windows</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz">macOS (Apple Silicon)</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz">macOS (Intel)</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz">Linux (x86_64)</a> | <a href="https://github.com/dloss/kelora/releases">Other platforms</a></p>
-<p><strong>Or install via Cargo:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
-</code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Built with AI</p>
-<p>Generated entirely by AI agents; validated by a large test suite and Rust security tools; see <a href="#development-approach">Development Approach</a> and the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before production use.</p>
+<p>Kelora is a scriptable log processor for the command line. Parse structured or semi-structured logs, filter with complex logic, and analyze streams using embedded <a href="https://rhai.rs">Rhai</a> scripting—all in a single binary.</p>
+<div class="admonition tip">
+<p class="admonition-title">Installation</p>
+<p><a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip">Windows</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz">macOS (Apple Silicon)</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz">macOS (Intel)</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz">Linux (x86_64)</a> | <a href="https://github.com/dloss/kelora/releases">Other platforms</a></p>
+<p>Or install via Cargo: <code>cargo install kelora</code></p>
 </div>
+<p><em>Kelora is AI-generated; see <a href="#development-approach">Development Approach</a>.</em></p>
 <h2 id="when-to-use-kelora">When to Use Kelora<a class="headerlink" href="#when-to-use-kelora" title="Permanent link">&para;</a></h2>
-<p>Kelora trades speed for programmability. It's slower than grep, awk, and jq, but adds stateful scripting for complex multi-stage transformations.</p>
-<p><strong>Reach for Kelora when:</strong></p>
+<p>Reach for Kelora when:</p>
 <ul>
-<li>Your logs are <strong>messy</strong> - One format per file/stream, with embedded JSON/logfmt fields you want to pull out</li>
-<li>You're <strong>chaining tools</strong> - Replacing <code>grep | awk | jq | custom-script.py</code> with one command</li>
-<li>You need <strong>stateful logic</strong> - Counting errors per service, windowed metrics, lookup tables</li>
-<li>You want <strong>embedded scripting</strong> - Complex transformations without leaving your shell</li>
+<li><strong>You're chaining tools</strong> - Replace <code>grep | awk | jq | custom-script.py</code> with one command</li>
+<li><strong>You're parsing custom formats</strong> - Use simple one-liners for non-standard logs (no regex required!) and output clean JSON</li>
+<li><strong>Logs have embedded structure</strong> - Extract JSON or key-value pairs buried in text lines</li>
+<li><strong>You need stateful logic</strong> - Count errors per service, tracking sessions, windowed metrics</li>
+<li><strong>Fields are inconsistent</strong> - Let missing data or errors be handled gracefully, with summary reports at the end</li>
 </ul>
-<p><strong>Use specialized tools for:</strong></p>
-<ul>
-<li><strong>Fast search</strong>: <code>grep</code>/<code>rg</code> (50-100× faster) - Finding text patterns in logs</li>
-<li><strong>Simple splitting</strong>: <code>awk</code> (faster, ubiquitous) - Field extraction and simple statistics</li>
-<li><strong>JSON queries</strong>: <code>jq</code> (faster, everywhere) - Querying structured JSON documents</li>
-<li><strong>Interactive exploration</strong>: <code>lnav</code> (TUI with SQL) - Browsing logs with a visual interface</li>
-</ul>
-<p>Kelora reads from files or stdin and outputs JSON, CSV, or Logfmt. Combine it with <a href="how-to/integrate-external-tools/">lnav, jq, qsv, and other tools</a> for visualization, analytics, and storage.</p>
+<p>Kelora prioritizes flexibility over <a href="concepts/performance-comparisons/">raw speed</a>. It shines for exploratory analysis on <strong>small to medium</strong> log files. For larger files, pre-filter with <code>jq</code>, <code>ripgrep</code>, or <code>qsv</code> -- Kelora <a href="how-to/integrate-external-tools/">plays well</a> with all of them.</p>
 <hr />
 <h2 id="live-examples">Live Examples<a class="headerlink" href="#live-examples" title="Permanent link">&para;</a></h2>
 <h3 id="1-filter-convert-the-basics">1. Filter &amp; Convert (The Basics)<a class="headerlink" href="#1-filter-convert-the-basics" title="Permanent link">&para;</a></h3>
@@ -2433,66 +2424,80 @@
 </div>
 </div>
 </div>
-<h3 id="3-contextual-analysis-pipeline-order">3. Contextual Analysis (Pipeline Order)<a class="headerlink" href="#3-contextual-analysis-pipeline-order" title="Permanent link">&para;</a></h3>
-<p><em>Scenario: An error occurred. We want to see the error, but enrich it with context from the </em><em>previous</em><em> log line (even if that line wasn't an error).</em></p>
-<div class="admonition tip">
-<p class="admonition-title">Sequential Pipeline</p>
-<p>Kelora processes flags in order. We run <code>--exec</code> <strong>before</strong> <code>--filter</code> so the sliding window can see the normal events before they are discarded.</p>
-</div>
+<h3 id="3-pattern-discovery-template-mining">3. Pattern Discovery (Template Mining)<a class="headerlink" href="#3-pattern-discovery-template-mining" title="Permanent link">&para;</a></h3>
+<p><em>Scenario: You have thousands of error messages that differ only in IPs, emails, and UUIDs. Find the underlying patterns automatically.</em></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Input Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_errors.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--window<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; &amp;&amp; window.len() &gt; 1 {</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">      e.prev_ctx = window[1].endpoint;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>-F<span class="w"> </span>logfmt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/production-errors.jsonl<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-07-17T12:00:05Z level=ERROR endpoint=/api/data status=500 error=&quot;database timeout&quot; prev_ctx=/health
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=2024-07-17T12:00:12Z level=ERROR endpoint=/api/admin status=401 request_id=req-abc123 user=alice token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcwMDAwMDAwMH0.sig1 error=&quot;token expired&quot; prev_ctx=/api/users
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=2024-07-17T12:00:18Z level=ERROR endpoint=/api/billing status=401 request_id=req-def456 user=bob token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IiLCJyb2xlIjoidXNlciIsImV4cCI6MTcwNTAwMDAwMH0.sig2 error=&quot;token expired&quot; prev_ctx=/api/posts
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=2024-07-17T12:00:20Z level=ERROR endpoint=/api/export status=503 error=&quot;service unavailable&quot; prev_ctx=/api/billing
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>templates (3 items):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  4: Failed to connect to &lt;ipv4&gt;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  3: Timeout on request &lt;uuid&gt;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  3: User &lt;email&gt; sent invalid request
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:00Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/health&quot;,&quot;status&quot;:200}
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:05Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/data&quot;,&quot;status&quot;:500,&quot;error&quot;:&quot;database timeout&quot;}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:10Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/api/users&quot;,&quot;status&quot;:200}
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:12Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/admin&quot;,&quot;status&quot;:401,&quot;request_id&quot;:&quot;req-abc123&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTcwMDAwMDAwMH0.sig1&quot;,&quot;error&quot;:&quot;token expired&quot;}
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:15Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/api/posts&quot;,&quot;status&quot;:200}
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:18Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/billing&quot;,&quot;status&quot;:401,&quot;request_id&quot;:&quot;req-def456&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;token&quot;:&quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IiLCJyb2xlIjoidXNlciIsImV4cCI6MTcwNTAwMDAwMH0.sig2&quot;,&quot;error&quot;:&quot;token expired&quot;}
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:20Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;endpoint&quot;:&quot;/api/export&quot;,&quot;status&quot;:503,&quot;error&quot;:&quot;service unavailable&quot;}
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>{&quot;timestamp&quot;:&quot;2024-07-17T12:00:25Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;endpoint&quot;:&quot;/health&quot;,&quot;status&quot;:200}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;message&quot;:&quot;Failed to connect to 192.168.1.10&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;message&quot;:&quot;Failed to connect to 10.0.5.23&quot;,&quot;service&quot;:&quot;web&quot;,&quot;level&quot;:&quot;ERROR&quot;}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;message&quot;:&quot;Failed to connect to 172.16.88.5&quot;,&quot;service&quot;:&quot;worker&quot;,&quot;level&quot;:&quot;ERROR&quot;}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;message&quot;:&quot;User alice@example.com sent invalid request&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;WARN&quot;}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;message&quot;:&quot;User bob@test.org sent invalid request&quot;,&quot;service&quot;:&quot;web&quot;,&quot;level&quot;:&quot;WARN&quot;}
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;message&quot;:&quot;Timeout on request a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;}
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>{&quot;message&quot;:&quot;Timeout on request f1e2d3c4-b5a6-9807-5432-098765fedcba&quot;,&quot;service&quot;:&quot;worker&quot;,&quot;level&quot;:&quot;ERROR&quot;}
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>{&quot;message&quot;:&quot;Failed to connect to 203.0.113.42&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;ERROR&quot;}
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>{&quot;message&quot;:&quot;User charlie@example.net sent invalid request&quot;,&quot;service&quot;:&quot;api&quot;,&quot;level&quot;:&quot;WARN&quot;}
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>{&quot;message&quot;:&quot;Timeout on request 11111111-2222-3333-4444-555555555555&quot;,&quot;service&quot;:&quot;web&quot;,&quot;level&quot;:&quot;ERROR&quot;}
 </code></pre></div>
 </div>
 </div>
 </div>
+<p>The Drain algorithm clusters similar messages and replaces variable parts with placeholders like <code>&lt;ipv4&gt;</code>, <code>&lt;email&gt;</code>, <code>&lt;uuid&gt;</code>. No regex required.</p>
 <hr />
 <h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
 <p>Beyond basic filtering and conversion, Kelora includes specialized functions that solve problems you'd otherwise need multiple tools or custom scripts for:</p>
 <ul>
-<li><strong><a href="how-to/power-user-techniques/#deep-structure-flattening">Deep flattening</a></strong> - Fan out nested JSON arrays to flat records (<code>emit_each()</code>)</li>
-<li><strong><a href="how-to/power-user-techniques/#extract-json-from-unstructured-text">Extract JSON from text</a></strong> - Pull structured data from unstructured log lines</li>
-<li><strong><a href="how-to/power-user-techniques/#template-mining-with-drain">Template mining</a></strong> - Automatic log pattern discovery and clustering using Drain algorithm</li>
-<li><strong><a href="how-to/power-user-techniques/#jwt-parsing-without-verification">JWT parsing</a></strong> - Extract claims without signature verification for debugging</li>
-<li><strong><a href="how-to/power-user-techniques/#multiple-hash-algorithms">Cryptographic pseudonymization</a></strong> - Privacy-preserving anonymization with Argon2id + HKDF + HMAC</li>
-<li><strong><a href="how-to/power-user-techniques/#pattern-normalization">Pattern normalization</a></strong> - Group error messages by replacing IPs, UUIDs, emails with placeholders</li>
-<li><strong><a href="how-to/power-user-techniques/#deterministic-sampling-with-bucket">Deterministic sampling</a></strong> - Hash-based sampling that's consistent across log rotations and distributed systems</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#extract-json-from-unstructured-text">Extract JSON from text</a></strong> - Pull structured data from unstructured lines
+  <code>e.data = e.line.extract_json()</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#deep-structure-flattening">Deep flattening</a></strong> - Fan out nested arrays to flat records
+  <code>emit_each(e.get_path("data.orders", []))</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#pattern-normalization">Pattern normalization</a></strong> - Group errors by replacing IPs, UUIDs, emails with placeholders
+  <code>e.error_pattern = e.message.normalized()</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#deterministic-sampling-with-bucket">Deterministic sampling</a></strong> - Consistent sampling across log rotations
+  <code>--filter 'e.request_id.bucket() % 10 == 0'</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#jwt-parsing-without-verification">JWT parsing</a></strong> - Extract claims without verification
+  <code>e.token.parse_jwt().claims.sub</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#multiple-hash-algorithms">Cryptographic pseudonymization</a></strong> - Privacy-preserving anonymization with HMAC
+  <code>e.anon_user = pseudonym(e.email, "users")</code></p>
+</li>
 </ul>
-<p>See <strong><a href="how-to/power-user-techniques/">Power-User Techniques</a></strong> for real-world examples. For performance characteristics and when to use specialized tools instead, see <a href="concepts/performance-comparisons/">Performance Comparisons</a>.</p>
+<p>See <strong><a href="how-to/power-user-techniques/">Power-User Techniques</a></strong> for real-world examples.</p>
 <hr />
 <h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
 <p><strong><a href="quickstart/">→ Quickstart (5 minutes)</a></strong> - Install and run your first commands</p>
 <p><strong><a href="tutorials/basics/">→ Tutorial: Basics (30 minutes)</a></strong> - Learn input formats, filtering, and output</p>
 <p><strong><a href="how-to/">→ How-To Guides</a></strong> - Solve specific problems (including <a href="how-to/debug-issues/">debugging</a>)</p>
 <p>For deeper understanding, see <a href="concepts/">Concepts</a>. For complete reference, see <a href="glossary/">Glossary</a>, <a href="reference/functions/">Functions</a>, <a href="reference/formats/">Formats</a>, and <a href="reference/cli-reference/">CLI options</a>.</p>
+<div class="admonition tip">
+<p class="admonition-title">On-call?</p>
+<p>Jump to <strong><a href="how-to/incident-response-playbooks/">Incident Response Playbooks</a></strong> for copy-paste commands covering latency spikes, error surges, auth failures, and more.</p>
+</div>
 <hr />
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>Kelora is open source software licensed under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>.</p>
 <h2 id="development-approach">Development Approach<a class="headerlink" href="#development-approach" title="Permanent link">&para;</a></h2>
-<p>Kelora is an experiment in agentic AI development using <a href="https://en.wikipedia.org/wiki/Vibe_coding">vibe-coding</a>. AI agents generate all implementation and tests; I steer requirements but do not write or review code. Validation relies on the automated test suite plus <code>cargo audit</code> and <code>cargo deny</code>.</p>
+<p>Kelora is an experiment in agentic AI development using <a href="https://en.wikipedia.org/wiki/Vibe_coding">vibe-coding</a>. AI agents generate all implementation and tests; I steer requirements but do not write or review code. Validation relies on a large automated test suite plus Rust security tools (<code>cargo audit</code> and <code>cargo deny</code>). Review the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before production use.</p>
 <p>This is a spare-time, single-developer project, so support and updates are best-effort.</p>
 
 
