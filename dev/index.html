@@ -457,6 +457,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#when-to-use-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2231,6 +2242,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#when-to-use-kelora" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2358,14 +2380,42 @@
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
 <p><strong>Turn messy logs into structured data.</strong></p>
 <p>Kelora is a scriptable log processor for the command line. Parse structured or semi-structured logs, filter with complex logic, and analyze streams using embedded <a href="https://rhai.rs">Rhai</a> scripting—all in a single binary.</p>
+<p>Kelora is AI-generated; see <a href="#development-approach">Development Approach</a>.</p>
 <p><a id="installation"></a></p>
-<div class="admonition tip">
-<p class="admonition-title">Installation</p>
-<p><strong>macOS:</strong> <code>brew tap dloss/kelora &amp;&amp; brew install kelora</code></p>
-<p><strong>Pre-built binaries:</strong> <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip">Windows</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz">macOS (Apple Silicon)</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz">macOS (Intel)</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz">Linux (x86_64)</a> | <a href="https://github.com/dloss/kelora/releases">Other platforms</a></p>
-<p><strong>Cargo:</strong> <code>cargo install kelora</code></p>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:5"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">macOS</label><label for="__tabbed_1_2">Linux</label><label for="__tabbed_1_3">Windows</label><label for="__tabbed_1_4">Cargo</label><label for="__tabbed_1_5">Other</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>tap<span class="w"> </span>dloss/kelora<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>brew<span class="w"> </span>install<span class="w"> </span>kelora
+</code></pre></div>
+<p>Or download a signed binary: <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz">Apple Silicon</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz">Intel</a></p>
 </div>
-<p><em>Kelora is AI-generated; see <a href="#development-approach">Development Approach</a>.</em></p>
+<div class="tabbed-block">
+<p><strong>Binary:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-LO<span class="w"> </span>https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>tar<span class="w"> </span>xzf<span class="w"> </span>kelora-x86_64-unknown-linux-musl.tar.gz
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>sudo<span class="w"> </span>mv<span class="w"> </span>kelora<span class="w"> </span>/usr/local/bin/
+</code></pre></div></p>
+<p><strong>Debian/Ubuntu:</strong> download <a href="https://github.com/dloss/kelora/releases/latest">.deb</a>, then:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sudo<span class="w"> </span>dpkg<span class="w"> </span>-i<span class="w"> </span>kelora_*_amd64.deb
+</code></pre></div></p>
+<p><strong>Fedora/RHEL:</strong> download <a href="https://github.com/dloss/kelora/releases/latest">.rpm</a>, then:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>kelora-*.x86_64.rpm
+</code></pre></div></p>
+<p><strong>ARM:</strong> see <a href="https://github.com/dloss/kelora/releases">releases</a> for aarch64 binaries.</p>
+</div>
+<div class="tabbed-block">
+<p>Download <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip">kelora-x86_64-pc-windows-msvc.zip</a>, extract, and add to PATH.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>See <a href="https://github.com/dloss/kelora/releases">all releases</a> for ARM Linux, FreeBSD, OpenBSD, and more.</p>
+</div>
+</div>
+</div>
 <h2 id="when-to-use-kelora">When to Use Kelora<a class="headerlink" href="#when-to-use-kelora" title="Permanent link">&para;</a></h2>
 <p>Reach for Kelora when:</p>
 <ul>
@@ -2380,7 +2430,7 @@
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <h3 id="1-filter-convert-the-basics">1. Filter &amp; Convert (The Basics)<a class="headerlink" href="#1-filter-convert-the-basics" title="Permanent link">&para;</a></h3>
 <p><em>Scenario: Filter a Logfmt file for slow requests and output clean JSON.</em></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label><label for="__tabbed_1_2">Input Data</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Input Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
@@ -2404,7 +2454,7 @@
 </div>
 <h3 id="2-modify-anonymize-scripting">2. Modify &amp; Anonymize (Scripting)<a class="headerlink" href="#2-modify-anonymize-scripting" title="Permanent link">&para;</a></h3>
 <p><em>Scenario: Mask user emails for privacy and convert milliseconds to seconds before printing.</em></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Input Data</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Input Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/audit.jsonl<span class="w"> </span><span class="se">\</span>
@@ -2428,7 +2478,7 @@
 </div>
 <h3 id="3-pattern-discovery-template-mining">3. Pattern Discovery (Template Mining)<a class="headerlink" href="#3-pattern-discovery-template-mining" title="Permanent link">&para;</a></h3>
 <p><em>Scenario: You have thousands of error messages that differ only in IPs, emails, and UUIDs. Find the underlying patterns automatically.</em></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Input Data</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command/Output</label><label for="__tabbed_4_2">Input Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/production-errors.jsonl<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
