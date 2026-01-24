@@ -1,0 +1,3996 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v1.4.3/how-to/incident-response-playbooks/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../debug-issues/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Incident Response Playbooks - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#incident-response-playbooks" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Incident Response Playbooks
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  How-To Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction to Rhai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and Tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/begin-end-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Begin and End Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/advanced-scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing Custom Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/span-aggregation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Span Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/configuration-and-reusability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Reusability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/composed-pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composed Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incident Response Playbooks
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incident Response Playbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-api-latency-spike" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. API Latency Spike
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. API Latency Spike">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reconnaissance-10-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reconnaissance (10 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-problem-endpoints-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Problem Endpoints (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualize-latency-distribution-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualize Latency Distribution (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deep-dive-correlate-with-status-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deep Dive: Correlate with Status Codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-error-rate-spike" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Error Rate Spike
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Error Rate Spike">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-error-templates-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Error Templates (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-error-hotspots-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Error Hotspots (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-stack-traces-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Stack Traces (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlate-with-usersendpoints-3-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlate with Users/Endpoints (3 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-authentication-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Authentication Failures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Authentication Failures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-failed-login-patterns-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Failed Login Patterns (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-brute-force-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect Brute Force (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-attack-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Attack Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-attacker-ips-for-blocking-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Attacker IPs for Blocking (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identify-attack-sources-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identify Attack Sources (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-database-performance-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Database Performance Degradation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Database Performance Degradation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-query-stats-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Query Stats (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-slowest-queries-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Slowest Queries (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-n1-query-problems-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect N+1 Query Problems (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlate-with-application-endpoints-3-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlate with Application Endpoints (3 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-resource-exhaustion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Resource Exhaustion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Resource Exhaustion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-find-resource-errors-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Find Resource Errors (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-resource-metrics-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Resource Metrics (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeline-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeline Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-deployment-correlation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Deployment Correlation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Deployment Correlation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compare-prepost-deployment-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compare Pre/Post Deployment (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-new-error-types-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find New Error Types (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualize-error-timeline-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualize Error Timeline (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-rate-limit-investigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Rate Limit Investigation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Rate Limit Investigation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-whos-getting-rate-limited-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Who's Getting Rate Limited? (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyze-request-patterns-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyze Request Patterns (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-scrapersbots-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect Scrapers/Bots (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-rate-limit-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Rate Limit Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-distributed-trace-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Distributed Trace Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Distributed Trace Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trace-single-request-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace Single Request (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-multiple-related-requests-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace Multiple Related Requests (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identify-service-delays-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identify Service Delays (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-full-request-context-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Full Request Context (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-techniques" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Techniques
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Techniques">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#combining-multiple-playbooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combining Multiple Playbooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#streaming-analysis-during-active-incident" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming Analysis During Active Incident
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-for-further-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export for Further Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-processing-for-large-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel Processing for Large Archives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sampling-for-extremely-large-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampling for Extremely Large Datasets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#playbook-cheat-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Playbook Cheat Sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-for-effective-incident-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips for Effective Incident Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debug-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug Issues Systematically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triage Production Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze Web Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Service Health Snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Investigate Syslog Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose a Multiline Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sanitize Logs Before Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pseudonymize Identifiers for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare CSV Exports for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flatten Nested JSON for Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build-streaming-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Streaming Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process Archives at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../span-aggregation-cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roll Up Logs with Span Windows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrate-external-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrate Kelora with External Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../power-user-techniques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Power-User Techniques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/pipeline-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processing Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/events-and-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events and Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/scripting-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/multiline-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/performance-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/performance-comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Comparisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/benchmark-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/configuration-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/common-errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Function Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-api-latency-spike" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. API Latency Spike
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. API Latency Spike">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reconnaissance-10-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reconnaissance (10 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-problem-endpoints-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Problem Endpoints (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualize-latency-distribution-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualize Latency Distribution (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deep-dive-correlate-with-status-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deep Dive: Correlate with Status Codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-error-rate-spike" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Error Rate Spike
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Error Rate Spike">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-error-templates-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Error Templates (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-error-hotspots-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Error Hotspots (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-stack-traces-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Stack Traces (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlate-with-usersendpoints-3-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlate with Users/Endpoints (3 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-authentication-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Authentication Failures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Authentication Failures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-failed-login-patterns-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Failed Login Patterns (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-brute-force-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect Brute Force (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-attack-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Attack Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-attacker-ips-for-blocking-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Attacker IPs for Blocking (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identify-attack-sources-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identify Attack Sources (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-database-performance-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Database Performance Degradation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Database Performance Degradation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-query-stats-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Query Stats (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-slowest-queries-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Slowest Queries (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-n1-query-problems-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect N+1 Query Problems (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlate-with-application-endpoints-3-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlate with Application Endpoints (3 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-resource-exhaustion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Resource Exhaustion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Resource Exhaustion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-find-resource-errors-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Find Resource Errors (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-resource-metrics-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Resource Metrics (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeline-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeline Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-deployment-correlation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Deployment Correlation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Deployment Correlation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compare-prepost-deployment-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compare Pre/Post Deployment (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-new-error-types-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find New Error Types (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualize-error-timeline-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualize Error Timeline (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-rate-limit-investigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Rate Limit Investigation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Rate Limit Investigation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-triage-whos-getting-rate-limited-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Triage: Who's Getting Rate Limited? (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyze-request-patterns-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyze Request Patterns (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detect-scrapersbots-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect Scrapers/Bots (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-based-rate-limit-analysis-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time-Based Rate Limit Analysis (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-distributed-trace-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Distributed Trace Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Distributed Trace Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trace-single-request-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace Single Request (30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trace-multiple-related-requests-1-minute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace Multiple Related Requests (1 minute)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#identify-service-delays-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identify Service Delays (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-full-request-context-2-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Full Request Context (2 minutes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-techniques" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Techniques
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Techniques">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#combining-multiple-playbooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combining Multiple Playbooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#streaming-analysis-during-active-incident" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streaming Analysis During Active Incident
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-for-further-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export for Further Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parallel-processing-for-large-archives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel Processing for Large Archives
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sampling-for-extremely-large-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampling for Extremely Large Datasets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#playbook-cheat-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Playbook Cheat Sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-for-effective-incident-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips for Effective Incident Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="incident-response-playbooks">Incident Response Playbooks<a class="headerlink" href="#incident-response-playbooks" title="Permanent link">&para;</a></h1>
+<p>Real-world scenarios for using Kelora during production incidents. Each playbook provides copy-paste commands for quick triage and deep analysis.</p>
+<h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Incident Type</th>
+<th>First Command</th>
+<th>Jump To</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API latency spike</td>
+<td><code>kelora app.jsonl --filter 'e.response_time_ms &gt; 500' --exec 'track_stats("latency", e.response_time_ms); track_top("endpoint", e.endpoint, 10)' -m</code></td>
+<td><a href="#1-api-latency-spike">Playbook 1</a></td>
+</tr>
+<tr>
+<td>Error rate spike</td>
+<td><code>kelora app.jsonl --filter 'e.level == "ERROR"' --drain -k message</code></td>
+<td><a href="#2-error-rate-spike">Playbook 2</a></td>
+</tr>
+<tr>
+<td>Auth failures</td>
+<td><code>kelora auth.log --filter 'e.line.contains("failed")' --exec 'track_top("ip", e.client_ip, 20); track_count(e.username)' -m</code></td>
+<td><a href="#3-authentication-failures">Playbook 3</a></td>
+</tr>
+<tr>
+<td>Database slow queries</td>
+<td><code>kelora db.jsonl --filter 'e.query_time_ms &gt; 1000' --exec 'track_stats("query_time", e.query_time_ms); track_top("query_type", e.query, 10)' -m</code></td>
+<td><a href="#4-database-performance-degradation">Playbook 4</a></td>
+</tr>
+<tr>
+<td>Resource exhaustion</td>
+<td><code>kelora app.log --filter 'e.line.contains("pool") || e.line.contains("exhausted")' -e 'e.absorb_kv("line")' -J</code></td>
+<td><a href="#5-resource-exhaustion">Playbook 5</a></td>
+</tr>
+<tr>
+<td>Deployment correlation</td>
+<td><code>kelora app.jsonl --since "2025-01-20T14:00:00Z" --until "2025-01-20T15:00:00Z" -l error,warn --stats</code></td>
+<td><a href="#6-deployment-correlation">Playbook 6</a></td>
+</tr>
+<tr>
+<td>Rate limit abuse</td>
+<td><code>kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso())' -m</code></td>
+<td><a href="#7-rate-limit-investigation">Playbook 7</a></td>
+</tr>
+<tr>
+<td>Trace request across services</td>
+<td><code>kelora *.jsonl --filter 'e.request_id == "abc123"' --normalize-ts -k timestamp,service,message,status</code></td>
+<td><a href="#8-distributed-trace-analysis">Playbook 8</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-api-latency-spike">1. API Latency Spike<a class="headerlink" href="#1-api-latency-spike" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Monitoring alerts show P95 latency jumped from 100ms to 2000ms. You need to find which endpoints are slow and when it started.</p>
+<h3 id="reconnaissance-10-seconds">Reconnaissance (10 seconds)<a class="headerlink" href="#reconnaissance-10-seconds" title="Permanent link">&para;</a></h3>
+<p>Get the lay of the land first:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span>--stats
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- Time span - Does log window cover the incident?
+- Event count - Do you have enough data?
+- Keys seen - What fields are available for analysis?</p>
+<h3 id="quick-triage-30-seconds">Quick Triage (30 seconds)<a class="headerlink" href="#quick-triage-30-seconds" title="Permanent link">&para;</a></h3>
+<p>Get immediate stats on response times:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;response&quot;, e.response_time_ms)&#39;</span><span class="w"> </span>--metrics
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- <code>response_p95</code>, <code>response_p99</code> - Are they above SLA?
+- <code>response_max</code> - Is there a ceiling (timeouts)?
+- <code>response_count</code> - How many requests in this window?</p>
+<h3 id="find-problem-endpoints-1-minute">Find Problem Endpoints (1 minute)<a class="headerlink" href="#find-problem-endpoints-1-minute" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;slow&quot;, e.response_time_ms); track_top(&quot;endpoint&quot;, e.endpoint, 10)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- <code>endpoint</code> top list shows which routes are slowest
+- If one endpoint dominates, it's a specific service issue
+- If many endpoints affected, check infrastructure</p>
+<h3 id="time-based-analysis-2-minutes">Time-Based Analysis (2 minutes)<a class="headerlink" href="#time-based-analysis-2-minutes" title="Permanent link">&para;</a></h3>
+<p>When did the latency spike start?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.bucket = to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;time&quot;, e.bucket)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- Buckets show time distribution of slow requests
+- Sharp increase = deployment or configuration change
+- Gradual increase = resource exhaustion or load</p>
+<h3 id="visualize-latency-distribution-1-minute">Visualize Latency Distribution (1 minute)<a class="headerlink" href="#visualize-latency-distribution-1-minute" title="Permanent link">&para;</a></h3>
+<p>Use tailmap to see percentile-based visualization over time:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>response_time_ms
+</code></pre></div>
+<p><strong>Reading tailmap output:</strong>
+- <code>_</code> = below p90 (fast)
+- <code>1</code> = p90-p95 (slow)
+- <code>2</code> = p95-p99 (slower)
+- <code>3</code> = above p99 (slowest)</p>
+<p>Look for vertical bars of <code>2</code> and <code>3</code> to pinpoint when latency spiked.</p>
+<h3 id="deep-dive-correlate-with-status-codes">Deep Dive: Correlate with Status Codes<a class="headerlink" href="#deep-dive-correlate-with-status-codes" title="Permanent link">&para;</a></h3>
+<p>Are slow requests failing?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;status&quot;, e.status.to_string(), 10); track_top(&quot;endpoint_status&quot;, e.endpoint + &quot; [&quot; + e.status + &quot;]&quot;, 15)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>Example using sample data:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>examples/api_latency_incident.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 100&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;slow&quot;, e.response_time_ms); track_top(&quot;endpoint&quot;, e.endpoint, 5); track_bucket(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<hr />
+<h2 id="2-error-rate-spike">2. Error Rate Spike<a class="headerlink" href="#2-error-rate-spike" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Error monitoring shows 500 errors/minute (normally 5/minute). Find what's breaking.</p>
+<h3 id="quick-triage-error-templates-30-seconds">Quick Triage: Error Templates (30 seconds)<a class="headerlink" href="#quick-triage-error-templates-30-seconds" title="Permanent link">&para;</a></h3>
+<p>Use drain to find common error patterns:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Clean pattern list</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># With line numbers and samples for context</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--drain<span class="o">=</span>full<span class="w"> </span>-k<span class="w"> </span>message
+</code></pre></div>
+<p><strong>Output formats:</strong>
+- <code>--drain</code> - Clean list showing counts and patterns
+- <code>--drain=full</code> - Adds line ranges and sample messages for each pattern
+- <code>--drain=json</code> - Export for further analysis</p>
+<p><strong>What to look for:</strong>
+- Template #1 with high count = root cause candidate
+- Many different templates = cascading failures
+- New templates = recently introduced bug</p>
+<h3 id="find-error-hotspots-1-minute">Find Error Hotspots (1 minute)<a class="headerlink" href="#find-error-hotspots-1-minute" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_type); track_top(&quot;service&quot;, e.service, 10); track_bucket(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="extract-stack-traces-2-minutes">Extract Stack Traces (2 minutes)<a class="headerlink" href="#extract-stack-traces-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Get actual error details for top issues:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot; &amp;&amp; e.get_path(&quot;stack_trace&quot;) != ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,message,stack_trace<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">10</span>
+</code></pre></div>
+<h3 id="correlate-with-usersendpoints-3-minutes">Correlate with Users/Endpoints (3 minutes)<a class="headerlink" href="#correlate-with-usersendpoints-3-minutes" title="Permanent link">&para;</a></h3>
+<p>Are errors isolated to specific users or widespread?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user_id); track_top(&quot;endpoint&quot;, e.endpoint, 10); track_top(&quot;error_msg&quot;, e.message, 5)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- <code>users</code> count - 1 user = isolated issue, 1000s = systemic
+- Top endpoints - Which API routes are failing?
+- Error messages - Same error repeated = single root cause</p>
+<p><strong>Example using sample data:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>examples/api_errors.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>error
+</code></pre></div>
+<hr />
+<h2 id="3-authentication-failures">3. Authentication Failures<a class="headerlink" href="#3-authentication-failures" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Auth service logs show spike in failed login attempts. Is this a brute force attack or service issue?</p>
+<h3 id="quick-triage-failed-login-patterns-30-seconds">Quick Triage: Failed Login Patterns (30 seconds)<a class="headerlink" href="#quick-triage-failed-login-patterns-30-seconds" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;) || e.line.contains(&quot;invalid&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ip&quot;, e.get_path(&quot;ip&quot;, &quot;unknown&quot;), 20); track_count(e.get_path(&quot;user&quot;, &quot;unknown&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>--metrics<span class="o">=</span>short
+</code></pre></div>
+<p><strong>Note:</strong> Using <code>--metrics=short</code> for compact output during time-sensitive incidents.</p>
+<p><strong>What to look for:</strong>
+- Top IPs with hundreds of attempts = brute force
+- Single IP with specific user = targeted attack
+- Many IPs, many users = service outage</p>
+<h3 id="detect-brute-force-1-minute">Detect Brute Force (1 minute)<a class="headerlink" href="#detect-brute-force-1-minute" title="Permanent link">&para;</a></h3>
+<p>Find IPs with suspicious attempt counts:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ip_user&quot;, e.get_path(&quot;ip&quot;, &quot;&quot;) + &quot; -&gt; &quot; + e.get_path(&quot;user&quot;, &quot;&quot;), 30)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="time-based-attack-analysis-2-minutes">Time-Based Attack Analysis (2 minutes)<a class="headerlink" href="#time-based-attack-analysis-2-minutes" title="Permanent link">&para;</a></h3>
+<p>When did the attack start, and is it ongoing?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_count(&quot;total_failures&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="extract-attacker-ips-for-blocking-1-minute">Extract Attacker IPs for Blocking (1 minute)<a class="headerlink" href="#extract-attacker-ips-for-blocking-1-minute" title="Permanent link">&para;</a></h3>
+<p>Get unique IPs with &gt;10 failed attempts:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.get_path(&quot;ip&quot;, &quot;&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">&#39;^\s+[0-9]+\.[0-9]+&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{if ($2 &gt; 10) print $1}&#39;</span>
+</code></pre></div>
+<h3 id="identify-attack-sources-2-minutes">Identify Attack Sources (2 minutes)<a class="headerlink" href="#identify-attack-sources-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Classify IPs as internal vs external threats:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="s1">    let ip = e.get_path(&quot;ip&quot;, &quot;&quot;);</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="s1">    e.ip_type = if ip.is_private_ip() { &quot;internal&quot; } else { &quot;external&quot; };</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s1">    track_top(&quot;attacks&quot;, ip + &quot; [&quot; + e.ip_type + &quot;]&quot;, 30)</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- External IPs = Internet-based attack, add to firewall
+- Internal IPs = Compromised account or insider threat
+- Mix of both = Potentially botnet or distributed attack</p>
+<p><strong>Example using sample data:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>examples/auth_burst.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 401&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ip&quot;, e.ip, 20); track_count(e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<hr />
+<h2 id="4-database-performance-degradation">4. Database Performance Degradation<a class="headerlink" href="#4-database-performance-degradation" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Database dashboard shows query latency increased 10x. Find slow queries.</p>
+<h3 id="quick-triage-query-stats-30-seconds">Quick Triage: Query Stats (30 seconds)<a class="headerlink" href="#quick-triage-query-stats-30-seconds" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>db.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;query_time&quot;, e.query_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="find-slowest-queries-1-minute">Find Slowest Queries (1 minute)<a class="headerlink" href="#find-slowest-queries-1-minute" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>db.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.query_time_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;query&quot;, e.query, 10); track_stats(&quot;slow&quot;, e.query_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- Specific query repeated = missing index or N+1 query
+- Many different queries = database overload</p>
+<h3 id="detect-n1-query-problems-2-minutes">Detect N+1 Query Problems (2 minutes)<a class="headerlink" href="#detect-n1-query-problems-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Find queries executed hundreds of times:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>db.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.query)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-k2<span class="w"> </span>-n<span class="w"> </span>-r<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
+</code></pre></div>
+<h3 id="correlate-with-application-endpoints-3-minutes">Correlate with Application Endpoints (3 minutes)<a class="headerlink" href="#correlate-with-application-endpoints-3-minutes" title="Permanent link">&para;</a></h3>
+<p>Which API endpoints trigger slow queries?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>db.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.query_time_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;endpoint_query&quot;, e.endpoint + &quot; :: &quot; + e.query.substring(0, 50), 15)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>Example using sample data:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>examples/database_queries.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.query_time_ms &gt; 100&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;slow&quot;, e.query_time_ms); track_top(&quot;query_type&quot;, e.query_type, 10)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<hr />
+<h2 id="5-resource-exhaustion">5. Resource Exhaustion<a class="headerlink" href="#5-resource-exhaustion" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Logs mention "pool exhausted", "too many connections", or "out of memory". Find the bottleneck.</p>
+<h3 id="quick-triage-find-resource-errors-30-seconds">Quick Triage: Find Resource Errors (30 seconds)<a class="headerlink" href="#quick-triage-find-resource-errors-30-seconds" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;pool&quot;) || e.line.contains(&quot;exhausted&quot;) || e.line.contains(&quot;memory&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<h3 id="extract-resource-metrics-1-minute">Extract Resource Metrics (1 minute)<a class="headerlink" href="#extract-resource-metrics-1-minute" title="Permanent link">&para;</a></h3>
+<p>If logs contain key=value metrics, extract them:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;pool&quot;) || e.line.contains(&quot;connections&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_max(&quot;max_used&quot;, e.get_path(&quot;used&quot;, 0)); track_max(&quot;max_waiting&quot;, e.get_path(&quot;waiting&quot;, 0))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">  </span>-J
+</code></pre></div>
+<h3 id="timeline-analysis-2-minutes">Timeline Analysis (2 minutes)<a class="headerlink" href="#timeline-analysis-2-minutes" title="Permanent link">&para;</a></h3>
+<p>When did resource exhaustion start?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;pool&quot;) || e.line.contains(&quot;exhausted&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>Example using sample data:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>examples/quickstart.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(3) level *msg&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.msg.contains(&quot;Pool exhausted&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span>-J
+</code></pre></div>
+<p>The <code>absorb_kv()</code> function works best when logs contain actual <code>key=value</code> pairs. For other formats, filter to find relevant lines and extract manually.</p>
+<hr />
+<h2 id="6-deployment-correlation">6. Deployment Correlation<a class="headerlink" href="#6-deployment-correlation" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Deployment finished at 14:00. Did it cause increased errors?</p>
+<h3 id="compare-prepost-deployment-1-minute">Compare Pre/Post Deployment (1 minute)<a class="headerlink" href="#compare-prepost-deployment-1-minute" title="Permanent link">&para;</a></h3>
+<p><strong>Before deployment:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-20T14:00:00Z&quot;</span><span class="w"> </span>-l<span class="w"> </span>error,warn<span class="w"> </span>--stats
+</code></pre></div></p>
+<p><strong>After deployment:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-20T14:00:00Z&quot;</span><span class="w"> </span>-l<span class="w"> </span>error,warn<span class="w"> </span>--stats
+</code></pre></div></p>
+<p><strong>What to look for:</strong>
+- Compare error counts and event counts
+- New error types in "After" = regression
+- Significant count increase = deployment issue</p>
+<h3 id="find-new-error-types-2-minutes">Find New Error Types (2 minutes)<a class="headerlink" href="#find-new-error-types-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Errors that appeared post-deployment:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Get post-deployment errors</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-20T14:00:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
+</code></pre></div>
+<p>Compare template IDs to pre-deployment run. New templates = new bugs.</p>
+<h3 id="visualize-error-timeline-1-minute">Visualize Error Timeline (1 minute)<a class="headerlink" href="#visualize-error-timeline-1-minute" title="Permanent link">&para;</a></h3>
+<p>See exact moment errors spiked:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-20T13:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-20T14:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<hr />
+<h2 id="7-rate-limit-investigation">7. Rate Limit Investigation<a class="headerlink" href="#7-rate-limit-investigation" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Rate limiting triggered on API. Is this legitimate traffic or abuse?</p>
+<h3 id="quick-triage-whos-getting-rate-limited-30-seconds">Quick Triage: Who's Getting Rate Limited? (30 seconds)<a class="headerlink" href="#quick-triage-whos-getting-rate-limited-30-seconds" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 429&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;user&quot;, e.user_id, 50); track_top(&quot;ip&quot;, e.client_ip, 30)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>What to look for:</strong>
+- Single user/IP dominating = likely abuse or misconfigured client
+- Many different users = limits too aggressive or legitimate traffic spike</p>
+<h3 id="analyze-request-patterns-1-minute">Analyze Request Patterns (1 minute)<a class="headerlink" href="#analyze-request-patterns-1-minute" title="Permanent link">&para;</a></h3>
+<p>What endpoints are being rate limited?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 429&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;endpoint&quot;, e.endpoint, 10); track_top(&quot;user_agent&quot;, e.user_agent, 20)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="detect-scrapersbots-2-minutes">Detect Scrapers/Bots (2 minutes)<a class="headerlink" href="#detect-scrapersbots-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Find suspicious user agents or request patterns:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 429&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ua_ip&quot;, e.user_agent + &quot; [&quot; + e.client_ip + &quot;]&quot;, 20)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="time-based-rate-limit-analysis-2-minutes">Time-Based Rate Limit Analysis (2 minutes)<a class="headerlink" href="#time-based-rate-limit-analysis-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Are rate limits being hit constantly or during specific times?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 429&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_count(&quot;total_429s&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<hr />
+<h2 id="8-distributed-trace-analysis">8. Distributed Trace Analysis<a class="headerlink" href="#8-distributed-trace-analysis" title="Permanent link">&para;</a></h2>
+<p><strong>Scenario</strong>: Request ID <code>abc-123</code> failed. Trace it across all services.</p>
+<h3 id="trace-single-request-30-seconds">Trace Single Request (30 seconds)<a class="headerlink" href="#trace-single-request-30-seconds" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>*.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_id == &quot;abc-123&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">  </span>--normalize-ts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,level,message,status,duration_ms
+</code></pre></div>
+<h3 id="trace-multiple-related-requests-1-minute">Trace Multiple Related Requests (1 minute)<a class="headerlink" href="#trace-multiple-related-requests-1-minute" title="Permanent link">&para;</a></h3>
+<p>Find all requests from a specific user session:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>*.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.session_id == &quot;xyz-789&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">  </span>--normalize-ts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,request_id,endpoint,status<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="w">  </span>--output-format<span class="w"> </span>csv
+</code></pre></div>
+<h3 id="identify-service-delays-2-minutes">Identify Service Delays (2 minutes)<a class="headerlink" href="#identify-service-delays-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Which service in the chain was slowest?</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>*.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_id == &quot;abc-123&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;service_duration&quot;, e.service + &quot;: &quot; + e.get_path(&quot;duration_ms&quot;, 0).to_string() + &quot;ms&quot;, 10)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="extract-full-request-context-2-minutes">Extract Full Request Context (2 minutes)<a class="headerlink" href="#extract-full-request-context-2-minutes" title="Permanent link">&para;</a></h3>
+<p>Get complete request lifecycle with all fields:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>kelora<span class="w"> </span>*.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_id == &quot;abc-123&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="w">  </span>--normalize-ts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="w">  </span>-F<span class="w"> </span>inspect
+</code></pre></div>
+<hr />
+<h2 id="advanced-techniques">Advanced Techniques<a class="headerlink" href="#advanced-techniques" title="Permanent link">&para;</a></h2>
+<h3 id="combining-multiple-playbooks">Combining Multiple Playbooks<a class="headerlink" href="#combining-multiple-playbooks" title="Permanent link">&para;</a></h3>
+<p>Incident often requires multiple angles:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># Latency + Error correlation</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 500 || e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.response_time_ms); track_top(&quot;status&quot;, e.status.to_string(), 10); track_top(&quot;endpoint&quot;, e.endpoint, 10)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="streaming-analysis-during-active-incident">Streaming Analysis During Active Incident<a class="headerlink" href="#streaming-analysis-during-active-incident" title="Permanent link">&para;</a></h3>
+<p>Monitor live logs as incident unfolds:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Real-time error tracking with periodic updates (every 10 events)</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;errors&quot;); track_top(&quot;msg&quot;, e.message, 5)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;eprint(span.metrics.to_json())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="w">  </span>-q
+</code></pre></div>
+<p><strong>For Kubernetes pods:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>deployment/api-server<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error,warn<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.response_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;eprint(span.metrics.to_json())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a><span class="w">  </span>-q
+</code></pre></div></p>
+<p><strong>For Docker containers:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>container_name<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.matches(&quot;ERROR|FATAL&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="w">  </span>-J
+</code></pre></div></p>
+<h3 id="export-for-further-analysis">Export for Further Analysis<a class="headerlink" href="#export-for-further-analysis" title="Permanent link">&para;</a></h3>
+<p>Save filtered data for deeper investigation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># Export events to JSON</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-20T14:00:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>incident-errors.jsonl
+<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>
+<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># Export metrics to JSON file (while suppressing terminal output)</span>
+<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-9" name="__codelineno-43-9" href="#__codelineno-43-9"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.response_time_ms); track_top(&quot;endpoint&quot;, e.endpoint, 20)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-10" name="__codelineno-43-10" href="#__codelineno-43-10"></a><span class="w">  </span>--metrics-file<span class="w"> </span>incident-metrics.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-11" name="__codelineno-43-11" href="#__codelineno-43-11"></a><span class="w">  </span>--silent
+<a id="__codelineno-43-12" name="__codelineno-43-12" href="#__codelineno-43-12"></a>
+<a id="__codelineno-43-13" name="__codelineno-43-13" href="#__codelineno-43-13"></a><span class="c1"># Export to CSV for spreadsheet analysis</span>
+<a id="__codelineno-43-14" name="__codelineno-43-14" href="#__codelineno-43-14"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-15" name="__codelineno-43-15" href="#__codelineno-43-15"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-16" name="__codelineno-43-16" href="#__codelineno-43-16"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,endpoint,status,user_id,error_message<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-43-17" name="__codelineno-43-17" href="#__codelineno-43-17"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>server-errors.csv
+</code></pre></div>
+<p>Then analyze with other tools, load into a database, or share with team.</p>
+<h3 id="parallel-processing-for-large-archives">Parallel Processing for Large Archives<a class="headerlink" href="#parallel-processing-for-large-archives" title="Permanent link">&para;</a></h3>
+<p>Speed up analysis on multi-GB files:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>kelora<span class="w"> </span>huge-archive.log.gz<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;response&quot;, e.response_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<h3 id="sampling-for-extremely-large-datasets">Sampling for Extremely Large Datasets<a class="headerlink" href="#sampling-for-extremely-large-datasets" title="Permanent link">&para;</a></h3>
+<p>When logs are too big to process quickly, use deterministic sampling:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a><span class="c1"># Analyze 10% of requests (consistent sampling by request_id)</span>
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>kelora<span class="w"> </span>huge-logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_id.bucket() % 10 == 0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.response_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a><span class="w">  </span>--metrics
+<a id="__codelineno-45-6" name="__codelineno-45-6" href="#__codelineno-45-6"></a>
+<a id="__codelineno-45-7" name="__codelineno-45-7" href="#__codelineno-45-7"></a><span class="c1"># Sample every 100th event (fast counter-based)</span>
+<a id="__codelineno-45-8" name="__codelineno-45-8" href="#__codelineno-45-8"></a>kelora<span class="w"> </span>huge-logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-9" name="__codelineno-45-9" href="#__codelineno-45-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;sample_every(100)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-10" name="__codelineno-45-10" href="#__codelineno-45-10"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;endpoint&quot;, e.endpoint, 20)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-45-11" name="__codelineno-45-11" href="#__codelineno-45-11"></a><span class="w">  </span>--metrics
+</code></pre></div>
+<p><strong>When to use each:</strong>
+- <code>bucket() % N</code> - Deterministic by field value (same IDs always included)
+- <code>sample_every(N)</code> - Fast counter-based (1 in N events)</p>
+<hr />
+<h2 id="playbook-cheat-sheet">Playbook Cheat Sheet<a class="headerlink" href="#playbook-cheat-sheet" title="Permanent link">&para;</a></h2>
+<p>Copy these to your incident runbook:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="c1"># 1. RECONNAISSANCE - Always start here</span>
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--stats
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>
+<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a><span class="c1"># 2. ERROR PATTERN DISCOVERY</span>
+<a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
+<a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>
+<a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a><span class="c1"># 3. TOP OFFENDERS</span>
+<a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_top(&quot;key&quot;, e.field, 20)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>
+<a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a><span class="c1"># 4. TIME DISTRIBUTION (proper datetime bucketing)</span>
+<a id="__codelineno-46-11" name="__codelineno-46-11" href="#__codelineno-46-11"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.bucket = to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-46-12" name="__codelineno-46-12" href="#__codelineno-46-12"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;time&quot;, e.bucket)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-46-13" name="__codelineno-46-13" href="#__codelineno-46-13"></a>
+<a id="__codelineno-46-14" name="__codelineno-46-14" href="#__codelineno-46-14"></a><span class="c1"># 5. COMPREHENSIVE STATS</span>
+<a id="__codelineno-46-15" name="__codelineno-46-15" href="#__codelineno-46-15"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_stats(&quot;metric&quot;, e.value)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-46-16" name="__codelineno-46-16" href="#__codelineno-46-16"></a>
+<a id="__codelineno-46-17" name="__codelineno-46-17" href="#__codelineno-46-17"></a><span class="c1"># 6. VISUALIZE LATENCY OVER TIME</span>
+<a id="__codelineno-46-18" name="__codelineno-46-18" href="#__codelineno-46-18"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>response_time_ms
+<a id="__codelineno-46-19" name="__codelineno-46-19" href="#__codelineno-46-19"></a>
+<a id="__codelineno-46-20" name="__codelineno-46-20" href="#__codelineno-46-20"></a><span class="c1"># 7. EXPORT METRICS TO FILE</span>
+<a id="__codelineno-46-21" name="__codelineno-46-21" href="#__codelineno-46-21"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-46-22" name="__codelineno-46-22" href="#__codelineno-46-22"></a><span class="w">  </span>--metrics-file<span class="w"> </span>incident.json<span class="w"> </span>--silent
+<a id="__codelineno-46-23" name="__codelineno-46-23" href="#__codelineno-46-23"></a>
+<a id="__codelineno-46-24" name="__codelineno-46-24" href="#__codelineno-46-24"></a><span class="c1"># 8. SAFE FIELD ACCESS</span>
+<a id="__codelineno-46-25" name="__codelineno-46-25" href="#__codelineno-46-25"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;nested.field&quot;, 0) &gt; 100&#39;</span>
+<a id="__codelineno-46-26" name="__codelineno-46-26" href="#__codelineno-46-26"></a>
+<a id="__codelineno-46-27" name="__codelineno-46-27" href="#__codelineno-46-27"></a><span class="c1"># 9. IP CLASSIFICATION</span>
+<a id="__codelineno-46-28" name="__codelineno-46-28" href="#__codelineno-46-28"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.ip_type = if e.ip.is_private_ip() { &quot;internal&quot; } else { &quot;external&quot; }&#39;</span>
+<a id="__codelineno-46-29" name="__codelineno-46-29" href="#__codelineno-46-29"></a>
+<a id="__codelineno-46-30" name="__codelineno-46-30" href="#__codelineno-46-30"></a><span class="c1"># 10. SAMPLING LARGE LOGS</span>
+<a id="__codelineno-46-31" name="__codelineno-46-31" href="#__codelineno-46-31"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;sample_every(100)&#39;</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-46-32" name="__codelineno-46-32" href="#__codelineno-46-32"></a>
+<a id="__codelineno-46-33" name="__codelineno-46-33" href="#__codelineno-46-33"></a><span class="c1"># 11. LIVE KUBERNETES MONITORING</span>
+<a id="__codelineno-46-34" name="__codelineno-46-34" href="#__codelineno-46-34"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>deploy/app<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error,warn<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-46-35" name="__codelineno-46-35" href="#__codelineno-46-35"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.response_time_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-46-36" name="__codelineno-46-36" href="#__codelineno-46-36"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;eprint(span.metrics.to_json())&#39;</span>
+<a id="__codelineno-46-37" name="__codelineno-46-37" href="#__codelineno-46-37"></a>
+<a id="__codelineno-46-38" name="__codelineno-46-38" href="#__codelineno-46-38"></a><span class="c1"># 12. EXTRACT SUBSET WITH TIME RANGE</span>
+<a id="__codelineno-46-39" name="__codelineno-46-39" href="#__codelineno-46-39"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>--since<span class="w"> </span>2h<span class="w"> </span>--until<span class="w"> </span>now<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>-J<span class="w"> </span>&gt;<span class="w"> </span>recent-errors.jsonl
+</code></pre></div>
+<hr />
+<h2 id="tips-for-effective-incident-response">Tips for Effective Incident Response<a class="headerlink" href="#tips-for-effective-incident-response" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Always start with <code>--stats</code></strong>: Reconnaissance first - understand time span, field availability, and data volume</li>
+<li><strong>Use <code>--drain</code> early</strong>: Quickly understand log patterns without reading every line</li>
+<li><strong>Visualize with tailmap</strong>: <code>kelora api.jsonl -F tailmap --keys response_time_ms</code> shows latency distribution at a glance</li>
+<li><strong>Safe field access</strong>: Use <code>e.get_path("field.path", default)</code> instead of direct access to avoid missing field errors</li>
+<li><strong>Proper time bucketing</strong>: Use <code>to_datetime().round_to("5m")</code> instead of <code>substring()</code> for robust time analysis</li>
+<li><strong>Filter progressively</strong>: Start broad, narrow down with additional <code>--filter</code> flags</li>
+<li><strong>Track everything in one pass</strong>: Combine multiple <code>track_*()</code> calls for efficiency</li>
+<li><strong>Export for collaboration</strong>: Use <code>--metrics-file incident.json --silent</code> to save metrics without terminal clutter</li>
+<li><strong>Classify IPs</strong>: Use <code>is_private_ip()</code> to distinguish internal vs external threats</li>
+<li><strong>Sample huge datasets</strong>: Use <code>sample_every(100)</code> or <code>bucket() % 10 == 0</code> for multi-TB logs</li>
+<li><strong>Use compact output</strong>: <code>--metrics=short</code> during time-sensitive incidents</li>
+<li><strong>Live streaming</strong>: Kubernetes: <code>kubectl logs -f</code> | Docker: <code>docker logs -f</code> | Files: <code>tail -f</code></li>
+<li><strong>Leverage time ranges</strong>: <code>--since 2h</code> and <code>--until now</code> for recent events</li>
+<li><strong>Parallel for speed</strong>: Add <code>--parallel</code> when processing GB+ files (metrics still work!)</li>
+<li><strong>Document your queries</strong>: Save working commands to your incident runbook</li>
+</ol>
+<hr />
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../power-user-techniques/">Power-User Techniques</a> - Advanced Rhai functions and patterns</li>
+<li><a href="../build-streaming-alerts/">Build Streaming Alerts</a> - Automate incident detection</li>
+<li><a href="../debug-issues/">Debug Issues</a> - Troubleshooting Kelora itself</li>
+<li><a href="../monitor-application-health/">Monitor Application Health</a> - Proactive monitoring strategies</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
