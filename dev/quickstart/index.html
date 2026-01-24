@@ -2416,8 +2416,12 @@
 <h1 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h1>
 <p>Get Kelora running in 5 minutes with three commands.</p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<p><a href="../#installation">Download for your platform</a> or install via Cargo:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
+<p><strong>macOS (Homebrew):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>tap<span class="w"> </span>dloss/kelora
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>brew<span class="w"> </span>install<span class="w"> </span>kelora
+</code></pre></div></p>
+<p><strong>Other platforms:</strong> <a href="../#installation">Download pre-built binaries</a> or install via Cargo:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
 </code></pre></div>
 <h2 id="three-essential-commands">Three Essential Commands<a class="headerlink" href="#three-essential-commands" title="Permanent link">&para;</a></h2>
 <p>Here's a typical log file with unstructured text and key-value pairs buried in the messages:</p>
@@ -2457,7 +2461,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: cols
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 11 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 11 total, 4 output, 7 filtered (63.6%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 6586 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 7384 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts (auto-detected) - 11/11 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora warning: Year-less timestamp format detected (15 parses)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Format lacks year (e.g., &quot;Dec 31 23:59:59&quot;)
@@ -2482,7 +2486,7 @@
 <p>Extract key-value pairs from error messages into structured JSON fields. Notice how <code>order=1234</code>, <code>gateway=stripe</code>, <code>user=admin</code>, and other embedded data are now proper JSON fields. The <code>--normalize-ts</code> flag also converts the syslog timestamp (<code>Jan 15 10:00:00</code>) into full ISO 8601 format, ready for analysis or ingestion into other tools.</p>
 <h2 id="interactive-mode">Interactive Mode<a class="headerlink" href="#interactive-mode" title="Permanent link">&para;</a></h2>
 <p>Run <code>kelora</code> without any arguments to enter <strong>interactive mode</strong>—a readline-based REPL where you can type commands without worrying about shell quoting:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora
 </code></pre></div>
 <p>This is especially helpful on Windows where command-line quoting is notoriously difficult. Features include:</p>
 <ul>
@@ -2494,20 +2498,20 @@
 <li><strong>REPL commands</strong> - Commands like <code>:help</code>, <code>:exit</code>, <code>:quit</code> are prefixed with <code>:</code> to avoid conflicts with filenames</li>
 </ul>
 <p>Example interactive session:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Kelora Interactive Mode — :quit to exit, :help for help
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>kelora&gt; -j examples/audit.jsonl -l error
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>{&quot;timestamp&quot;:&quot;2025-01-15T10:02:30Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;user_id&quot;:103,&quot;email&quot;:&quot;***&quot;,&quot;ms&quot;:45}
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kelora&gt; -f logfmt examples/*.log --stats
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>...
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>kelora&gt; :exit
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Kelora Interactive Mode — :quit to exit, :help for help
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>kelora&gt; -j examples/audit.jsonl -l error
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>{&quot;timestamp&quot;:&quot;2025-01-15T10:02:30Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;user_id&quot;:103,&quot;email&quot;:&quot;***&quot;,&quot;ms&quot;:45}
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora&gt; -f logfmt examples/*.log --stats
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>...
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>kelora&gt; :exit
 </code></pre></div></p>
 <h2 id="get-help">Get Help<a class="headerlink" href="#get-help" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># More usage patterns</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai scripting guide</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># All built-in Rhai functions</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora<span class="w"> </span>--help-time<span class="w">         </span><span class="c1"># Timestamp format reference</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># More usage patterns</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai scripting guide</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># All built-in Rhai functions</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>kelora<span class="w"> </span>--help-time<span class="w">         </span><span class="c1"># Timestamp format reference</span>
 </code></pre></div>
 <p><strong>Having trouble?</strong> See <strong><a href="../how-to/debug-issues/">Debug Issues Systematically</a></strong> or the <strong><a href="../reference/common-errors/">Common Errors Reference</a></strong>.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
