@@ -115,7 +115,7 @@ jobs:
         run: |
           cargo install cargo-deb
           # cargo-deb expects the binary at target/<target>/release/
-          cargo deb --no-build --target ${{ matrix.target }} \
+          cargo deb --no-build --no-strip --target ${{ matrix.target }} \
             --output target/${{ matrix.target }}/release/kelora_${{ matrix.deb_arch }}.deb
 
       - name: Build RPM package
