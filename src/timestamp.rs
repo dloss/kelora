@@ -469,11 +469,11 @@ pub fn identify_timestamp_field(
     // If custom field is specified, try that first
     if let Some(ref custom_field) = config.custom_field {
         if let Some(value) = fields.get(custom_field) {
-            if let Ok(ts_str) = value.clone().into_string() {
+            if let Some(ts_str) = dynamic_to_timestamp_string(value) {
                 return Some((custom_field.clone(), ts_str));
             }
         }
-        // Custom field explicitly requested but absent or not string-convertible;
+        // Custom field explicitly requested but absent or not convertible;
         // do not fall back to built-in candidates.
         return None;
     }
@@ -481,13 +481,31 @@ pub fn identify_timestamp_field(
     // Otherwise, try the standard timestamp field names
     for ts_key in crate::event::TIMESTAMP_FIELD_NAMES {
         if let Some(value) = fields.get(*ts_key) {
-            if let Ok(ts_str) = value.clone().into_string() {
+            if let Some(ts_str) = dynamic_to_timestamp_string(value) {
                 return Some((ts_key.to_string(), ts_str));
             }
         }
     }
 
     None
+}
+
+/// Convert a Rhai Dynamic value to a timestamp string representation
+/// Handles integers, floats, and strings
+fn dynamic_to_timestamp_string(value: &rhai::Dynamic) -> Option<String> {
+    // Try integer first (Unix timestamps are often integers in JSON)
+    if let Ok(int_val) = value.as_int() {
+        return Some(int_val.to_string());
+    }
+
+    // Try float (Unix timestamps with fractional seconds)
+    if let Ok(float_val) = value.as_float() {
+        // Format with enough precision to preserve sub-second detail
+        return Some(format!("{:.9}", float_val));
+    }
+
+    // Fall back to string conversion
+    value.clone().into_string().ok()
 }
 
 /// Parse timestamp arguments (--since, --until) in journalctl-compatible format
@@ -896,6 +914,61 @@ mod tests {
         let result = identify_timestamp_field(&fields, &config);
 
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_timestamp_field_numeric_integer() {
+        use indexmap::IndexMap;
+        use rhai::Dynamic;
+
+        let mut fields = IndexMap::new();
+        // Unix timestamp as integer (seconds precision)
+        fields.insert("ts".to_string(), Dynamic::from(1735566123_i64));
+
+        let config = TsConfig::default();
+        let result = identify_timestamp_field(&fields, &config);
+
+        assert!(result.is_some());
+        let (field_name, value) = result.unwrap();
+        assert_eq!(field_name, "ts");
+        assert_eq!(value, "1735566123");
+    }
+
+    #[test]
+    fn test_timestamp_field_numeric_float() {
+        use indexmap::IndexMap;
+        use rhai::Dynamic;
+
+        let mut fields = IndexMap::new();
+        // Unix timestamp as float (seconds with fractional milliseconds)
+        fields.insert("ts".to_string(), Dynamic::from(1735566123.456_f64));
+
+        let config = TsConfig::default();
+        let result = identify_timestamp_field(&fields, &config);
+
+        assert!(result.is_some());
+        let (field_name, value) = result.unwrap();
+        assert_eq!(field_name, "ts");
+        // Check it starts with the expected integer part and has decimal
+        assert!(value.starts_with("1735566123.456"));
+    }
+
+    #[test]
+    fn test_numeric_timestamp_parses_correctly() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Integer timestamp extracted from a numeric field
+        let result = parser.parse_ts("1735566123");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2024);
+
+        // Float timestamp extracted from a numeric field
+        let result = parser.parse_ts("1735566123.456000000");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2024);
+        assert!(dt.nanosecond() >= 456_000_000);
     }
 
     #[test]
