@@ -58,11 +58,20 @@ Naive timestamp + timezone example:
 Shell tip: wrap the entire format in single quotes or escape % symbols to keep
   your shell from expanding them.
 
+Unix epoch timestamps (auto-detected):
+  Integer format:    1735566123         # Seconds (10 digits)
+                     1735566123000      # Milliseconds (13 digits)
+                     1735566123000000   # Microseconds (16 digits)
+  Float format:      1735566123.456     # Seconds with fractional milliseconds
+                     1735566123.456789  # Seconds with fractional microseconds
+
 Timestamp filtering with --since and --until:
   kelora --since "2024-01-15T10:00:00Z" app.log   # Events after timestamp
   kelora --until "yesterday" app.log              # Events before yesterday
   kelora --since 1h app.log                       # Last hour (1h, 30m, 2d, etc.)
   kelora --since +1h app.log                      # Future events (+ means ahead)
+  kelora --since 1735566123 app.log               # Events after Unix timestamp
+  kelora --since 1735566123.456 app.log           # Float Unix timestamps work too
 
   Anchored timestamps (relative to the other boundary):
   kelora --since 10:00 --until start+30m app.log  # 30 minutes starting at 10:00

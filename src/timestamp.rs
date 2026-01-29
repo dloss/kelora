@@ -61,8 +61,8 @@ impl AdaptiveTsParser {
             }
         }
 
-        // Try Unix timestamp parsing for numeric-only strings
-        if ts_str.chars().all(|c| c.is_ascii_digit()) {
+        // Try Unix timestamp parsing for numeric strings (integer or float)
+        if looks_like_unix_timestamp(ts_str) {
             if let Some(parsed) = try_parse_unix_timestamp(ts_str) {
                 return Some(parsed);
             }
@@ -309,12 +309,80 @@ fn try_parse_with_format(
     None
 }
 
-/// Try to parse Unix timestamp based on string length
-fn try_parse_unix_timestamp(ts_str: &str) -> Option<DateTime<Utc>> {
-    let timestamp_int = ts_str.parse::<i64>().ok()?;
+/// Check if a string looks like a Unix timestamp (integer or float)
+fn looks_like_unix_timestamp(ts_str: &str) -> bool {
+    if ts_str.is_empty() {
+        return false;
+    }
 
+    let mut has_dot = false;
+    for c in ts_str.chars() {
+        if c == '.' {
+            if has_dot {
+                return false; // Multiple dots
+            }
+            has_dot = true;
+        } else if !c.is_ascii_digit() {
+            return false;
+        }
+    }
+
+    // Must start with a digit (not just ".")
+    ts_str.chars().next().is_some_and(|c| c.is_ascii_digit())
+}
+
+/// Try to parse Unix timestamp (integer or float format)
+fn try_parse_unix_timestamp(ts_str: &str) -> Option<DateTime<Utc>> {
+    // Check if this is a float (contains decimal point)
+    if ts_str.contains('.') {
+        // Use magnitude-based float parsing for decimal timestamps
+        if let Ok(timestamp_float) = ts_str.parse::<f64>() {
+            return try_parse_unix_float(timestamp_float);
+        }
+    } else {
+        // Use string-length-based integer parsing for whole numbers
+        // This is more precise for integer timestamps (10, 13, 16, 19 digits)
+        if let Ok(timestamp_int) = ts_str.parse::<i64>() {
+            return try_parse_unix_int(ts_str.len(), timestamp_int);
+        }
+    }
+
+    None
+}
+
+/// Parse Unix timestamp from float value using magnitude-based precision detection
+fn try_parse_unix_float(timestamp_float: f64) -> Option<DateTime<Utc>> {
+    // Determine precision based on magnitude (same logic as formatters/default.rs)
+    let dt = if timestamp_float >= 1e15 {
+        // Microseconds (16+ digits before decimal)
+        DateTime::from_timestamp(
+            (timestamp_float / 1_000_000.0).floor() as i64,
+            ((timestamp_float % 1_000_000.0) * 1000.0) as u32,
+        )
+    } else if timestamp_float >= 1e12 {
+        // Milliseconds (13+ digits before decimal)
+        DateTime::from_timestamp(
+            (timestamp_float / 1000.0).floor() as i64,
+            ((timestamp_float % 1000.0) * 1_000_000.0) as u32,
+        )
+    } else if timestamp_float >= 1e9 {
+        // Seconds with optional fractional part (10+ digits before decimal)
+        DateTime::from_timestamp(
+            timestamp_float.floor() as i64,
+            (timestamp_float.fract() * 1_000_000_000.0) as u32,
+        )
+    } else {
+        // Too small to be a valid Unix timestamp (before ~2001)
+        None
+    };
+
+    dt.map(|dt| dt.with_timezone(&Utc))
+}
+
+/// Parse Unix timestamp from integer value using string length for precision detection
+fn try_parse_unix_int(str_len: usize, timestamp_int: i64) -> Option<DateTime<Utc>> {
     // Detect Unix timestamp precision by string length
-    let dt = match ts_str.len() {
+    let dt = match str_len {
         10 => {
             // Seconds (1735566123)
             DateTime::from_timestamp(timestamp_int, 0)
@@ -712,6 +780,59 @@ mod tests {
         assert!(result.is_some());
         let dt = result.unwrap();
         assert_eq!(dt.year(), 2024);
+    }
+
+    #[test]
+    fn test_unix_float_timestamp_parsing() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // Test seconds with fractional part (e.g., Python time.time())
+        let result = parser.parse_ts("1735566123.456");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.nanosecond() / 1_000_000, 456); // millisecond component
+
+        // Test seconds with microsecond precision
+        let result = parser.parse_ts("1735566123.456789");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2024);
+        // Check subsecond precision is preserved
+        assert!(dt.nanosecond() >= 456_000_000);
+
+        // Test milliseconds as float (less common but valid)
+        let result = parser.parse_ts("1735566123456.789");
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2024);
+
+        // Test that very small values are rejected
+        let result = parser.parse_ts("123456.789");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_looks_like_unix_timestamp() {
+        // Valid integer timestamps
+        assert!(looks_like_unix_timestamp("1735566123"));
+        assert!(looks_like_unix_timestamp("1735566123000"));
+
+        // Valid float timestamps
+        assert!(looks_like_unix_timestamp("1735566123.456"));
+        assert!(looks_like_unix_timestamp("1735566123.456789"));
+
+        // Invalid: multiple dots
+        assert!(!looks_like_unix_timestamp("1735566123.456.789"));
+
+        // Invalid: contains non-digit characters
+        assert!(!looks_like_unix_timestamp("1735566123a"));
+        assert!(!looks_like_unix_timestamp("2024-01-01"));
+
+        // Invalid: empty or just dot
+        assert!(!looks_like_unix_timestamp(""));
+        assert!(!looks_like_unix_timestamp("."));
+        assert!(!looks_like_unix_timestamp(".123"));
     }
 
     #[test]
