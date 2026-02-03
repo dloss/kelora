@@ -51,7 +51,10 @@ text.len                             Get string length (builtin)
 text.lower()                         Convert text to lowercase
 text.lstrip([chars])                 Remove leading whitespace or specified characters
 text.mask_ip([octets])               Mask IP address (default: last octet)
-text.normalized([patterns])          Replace variable patterns with placeholders (e.g., <ipv4>, <email>)
+text.normalized([patterns])          Replace patterns with placeholders (<ipv4>, <email>, <credit_card>, etc.)
+                                     Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
+                                     sha1, sha256, path, oauth, function, hexcolor, version, hexnum,
+                                     duration, num, credit_card (Luhn-validated), ssn, phone
 text.parse_cef()                     Parse Common Event Format line into fields
 text.parse_cols(spec [,sep])         Parse columns according to spec
 text.parse_combined()                Parse Apache/Nginx combined log line
@@ -238,6 +241,7 @@ drain_templates()                    Return array of templates with same fields 
                                      Default filters: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid,
                                      mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
                                      hexnum, duration, timestamp, date, time, num
+                                     PII filters (opt-in): credit_card (Luhn-validated), ssn, phone
                                      Options: depth, max_children, similarity, filters, line_num
 
 STATE MANAGEMENT (sequential mode only; errors in --parallel mode):

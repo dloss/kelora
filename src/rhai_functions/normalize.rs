@@ -1,7 +1,47 @@
 use once_cell::sync::Lazy;
-use regex::Regex;
+use regex::{Captures, Regex};
 use rhai::{Dynamic, Engine, Map};
 use std::collections::HashMap;
+
+/// Luhn algorithm validation for credit card numbers
+#[allow(clippy::manual_is_multiple_of)]
+fn is_valid_luhn(digits: &str) -> bool {
+    let digits: Vec<u32> = digits
+        .chars()
+        .filter(|c| c.is_ascii_digit())
+        .filter_map(|c| c.to_digit(10))
+        .collect();
+
+    if digits.len() < 13 || digits.len() > 19 {
+        return false;
+    }
+
+    // Reject all-zeros (would pass Luhn but isn't a real card)
+    if digits.iter().all(|&d| d == 0) {
+        return false;
+    }
+
+    // Luhn checksum
+    let sum: u32 = digits
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(i, &d)| {
+            if i % 2 == 1 {
+                let doubled = d * 2;
+                if doubled > 9 {
+                    doubled - 9
+                } else {
+                    doubled
+                }
+            } else {
+                d
+            }
+        })
+        .sum();
+
+    sum % 10 == 0
+}
 
 /// Pattern name to regex mapping for normalization
 static PATTERNS: Lazy<HashMap<&'static str, Vec<Regex>>> = Lazy::new(|| {
@@ -123,10 +163,42 @@ static PATTERNS: Lazy<HashMap<&'static str, Vec<Regex>>> = Lazy::new(|| {
         vec![Regex::new(r"[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?").unwrap()],
     );
 
+    // Credit card number (13-19 digits, optionally separated by spaces or hyphens)
+    // Validated with Luhn algorithm in the replacement function
+    map.insert(
+        "credit_card",
+        vec![Regex::new(r"\b\d(?:[ -]?\d){12,18}\b").unwrap()],
+    );
+
+    // US Social Security Number (XXX-XX-XXXX format)
+    map.insert("ssn", vec![Regex::new(r"\b\d{3}-\d{2}-\d{4}\b").unwrap()]);
+
+    // Phone numbers (various formats)
+    map.insert(
+        "phone",
+        vec![
+            // International format: +1-234-567-8900 or +1 234 567 8900
+            Regex::new(r"\+\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}").unwrap(),
+            // US format with parentheses: (123) 456-7890
+            Regex::new(r"\(\d{3}\)[-.\s]?\d{3}[-.\s]?\d{4}").unwrap(),
+            // US format without parentheses: 123-456-7890
+            Regex::new(r"\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b").unwrap(),
+        ],
+    );
+
+    map
+});
+
+/// Patterns that require additional validation beyond regex matching
+type Validator = fn(&str) -> bool;
+static VALIDATORS: Lazy<HashMap<&'static str, Validator>> = Lazy::new(|| {
+    let mut map: HashMap<&'static str, Validator> = HashMap::new();
+    map.insert("credit_card", is_valid_luhn as Validator);
     map
 });
 
 /// Default pattern set - balanced between specificity and utility
+/// Note: PII patterns (credit_card, ssn, phone) are NOT in defaults for safety
 const DEFAULT_PATTERNS: &[&str] = &[
     "ipv4_port",
     "ipv4",
@@ -179,13 +251,30 @@ fn normalized_str_impl(text: &str, patterns: &[String]) -> String {
     // Use Unicode private use area (U+E000-U+F8FF) to avoid conflicts
     for (idx, pattern_name) in patterns.iter().enumerate() {
         let placeholder = format!("<{}>", pattern_name);
+        let validator = VALIDATORS.get(pattern_name.as_str()).copied();
 
         // Regex-based patterns
         if let Some(regexes) = PATTERNS.get(pattern_name.as_str()) {
             for regex in regexes {
                 if let Some(marker) = char::from_u32(0xE000 + idx as u32) {
                     replacements.push((marker, placeholder.clone()));
-                    result = regex.replace_all(&result, marker.to_string()).to_string();
+
+                    if let Some(validate) = validator {
+                        // Pattern requires validation (e.g., credit_card with Luhn)
+                        result = regex
+                            .replace_all(&result, |caps: &Captures| {
+                                let matched = &caps[0];
+                                if validate(matched) {
+                                    marker.to_string()
+                                } else {
+                                    matched.to_string()
+                                }
+                            })
+                            .to_string();
+                    } else {
+                        // Simple regex replacement
+                        result = regex.replace_all(&result, marker.to_string()).to_string();
+                    }
                 }
             }
         }
@@ -456,5 +545,82 @@ mod tests {
         // Scientific notation
         let result = normalized_str_impl("val: 1.23e-10", &["num".to_string()]);
         assert_eq!(result, "val: <num>");
+    }
+
+    // PII pattern tests
+
+    #[test]
+    fn test_luhn_validation() {
+        // Valid test card numbers
+        assert!(is_valid_luhn("4111111111111111")); // Visa test
+        assert!(is_valid_luhn("5500000000000004")); // Mastercard test
+        assert!(is_valid_luhn("378282246310005")); // Amex test
+        assert!(is_valid_luhn("4111-1111-1111-1111")); // With dashes
+        assert!(is_valid_luhn("4111 1111 1111 1111")); // With spaces
+
+        // Invalid numbers
+        assert!(!is_valid_luhn("4111111111111112")); // Bad checksum
+        assert!(!is_valid_luhn("1234567890")); // Too short
+        assert!(!is_valid_luhn("0000000000000000")); // Not enough distinct digits
+    }
+
+    #[test]
+    fn test_normalized_credit_card() {
+        // Valid credit card should be replaced
+        let result = normalized_str_impl(
+            "Card: 4111111111111111 charged",
+            &["credit_card".to_string()],
+        );
+        assert_eq!(result, "Card: <credit_card> charged");
+
+        // With dashes
+        let result = normalized_str_impl(
+            "Card: 4111-1111-1111-1111 charged",
+            &["credit_card".to_string()],
+        );
+        assert_eq!(result, "Card: <credit_card> charged");
+
+        // Invalid card number should NOT be replaced
+        let result =
+            normalized_str_impl("Not a card: 4111111111111112", &["credit_card".to_string()]);
+        assert_eq!(result, "Not a card: 4111111111111112");
+    }
+
+    #[test]
+    fn test_normalized_ssn() {
+        let result = normalized_str_impl("SSN: 123-45-6789", &["ssn".to_string()]);
+        assert_eq!(result, "SSN: <ssn>");
+
+        // Should not match without dashes
+        let result = normalized_str_impl("Not SSN: 123456789", &["ssn".to_string()]);
+        assert_eq!(result, "Not SSN: 123456789");
+    }
+
+    #[test]
+    fn test_normalized_phone() {
+        // US format with parentheses
+        let result = normalized_str_impl("Call (555) 123-4567", &["phone".to_string()]);
+        assert_eq!(result, "Call <phone>");
+
+        // US format with dashes
+        let result = normalized_str_impl("Call 555-123-4567", &["phone".to_string()]);
+        assert_eq!(result, "Call <phone>");
+
+        // International format
+        let result = normalized_str_impl("Call +1-555-123-4567", &["phone".to_string()]);
+        assert_eq!(result, "Call <phone>");
+    }
+
+    #[test]
+    fn test_normalized_pii_combined() {
+        let result = normalized_str_impl(
+            "User SSN 123-45-6789, card 4111111111111111, phone (555) 123-4567",
+            &[
+                "ssn".to_string(),
+                "credit_card".to_string(),
+                "phone".to_string(),
+            ],
+        );
+        assert_eq!(result, "User SSN <ssn>, card <credit_card>, phone <phone>");
     }
 }
