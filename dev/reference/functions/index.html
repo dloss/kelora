@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../kelora-logo.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
     
     
       
@@ -7576,7 +7576,8 @@
 <a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>}
 </code></pre></div>
 <h4 id="textis_private_ip"><code>text.is_private_ip()</code><a class="headerlink" href="#textis_private_ip" title="Permanent link">&para;</a></h4>
-<p>Check if IP is in private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16).</p>
+<p>Check if IP is in private/internal ranges.</p>
+<p>Includes RFC1918 IPv4, IPv6 unique local (<code>fc00::/7</code>), IPv6 link-local (<code>fe80::/10</code>), and loopback addresses.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>if e.ip.is_private_ip() {
 <a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>    e.internal = true
 <a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>}
@@ -7588,9 +7589,10 @@
 <a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>}
 </code></pre></div>
 <h4 id="textmask_ipoctets"><code>text.mask_ip([octets])</code><a class="headerlink" href="#textmask_ipoctets" title="Permanent link">&para;</a></h4>
-<p>Mask IP address (default: last octet).</p>
+<p>Mask the host portion of an IP address while preserving the network prefix.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>e.masked_ip = e.client_ip.mask_ip()                   // &quot;192.168.1.100&quot; → &quot;192.168.1.0&quot;
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>e.partial = e.ip.mask_ip(2)                           // Mask last 2 octets
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>e.partial = e.ip.mask_ip(2)                           // &quot;192.168.1.100&quot; → &quot;192.168.0.0&quot;
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>e.ipv6_masked = e.ip.mask_ip(2)                       // &quot;2001:db8:1:2:3:4:5:6&quot; → &quot;2001:db8:1:2:3:4::&quot;
 </code></pre></div>
 <h3 id="pattern-normalization">Pattern Normalization<a class="headerlink" href="#pattern-normalization" title="Permanent link">&para;</a></h3>
 <h4 id="textnormalizedpatterns"><code>text.normalized([patterns])</code><a class="headerlink" href="#textnormalizedpatterns" title="Permanent link">&para;</a></h4>
