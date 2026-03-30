@@ -558,6 +558,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-did-i-get-no-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Did I Get No Output?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#get-help" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2333,6 +2344,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-did-i-get-no-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Did I Get No Output?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#get-help" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2461,7 +2483,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: cols
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 11 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 11 total, 4 output, 7 filtered (63.6%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 7759 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 6946 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts (auto-detected) - 11/11 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora warning: Year-less timestamp format detected (15 parses)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Format lacks year (e.g., &quot;Dec 31 23:59:59&quot;)
@@ -2485,27 +2507,27 @@
 </code></pre></div>
 <p>Extract key-value pairs from error messages into structured JSON fields. Notice how <code>order=1234</code>, <code>gateway=stripe</code>, <code>user=admin</code>, and other embedded data are now proper JSON fields. The <code>--normalize-ts</code> flag also converts the syslog timestamp (<code>Jan 15 10:00:00</code>) into full ISO 8601 format, ready for analysis or ingestion into other tools.</p>
 <h2 id="interactive-mode">Interactive Mode<a class="headerlink" href="#interactive-mode" title="Permanent link">&para;</a></h2>
-<p>Run <code>kelora</code> without any arguments to enter <strong>interactive mode</strong>—a readline-based REPL where you can type commands without worrying about shell quoting:</p>
+<p>Run <code>kelora</code> without any arguments to enter <strong>interactive mode</strong>. This is useful when shell quoting is annoying, especially on Windows. It supports history, glob expansion, and built-in <code>:help</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora
 </code></pre></div>
-<p>This is especially helpful on Windows where command-line quoting is notoriously difficult. Features include:</p>
+<p>Try one of these:</p>
 <ul>
-<li><strong>Shell-like parsing</strong> - Handles quotes properly without shell escaping issues</li>
-<li><strong>Automatic glob expansion</strong> - <code>*.log</code> and <code>test?.json</code> patterns work automatically</li>
-<li><strong>Command history</strong> - Press Up/Down arrows to recall previous commands</li>
-<li><strong>Easy cancellation</strong> - Ctrl-C returns to the prompt instead of exiting</li>
-<li><strong>Built-in help</strong> - Type <code>:help</code> for a quick reference</li>
-<li><strong>REPL commands</strong> - Commands like <code>:help</code>, <code>:exit</code>, <code>:quit</code> are prefixed with <code>:</code> to avoid conflicts with filenames</li>
+<li><code>-j examples/audit.jsonl --stats</code></li>
+<li><code>examples/quickstart.log -f 'cols:ts(3) level *msg' --take 5</code></li>
 </ul>
-<p>Example interactive session:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Kelora Interactive Mode — :quit to exit, :help for help
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>kelora&gt; -j examples/audit.jsonl -l error
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>{&quot;timestamp&quot;:&quot;2025-01-15T10:02:30Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;user_id&quot;:103,&quot;email&quot;:&quot;***&quot;,&quot;ms&quot;:45}
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kelora&gt; -f logfmt examples/*.log --stats
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>...
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>kelora&gt; :exit
-</code></pre></div></p>
+<h2 id="why-did-i-get-no-output">Why Did I Get No Output?<a class="headerlink" href="#why-did-i-get-no-output" title="Permanent link">&para;</a></h2>
+<p>Most first-run problems come from one of these cases:</p>
+<ul>
+<li><strong>Wrong parser</strong>: Try <code>-j</code>, <code>-f logfmt</code>, <code>-f combined</code>, or <code>-f 'cols:...'</code> explicitly instead of relying on auto-detection.</li>
+<li><strong>Wrong field name</strong>: Run with <code>--stats</code> first to see discovered keys, then update your filter to match.</li>
+<li><strong>Filter too strict</strong>: Remove filters and re-add them one at a time.</li>
+<li><strong>Mixed-format file</strong>: If your file mixes JSON lines and plain text, process them separately. See <a href="../how-to/integrate-external-tools/">Integrate Kelora with External Tools</a>.</li>
+<li><strong>Nothing matches your level/timestamp assumptions</strong>: Prefer explicit filters like <code>e.level == "ERROR"</code> and confirm timestamp field names with <code>--stats</code>.</li>
+</ul>
+<p>When in doubt, start here:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>your.log<span class="w"> </span>--stats
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>your.log<span class="w"> </span>--take<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
 <h2 id="get-help">Get Help<a class="headerlink" href="#get-help" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>--help<span class="w">              </span><span class="c1"># Complete CLI reference</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># More usage patterns</span>
@@ -2515,7 +2537,7 @@
 </code></pre></div>
 <p><strong>Having trouble?</strong> See <strong><a href="../how-to/debug-issues/">Debug Issues Systematically</a></strong> or the <strong><a href="../reference/common-errors/">Common Errors Reference</a></strong>.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>You've seen Kelora in action. Now <strong>learn how it actually works</strong>:</p>
+<p>You've seen Kelora in action. Next, learn how it works:</p>
 <h3 id="recommended-learning-path">Recommended Learning Path<a class="headerlink" href="#recommended-learning-path" title="Permanent link">&para;</a></h3>
 <p>Follow this sequence to build your Kelora skills systematically:</p>
 <ol>
