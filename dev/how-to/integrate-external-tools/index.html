@@ -3537,13 +3537,21 @@
 <p>See <a href="../batch-process-archives/">Process Archives at Scale</a> for parallel processing strategies.</p>
 <hr />
 <h3 id="tail-journalctl-live-streaming">tail / journalctl — Live Streaming<a class="headerlink" href="#tail-journalctl-live-streaming" title="Permanent link">&para;</a></h3>
-<p>Stream live log data into Kelora for real-time monitoring and alerting during deployments or incidents. Use <code>tail -F</code> (capital F) to survive log rotation. Combine with Kelora's <code>-q</code> to suppress event output while keeping diagnostics and metrics visible.</p>
+<p>Stream live log data into Kelora for real-time monitoring and alerting during deployments or incidents. Use <code>tail -F</code> (capital F) to survive log rotation. Combine with Kelora's <code>-q</code> to suppress event output while keeping diagnostics and metrics visible. The same pattern works over SSH when the remote host can produce a continuous stream on stdout.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Monitor live logs for critical errors</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>tail<span class="w"> </span>-F<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>critical<span class="w"> </span>-q
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Stream systemd journal logs for a specific service</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>myapp.service<span class="w"> </span>-f<span class="w"> </span>--output<span class="o">=</span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.priority &lt;= 3&#39;</span><span class="w"> </span>-F<span class="w"> </span>json
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Stream a remote file over SSH</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>ssh<span class="w"> </span>loghost.example.net<span class="w"> </span><span class="s1">&#39;tail -F /var/log/app.jsonl&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error,warn
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1"># Stream a remote systemd unit over SSH</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>ssh<span class="w"> </span>ops@example.net<span class="w"> </span><span class="s1">&#39;journalctl -u myapp.service -f -o json&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.PRIORITY &lt;= 3&#39;</span>
 </code></pre></div>
 <p>See <a href="../build-streaming-alerts/">Design Streaming Alerts</a> for complete alert workflows.</p>
 <hr />
