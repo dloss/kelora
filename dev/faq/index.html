@@ -1993,6 +1993,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-does-kelora-have-so-much-code-for-a-cli-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why does Kelora have so much code for a CLI tool?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-does-configuration-precedence-work" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2485,6 +2496,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-does-kelora-have-so-much-code-for-a-cli-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why does Kelora have so much code for a CLI tool?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-does-configuration-precedence-work" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2578,6 +2600,8 @@
 <p>Yes. Kelora is an experiment in agentic AI development: AI agents generate the implementation and tests, and human oversight focuses on requirements and validation. See the <a href="../#development-approach">Development Approach</a> and the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before production use.</p>
 <h2 id="does-kelora-phone-home-or-send-telemetry">Does Kelora phone home or send telemetry?<a class="headerlink" href="#does-kelora-phone-home-or-send-telemetry" title="Permanent link">&para;</a></h2>
 <p>No. Kelora is a local-only tool and does not include any built-in networking or telemetry features. The repository also includes <code>just check-no-networking</code>, a small CI-enforced check that Kelora stays free of common networking and telemetry dependencies.</p>
+<h2 id="why-does-kelora-have-so-much-code-for-a-cli-tool">Why does Kelora have so much code for a CLI tool?<a class="headerlink" href="#why-does-kelora-have-so-much-code-for-a-cli-tool" title="Permanent link">&para;</a></h2>
+<p>Kelora is not a tiny CLI. It combines multiple parsers, multiline handling, time parsing, streaming state, parallel execution, output formatting, and an embedded Rhai runtime with a large built-in function set. A substantial part of the repository is also tests, examples, and documentation for real-world log edge cases. The codebase is large because the feature surface is large, not because it is padded with filler.</p>
 <h2 id="how-does-configuration-precedence-work">How does configuration precedence work?<a class="headerlink" href="#how-does-configuration-precedence-work" title="Permanent link">&para;</a></h2>
 <p>CLI flags override <code>.kelora.ini</code>, which overrides <code>~/.config/kelora/kelora.ini</code>, which overrides defaults. The <a href="../concepts/configuration-system/">Configuration System</a> explains precedence and aliases.</p>
 <h2 id="is-there-an-interactive-mode-for-tricky-shell-quoting">Is there an interactive mode for tricky shell quoting?<a class="headerlink" href="#is-there-an-interactive-mode-for-tricky-shell-quoting" title="Permanent link">&para;</a></h2>
