@@ -231,8 +231,11 @@ pub struct Cli {
     )]
     pub begin: Option<String>,
 
-    /// Boolean filter expressions. See --help-rhai for expression examples.
-    #[arg(long = "filter", help_heading = "Processing Options")]
+    #[arg(
+        long = "filter",
+        help_heading = "Processing Options",
+        help = "Boolean filter expression; events where it evaluates to true are kept.\n\nCan be combined with --include (-I) to call helper functions defined in an\ninclude file. Include files used with --filter must contain only function\ndefinitions — top-level statements are rejected with an error.\n\nExample:\n  kelora -I helpers.rhai --filter 'is_error(e.level)' app.log\n\nSee --help-rhai for expression syntax."
+    )]
     pub filters: Vec<String>,
 
     /// Transform/process exec scripts evaluated on each event. See --help-rhai for stage semantics.
@@ -247,8 +250,12 @@ pub struct Cli {
     /// processing continues unless --strict is enabled. See --help-rhai for expression syntax.
     #[arg(long = "assert", help_heading = "Processing Options")]
     pub asserts: Vec<String>,
-    /// Include Rhai files before script stages
-    #[arg(short = 'I', long = "include", help_heading = "Processing Options")]
+    #[arg(
+        short = 'I',
+        long = "include",
+        help_heading = "Processing Options",
+        help = "Include a Rhai file before the adjacent script stage.\n\nPosition on the command line determines which stage the file applies to:\n  --include placed before --exec/-e     → loaded into that exec stage\n  --include placed before --filter       → loaded into that filter stage\n  --include placed before all stages     → loaded into the begin stage\n\nWhen used with --filter, the include file must contain only function\ndefinitions. Top-level statements (side effects) are rejected with an error.\n\nExample:\n  kelora -I helpers.rhai --filter 'is_error(e.level)' app.log"
+    )]
     pub includes: Vec<String>,
 
     /// Run once after processing completes (post-processing stage). Ideal for summarising metrics or emitting reports. The global `metrics` map from track_*() calls is accessible here.
