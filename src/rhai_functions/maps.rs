@@ -1,6 +1,7 @@
 use crate::event::{flatten_dynamic, FlattenStyle};
 use indexmap::IndexMap;
-use rhai::{Array, Dynamic, Engine, Map};
+use rhai::{Array, Dynamic, Engine, EvalAltResult, Map, Position};
+use std::collections::HashSet;
 
 /// Registers map merge/enrich operators to the Rhai engine.
 pub fn register_functions(engine: &mut Engine) {
@@ -98,8 +99,71 @@ pub fn register_functions(engine: &mut Engine) {
         map.get(key.as_str()).is_some_and(|value| !value.is_unit())
     });
 
+    // map.keep(fields) - return a new map with only the selected top-level keys
+    engine.register_fn(
+        "keep",
+        |map: Map, fields: Dynamic| -> Result<Map, Box<EvalAltResult>> { keep_fields(map, fields) },
+    );
+
+    // map.drop(fields) - return a new map excluding the selected top-level keys
+    engine.register_fn(
+        "drop",
+        |map: Map, fields: Dynamic| -> Result<Map, Box<EvalAltResult>> { drop_fields(map, fields) },
+    );
+
     // map.rename_field(old_name, new_name) - rename a field, returns true if successful
     engine.register_fn("rename_field", rename_field);
+}
+
+fn parse_field_names(
+    function_name: &str,
+    fields: Dynamic,
+) -> Result<HashSet<String>, Box<EvalAltResult>> {
+    let field_list = fields.try_cast::<Array>().ok_or_else(|| {
+        Box::new(EvalAltResult::ErrorRuntime(
+            format!("{function_name}(fields): fields must be an array of strings").into(),
+            Position::NONE,
+        ))
+    })?;
+
+    let mut names = HashSet::with_capacity(field_list.len());
+    for field in field_list {
+        let field_name = field.try_cast::<String>().ok_or_else(|| {
+            Box::new(EvalAltResult::ErrorRuntime(
+                format!("{function_name}(fields): fields must be an array of strings").into(),
+                Position::NONE,
+            ))
+        })?;
+        names.insert(field_name);
+    }
+
+    Ok(names)
+}
+
+fn keep_fields(map: Map, fields: Dynamic) -> Result<Map, Box<EvalAltResult>> {
+    let field_names = parse_field_names("keep", fields)?;
+    let mut result = Map::new();
+
+    for (key, value) in map {
+        if field_names.contains(key.as_str()) {
+            result.insert(key, value);
+        }
+    }
+
+    Ok(result)
+}
+
+fn drop_fields(map: Map, fields: Dynamic) -> Result<Map, Box<EvalAltResult>> {
+    let field_names = parse_field_names("drop", fields)?;
+    let mut result = Map::new();
+
+    for (key, value) in map {
+        if !field_names.contains(key.as_str()) {
+            result.insert(key, value);
+        }
+    }
+
+    Ok(result)
 }
 
 /// Rename a field in the map
@@ -553,5 +617,230 @@ mod tests {
         assert!(!map.contains_key("a"));
         assert!(!map.contains_key("b"));
         assert!(!map.contains_key("c"));
+    }
+
+    #[test]
+    fn test_keep_existing_subset() {
+        use super::*;
+        use rhai::Engine;
+
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let map = engine
+            .eval::<Map>(
+                r#"
+            let e = #{ts: "2026-04-03T10:00:00Z", service: "api", level: "info", msg: "started", pid: 1234};
+            e.keep(["service", "level", "msg"])
+        "#,
+            )
+            .unwrap();
+
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("service").unwrap().clone().cast::<String>(), "api");
+        assert_eq!(map.get("level").unwrap().clone().cast::<String>(), "info");
+        assert_eq!(map.get("msg").unwrap().clone().cast::<String>(), "started");
+    }
+
+    #[test]
+    fn test_drop_existing_subset() {
+        use super::*;
+        use rhai::Engine;
+
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let map = engine
+            .eval::<Map>(
+                r#"
+            let e = #{ts: "2026-04-03T10:00:00Z", service: "api", level: "info", msg: "started", pid: 1234};
+            e.drop(["ts", "pid"])
+        "#,
+            )
+            .unwrap();
+
+        assert_eq!(map.len(), 3);
+        assert!(!map.contains_key("ts"));
+        assert!(!map.contains_key("pid"));
+        assert_eq!(map.get("service").unwrap().clone().cast::<String>(), "api");
+        assert_eq!(map.get("level").unwrap().clone().cast::<String>(), "info");
+        assert_eq!(map.get("msg").unwrap().clone().cast::<String>(), "started");
+    }
+
+    #[test]
+    fn test_keep_and_drop_edge_cases() {
+        use super::*;
+        use rhai::Engine;
+
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let keep_empty = engine.eval::<Map>(r#"#{a: 1, b: 2}.keep([])"#).unwrap();
+        assert!(keep_empty.is_empty());
+
+        let drop_empty = engine.eval::<Map>(r#"#{a: 1, b: 2}.drop([])"#).unwrap();
+        assert_eq!(drop_empty.len(), 2);
+        assert_eq!(drop_empty.get("a").unwrap().as_int().unwrap(), 1);
+        assert_eq!(drop_empty.get("b").unwrap().as_int().unwrap(), 2);
+
+        let keep_missing = engine
+            .eval::<Map>(r#"#{service: "api"}.keep(["service", "missing"])"#)
+            .unwrap();
+        assert_eq!(keep_missing.len(), 1);
+        assert_eq!(
+            keep_missing
+                .get("service")
+                .unwrap()
+                .clone()
+                .cast::<String>(),
+            "api"
+        );
+
+        let drop_missing = engine
+            .eval::<Map>(r#"#{service: "api"}.drop(["missing"])"#)
+            .unwrap();
+        assert_eq!(drop_missing.len(), 1);
+        assert_eq!(
+            drop_missing
+                .get("service")
+                .unwrap()
+                .clone()
+                .cast::<String>(),
+            "api"
+        );
+    }
+
+    #[test]
+    fn test_keep_drop_preserves_source_order() {
+        use super::*;
+        use rhai::Engine;
+
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let source_keys = engine
+            .eval::<rhai::Array>(
+                r#"
+            let e = #{ts: "t", level: "info", service: "api", msg: "started"};
+            e.keys()
+        "#,
+            )
+            .unwrap();
+        let source_keys: Vec<String> = source_keys
+            .into_iter()
+            .map(|k| k.cast::<String>())
+            .collect();
+
+        let keys = engine
+            .eval::<rhai::Array>(
+                r#"
+            let e = #{ts: "t", level: "info", service: "api", msg: "started"};
+            e.keep(["msg", "service"]).keys()
+        "#,
+            )
+            .unwrap();
+
+        let keys: Vec<String> = keys.into_iter().map(|k| k.cast::<String>()).collect();
+        let expected_keep: Vec<String> = source_keys
+            .iter()
+            .filter(|k| *k == "msg" || *k == "service")
+            .cloned()
+            .collect();
+        assert_eq!(keys, expected_keep);
+
+        let dropped_keys = engine
+            .eval::<rhai::Array>(
+                r#"
+            let e = #{ts: "t", level: "info", service: "api", msg: "started"};
+            e.drop(["level"]).keys()
+        "#,
+            )
+            .unwrap();
+
+        let dropped_keys: Vec<String> = dropped_keys
+            .into_iter()
+            .map(|k| k.cast::<String>())
+            .collect();
+        let expected_drop: Vec<String> = source_keys
+            .iter()
+            .filter(|k| *k != "level")
+            .cloned()
+            .collect();
+        assert_eq!(dropped_keys, expected_drop);
+    }
+
+    #[test]
+    fn test_keep_drop_reject_invalid_fields_argument() {
+        use super::*;
+        use rhai::Engine;
+
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let keep_err = engine.eval::<Map>(r#"#{a: 1}.keep("a")"#).unwrap_err();
+        assert!(keep_err
+            .to_string()
+            .contains("keep(fields): fields must be an array of strings"));
+
+        let drop_err = engine.eval::<Map>(r#"#{a: 1}.drop([1, "a"])"#).unwrap_err();
+        assert!(drop_err
+            .to_string()
+            .contains("drop(fields): fields must be an array of strings"));
+    }
+
+    #[test]
+    fn test_keep_drop_non_map_receiver_errors() {
+        use super::*;
+        use rhai::Engine;
+
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let keep_err = engine.eval::<Map>(r#"42.keep(["a"])"#).unwrap_err();
+        assert!(keep_err.to_string().contains("Function not found"));
+
+        let drop_err = engine.eval::<Map>(r#"42.drop(["a"])"#).unwrap_err();
+        assert!(drop_err.to_string().contains("Function not found"));
+    }
+
+    #[test]
+    fn test_keep_drop_special_and_nested_keys() {
+        use super::*;
+        use rhai::Engine;
+
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let dotted_key = engine
+            .eval::<Map>(
+                r#"
+            #{"http.status": 200, "space key": "yes", service: "api"}.keep(["http.status", "space key"])
+        "#,
+            )
+            .unwrap();
+        assert_eq!(dotted_key.len(), 2);
+        assert_eq!(
+            dotted_key.get("http.status").unwrap().as_int().unwrap(),
+            200
+        );
+        assert_eq!(
+            dotted_key
+                .get("space key")
+                .unwrap()
+                .clone()
+                .cast::<String>(),
+            "yes"
+        );
+
+        let nested = engine
+            .eval::<Map>(
+                r#"
+            let e = #{service: "api", http: #{status: 200, method: "GET"}};
+            e.keep(["http"])
+        "#,
+            )
+            .unwrap();
+        assert_eq!(nested.len(), 1);
+        assert!(nested.contains_key("http"));
     }
 }
