@@ -3765,8 +3765,7 @@ mod tests {
             content: "let x = 1;".to_string(),
         }];
 
-        let err = engine
-            .compile_filter_with_includes("e.level == \"ERROR\"", &includes);
+        let err = engine.compile_filter_with_includes("e.level == \"ERROR\"", &includes);
         match err {
             Ok(_) => panic!("filters should reject include statements"),
             Err(err) => {

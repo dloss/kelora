@@ -1278,13 +1278,10 @@ mod tests {
     #[test]
     fn filter_stage_marks_overlapping_matches_as_match() {
         let mut engine = crate::engine::RhaiEngine::new();
-        let mut stage = FilterStage::new(
-            "e.method == \"HEAD\"".to_string(),
-            Vec::new(),
-            &mut engine,
-        )
-            .expect("filter compilation should succeed")
-            .with_context(crate::config::ContextConfig::new(1, 1));
+        let mut stage =
+            FilterStage::new("e.method == \"HEAD\"".to_string(), Vec::new(), &mut engine)
+                .expect("filter compilation should succeed")
+                .with_context(crate::config::ContextConfig::new(1, 1));
 
         let mut ctx = PipelineContext {
             config: PipelineConfig {
@@ -1395,8 +1392,8 @@ mod tests {
             Vec::new(),
             &mut engine,
         )
-            .expect("filter compilation should succeed")
-            .with_context(crate::config::ContextConfig::new(1, 1));
+        .expect("filter compilation should succeed")
+        .with_context(crate::config::ContextConfig::new(1, 1));
 
         let mut ctx = PipelineContext {
             config: PipelineConfig {
