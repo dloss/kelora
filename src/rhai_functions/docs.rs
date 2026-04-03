@@ -143,9 +143,11 @@ map.flatten_field("field_name")      Flatten just one field from the map
 map.get_path("field.path" [,default]) Safe nested field access with fallback
 map.has("key")                       Check if map contains key with non-unit value
 map.has_path("field.path")           Check if nested field path exists
+map.keep(["field1", ...])            Return new map with only selected top-level fields
 map.merge(other_map)                 Merge another map into this one (overwrites existing keys)
 map.normalized([patterns])           Return new map with all string fields normalized
 map.path_equals("path", value)       Safe nested field comparison
+map.drop(["field1", ...])            Return new map without selected top-level fields
 map.rename_field("old", "new")       Rename a field, returns true if successful
 map.to_cef()                         Convert map to Common Event Format (CEF) string
 map.to_combined()                    Convert map to Apache/Nginx combined log format
