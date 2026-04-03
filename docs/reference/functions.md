@@ -855,6 +855,25 @@ if e.has("error_code") {
 
 ### Field Manipulation
 
+#### `map.keep(["field1", ...])`
+Return a new map containing only selected top-level fields that exist.
+
+```rhai
+let shaped = e.keep(["service", "level", "msg"])
+// Missing fields are ignored; result contains only existing selected keys
+```
+
+#### `map.drop(["field1", ...])`
+Return a new map containing all top-level fields except selected ones.
+
+```rhai
+let trimmed = e.drop(["_raw", "_file", "_offset"])
+// Missing fields are ignored; empty list returns a copy of the original map
+```
+
+Both methods are pure: they return a new top-level map and do not mutate `e`.
+Field names are matched exactly as strings (no path traversal or wildcards).
+
 #### `map.rename_field("old", "new")`
 Rename a field, returns true if successful.
 
