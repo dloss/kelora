@@ -364,6 +364,29 @@ e.date = timestamp.round_to("1d").format("%Y-%m-%d");
 - `2024-01-15T12:34:56Z` with `"1d"` → `2024-01-15T00:00:00Z`
 - Preserves the original timezone
 
+#### `.ceil_to(interval)`
+
+Round a timestamp **up** to the next interval boundary. If the timestamp is already exactly on a boundary, it stays unchanged.
+
+**Syntax:**
+```rhai
+ceiled_dt = dt.ceil_to("interval")
+```
+
+**Examples:**
+```rhai
+let timestamp = to_datetime(e.timestamp);
+
+// Compute bucket start and end times
+e.bucket_start = timestamp.round_to("1h").to_iso();
+e.bucket_end = timestamp.ceil_to("1h").to_iso();
+
+// 12:34:56 ceil to 5m → 12:35:00
+// 12:30:00 ceil to 5m → 12:30:00 (already on boundary)
+```
+
+Accepts the same interval strings as `round_to()`. Preserves the original timezone.
+
 ### DateTime Comparison
 
 DateTime values support all comparison operators:

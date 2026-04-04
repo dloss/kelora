@@ -1071,6 +1071,20 @@ e.day = timestamp.round_to("1d").format("%Y-%m-%d");
 - `"1h"`, `"6h"`, `"12h"` - Hour-level bucketing
 - `"1d"`, `"7d"` - Day/week-level bucketing
 
+#### `dt.ceil_to("interval")`
+Round timestamp up to the next interval boundary. If the timestamp is already exactly on a boundary, it stays unchanged.
+
+Useful for computing bucket end-times or "next window" boundaries.
+
+```rhai
+let ts = to_datetime(e.timestamp);
+e.bucket_start = ts.round_to("1h").to_iso();
+e.bucket_end = ts.ceil_to("1h").to_iso();
+
+// 12:34:56 ceil to 5m → 12:35:00
+// 12:30:00 ceil to 5m → 12:30:00 (already on boundary)
+```
+
 ### Arithmetic and Comparison
 
 #### `dt + duration`, `dt - duration`
@@ -1189,6 +1203,24 @@ sample_every(100)   // Returns true on calls 100, 200, 300...
 **Comparison with `bucket()`:**
 - `sample_every(n)` - Fast counter, approximate in parallel mode, non-deterministic
 - `e.field.bucket() % n == 0` - Hash-based, deterministic across runs/threads, slightly slower
+
+#### `sample_prob(p)`
+Probabilistic sampling — returns `true` with probability `p` (0.0–1.0). Useful for "keep ~N% of events" without manual `rand()` checks.
+
+```rhai
+// Keep ~1% of events
+if !sample_prob(0.01) { skip() }
+
+// 10% sampling for metrics
+if sample_prob(0.10) {
+    track_count("sampled_errors")
+}
+```
+
+**Comparison with other sampling methods:**
+- `sample_prob(p)` - Probabilistic, ~p fraction kept, non-deterministic
+- `sample_every(n)` - Counter-based, exact 1/n fraction, approximate in parallel
+- `e.field.bucket() % n == 0` - Hash-based, deterministic across runs/threads
 
 ---
 

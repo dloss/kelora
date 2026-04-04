@@ -133,7 +133,7 @@ kelora -j logs.jsonl \
 ## Deterministic Sampling with `bucket()`
 
 ### The Problem
-Approximate sampling (`--head N`, `sample_every(n)`, or `rand() < 0.1`) gives different results each run, making it impossible to track specific requests across multiple log files or rotations.
+Approximate sampling (`--head N`, `sample_every(n)`, `sample_prob(0.1)`, or `rand() < 0.1`) gives different results each run, making it impossible to track specific requests across multiple log files or rotations.
 
 ### The Solution: Hash-Based Sampling
 

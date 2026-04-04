@@ -495,6 +495,19 @@ dt.round_to("1h")   // → 2024-01-15T10:00:00Z
 dt.round_to("1d")   // → 2024-01-15T00:00:00Z
 ```
 
+**`ceil_to()` rounds UP** to the next boundary (stays if already on one):
+
+```rhai
+let dt = to_datetime("2024-01-15T10:34:56Z");
+
+dt.ceil_to("5m")   // → 2024-01-15T10:35:00Z
+dt.ceil_to("1h")   // → 2024-01-15T11:00:00Z
+
+// Compute bucket edges
+e.bucket_start = dt.round_to("1h").to_iso();
+e.bucket_end = dt.ceil_to("1h").to_iso();
+```
+
 **Common use cases:**
 - **Latency histograms** - Group response times into time windows
 - **Traffic patterns** - Analyze request volume over time
