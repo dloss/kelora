@@ -323,31 +323,43 @@ pub fn to_duration(s: &str) -> Result<DurationWrapper, Box<EvalAltResult>> {
     Ok(DurationWrapper::new(total_duration))
 }
 
-/// Round a datetime down to the nearest interval
-pub fn round_to(
-    dt: &mut DateTimeWrapper,
-    interval: &str,
-) -> Result<DateTimeWrapper, Box<EvalAltResult>> {
+/// Floor-divide: always round toward negative infinity.
+/// Rust's `/` truncates toward zero, which is wrong for negative timestamps.
+fn floor_nanos(timestamp_nanos: i64, interval_nanos: i64) -> i64 {
+    let d = timestamp_nanos / interval_nanos;
+    let r = timestamp_nanos % interval_nanos;
+    // If remainder is negative, we truncated toward zero — adjust down by one interval
+    let floored_d = if r < 0 { d - 1 } else { d };
+    floored_d * interval_nanos
+}
+
+fn parse_positive_interval_nanos(interval: &str) -> Result<i64, Box<EvalAltResult>> {
     let duration = to_duration(interval)?;
-    let interval_nanos = duration.inner.num_nanoseconds().ok_or_else(|| {
+    let nanos = duration.inner.num_nanoseconds().ok_or_else(|| {
         EvalAltResult::ErrorRuntime("Duration out of range".into(), Position::NONE)
     })?;
-
-    if interval_nanos <= 0 {
+    if nanos <= 0 {
         return Err(Box::new(EvalAltResult::ErrorRuntime(
             "Interval must be positive".into(),
             Position::NONE,
         )));
     }
+    Ok(nanos)
+}
 
+/// Round a datetime down to the nearest interval
+pub fn round_to(
+    dt: &mut DateTimeWrapper,
+    interval: &str,
+) -> Result<DateTimeWrapper, Box<EvalAltResult>> {
+    let interval_nanos = parse_positive_interval_nanos(interval)?;
     let timestamp_nanos = dt.inner.timestamp_nanos_opt().ok_or_else(|| {
         EvalAltResult::ErrorRuntime("Timestamp out of range".into(), Position::NONE)
     })?;
 
-    let rounded_nanos = (timestamp_nanos / interval_nanos) * interval_nanos;
-
+    let floored = floor_nanos(timestamp_nanos, interval_nanos);
     let rounded_dt = Utc
-        .timestamp_nanos(rounded_nanos)
+        .timestamp_nanos(floored)
         .with_timezone(&dt.inner.timezone());
 
     Ok(DateTimeWrapper::new(rounded_dt))
@@ -361,33 +373,20 @@ pub fn ceil_to(
     dt: &mut DateTimeWrapper,
     interval: &str,
 ) -> Result<DateTimeWrapper, Box<EvalAltResult>> {
-    let duration = to_duration(interval)?;
-    let interval_nanos = duration.inner.num_nanoseconds().ok_or_else(|| {
-        EvalAltResult::ErrorRuntime("Duration out of range".into(), Position::NONE)
-    })?;
-
-    if interval_nanos <= 0 {
-        return Err(Box::new(EvalAltResult::ErrorRuntime(
-            "Interval must be positive".into(),
-            Position::NONE,
-        )));
-    }
-
+    let interval_nanos = parse_positive_interval_nanos(interval)?;
     let timestamp_nanos = dt.inner.timestamp_nanos_opt().ok_or_else(|| {
         EvalAltResult::ErrorRuntime("Timestamp out of range".into(), Position::NONE)
     })?;
 
-    let floored_nanos = (timestamp_nanos / interval_nanos) * interval_nanos;
-
-    // If already on a boundary, keep it; otherwise advance to next boundary
-    let ceiled_nanos = if floored_nanos == timestamp_nanos {
-        floored_nanos
+    let floored = floor_nanos(timestamp_nanos, interval_nanos);
+    let ceiled = if floored == timestamp_nanos {
+        floored
     } else {
-        floored_nanos + interval_nanos
+        floored + interval_nanos
     };
 
     let ceiled_dt = Utc
-        .timestamp_nanos(ceiled_nanos)
+        .timestamp_nanos(ceiled)
         .with_timezone(&dt.inner.timezone());
 
     Ok(DateTimeWrapper::new(ceiled_dt))
@@ -1299,5 +1298,64 @@ mod tests {
 
         let ceiled = ceil_to(&mut dt, "1h").unwrap();
         assert_eq!(ceiled.inner.timezone().to_string(), "America/New_York");
+    }
+
+    // Pre-epoch tests: verify floor-toward-negative-infinity (not toward zero)
+
+    #[test]
+    fn test_round_to_pre_epoch() {
+        // 1969-12-31 23:47:00 UTC — 13 minutes before epoch
+        let mut dt = to_datetime("1969-12-31 23:47:00Z", None, None).unwrap();
+
+        // Floor to 5m: should go to 23:45:00, not 23:50:00
+        let rounded = round_to(&mut dt, "5m").unwrap();
+        assert_eq!(rounded.inner.hour(), 23);
+        assert_eq!(rounded.inner.minute(), 45);
+        assert_eq!(rounded.inner.second(), 0);
+    }
+
+    #[test]
+    fn test_round_to_pre_epoch_on_boundary() {
+        // Exactly on a 5m boundary before epoch
+        let mut dt = to_datetime("1969-12-31 23:45:00Z", None, None).unwrap();
+        let rounded = round_to(&mut dt, "5m").unwrap();
+        assert_eq!(rounded.inner.hour(), 23);
+        assert_eq!(rounded.inner.minute(), 45);
+    }
+
+    #[test]
+    fn test_ceil_to_pre_epoch() {
+        // 1969-12-31 23:47:00 UTC
+        let mut dt = to_datetime("1969-12-31 23:47:00Z", None, None).unwrap();
+
+        // Ceil to 5m: should go to 23:50:00
+        let ceiled = ceil_to(&mut dt, "5m").unwrap();
+        assert_eq!(ceiled.inner.hour(), 23);
+        assert_eq!(ceiled.inner.minute(), 50);
+        assert_eq!(ceiled.inner.second(), 0);
+    }
+
+    #[test]
+    fn test_ceil_to_pre_epoch_on_boundary() {
+        // Exactly on a 5m boundary before epoch — should stay
+        let mut dt = to_datetime("1969-12-31 23:45:00Z", None, None).unwrap();
+        let ceiled = ceil_to(&mut dt, "5m").unwrap();
+        assert_eq!(ceiled.inner.hour(), 23);
+        assert_eq!(ceiled.inner.minute(), 45);
+    }
+
+    #[test]
+    fn test_floor_nanos_positive() {
+        assert_eq!(floor_nanos(7, 5), 5);
+        assert_eq!(floor_nanos(10, 5), 10);
+        assert_eq!(floor_nanos(0, 5), 0);
+    }
+
+    #[test]
+    fn test_floor_nanos_negative() {
+        // -7 floored by 5 should be -10, not -5
+        assert_eq!(floor_nanos(-7, 5), -10);
+        assert_eq!(floor_nanos(-10, 5), -10); // exactly on boundary
+        assert_eq!(floor_nanos(-1, 5), -5);
     }
 }
