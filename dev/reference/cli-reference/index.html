@@ -3629,6 +3629,45 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#field-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Field Discovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-discoverformat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --discover[=FORMAT]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-discover-scope-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --discover-scope &lt;SCOPE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5784,6 +5823,45 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#field-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field Discovery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Field Discovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#-discoverformat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --discover[=FORMAT]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-discover-scope-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --discover-scope &lt;SCOPE&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6775,33 +6853,58 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-77-10" name="__codelineno-77-10" href="#__codelineno-77-10"></a><span class="c1"># JSON output</span>
 <a id="__codelineno-77-11" name="__codelineno-77-11" href="#__codelineno-77-11"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="o">=</span>json<span class="w"> </span>-k<span class="w"> </span>message
 </code></pre></div>
+<h3 id="field-discovery">Field Discovery<a class="headerlink" href="#field-discovery" title="Permanent link">&para;</a></h3>
+<h4 id="-discoverformat"><code>--discover[=FORMAT]</code><a class="headerlink" href="#-discoverformat" title="Permanent link">&para;</a></h4>
+<p>Profile observed fields across the stream: field names, inferred types, cardinality estimates, and sample values.
+Implies <code>-q/--quiet</code> (events are suppressed).
+Sequential mode only (not supported with <code>--parallel</code> or thread overrides).</p>
+<p><strong>Formats:</strong></p>
+<ul>
+<li><code>table</code> (default) - Human-readable summary</li>
+<li><code>json</code> - Machine-readable output</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a><span class="c1"># Default table format</span>
+<a id="__codelineno-78-2" name="__codelineno-78-2" href="#__codelineno-78-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover
+<a id="__codelineno-78-3" name="__codelineno-78-3" href="#__codelineno-78-3"></a>
+<a id="__codelineno-78-4" name="__codelineno-78-4" href="#__codelineno-78-4"></a><span class="c1"># JSON output</span>
+<a id="__codelineno-78-5" name="__codelineno-78-5" href="#__codelineno-78-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover<span class="o">=</span>json
+</code></pre></div>
+<h4 id="-discover-scope-scope"><code>--discover-scope &lt;SCOPE&gt;</code><a class="headerlink" href="#-discover-scope-scope" title="Permanent link">&para;</a></h4>
+<p>Choose where field discovery observes data:</p>
+<ul>
+<li><code>input</code> (default) - Profile parsed fields before scripts/filters</li>
+<li><code>output</code> - Profile fields after scripts and filters</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a><span class="c1"># Discover only fields that survive filtering/transforms</span>
+<a id="__codelineno-79-2" name="__codelineno-79-2" href="#__codelineno-79-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover<span class="w"> </span>--discover-scope<span class="o">=</span>output<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+</code></pre></div>
 <h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <h3 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h3>
 <p>Kelora uses a configuration file for defaults and aliases. See <a href="../../concepts/configuration-system/">Configuration System</a> for details.</p>
 <h4 id="-a-alias-alias"><code>-a, --alias &lt;ALIAS&gt;</code><a class="headerlink" href="#-a-alias-alias" title="Permanent link">&para;</a></h4>
 <p>Use alias from configuration file.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>kelora<span class="w"> </span>-a<span class="w"> </span>errors<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>kelora<span class="w"> </span>-a<span class="w"> </span>errors<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-config-file-file"><code>--config-file &lt;FILE&gt;</code><a class="headerlink" href="#-config-file-file" title="Permanent link">&para;</a></h4>
 <p>Specify custom configuration file path.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>kelora<span class="w"> </span>--config-file<span class="w"> </span>/path/to/custom.ini<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>kelora<span class="w"> </span>--config-file<span class="w"> </span>/path/to/custom.ini<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-show-config"><code>--show-config</code><a class="headerlink" href="#-show-config" title="Permanent link">&para;</a></h4>
 <p>Show current configuration with precedence information and exit.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>kelora<span class="w"> </span>--show-config
+<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>kelora<span class="w"> </span>--show-config
 </code></pre></div>
 <h4 id="-edit-config"><code>--edit-config</code><a class="headerlink" href="#-edit-config" title="Permanent link">&para;</a></h4>
 <p>Edit configuration file in default editor and exit.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>kelora<span class="w"> </span>--edit-config
+<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>kelora<span class="w"> </span>--edit-config
 </code></pre></div>
 <h4 id="-ignore-config"><code>--ignore-config</code><a class="headerlink" href="#-ignore-config" title="Permanent link">&para;</a></h4>
 <p>Ignore configuration file (use built-in defaults only).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>kelora<span class="w"> </span>--ignore-config<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>kelora<span class="w"> </span>--ignore-config<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-save-alias-name"><code>--save-alias &lt;NAME&gt;</code><a class="headerlink" href="#-save-alias-name" title="Permanent link">&para;</a></h4>
 <p>Save current command as alias to configuration file.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--keys<span class="w"> </span>timestamp,message<span class="w"> </span>--save-alias<span class="w"> </span>errors
-<a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a><span class="c1"># Later use: kelora -a errors app.log</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--keys<span class="w"> </span>timestamp,message<span class="w"> </span>--save-alias<span class="w"> </span>errors
+<a id="__codelineno-85-2" name="__codelineno-85-2" href="#__codelineno-85-2"></a><span class="c1"># Later use: kelora -a errors app.log</span>
 </code></pre></div>
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <p>Kelora uses standard Unix exit codes to indicate success or failure:</p>
@@ -6847,51 +6950,51 @@ timestamp, date, time, num.</p>
 </ul>
 <h3 id="rhai-scripts">Rhai Scripts<a class="headerlink" href="#rhai-scripts" title="Permanent link">&para;</a></h3>
 <p>Access environment variables in scripts using <code>get_env()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.build = get_env(&quot;BUILD_ID&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.build = get_env(&quot;BUILD_ID&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h2 id="common-option-combinations">Common Option Combinations<a class="headerlink" href="#common-option-combinations" title="Permanent link">&para;</a></h2>
 <h3 id="error-analysis">Error Analysis<a class="headerlink" href="#error-analysis" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a><span class="c1"># Find errors with context</span>
-<a id="__codelineno-85-2" name="__codelineno-85-2" href="#__codelineno-85-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
-<a id="__codelineno-85-3" name="__codelineno-85-3" href="#__codelineno-85-3"></a>
-<a id="__codelineno-85-4" name="__codelineno-85-4" href="#__codelineno-85-4"></a><span class="c1"># Count errors by service</span>
-<a id="__codelineno-85-5" name="__codelineno-85-5" href="#__codelineno-85-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a><span class="c1"># Find errors with context</span>
+<a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
+<a id="__codelineno-87-3" name="__codelineno-87-3" href="#__codelineno-87-3"></a>
+<a id="__codelineno-87-4" name="__codelineno-87-4" href="#__codelineno-87-4"></a><span class="c1"># Count errors by service</span>
+<a id="__codelineno-87-5" name="__codelineno-87-5" href="#__codelineno-87-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="performance-analysis">Performance Analysis<a class="headerlink" href="#performance-analysis" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a><span class="c1"># Find slow requests</span>
-<a id="__codelineno-86-2" name="__codelineno-86-2" href="#__codelineno-86-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_time.to_float() &gt; 1.0&#39;</span><span class="w"> </span>nginx.log
-<a id="__codelineno-86-3" name="__codelineno-86-3" href="#__codelineno-86-3"></a>
-<a id="__codelineno-86-4" name="__codelineno-86-4" href="#__codelineno-86-4"></a><span class="c1"># Track response time percentiles</span>
-<a id="__codelineno-86-5" name="__codelineno-86-5" href="#__codelineno-86-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-86-6" name="__codelineno-86-6" href="#__codelineno-86-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;latency&quot;, e.request_time.to_float() * 1000)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-86-7" name="__codelineno-86-7" href="#__codelineno-86-7"></a><span class="w">    </span>--metrics<span class="w"> </span>nginx.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a><span class="c1"># Find slow requests</span>
+<a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.request_time.to_float() &gt; 1.0&#39;</span><span class="w"> </span>nginx.log
+<a id="__codelineno-88-3" name="__codelineno-88-3" href="#__codelineno-88-3"></a>
+<a id="__codelineno-88-4" name="__codelineno-88-4" href="#__codelineno-88-4"></a><span class="c1"># Track response time percentiles</span>
+<a id="__codelineno-88-5" name="__codelineno-88-5" href="#__codelineno-88-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-88-6" name="__codelineno-88-6" href="#__codelineno-88-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;latency&quot;, e.request_time.to_float() * 1000)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-88-7" name="__codelineno-88-7" href="#__codelineno-88-7"></a><span class="w">    </span>--metrics<span class="w"> </span>nginx.log
 </code></pre></div>
 <h3 id="data-export">Data Export<a class="headerlink" href="#data-export" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a><span class="c1"># Export to JSON</span>
-<a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-o<span class="w"> </span>output.json<span class="w"> </span>app.log
-<a id="__codelineno-87-3" name="__codelineno-87-3" href="#__codelineno-87-3"></a>
-<a id="__codelineno-87-4" name="__codelineno-87-4" href="#__codelineno-87-4"></a><span class="c1"># Export to CSV</span>
-<a id="__codelineno-87-5" name="__codelineno-87-5" href="#__codelineno-87-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,service,message<span class="w"> </span>-o<span class="w"> </span>report.csv<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a><span class="c1"># Export to JSON</span>
+<a id="__codelineno-89-2" name="__codelineno-89-2" href="#__codelineno-89-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>-o<span class="w"> </span>output.json<span class="w"> </span>app.log
+<a id="__codelineno-89-3" name="__codelineno-89-3" href="#__codelineno-89-3"></a>
+<a id="__codelineno-89-4" name="__codelineno-89-4" href="#__codelineno-89-4"></a><span class="c1"># Export to CSV</span>
+<a id="__codelineno-89-5" name="__codelineno-89-5" href="#__codelineno-89-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>timestamp,level,service,message<span class="w"> </span>-o<span class="w"> </span>report.csv<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="real-time-monitoring">Real-Time Monitoring<a class="headerlink" href="#real-time-monitoring" title="Permanent link">&para;</a></h3>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Linux/macOS</label><label for="__tabbed_1_2">Windows</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error,warn
+<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>tail<span class="w"> </span>-f<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error,warn
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a><span class="nb">Get-Content</span> <span class="n">-Wait</span> <span class="n">app</span><span class="p">.</span><span class="n">log</span> <span class="p">|</span> <span class="n">kelora</span> <span class="n">-j</span> <span class="n">-l</span> <span class="n">error</span><span class="p">,</span><span class="n">warn</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a><span class="nb">Get-Content</span> <span class="n">-Wait</span> <span class="n">app</span><span class="p">.</span><span class="n">log</span> <span class="p">|</span> <span class="n">kelora</span> <span class="n">-j</span> <span class="n">-l</span> <span class="n">error</span><span class="p">,</span><span class="n">warn</span>
 </code></pre></div>
 </div>
 </div>
 </div>
 <h3 id="high-performance-batch-processing">High-Performance Batch Processing<a class="headerlink" href="#high-performance-batch-processing" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a><span class="c1"># Parallel processing with optimal batch size</span>
-<a id="__codelineno-90-2" name="__codelineno-90-2" href="#__codelineno-90-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--unordered<span class="w"> </span>large.log
-<a id="__codelineno-90-3" name="__codelineno-90-3" href="#__codelineno-90-3"></a>
-<a id="__codelineno-90-4" name="__codelineno-90-4" href="#__codelineno-90-4"></a><span class="c1"># Compressed archives</span>
-<a id="__codelineno-90-5" name="__codelineno-90-5" href="#__codelineno-90-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>logs/*.log.gz
+<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a><span class="c1"># Parallel processing with optimal batch size</span>
+<a id="__codelineno-92-2" name="__codelineno-92-2" href="#__codelineno-92-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--unordered<span class="w"> </span>large.log
+<a id="__codelineno-92-3" name="__codelineno-92-3" href="#__codelineno-92-3"></a>
+<a id="__codelineno-92-4" name="__codelineno-92-4" href="#__codelineno-92-4"></a><span class="c1"># Compressed archives</span>
+<a id="__codelineno-92-5" name="__codelineno-92-5" href="#__codelineno-92-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>logs/*.log.gz
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
