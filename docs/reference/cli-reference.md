@@ -1067,6 +1067,39 @@ kelora -j app.log --drain=id -k message
 kelora -j app.log --drain=json -k message
 ```
 
+### Field Discovery
+
+#### `--discover[=FORMAT]`
+
+Profile observed fields across the stream: field names, inferred types, cardinality estimates, and sample values.
+Implies `-q/--quiet` (events are suppressed).
+Sequential mode only (not supported with `--parallel` or thread overrides).
+
+**Formats:**
+
+- `table` (default) - Human-readable summary
+- `json` - Machine-readable output
+
+```bash
+# Default table format
+kelora -j app.log --discover
+
+# JSON output
+kelora -j app.log --discover=json
+```
+
+#### `--discover-scope <SCOPE>`
+
+Choose where field discovery observes data:
+
+- `input` (default) - Profile parsed fields before scripts/filters
+- `output` - Profile fields after scripts and filters
+
+```bash
+# Discover only fields that survive filtering/transforms
+kelora -j app.log --discover --discover-scope=output --filter 'e.level == "ERROR"'
+```
+
 ## Configuration Options
 
 ### Configuration File
