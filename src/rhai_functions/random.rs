@@ -61,10 +61,28 @@ pub fn clear_sample_counters() {
     });
 }
 
+/// Probabilistic sampling - returns true with probability p (0.0-1.0).
+///
+/// Useful for "keep ~N% of events" without deterministic hashing.
+/// For deterministic sampling across parallel threads, use bucket() instead.
+fn sample_prob(p: f64) -> Result<bool, Box<EvalAltResult>> {
+    if !(0.0..=1.0).contains(&p) {
+        return Err(format!(
+            "sample_prob: probability must be between 0.0 and 1.0, got {}",
+            p
+        )
+        .into());
+    }
+
+    let mut rng = RNG.lock().unwrap();
+    Ok(rng.f64() < p)
+}
+
 pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("rand", rand_float);
     engine.register_fn("rand_int", rand_int_range);
     engine.register_fn("sample_every", sample_every);
+    engine.register_fn("sample_prob", sample_prob);
 }
 
 #[cfg(test)]
@@ -212,6 +230,63 @@ mod tests {
 
         let result: Result<bool, _> = engine.eval("sample_every(-1)");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_sample_prob_always_true() {
+        // p = 1.0 should always return true
+        for _ in 0..100 {
+            assert!(sample_prob(1.0).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_sample_prob_always_false() {
+        // p = 0.0 should always return false
+        for _ in 0..100 {
+            assert!(!sample_prob(0.0).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_sample_prob_invalid_range() {
+        assert!(sample_prob(-0.1).is_err());
+        assert!(sample_prob(1.1).is_err());
+        assert!(sample_prob(-1.0).is_err());
+        assert!(sample_prob(2.0).is_err());
+    }
+
+    #[test]
+    fn test_sample_prob_approximate_rate() {
+        // With p=0.5, roughly half should be true over many trials
+        let mut count = 0;
+        let trials = 10000;
+        for _ in 0..trials {
+            if sample_prob(0.5).unwrap() {
+                count += 1;
+            }
+        }
+        // Allow wide margin (40%-60%) for randomness
+        assert!(
+            count > 4000 && count < 6000,
+            "Expected ~5000 true out of 10000, got {}",
+            count
+        );
+    }
+
+    #[test]
+    fn test_sample_prob_with_rhai() {
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        // Valid probabilities
+        let _: bool = engine.eval("sample_prob(0.5)").unwrap();
+        let _: bool = engine.eval("sample_prob(0.0)").unwrap();
+        let _: bool = engine.eval("sample_prob(1.0)").unwrap();
+
+        // Invalid probabilities
+        assert!(engine.eval::<bool>("sample_prob(-0.1)").is_err());
+        assert!(engine.eval::<bool>("sample_prob(1.1)").is_err());
     }
 
     #[test]

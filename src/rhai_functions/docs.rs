@@ -172,6 +172,8 @@ dt.to_timezone("tz_name")            Convert to named timezone
 dt.timezone_name()                   Get timezone name as string
 dt.ts_nanos()                        Get timestamp as nanoseconds
 dt.round_to("interval")              Round timestamp down to interval (e.g., "5m", "1h", "1d")
+dt.floor_to("interval")              Truncate timestamp down to interval boundary (alias for round_to)
+dt.ceil_to("interval")               Round timestamp up to next interval boundary
 dt + duration, dt - duration         Add/subtract duration from datetime
 dt1 - dt2                            Get duration between datetimes (returns DurationWrapper)
 dt1 == dt2, dt1 != dt2               Compare datetimes for equality
@@ -202,6 +204,8 @@ round(x)                             Round to nearest integer
 sample_every(n)                      Sample every Nth event (returns true on Nth, 2Nth, 3Nth calls)
                                      Fast counter-based sampling (thread-local, approximate in parallel mode)
                                      For deterministic sampling, use: text.bucket() % n == 0
+sample_prob(p)                       Probabilistic sampling: returns true with probability p (0.0-1.0)
+                                     Example: sample_prob(0.01) keeps ~1% of events
 
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)
@@ -489,6 +493,13 @@ kelora -j api_logs.jsonl --exec '
   e.bucket = timestamp.round_to("5m").to_iso()
 ' | kelora -j - -m --exec 'track_bucket("time_buckets", e.bucket)'
 
+# floor_to / ceil_to for explicit bucket edges
+kelora -j api_logs.jsonl --exec '
+  let ts = to_datetime(e.timestamp);
+  e.bucket_start = ts.floor_to("1h").to_iso();
+  e.bucket_end = ts.ceil_to("1h").to_iso()
+'
+
 # Show local timestamps
 kelora -j api_logs.jsonl -z --since yesterday
 
@@ -593,6 +604,9 @@ kelora -f line huge.log.gz --head 1000 -F inspect
 
 # Sample every Nth event (fast counter-based, approximate in parallel mode)
 kelora -j api_logs.jsonl --filter 'sample_every(100)'
+
+# Sample ~10% of events probabilistically
+kelora -j api_logs.jsonl --filter 'sample_prob(0.10)'
 
 # Sample 10% of events for analysis (deterministic)
 kelora -j api_logs.jsonl --filter 'e.request_id.bucket() % 10 == 0'
