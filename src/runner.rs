@@ -35,11 +35,11 @@ use crate::{rhai_functions, stats};
 const LINE_CHANNEL_BOUND: usize = 1024;
 
 /// Result of pipeline processing
-#[derive(Debug)]
 pub struct PipelineResult {
     pub stats: Option<ProcessingStats>,
     pub tracking_data: TrackingSnapshot,
     pub auto_detected_non_line: bool,
+    pub field_discovery: Option<crate::field_discovery::FieldDiscovery>,
 }
 
 /// Core pipeline processing function using KeloraConfig
@@ -50,8 +50,18 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
 ) -> Result<PipelineResult> {
     crate::drain::reset();
 
+    // Enable field discovery if requested
+    if config.output.discover_fields.is_some() {
+        let output_scope = matches!(
+            config.output.discover_fields_scope,
+            crate::cli::DiscoverFieldsScope::Output
+        );
+        crate::field_discovery::enable(output_scope);
+    }
+
     // Enable/disable stats collection up front to avoid per-event overhead when diagnostics are off
     let collect_stats = config.output.stats.is_some()
+        || config.output.discover_fields.is_some()
         || (!config.processing.silent && !config.processing.suppress_diagnostics);
     set_collect_stats(collect_stats);
 
@@ -88,6 +98,12 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         ));
     }
 
+    if use_parallel && config.output.discover_fields.is_some() {
+        return Err(anyhow::anyhow!(
+            "--discover-fields is not supported with --parallel or thread overrides. Rerun without --parallel."
+        ));
+    }
+
     if use_parallel {
         run_pipeline_parallel(config, output, ctrl_rx)
     } else {
@@ -103,10 +119,17 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         stats.extract_discovered_from_tracking(&tracking_data.internal);
         let final_stats = Some(stats);
 
+        let field_discovery = if crate::field_discovery::is_enabled() {
+            Some(crate::field_discovery::take_thread_discovery())
+        } else {
+            None
+        };
+
         Ok(PipelineResult {
             stats: final_stats,
             tracking_data,
             auto_detected_non_line,
+            field_discovery,
         })
     }
 }
@@ -231,6 +254,7 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
         stats: Some(processor.get_final_stats()),
         tracking_data: parallel_snapshot,
         auto_detected_non_line,
+        field_discovery: None, // Not supported in parallel mode
     })
 }
 

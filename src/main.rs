@@ -16,6 +16,7 @@ mod detection;
 mod drain;
 mod engine;
 mod event;
+mod field_discovery;
 mod formatters;
 mod help;
 mod interactive;
@@ -668,6 +669,17 @@ fn handle_pipeline_success(
             hint = hint.trim_start_matches('\n').to_string();
         }
         stderr.writeln(&hint).unwrap_or(());
+    }
+
+    // Print field discovery results if requested
+    if !SHOULD_TERMINATE.load(Ordering::Relaxed) {
+        if let Some(ref discovery) = pipeline_result.field_discovery {
+            let formatted = match config.output.discover_fields {
+                Some(cli::DiscoverFieldsFormat::Json) => discovery.format_json(),
+                _ => discovery.format_table(),
+            };
+            stdout.writeln(&formatted).unwrap_or(());
+        }
     }
 
     // Print output based on configuration (only if not terminated)

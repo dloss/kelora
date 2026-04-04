@@ -8,6 +8,7 @@ pub mod decompression;
 pub mod drain;
 pub mod engine;
 pub mod event;
+pub mod field_discovery;
 pub mod formatters;
 pub mod parallel;
 pub mod parsers;

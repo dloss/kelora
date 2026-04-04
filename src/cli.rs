@@ -60,6 +60,19 @@ pub enum StatsFormat {
     Json,
 }
 
+#[derive(clap::ValueEnum, Clone, Debug)]
+pub enum DiscoverFieldsFormat {
+    Table,
+    Json,
+}
+
+#[derive(clap::ValueEnum, Clone, Debug, Default)]
+pub enum DiscoverFieldsScope {
+    #[default]
+    Input,
+    Output,
+}
+
 #[derive(clap::ValueEnum, Clone, Debug, Default)]
 pub enum DrainFormat {
     #[default]
@@ -621,6 +634,30 @@ pub struct Cli {
         help = "Summarize log templates using Drain (summary-only; requires --keys with exactly one field; sequential mode only).\n\nFormats:\n  table (default)  Clean output: count + template\n  full             Detailed: adds line ranges + sample + template ID\n  id               Stable output: template_id + template (sorted by ID)\n  json             JSON with all metadata\n\nExamples:\n  --drain          Clean table (count + template)\n  --drain=full     With line numbers, samples, and IDs\n  --drain=id       Stable ID list for diffs\n  --drain=json     JSON output for scripting"
     )]
     pub drain: Option<DrainFormat>,
+
+    /// Discover field names, types, and cardinality from the log stream.
+    #[arg(
+        long = "discover-fields",
+        value_enum,
+        value_name = "FORMAT",
+        require_equals = true,
+        num_args = 0..=1,
+        default_missing_value = "table",
+        help_heading = "Field Discovery",
+        help = "Profile fields: names, inferred types, cardinality estimates, and sample values.\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  --discover-fields          Table summary\n  --discover-fields=json     Machine-readable JSON"
+    )]
+    pub discover_fields: Option<DiscoverFieldsFormat>,
+
+    /// Scope for --discover-fields: input (pre-script, default) or output (post-filter).
+    #[arg(
+        long = "discover-fields-scope",
+        value_enum,
+        value_name = "SCOPE",
+        default_value = "input",
+        help_heading = "Field Discovery",
+        help = "Observation point for --discover-fields.\n\n  input   Profile raw parsed fields (default)\n  output  Profile fields after scripts and filters"
+    )]
+    pub discover_fields_scope: DiscoverFieldsScope,
 
     /// Specify custom configuration file path
     #[arg(long = "config-file", help_heading = "Configuration Options")]

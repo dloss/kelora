@@ -382,6 +382,13 @@ impl Pipeline {
                     // Collect discovered levels and keys for stats
                     collect_discovered_levels_and_keys(&e, ctx);
 
+                    // Field discovery: observe input fields (pre-script)
+                    if crate::field_discovery::is_enabled()
+                        && !crate::field_discovery::is_output_scope()
+                    {
+                        crate::field_discovery::observe_event_fields(&e.fields);
+                    }
+
                     // Also track in Rhai context for parallel processing
                     ctx.internal_tracker
                         .entry("__kelora_stats_events_created".to_string())
@@ -586,6 +593,13 @@ impl Pipeline {
                         // Collect output levels and keys for stats
                         collect_output_levels_and_keys(&event, ctx);
 
+                        // Field discovery: observe output fields (post-filter)
+                        if crate::field_discovery::is_enabled()
+                            && crate::field_discovery::is_output_scope()
+                        {
+                            crate::field_discovery::observe_event_fields(&event.fields);
+                        }
+
                         // Refresh parsed_ts after script stages so stats and output both see the
                         // final timestamp value without cloning the whole event.
                         event.parsed_ts = None;
@@ -677,6 +691,13 @@ impl Pipeline {
 
                             // Collect output levels and keys for stats
                             collect_output_levels_and_keys(&event, ctx);
+
+                            // Field discovery: observe output fields (post-filter)
+                            if crate::field_discovery::is_enabled()
+                                && crate::field_discovery::is_output_scope()
+                            {
+                                crate::field_discovery::observe_event_fields(&event.fields);
+                            }
 
                             // Refresh parsed_ts after script stages so stats and output both see
                             // the final timestamp value without cloning the whole event.
@@ -816,6 +837,13 @@ impl Pipeline {
 
                 // Collect discovered levels and keys for stats
                 collect_discovered_levels_and_keys(&e, ctx);
+
+                // Field discovery: observe input fields (pre-script)
+                if crate::field_discovery::is_enabled()
+                    && !crate::field_discovery::is_output_scope()
+                {
+                    crate::field_discovery::observe_event_fields(&e.fields);
+                }
 
                 // Also track in Rhai context for parallel processing
                 ctx.internal_tracker
