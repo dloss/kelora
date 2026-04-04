@@ -26,6 +26,14 @@ const MAX_SAMPLE_LEN: usize = 80;
 /// Maximum number of distinct fields to track (memory safety).
 const MAX_TRACKED_FIELDS: usize = 1_000;
 
+/// Maximum depth for flattening nested maps and arrays into dotted keys.
+/// Depth counts descents from the event root: `a.b.c` is depth 3.
+const MAX_FLATTEN_DEPTH: usize = 3;
+
+/// Cap on the per-field dedup set for reservoir sampling.
+/// Once reached, samples may include duplicates.
+const MAX_DEDUP_TRACKING: usize = 1024;
+
 /// HLL error rate (~1.04% standard error, matching the tracking module).
 const HLL_ERROR_RATE: f64 = 0.01;
 
@@ -137,10 +145,13 @@ pub struct FieldProfile {
     pub type_counts: HashMap<FieldType, usize>,
     /// Cardinality tracker (skipped for map/array types).
     cardinality: CardinalityTracker,
-    /// First N distinct sample values (display strings).
+    /// Reservoir sample of distinct values (display strings).
     pub samples: Vec<std::string::String>,
-    /// Set of sample hashes to avoid duplicate samples.
+    /// Hashes of values currently present in `samples` plus deduplication history.
+    /// Capped at `MAX_DEDUP_TRACKING` to bound memory.
     sample_hashes: HashSet<u64>,
+    /// Count of distinct values attempted (for Algorithm R indexing).
+    distinct_samples_seen: usize,
     /// Size range for array values: (min_len, max_len).
     pub array_size_range: Option<(usize, usize)>,
     /// Size range for map values: (min_len, max_len).
@@ -155,6 +166,7 @@ impl FieldProfile {
             cardinality: CardinalityTracker::new(),
             samples: Vec::new(),
             sample_hashes: HashSet::new(),
+            distinct_samples_seen: 0,
             array_size_range: None,
             map_size_range: None,
         }
@@ -195,12 +207,32 @@ impl FieldProfile {
                 let hash = hash_value(&ft, &display);
 
                 self.cardinality.insert(hash);
+                self.add_sample(hash, &display);
+            }
+        }
+    }
 
-                // Collect samples (first N distinct)
-                if self.samples.len() < MAX_SAMPLES && self.sample_hashes.insert(hash) {
-                    let truncated = truncate_sample(&display);
-                    self.samples.push(truncated);
-                }
+    /// Add a scalar value to the reservoir sample using Algorithm R.
+    /// Distinct values are preferred: a bounded hash set deduplicates the
+    /// first `MAX_DEDUP_TRACKING` distinct values seen.
+    fn add_sample(&mut self, hash: u64, display: &str) {
+        if self.sample_hashes.len() < MAX_DEDUP_TRACKING {
+            if !self.sample_hashes.insert(hash) {
+                return;
+            }
+        } else if self.sample_hashes.contains(&hash) {
+            return;
+        }
+
+        self.distinct_samples_seen += 1;
+
+        if self.samples.len() < MAX_SAMPLES {
+            self.samples.push(truncate_sample(display));
+        } else {
+            // Algorithm R: replace random slot with probability K/i.
+            let idx = fastrand::usize(0..self.distinct_samples_seen);
+            if idx < MAX_SAMPLES {
+                self.samples[idx] = truncate_sample(display);
             }
         }
     }
@@ -242,21 +274,63 @@ impl FieldDiscovery {
     }
 
     /// Observe all fields from one event.
+    ///
+    /// Nested maps and arrays are flattened into dotted keys (`user.name`,
+    /// `user.roles[]`) up to [`MAX_FLATTEN_DEPTH`] levels deep. The parent
+    /// container is also observed so its size range remains visible.
     pub fn observe_event(&mut self, fields: &IndexMap<std::string::String, Dynamic>) {
         self.total_events += 1;
 
         for (key, value) in fields {
-            if let Some(profile) = self.fields.get_mut(key) {
-                profile.observe(value);
-            } else if !self.capped {
-                if self.fields.len() >= MAX_TRACKED_FIELDS {
-                    self.capped = true;
-                    continue;
+            self.observe_path(key, value, 1);
+        }
+    }
+
+    /// Observe a value under a given dotted path, then recurse into map/array
+    /// children if depth permits.
+    fn observe_path(&mut self, path: &str, value: &Dynamic, depth: usize) {
+        self.record(path, value);
+
+        if depth >= MAX_FLATTEN_DEPTH {
+            return;
+        }
+
+        if value.is_map() {
+            if let Some(map) = value.clone().try_cast::<rhai::Map>() {
+                for (k, v) in map.iter() {
+                    let subkey = format!("{path}.{k}");
+                    self.observe_path(&subkey, v, depth + 1);
                 }
-                let mut profile = FieldProfile::new();
-                profile.observe(value);
-                self.fields.insert(key.clone(), profile);
             }
+        } else if value.is_array() {
+            if let Ok(arr) = value.clone().into_array() {
+                let subkey = format!("{path}[]");
+                for elem in arr.iter() {
+                    self.observe_path(&subkey, elem, depth + 1);
+                }
+            }
+        }
+    }
+
+    /// Record a single observation of `value` at the given `path`, honoring
+    /// the tracked-fields cap and emitting a one-shot diagnostic on overflow.
+    fn record(&mut self, path: &str, value: &Dynamic) {
+        if let Some(profile) = self.fields.get_mut(path) {
+            profile.observe(value);
+        } else {
+            if self.fields.len() >= MAX_TRACKED_FIELDS {
+                if !self.capped {
+                    self.capped = true;
+                    eprintln!(
+                        "⚠️ field discovery truncated at {} unique field names",
+                        MAX_TRACKED_FIELDS
+                    );
+                }
+                return;
+            }
+            let mut profile = FieldProfile::new();
+            profile.observe(value);
+            self.fields.insert(path.to_string(), profile);
         }
     }
 
@@ -320,8 +394,11 @@ impl FieldDiscovery {
         entries.sort_by(|a, b| b.1.seen_count.cmp(&a.1.seen_count));
 
         for (name, profile) in &entries {
+            // Flattened array-element fields (`key[]`) can have seen_count > total_events
+            // because each element counts as an observation; saturating_sub avoids underflow.
+            let missing = self.total_events.saturating_sub(profile.seen_count);
             let miss_pct = if self.total_events > 0 {
-                ((self.total_events - profile.seen_count) as f64 / self.total_events as f64) * 100.0
+                (missing as f64 / self.total_events as f64) * 100.0
             } else {
                 0.0
             };
@@ -384,7 +461,7 @@ impl FieldDiscovery {
             let mut field_obj = serde_json::json!({
                 "name": name,
                 "seen": profile.seen_count,
-                "missing": self.total_events - profile.seen_count,
+                "missing": self.total_events.saturating_sub(profile.seen_count),
                 "types": types,
                 "cardinality": {
                     "count": card_count,
@@ -406,6 +483,7 @@ impl FieldDiscovery {
         let result = serde_json::json!({
             "total_events": self.total_events,
             "fields": fields_json,
+            "truncated": self.capped,
         });
 
         serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".to_string())
@@ -807,5 +885,118 @@ mod tests {
             profile.observe(&make_string(&format!("value_{}", i)));
         }
         assert_eq!(profile.samples.len(), MAX_SAMPLES);
+    }
+
+    #[test]
+    fn test_reservoir_sees_rare_values() {
+        // With first-seen, 8 rare values appearing after 1000 common ones would
+        // be dropped. Algorithm R should keep some of them in expectation.
+        let mut total_rare_in_samples = 0;
+        let trials = 40;
+        for _ in 0..trials {
+            let mut profile = FieldProfile::new();
+            for _ in 0..1000 {
+                profile.observe(&make_string("common"));
+            }
+            for i in 0..20 {
+                profile.observe(&make_string(&format!("rare_{i}")));
+            }
+            total_rare_in_samples += profile
+                .samples
+                .iter()
+                .filter(|s| s.starts_with("rare_"))
+                .count();
+        }
+        // Expected ≈ 8 * (20/21) ≈ 7.6 rare samples per trial.
+        // With 40 trials we should see rares dominate the reservoir.
+        assert!(
+            total_rare_in_samples > trials * 4,
+            "reservoir should surface rare distinct values; got {total_rare_in_samples} across {trials} trials",
+        );
+    }
+
+    #[test]
+    fn test_nested_flattening() {
+        let mut discovery = FieldDiscovery::new();
+        let mut fields = IndexMap::new();
+        fields.insert(
+            "user".to_string(),
+            make_map(vec![("name", make_string("alice")), ("age", make_int(30))]),
+        );
+        fields.insert("level".to_string(), make_string("INFO"));
+        discovery.observe_event(&fields);
+
+        // Parent container retained
+        assert!(discovery.fields.contains_key("user"));
+        // Children flattened with dotted paths
+        assert!(discovery.fields.contains_key("user.name"));
+        assert!(discovery.fields.contains_key("user.age"));
+        assert_eq!(discovery.fields["user.name"].seen_count, 1);
+        assert_eq!(discovery.fields["user.age"].type_counts[&FieldType::Int], 1);
+    }
+
+    #[test]
+    fn test_array_element_flattening() {
+        let mut discovery = FieldDiscovery::new();
+        let mut fields = IndexMap::new();
+        fields.insert(
+            "roles".to_string(),
+            make_array(vec![make_string("admin"), make_string("dev")]),
+        );
+        discovery.observe_event(&fields);
+
+        assert!(discovery.fields.contains_key("roles"));
+        assert!(discovery.fields.contains_key("roles[]"));
+        // Two elements → two observations
+        assert_eq!(discovery.fields["roles[]"].seen_count, 2);
+        let (card, _) = discovery.fields["roles[]"].cardinality();
+        assert_eq!(card, 2);
+    }
+
+    #[test]
+    fn test_depth_limit() {
+        // Build a 5-deep nested map: a.b.c.d.e
+        let deep = make_map(vec![(
+            "b",
+            make_map(vec![(
+                "c",
+                make_map(vec![("d", make_map(vec![("e", make_string("bottom"))]))]),
+            )]),
+        )]);
+        let mut fields = IndexMap::new();
+        fields.insert("a".to_string(), deep);
+
+        let mut discovery = FieldDiscovery::new();
+        discovery.observe_event(&fields);
+
+        // Depth 3 means we record a (1), a.b (2), a.b.c (3) and stop there.
+        assert!(discovery.fields.contains_key("a"));
+        assert!(discovery.fields.contains_key("a.b"));
+        assert!(discovery.fields.contains_key("a.b.c"));
+        assert!(!discovery.fields.contains_key("a.b.c.d"));
+        assert!(!discovery.fields.contains_key("a.b.c.d.e"));
+    }
+
+    #[test]
+    fn test_array_seen_exceeds_events_does_not_panic() {
+        // Array-element fields can have seen_count > total_events.
+        let mut discovery = FieldDiscovery::new();
+        let mut fields = IndexMap::new();
+        fields.insert(
+            "tags".to_string(),
+            make_array(vec![make_string("a"), make_string("b"), make_string("c")]),
+        );
+        discovery.observe_event(&fields);
+
+        // seen_count=3 > total_events=1 for tags[]
+        assert_eq!(discovery.fields["tags[]"].seen_count, 3);
+        assert_eq!(discovery.total_events, 1);
+
+        // Formatting must not panic
+        let table = discovery.format_table();
+        assert!(table.contains("tags[]"));
+        let json = discovery.format_json();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["truncated"], false);
     }
 }

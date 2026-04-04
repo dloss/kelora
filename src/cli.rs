@@ -644,7 +644,7 @@ pub struct Cli {
         num_args = 0..=1,
         default_missing_value = "table",
         help_heading = "Field Discovery",
-        help = "Profile fields: names, inferred types, cardinality estimates, and sample values.\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  --discover          Table summary\n  --discover=json     Machine-readable JSON"
+        help = "Profile fields: names, inferred types, cardinality estimates, and sample values.\nNested maps and arrays are flattened to 3 levels (e.g. user.name, user.roles[]).\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  --discover          Table summary\n  --discover=json     Machine-readable JSON"
     )]
     pub discover_fields: Option<DiscoverFieldsFormat>,
 

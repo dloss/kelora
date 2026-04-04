@@ -1072,6 +1072,8 @@ kelora -j app.log --drain=json -k message
 #### `--discover[=FORMAT]`
 
 Profile observed fields across the stream: field names, inferred types, cardinality estimates, and sample values.
+Nested maps and arrays are flattened into dotted paths up to 3 levels deep (e.g. `user.name`, `user.roles[]`),
+and example values are drawn via reservoir sampling so rare distinct values surface even on long streams.
 Implies `-q/--quiet` (events are suppressed).
 Sequential mode only (not supported with `--parallel` or thread overrides).
 
