@@ -637,25 +637,25 @@ pub struct Cli {
 
     /// Discover field names, types, and cardinality from the log stream.
     #[arg(
-        long = "discover-fields",
+        long = "discover",
         value_enum,
         value_name = "FORMAT",
         require_equals = true,
         num_args = 0..=1,
         default_missing_value = "table",
         help_heading = "Field Discovery",
-        help = "Profile fields: names, inferred types, cardinality estimates, and sample values.\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  --discover-fields          Table summary\n  --discover-fields=json     Machine-readable JSON"
+        help = "Profile fields: names, inferred types, cardinality estimates, and sample values.\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  --discover          Table summary\n  --discover=json     Machine-readable JSON"
     )]
     pub discover_fields: Option<DiscoverFieldsFormat>,
 
-    /// Scope for --discover-fields: input (pre-script, default) or output (post-filter).
+    /// Scope for --discover: input (pre-script, default) or output (post-filter).
     #[arg(
-        long = "discover-fields-scope",
+        long = "discover-scope",
         value_enum,
         value_name = "SCOPE",
         default_value = "input",
         help_heading = "Field Discovery",
-        help = "Observation point for --discover-fields.\n\n  input   Profile raw parsed fields (default)\n  output  Profile fields after scripts and filters"
+        help = "Observation point for --discover.\n\n  input   Profile raw parsed fields (default)\n  output  Profile fields after scripts and filters"
     )]
     pub discover_fields_scope: DiscoverFieldsScope,
 

@@ -429,9 +429,9 @@ kelora -j api_logs.jsonl -F keymap --keys method
 kelora -f combined web_access.log -k client_ip,status,path
 
 # Discover fields: names, types, cardinality, and sample values
-kelora -j api_logs.jsonl --discover-fields
-kelora -j api_logs.jsonl --discover-fields=json
-kelora -j api_logs.jsonl --discover-fields --discover-fields-scope=output --filter 'e.level == "ERROR"'
+kelora -j api_logs.jsonl --discover
+kelora -j api_logs.jsonl --discover=json
+kelora -j api_logs.jsonl --discover --discover-scope=output --filter 'e.level == "ERROR"'
 
 # Template mining summary (Drain)
 kelora -j api_logs.jsonl --drain -k message

@@ -100,7 +100,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
 
     if use_parallel && config.output.discover_fields.is_some() {
         return Err(anyhow::anyhow!(
-            "--discover-fields is not supported with --parallel or thread overrides. Rerun without --parallel."
+            "--discover is not supported with --parallel or thread overrides. Rerun without --parallel."
         ));
     }
 
