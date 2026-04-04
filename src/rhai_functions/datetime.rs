@@ -353,19 +353,6 @@ pub fn round_to(
     Ok(DateTimeWrapper::new(rounded_dt))
 }
 
-/// Truncate a datetime down to the nearest interval boundary (floor)
-///
-/// Unlike `round_to` (which is an alias for this), `floor_to` makes the
-/// truncation direction explicit. The timestamp is always moved backward
-/// (or stays the same if already on a boundary).
-pub fn floor_to(
-    dt: &mut DateTimeWrapper,
-    interval: &str,
-) -> Result<DateTimeWrapper, Box<EvalAltResult>> {
-    // floor_to is the same operation as round_to (which already floors)
-    round_to(dt, interval)
-}
-
 /// Round a datetime up to the next interval boundary (ceiling)
 ///
 /// If the timestamp is already exactly on a boundary, it stays unchanged.
@@ -507,7 +494,6 @@ pub fn register_functions(engine: &mut Engine) {
 
     // Time bucketing
     engine.register_fn("round_to", round_to);
-    engine.register_fn("floor_to", floor_to);
     engine.register_fn("ceil_to", ceil_to);
 
     // Duration methods
@@ -1244,27 +1230,6 @@ mod tests {
         let rounded = round_to(&mut dt2, "1d").unwrap();
         assert_eq!(rounded.inner.day(), 5);
         assert_eq!(rounded.inner.hour(), 0);
-    }
-
-    #[test]
-    fn test_floor_to_same_as_round_to() {
-        let mut dt1 = to_datetime("2023-07-04 12:34:56Z", None, None).unwrap();
-        let mut dt2 = to_datetime("2023-07-04 12:34:56Z", None, None).unwrap();
-
-        let floored = floor_to(&mut dt1, "5m").unwrap();
-        let rounded = round_to(&mut dt2, "5m").unwrap();
-
-        assert_eq!(floored.inner, rounded.inner);
-    }
-
-    #[test]
-    fn test_floor_to_minutes() {
-        let mut dt = to_datetime("2023-07-04 12:34:56Z", None, None).unwrap();
-
-        let floored = floor_to(&mut dt, "5m").unwrap();
-        assert_eq!(floored.inner.hour(), 12);
-        assert_eq!(floored.inner.minute(), 30);
-        assert_eq!(floored.inner.second(), 0);
     }
 
     #[test]

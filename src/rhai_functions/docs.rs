@@ -172,7 +172,6 @@ dt.to_timezone("tz_name")            Convert to named timezone
 dt.timezone_name()                   Get timezone name as string
 dt.ts_nanos()                        Get timestamp as nanoseconds
 dt.round_to("interval")              Round timestamp down to interval (e.g., "5m", "1h", "1d")
-dt.floor_to("interval")              Truncate timestamp down to interval boundary (alias for round_to)
 dt.ceil_to("interval")               Round timestamp up to next interval boundary
 dt + duration, dt - duration         Add/subtract duration from datetime
 dt1 - dt2                            Get duration between datetimes (returns DurationWrapper)
@@ -493,10 +492,10 @@ kelora -j api_logs.jsonl --exec '
   e.bucket = timestamp.round_to("5m").to_iso()
 ' | kelora -j - -m --exec 'track_bucket("time_buckets", e.bucket)'
 
-# floor_to / ceil_to for explicit bucket edges
+# round_to / ceil_to for explicit bucket edges
 kelora -j api_logs.jsonl --exec '
   let ts = to_datetime(e.timestamp);
-  e.bucket_start = ts.floor_to("1h").to_iso();
+  e.bucket_start = ts.round_to("1h").to_iso();
   e.bucket_end = ts.ceil_to("1h").to_iso()
 '
 
