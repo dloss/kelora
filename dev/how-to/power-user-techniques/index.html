@@ -3721,7 +3721,7 @@ timestamp, date, time, num.</p>
 </code></pre></div>
 <h2 id="deterministic-sampling-with-bucket">Deterministic Sampling with <code>bucket()</code><a class="headerlink" href="#deterministic-sampling-with-bucket" title="Permanent link">&para;</a></h2>
 <h3 id="the-problem_1">The Problem<a class="headerlink" href="#the-problem_1" title="Permanent link">&para;</a></h3>
-<p>Approximate sampling (<code>--head N</code>, <code>sample_every(n)</code>, or <code>rand() &lt; 0.1</code>) gives different results each run, making it impossible to track specific requests across multiple log files or rotations.</p>
+<p>Approximate sampling (<code>--head N</code>, <code>sample_every(n)</code>, <code>sample_prob(0.1)</code>, or <code>rand() &lt; 0.1</code>) gives different results each run, making it impossible to track specific requests across multiple log files or rotations.</p>
 <h3 id="the-solution-hash-based-sampling">The Solution: Hash-Based Sampling<a class="headerlink" href="#the-solution-hash-based-sampling" title="Permanent link">&para;</a></h3>
 <p>The <code>bucket()</code> function returns a consistent integer hash for any string, enabling deterministic sampling.</p>
 <p>The same <code>request_id</code> always hashes to the same number, so you'll get consistent sampling across multiple log files, log rotations, different days, and distributed systems.</p>

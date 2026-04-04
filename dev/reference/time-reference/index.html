@@ -2240,6 +2240,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ceil_tointerval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .ceil_to(interval)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2909,6 +2920,17 @@
     <span class="md-ellipsis">
       
         .round_to(interval)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ceil_tointerval" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .ceil_to(interval)
       
     </span>
   </a>
@@ -3817,30 +3839,46 @@
 - <code>2024-01-15T12:34:56Z</code> with <code>"1h"</code> → <code>2024-01-15T12:00:00Z</code>
 - <code>2024-01-15T12:34:56Z</code> with <code>"1d"</code> → <code>2024-01-15T00:00:00Z</code>
 - Preserves the original timezone</p>
+<h4 id="ceil_tointerval"><code>.ceil_to(interval)</code><a class="headerlink" href="#ceil_tointerval" title="Permanent link">&para;</a></h4>
+<p>Round a timestamp <strong>up</strong> to the next interval boundary. If the timestamp is already exactly on a boundary, it stays unchanged.</p>
+<p><strong>Syntax:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>ceiled_dt = dt.ceil_to(&quot;interval&quot;)
+</code></pre></div></p>
+<p><strong>Examples:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>let timestamp = to_datetime(e.timestamp);
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>// Compute bucket start and end times
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>e.bucket_start = timestamp.round_to(&quot;1h&quot;).to_iso();
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>e.bucket_end = timestamp.ceil_to(&quot;1h&quot;).to_iso();
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>// 12:34:56 ceil to 5m → 12:35:00
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>// 12:30:00 ceil to 5m → 12:30:00 (already on boundary)
+</code></pre></div></p>
+<p>Accepts the same interval strings as <code>round_to()</code>. Preserves the original timezone.</p>
 <h3 id="datetime-comparison">DateTime Comparison<a class="headerlink" href="#datetime-comparison" title="Permanent link">&para;</a></h3>
 <p>DateTime values support all comparison operators:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>let dt1 = to_datetime(&quot;2024-01-15T10:30:00Z&quot;);
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>let dt2 = to_datetime(&quot;2024-01-15T11:00:00Z&quot;);
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>dt1 == dt2  // false
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>dt1 != dt2  // true
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>dt1 &lt; dt2   // true
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>dt1 &lt;= dt2  // true
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>dt1 &gt; dt2   // false
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>dt1 &gt;= dt2  // false
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>let dt1 = to_datetime(&quot;2024-01-15T10:30:00Z&quot;);
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let dt2 = to_datetime(&quot;2024-01-15T11:00:00Z&quot;);
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>dt1 == dt2  // false
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>dt1 != dt2  // true
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>dt1 &lt; dt2   // true
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>dt1 &lt;= dt2  // true
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>dt1 &gt; dt2   // false
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>dt1 &gt;= dt2  // false
 </code></pre></div>
 <h3 id="datetime-arithmetic">DateTime Arithmetic<a class="headerlink" href="#datetime-arithmetic" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>// Add duration to datetime
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>let dt = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>let later = dt + to_duration(&quot;1h30m&quot;);  // 2024-01-15T11:30:00Z
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>// Subtract duration from datetime
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>let earlier = dt - to_duration(&quot;30m&quot;);  // 2024-01-15T09:30:00Z
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>// Difference between two datetimes (returns Duration)
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>let dt1 = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>let dt2 = to_datetime(&quot;2024-01-15T11:30:00Z&quot;);
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>let elapsed = dt2 - dt1;  // Duration: 1h30m
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Add duration to datetime
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>let dt = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>let later = dt + to_duration(&quot;1h30m&quot;);  // 2024-01-15T11:30:00Z
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>// Subtract duration from datetime
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>let earlier = dt - to_duration(&quot;30m&quot;);  // 2024-01-15T09:30:00Z
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>// Difference between two datetimes (returns Duration)
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>let dt1 = to_datetime(&quot;2024-01-15T10:00:00Z&quot;);
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>let dt2 = to_datetime(&quot;2024-01-15T11:30:00Z&quot;);
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>let elapsed = dt2 - dt1;  // Duration: 1h30m
 </code></pre></div>
 <h2 id="rhai-duration-functions">Rhai Duration Functions<a class="headerlink" href="#rhai-duration-functions" title="Permanent link">&para;</a></h2>
 <h3 id="parsing-and-creation_1">Parsing and Creation<a class="headerlink" href="#parsing-and-creation_1" title="Permanent link">&para;</a></h3>
@@ -3963,68 +4001,68 @@
 </tbody>
 </table>
 <p><strong>Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>let dur = to_duration(&quot;1h30m&quot;);
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>print(`${dur.as_minutes()} minutes`);  // 90 minutes
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>print(`${dur.as_seconds()} seconds`);  // 5400 seconds
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>let dur = to_duration(&quot;1h30m&quot;);
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>print(`${dur.as_minutes()} minutes`);  // 90 minutes
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>print(`${dur.as_seconds()} seconds`);  // 5400 seconds
 </code></pre></div></p>
 <h3 id="duration-arithmetic">Duration Arithmetic<a class="headerlink" href="#duration-arithmetic" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Add durations
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>let d1 = to_duration(&quot;1h&quot;);
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>let d2 = to_duration(&quot;30m&quot;);
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>let total = d1 + d2;  // 1h30m
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>// Subtract durations
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>let diff = d1 - d2;  // 30m
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>// Multiply duration
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>let doubled = d1 * 2;  // 2h
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>// Divide duration
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>let half = d1 / 2;  // 30m
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Add durations
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>let d1 = to_duration(&quot;1h&quot;);
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>let d2 = to_duration(&quot;30m&quot;);
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>let total = d1 + d2;  // 1h30m
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>// Subtract durations
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>let diff = d1 - d2;  // 30m
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>// Multiply duration
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>let doubled = d1 * 2;  // 2h
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>// Divide duration
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>let half = d1 / 2;  // 30m
 </code></pre></div>
 <h3 id="duration-comparison">Duration Comparison<a class="headerlink" href="#duration-comparison" title="Permanent link">&para;</a></h3>
 <p>Duration values support all comparison operators:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>let d1 = to_duration(&quot;1h&quot;);
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>let d2 = to_duration(&quot;30m&quot;);
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>d1 == d2  // false
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>d1 != d2  // true
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>d1 &gt; d2   // true
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>d1 &gt;= d2  // true
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>d1 &lt; d2   // false
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>d1 &lt;= d2  // false
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>let d1 = to_duration(&quot;1h&quot;);
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>let d2 = to_duration(&quot;30m&quot;);
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>d1 == d2  // false
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>d1 != d2  // true
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>d1 &gt; d2   // true
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>d1 &gt;= d2  // true
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>d1 &lt; d2   // false
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>d1 &lt;= d2  // false
 </code></pre></div>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="calculate-request-duration">Calculate Request Duration<a class="headerlink" href="#calculate-request-duration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Parse timestamps and calculate duration
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>let start = to_datetime(e.start_time);
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>let end = to_datetime(e.end_time);
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>let duration = end - start;
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.duration_ms = duration.as_milliseconds();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Parse timestamps and calculate duration
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>let start = to_datetime(e.start_time);
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>let end = to_datetime(e.end_time);
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>let duration = end - start;
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>e.duration_ms = duration.as_milliseconds();
 </code></pre></div>
 <h3 id="filter-business-hours">Filter Business Hours<a class="headerlink" href="#filter-business-hours" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Use inside a --filter stage to keep only business hours (9 AM - 5 PM)
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>// Use inside a --filter stage to keep only business hours (9 AM - 5 PM)
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>dt.hour() &gt;= 9 &amp;&amp; dt.hour() &lt; 17
 </code></pre></div>
 <h3 id="compare-against-current-time">Compare Against Current Time<a class="headerlink" href="#compare-against-current-time" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Find events older than 1 hour
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>let age = now() - dt;
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>if age &gt; to_duration(&quot;1h&quot;) {
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    e.is_old = true;
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>// Find events older than 1 hour
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>let age = now() - dt;
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>if age &gt; to_duration(&quot;1h&quot;) {
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    e.is_old = true;
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>}
 </code></pre></div>
 <h3 id="format-timestamp-for-display">Format Timestamp for Display<a class="headerlink" href="#format-timestamp-for-display" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>// Convert to custom display format
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>e.display_time = dt.format(&quot;%Y-%m-%d %I:%M %p&quot;);
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>// Result: &quot;2024-01-15 10:30 AM&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>// Convert to custom display format
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>e.display_time = dt.format(&quot;%Y-%m-%d %I:%M %p&quot;);
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>// Result: &quot;2024-01-15 10:30 AM&quot;
 </code></pre></div>
 <h3 id="time-based-aggregation">Time-Based Aggregation<a class="headerlink" href="#time-based-aggregation" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>// Group by hour of day
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>let dt = to_datetime(e.timestamp);
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>e.hour_of_day = dt.hour();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>// Group by hour of day
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>let dt = to_datetime(e.timestamp);
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>e.hour_of_day = dt.hour();
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="timestamp-not-detected">Timestamp Not Detected<a class="headerlink" href="#timestamp-not-detected" title="Permanent link">&para;</a></h3>
