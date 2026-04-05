@@ -13,6 +13,7 @@ pub mod encoding;
 pub mod environment;
 pub mod extractors;
 pub mod file_ops;
+pub mod formatting;
 pub mod hashing;
 pub mod maps;
 pub mod math;
@@ -52,6 +53,7 @@ pub fn register_all_functions(engine: &mut Engine) {
     environment::register_functions(engine);
     emit::register_functions(engine);
     file_ops::register_functions(engine);
+    formatting::register_functions(engine);
     hashing::register_functions(engine);
     extractors::register_functions(engine);
     parsers::register_functions(engine);

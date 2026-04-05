@@ -206,6 +206,23 @@ sample_every(n)                      Sample every Nth event (returns true on Nth
 sample_prob(p)                       Probabilistic sampling: returns true with probability p (0.0-1.0)
                                      Example: sample_prob(0.01) keeps ~1% of events
 
+OUTPUT FORMATTING FUNCTIONS:
+human_bytes(n [,units])              Format byte count as human-readable string (returns string)
+                                     Default: binary/IEC units (1024-based): B, KiB, MiB, GiB, TiB, PiB, EiB
+                                     With units="si": decimal/SI units (1000-based): B, KB, MB, GB, TB, PB, EB
+                                     Examples: human_bytes(1536) → "1.5 KiB"
+                                               human_bytes(1500, "si") → "1.5 KB"
+                                               human_bytes(1073741824) → "1.0 GiB"
+format_decimals(value, decimals)     Format number with exactly N digits after the decimal point (returns string)
+                                     Examples: format_decimals(3.14159, 2) → "3.14"
+                                               format_decimals(1.0, 2) → "1.00"
+                                               format_decimals(1.0/3.0, 3) → "0.333"
+format_percent(ratio, decimals)      Format ratio as percentage string with N decimals and '%' suffix (returns string)
+                                     Input is multiplied by 100, so pass 0.042 to render "4.2%".
+                                     Examples: format_percent(0.042, 1) → "4.2%"
+                                               format_percent(0.5, 0) → "50%"
+                                               format_percent(1.5, 1) → "150.0%"
+
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)
 to_int(value, thousands)             Parse integer, removing ANY char in thousands string
