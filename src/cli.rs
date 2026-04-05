@@ -112,7 +112,8 @@ pub struct Cli {
 
     /// Input format. Available formats: auto (default), json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>.
     /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
-    /// Examples: -f json, -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
+    /// Cascade mode: pass a comma-separated list (e.g. 'json,line') to try each parser in order; adds an '_format' field to each event.
+    /// Examples: -f json, -f json,line, -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
     #[arg(
         short = 'f',
         long = "input-format",
@@ -1094,6 +1095,28 @@ fn parse_format_value(s: &str) -> Result<String, String> {
         return Ok(s.to_string());
     }
     if s.starts_with("tsv:") || s.starts_with("tsv ") {
+        return Ok(s.to_string());
+    }
+
+    // Check if it's a cascade (comma-separated list of simple formats).
+    // Full validation happens in parse_input_format_spec; here we accept the
+    // form and catch the most obvious mistakes early.
+    if s.contains(',') {
+        let allowed = ["json", "line", "raw", "logfmt", "syslog", "cef", "combined"];
+        for part in s.split(',') {
+            let p = part.trim().to_lowercase();
+            if p.is_empty() {
+                return Err(format!("Empty entry in cascade format list: '{}'", s));
+            }
+            if !allowed.contains(&p.as_str()) {
+                return Err(format!(
+                    "Unknown or unsupported format '{}' in cascade list '{}'. \
+Allowed in cascade: json, line, raw, logfmt, syslog, cef, combined",
+                    part.trim(),
+                    s
+                ));
+            }
+        }
         return Ok(s.to_string());
     }
 

@@ -52,6 +52,86 @@ use crate::readers::MultiFileReader;
 use crate::rhai_functions::file_ops::{self, RuntimeConfig};
 use crate::rhai_functions::hashing;
 
+/// Build a parser for one of the "simple" schema-less formats that are
+/// allowed inside a cascade list. Returns an error if `format` isn't one of
+/// those; callers should never pass CSV/cols/regex/auto here.
+fn build_simple_cascade_parser(
+    format: &crate::config::InputFormat,
+    custom_ts_config: bool,
+    strict: bool,
+) -> Result<Box<dyn EventParser>> {
+    let parser: Box<dyn EventParser> = match format {
+        crate::config::InputFormat::Json => {
+            if custom_ts_config {
+                Box::new(
+                    crate::parsers::JsonlParser::new_without_auto_timestamp().with_strict(strict),
+                )
+            } else {
+                Box::new(crate::parsers::JsonlParser::new().with_strict(strict))
+            }
+        }
+        crate::config::InputFormat::Line => Box::new(crate::parsers::LineParser::new()),
+        crate::config::InputFormat::Raw => Box::new(crate::parsers::RawParser::new()),
+        crate::config::InputFormat::Logfmt => {
+            if custom_ts_config {
+                Box::new(crate::parsers::LogfmtParser::new_without_auto_timestamp())
+            } else {
+                Box::new(crate::parsers::LogfmtParser::new())
+            }
+        }
+        crate::config::InputFormat::Syslog => {
+            if custom_ts_config {
+                Box::new(crate::parsers::SyslogParser::new_without_auto_timestamp()?)
+            } else {
+                Box::new(crate::parsers::SyslogParser::new()?)
+            }
+        }
+        crate::config::InputFormat::Cef => {
+            if custom_ts_config {
+                Box::new(
+                    crate::parsers::CefParser::new_without_auto_timestamp().with_strict(strict),
+                )
+            } else {
+                Box::new(crate::parsers::CefParser::new().with_strict(strict))
+            }
+        }
+        crate::config::InputFormat::Combined => {
+            if custom_ts_config {
+                Box::new(crate::parsers::CombinedParser::new_without_auto_timestamp()?)
+            } else {
+                Box::new(crate::parsers::CombinedParser::new()?)
+            }
+        }
+        other => {
+            return Err(anyhow::anyhow!(
+                "format '{}' is not allowed inside a cascade list",
+                other.cascade_name()
+            ));
+        }
+    };
+    Ok(parser)
+}
+
+/// Assemble a CascadingParser from a list of simple formats.
+fn build_cascading_parser(
+    formats: &[crate::config::InputFormat],
+    custom_ts_config: bool,
+    strict: bool,
+) -> Result<Box<dyn EventParser>> {
+    if formats.len() < 2 {
+        return Err(anyhow::anyhow!(
+            "cascade format requires at least two formats"
+        ));
+    }
+    let mut parsers: Vec<(String, Box<dyn EventParser>)> = Vec::with_capacity(formats.len());
+    for fmt in formats {
+        let name = fmt.cascade_name().to_string();
+        let parser = build_simple_cascade_parser(fmt, custom_ts_config, strict)?;
+        parsers.push((name, parser));
+    }
+    Ok(Box::new(crate::parsers::CascadingParser::new(parsers)))
+}
+
 /// Pipeline builder for easy construction from CLI arguments
 #[derive(Clone)]
 pub struct PipelineBuilder {
@@ -338,6 +418,9 @@ impl PipelineBuilder {
             }
             crate::config::InputFormat::Regex(ref pattern) => {
                 Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(self.strict))
+            }
+            crate::config::InputFormat::Cascade(ref formats) => {
+                build_cascading_parser(formats, custom_ts_config, self.strict)?
             }
         };
 
@@ -858,6 +941,9 @@ impl PipelineBuilder {
             }
             crate::config::InputFormat::Regex(ref pattern) => {
                 Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(self.strict))
+            }
+            crate::config::InputFormat::Cascade(ref formats) => {
+                build_cascading_parser(formats, custom_ts_config, self.strict)?
             }
         };
 

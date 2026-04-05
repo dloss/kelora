@@ -187,6 +187,12 @@ impl GlobalTracker {
             entry.detected += worker_field_stats.detected;
             entry.parsed += worker_field_stats.parsed;
         }
+        for (name, count) in &worker_stats.cascade_format_counts {
+            *global_stats
+                .cascade_format_counts
+                .entry(name.clone())
+                .or_insert(0) += count;
+        }
         // Calculate total processing time from global start time
         if let Some(start_time) = self.start_time {
             global_stats.processing_time = start_time.elapsed();

@@ -119,7 +119,27 @@ Real-world logs often contain multiple formats in the same file (Docker prefixes
 - `mixed_format.log` - Sample file with JSON and plain text intermixed
 - `mixed_format_demo.sh` - Demonstrates preprocessing techniques for handling mixed formats
 
-**Key Insight:** Kelora excels at processing single-format structured logs. For mixed formats, the recommended approach is to **preprocess logs** to split by format before processing:
+**Cascade mode** (recommended for noisy streams): pass a comma-separated list
+of formats and kelora tries each parser in order per line, tagging every event
+with the winning format in `_format`:
+
+```bash
+# Noisy JSON: parse JSON lines as JSON, everything else as plain text
+kelora -f json,line mixed_format.log
+
+# Segment downstream by how each event was parsed
+kelora -f json,line mixed_format.log --filter 'e._format == "line"'
+
+# See the per-format breakdown
+kelora -f json,line mixed_format.log --stats
+```
+
+Cascade accepts any combination of `json`, `line`, `raw`, `logfmt`, `syslog`,
+`cef`, `combined`. Schema-based formats (`csv`/`tsv`, `cols:`, `regex:`) and
+`auto` are not allowed in the cascade list.
+
+For more advanced splitting you can still **preprocess logs** with standard
+Unix tools:
 
 ```bash
 # Extract and process JSON lines only

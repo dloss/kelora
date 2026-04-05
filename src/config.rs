@@ -218,6 +218,9 @@ pub enum InputFormat {
     Combined,
     Cols(String),  // Contains the column spec
     Regex(String), // Contains the regex pattern with optional type annotations
+    /// Cascade: try each format in order, first success wins.
+    /// Only contains formats that are safe to try per-line (no CSV/cols/regex/auto).
+    Cascade(Vec<InputFormat>),
 }
 
 impl InputFormat {
@@ -238,6 +241,37 @@ impl InputFormat {
             InputFormat::Combined => "combined".to_string(),
             InputFormat::Cols(_) => "cols".to_string(),
             InputFormat::Regex(_) => "regex".to_string(),
+            InputFormat::Cascade(formats) => {
+                let names: Vec<String> = formats.iter().map(|f| f.to_display_string()).collect();
+                format!("cascade({})", names.join(","))
+            }
+        }
+    }
+
+    /// Returns true if this format is a cascade (multi-format per-line dispatch).
+    pub fn is_cascade(&self) -> bool {
+        matches!(self, InputFormat::Cascade(_))
+    }
+
+    /// Returns the short name of a format suitable for use inside a cascade list
+    /// (without any spec/args). Used for validation error messages.
+    pub fn cascade_name(&self) -> &'static str {
+        match self {
+            InputFormat::Auto => "auto",
+            InputFormat::Json => "json",
+            InputFormat::Line => "line",
+            InputFormat::Raw => "raw",
+            InputFormat::Logfmt => "logfmt",
+            InputFormat::Syslog => "syslog",
+            InputFormat::Cef => "cef",
+            InputFormat::Csv(_) => "csv",
+            InputFormat::Tsv(_) => "tsv",
+            InputFormat::Csvnh => "csvnh",
+            InputFormat::Tsvnh => "tsvnh",
+            InputFormat::Combined => "combined",
+            InputFormat::Cols(_) => "cols",
+            InputFormat::Regex(_) => "regex",
+            InputFormat::Cascade(_) => "cascade",
         }
     }
 }
@@ -1088,6 +1122,21 @@ fn parse_input_format_from_cli(cli: &crate::Cli) -> anyhow::Result<InputFormat> 
 
 /// Parse input format specification string (e.g., "cols:ts(2) level - *msg")
 pub(crate) fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat> {
+    // Cascade mode: comma-separated list of simple formats.
+    // Detected by presence of a comma at the top level. We deliberately only
+    // allow cascade with simple formats (no colons/specs) to avoid ambiguity
+    // with "csv:spec" or "regex:pattern" that may contain commas.
+    if spec.contains(',')
+        && !spec.starts_with("regex:")
+        && !spec.starts_with("cols:")
+        && !spec.starts_with("csv:")
+        && !spec.starts_with("csv ")
+        && !spec.starts_with("tsv:")
+        && !spec.starts_with("tsv ")
+    {
+        return parse_cascade_spec(spec);
+    }
+
     // Helper to parse field spec after format name
     let parse_field_spec = |_prefix: &str, name: &str| -> Option<String> {
         // Handle both "csv:" and "csv " (optional colon)
@@ -1143,6 +1192,68 @@ pub(crate) fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat>
         "combined" => Ok(InputFormat::Combined),
         _ => Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: json, line, csv, syslog, cef, logfmt, raw, tsv, csvnh, tsvnh, combined, auto, cols:<spec>, and regex:<pattern>", spec)),
     }
+}
+
+/// Parse a cascade format spec like "json,logfmt,line".
+/// Only simple, schema-less formats are allowed; CSV/TSV/cols/regex/auto are rejected.
+fn parse_cascade_spec(spec: &str) -> anyhow::Result<InputFormat> {
+    let parts: Vec<&str> = spec.split(',').map(|s| s.trim()).collect();
+    if parts.len() < 2 {
+        return Err(anyhow::anyhow!(
+            "cascade format requires at least two formats, e.g., 'json,line'"
+        ));
+    }
+    let mut formats = Vec::with_capacity(parts.len());
+    let mut seen = std::collections::HashSet::new();
+    for part in parts {
+        if part.is_empty() {
+            return Err(anyhow::anyhow!(
+                "cascade format contains an empty entry in '{}'",
+                spec
+            ));
+        }
+        let fmt = match part.to_lowercase().as_str() {
+            "json" => InputFormat::Json,
+            "line" => InputFormat::Line,
+            "raw" => InputFormat::Raw,
+            "logfmt" => InputFormat::Logfmt,
+            "syslog" => InputFormat::Syslog,
+            "cef" => InputFormat::Cef,
+            "combined" => InputFormat::Combined,
+            "auto" => {
+                return Err(anyhow::anyhow!(
+                    "'auto' is not allowed inside a cascade list; list the formats explicitly"
+                ));
+            }
+            "csv" | "tsv" | "csvnh" | "tsvnh" => {
+                return Err(anyhow::anyhow!(
+                    "'{}' is not allowed inside a cascade list (schema-based formats cannot be mixed per-line)",
+                    part
+                ));
+            }
+            "cols" | "regex" | "cascade" => {
+                return Err(anyhow::anyhow!(
+                    "'{}' is not allowed inside a cascade list",
+                    part
+                ));
+            }
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Unknown format '{}' in cascade list. Allowed: json, line, raw, logfmt, syslog, cef, combined",
+                    part
+                ));
+            }
+        };
+        let name = fmt.cascade_name();
+        if !seen.insert(name) {
+            return Err(anyhow::anyhow!(
+                "cascade list contains duplicate format '{}'",
+                name
+            ));
+        }
+        formats.push(fmt);
+    }
+    Ok(InputFormat::Cascade(formats))
 }
 
 /// Create timestamp formatting configuration from CLI options
@@ -1392,6 +1503,9 @@ impl From<InputFormat> for crate::InputFormat {
             InputFormat::Combined => crate::InputFormat::Combined,
             InputFormat::Cols(_) => crate::InputFormat::Cols,
             InputFormat::Regex(_) => crate::InputFormat::Regex,
+            // Cascade has no direct equivalent in the CLI enum; fall back to Auto
+            // for the (unused) legacy conversion path.
+            InputFormat::Cascade(_) => crate::InputFormat::Auto,
         }
     }
 }

@@ -68,6 +68,16 @@ auto (default)
   Detection order: json → syslog → cef → combined → logfmt → csv → line
   Note: Detects once and applies to all lines
 
+<fmt1>,<fmt2>[,...]   (cascade mode)
+  Try each format in order, first success wins (per line)
+  Examples: -f json,line          (noisy JSON with plain-text fallback)
+            -f json,logfmt,line   (structured streams with fallback)
+  Adds an '_format' field to each event with the winning format name
+  Stats (--stats) include per-format event counts
+  Allowed in cascade: json, line, raw, logfmt, syslog, cef, combined
+  NOT allowed: auto, csv/tsv/csvnh/tsvnh, cols:, regex: (schema-based or spec-based)
+  Multiline: uses the first listed format's strategy
+
 OUTPUT FORMATS:
 
 Specify with -F, --output-format <format>

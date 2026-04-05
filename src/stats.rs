@@ -49,7 +49,10 @@ pub struct ProcessingStats {
     pub timestamp_override_warning: Option<String>,
     pub yearless_timestamps: usize, // Count of timestamps parsed with year inference
     pub detected_format: Option<String>, // Format detected for this processing session
-    pub assertion_failures: usize,  // Total assertion failures
+    /// Per-format event counts when running in cascade mode. Empty otherwise.
+    /// Keyed by the short format name used in `_format` (e.g. "json", "line").
+    pub cascade_format_counts: IndexMap<String, usize>,
+    pub assertion_failures: usize, // Total assertion failures
     pub assertion_failures_by_expr: HashMap<String, usize>, // Per-assertion tracking
 }
 
@@ -156,6 +159,20 @@ pub fn stats_set_timestamp_override(field: Option<String>, format: Option<String
         stats.timestamp_override_format = format;
         stats.timestamp_override_failed = false;
         stats.timestamp_override_warning = None;
+    });
+}
+
+/// Record that a cascade parser successfully matched `format` on one line.
+pub fn stats_add_cascade_format_hit(format: &str) {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        let mut stats = stats.borrow_mut();
+        *stats
+            .cascade_format_counts
+            .entry(format.to_string())
+            .or_insert(0) += 1;
     });
 }
 
@@ -566,6 +583,16 @@ impl ProcessingStats {
         // Show detected format if available
         if let Some(ref format) = self.detected_format {
             output.push_str(&format!("Detected format: {}\n", format));
+        }
+
+        // Show cascade format distribution (only present in cascade mode)
+        if !self.cascade_format_counts.is_empty() {
+            let parts: Vec<String> = self
+                .cascade_format_counts
+                .iter()
+                .map(|(name, count)| format!("{}={}", name, count))
+                .collect();
+            output.push_str(&format!("Cascade formats: {}\n", parts.join(", ")));
         }
 
         // Lines processed: N total, N filtered (X%), N errors (Y%)

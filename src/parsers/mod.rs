@@ -1,4 +1,5 @@
 pub mod auto_detect;
+pub mod cascade;
 pub mod cef;
 pub mod cols;
 pub mod combined;
@@ -13,6 +14,8 @@ pub mod type_conversion;
 
 #[allow(unused_imports)] // Used by lib.rs for format auto-detection
 pub use auto_detect::detect_format;
+#[allow(unused_imports)] // FORMAT_FIELD re-exported for external access
+pub use cascade::{CascadingParser, FORMAT_FIELD};
 pub use cef::CefParser;
 pub use cols::ColsParser;
 pub use combined::CombinedParser;
