@@ -20,6 +20,7 @@ Specify input format with `-f, --input-format <format>`.
 | `cef` | ArcSight Common Event Format, SIEM data |
 | `cols:<spec>` | Custom column-based logs |
 | `regex:<pattern>` | Custom regex parsing with named groups and type annotations |
+| `<fmt1>,<fmt2>[,…]` | Cascade mode — try parsers in order, first success wins (e.g. `json,line`) |
 
 ### JSON Format
 
@@ -350,7 +351,81 @@ The following names cannot be used: `original_line`, `parsed_ts`, `fields`
 **Notes:**
 
 - Detects once, applies to all lines
-- Not suitable for mixed-format files
+- Not suitable for mixed-format files — use **cascade mode** instead
+
+### Cascade Mode
+
+**Syntax:** `-f <fmt1>,<fmt2>[,…]` (comma-separated list of simple formats)
+
+**Description:** Try each parser in order on every line; the first one that
+succeeds handles the event. Designed for the common "noisy JSON" case —
+structured logs with plain-text noise (stack traces, panics, startup banners)
+interspersed — without requiring users to split the stream with `grep` first.
+
+**Input Example:**
+```
+{"level":"info","msg":"hello"}
+Server starting on port 8080
+{"level":"error","msg":"connection refused"}
+java.lang.NullPointerException
+```
+
+**Example Usage:**
+```bash
+# Noisy JSON with plain-text fallback
+kelora -f json,line app.log
+
+# Three-way cascade
+kelora -f json,logfmt,line mixed.log
+
+# Segment downstream by how each event was parsed
+kelora -f json,line app.log --filter 'e._format == "line"'
+
+# See per-format breakdown
+kelora -f json,line app.log --stats
+```
+
+**The `_format` field:** Every event emitted in cascade mode gets a
+`_format` field naming the winning parser (e.g. `"json"`, `"line"`). This
+field is **only** added in cascade mode — single-format runs are unchanged.
+Filter or group by it in Rhai, or inspect it in the output to debug
+classification.
+
+**Diagnostic counts:** With `--stats`, cascade mode adds a per-format
+breakdown so silent misclassification surfaces immediately:
+
+```
+Cascade formats: json=9812, line=23
+```
+
+**Allowed in cascade:** `json`, `line`, `raw`, `logfmt`, `syslog`, `cef`,
+`combined`.
+
+**Not allowed in cascade** (rejected at CLI parse time):
+
+- `auto` — meaningless inside a cascade list; list the formats explicitly
+- `csv`, `tsv`, `csvnh`, `tsvnh` — schema-based; headers/types can't safely
+  change mid-stream
+- `cols:<spec>`, `regex:<pattern>` — carry positional specs that tie them
+  to a single stream shape
+
+**Ordering matters.** The first parser that returns `Ok` wins, so list
+high-confidence formats first and use `line` as the terminal fallback.
+Liberal grammars (like `logfmt`, which accepts any `key=value` substring)
+should come *after* stricter ones to avoid swallowing events that a later
+parser would handle correctly.
+
+**Multiline:** Multiline chunking is format-aware and runs *before* parsing,
+so it follows the first listed format's strategy. Per-chunk
+reclassification is intentionally not supported.
+
+**Notes:**
+
+- Adds ~5–10% overhead per line vs. a single parser (one extra parse
+  attempt on fall-through)
+- Safe to combine with `--filter`, `--select`, `--stats`, `--metrics`, and
+  Rhai scripting
+- Works in both sequential and parallel modes
 
 ## Output Formats
 

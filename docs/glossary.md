@@ -23,6 +23,9 @@ Display mode that shows only field values without field names. Activated with `-
 
 ## C
 
+### Cascade Mode
+Input-format mode that tries a list of parsers in order per line, tagging each event with the winning parser in `_format`. Activated by passing a comma-separated list to `-f` (e.g. `-f json,line`). Targets mixed-format streams. See [Cascade Mode](reference/formats.md#cascade-mode).
+
 ### Context Lines
 Log lines shown before and/or after a matching event to provide surrounding context. Configured with `-A` (after), `-B` (before), or `-C` (both). Similar to grep's context flags. See [Processing Architecture](concepts/pipeline-model.md#context-lines).
 

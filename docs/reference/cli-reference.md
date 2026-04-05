@@ -129,11 +129,25 @@ Specify input format. Supports standard formats, column parsing, and CSV with ty
 -f 'csv status:int bytes:int response_time:float'
 ```
 
+**Cascade mode (mixed-format streams):**
+```bash
+-f json,line          # try JSON first, fall back to line
+-f json,logfmt,line   # three-way cascade
+```
+
+Comma-separated list of simple formats tried in order; first success wins.
+Adds an `_format` field to each event with the winning parser name. Allowed:
+`json`, `line`, `raw`, `logfmt`, `syslog`, `cef`, `combined`. Schema-based
+formats (`csv`/`tsv`, `cols:`, `regex:`) and `auto` are not allowed inside
+the cascade list. See [Format Reference](formats.md#cascade-mode) for full
+details.
+
 **Examples:**
 ```bash
 kelora -f json app.log
 kelora -f combined nginx.log
-kelora -f 'cols:ts(2) level *msg' custom.log  # `ts` is auto-detected as a timestamp
+kelora -f json,line noisy.log                  # cascade: JSON with text fallback
+kelora -f 'cols:ts(2) level *msg' custom.log   # `ts` is auto-detected as a timestamp
 ```
 
 #### `-j`

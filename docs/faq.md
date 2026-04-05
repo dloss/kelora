@@ -8,7 +8,7 @@ Use Kelora when logs are messy, you need stateful transforms, or you want to com
 
 ## How do I choose the right input format?
 
-Start with auto-detection (`-f auto`, the default). If detection disagrees, force a format like `-j` for JSON, `-f logfmt`, or `-f line`. The [Format Reference](reference/formats.md) lists all formats and parsing options.
+Start with auto-detection (`-f auto`, the default). If detection disagrees, force a format like `-j` for JSON, `-f logfmt`, or `-f line`. For streams that genuinely mix multiple formats line by line (e.g. JSON logs with plain-text panics/stack traces), use **cascade mode**: `-f json,line` tries each parser in order and tags events with `_format`. See [Cascade Mode](reference/formats.md#cascade-mode) for details.
 
 ## How do I parse a custom format?
 

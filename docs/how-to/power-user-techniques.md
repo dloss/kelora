@@ -553,9 +553,27 @@ You want to see the distribution of response times, not just average/max.
 
 ### Use Case: Normalize Multi-Format Logs
 
-Handle logs with mixed JSON and logfmt lines:
+For streams that mix multiple structured formats line by line, **cascade
+mode** (`-f fmt1,fmt2,…`) tries each parser in order and tags each event
+with the winning format in `_format`:
 
-=== "Command/Output"
+=== "Cascade mode"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora -f json,logfmt,line examples/nightmare_mixed_formats.log \
+      -F json | head -5
+    ```
+
+=== "Log Data"
+
+    ```bash exec="on" result="ansi"
+    head -5 examples/nightmare_mixed_formats.log
+    ```
+
+When the mixing is more irregular (e.g. JSON embedded *inside* line text),
+you can still fall back to manual extraction per event:
+
+=== "Manual extraction"
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/nightmare_mixed_formats.log \
@@ -567,12 +585,6 @@ Handle logs with mixed JSON and logfmt lines:
       }' \
       --filter 'e.has("data")' \
       -F json | head -5
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    head -5 examples/nightmare_mixed_formats.log
     ```
 
 ## Stateful Processing with `state`

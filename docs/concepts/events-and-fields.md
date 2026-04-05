@@ -363,6 +363,13 @@ Different parsers add format-specific fields:
 
 - All key-value pairs as top-level fields
 
+**Cascade mode (`-f json,line`, etc.):**
+
+- `_format` — name of the parser that handled this event (e.g. `"json"`,
+  `"line"`). Added only in cascade mode so single-format runs stay
+  unchanged. Useful for filtering (`--filter 'e._format == "line"'`) or
+  debugging silent misclassification.
+
 ## Working with Nested Structures
 
 ### Objects/Maps
