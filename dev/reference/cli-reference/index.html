@@ -6856,6 +6856,8 @@ timestamp, date, time, num.</p>
 <h3 id="field-discovery">Field Discovery<a class="headerlink" href="#field-discovery" title="Permanent link">&para;</a></h3>
 <h4 id="-discoverformat"><code>--discover[=FORMAT]</code><a class="headerlink" href="#-discoverformat" title="Permanent link">&para;</a></h4>
 <p>Profile observed fields across the stream: field names, inferred types, cardinality estimates, and sample values.
+Nested maps and arrays are flattened into dotted paths up to 3 levels deep (e.g. <code>user.name</code>, <code>user.roles[]</code>),
+and example values are drawn via reservoir sampling so rare distinct values surface even on long streams.
 Implies <code>-q/--quiet</code> (events are suppressed).
 Sequential mode only (not supported with <code>--parallel</code> or thread overrides).</p>
 <p><strong>Formats:</strong></p>
