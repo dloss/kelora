@@ -1,4 +1,5 @@
 use rhai::Engine;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 pub fn register_functions(engine: &mut Engine) {
     // human_bytes: format byte count with binary (IEC) units (B, KiB, MiB, ...).
@@ -33,6 +34,51 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("format_percent", |ratio: i64, decimals: i64| -> String {
         format_percent_impl(ratio as f64, decimals)
     });
+
+    // ljust: left-justify, pad right with spaces (or fill char) to reach
+    // display width n. Already-wide strings are returned unchanged.
+    engine.register_fn("ljust", |s: &str, n: i64| -> String {
+        ljust_impl(s, n, ' ')
+    });
+    engine.register_fn("ljust", |s: &str, n: i64, fill: &str| -> String {
+        ljust_impl(s, n, fill_char(fill))
+    });
+
+    // rjust: right-justify, pad left to reach display width n.
+    engine.register_fn("rjust", |s: &str, n: i64| -> String {
+        rjust_impl(s, n, ' ')
+    });
+    engine.register_fn("rjust", |s: &str, n: i64, fill: &str| -> String {
+        rjust_impl(s, n, fill_char(fill))
+    });
+
+    // center: center within width n; extra padding goes on the right.
+    engine.register_fn("center", |s: &str, n: i64| -> String {
+        center_impl(s, n, ' ')
+    });
+    engine.register_fn("center", |s: &str, n: i64, fill: &str| -> String {
+        center_impl(s, n, fill_char(fill))
+    });
+
+    // shorten: if the string exceeds width n, keep the start and append a
+    // marker (default "…"). Width-aware (counts display columns).
+    engine.register_fn("shorten", |s: &str, n: i64| -> String {
+        shorten_impl(s, n, "…")
+    });
+    engine.register_fn("shorten", |s: &str, n: i64, marker: &str| -> String {
+        shorten_impl(s, n, marker)
+    });
+
+    // shorten_middle: if the string exceeds width n, keep both ends and
+    // insert a marker (default "…") in the middle. Front gets the extra
+    // column when the remaining budget is odd.
+    engine.register_fn("shorten_middle", |s: &str, n: i64| -> String {
+        shorten_middle_impl(s, n, "…")
+    });
+    engine.register_fn(
+        "shorten_middle",
+        |s: &str, n: i64, marker: &str| -> String { shorten_middle_impl(s, n, marker) },
+    );
 }
 
 /// Format a byte count as a human-readable string.
@@ -93,6 +139,146 @@ fn format_decimals_impl(value: f64, decimals: i64) -> String {
 fn format_percent_impl(ratio: f64, decimals: i64) -> String {
     let d = decimals.clamp(0, 20) as usize;
     format!("{:.*}%", d, ratio * 100.0)
+}
+
+/// Treat the first character of the user-supplied fill string as the fill
+/// character, falling back to space if the string is empty or its first
+/// character has non-unit display width (wide / CJK / zero-width).
+fn fill_char(fill: &str) -> char {
+    fill.chars()
+        .next()
+        .filter(|c| UnicodeWidthChar::width(*c) == Some(1))
+        .unwrap_or(' ')
+}
+
+/// Left-justify `s` to display width `target`, padding with `fill` on the
+/// right. Strings already at or beyond the target width are returned
+/// unchanged. Negative widths are treated as zero.
+fn ljust_impl(s: &str, target: i64, fill: char) -> String {
+    let target = target.max(0) as usize;
+    let w = UnicodeWidthStr::width(s);
+    if w >= target {
+        return s.to_string();
+    }
+    let mut out = String::with_capacity(s.len() + (target - w));
+    out.push_str(s);
+    for _ in 0..(target - w) {
+        out.push(fill);
+    }
+    out
+}
+
+/// Right-justify `s` to display width `target`, padding with `fill` on the
+/// left.
+fn rjust_impl(s: &str, target: i64, fill: char) -> String {
+    let target = target.max(0) as usize;
+    let w = UnicodeWidthStr::width(s);
+    if w >= target {
+        return s.to_string();
+    }
+    let pad = target - w;
+    let mut out = String::with_capacity(s.len() + pad);
+    for _ in 0..pad {
+        out.push(fill);
+    }
+    out.push_str(s);
+    out
+}
+
+/// Center `s` within display width `target`. Extra padding (when the
+/// difference is odd) goes on the right side.
+fn center_impl(s: &str, target: i64, fill: char) -> String {
+    let target = target.max(0) as usize;
+    let w = UnicodeWidthStr::width(s);
+    if w >= target {
+        return s.to_string();
+    }
+    let total_pad = target - w;
+    let left_pad = total_pad / 2;
+    let right_pad = total_pad - left_pad;
+    let mut out = String::with_capacity(s.len() + total_pad);
+    for _ in 0..left_pad {
+        out.push(fill);
+    }
+    out.push_str(s);
+    for _ in 0..right_pad {
+        out.push(fill);
+    }
+    out
+}
+
+/// Take a prefix of `s` whose display width does not exceed `budget`.
+/// Returns the prefix as a string and the exact display width of that
+/// prefix. Zero-width chars are included greedily at the tail as long as
+/// no other char is pushed past the budget.
+fn take_prefix_by_width(s: &str, budget: usize) -> (String, usize) {
+    let mut out = String::new();
+    let mut width = 0usize;
+    for c in s.chars() {
+        let cw = UnicodeWidthChar::width(c).unwrap_or(0);
+        if width + cw > budget {
+            break;
+        }
+        out.push(c);
+        width += cw;
+    }
+    (out, width)
+}
+
+/// Take a suffix of `s` whose display width does not exceed `budget`.
+fn take_suffix_by_width(s: &str, budget: usize) -> (String, usize) {
+    let mut chars: Vec<char> = Vec::new();
+    let mut width = 0usize;
+    for c in s.chars().rev() {
+        let cw = UnicodeWidthChar::width(c).unwrap_or(0);
+        if width + cw > budget {
+            break;
+        }
+        chars.push(c);
+        width += cw;
+    }
+    chars.reverse();
+    (chars.into_iter().collect(), width)
+}
+
+/// If `s` exceeds display width `target`, cut from the end and append
+/// `marker`. If the marker alone does not fit, falls back to a hard
+/// width-truncated prefix without a marker.
+fn shorten_impl(s: &str, target: i64, marker: &str) -> String {
+    let target = target.max(0) as usize;
+    let w = UnicodeWidthStr::width(s);
+    if w <= target {
+        return s.to_string();
+    }
+    let mw = UnicodeWidthStr::width(marker);
+    if mw >= target {
+        return take_prefix_by_width(s, target).0;
+    }
+    let budget = target - mw;
+    let (prefix, _) = take_prefix_by_width(s, budget);
+    format!("{prefix}{marker}")
+}
+
+/// If `s` exceeds display width `target`, keep the start and end and insert
+/// `marker` in the middle. The front half gets the extra column when the
+/// remaining budget is odd. Falls back to a hard prefix cut if the marker
+/// alone does not fit.
+fn shorten_middle_impl(s: &str, target: i64, marker: &str) -> String {
+    let target = target.max(0) as usize;
+    let w = UnicodeWidthStr::width(s);
+    if w <= target {
+        return s.to_string();
+    }
+    let mw = UnicodeWidthStr::width(marker);
+    if mw >= target {
+        return take_prefix_by_width(s, target).0;
+    }
+    let budget = target - mw;
+    let front_budget = budget.div_ceil(2);
+    let back_budget = budget - front_budget;
+    let (front, _) = take_prefix_by_width(s, front_budget);
+    let (back, _) = take_suffix_by_width(s, back_budget);
+    format!("{front}{marker}{back}")
 }
 
 #[cfg(test)]
@@ -197,5 +383,194 @@ mod tests {
     #[test]
     fn test_format_percent_clamps_decimals_arg() {
         assert_eq!(format_percent_impl(0.5, -1), "50%");
+    }
+
+    // ---- padding / justification ----
+
+    #[test]
+    fn test_ljust_basic() {
+        assert_eq!(ljust_impl("hi", 5, ' '), "hi   ");
+        assert_eq!(ljust_impl("hello", 5, ' '), "hello");
+        assert_eq!(ljust_impl("hello", 3, ' '), "hello"); // already too wide
+        assert_eq!(ljust_impl("", 3, '-'), "---");
+    }
+
+    #[test]
+    fn test_rjust_basic() {
+        assert_eq!(rjust_impl("hi", 5, ' '), "   hi");
+        assert_eq!(rjust_impl("42", 6, '0'), "000042");
+        assert_eq!(rjust_impl("hello", 3, ' '), "hello");
+    }
+
+    #[test]
+    fn test_center_basic() {
+        assert_eq!(center_impl("hi", 6, ' '), "  hi  ");
+        // odd remainder: extra goes to the right
+        assert_eq!(center_impl("hi", 5, ' '), " hi  ");
+        assert_eq!(center_impl("hi", 4, '-'), "-hi-");
+        assert_eq!(center_impl("hello", 3, ' '), "hello");
+    }
+
+    #[test]
+    fn test_padding_negative_width() {
+        assert_eq!(ljust_impl("hi", -5, ' '), "hi");
+        assert_eq!(rjust_impl("hi", -1, ' '), "hi");
+        assert_eq!(center_impl("hi", -3, ' '), "hi");
+    }
+
+    #[test]
+    fn test_padding_unicode_width_aware() {
+        // "日本" has display width 4 (two wide chars)
+        assert_eq!(UnicodeWidthStr::width("日本"), 4);
+        assert_eq!(ljust_impl("日本", 6, ' '), "日本  ");
+        assert_eq!(rjust_impl("日本", 6, ' '), "  日本");
+        assert_eq!(center_impl("日本", 6, ' '), " 日本 ");
+    }
+
+    #[test]
+    fn test_fill_char_defaults_to_space() {
+        // empty fill → space
+        assert_eq!(fill_char(""), ' ');
+        // wide char → space (not allowed as fill)
+        assert_eq!(fill_char("日"), ' ');
+        // single narrow char → that char
+        assert_eq!(fill_char("-"), '-');
+        assert_eq!(fill_char("0"), '0');
+        // multi-char: first narrow char
+        assert_eq!(fill_char("abc"), 'a');
+    }
+
+    // ---- shorten ----
+
+    #[test]
+    fn test_shorten_basic() {
+        assert_eq!(shorten_impl("hello world", 20, "…"), "hello world");
+        assert_eq!(shorten_impl("hello world", 11, "…"), "hello world");
+        assert_eq!(shorten_impl("hello world", 8, "…"), "hello w…");
+        assert_eq!(shorten_impl("hello world", 5, "…"), "hell…");
+    }
+
+    #[test]
+    fn test_shorten_ascii_marker() {
+        assert_eq!(shorten_impl("hello world", 8, "..."), "hello...");
+        assert_eq!(shorten_impl("hello world", 6, "..."), "hel...");
+    }
+
+    #[test]
+    fn test_shorten_empty_marker() {
+        // Empty marker = hard truncate
+        assert_eq!(shorten_impl("hello world", 5, ""), "hello");
+    }
+
+    #[test]
+    fn test_shorten_marker_too_wide() {
+        // marker ">>>>" has width 4, target is 3 → fall back to hard truncate
+        assert_eq!(shorten_impl("hello world", 3, ">>>>"), "hel");
+    }
+
+    #[test]
+    fn test_shorten_unicode() {
+        // "日本語テスト" is 6 chars × 2 cols each = 12 cols
+        assert_eq!(UnicodeWidthStr::width("日本語テスト"), 12);
+        // target 7: marker "…" is 1 col → budget 6 → fits 3 wide chars
+        assert_eq!(shorten_impl("日本語テスト", 7, "…"), "日本語…");
+        // target 5: budget 4 → fits 2 wide chars
+        assert_eq!(shorten_impl("日本語テスト", 5, "…"), "日本…");
+    }
+
+    #[test]
+    fn test_shorten_negative_width() {
+        assert_eq!(shorten_impl("hello", -1, "…"), "");
+    }
+
+    // ---- shorten_middle ----
+
+    #[test]
+    fn test_shorten_middle_basic() {
+        // "abcdefghij" width 10, target 6, marker "…" width 1 → budget 5
+        // front = ceil(5/2) = 3, back = 2 → "abc…ij"
+        assert_eq!(shorten_middle_impl("abcdefghij", 6, "…"), "abc…ij");
+    }
+
+    #[test]
+    fn test_shorten_middle_even_budget() {
+        // target 7, marker "…" width 1 → budget 6 → front=3, back=3
+        assert_eq!(shorten_middle_impl("abcdefghij", 7, "…"), "abc…hij");
+    }
+
+    #[test]
+    fn test_shorten_middle_ascii_marker() {
+        // marker "..." width 3, target 8, budget 5, front=3 back=2
+        assert_eq!(shorten_middle_impl("abcdefghij", 8, "..."), "abc...ij");
+    }
+
+    #[test]
+    fn test_shorten_middle_no_truncation() {
+        assert_eq!(shorten_middle_impl("short", 20, "…"), "short");
+        assert_eq!(shorten_middle_impl("hello", 5, "…"), "hello");
+    }
+
+    #[test]
+    fn test_shorten_middle_path_example() {
+        let path = "/home/user/projects/kelora/src/rhai_functions/formatting.rs";
+        let result = shorten_middle_impl(path, 30, "…");
+        assert!(UnicodeWidthStr::width(result.as_str()) <= 30);
+        assert!(result.starts_with('/'));
+        assert!(result.ends_with("formatting.rs"));
+        assert!(result.contains('…'));
+    }
+
+    #[test]
+    fn test_shorten_middle_marker_too_wide() {
+        // marker width 4, target 3 → fall back to hard prefix cut
+        assert_eq!(shorten_middle_impl("abcdefghij", 3, ">>>>"), "abc");
+    }
+
+    #[test]
+    fn test_shorten_middle_unicode() {
+        // "日本語テスト" is 12 cols. target 8, marker "…" width 1 → budget 7
+        // front = ceil(7/2)=4 → 2 wide chars; back = 3 → 1 wide char (width 2, next would be 4 > 3)
+        // Result: "日本…ト" = 2+2+1+2 = 7 cols, leq 8 ✓
+        assert_eq!(shorten_middle_impl("日本語テスト", 8, "…"), "日本…ト");
+    }
+
+    #[test]
+    fn test_shorten_width_invariant() {
+        // Output width never exceeds target
+        for target in 0..15 {
+            let out = shorten_impl("/some/path/to/a/file.rs", target, "…");
+            assert!(
+                UnicodeWidthStr::width(out.as_str()) <= target as usize,
+                "shorten(target={target}) exceeded: {out:?}"
+            );
+            let out = shorten_middle_impl("/some/path/to/a/file.rs", target, "…");
+            assert!(
+                UnicodeWidthStr::width(out.as_str()) <= target as usize,
+                "shorten_middle(target={target}) exceeded: {out:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_padding_width_invariant() {
+        // ljust/rjust/center output width is exactly max(input_width, target)
+        for target in 0..12 {
+            for s in &["", "x", "hi", "hello"] {
+                let input_w = UnicodeWidthStr::width(*s);
+                let expected = input_w.max(target as usize);
+                assert_eq!(
+                    UnicodeWidthStr::width(ljust_impl(s, target, ' ').as_str()),
+                    expected
+                );
+                assert_eq!(
+                    UnicodeWidthStr::width(rjust_impl(s, target, ' ').as_str()),
+                    expected
+                );
+                assert_eq!(
+                    UnicodeWidthStr::width(center_impl(s, target, ' ').as_str()),
+                    expected
+                );
+            }
+        }
     }
 }

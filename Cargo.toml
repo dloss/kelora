@@ -74,6 +74,7 @@ hex = "0.4"  # Hex encoding/decoding exposed to Rhai scripts
 urlencoding = "2.1"  # URL encoding/decoding exposed to Rhai scripts
 html-escape = "0.2"  # HTML escaping exposed to Rhai scripts
 unicode-normalization = "0.1"  # Unicode normalization (NFC, NFD, NFKC, NFKD) exposed to Rhai scripts
+unicode-width = "0.2"  # Display-width measurement (wide chars, CJK, emoji) for padding/truncation helpers
 
 # Rhai built-in functions - cryptography and hashing
 xxhash-rust = { version = "0.8", features = ["xxh3"] }  # Fast non-cryptographic hashing (XXH3) exposed to Rhai scripts

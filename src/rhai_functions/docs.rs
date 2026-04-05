@@ -222,6 +222,15 @@ format_percent(ratio, decimals)      Format ratio as percentage string with N de
                                      Examples: format_percent(0.042, 1) → "4.2%"
                                                format_percent(0.5, 0) → "50%"
                                                format_percent(1.5, 1) → "150.0%"
+text.ljust(n [,fill])                Left-justify: pad right to display width n (default fill: space). Unicode-width aware.
+text.rjust(n [,fill])                Right-justify: pad left to display width n (default fill: space).
+text.center(n [,fill])               Center within display width n (extra goes right on odd difference).
+text.shorten(n [,marker])            If text exceeds width n, keep start and append marker (default "…").
+                                     Examples: path.shorten(20) → "/home/user/projec…"
+                                               name.shorten(10, "...") → "longname..." (ASCII marker)
+text.shorten_middle(n [,marker])     If text exceeds width n, keep both ends, insert marker (default "…") in the middle.
+                                     Useful for paths/URLs/IDs where both ends are informative.
+                                     Examples: path.shorten_middle(30) → "/home/user/proj…formatting.rs"
 
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)

@@ -1268,6 +1268,61 @@ format_percent(0.5, 0)                                // "50%"
 format_percent(e.errors.to_float() / e.total, 2)      // "3.14%"
 ```
 
+### Padding & Alignment
+
+All padding and shortening helpers are **Unicode-width aware** — CJK / wide
+characters count as 2 columns, zero-width combining marks as 0. Use these for
+aligned columns in summary tables and inline output.
+
+#### `text.ljust(n)` / `text.ljust(n, fill)`
+Left-justify by padding the right side with spaces (or `fill`) to reach display
+width `n`. Strings already at or beyond `n` are returned unchanged.
+
+```rhai
+"hi".ljust(5)                                         // "hi   "
+"ERROR".ljust(8, '.')                                 // "ERROR..."
+```
+
+#### `text.rjust(n)` / `text.rjust(n, fill)`
+Right-justify by padding the left side. Common for numeric columns and zero
+padding.
+
+```rhai
+"42".rjust(5)                                         // "   42"
+"42".rjust(5, '0')                                    // "00042"
+```
+
+#### `text.center(n)` / `text.center(n, fill)`
+Center within width `n`. If the remaining pad is odd, the extra column goes on
+the right.
+
+```rhai
+"hi".center(6)                                        // "  hi  "
+" TITLE ".center(20, '=')                             // "====== TITLE ======="
+```
+
+#### `text.shorten(n)` / `text.shorten(n, marker)`
+If `text` exceeds display width `n`, keep the start and append `marker`
+(default `"…"`, 1 column). Pass `""` for a hard truncate, or `"..."` for an
+ASCII-only marker.
+
+```rhai
+"hello world".shorten(8)                              // "hello w…"
+"hello world".shorten(8, "...")                       // "hello..."
+"hello world".shorten(5, "")                          // "hello"
+```
+
+#### `text.shorten_middle(n)` / `text.shorten_middle(n, marker)`
+If `text` exceeds display width `n`, keep both ends and insert `marker` in the
+middle. Ideal for paths, URLs, UUIDs, and fully-qualified names where the
+distinguishing info lives at the end.
+
+```rhai
+let path = "/home/user/projects/kelora/src/rhai_functions/formatting.rs";
+path.shorten_middle(30)                               // "/home/user/proj…formatting.rs"
+path.shorten_middle(30, "...")                        // ASCII marker
+```
+
 ---
 
 ## Type Conversion Functions

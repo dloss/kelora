@@ -1042,6 +1042,7 @@ dependencies = [
  "tempfile",
  "terminal_size",
  "unicode-normalization",
+ "unicode-width",
  "url",
  "urlencoding",
  "xxhash-rust",
