@@ -1,4 +1,4 @@
-use rhai::Engine;
+use rhai::{Array, Dynamic, Engine};
 use std::sync::atomic::{AtomicBool, Ordering};
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
@@ -112,6 +112,38 @@ pub fn register_functions(engine: &mut Engine) {
     // return the string unchanged so scripts work transparently in pipes.
     // Bright variants are used for primary colors to match the existing
     // logfmt output palette in src/colors.rs.
+    // bar(value, max, width): render a horizontal bar of display width `width`
+    // columns representing value/max as a fraction, using Unicode eighth-blocks
+    // for sub-cell resolution. Overflow (value > max) clamps to full; negative
+    // values and a non-positive max render as an empty-width pad.
+    engine.register_fn("bar", |value: f64, max: f64, width: i64| -> String {
+        bar_impl(value / max, width)
+    });
+    engine.register_fn("bar", |value: i64, max: i64, width: i64| -> String {
+        let ratio = if max == 0 {
+            0.0
+        } else {
+            value as f64 / max as f64
+        };
+        bar_impl(ratio, width)
+    });
+    engine.register_fn("bar", |value: f64, max: i64, width: i64| -> String {
+        let ratio = if max == 0 { 0.0 } else { value / max as f64 };
+        bar_impl(ratio, width)
+    });
+    engine.register_fn("bar", |value: i64, max: f64, width: i64| -> String {
+        bar_impl(value as f64 / max, width)
+    });
+    // bar(ratio, width): render with a pre-normalized ratio in 0..1.
+    engine.register_fn("bar", |ratio: f64, width: i64| -> String {
+        bar_impl(ratio, width)
+    });
+
+    // sparkline(array): render a sparkline scaled 0..max(array) from an
+    // array of numbers. Empty arrays return "". Non-numeric elements are
+    // treated as 0.
+    engine.register_fn("sparkline", |arr: Array| -> String { sparkline_impl(&arr) });
+
     engine.register_fn("red", |s: &str| -> String { wrap(s, "\x1b[91m") });
     engine.register_fn("green", |s: &str| -> String { wrap(s, "\x1b[92m") });
     engine.register_fn("yellow", |s: &str| -> String { wrap(s, "\x1b[93m") });
@@ -320,6 +352,93 @@ fn shorten_middle_impl(s: &str, target: i64, marker: &str) -> String {
     let (front, _) = take_prefix_by_width(s, front_budget);
     let (back, _) = take_suffix_by_width(s, back_budget);
     format!("{front}{marker}{back}")
+}
+
+/// Unicode eighth-blocks, ordered from empty (0/8) to full (8/8). Used by
+/// `bar` and `sparkline` to render sub-cell resolution. Index `i` represents
+/// `i` eighths filled.
+const EIGHTHS: [&str; 9] = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"];
+
+/// Sparkline ticks from low to high. Eight levels give smooth visual
+/// gradations; index 0 is used for zero/empty values (rendered as a space).
+const SPARKS: [char; 8] = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+
+/// Render a horizontal bar of display width `width` columns from a ratio in
+/// 0..1. Ratios outside that range clamp. NaN ratios render as an empty
+/// (all-space) bar. A non-positive width returns an empty string.
+fn bar_impl(ratio: f64, width: i64) -> String {
+    let width = width.max(0) as usize;
+    if width == 0 {
+        return String::new();
+    }
+    let r = if ratio.is_nan() {
+        0.0
+    } else {
+        ratio.clamp(0.0, 1.0)
+    };
+    // Total eighths to fill out of width * 8.
+    let total_eighths = (r * (width as f64) * 8.0).round() as usize;
+    let full_cells = total_eighths / 8;
+    let partial = total_eighths % 8;
+    let mut out = String::with_capacity(width * 3);
+    for _ in 0..full_cells {
+        out.push_str(EIGHTHS[8]);
+    }
+    if full_cells < width {
+        out.push_str(EIGHTHS[partial]);
+        // Pad the remainder with spaces so the bar has fixed display width.
+        for _ in (full_cells + 1)..width {
+            out.push(' ');
+        }
+    }
+    out
+}
+
+/// Convert a Dynamic to f64, treating non-numeric values as 0.0.
+fn dyn_to_f64(value: &Dynamic) -> f64 {
+    if value.is_int() {
+        value.as_int().unwrap_or(0) as f64
+    } else if value.is_float() {
+        value.as_float().unwrap_or(0.0)
+    } else if value.is_bool() {
+        if value.as_bool().unwrap_or(false) {
+            1.0
+        } else {
+            0.0
+        }
+    } else {
+        0.0
+    }
+}
+
+/// Render an array of numbers as a sparkline scaled 0..max. Empty arrays and
+/// all-zero / all-negative arrays return a string of spaces of the same
+/// length as the input, preserving column count so callers can align output.
+fn sparkline_impl(arr: &[Dynamic]) -> String {
+    if arr.is_empty() {
+        return String::new();
+    }
+    let values: Vec<f64> = arr.iter().map(dyn_to_f64).map(|v| v.max(0.0)).collect();
+    let max = values.iter().copied().fold(0.0_f64, f64::max);
+    let mut out = String::with_capacity(arr.len() * 3);
+    if max <= 0.0 {
+        for _ in 0..arr.len() {
+            out.push(' ');
+        }
+        return out;
+    }
+    let levels = SPARKS.len() as f64; // 8
+    for v in values {
+        if v <= 0.0 {
+            out.push(' ');
+            continue;
+        }
+        // Map (0, max] to indices 0..=7.
+        let scaled = (v / max * levels).ceil() as usize;
+        let idx = scaled.clamp(1, SPARKS.len()) - 1;
+        out.push(SPARKS[idx]);
+    }
+    out
 }
 
 #[cfg(test)]
@@ -624,6 +743,114 @@ mod tests {
         assert!(colors_enabled());
         set_colors_enabled(false);
         assert!(!colors_enabled());
+    }
+
+    // ---- bar ----
+
+    #[test]
+    fn test_bar_empty_and_full() {
+        assert_eq!(bar_impl(0.0, 10), "          ");
+        assert_eq!(bar_impl(1.0, 10), "██████████");
+    }
+
+    #[test]
+    fn test_bar_half() {
+        // 0.5 * 10 * 8 = 40 eighths → 5 full cells + pad
+        assert_eq!(bar_impl(0.5, 10), "█████     ");
+    }
+
+    #[test]
+    fn test_bar_eighth_resolution() {
+        // 1/8 of one cell out of a 1-wide bar → first partial block
+        assert_eq!(bar_impl(0.125, 1), "▏");
+        // 1/8 of a 4-wide bar: 0.125 * 4 * 8 = 4 eighths → half block in first cell
+        assert_eq!(bar_impl(0.125, 4), "▌   ");
+        // 3/8 in a 1-wide bar
+        assert_eq!(bar_impl(0.375, 1), "▍");
+        // 7/8 in a 1-wide bar
+        assert_eq!(bar_impl(0.875, 1), "▉");
+    }
+
+    #[test]
+    fn test_bar_clamps_overflow_and_negative() {
+        assert_eq!(bar_impl(2.0, 5), "█████");
+        assert_eq!(bar_impl(-0.5, 5), "     ");
+    }
+
+    #[test]
+    fn test_bar_nan_and_zero_width() {
+        assert_eq!(bar_impl(f64::NAN, 5), "     ");
+        assert_eq!(bar_impl(0.5, 0), "");
+        assert_eq!(bar_impl(0.5, -3), "");
+    }
+
+    #[test]
+    fn test_bar_display_width_invariant() {
+        // Every bar of width N has exactly N display columns.
+        for width in 0..20_i64 {
+            for &ratio in &[-1.0, 0.0, 0.1, 0.33, 0.5, 0.75, 0.99, 1.0, 2.0] {
+                let out = bar_impl(ratio, width);
+                assert_eq!(
+                    UnicodeWidthStr::width(out.as_str()),
+                    width.max(0) as usize,
+                    "bar(ratio={ratio}, width={width}) = {out:?}"
+                );
+            }
+        }
+    }
+
+    // ---- sparkline ----
+
+    #[test]
+    fn test_sparkline_empty() {
+        let arr: Vec<Dynamic> = vec![];
+        assert_eq!(sparkline_impl(&arr), "");
+    }
+
+    #[test]
+    fn test_sparkline_all_zero() {
+        let arr: Vec<Dynamic> = vec![
+            Dynamic::from(0_i64),
+            Dynamic::from(0_i64),
+            Dynamic::from(0_i64),
+        ];
+        assert_eq!(sparkline_impl(&arr), "   ");
+    }
+
+    #[test]
+    fn test_sparkline_monotonic() {
+        let arr: Vec<Dynamic> = (1_i64..=8).map(Dynamic::from).collect();
+        // Scaled 1..8 to 8 levels: 1/8,2/8,...,8/8 → all eight chars.
+        assert_eq!(sparkline_impl(&arr), "▁▂▃▄▅▆▇█");
+    }
+
+    #[test]
+    fn test_sparkline_mixed_types() {
+        let arr: Vec<Dynamic> = vec![
+            Dynamic::from(0_i64),
+            Dynamic::from(5.0_f64),
+            Dynamic::from(10_i64),
+        ];
+        // max=10: 0→space, 5→ceil(5/10*8)=4→'▄', 10→'█'
+        assert_eq!(sparkline_impl(&arr), " ▄█");
+    }
+
+    #[test]
+    fn test_sparkline_negative_clamped() {
+        let arr: Vec<Dynamic> = vec![
+            Dynamic::from(-3_i64),
+            Dynamic::from(5_i64),
+            Dynamic::from(10_i64),
+        ];
+        // negatives become 0 (rendered as space)
+        assert_eq!(sparkline_impl(&arr), " ▄█");
+    }
+
+    #[test]
+    fn test_sparkline_single_value() {
+        let arr: Vec<Dynamic> = vec![Dynamic::from(42_i64)];
+        // max = value → full height
+        assert_eq!(sparkline_impl(&arr), "█");
     }
 
     #[test]
