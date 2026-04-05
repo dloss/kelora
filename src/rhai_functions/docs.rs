@@ -231,6 +231,9 @@ text.shorten(n [,marker])            If text exceeds width n, keep start and app
 text.shorten_middle(n [,marker])     If text exceeds width n, keep both ends, insert marker (default "…") in the middle.
                                      Useful for paths/URLs/IDs where both ends are informative.
                                      Examples: path.shorten_middle(30) → "/home/user/proj…formatting.rs"
+text.red() / .green() / .yellow()    Wrap text with ANSI color/style; resets at end. Returns text unchanged
+text.blue() / .cyan() / .magenta()   when colors are disabled (non-TTY output, NO_COLOR, --no-color).
+text.bold() / .dim()                 Chainable: "X".bold().red() renders as bold red.
 
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)

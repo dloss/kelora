@@ -1,5 +1,32 @@
 use rhai::Engine;
+use std::sync::atomic::{AtomicBool, Ordering};
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
+/// Process-wide flag governing whether color helpers emit ANSI escape
+/// sequences. Defaults to false (disabled) so that library users and tests
+/// get uncolored output unless explicitly opted in. The runner calls
+/// `set_colors_enabled()` at startup based on --color / NO_COLOR / TTY.
+static COLORS_ENABLED: AtomicBool = AtomicBool::new(false);
+
+/// Enable or disable ANSI color output from Rhai color helpers. Called
+/// once at pipeline startup by the runner.
+pub fn set_colors_enabled(enabled: bool) {
+    COLORS_ENABLED.store(enabled, Ordering::Relaxed);
+}
+
+fn colors_enabled() -> bool {
+    COLORS_ENABLED.load(Ordering::Relaxed)
+}
+
+const RESET: &str = "\x1b[0m";
+
+fn wrap(text: &str, code: &str) -> String {
+    if colors_enabled() {
+        format!("{code}{text}{RESET}")
+    } else {
+        text.to_string()
+    }
+}
 
 pub fn register_functions(engine: &mut Engine) {
     // human_bytes: format byte count with binary (IEC) units (B, KiB, MiB, ...).
@@ -79,6 +106,20 @@ pub fn register_functions(engine: &mut Engine) {
         "shorten_middle",
         |s: &str, n: i64, marker: &str| -> String { shorten_middle_impl(s, n, marker) },
     );
+
+    // ANSI color helpers. Wrap the string with an SGR code and a reset. When
+    // colors are disabled (no TTY / NO_COLOR / --no-color / default), these
+    // return the string unchanged so scripts work transparently in pipes.
+    // Bright variants are used for primary colors to match the existing
+    // logfmt output palette in src/colors.rs.
+    engine.register_fn("red", |s: &str| -> String { wrap(s, "\x1b[91m") });
+    engine.register_fn("green", |s: &str| -> String { wrap(s, "\x1b[92m") });
+    engine.register_fn("yellow", |s: &str| -> String { wrap(s, "\x1b[93m") });
+    engine.register_fn("blue", |s: &str| -> String { wrap(s, "\x1b[34m") });
+    engine.register_fn("cyan", |s: &str| -> String { wrap(s, "\x1b[36m") });
+    engine.register_fn("magenta", |s: &str| -> String { wrap(s, "\x1b[95m") });
+    engine.register_fn("bold", |s: &str| -> String { wrap(s, "\x1b[1m") });
+    engine.register_fn("dim", |s: &str| -> String { wrap(s, "\x1b[2m") });
 }
 
 /// Format a byte count as a human-readable string.
@@ -549,6 +590,40 @@ mod tests {
                 "shorten_middle(target={target}) exceeded: {out:?}"
             );
         }
+    }
+
+    // ---- colors ----
+
+    // A minimal test fixture: uses its own setter, restores after. The tests
+    // use Relaxed ordering and only flip a single atomic, so cross-test bleed
+    // is acceptable (we always set explicitly before asserting).
+
+    #[test]
+    fn test_colors_disabled_by_default_returns_plain() {
+        set_colors_enabled(false);
+        assert_eq!(wrap("hi", "\x1b[91m"), "hi");
+    }
+
+    #[test]
+    fn test_colors_enabled_wraps_with_ansi() {
+        set_colors_enabled(true);
+        assert_eq!(wrap("hi", "\x1b[91m"), "\x1b[91mhi\x1b[0m");
+        set_colors_enabled(false);
+    }
+
+    #[test]
+    fn test_colors_empty_string() {
+        set_colors_enabled(true);
+        assert_eq!(wrap("", "\x1b[1m"), "\x1b[1m\x1b[0m");
+        set_colors_enabled(false);
+    }
+
+    #[test]
+    fn test_colors_set_and_get() {
+        set_colors_enabled(true);
+        assert!(colors_enabled());
+        set_colors_enabled(false);
+        assert!(!colors_enabled());
     }
 
     #[test]

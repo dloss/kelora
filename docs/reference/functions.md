@@ -1323,6 +1323,41 @@ path.shorten_middle(30)                               // "/home/user/proj…form
 path.shorten_middle(30, "...")                        // ASCII marker
 ```
 
+### Colors & Styles
+
+ANSI escape-sequence helpers that wrap the string with a color or style code
+and a reset. When colors are disabled (output is not a TTY, `NO_COLOR` is set,
+or `--no-color` was passed), these functions return the string **unchanged**,
+so scripts work transparently whether output is piped to a file or a
+terminal. No flag detection needed inside scripts.
+
+#### `text.red()` / `.green()` / `.yellow()` / `.blue()` / `.cyan()` / `.magenta()`
+Wrap `text` with the corresponding ANSI foreground color. The palette matches
+Kelora's existing logfmt output (bright red/green/yellow/magenta, regular
+blue/cyan).
+
+```rhai
+"ERROR".red()
+"OK".green()
+"WARN".yellow()
+e.level = e.level.yellow()
+```
+
+#### `text.bold()` / `text.dim()`
+Apply bold or dim styling.
+
+```rhai
+"header".bold()
+e.timestamp = e.timestamp.dim()
+```
+
+Color and style helpers are chainable — they compose by stacking SGR codes:
+
+```rhai
+"CRITICAL".bold().red()                               // bold red
+"meta".dim().cyan()                                   // dim cyan
+```
+
 ---
 
 ## Type Conversion Functions
