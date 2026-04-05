@@ -12,6 +12,7 @@ Complete reference for all 150+ built-in Rhai functions available in Kelora. Fun
 - [Map/Object Functions](#mapobject-functions) - Field access, manipulation, conversion
 - [DateTime Functions](#datetime-functions) - Time parsing, formatting, arithmetic
 - [Math Functions](#math-functions) - Numeric operations
+- [Output Formatting](#output-formatting-functions) - Human-readable number formatting
 - [Type Conversion](#type-conversion-functions) - Safe type conversions
 - [Utility Functions](#utility-functions) - Environment, files, pseudonyms
 - [Tracking/Metrics](#trackingmetrics-functions) - Counters, aggregations
@@ -1221,6 +1222,51 @@ if sample_prob(0.10) {
 - `sample_prob(p)` - Probabilistic, ~p fraction kept, non-deterministic
 - `sample_every(n)` - Counter-based, exact 1/n fraction, approximate in parallel
 - `e.field.bucket() % n == 0` - Hash-based, deterministic across runs/threads
+
+---
+
+## Output Formatting Functions
+
+String-returning helpers for rendering numbers in human-readable form. Useful
+in inline event output, `eprint`, and end-of-stream summary reports.
+
+#### `human_bytes(n)`
+Format byte count with binary/IEC units (1024-based): `B`, `KiB`, `MiB`, `GiB`, `TiB`, `PiB`, `EiB`.
+
+```rhai
+human_bytes(1536)                                     // "1.5 KiB"
+human_bytes(1073741824)                               // "1.0 GiB"
+e.size_h = human_bytes(e.bytes)
+```
+
+#### `human_bytes_si(n)`
+Format byte count with decimal/SI units (1000-based): `B`, `KB`, `MB`, `GB`, `TB`, `PB`, `EB`.
+
+```rhai
+human_bytes_si(1500)                                  // "1.5 KB"
+human_bytes_si(1_500_000_000)                         // "1.5 GB"
+e.size_h = human_bytes_si(e.bytes)
+```
+
+#### `format_decimals(value, decimals)`
+Format a number as a string with exactly N digits after the decimal point.
+Negative `decimals` is treated as 0; very large values are clamped to 20.
+
+```rhai
+format_decimals(1.0 / 3.0, 3)                         // "0.333"
+format_decimals(1.0, 2)                               // "1.00"
+format_decimals(42.987, 0)                            // "43"
+```
+
+#### `format_percent(ratio, decimals)`
+Format a ratio (0.0–1.0) as a percentage string with N decimals and `%` suffix.
+The input is multiplied by 100, so `0.042` renders as `"4.2%"`.
+
+```rhai
+format_percent(0.042, 1)                              // "4.2%"
+format_percent(0.5, 0)                                // "50%"
+format_percent(e.errors.to_float() / e.total, 2)      // "3.14%"
+```
 
 ---
 

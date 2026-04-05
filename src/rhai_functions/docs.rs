@@ -207,12 +207,12 @@ sample_prob(p)                       Probabilistic sampling: returns true with p
                                      Example: sample_prob(0.01) keeps ~1% of events
 
 OUTPUT FORMATTING FUNCTIONS:
-human_bytes(n [,units])              Format byte count as human-readable string (returns string)
-                                     Default: binary/IEC units (1024-based): B, KiB, MiB, GiB, TiB, PiB, EiB
-                                     With units="si": decimal/SI units (1000-based): B, KB, MB, GB, TB, PB, EB
+human_bytes(n)                       Format byte count with binary/IEC units (1024-based): B, KiB, MiB, GiB, ...
                                      Examples: human_bytes(1536) → "1.5 KiB"
-                                               human_bytes(1500, "si") → "1.5 KB"
                                                human_bytes(1073741824) → "1.0 GiB"
+human_bytes_si(n)                    Format byte count with decimal/SI units (1000-based): B, KB, MB, GB, ...
+                                     Examples: human_bytes_si(1500) → "1.5 KB"
+                                               human_bytes_si(1_500_000_000) → "1.5 GB"
 format_decimals(value, decimals)     Format number with exactly N digits after the decimal point (returns string)
                                      Examples: format_decimals(3.14159, 2) → "3.14"
                                                format_decimals(1.0, 2) → "1.00"

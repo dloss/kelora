@@ -1,19 +1,19 @@
 use rhai::Engine;
 
 pub fn register_functions(engine: &mut Engine) {
-    // human_bytes: format byte count with binary (IEC) units by default.
-    // Takes i64 or f64. Overload with unit string selects "si" for decimal units.
+    // human_bytes: format byte count with binary (IEC) units (B, KiB, MiB, ...).
+    // human_bytes_si: format byte count with decimal (SI) units (B, KB, MB, ...).
     engine.register_fn("human_bytes", |n: i64| -> String {
         human_bytes_impl(n as f64, false)
     });
     engine.register_fn("human_bytes", |n: f64| -> String {
         human_bytes_impl(n, false)
     });
-    engine.register_fn("human_bytes", |n: i64, units: &str| -> String {
-        human_bytes_impl(n as f64, units.eq_ignore_ascii_case("si"))
+    engine.register_fn("human_bytes_si", |n: i64| -> String {
+        human_bytes_impl(n as f64, true)
     });
-    engine.register_fn("human_bytes", |n: f64, units: &str| -> String {
-        human_bytes_impl(n, units.eq_ignore_ascii_case("si"))
+    engine.register_fn("human_bytes_si", |n: f64| -> String {
+        human_bytes_impl(n, true)
     });
 
     // format_decimals: format number as string with exactly N digits after the
