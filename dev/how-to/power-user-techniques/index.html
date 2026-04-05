@@ -4270,8 +4270,35 @@ timestamp, date, time, num.</p>
 </div>
 </div>
 <h3 id="use-case-normalize-multi-format-logs">Use Case: Normalize Multi-Format Logs<a class="headerlink" href="#use-case-normalize-multi-format-logs" title="Permanent link">&para;</a></h3>
-<p>Handle logs with mixed JSON and logfmt lines:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Command/Output</label><label for="__tabbed_23_2">Log Data</label></div>
+<p>For streams that mix multiple structured formats line by line, <strong>cascade
+mode</strong> (<code>-f fmt1,fmt2,…</code>) tries each parser in order and tags each event
+with the winning format in <code>_format</code>:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Cascade mode</label><label for="__tabbed_23_2">Log Data</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,logfmt,line<span class="w"> </span>examples/nightmare_mixed_formats.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-5
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;line&quot;:&quot;2024-01-15 10:00:00 [INFO] Server starting&quot;,&quot;_format&quot;:&quot;line&quot;}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:01Z&quot;,&quot;level&quot;:&quot;DEBUG&quot;,&quot;message&quot;:&quot;Connection pool initialized&quot;,&quot;format&quot;:&quot;json&quot;,&quot;connections&quot;:50,&quot;_format&quot;:&quot;json&quot;}
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:02Z&quot;,&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;Cache layer ready&quot;,&quot;format&quot;:&quot;logfmt&quot;,&quot;size&quot;:1024,&quot;_format&quot;:&quot;logfmt&quot;}
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{&quot;line&quot;:&quot;&lt;34&gt;Jan 15 10:00:03 appserver syslog: Authentication module loaded&quot;,&quot;_format&quot;:&quot;line&quot;}
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>{&quot;line&quot;:&quot;web_1    | 2024-01-15 10:00:04 [INFO] HTTP server listening on port 8080&quot;,&quot;_format&quot;:&quot;line&quot;}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>2024-01-15 10:00:00 [INFO] Server starting
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:01Z&quot;,&quot;level&quot;:&quot;DEBUG&quot;,&quot;format&quot;:&quot;json&quot;,&quot;message&quot;:&quot;Connection pool initialized&quot;,&quot;connections&quot;:50}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>timestamp=2024-01-15T10:00:02Z level=info format=logfmt msg=&quot;Cache layer ready&quot; size=1024
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>&lt;34&gt;Jan 15 10:00:03 appserver syslog: Authentication module loaded
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>web_1    | 2024-01-15 10:00:04 [INFO] HTTP server listening on port 8080
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>When the mixing is more irregular (e.g. JSON embedded <em>inside</em> line text),
+you can still fall back to manual extraction per event:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="24:1"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Manual extraction</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/nightmare_mixed_formats.log<span class="w"> </span><span class="se">\</span>
@@ -4289,14 +4316,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{&quot;data&quot;:{&quot;level&quot;:&quot;WARN&quot;,&quot;nested&quot;:{&quot;data&quot;:{&quot;deeply&quot;:{&quot;buried&quot;:{&quot;value&quot;:&quot;hard to extract with jq&quot;}}}},&quot;timestamp&quot;:&quot;2024-01-15T10:00:05Z&quot;},&quot;line&quot;:&quot;{\&quot;timestamp\&quot;:\&quot;2024-01-15T10:00:05Z\&quot;,\&quot;level\&quot;:\&quot;WARN\&quot;,\&quot;nested\&quot;:{\&quot;data\&quot;:{\&quot;deeply\&quot;:{\&quot;buried\&quot;:{\&quot;value\&quot;:\&quot;hard to extract with jq\&quot;}}}}}&quot;}
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{&quot;data&quot;:{&quot;err&quot;:&quot;\&quot;connection&quot;,&quot;level&quot;:&quot;error&quot;,&quot;max_retries&quot;:&quot;5&quot;,&quot;retry&quot;:&quot;3&quot;,&quot;timestamp&quot;:&quot;2024-01-15T10:00:07Z&quot;},&quot;line&quot;:&quot;timestamp=2024-01-15T10:00:07Z level=error err=\&quot;connection timeout\&quot; retry=3 max_retries=5&quot;}
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>{&quot;data&quot;:{&quot;action&quot;:&quot;batch_process&quot;,&quot;timestamp&quot;:&quot;2024-01-15T10:00:09Z&quot;,&quot;users&quot;:[{&quot;id&quot;:1,&quot;name&quot;:&quot;alice&quot;},{&quot;id&quot;:2,&quot;name&quot;:&quot;bob&quot;}]},&quot;line&quot;:&quot;{\&quot;timestamp\&quot;:\&quot;2024-01-15T10:00:09Z\&quot;,\&quot;users\&quot;:[{\&quot;id\&quot;:1,\&quot;name\&quot;:\&quot;alice\&quot;},{\&quot;id\&quot;:2,\&quot;name\&quot;:\&quot;bob\&quot;}],\&quot;action\&quot;:\&quot;batch_process\&quot;}&quot;}
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>2024-01-15 10:00:00 [INFO] Server starting
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:01Z&quot;,&quot;level&quot;:&quot;DEBUG&quot;,&quot;format&quot;:&quot;json&quot;,&quot;message&quot;:&quot;Connection pool initialized&quot;,&quot;connections&quot;:50}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>timestamp=2024-01-15T10:00:02Z level=info format=logfmt msg=&quot;Cache layer ready&quot; size=1024
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>&lt;34&gt;Jan 15 10:00:03 appserver syslog: Authentication module loaded
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>web_1    | 2024-01-15 10:00:04 [INFO] HTTP server listening on port 8080
 </code></pre></div>
 </div>
 </div>
@@ -4376,7 +4395,7 @@ timestamp, date, time, num.</p>
 <p>Only first occurrences pass through; duplicates are filtered out.</p>
 <h3 id="use-case-track-complex-per-user-state">Use Case: Track Complex Per-User State<a class="headerlink" href="#use-case-track-complex-per-user-state" title="Permanent link">&para;</a></h3>
 <p>Store nested maps to track multiple attributes per user:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Command/Output</label><label for="__tabbed_24_2">Log Data</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Command/Output</label><label for="__tabbed_25_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/user-events.jsonl<span class="w"> </span><span class="se">\</span>
@@ -4430,7 +4449,7 @@ timestamp, date, time, num.</p>
 <p><strong>Note</strong>: For simple counting by category, use <code>track_count(e.category)</code> instead.</p>
 <h3 id="converting-state-to-regular-map">Converting State to Regular Map<a class="headerlink" href="#converting-state-to-regular-map" title="Permanent link">&para;</a></h3>
 <p><code>state</code> is a special <code>StateMap</code> type with limited operations. To use map functions like <code>.to_logfmt()</code> or <code>.to_kv()</code>, convert it first:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Command/Output</label><label for="__tabbed_25_2">Log Data</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Command/Output</label><label for="__tabbed_26_2">Log Data</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>

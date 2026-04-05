@@ -2083,6 +2083,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cascade-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cascade Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2425,6 +2436,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cascade-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cascade Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2524,6 +2546,10 @@
 <tr>
 <td><code>regex:&lt;pattern&gt;</code></td>
 <td>Custom regex parsing with named groups and type annotations</td>
+</tr>
+<tr>
+<td><code>&lt;fmt1&gt;,&lt;fmt2&gt;[,…]</code></td>
+<td>Cascade mode — try parsers in order, first success wins (e.g. <code>json,line</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -3023,7 +3049,67 @@
 <p><strong>Notes:</strong></p>
 <ul>
 <li>Detects once, applies to all lines</li>
-<li>Not suitable for mixed-format files</li>
+<li>Not suitable for mixed-format files — use <strong>cascade mode</strong> instead</li>
+</ul>
+<h3 id="cascade-mode">Cascade Mode<a class="headerlink" href="#cascade-mode" title="Permanent link">&para;</a></h3>
+<p><strong>Syntax:</strong> <code>-f &lt;fmt1&gt;,&lt;fmt2&gt;[,…]</code> (comma-separated list of simple formats)</p>
+<p><strong>Description:</strong> Try each parser in order on every line; the first one that
+succeeds handles the event. Designed for the common "noisy JSON" case —
+structured logs with plain-text noise (stack traces, panics, startup banners)
+interspersed — without requiring users to split the stream with <code>grep</code> first.</p>
+<p><strong>Input Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>{&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;hello&quot;}
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>Server starting on port 8080
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>{&quot;level&quot;:&quot;error&quot;,&quot;msg&quot;:&quot;connection refused&quot;}
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>java.lang.NullPointerException
+</code></pre></div></p>
+<p><strong>Example Usage:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Noisy JSON with plain-text fallback</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Three-way cascade</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,logfmt,line<span class="w"> </span>mixed.log
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Segment downstream by how each event was parsed</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e._format == &quot;line&quot;&#39;</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="c1"># See per-format breakdown</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--stats
+</code></pre></div></p>
+<p><strong>The <code>_format</code> field:</strong> Every event emitted in cascade mode gets a
+<code>_format</code> field naming the winning parser (e.g. <code>"json"</code>, <code>"line"</code>). This
+field is <strong>only</strong> added in cascade mode — single-format runs are unchanged.
+Filter or group by it in Rhai, or inspect it in the output to debug
+classification.</p>
+<p><strong>Diagnostic counts:</strong> With <code>--stats</code>, cascade mode adds a per-format
+breakdown so silent misclassification surfaces immediately:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Cascade formats: json=9812, line=23
+</code></pre></div>
+<p><strong>Allowed in cascade:</strong> <code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>, <code>cef</code>,
+<code>combined</code>.</p>
+<p><strong>Not allowed in cascade</strong> (rejected at CLI parse time):</p>
+<ul>
+<li><code>auto</code> — meaningless inside a cascade list; list the formats explicitly</li>
+<li><code>csv</code>, <code>tsv</code>, <code>csvnh</code>, <code>tsvnh</code> — schema-based; headers/types can't safely
+  change mid-stream</li>
+<li><code>cols:&lt;spec&gt;</code>, <code>regex:&lt;pattern&gt;</code> — carry positional specs that tie them
+  to a single stream shape</li>
+</ul>
+<p><strong>Ordering matters.</strong> The first parser that returns <code>Ok</code> wins, so list
+high-confidence formats first and use <code>line</code> as the terminal fallback.
+Liberal grammars (like <code>logfmt</code>, which accepts any <code>key=value</code> substring)
+should come <em>after</em> stricter ones to avoid swallowing events that a later
+parser would handle correctly.</p>
+<p><strong>Multiline:</strong> Multiline chunking is format-aware and runs <em>before</em> parsing,
+so it follows the first listed format's strategy. Per-chunk
+reclassification is intentionally not supported.</p>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Adds ~5–10% overhead per line vs. a single parser (one extra parse
+  attempt on fall-through)</li>
+<li>Safe to combine with <code>--filter</code>, <code>--select</code>, <code>--stats</code>, <code>--metrics</code>, and
+  Rhai scripting</li>
+<li>Works in both sequential and parallel modes</li>
 </ul>
 <h2 id="output-formats">Output Formats<a class="headerlink" href="#output-formats" title="Permanent link">&para;</a></h2>
 <p>Specify output format with <code>-F, --output-format &lt;format&gt;</code>.</p>
@@ -3109,13 +3195,13 @@
 - Request latency tracking
 - Any time-series numeric data where tail latencies matter</p>
 <p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>method<span class="w"> </span>access.log<span class="w">          </span><span class="c1"># Show HTTP method patterns</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>--keys<span class="w"> </span>status<span class="w"> </span>api.log<span class="w">         </span><span class="c1"># Show status field patterns</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log<span class="w">     </span><span class="c1"># Visualize response time distribution</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>query_time_ms<span class="w"> </span>db.log<span class="w">  </span><span class="c1"># Show database query performance</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>method<span class="w"> </span>access.log<span class="w">          </span><span class="c1"># Show HTTP method patterns</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>--keys<span class="w"> </span>status<span class="w"> </span>api.log<span class="w">         </span><span class="c1"># Show status field patterns</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log<span class="w">     </span><span class="c1"># Visualize response time distribution</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>query_time_ms<span class="w"> </span>db.log<span class="w">  </span><span class="c1"># Show database query performance</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

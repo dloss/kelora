@@ -3793,6 +3793,13 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <ul>
 <li>All key-value pairs as top-level fields</li>
 </ul>
+<p><strong>Cascade mode (<code>-f json,line</code>, etc.):</strong></p>
+<ul>
+<li><code>_format</code> — name of the parser that handled this event (e.g. <code>"json"</code>,
+  <code>"line"</code>). Added only in cascade mode so single-format runs stay
+  unchanged. Useful for filtering (<code>--filter 'e._format == "line"'</code>) or
+  debugging silent misclassification.</li>
+</ul>
 <h2 id="working-with-nested-structures">Working with Nested Structures<a class="headerlink" href="#working-with-nested-structures" title="Permanent link">&para;</a></h2>
 <h3 id="objectsmaps">Objects/Maps<a class="headerlink" href="#objectsmaps" title="Permanent link">&para;</a></h3>
 <p>Access nested maps using dot notation:</p>
