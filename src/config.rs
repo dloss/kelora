@@ -19,6 +19,7 @@ pub struct InputConfig {
     pub no_input: bool,
     pub format: InputFormat,
     pub file_order: FileOrder,
+    pub merge_ts: bool,
     pub skip_lines: usize,
     pub head_lines: Option<usize>,
     pub section: Option<SectionConfig>,
@@ -947,6 +948,7 @@ impl KeloraConfig {
                     parse_input_format_from_cli(cli)?
                 },
                 file_order: cli.file_order.clone().into(),
+                merge_ts: cli.merge_ts,
                 skip_lines: cli.skip_lines.unwrap_or(0),
                 head_lines: cli.head,
                 section: None,      // Will be set after CLI parsing
@@ -1046,6 +1048,7 @@ impl Default for KeloraConfig {
                 no_input: false,
                 format: InputFormat::Auto,
                 file_order: FileOrder::Cli,
+                merge_ts: false,
                 skip_lines: 0,
                 head_lines: None,
                 section: None,

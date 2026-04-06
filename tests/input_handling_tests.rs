@@ -418,3 +418,54 @@ fn test_no_input_parallel_mode() {
     assert_eq!(exit_code, 0, "Should work in parallel mode");
     assert!(stdout.contains("Parallel mode"));
 }
+
+#[test]
+fn test_merge_ts_merges_files_chronologically() {
+    let mut temp_file1 = NamedTempFile::new().expect("Failed to create temp file");
+    let mut temp_file2 = NamedTempFile::new().expect("Failed to create temp file");
+
+    temp_file1
+        .write_all(
+            b"{\"ts\":\"2025-01-01T00:00:02Z\",\"msg\":\"b\"}\n{\"ts\":\"2025-01-01T00:00:04Z\",\"msg\":\"d\"}\n",
+        )
+        .expect("Failed to write to temp file");
+    temp_file2
+        .write_all(
+            b"{\"ts\":\"2025-01-01T00:00:01Z\",\"msg\":\"a\"}\n{\"ts\":\"2025-01-01T00:00:03Z\",\"msg\":\"c\"}\n",
+        )
+        .expect("Failed to write to temp file");
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_files(
+        &["-f", "json", "-F", "json", "--merge-ts"],
+        &[
+            temp_file1.path().to_str().unwrap(),
+            temp_file2.path().to_str().unwrap(),
+        ],
+    );
+
+    assert_eq!(exit_code, 0, "Should merge files successfully");
+    let messages: Vec<String> = stdout
+        .lines()
+        .map(|line| {
+            serde_json::from_str::<serde_json::Value>(line)
+                .expect("Output line should be JSON")
+                .get("msg")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string()
+        })
+        .collect();
+    assert_eq!(messages, vec!["a", "b", "c", "d"]);
+}
+
+#[test]
+fn test_merge_ts_rejects_parallel_mode() {
+    let (stdout, stderr, exit_code) = run_kelora(&["-f", "json", "--parallel", "--merge-ts"]);
+    assert_ne!(exit_code, 0, "Expected validation error");
+    assert!(
+        stderr.contains("--merge-ts is not supported with --parallel"),
+        "Unexpected error message: {}",
+        stderr
+    );
+    assert!(stdout.is_empty());
+}

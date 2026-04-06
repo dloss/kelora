@@ -136,6 +136,10 @@ pub struct Cli {
     )]
     pub file_order: FileOrder,
 
+    /// Merge events from multiple input files by timestamp (chronological order).
+    #[arg(long = "merge-ts", help_heading = "Input Options")]
+    pub merge_ts: bool,
+
     /// Skip the first N input lines
     #[arg(long = "skip-lines", help_heading = "Input Options")]
     pub skip_lines: Option<usize>,
