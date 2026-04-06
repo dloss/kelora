@@ -128,3 +128,28 @@ not json
         stdout
     );
 }
+
+/// Cascade works in parallel mode; per-worker counts merge into global stats.
+#[test]
+fn test_cascade_parallel_mode_merges_counts() {
+    // Enough lines that parallel mode actually splits across workers.
+    let mut input = String::new();
+    for i in 0..200 {
+        input.push_str(&format!("{{\"n\":{}}}\n", i));
+        input.push_str("plain text line\n");
+    }
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json,line", "-F", "json", "--parallel", "--stats"],
+        &input,
+    );
+    assert_eq!(exit_code, 0);
+    // 200 json + 200 line events merged across workers
+    assert!(
+        stdout.contains("Cascade formats:")
+            && stdout.contains("json=200")
+            && stdout.contains("line=200"),
+        "parallel stats should merge per-format counts: {}",
+        stdout
+    );
+}
