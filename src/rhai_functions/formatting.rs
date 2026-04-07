@@ -147,8 +147,8 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("red", |s: &str| -> String { wrap(s, "\x1b[91m") });
     engine.register_fn("green", |s: &str| -> String { wrap(s, "\x1b[92m") });
     engine.register_fn("yellow", |s: &str| -> String { wrap(s, "\x1b[93m") });
-    engine.register_fn("blue", |s: &str| -> String { wrap(s, "\x1b[34m") });
-    engine.register_fn("cyan", |s: &str| -> String { wrap(s, "\x1b[36m") });
+    engine.register_fn("blue", |s: &str| -> String { wrap(s, "\x1b[94m") });
+    engine.register_fn("cyan", |s: &str| -> String { wrap(s, "\x1b[96m") });
     engine.register_fn("magenta", |s: &str| -> String { wrap(s, "\x1b[95m") });
     engine.register_fn("bold", |s: &str| -> String { wrap(s, "\x1b[1m") });
     engine.register_fn("dim", |s: &str| -> String { wrap(s, "\x1b[2m") });
