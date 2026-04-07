@@ -95,6 +95,21 @@ pub fn validate_cli_args(cli: &Cli) -> Result<()> {
         }
     }
 
+    // Check --discover and --drain conflicts with parallel mode
+    let implies_parallel = cli.parallel || cli.threads > 0 || cli.batch_size.is_some();
+
+    if cli.discover_fields.is_some() && implies_parallel {
+        return Err(anyhow::anyhow!(
+            "--discover is not supported with --parallel or thread overrides. Rerun without --parallel to use field discovery."
+        ));
+    }
+
+    if cli.drain.is_some() && implies_parallel {
+        return Err(anyhow::anyhow!(
+            "--drain summary is not supported with --parallel or thread overrides. Rerun without --parallel to use Drain template mining."
+        ));
+    }
+
     if cli.drain.is_some() {
         // Calculate effective keys after applying exclusions
         let effective_keys: Vec<String> = cli
