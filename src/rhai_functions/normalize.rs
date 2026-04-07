@@ -3,6 +3,86 @@ use regex::{Captures, Regex};
 use rhai::{Dynamic, Engine, Map};
 use std::collections::HashMap;
 
+/// SSN validation based on SSA assignment rules.
+/// Rejects structurally invalid SSNs: area 000/666/900-999, group 00, serial 0000.
+fn is_valid_ssn(matched: &str) -> bool {
+    let parts: Vec<&str> = matched.split('-').collect();
+    if parts.len() != 3 {
+        return false;
+    }
+
+    let area: u16 = match parts[0].parse() {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+    let group: u16 = match parts[1].parse() {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+    let serial: u16 = match parts[2].parse() {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+
+    // SSA rules: area cannot be 000, 666, or 900-999
+    if area == 0 || area == 666 || area >= 900 {
+        return false;
+    }
+    // Group and serial cannot be all zeros
+    if group == 0 || serial == 0 {
+        return false;
+    }
+
+    true
+}
+
+/// Phone number validation using NANP rules for US/CA numbers.
+/// For US numbers: area code and exchange must start with 2-9; rejects fictional 555-01xx range.
+fn is_valid_phone(matched: &str) -> bool {
+    // Strip all non-digit characters, and any leading country code
+    let digits: Vec<u8> = matched
+        .chars()
+        .filter(|c| c.is_ascii_digit())
+        .map(|c| c as u8 - b'0')
+        .collect();
+
+    // Determine the 10-digit national number for NANP validation
+    let national: &[u8] = if digits.len() == 11 && digits[0] == 1 {
+        // +1 country code prefix
+        &digits[1..]
+    } else if digits.len() == 10 {
+        &digits
+    } else {
+        // International (non-NANP) numbers — accept if they have enough digits
+        return digits.len() >= 7;
+    };
+
+    if national.len() != 10 {
+        return false;
+    }
+
+    let area_first = national[0];
+    let exchange_first = national[3];
+
+    // NANP: area code and exchange must start with 2-9
+    if area_first < 2 || exchange_first < 2 {
+        return false;
+    }
+
+    // Reject fictional 555-0100..555-0199 range
+    if national[0] == 5
+        && national[1] == 5
+        && national[2] == 5
+        && national[3] == 0
+        && national[4] == 1
+        && national[5] < 2
+    {
+        return false;
+    }
+
+    true
+}
+
 /// Luhn algorithm validation for credit card numbers
 fn is_valid_luhn(digits: &str) -> bool {
     let digits: Vec<u32> = digits
@@ -193,6 +273,8 @@ type Validator = fn(&str) -> bool;
 static VALIDATORS: Lazy<HashMap<&'static str, Validator>> = Lazy::new(|| {
     let mut map: HashMap<&'static str, Validator> = HashMap::new();
     map.insert("credit_card", is_valid_luhn as Validator);
+    map.insert("ssn", is_valid_ssn as Validator);
+    map.insert("phone", is_valid_phone as Validator);
     map
 });
 
@@ -586,6 +668,26 @@ mod tests {
     }
 
     #[test]
+    fn test_ssn_validation() {
+        // Valid SSNs
+        assert!(is_valid_ssn("123-45-6789"));
+        assert!(is_valid_ssn("001-01-0001")); // area 001 is valid
+        assert!(is_valid_ssn("665-01-0001")); // just below 666
+
+        // Invalid: area 000
+        assert!(!is_valid_ssn("000-12-3456"));
+        // Invalid: area 666
+        assert!(!is_valid_ssn("666-12-3456"));
+        // Invalid: area 900-999
+        assert!(!is_valid_ssn("900-12-3456"));
+        assert!(!is_valid_ssn("999-99-9999"));
+        // Invalid: group 00
+        assert!(!is_valid_ssn("123-00-6789"));
+        // Invalid: serial 0000
+        assert!(!is_valid_ssn("123-45-0000"));
+    }
+
+    #[test]
     fn test_normalized_ssn() {
         let result = normalized_str_impl("SSN: 123-45-6789", &["ssn".to_string()]);
         assert_eq!(result, "SSN: <ssn>");
@@ -593,27 +695,62 @@ mod tests {
         // Should not match without dashes
         let result = normalized_str_impl("Not SSN: 123456789", &["ssn".to_string()]);
         assert_eq!(result, "Not SSN: 123456789");
+
+        // Invalid SSN (area 999) should NOT be replaced
+        let result = normalized_str_impl("Bad SSN: 999-99-9999", &["ssn".to_string()]);
+        assert_eq!(result, "Bad SSN: 999-99-9999");
+
+        // Invalid SSN (area 000) should NOT be replaced
+        let result = normalized_str_impl("Bad SSN: 000-12-3456", &["ssn".to_string()]);
+        assert_eq!(result, "Bad SSN: 000-12-3456");
+    }
+
+    #[test]
+    fn test_phone_validation() {
+        // Valid US numbers (area and exchange both start with 2-9)
+        assert!(is_valid_phone("555-234-5678"));
+        assert!(is_valid_phone("(212) 555-7890"));
+        assert!(is_valid_phone("+1-415-555-2671"));
+
+        // Invalid: area code starts with 0
+        assert!(!is_valid_phone("055-234-5678"));
+        // Invalid: area code starts with 1
+        assert!(!is_valid_phone("155-234-5678"));
+        // Invalid: exchange starts with 0
+        assert!(!is_valid_phone("555-012-3456"));
+        // Invalid: exchange starts with 1
+        assert!(!is_valid_phone("555-123-4567"));
+        // Fictional 555-01xx range (also invalid because exchange starts with 0)
+        assert!(!is_valid_phone("555-010-1234"));
     }
 
     #[test]
     fn test_normalized_phone() {
         // US format with parentheses
-        let result = normalized_str_impl("Call (555) 123-4567", &["phone".to_string()]);
+        let result = normalized_str_impl("Call (212) 555-7890", &["phone".to_string()]);
         assert_eq!(result, "Call <phone>");
 
         // US format with dashes
-        let result = normalized_str_impl("Call 555-123-4567", &["phone".to_string()]);
+        let result = normalized_str_impl("Call 555-234-5678", &["phone".to_string()]);
         assert_eq!(result, "Call <phone>");
 
         // International format
-        let result = normalized_str_impl("Call +1-555-123-4567", &["phone".to_string()]);
+        let result = normalized_str_impl("Call +1-415-555-2671", &["phone".to_string()]);
         assert_eq!(result, "Call <phone>");
+
+        // Invalid: area code starts with 0 — should NOT be replaced
+        let result = normalized_str_impl("Call 055-234-5678", &["phone".to_string()]);
+        assert_eq!(result, "Call 055-234-5678");
+
+        // Invalid: exchange starts with 1 — should NOT be replaced
+        let result = normalized_str_impl("Call 555-123-4567", &["phone".to_string()]);
+        assert_eq!(result, "Call 555-123-4567");
     }
 
     #[test]
     fn test_normalized_pii_combined() {
         let result = normalized_str_impl(
-            "User SSN 123-45-6789, card 4111111111111111, phone (555) 123-4567",
+            "User SSN 123-45-6789, card 4111111111111111, phone (212) 555-7890",
             &[
                 "ssn".to_string(),
                 "credit_card".to_string(),
