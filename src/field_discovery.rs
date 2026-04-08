@@ -322,7 +322,7 @@ impl FieldDiscovery {
                 if !self.capped {
                     self.capped = true;
                     eprintln!(
-                        "⚠️ field discovery truncated at {} unique field names",
+                        "Warning: field discovery truncated at {} unique field names",
                         MAX_TRACKED_FIELDS
                     );
                 }
@@ -408,8 +408,8 @@ impl FieldDiscovery {
             let examples_str = format_examples(profile);
 
             // Truncate long field names
-            let display_name = if name.len() > name_width {
-                format!("{}...", &name[..name_width - 3])
+            let display_name = if name.chars().count() > name_width {
+                truncate_for_display(name, name_width)
             } else {
                 name.to_string()
             };
@@ -559,8 +559,8 @@ fn format_examples(profile: &FieldProfile) -> std::string::String {
     }
 
     let joined = profile.samples.join(", ");
-    if joined.len() > 60 {
-        format!("{}...", &joined[..57])
+    if joined.chars().count() > 60 {
+        truncate_for_display(&joined, 60)
     } else {
         joined
     }
@@ -606,11 +606,28 @@ fn hash_value(ft: &FieldType, display: &str) -> u64 {
 
 /// Truncate a sample value for display.
 fn truncate_sample(s: &str) -> std::string::String {
-    if s.len() <= MAX_SAMPLE_LEN {
+    if s.chars().count() <= MAX_SAMPLE_LEN {
         s.to_string()
     } else {
-        format!("{}...", &s[..MAX_SAMPLE_LEN - 3])
+        truncate_for_display(s, MAX_SAMPLE_LEN)
     }
+}
+
+/// Truncate a string to `max_chars` with an ellipsis suffix, preserving valid
+/// UTF-8 boundaries.
+fn truncate_for_display(s: &str, max_chars: usize) -> std::string::String {
+    if max_chars <= 3 {
+        return ".".repeat(max_chars);
+    }
+    let char_count = s.chars().count();
+    if char_count <= max_chars {
+        return s.to_string();
+    }
+
+    let keep = max_chars - 3;
+    let mut out = s.chars().take(keep).collect::<std::string::String>();
+    out.push_str("...");
+    out
 }
 
 // ── thread-local accumulator ──────────────────────────────────────────
