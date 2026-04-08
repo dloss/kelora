@@ -9,10 +9,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **`--include` now works with `--filter`** - Helper functions defined in an include file (`-I`) can be called from `--filter` expressions. Include files used with `--filter` must contain only function definitions; top-level statements are rejected with a clear error.
+- **Schema discovery mode** - Added `--discover` for stream schema profiling, including nested field flattening, sampling examples, and cap warnings for high-cardinality fields.
+- **Cascade format mode** - Added cascade parsing mode for mixed-format streams.
+- **New Rhai output helpers** - Added `human_bytes`, `human_bytes_si`, `format_decimals`, and `format_percent`.
+- **New Rhai text formatting helpers** - Added Unicode-width-aware `pad_left`, `pad_right`, and `shorten` helpers.
+- **New Rhai ANSI styling helpers** - Added `red`, `green`, `yellow`, `blue`, `cyan`, `magenta`, `bold`, and `dim`.
+- **New Rhai chart helpers** - Added `bar` and `sparkline` helpers for end-of-stream metrics output.
+- **New Rhai projection helpers** - Added `map.keep` and `map.drop` for event field projection.
+- **New Rhai time/random helpers** - Added `floor_to`, `ceil_to`, and `sample_prob`.
+- **New PII validators** - Added `ssn` and `phone` pattern validators to `normalized()`, including SSA-aware SSN checks and NANP-aware phone validation.
 
 ### Changed
 
-- **CLI diagnostics** - Improved actionable guidance for wrong mode, wrong format, missing `--keys`, missing input, and common flag conflicts without changing behavior
+- **CLI diagnostics** - Improved actionable guidance for wrong mode, wrong format, missing `--keys`, missing input, and common flag conflicts without changing behavior.
+- **CLI option validation** - `--discover`/`--drain` conflicts with `--parallel` are now validated at CLI parse time with clearer errors.
+- **ANSI readability** - Bright variants are now used for blue and cyan terminal colors for better readability.
+
+### Fixed
+
+- **Parser strict mode behavior** - JSON and CEF parsers now correctly respect the strict parsing flag.
+- **Pre-epoch rounding** - Fixed `round_to`/`ceil_to` behavior for timestamps before Unix epoch.
 ## [1.4.10] - 2026-03-10
 
 ### Added
