@@ -6303,7 +6303,8 @@
 <p>Specify input format. Supports standard formats, column parsing, and CSV with type annotations.</p>
 <p><strong>Standard Formats:</strong></p>
 <ul>
-<li><code>auto</code> - Auto-detect format from the first line (default)</li>
+<li><code>auto</code> - Auto-detect format from the first non-empty line (default)</li>
+<li><code>auto-per-file</code> - Auto-detect once per file; useful when different files use different formats</li>
 <li><code>json</code> - JSON lines (one JSON object per line)</li>
 <li><code>line</code> - Plain text (one line per event)</li>
 <li><code>csv</code> - CSV with header row</li>
@@ -6331,9 +6332,10 @@ the cascade list. See <a href="../formats/#cascade-mode">Format Reference</a> fo
 details.</p>
 <p><strong>Examples:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>nginx.log
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>noisy.log<span class="w">                  </span><span class="c1"># cascade: JSON with text fallback</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>custom.log<span class="w">   </span><span class="c1"># `ts` is auto-detected as a timestamp</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto-per-file<span class="w"> </span>-J<span class="w"> </span>logs/*.log<span class="w">         </span><span class="c1"># detect each file independently</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>nginx.log
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>noisy.log<span class="w">                  </span><span class="c1"># cascade: JSON with text fallback</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>custom.log<span class="w">   </span><span class="c1"># `ts` is auto-detected as a timestamp</span>
 </code></pre></div></p>
 <h4 id="-j"><code>-j</code><a class="headerlink" href="#-j" title="Permanent link">&para;</a></h4>
 <p>Shortcut for <code>-f json</code>. Only affects input parsing. For JSON output, use <code>-J</code> or <code>-F json</code>.</p>
@@ -6967,6 +6969,8 @@ timestamp, date, time, num.</p>
 <p>Profile observed fields across the stream: field names, inferred types, cardinality estimates, and sample values.
 Nested maps and arrays are flattened into dotted paths up to 3 levels deep (e.g. <code>user.name</code>, <code>user.roles[]</code>),
 and example values are drawn via reservoir sampling so rare distinct values surface even on long streams.
+When deeper nesting is present, the table output adds an explicit note that flattening stopped at the depth cap,
+and JSON output includes <code>flatten_depth_limit</code> and <code>flatten_depth_capped</code>.
 Implies <code>-q/--quiet</code> (events are suppressed).
 Sequential mode only (not supported with <code>--parallel</code> or thread overrides).</p>
 <p><strong>Formats:</strong></p>
