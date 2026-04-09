@@ -8827,6 +8827,7 @@ blue/cyan).</p>
 <h3 id="charts-sparklines">Charts &amp; Sparklines<a class="headerlink" href="#charts-sparklines" title="Permanent link">&para;</a></h3>
 <h4 id="barvalue-max-width"><code>bar(value, max, width)</code><a class="headerlink" href="#barvalue-max-width" title="Permanent link">&para;</a></h4>
 <p>Render a fixed-width Unicode bar showing <code>value / max</code>.</p>
+<p>This is the primary form and the one to prefer in examples and scripts.</p>
 <ul>
 <li>Uses eighth-block characters for sub-cell resolution</li>
 <li>Clamps values outside <code>0..max</code></li>
@@ -8837,6 +8838,9 @@ blue/cyan).</p>
 </code></pre></div>
 <h4 id="barratio-width"><code>bar(ratio, width)</code><a class="headerlink" href="#barratio-width" title="Permanent link">&para;</a></h4>
 <p>Render a bar from a pre-normalized ratio in <code>0..1</code>.</p>
+<p>This is the convenience form when you already have a ratio.</p>
+<p>There is no two-argument <code>bar(value, max)</code> form. Use <code>bar(value, max, width)</code>
+or <code>bar(ratio, width)</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>bar(0.42, 10)                                         // &quot;████▏     &quot;
 </code></pre></div>
 <h4 id="sparklinearray"><code>sparkline(array)</code><a class="headerlink" href="#sparklinearray" title="Permanent link">&para;</a></h4>
