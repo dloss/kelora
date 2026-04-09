@@ -4036,6 +4036,56 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#charts-sparklines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Charts &amp; Sparklines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Charts &amp; Sparklines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#barvalue-max-width" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bar(value, max, width)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#barratio-width" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bar(ratio, width)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sparklinearray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sparkline(array)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6967,6 +7017,56 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#charts-sparklines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Charts &amp; Sparklines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Charts &amp; Sparklines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#barvalue-max-width" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bar(value, max, width)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#barratio-width" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bar(ratio, width)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sparklinearray" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sparkline(array)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -8072,7 +8172,13 @@
 <p><strong>Default patterns</strong> (when no argument provided):
 <code>ipv4_port</code>, <code>ipv4</code>, <code>ipv6</code>, <code>email</code>, <code>url</code>, <code>fqdn</code>, <code>uuid</code>, <code>mac</code>, <code>md5</code>, <code>sha1</code>, <code>sha256</code>, <code>path</code>, <code>oauth</code>, <code>function</code>, <code>hexcolor</code>, <code>version</code></p>
 <p><strong>Available patterns</strong> (opt-in):
-<code>hexnum</code>, <code>duration</code>, <code>num</code></p>
+<code>hexnum</code>, <code>duration</code>, <code>num</code>, <code>credit_card</code>, <code>ssn</code>, <code>phone</code></p>
+<p>PII-oriented patterns are opt-in on purpose:</p>
+<ul>
+<li><code>credit_card</code> - Luhn-validated payment card numbers</li>
+<li><code>ssn</code> - SSA-aware US Social Security number validation</li>
+<li><code>phone</code> - NANP-aware validation for US/CA numbers, with permissive support for other international numbers</li>
+</ul>
 <p><strong>Common use case</strong> - Pattern discovery:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># Recommended alias for easy pattern discovery</span>
 <a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>kelora<span class="w"> </span>--save-alias<span class="w"> </span>patterns<span class="w"> </span><span class="se">\</span>
@@ -8718,12 +8824,36 @@ blue/cyan).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>&quot;CRITICAL&quot;.bold().red()                               // bold red
 <a id="__codelineno-134-2" name="__codelineno-134-2" href="#__codelineno-134-2"></a>&quot;meta&quot;.dim().cyan()                                   // dim cyan
 </code></pre></div>
+<h3 id="charts-sparklines">Charts &amp; Sparklines<a class="headerlink" href="#charts-sparklines" title="Permanent link">&para;</a></h3>
+<h4 id="barvalue-max-width"><code>bar(value, max, width)</code><a class="headerlink" href="#barvalue-max-width" title="Permanent link">&para;</a></h4>
+<p>Render a fixed-width Unicode bar showing <code>value / max</code>.</p>
+<ul>
+<li>Uses eighth-block characters for sub-cell resolution</li>
+<li>Clamps values outside <code>0..max</code></li>
+<li>Returns spaces when <code>max &lt;= 0</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>bar(7, 10, 10)                                        // &quot;███████   &quot;
+<a id="__codelineno-135-2" name="__codelineno-135-2" href="#__codelineno-135-2"></a>bar(3, 8, 4)                                          // &quot;█▌  &quot;
+</code></pre></div>
+<h4 id="barratio-width"><code>bar(ratio, width)</code><a class="headerlink" href="#barratio-width" title="Permanent link">&para;</a></h4>
+<p>Render a bar from a pre-normalized ratio in <code>0..1</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>bar(0.42, 10)                                         // &quot;████▏     &quot;
+</code></pre></div>
+<h4 id="sparklinearray"><code>sparkline(array)</code><a class="headerlink" href="#sparklinearray" title="Permanent link">&para;</a></h4>
+<p>Render an array of numbers as a single-line sparkline using <code>▁▂▃▄▅▆▇█</code>.</p>
+<ul>
+<li>Scales values from <code>0..max(array)</code></li>
+<li>Negative and non-numeric values render as spaces</li>
+<li>Empty arrays return <code>""</code></li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>sparkline([1, 4, 2, 8, 5, 7])                         // &quot;▁▄▂█▅▇&quot;
+</code></pre></div>
 <hr />
 <h2 id="type-conversion-functions">Type Conversion Functions<a class="headerlink" href="#type-conversion-functions" title="Permanent link">&para;</a></h2>
 <h4 id="to_intvalue-to_floatvalue-to_boolvalue"><code>to_int(value)</code> / <code>to_float(value)</code> / <code>to_bool(value)</code><a class="headerlink" href="#to_intvalue-to_floatvalue-to_boolvalue" title="Permanent link">&para;</a></h4>
 <p>Convert value to type (returns <code>()</code> on error).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>e.status = to_int(e.status_string)
-<a id="__codelineno-135-2" name="__codelineno-135-2" href="#__codelineno-135-2"></a>e.score = to_float(e.score_string)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>e.status = to_int(e.status_string)
+<a id="__codelineno-138-2" name="__codelineno-138-2" href="#__codelineno-138-2"></a>e.score = to_float(e.score_string)
 </code></pre></div>
 <h4 id="to_intvalue-thousands_sep-to_floatvalue-thousands_sep-decimal_sep"><code>to_int(value, thousands_sep)</code> / <code>to_float(value, thousands_sep, decimal_sep)</code><a class="headerlink" href="#to_intvalue-thousands_sep-to_floatvalue-thousands_sep-decimal_sep" title="Permanent link">&para;</a></h4>
 <p>Parse formatted numbers with explicit separators.</p>
@@ -8731,31 +8861,31 @@ blue/cyan).</p>
 - <code>thousands_sep</code> - The thousands/grouping separator (single char or empty string)
 - <code>decimal_sep</code> - The decimal separator (single char or empty string)</p>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>// US format (comma thousands, dot decimal)
-<a id="__codelineno-136-2" name="__codelineno-136-2" href="#__codelineno-136-2"></a>e.price = &quot;1,234.56&quot;.to_float(&#39;,&#39;, &#39;.&#39;)     // → 1234.56
-<a id="__codelineno-136-3" name="__codelineno-136-3" href="#__codelineno-136-3"></a>e.count = &quot;1,234,567&quot;.to_int(&#39;,&#39;)           // → 1234567
-<a id="__codelineno-136-4" name="__codelineno-136-4" href="#__codelineno-136-4"></a>
-<a id="__codelineno-136-5" name="__codelineno-136-5" href="#__codelineno-136-5"></a>// EU format (dot thousands, comma decimal)
-<a id="__codelineno-136-6" name="__codelineno-136-6" href="#__codelineno-136-6"></a>e.price = &quot;1.234,56&quot;.to_float(&#39;.&#39;, &#39;,&#39;)     // → 1234.56
-<a id="__codelineno-136-7" name="__codelineno-136-7" href="#__codelineno-136-7"></a>e.count = &quot;1.234.567&quot;.to_int(&#39;.&#39;)           // → 1234567
-<a id="__codelineno-136-8" name="__codelineno-136-8" href="#__codelineno-136-8"></a>
-<a id="__codelineno-136-9" name="__codelineno-136-9" href="#__codelineno-136-9"></a>// French format (space thousands, comma decimal)
-<a id="__codelineno-136-10" name="__codelineno-136-10" href="#__codelineno-136-10"></a>e.price = &quot;1 234,56&quot;.to_float(&#39; &#39;, &#39;,&#39;)     // → 1234.56
-<a id="__codelineno-136-11" name="__codelineno-136-11" href="#__codelineno-136-11"></a>e.count = &quot;2 000 000&quot;.to_int(&#39; &#39;)           // → 2000000
-<a id="__codelineno-136-12" name="__codelineno-136-12" href="#__codelineno-136-12"></a>
-<a id="__codelineno-136-13" name="__codelineno-136-13" href="#__codelineno-136-13"></a>// No thousands separator (empty string)
-<a id="__codelineno-136-14" name="__codelineno-136-14" href="#__codelineno-136-14"></a>e.price = &quot;1234.56&quot;.to_float(&quot;&quot;, &#39;.&#39;)       // → 1234.56
+<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>// US format (comma thousands, dot decimal)
+<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>e.price = &quot;1,234.56&quot;.to_float(&#39;,&#39;, &#39;.&#39;)     // → 1234.56
+<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>e.count = &quot;1,234,567&quot;.to_int(&#39;,&#39;)           // → 1234567
+<a id="__codelineno-139-4" name="__codelineno-139-4" href="#__codelineno-139-4"></a>
+<a id="__codelineno-139-5" name="__codelineno-139-5" href="#__codelineno-139-5"></a>// EU format (dot thousands, comma decimal)
+<a id="__codelineno-139-6" name="__codelineno-139-6" href="#__codelineno-139-6"></a>e.price = &quot;1.234,56&quot;.to_float(&#39;.&#39;, &#39;,&#39;)     // → 1234.56
+<a id="__codelineno-139-7" name="__codelineno-139-7" href="#__codelineno-139-7"></a>e.count = &quot;1.234.567&quot;.to_int(&#39;.&#39;)           // → 1234567
+<a id="__codelineno-139-8" name="__codelineno-139-8" href="#__codelineno-139-8"></a>
+<a id="__codelineno-139-9" name="__codelineno-139-9" href="#__codelineno-139-9"></a>// French format (space thousands, comma decimal)
+<a id="__codelineno-139-10" name="__codelineno-139-10" href="#__codelineno-139-10"></a>e.price = &quot;1 234,56&quot;.to_float(&#39; &#39;, &#39;,&#39;)     // → 1234.56
+<a id="__codelineno-139-11" name="__codelineno-139-11" href="#__codelineno-139-11"></a>e.count = &quot;2 000 000&quot;.to_int(&#39; &#39;)           // → 2000000
+<a id="__codelineno-139-12" name="__codelineno-139-12" href="#__codelineno-139-12"></a>
+<a id="__codelineno-139-13" name="__codelineno-139-13" href="#__codelineno-139-13"></a>// No thousands separator (empty string)
+<a id="__codelineno-139-14" name="__codelineno-139-14" href="#__codelineno-139-14"></a>e.price = &quot;1234.56&quot;.to_float(&quot;&quot;, &#39;.&#39;)       // → 1234.56
 </code></pre></div>
 <h4 id="to_int_orvalue-default-to_float_orvalue-default-to_bool_orvalue-default"><code>to_int_or(value, default)</code> / <code>to_float_or(value, default)</code> / <code>to_bool_or(value, default)</code><a class="headerlink" href="#to_int_orvalue-default-to_float_orvalue-default-to_bool_orvalue-default" title="Permanent link">&para;</a></h4>
 <p>Convert value to type with fallback.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>e.status = e.status_string.to_int_or(0)
-<a id="__codelineno-137-2" name="__codelineno-137-2" href="#__codelineno-137-2"></a>e.score = e.score_string.to_float_or(0.0)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>e.status = e.status_string.to_int_or(0)
+<a id="__codelineno-140-2" name="__codelineno-140-2" href="#__codelineno-140-2"></a>e.score = e.score_string.to_float_or(0.0)
 </code></pre></div>
 <h4 id="to_int_orvalue-thousands_sep-default-to_float_orvalue-thousands_sep-decimal_sep-default"><code>to_int_or(value, thousands_sep, default)</code> / <code>to_float_or(value, thousands_sep, decimal_sep, default)</code><a class="headerlink" href="#to_int_orvalue-thousands_sep-default-to_float_orvalue-thousands_sep-decimal_sep-default" title="Permanent link">&para;</a></h4>
 <p>Parse formatted numbers with separators and fallback.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>// With error handling
-<a id="__codelineno-138-2" name="__codelineno-138-2" href="#__codelineno-138-2"></a>e.amount = e.value.to_float_or(&#39;,&#39;, &#39;.&#39;, 0.0)   // Default to 0.0 if invalid
-<a id="__codelineno-138-3" name="__codelineno-138-3" href="#__codelineno-138-3"></a>e.count = e.total.to_int_or(&#39;,&#39;, 0)             // Default to 0 if invalid
+<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>// With error handling
+<a id="__codelineno-141-2" name="__codelineno-141-2" href="#__codelineno-141-2"></a>e.amount = e.value.to_float_or(&#39;,&#39;, &#39;.&#39;, 0.0)   // Default to 0.0 if invalid
+<a id="__codelineno-141-3" name="__codelineno-141-3" href="#__codelineno-141-3"></a>e.count = e.total.to_int_or(&#39;,&#39;, 0)             // Default to 0 if invalid
 </code></pre></div>
 <h4 id="valueor_empty"><code>value.or_empty()</code><a class="headerlink" href="#valueor_empty" title="Permanent link">&para;</a></h4>
 <p>Convert empty values to Unit <code>()</code> for removal/filtering.</p>
@@ -8773,58 +8903,58 @@ blue/cyan).</p>
 <li>Unit itself: <code>()</code> → <code>()</code> (pass-through)</li>
 </ul>
 <p><strong>String extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>// Extract only when prefix exists, otherwise remove field
-<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>e.name = e.message.after(&quot;prefix:&quot;).or_empty()
-<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>
-<a id="__codelineno-139-4" name="__codelineno-139-4" href="#__codelineno-139-4"></a>// Track only non-empty values
-<a id="__codelineno-139-5" name="__codelineno-139-5" href="#__codelineno-139-5"></a>track_unique(&quot;names&quot;, e.extracted.or_empty())
+<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a>// Extract only when prefix exists, otherwise remove field
+<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>e.name = e.message.after(&quot;prefix:&quot;).or_empty()
+<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>
+<a id="__codelineno-142-4" name="__codelineno-142-4" href="#__codelineno-142-4"></a>// Track only non-empty values
+<a id="__codelineno-142-5" name="__codelineno-142-5" href="#__codelineno-142-5"></a>track_unique(&quot;names&quot;, e.extracted.or_empty())
 </code></pre></div></p>
 <p><strong>Array filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>// Only assign tags if array is non-empty
-<a id="__codelineno-140-2" name="__codelineno-140-2" href="#__codelineno-140-2"></a>e.tags = e.tags.or_empty()  // [] becomes (), field removed
-<a id="__codelineno-140-3" name="__codelineno-140-3" href="#__codelineno-140-3"></a>
-<a id="__codelineno-140-4" name="__codelineno-140-4" href="#__codelineno-140-4"></a>// Track only events with items
-<a id="__codelineno-140-5" name="__codelineno-140-5" href="#__codelineno-140-5"></a>track_bucket(&quot;item_count&quot;, e.items.len())
-<a id="__codelineno-140-6" name="__codelineno-140-6" href="#__codelineno-140-6"></a>if e.items.len() == 0 {
-<a id="__codelineno-140-7" name="__codelineno-140-7" href="#__codelineno-140-7"></a>    e.items = e.items.or_empty()  // Remove empty array
-<a id="__codelineno-140-8" name="__codelineno-140-8" href="#__codelineno-140-8"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>// Only assign tags if array is non-empty
+<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>e.tags = e.tags.or_empty()  // [] becomes (), field removed
+<a id="__codelineno-143-3" name="__codelineno-143-3" href="#__codelineno-143-3"></a>
+<a id="__codelineno-143-4" name="__codelineno-143-4" href="#__codelineno-143-4"></a>// Track only events with items
+<a id="__codelineno-143-5" name="__codelineno-143-5" href="#__codelineno-143-5"></a>track_bucket(&quot;item_count&quot;, e.items.len())
+<a id="__codelineno-143-6" name="__codelineno-143-6" href="#__codelineno-143-6"></a>if e.items.len() == 0 {
+<a id="__codelineno-143-7" name="__codelineno-143-7" href="#__codelineno-143-7"></a>    e.items = e.items.or_empty()  // Remove empty array
+<a id="__codelineno-143-8" name="__codelineno-143-8" href="#__codelineno-143-8"></a>}
 </code></pre></div></p>
 <p><strong>Map filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>// Only keep non-empty metadata
-<a id="__codelineno-141-2" name="__codelineno-141-2" href="#__codelineno-141-2"></a>e.metadata = e.parse_json().or_empty()  // {} becomes (), field removed
-<a id="__codelineno-141-3" name="__codelineno-141-3" href="#__codelineno-141-3"></a>
-<a id="__codelineno-141-4" name="__codelineno-141-4" href="#__codelineno-141-4"></a>// Safe chaining with missing fields
-<a id="__codelineno-141-5" name="__codelineno-141-5" href="#__codelineno-141-5"></a>e.optional = e.maybe_field.or_empty()  // Works even if maybe_field is ()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a>// Only keep non-empty metadata
+<a id="__codelineno-144-2" name="__codelineno-144-2" href="#__codelineno-144-2"></a>e.metadata = e.parse_json().or_empty()  // {} becomes (), field removed
+<a id="__codelineno-144-3" name="__codelineno-144-3" href="#__codelineno-144-3"></a>
+<a id="__codelineno-144-4" name="__codelineno-144-4" href="#__codelineno-144-4"></a>// Safe chaining with missing fields
+<a id="__codelineno-144-5" name="__codelineno-144-5" href="#__codelineno-144-5"></a>e.optional = e.maybe_field.or_empty()  // Works even if maybe_field is ()
 </code></pre></div></p>
 <p><strong>Common pattern - conditional extraction and tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a>e.extracted = e.message.after(&quot;User:&quot;).or_empty()
-<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>track_unique(&quot;users&quot;, e.extracted)  // Only tracks when extraction succeeds
-<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>
-<a id="__codelineno-142-4" name="__codelineno-142-4" href="#__codelineno-142-4"></a>// Filter events with no data
-<a id="__codelineno-142-5" name="__codelineno-142-5" href="#__codelineno-142-5"></a>e.results = e.search_results.or_empty()
-<a id="__codelineno-142-6" name="__codelineno-142-6" href="#__codelineno-142-6"></a>track_unique(&quot;result_sets&quot;, e.results)  // Skips empty arrays and ()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-145-1" name="__codelineno-145-1" href="#__codelineno-145-1"></a>e.extracted = e.message.after(&quot;User:&quot;).or_empty()
+<a id="__codelineno-145-2" name="__codelineno-145-2" href="#__codelineno-145-2"></a>track_unique(&quot;users&quot;, e.extracted)  // Only tracks when extraction succeeds
+<a id="__codelineno-145-3" name="__codelineno-145-3" href="#__codelineno-145-3"></a>
+<a id="__codelineno-145-4" name="__codelineno-145-4" href="#__codelineno-145-4"></a>// Filter events with no data
+<a id="__codelineno-145-5" name="__codelineno-145-5" href="#__codelineno-145-5"></a>e.results = e.search_results.or_empty()
+<a id="__codelineno-145-6" name="__codelineno-145-6" href="#__codelineno-145-6"></a>track_unique(&quot;result_sets&quot;, e.results)  // Skips empty arrays and ()
 </code></pre></div></p>
 <hr />
 <h2 id="utility-functions">Utility Functions<a class="headerlink" href="#utility-functions" title="Permanent link">&para;</a></h2>
 <h4 id="get_envvar-default"><code>get_env(var [, default])</code><a class="headerlink" href="#get_envvar-default" title="Permanent link">&para;</a></h4>
 <p>Get environment variable with optional default.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>e.branch = get_env(&quot;CI_BRANCH&quot;, &quot;main&quot;)
-<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>e.build_id = get_env(&quot;BUILD_ID&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-146-1" name="__codelineno-146-1" href="#__codelineno-146-1"></a>e.branch = get_env(&quot;CI_BRANCH&quot;, &quot;main&quot;)
+<a id="__codelineno-146-2" name="__codelineno-146-2" href="#__codelineno-146-2"></a>e.build_id = get_env(&quot;BUILD_ID&quot;)
 </code></pre></div>
 <h4 id="pseudonymvalue-domain"><code>pseudonym(value, domain)</code><a class="headerlink" href="#pseudonymvalue-domain" title="Permanent link">&para;</a></h4>
 <p>Generate domain-separated pseudonym (requires <code>KELORA_SECRET</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a>e.user_alias = pseudonym(e.username, &quot;users&quot;)
-<a id="__codelineno-144-2" name="__codelineno-144-2" href="#__codelineno-144-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-147-1" name="__codelineno-147-1" href="#__codelineno-147-1"></a>e.user_alias = pseudonym(e.username, &quot;users&quot;)
+<a id="__codelineno-147-2" name="__codelineno-147-2" href="#__codelineno-147-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
 </code></pre></div>
 <h4 id="read_filepath-read_linespath"><code>read_file(path)</code> / <code>read_lines(path)</code><a class="headerlink" href="#read_filepath-read_linespath" title="Permanent link">&para;</a></h4>
 <p>Read file contents.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-145-1" name="__codelineno-145-1" href="#__codelineno-145-1"></a>e.config = read_file(&quot;config.json&quot;)
-<a id="__codelineno-145-2" name="__codelineno-145-2" href="#__codelineno-145-2"></a>e.lines = read_lines(&quot;data.txt&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-148-1" name="__codelineno-148-1" href="#__codelineno-148-1"></a>e.config = read_file(&quot;config.json&quot;)
+<a id="__codelineno-148-2" name="__codelineno-148-2" href="#__codelineno-148-2"></a>e.lines = read_lines(&quot;data.txt&quot;)
 </code></pre></div>
 <h4 id="drain_templatetext-options"><code>drain_template(text [, options])</code><a class="headerlink" href="#drain_templatetext-options" title="Permanent link">&para;</a></h4>
 <p>Add a line to the Drain template model and return <code>{template, count, is_new}</code>. Sequential mode only.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-146-1" name="__codelineno-146-1" href="#__codelineno-146-1"></a>let r = drain_template(e.message);
-<a id="__codelineno-146-2" name="__codelineno-146-2" href="#__codelineno-146-2"></a>e.template = r.template;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-149-1" name="__codelineno-149-1" href="#__codelineno-149-1"></a>let r = drain_template(e.message);
+<a id="__codelineno-149-2" name="__codelineno-149-2" href="#__codelineno-149-2"></a>e.template = r.template;
 </code></pre></div>
 <p>Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
 md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
@@ -8839,54 +8969,54 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 </ul>
 <h4 id="drain_templates"><code>drain_templates()</code><a class="headerlink" href="#drain_templates" title="Permanent link">&para;</a></h4>
 <p>Return array of <code>{template, count}</code> from the current Drain model. Sequential mode only.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-147-1" name="__codelineno-147-1" href="#__codelineno-147-1"></a>let templates = drain_templates();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-150-1" name="__codelineno-150-1" href="#__codelineno-150-1"></a>let templates = drain_templates();
 </code></pre></div>
 <h4 id="printmessage-eprintmessage"><code>print(message)</code> / <code>eprint(message)</code><a class="headerlink" href="#printmessage-eprintmessage" title="Permanent link">&para;</a></h4>
 <p>Print to stdout/stderr (suppressed with <code>--no-script-output</code> or data-only modes).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-148-1" name="__codelineno-148-1" href="#__codelineno-148-1"></a>print(&quot;Processing event: &quot; + e.id)
-<a id="__codelineno-148-2" name="__codelineno-148-2" href="#__codelineno-148-2"></a>eprint(&quot;Warning: &quot; + e.error)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-151-1" name="__codelineno-151-1" href="#__codelineno-151-1"></a>print(&quot;Processing event: &quot; + e.id)
+<a id="__codelineno-151-2" name="__codelineno-151-2" href="#__codelineno-151-2"></a>eprint(&quot;Warning: &quot; + e.error)
 </code></pre></div>
 <h4 id="exitcode"><code>exit(code)</code><a class="headerlink" href="#exitcode" title="Permanent link">&para;</a></h4>
 <p>Exit kelora with given exit code.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-149-1" name="__codelineno-149-1" href="#__codelineno-149-1"></a>if e.critical {
-<a id="__codelineno-149-2" name="__codelineno-149-2" href="#__codelineno-149-2"></a>    exit(1)
-<a id="__codelineno-149-3" name="__codelineno-149-3" href="#__codelineno-149-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a>if e.critical {
+<a id="__codelineno-152-2" name="__codelineno-152-2" href="#__codelineno-152-2"></a>    exit(1)
+<a id="__codelineno-152-3" name="__codelineno-152-3" href="#__codelineno-152-3"></a>}
 </code></pre></div>
 <h4 id="skip"><code>skip()</code><a class="headerlink" href="#skip" title="Permanent link">&para;</a></h4>
 <p>Skip the current event, mark it as filtered, and continue with the next one. Downstream stages and output for the skipped event do not run.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-150-1" name="__codelineno-150-1" href="#__codelineno-150-1"></a>if e.endpoint == &quot;/health&quot; {
-<a id="__codelineno-150-2" name="__codelineno-150-2" href="#__codelineno-150-2"></a>    skip();
-<a id="__codelineno-150-3" name="__codelineno-150-3" href="#__codelineno-150-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a>if e.endpoint == &quot;/health&quot; {
+<a id="__codelineno-153-2" name="__codelineno-153-2" href="#__codelineno-153-2"></a>    skip();
+<a id="__codelineno-153-3" name="__codelineno-153-3" href="#__codelineno-153-3"></a>}
 </code></pre></div>
 <h4 id="status_classstatus_code"><code>status_class(status_code)</code><a class="headerlink" href="#status_classstatus_code" title="Permanent link">&para;</a></h4>
 <p>Convert HTTP status code to class string ("1xx", "2xx", "3xx", "4xx", "5xx", or "unknown").</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-151-1" name="__codelineno-151-1" href="#__codelineno-151-1"></a>e.status_category = status_class(e.status)            // 404 → &quot;4xx&quot;, 200 → &quot;2xx&quot;
-<a id="__codelineno-151-2" name="__codelineno-151-2" href="#__codelineno-151-2"></a>e.is_error = status_class(e.code) == &quot;5xx&quot;
-<a id="__codelineno-151-3" name="__codelineno-151-3" href="#__codelineno-151-3"></a>
-<a id="__codelineno-151-4" name="__codelineno-151-4" href="#__codelineno-151-4"></a>// Track errors by class
-<a id="__codelineno-151-5" name="__codelineno-151-5" href="#__codelineno-151-5"></a>track_count(status_class(e.status))
-<a id="__codelineno-151-6" name="__codelineno-151-6" href="#__codelineno-151-6"></a>
-<a id="__codelineno-151-7" name="__codelineno-151-7" href="#__codelineno-151-7"></a>// Group status codes for analysis
-<a id="__codelineno-151-8" name="__codelineno-151-8" href="#__codelineno-151-8"></a>e.status_group = status_class(e.response_code)        // 503 → &quot;5xx&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a>e.status_category = status_class(e.status)            // 404 → &quot;4xx&quot;, 200 → &quot;2xx&quot;
+<a id="__codelineno-154-2" name="__codelineno-154-2" href="#__codelineno-154-2"></a>e.is_error = status_class(e.code) == &quot;5xx&quot;
+<a id="__codelineno-154-3" name="__codelineno-154-3" href="#__codelineno-154-3"></a>
+<a id="__codelineno-154-4" name="__codelineno-154-4" href="#__codelineno-154-4"></a>// Track errors by class
+<a id="__codelineno-154-5" name="__codelineno-154-5" href="#__codelineno-154-5"></a>track_count(status_class(e.status))
+<a id="__codelineno-154-6" name="__codelineno-154-6" href="#__codelineno-154-6"></a>
+<a id="__codelineno-154-7" name="__codelineno-154-7" href="#__codelineno-154-7"></a>// Group status codes for analysis
+<a id="__codelineno-154-8" name="__codelineno-154-8" href="#__codelineno-154-8"></a>e.status_group = status_class(e.response_code)        // 503 → &quot;5xx&quot;
 </code></pre></div>
 <h4 id="type_ofvalue"><code>type_of(value)</code><a class="headerlink" href="#type_ofvalue" title="Permanent link">&para;</a></h4>
 <p>Get type name as string.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a>e.value_type = type_of(e.value)                       // &quot;string&quot;, &quot;int&quot;, &quot;array&quot;, etc.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>e.value_type = type_of(e.value)                       // &quot;string&quot;, &quot;int&quot;, &quot;array&quot;, etc.
 </code></pre></div>
 <h4 id="windowpluckfield-windowpluck_as_numsfield"><code>window.pluck(field)</code> / <code>window.pluck_as_nums(field)</code><a class="headerlink" href="#windowpluckfield-windowpluck_as_numsfield" title="Permanent link">&para;</a></h4>
 <p>Extract field values from the sliding window array (requires <code>--window</code>). See <a href="#arraypluckfield--arraypluck_as_numsfield"><code>array.pluck()</code></a> for detailed documentation.</p>
 <p>The <code>window</code> variable is an array containing the N most recent events, making <code>pluck()</code> especially useful for rolling calculations and burst detection.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a>// Rolling average of response times
-<a id="__codelineno-153-2" name="__codelineno-153-2" href="#__codelineno-153-2"></a>let recent_times = window.pluck_as_nums(&quot;response_time&quot;)
-<a id="__codelineno-153-3" name="__codelineno-153-3" href="#__codelineno-153-3"></a>e.avg_recent = recent_times.reduce(|sum, x| sum + x, 0) / recent_times.len()
-<a id="__codelineno-153-4" name="__codelineno-153-4" href="#__codelineno-153-4"></a>
-<a id="__codelineno-153-5" name="__codelineno-153-5" href="#__codelineno-153-5"></a>// Detect error bursts
-<a id="__codelineno-153-6" name="__codelineno-153-6" href="#__codelineno-153-6"></a>let recent_statuses = window.pluck(&quot;status&quot;)
-<a id="__codelineno-153-7" name="__codelineno-153-7" href="#__codelineno-153-7"></a>e.error_burst = recent_statuses.filter(|s| s &gt;= 500).len() &gt;= 3
-<a id="__codelineno-153-8" name="__codelineno-153-8" href="#__codelineno-153-8"></a>
-<a id="__codelineno-153-9" name="__codelineno-153-9" href="#__codelineno-153-9"></a>// Compare current vs recent average
-<a id="__codelineno-153-10" name="__codelineno-153-10" href="#__codelineno-153-10"></a>let recent_vals = window.pluck_as_nums(&quot;value&quot;)
-<a id="__codelineno-153-11" name="__codelineno-153-11" href="#__codelineno-153-11"></a>e.spike = e.value &gt; (recent_vals.reduce(|s, x| s + x, 0) / recent_vals.len()) * 2
+<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a>// Rolling average of response times
+<a id="__codelineno-156-2" name="__codelineno-156-2" href="#__codelineno-156-2"></a>let recent_times = window.pluck_as_nums(&quot;response_time&quot;)
+<a id="__codelineno-156-3" name="__codelineno-156-3" href="#__codelineno-156-3"></a>e.avg_recent = recent_times.reduce(|sum, x| sum + x, 0) / recent_times.len()
+<a id="__codelineno-156-4" name="__codelineno-156-4" href="#__codelineno-156-4"></a>
+<a id="__codelineno-156-5" name="__codelineno-156-5" href="#__codelineno-156-5"></a>// Detect error bursts
+<a id="__codelineno-156-6" name="__codelineno-156-6" href="#__codelineno-156-6"></a>let recent_statuses = window.pluck(&quot;status&quot;)
+<a id="__codelineno-156-7" name="__codelineno-156-7" href="#__codelineno-156-7"></a>e.error_burst = recent_statuses.filter(|s| s &gt;= 500).len() &gt;= 3
+<a id="__codelineno-156-8" name="__codelineno-156-8" href="#__codelineno-156-8"></a>
+<a id="__codelineno-156-9" name="__codelineno-156-9" href="#__codelineno-156-9"></a>// Compare current vs recent average
+<a id="__codelineno-156-10" name="__codelineno-156-10" href="#__codelineno-156-10"></a>let recent_vals = window.pluck_as_nums(&quot;value&quot;)
+<a id="__codelineno-156-11" name="__codelineno-156-11" href="#__codelineno-156-11"></a>e.spike = e.value &gt; (recent_vals.reduce(|s, x| s + x, 0) / recent_vals.len()) * 2
 </code></pre></div>
 <hr />
 <h2 id="state-management-functions">State Management Functions<a class="headerlink" href="#state-management-functions" title="Permanent link">&para;</a></h2>
@@ -8898,151 +9028,151 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <h3 id="basic-operations">Basic Operations<a class="headerlink" href="#basic-operations" title="Permanent link">&para;</a></h3>
 <h4 id="statekey-statekey-value"><code>state["key"]</code> / <code>state[key] = value</code><a class="headerlink" href="#statekey-statekey-value" title="Permanent link">&para;</a></h4>
 <p>Get or set values using indexer syntax.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a>// Initialize counter
-<a id="__codelineno-154-2" name="__codelineno-154-2" href="#__codelineno-154-2"></a>state[&quot;count&quot;] = 0
-<a id="__codelineno-154-3" name="__codelineno-154-3" href="#__codelineno-154-3"></a>
-<a id="__codelineno-154-4" name="__codelineno-154-4" href="#__codelineno-154-4"></a>// Increment counter
-<a id="__codelineno-154-5" name="__codelineno-154-5" href="#__codelineno-154-5"></a>state[&quot;count&quot;] = state[&quot;count&quot;] + 1
-<a id="__codelineno-154-6" name="__codelineno-154-6" href="#__codelineno-154-6"></a>
-<a id="__codelineno-154-7" name="__codelineno-154-7" href="#__codelineno-154-7"></a>// Track unique IPs
-<a id="__codelineno-154-8" name="__codelineno-154-8" href="#__codelineno-154-8"></a>if !state.contains(&quot;seen_ips&quot;) {
-<a id="__codelineno-154-9" name="__codelineno-154-9" href="#__codelineno-154-9"></a>    state[&quot;seen_ips&quot;] = []
-<a id="__codelineno-154-10" name="__codelineno-154-10" href="#__codelineno-154-10"></a>}
-<a id="__codelineno-154-11" name="__codelineno-154-11" href="#__codelineno-154-11"></a>state[&quot;seen_ips&quot;].push(e.ip)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>// Initialize counter
+<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>state[&quot;count&quot;] = 0
+<a id="__codelineno-157-3" name="__codelineno-157-3" href="#__codelineno-157-3"></a>
+<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>// Increment counter
+<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>state[&quot;count&quot;] = state[&quot;count&quot;] + 1
+<a id="__codelineno-157-6" name="__codelineno-157-6" href="#__codelineno-157-6"></a>
+<a id="__codelineno-157-7" name="__codelineno-157-7" href="#__codelineno-157-7"></a>// Track unique IPs
+<a id="__codelineno-157-8" name="__codelineno-157-8" href="#__codelineno-157-8"></a>if !state.contains(&quot;seen_ips&quot;) {
+<a id="__codelineno-157-9" name="__codelineno-157-9" href="#__codelineno-157-9"></a>    state[&quot;seen_ips&quot;] = []
+<a id="__codelineno-157-10" name="__codelineno-157-10" href="#__codelineno-157-10"></a>}
+<a id="__codelineno-157-11" name="__codelineno-157-11" href="#__codelineno-157-11"></a>state[&quot;seen_ips&quot;].push(e.ip)
 </code></pre></div>
 <h4 id="stategetkey-statesetkey-value"><code>state.get(key)</code> / <code>state.set(key, value)</code><a class="headerlink" href="#stategetkey-statesetkey-value" title="Permanent link">&para;</a></h4>
 <p>Get or set values using method syntax. <code>get()</code> returns <code>()</code> if key doesn't exist.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>let count = state.get(&quot;count&quot;)                        // Returns () if not found
-<a id="__codelineno-155-2" name="__codelineno-155-2" href="#__codelineno-155-2"></a>state.set(&quot;total_bytes&quot;, 0)
-<a id="__codelineno-155-3" name="__codelineno-155-3" href="#__codelineno-155-3"></a>
-<a id="__codelineno-155-4" name="__codelineno-155-4" href="#__codelineno-155-4"></a>// Safer pattern with default
-<a id="__codelineno-155-5" name="__codelineno-155-5" href="#__codelineno-155-5"></a>let current = state.get(&quot;count&quot;) ?? 0
-<a id="__codelineno-155-6" name="__codelineno-155-6" href="#__codelineno-155-6"></a>state.set(&quot;count&quot;, current + 1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a>let count = state.get(&quot;count&quot;)                        // Returns () if not found
+<a id="__codelineno-158-2" name="__codelineno-158-2" href="#__codelineno-158-2"></a>state.set(&quot;total_bytes&quot;, 0)
+<a id="__codelineno-158-3" name="__codelineno-158-3" href="#__codelineno-158-3"></a>
+<a id="__codelineno-158-4" name="__codelineno-158-4" href="#__codelineno-158-4"></a>// Safer pattern with default
+<a id="__codelineno-158-5" name="__codelineno-158-5" href="#__codelineno-158-5"></a>let current = state.get(&quot;count&quot;) ?? 0
+<a id="__codelineno-158-6" name="__codelineno-158-6" href="#__codelineno-158-6"></a>state.set(&quot;count&quot;, current + 1)
 </code></pre></div>
 <h4 id="statecontainskey"><code>state.contains(key)</code><a class="headerlink" href="#statecontainskey" title="Permanent link">&para;</a></h4>
 <p>Check if a key exists in state.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a>if !state.contains(&quot;initialized&quot;) {
-<a id="__codelineno-156-2" name="__codelineno-156-2" href="#__codelineno-156-2"></a>    state[&quot;initialized&quot;] = true
-<a id="__codelineno-156-3" name="__codelineno-156-3" href="#__codelineno-156-3"></a>    state[&quot;start_time&quot;] = now()
-<a id="__codelineno-156-4" name="__codelineno-156-4" href="#__codelineno-156-4"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a>if !state.contains(&quot;initialized&quot;) {
+<a id="__codelineno-159-2" name="__codelineno-159-2" href="#__codelineno-159-2"></a>    state[&quot;initialized&quot;] = true
+<a id="__codelineno-159-3" name="__codelineno-159-3" href="#__codelineno-159-3"></a>    state[&quot;start_time&quot;] = now()
+<a id="__codelineno-159-4" name="__codelineno-159-4" href="#__codelineno-159-4"></a>}
 </code></pre></div>
 <h3 id="map-operations">Map Operations<a class="headerlink" href="#map-operations" title="Permanent link">&para;</a></h3>
 <h4 id="statekeys-statevalues"><code>state.keys()</code> / <code>state.values()</code><a class="headerlink" href="#statekeys-statevalues" title="Permanent link">&para;</a></h4>
 <p>Get arrays of all keys or values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>let all_keys = state.keys()                           // [&quot;count&quot;, &quot;total&quot;, &quot;seen_ips&quot;]
-<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>let all_values = state.values()                       // [42, 1024, [...]]
-<a id="__codelineno-157-3" name="__codelineno-157-3" href="#__codelineno-157-3"></a>
-<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>// Iterate over all state entries
-<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>for key in state.keys() {
-<a id="__codelineno-157-6" name="__codelineno-157-6" href="#__codelineno-157-6"></a>    print(key + &quot;: &quot; + state[key].to_string())
-<a id="__codelineno-157-7" name="__codelineno-157-7" href="#__codelineno-157-7"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a>let all_keys = state.keys()                           // [&quot;count&quot;, &quot;total&quot;, &quot;seen_ips&quot;]
+<a id="__codelineno-160-2" name="__codelineno-160-2" href="#__codelineno-160-2"></a>let all_values = state.values()                       // [42, 1024, [...]]
+<a id="__codelineno-160-3" name="__codelineno-160-3" href="#__codelineno-160-3"></a>
+<a id="__codelineno-160-4" name="__codelineno-160-4" href="#__codelineno-160-4"></a>// Iterate over all state entries
+<a id="__codelineno-160-5" name="__codelineno-160-5" href="#__codelineno-160-5"></a>for key in state.keys() {
+<a id="__codelineno-160-6" name="__codelineno-160-6" href="#__codelineno-160-6"></a>    print(key + &quot;: &quot; + state[key].to_string())
+<a id="__codelineno-160-7" name="__codelineno-160-7" href="#__codelineno-160-7"></a>}
 </code></pre></div>
 <h4 id="statelen-stateis_empty"><code>state.len()</code> / <code>state.is_empty()</code><a class="headerlink" href="#statelen-stateis_empty" title="Permanent link">&para;</a></h4>
 <p>Get number of entries or check if empty.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a>if state.is_empty() {
-<a id="__codelineno-158-2" name="__codelineno-158-2" href="#__codelineno-158-2"></a>    state[&quot;initialized&quot;] = true
-<a id="__codelineno-158-3" name="__codelineno-158-3" href="#__codelineno-158-3"></a>}
-<a id="__codelineno-158-4" name="__codelineno-158-4" href="#__codelineno-158-4"></a>
-<a id="__codelineno-158-5" name="__codelineno-158-5" href="#__codelineno-158-5"></a>let num_keys = state.len()                            // Number of entries
+<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a>if state.is_empty() {
+<a id="__codelineno-161-2" name="__codelineno-161-2" href="#__codelineno-161-2"></a>    state[&quot;initialized&quot;] = true
+<a id="__codelineno-161-3" name="__codelineno-161-3" href="#__codelineno-161-3"></a>}
+<a id="__codelineno-161-4" name="__codelineno-161-4" href="#__codelineno-161-4"></a>
+<a id="__codelineno-161-5" name="__codelineno-161-5" href="#__codelineno-161-5"></a>let num_keys = state.len()                            // Number of entries
 </code></pre></div>
 <h4 id="stateremovekey"><code>state.remove(key)</code><a class="headerlink" href="#stateremovekey" title="Permanent link">&para;</a></h4>
 <p>Remove a key from state and return its value (or <code>()</code> if not found).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a>let old_value = state.remove(&quot;temp_data&quot;)             // Remove and get value
-<a id="__codelineno-159-2" name="__codelineno-159-2" href="#__codelineno-159-2"></a>state.remove(&quot;cache&quot;)                                 // Just remove
+<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a>let old_value = state.remove(&quot;temp_data&quot;)             // Remove and get value
+<a id="__codelineno-162-2" name="__codelineno-162-2" href="#__codelineno-162-2"></a>state.remove(&quot;cache&quot;)                                 // Just remove
 </code></pre></div>
 <h4 id="stateclear"><code>state.clear()</code><a class="headerlink" href="#stateclear" title="Permanent link">&para;</a></h4>
 <p>Remove all entries from state.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a>// Reset state
-<a id="__codelineno-160-2" name="__codelineno-160-2" href="#__codelineno-160-2"></a>state.clear()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a>// Reset state
+<a id="__codelineno-163-2" name="__codelineno-163-2" href="#__codelineno-163-2"></a>state.clear()
 </code></pre></div>
 <h3 id="bulk-operations">Bulk Operations<a class="headerlink" href="#bulk-operations" title="Permanent link">&para;</a></h3>
 <h4 id="statemixinmap"><code>state.mixin(map)</code><a class="headerlink" href="#statemixinmap" title="Permanent link">&para;</a></h4>
 <p>Merge a map into state, overwriting existing keys.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a>// Initialize multiple values
-<a id="__codelineno-161-2" name="__codelineno-161-2" href="#__codelineno-161-2"></a>state.mixin(#{
-<a id="__codelineno-161-3" name="__codelineno-161-3" href="#__codelineno-161-3"></a>    count: 0,
-<a id="__codelineno-161-4" name="__codelineno-161-4" href="#__codelineno-161-4"></a>    total_bytes: 0,
-<a id="__codelineno-161-5" name="__codelineno-161-5" href="#__codelineno-161-5"></a>    seen_users: []
-<a id="__codelineno-161-6" name="__codelineno-161-6" href="#__codelineno-161-6"></a>})
-<a id="__codelineno-161-7" name="__codelineno-161-7" href="#__codelineno-161-7"></a>
-<a id="__codelineno-161-8" name="__codelineno-161-8" href="#__codelineno-161-8"></a>// Merge new data
-<a id="__codelineno-161-9" name="__codelineno-161-9" href="#__codelineno-161-9"></a>state.mixin(e.metadata)                               // Add all metadata fields
+<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>// Initialize multiple values
+<a id="__codelineno-164-2" name="__codelineno-164-2" href="#__codelineno-164-2"></a>state.mixin(#{
+<a id="__codelineno-164-3" name="__codelineno-164-3" href="#__codelineno-164-3"></a>    count: 0,
+<a id="__codelineno-164-4" name="__codelineno-164-4" href="#__codelineno-164-4"></a>    total_bytes: 0,
+<a id="__codelineno-164-5" name="__codelineno-164-5" href="#__codelineno-164-5"></a>    seen_users: []
+<a id="__codelineno-164-6" name="__codelineno-164-6" href="#__codelineno-164-6"></a>})
+<a id="__codelineno-164-7" name="__codelineno-164-7" href="#__codelineno-164-7"></a>
+<a id="__codelineno-164-8" name="__codelineno-164-8" href="#__codelineno-164-8"></a>// Merge new data
+<a id="__codelineno-164-9" name="__codelineno-164-9" href="#__codelineno-164-9"></a>state.mixin(e.metadata)                               // Add all metadata fields
 </code></pre></div>
 <h4 id="statefill_withmap"><code>state.fill_with(map)</code><a class="headerlink" href="#statefill_withmap" title="Permanent link">&para;</a></h4>
 <p>Replace entire state with a new map.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a>// Reset state with new values
-<a id="__codelineno-162-2" name="__codelineno-162-2" href="#__codelineno-162-2"></a>state.fill_with(#{
-<a id="__codelineno-162-3" name="__codelineno-162-3" href="#__codelineno-162-3"></a>    count: 0,
-<a id="__codelineno-162-4" name="__codelineno-162-4" href="#__codelineno-162-4"></a>    start_time: now()
-<a id="__codelineno-162-5" name="__codelineno-162-5" href="#__codelineno-162-5"></a>})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-165-1" name="__codelineno-165-1" href="#__codelineno-165-1"></a>// Reset state with new values
+<a id="__codelineno-165-2" name="__codelineno-165-2" href="#__codelineno-165-2"></a>state.fill_with(#{
+<a id="__codelineno-165-3" name="__codelineno-165-3" href="#__codelineno-165-3"></a>    count: 0,
+<a id="__codelineno-165-4" name="__codelineno-165-4" href="#__codelineno-165-4"></a>    start_time: now()
+<a id="__codelineno-165-5" name="__codelineno-165-5" href="#__codelineno-165-5"></a>})
 </code></pre></div>
 <h4 id="state-map"><code>state += map</code><a class="headerlink" href="#state-map" title="Permanent link">&para;</a></h4>
 <p>Operator form of <code>mixin()</code> - merge map into state.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a>state += #{ new_field: 42, another: &quot;value&quot; }
+<div class="highlight"><pre><span></span><code><a id="__codelineno-166-1" name="__codelineno-166-1" href="#__codelineno-166-1"></a>state += #{ new_field: 42, another: &quot;value&quot; }
 </code></pre></div>
 <h3 id="conversion">Conversion<a class="headerlink" href="#conversion" title="Permanent link">&para;</a></h3>
 <h4 id="stateto_map"><code>state.to_map()</code><a class="headerlink" href="#stateto_map" title="Permanent link">&para;</a></h4>
 <p>Convert state to a regular map for use with other functions.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>// Export state as JSON
-<a id="__codelineno-164-2" name="__codelineno-164-2" href="#__codelineno-164-2"></a>let state_json = state.to_map().to_json()
-<a id="__codelineno-164-3" name="__codelineno-164-3" href="#__codelineno-164-3"></a>print(state_json)
-<a id="__codelineno-164-4" name="__codelineno-164-4" href="#__codelineno-164-4"></a>
-<a id="__codelineno-164-5" name="__codelineno-164-5" href="#__codelineno-164-5"></a>// Export as logfmt
-<a id="__codelineno-164-6" name="__codelineno-164-6" href="#__codelineno-164-6"></a>let state_logfmt = state.to_map().to_logfmt()
-<a id="__codelineno-164-7" name="__codelineno-164-7" href="#__codelineno-164-7"></a>
-<a id="__codelineno-164-8" name="__codelineno-164-8" href="#__codelineno-164-8"></a>// Use in conditions
-<a id="__codelineno-164-9" name="__codelineno-164-9" href="#__codelineno-164-9"></a>let snapshot = state.to_map()
-<a id="__codelineno-164-10" name="__codelineno-164-10" href="#__codelineno-164-10"></a>if snapshot.contains(&quot;error_count&quot;) &amp;&amp; snapshot[&quot;error_count&quot;] &gt; 100 {
-<a id="__codelineno-164-11" name="__codelineno-164-11" href="#__codelineno-164-11"></a>    exit(1)
-<a id="__codelineno-164-12" name="__codelineno-164-12" href="#__codelineno-164-12"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-167-1" name="__codelineno-167-1" href="#__codelineno-167-1"></a>// Export state as JSON
+<a id="__codelineno-167-2" name="__codelineno-167-2" href="#__codelineno-167-2"></a>let state_json = state.to_map().to_json()
+<a id="__codelineno-167-3" name="__codelineno-167-3" href="#__codelineno-167-3"></a>print(state_json)
+<a id="__codelineno-167-4" name="__codelineno-167-4" href="#__codelineno-167-4"></a>
+<a id="__codelineno-167-5" name="__codelineno-167-5" href="#__codelineno-167-5"></a>// Export as logfmt
+<a id="__codelineno-167-6" name="__codelineno-167-6" href="#__codelineno-167-6"></a>let state_logfmt = state.to_map().to_logfmt()
+<a id="__codelineno-167-7" name="__codelineno-167-7" href="#__codelineno-167-7"></a>
+<a id="__codelineno-167-8" name="__codelineno-167-8" href="#__codelineno-167-8"></a>// Use in conditions
+<a id="__codelineno-167-9" name="__codelineno-167-9" href="#__codelineno-167-9"></a>let snapshot = state.to_map()
+<a id="__codelineno-167-10" name="__codelineno-167-10" href="#__codelineno-167-10"></a>if snapshot.contains(&quot;error_count&quot;) &amp;&amp; snapshot[&quot;error_count&quot;] &gt; 100 {
+<a id="__codelineno-167-11" name="__codelineno-167-11" href="#__codelineno-167-11"></a>    exit(1)
+<a id="__codelineno-167-12" name="__codelineno-167-12" href="#__codelineno-167-12"></a>}
 </code></pre></div>
 <h3 id="practical-examples">Practical Examples<a class="headerlink" href="#practical-examples" title="Permanent link">&para;</a></h3>
 <p><strong>Counter Pattern:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-165-1" name="__codelineno-165-1" href="#__codelineno-165-1"></a>// Initialize on first event
-<a id="__codelineno-165-2" name="__codelineno-165-2" href="#__codelineno-165-2"></a>if state.is_empty() {
-<a id="__codelineno-165-3" name="__codelineno-165-3" href="#__codelineno-165-3"></a>    state[&quot;event_count&quot;] = 0
-<a id="__codelineno-165-4" name="__codelineno-165-4" href="#__codelineno-165-4"></a>    state[&quot;error_count&quot;] = 0
-<a id="__codelineno-165-5" name="__codelineno-165-5" href="#__codelineno-165-5"></a>}
-<a id="__codelineno-165-6" name="__codelineno-165-6" href="#__codelineno-165-6"></a>
-<a id="__codelineno-165-7" name="__codelineno-165-7" href="#__codelineno-165-7"></a>// Increment counters
-<a id="__codelineno-165-8" name="__codelineno-165-8" href="#__codelineno-165-8"></a>state[&quot;event_count&quot;] = state[&quot;event_count&quot;] + 1
-<a id="__codelineno-165-9" name="__codelineno-165-9" href="#__codelineno-165-9"></a>if e.level == &quot;ERROR&quot; {
-<a id="__codelineno-165-10" name="__codelineno-165-10" href="#__codelineno-165-10"></a>    state[&quot;error_count&quot;] = state[&quot;error_count&quot;] + 1
-<a id="__codelineno-165-11" name="__codelineno-165-11" href="#__codelineno-165-11"></a>}
-<a id="__codelineno-165-12" name="__codelineno-165-12" href="#__codelineno-165-12"></a>
-<a id="__codelineno-165-13" name="__codelineno-165-13" href="#__codelineno-165-13"></a>// Output summary at end
-<a id="__codelineno-165-14" name="__codelineno-165-14" href="#__codelineno-165-14"></a>--end &#39;print(&quot;Events: &quot; + state[&quot;event_count&quot;] + &quot;, Errors: &quot; + state[&quot;error_count&quot;])&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-168-1" name="__codelineno-168-1" href="#__codelineno-168-1"></a>// Initialize on first event
+<a id="__codelineno-168-2" name="__codelineno-168-2" href="#__codelineno-168-2"></a>if state.is_empty() {
+<a id="__codelineno-168-3" name="__codelineno-168-3" href="#__codelineno-168-3"></a>    state[&quot;event_count&quot;] = 0
+<a id="__codelineno-168-4" name="__codelineno-168-4" href="#__codelineno-168-4"></a>    state[&quot;error_count&quot;] = 0
+<a id="__codelineno-168-5" name="__codelineno-168-5" href="#__codelineno-168-5"></a>}
+<a id="__codelineno-168-6" name="__codelineno-168-6" href="#__codelineno-168-6"></a>
+<a id="__codelineno-168-7" name="__codelineno-168-7" href="#__codelineno-168-7"></a>// Increment counters
+<a id="__codelineno-168-8" name="__codelineno-168-8" href="#__codelineno-168-8"></a>state[&quot;event_count&quot;] = state[&quot;event_count&quot;] + 1
+<a id="__codelineno-168-9" name="__codelineno-168-9" href="#__codelineno-168-9"></a>if e.level == &quot;ERROR&quot; {
+<a id="__codelineno-168-10" name="__codelineno-168-10" href="#__codelineno-168-10"></a>    state[&quot;error_count&quot;] = state[&quot;error_count&quot;] + 1
+<a id="__codelineno-168-11" name="__codelineno-168-11" href="#__codelineno-168-11"></a>}
+<a id="__codelineno-168-12" name="__codelineno-168-12" href="#__codelineno-168-12"></a>
+<a id="__codelineno-168-13" name="__codelineno-168-13" href="#__codelineno-168-13"></a>// Output summary at end
+<a id="__codelineno-168-14" name="__codelineno-168-14" href="#__codelineno-168-14"></a>--end &#39;print(&quot;Events: &quot; + state[&quot;event_count&quot;] + &quot;, Errors: &quot; + state[&quot;error_count&quot;])&#39;
 </code></pre></div></p>
 <p><strong>Deduplication Pattern:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-166-1" name="__codelineno-166-1" href="#__codelineno-166-1"></a>// Initialize seen set
-<a id="__codelineno-166-2" name="__codelineno-166-2" href="#__codelineno-166-2"></a>if !state.contains(&quot;seen_ids&quot;) {
-<a id="__codelineno-166-3" name="__codelineno-166-3" href="#__codelineno-166-3"></a>    state[&quot;seen_ids&quot;] = #{}  // Use map as set
-<a id="__codelineno-166-4" name="__codelineno-166-4" href="#__codelineno-166-4"></a>}
-<a id="__codelineno-166-5" name="__codelineno-166-5" href="#__codelineno-166-5"></a>
-<a id="__codelineno-166-6" name="__codelineno-166-6" href="#__codelineno-166-6"></a>// Skip duplicates
-<a id="__codelineno-166-7" name="__codelineno-166-7" href="#__codelineno-166-7"></a>if state[&quot;seen_ids&quot;].contains(e.request_id) {
-<a id="__codelineno-166-8" name="__codelineno-166-8" href="#__codelineno-166-8"></a>    skip()
-<a id="__codelineno-166-9" name="__codelineno-166-9" href="#__codelineno-166-9"></a>}
-<a id="__codelineno-166-10" name="__codelineno-166-10" href="#__codelineno-166-10"></a>state[&quot;seen_ids&quot;][e.request_id] = true
+<div class="highlight"><pre><span></span><code><a id="__codelineno-169-1" name="__codelineno-169-1" href="#__codelineno-169-1"></a>// Initialize seen set
+<a id="__codelineno-169-2" name="__codelineno-169-2" href="#__codelineno-169-2"></a>if !state.contains(&quot;seen_ids&quot;) {
+<a id="__codelineno-169-3" name="__codelineno-169-3" href="#__codelineno-169-3"></a>    state[&quot;seen_ids&quot;] = #{}  // Use map as set
+<a id="__codelineno-169-4" name="__codelineno-169-4" href="#__codelineno-169-4"></a>}
+<a id="__codelineno-169-5" name="__codelineno-169-5" href="#__codelineno-169-5"></a>
+<a id="__codelineno-169-6" name="__codelineno-169-6" href="#__codelineno-169-6"></a>// Skip duplicates
+<a id="__codelineno-169-7" name="__codelineno-169-7" href="#__codelineno-169-7"></a>if state[&quot;seen_ids&quot;].contains(e.request_id) {
+<a id="__codelineno-169-8" name="__codelineno-169-8" href="#__codelineno-169-8"></a>    skip()
+<a id="__codelineno-169-9" name="__codelineno-169-9" href="#__codelineno-169-9"></a>}
+<a id="__codelineno-169-10" name="__codelineno-169-10" href="#__codelineno-169-10"></a>state[&quot;seen_ids&quot;][e.request_id] = true
 </code></pre></div></p>
 <p><strong>Session Tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-167-1" name="__codelineno-167-1" href="#__codelineno-167-1"></a>// Track active sessions
-<a id="__codelineno-167-2" name="__codelineno-167-2" href="#__codelineno-167-2"></a>if !state.contains(&quot;sessions&quot;) {
-<a id="__codelineno-167-3" name="__codelineno-167-3" href="#__codelineno-167-3"></a>    state[&quot;sessions&quot;] = #{}
-<a id="__codelineno-167-4" name="__codelineno-167-4" href="#__codelineno-167-4"></a>}
-<a id="__codelineno-167-5" name="__codelineno-167-5" href="#__codelineno-167-5"></a>
-<a id="__codelineno-167-6" name="__codelineno-167-6" href="#__codelineno-167-6"></a>let session_id = e.session_id
-<a id="__codelineno-167-7" name="__codelineno-167-7" href="#__codelineno-167-7"></a>if !state[&quot;sessions&quot;].contains(session_id) {
-<a id="__codelineno-167-8" name="__codelineno-167-8" href="#__codelineno-167-8"></a>    state[&quot;sessions&quot;][session_id] = #{
-<a id="__codelineno-167-9" name="__codelineno-167-9" href="#__codelineno-167-9"></a>        start: e.timestamp,
-<a id="__codelineno-167-10" name="__codelineno-167-10" href="#__codelineno-167-10"></a>        events: 0
-<a id="__codelineno-167-11" name="__codelineno-167-11" href="#__codelineno-167-11"></a>    }
-<a id="__codelineno-167-12" name="__codelineno-167-12" href="#__codelineno-167-12"></a>}
-<a id="__codelineno-167-13" name="__codelineno-167-13" href="#__codelineno-167-13"></a>
-<a id="__codelineno-167-14" name="__codelineno-167-14" href="#__codelineno-167-14"></a>// Update session
-<a id="__codelineno-167-15" name="__codelineno-167-15" href="#__codelineno-167-15"></a>let session = state[&quot;sessions&quot;][session_id]
-<a id="__codelineno-167-16" name="__codelineno-167-16" href="#__codelineno-167-16"></a>session[&quot;events&quot;] = session[&quot;events&quot;] + 1
-<a id="__codelineno-167-17" name="__codelineno-167-17" href="#__codelineno-167-17"></a>session[&quot;last_seen&quot;] = e.timestamp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-170-1" name="__codelineno-170-1" href="#__codelineno-170-1"></a>// Track active sessions
+<a id="__codelineno-170-2" name="__codelineno-170-2" href="#__codelineno-170-2"></a>if !state.contains(&quot;sessions&quot;) {
+<a id="__codelineno-170-3" name="__codelineno-170-3" href="#__codelineno-170-3"></a>    state[&quot;sessions&quot;] = #{}
+<a id="__codelineno-170-4" name="__codelineno-170-4" href="#__codelineno-170-4"></a>}
+<a id="__codelineno-170-5" name="__codelineno-170-5" href="#__codelineno-170-5"></a>
+<a id="__codelineno-170-6" name="__codelineno-170-6" href="#__codelineno-170-6"></a>let session_id = e.session_id
+<a id="__codelineno-170-7" name="__codelineno-170-7" href="#__codelineno-170-7"></a>if !state[&quot;sessions&quot;].contains(session_id) {
+<a id="__codelineno-170-8" name="__codelineno-170-8" href="#__codelineno-170-8"></a>    state[&quot;sessions&quot;][session_id] = #{
+<a id="__codelineno-170-9" name="__codelineno-170-9" href="#__codelineno-170-9"></a>        start: e.timestamp,
+<a id="__codelineno-170-10" name="__codelineno-170-10" href="#__codelineno-170-10"></a>        events: 0
+<a id="__codelineno-170-11" name="__codelineno-170-11" href="#__codelineno-170-11"></a>    }
+<a id="__codelineno-170-12" name="__codelineno-170-12" href="#__codelineno-170-12"></a>}
+<a id="__codelineno-170-13" name="__codelineno-170-13" href="#__codelineno-170-13"></a>
+<a id="__codelineno-170-14" name="__codelineno-170-14" href="#__codelineno-170-14"></a>// Update session
+<a id="__codelineno-170-15" name="__codelineno-170-15" href="#__codelineno-170-15"></a>let session = state[&quot;sessions&quot;][session_id]
+<a id="__codelineno-170-16" name="__codelineno-170-16" href="#__codelineno-170-16"></a>session[&quot;events&quot;] = session[&quot;events&quot;] + 1
+<a id="__codelineno-170-17" name="__codelineno-170-17" href="#__codelineno-170-17"></a>session[&quot;last_seen&quot;] = e.timestamp
 </code></pre></div></p>
 <hr />
 <h2 id="trackingmetrics-functions">Tracking/Metrics Functions<a class="headerlink" href="#trackingmetrics-functions" title="Permanent link">&para;</a></h2>
@@ -9054,63 +9184,63 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <h3 id="tracking-functions">Tracking Functions<a class="headerlink" href="#tracking-functions" title="Permanent link">&para;</a></h3>
 <h4 id="track_avgkey-value"><code>track_avg(key, value)</code><a class="headerlink" href="#track_avgkey-value" title="Permanent link">&para;</a></h4>
 <p>Track average of numeric values for key. Automatically computes the average during output. Skips Unit <code>()</code> values. Works correctly in parallel mode.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-168-1" name="__codelineno-168-1" href="#__codelineno-168-1"></a>track_avg(&quot;avg_latency&quot;, e.response_time)
-<a id="__codelineno-168-2" name="__codelineno-168-2" href="#__codelineno-168-2"></a>track_avg(e.endpoint, e.duration_ms)
-<a id="__codelineno-168-3" name="__codelineno-168-3" href="#__codelineno-168-3"></a>
-<a id="__codelineno-168-4" name="__codelineno-168-4" href="#__codelineno-168-4"></a>// Safe with conversions that may fail
-<a id="__codelineno-168-5" name="__codelineno-168-5" href="#__codelineno-168-5"></a>let latency = e.latency_str.to_float()  // Returns () on error
-<a id="__codelineno-168-6" name="__codelineno-168-6" href="#__codelineno-168-6"></a>track_avg(&quot;avg_ms&quot;, latency)            // Skips () values
+<div class="highlight"><pre><span></span><code><a id="__codelineno-171-1" name="__codelineno-171-1" href="#__codelineno-171-1"></a>track_avg(&quot;avg_latency&quot;, e.response_time)
+<a id="__codelineno-171-2" name="__codelineno-171-2" href="#__codelineno-171-2"></a>track_avg(e.endpoint, e.duration_ms)
+<a id="__codelineno-171-3" name="__codelineno-171-3" href="#__codelineno-171-3"></a>
+<a id="__codelineno-171-4" name="__codelineno-171-4" href="#__codelineno-171-4"></a>// Safe with conversions that may fail
+<a id="__codelineno-171-5" name="__codelineno-171-5" href="#__codelineno-171-5"></a>let latency = e.latency_str.to_float()  // Returns () on error
+<a id="__codelineno-171-6" name="__codelineno-171-6" href="#__codelineno-171-6"></a>track_avg(&quot;avg_ms&quot;, latency)            // Skips () values
 </code></pre></div>
 <h4 id="track_countkey"><code>track_count(key)</code><a class="headerlink" href="#track_countkey" title="Permanent link">&para;</a></h4>
 <p>Increment counter for key by 1.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-169-1" name="__codelineno-169-1" href="#__codelineno-169-1"></a>track_count(e.service)                                // Count by service
-<a id="__codelineno-169-2" name="__codelineno-169-2" href="#__codelineno-169-2"></a>track_count(&quot;total&quot;)                                  // Global counter
+<div class="highlight"><pre><span></span><code><a id="__codelineno-172-1" name="__codelineno-172-1" href="#__codelineno-172-1"></a>track_count(e.service)                                // Count by service
+<a id="__codelineno-172-2" name="__codelineno-172-2" href="#__codelineno-172-2"></a>track_count(&quot;total&quot;)                                  // Global counter
 </code></pre></div>
 <h4 id="track_sumkey-value"><code>track_sum(key, value)</code><a class="headerlink" href="#track_sumkey-value" title="Permanent link">&para;</a></h4>
 <p>Accumulate numeric values for key. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-170-1" name="__codelineno-170-1" href="#__codelineno-170-1"></a>track_sum(&quot;total_bytes&quot;, e.bytes)
-<a id="__codelineno-170-2" name="__codelineno-170-2" href="#__codelineno-170-2"></a>track_sum(e.endpoint, e.response_time)
-<a id="__codelineno-170-3" name="__codelineno-170-3" href="#__codelineno-170-3"></a>
-<a id="__codelineno-170-4" name="__codelineno-170-4" href="#__codelineno-170-4"></a>// Safe with conversions that may fail
-<a id="__codelineno-170-5" name="__codelineno-170-5" href="#__codelineno-170-5"></a>let score = e.score_str.to_int()  // Returns () on error
-<a id="__codelineno-170-6" name="__codelineno-170-6" href="#__codelineno-170-6"></a>track_sum(&quot;total_score&quot;, score)   // Skips () values
+<div class="highlight"><pre><span></span><code><a id="__codelineno-173-1" name="__codelineno-173-1" href="#__codelineno-173-1"></a>track_sum(&quot;total_bytes&quot;, e.bytes)
+<a id="__codelineno-173-2" name="__codelineno-173-2" href="#__codelineno-173-2"></a>track_sum(e.endpoint, e.response_time)
+<a id="__codelineno-173-3" name="__codelineno-173-3" href="#__codelineno-173-3"></a>
+<a id="__codelineno-173-4" name="__codelineno-173-4" href="#__codelineno-173-4"></a>// Safe with conversions that may fail
+<a id="__codelineno-173-5" name="__codelineno-173-5" href="#__codelineno-173-5"></a>let score = e.score_str.to_int()  // Returns () on error
+<a id="__codelineno-173-6" name="__codelineno-173-6" href="#__codelineno-173-6"></a>track_sum(&quot;total_score&quot;, score)   // Skips () values
 </code></pre></div>
 <h4 id="track_minkey-value-track_maxkey-value"><code>track_min(key, value)</code> / <code>track_max(key, value)</code><a class="headerlink" href="#track_minkey-value-track_maxkey-value" title="Permanent link">&para;</a></h4>
 <p>Track minimum/maximum value for key. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-171-1" name="__codelineno-171-1" href="#__codelineno-171-1"></a>track_min(&quot;fastest&quot;, e.response_time)
-<a id="__codelineno-171-2" name="__codelineno-171-2" href="#__codelineno-171-2"></a>track_max(&quot;slowest&quot;, e.response_time)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-174-1" name="__codelineno-174-1" href="#__codelineno-174-1"></a>track_min(&quot;fastest&quot;, e.response_time)
+<a id="__codelineno-174-2" name="__codelineno-174-2" href="#__codelineno-174-2"></a>track_max(&quot;slowest&quot;, e.response_time)
 </code></pre></div>
 <h4 id="track_uniquekey-value"><code>track_unique(key, value)</code><a class="headerlink" href="#track_uniquekey-value" title="Permanent link">&para;</a></h4>
 <p>Track unique values for key. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-172-1" name="__codelineno-172-1" href="#__codelineno-172-1"></a>track_unique(&quot;users&quot;, e.user_id)
-<a id="__codelineno-172-2" name="__codelineno-172-2" href="#__codelineno-172-2"></a>track_unique(&quot;ips&quot;, e.client_ip)
-<a id="__codelineno-172-3" name="__codelineno-172-3" href="#__codelineno-172-3"></a>
-<a id="__codelineno-172-4" name="__codelineno-172-4" href="#__codelineno-172-4"></a>// Combined with .or_empty() for conditional tracking
-<a id="__codelineno-172-5" name="__codelineno-172-5" href="#__codelineno-172-5"></a>track_unique(&quot;names&quot;, e.message.after(&quot;User:&quot;).or_empty())
+<div class="highlight"><pre><span></span><code><a id="__codelineno-175-1" name="__codelineno-175-1" href="#__codelineno-175-1"></a>track_unique(&quot;users&quot;, e.user_id)
+<a id="__codelineno-175-2" name="__codelineno-175-2" href="#__codelineno-175-2"></a>track_unique(&quot;ips&quot;, e.client_ip)
+<a id="__codelineno-175-3" name="__codelineno-175-3" href="#__codelineno-175-3"></a>
+<a id="__codelineno-175-4" name="__codelineno-175-4" href="#__codelineno-175-4"></a>// Combined with .or_empty() for conditional tracking
+<a id="__codelineno-175-5" name="__codelineno-175-5" href="#__codelineno-175-5"></a>track_unique(&quot;names&quot;, e.message.after(&quot;User:&quot;).or_empty())
 </code></pre></div>
 <h4 id="track_bucketkey-bucket"><code>track_bucket(key, bucket)</code><a class="headerlink" href="#track_bucketkey-bucket" title="Permanent link">&para;</a></h4>
 <p>Track values in buckets for histograms. Skips Unit <code>()</code> values.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-173-1" name="__codelineno-173-1" href="#__codelineno-173-1"></a>let bucket = floor(e.response_time / 100) * 100
-<a id="__codelineno-173-2" name="__codelineno-173-2" href="#__codelineno-173-2"></a>track_bucket(&quot;latency&quot;, bucket)
-<a id="__codelineno-173-3" name="__codelineno-173-3" href="#__codelineno-173-3"></a>
-<a id="__codelineno-173-4" name="__codelineno-173-4" href="#__codelineno-173-4"></a>// Safe with optional fields
-<a id="__codelineno-173-5" name="__codelineno-173-5" href="#__codelineno-173-5"></a>track_bucket(&quot;user_types&quot;, e.user_type.or_empty())  // Skips empty/missing
+<div class="highlight"><pre><span></span><code><a id="__codelineno-176-1" name="__codelineno-176-1" href="#__codelineno-176-1"></a>let bucket = floor(e.response_time / 100) * 100
+<a id="__codelineno-176-2" name="__codelineno-176-2" href="#__codelineno-176-2"></a>track_bucket(&quot;latency&quot;, bucket)
+<a id="__codelineno-176-3" name="__codelineno-176-3" href="#__codelineno-176-3"></a>
+<a id="__codelineno-176-4" name="__codelineno-176-4" href="#__codelineno-176-4"></a>// Safe with optional fields
+<a id="__codelineno-176-5" name="__codelineno-176-5" href="#__codelineno-176-5"></a>track_bucket(&quot;user_types&quot;, e.user_type.or_empty())  // Skips empty/missing
 </code></pre></div>
 <h4 id="track_cardinalitykey-value-track_cardinalitykey-value-error_rate"><code>track_cardinality(key, value)</code> / <code>track_cardinality(key, value, error_rate)</code><a class="headerlink" href="#track_cardinalitykey-value-track_cardinalitykey-value-error_rate" title="Permanent link">&para;</a></h4>
 <p>Estimate unique count using HyperLogLog algorithm. Uses ~12KB of memory regardless of cardinality, with ~1% standard error by default. Skips Unit <code>()</code> values. Works correctly in parallel mode.</p>
 <p><strong>When to use:</strong> For high-cardinality data (millions of unique values) where <code>track_unique()</code> would consume too much memory. Use <code>track_unique()</code> when you need the actual values or have low cardinality.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-174-1" name="__codelineno-174-1" href="#__codelineno-174-1"></a>// Basic usage - ~1% standard error, ~12KB memory
-<a id="__codelineno-174-2" name="__codelineno-174-2" href="#__codelineno-174-2"></a>track_cardinality(&quot;unique_ips&quot;, e.client_ip)
-<a id="__codelineno-174-3" name="__codelineno-174-3" href="#__codelineno-174-3"></a>track_cardinality(&quot;unique_sessions&quot;, e.session_id)
-<a id="__codelineno-174-4" name="__codelineno-174-4" href="#__codelineno-174-4"></a>
-<a id="__codelineno-174-5" name="__codelineno-174-5" href="#__codelineno-174-5"></a>// Custom error rate for higher precision (uses more memory)
-<a id="__codelineno-174-6" name="__codelineno-174-6" href="#__codelineno-174-6"></a>track_cardinality(&quot;unique_users&quot;, e.user_id, 0.005)  // 0.5% error
-<a id="__codelineno-174-7" name="__codelineno-174-7" href="#__codelineno-174-7"></a>
-<a id="__codelineno-174-8" name="__codelineno-174-8" href="#__codelineno-174-8"></a>// Safe with optional fields
-<a id="__codelineno-174-9" name="__codelineno-174-9" href="#__codelineno-174-9"></a>track_cardinality(&quot;unique_emails&quot;, e.email.or_empty())
+<div class="highlight"><pre><span></span><code><a id="__codelineno-177-1" name="__codelineno-177-1" href="#__codelineno-177-1"></a>// Basic usage - ~1% standard error, ~12KB memory
+<a id="__codelineno-177-2" name="__codelineno-177-2" href="#__codelineno-177-2"></a>track_cardinality(&quot;unique_ips&quot;, e.client_ip)
+<a id="__codelineno-177-3" name="__codelineno-177-3" href="#__codelineno-177-3"></a>track_cardinality(&quot;unique_sessions&quot;, e.session_id)
+<a id="__codelineno-177-4" name="__codelineno-177-4" href="#__codelineno-177-4"></a>
+<a id="__codelineno-177-5" name="__codelineno-177-5" href="#__codelineno-177-5"></a>// Custom error rate for higher precision (uses more memory)
+<a id="__codelineno-177-6" name="__codelineno-177-6" href="#__codelineno-177-6"></a>track_cardinality(&quot;unique_users&quot;, e.user_id, 0.005)  // 0.5% error
+<a id="__codelineno-177-7" name="__codelineno-177-7" href="#__codelineno-177-7"></a>
+<a id="__codelineno-177-8" name="__codelineno-177-8" href="#__codelineno-177-8"></a>// Safe with optional fields
+<a id="__codelineno-177-9" name="__codelineno-177-9" href="#__codelineno-177-9"></a>track_cardinality(&quot;unique_emails&quot;, e.email.or_empty())
 </code></pre></div>
 <p><strong>Output format:</strong> Shows <code>≈</code> prefix in text output to indicate approximate value:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-175-1" name="__codelineno-175-1" href="#__codelineno-175-1"></a>unique_ips   ≈ 1234567
+<div class="highlight"><pre><span></span><code><a id="__codelineno-178-1" name="__codelineno-178-1" href="#__codelineno-178-1"></a>unique_ips   ≈ 1234567
 </code></pre></div></p>
 <p><strong>Error rate bounds:</strong> 0.001 (0.1%) to 0.26 (26%). Lower error = more memory.</p>
 <div class="admonition tip">
@@ -9150,21 +9280,21 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <h4 id="track_topkey-item-n-track_topkey-item-n-value"><code>track_top(key, item, n)</code> / <code>track_top(key, item, n, value)</code><a class="headerlink" href="#track_topkey-item-n-track_topkey-item-n-value" title="Permanent link">&para;</a></h4>
 <p>Track top N most frequent items (count mode) or highest-valued items (weighted mode). Skips Unit <code>()</code> values.</p>
 <p><strong>Count mode</strong> tracks the N items that appear most frequently:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-176-1" name="__codelineno-176-1" href="#__codelineno-176-1"></a>// Track top 10 most common errors
-<a id="__codelineno-176-2" name="__codelineno-176-2" href="#__codelineno-176-2"></a>track_top(&quot;common_errors&quot;, e.error_type, 10)
-<a id="__codelineno-176-3" name="__codelineno-176-3" href="#__codelineno-176-3"></a>
-<a id="__codelineno-176-4" name="__codelineno-176-4" href="#__codelineno-176-4"></a>// Track top 5 most active users
-<a id="__codelineno-176-5" name="__codelineno-176-5" href="#__codelineno-176-5"></a>track_top(&quot;active_users&quot;, e.user_id, 5)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-179-1" name="__codelineno-179-1" href="#__codelineno-179-1"></a>// Track top 10 most common errors
+<a id="__codelineno-179-2" name="__codelineno-179-2" href="#__codelineno-179-2"></a>track_top(&quot;common_errors&quot;, e.error_type, 10)
+<a id="__codelineno-179-3" name="__codelineno-179-3" href="#__codelineno-179-3"></a>
+<a id="__codelineno-179-4" name="__codelineno-179-4" href="#__codelineno-179-4"></a>// Track top 5 most active users
+<a id="__codelineno-179-5" name="__codelineno-179-5" href="#__codelineno-179-5"></a>track_top(&quot;active_users&quot;, e.user_id, 5)
 </code></pre></div>
 <p><strong>Weighted mode</strong> tracks the N items with the highest custom values:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-177-1" name="__codelineno-177-1" href="#__codelineno-177-1"></a>// Track top 10 slowest endpoints by latency
-<a id="__codelineno-177-2" name="__codelineno-177-2" href="#__codelineno-177-2"></a>track_top(&quot;slowest_endpoints&quot;, e.endpoint, 10, e.latency_ms)
-<a id="__codelineno-177-3" name="__codelineno-177-3" href="#__codelineno-177-3"></a>
-<a id="__codelineno-177-4" name="__codelineno-177-4" href="#__codelineno-177-4"></a>// Track top 5 biggest requests by bytes
-<a id="__codelineno-177-5" name="__codelineno-177-5" href="#__codelineno-177-5"></a>track_top(&quot;heavy_requests&quot;, e.request_id, 5, e.bytes)
-<a id="__codelineno-177-6" name="__codelineno-177-6" href="#__codelineno-177-6"></a>
-<a id="__codelineno-177-7" name="__codelineno-177-7" href="#__codelineno-177-7"></a>// Handles missing values gracefully
-<a id="__codelineno-177-8" name="__codelineno-177-8" href="#__codelineno-177-8"></a>track_top(&quot;cpu_hogs&quot;, e.process, 10, e.cpu_time.or_empty())  // Skips ()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-180-1" name="__codelineno-180-1" href="#__codelineno-180-1"></a>// Track top 10 slowest endpoints by latency
+<a id="__codelineno-180-2" name="__codelineno-180-2" href="#__codelineno-180-2"></a>track_top(&quot;slowest_endpoints&quot;, e.endpoint, 10, e.latency_ms)
+<a id="__codelineno-180-3" name="__codelineno-180-3" href="#__codelineno-180-3"></a>
+<a id="__codelineno-180-4" name="__codelineno-180-4" href="#__codelineno-180-4"></a>// Track top 5 biggest requests by bytes
+<a id="__codelineno-180-5" name="__codelineno-180-5" href="#__codelineno-180-5"></a>track_top(&quot;heavy_requests&quot;, e.request_id, 5, e.bytes)
+<a id="__codelineno-180-6" name="__codelineno-180-6" href="#__codelineno-180-6"></a>
+<a id="__codelineno-180-7" name="__codelineno-180-7" href="#__codelineno-180-7"></a>// Handles missing values gracefully
+<a id="__codelineno-180-8" name="__codelineno-180-8" href="#__codelineno-180-8"></a>track_top(&quot;cpu_hogs&quot;, e.process, 10, e.cpu_time.or_empty())  // Skips ()
 </code></pre></div>
 <p><strong>Output format:</strong>
 - Count mode: <code>[{key: "item", count: 42}, ...]</code>
@@ -9173,18 +9303,18 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <h4 id="track_bottomkey-item-n-track_bottomkey-item-n-value"><code>track_bottom(key, item, n)</code> / <code>track_bottom(key, item, n, value)</code><a class="headerlink" href="#track_bottomkey-item-n-track_bottomkey-item-n-value" title="Permanent link">&para;</a></h4>
 <p>Track bottom N least frequent items (count mode) or lowest-valued items (weighted mode). Skips Unit <code>()</code> values.</p>
 <p><strong>Count mode</strong> tracks the N items that appear least frequently:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-178-1" name="__codelineno-178-1" href="#__codelineno-178-1"></a>// Track bottom 5 rarest errors
-<a id="__codelineno-178-2" name="__codelineno-178-2" href="#__codelineno-178-2"></a>track_bottom(&quot;rare_errors&quot;, e.error_type, 5)
-<a id="__codelineno-178-3" name="__codelineno-178-3" href="#__codelineno-178-3"></a>
-<a id="__codelineno-178-4" name="__codelineno-178-4" href="#__codelineno-178-4"></a>// Track least active users
-<a id="__codelineno-178-5" name="__codelineno-178-5" href="#__codelineno-178-5"></a>track_bottom(&quot;inactive_users&quot;, e.user_id, 10)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-181-1" name="__codelineno-181-1" href="#__codelineno-181-1"></a>// Track bottom 5 rarest errors
+<a id="__codelineno-181-2" name="__codelineno-181-2" href="#__codelineno-181-2"></a>track_bottom(&quot;rare_errors&quot;, e.error_type, 5)
+<a id="__codelineno-181-3" name="__codelineno-181-3" href="#__codelineno-181-3"></a>
+<a id="__codelineno-181-4" name="__codelineno-181-4" href="#__codelineno-181-4"></a>// Track least active users
+<a id="__codelineno-181-5" name="__codelineno-181-5" href="#__codelineno-181-5"></a>track_bottom(&quot;inactive_users&quot;, e.user_id, 10)
 </code></pre></div>
 <p><strong>Weighted mode</strong> tracks the N items with the lowest custom values:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-179-1" name="__codelineno-179-1" href="#__codelineno-179-1"></a>// Track 10 fastest endpoints by latency
-<a id="__codelineno-179-2" name="__codelineno-179-2" href="#__codelineno-179-2"></a>track_bottom(&quot;fastest_endpoints&quot;, e.endpoint, 10, e.latency_ms)
-<a id="__codelineno-179-3" name="__codelineno-179-3" href="#__codelineno-179-3"></a>
-<a id="__codelineno-179-4" name="__codelineno-179-4" href="#__codelineno-179-4"></a>// Track smallest requests
-<a id="__codelineno-179-5" name="__codelineno-179-5" href="#__codelineno-179-5"></a>track_bottom(&quot;tiny_requests&quot;, e.request_id, 5, e.bytes)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-182-1" name="__codelineno-182-1" href="#__codelineno-182-1"></a>// Track 10 fastest endpoints by latency
+<a id="__codelineno-182-2" name="__codelineno-182-2" href="#__codelineno-182-2"></a>track_bottom(&quot;fastest_endpoints&quot;, e.endpoint, 10, e.latency_ms)
+<a id="__codelineno-182-3" name="__codelineno-182-3" href="#__codelineno-182-3"></a>
+<a id="__codelineno-182-4" name="__codelineno-182-4" href="#__codelineno-182-4"></a>// Track smallest requests
+<a id="__codelineno-182-5" name="__codelineno-182-5" href="#__codelineno-182-5"></a>track_bottom(&quot;tiny_requests&quot;, e.request_id, 5, e.bytes)
 </code></pre></div>
 <p><strong>Output format:</strong>
 - Count mode: <code>[{key: "item", count: 1}, ...]</code>
@@ -9207,24 +9337,24 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 - <code>0.999</code> = 99.9th percentile → creates <code>key_p99.9</code></p>
 <p><strong>Memory efficiency:</strong> Uses ~4KB per metric regardless of event count (vs. storing all values). Suitable for millions of events.</p>
 <p><strong>Accuracy:</strong> ~1-2% relative error, suitable for operational monitoring.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-180-1" name="__codelineno-180-1" href="#__codelineno-180-1"></a>// Default percentiles [0.50, 0.95, 0.99]
-<a id="__codelineno-180-2" name="__codelineno-180-2" href="#__codelineno-180-2"></a>track_percentiles(&quot;api_latency&quot;, e.response_time)
-<a id="__codelineno-180-3" name="__codelineno-180-3" href="#__codelineno-180-3"></a>// Creates: api_latency_p50, api_latency_p95, api_latency_p99
-<a id="__codelineno-180-4" name="__codelineno-180-4" href="#__codelineno-180-4"></a>
-<a id="__codelineno-180-5" name="__codelineno-180-5" href="#__codelineno-180-5"></a>// Custom percentiles
-<a id="__codelineno-180-6" name="__codelineno-180-6" href="#__codelineno-180-6"></a>track_percentiles(&quot;latency&quot;, e.duration_ms, [0.50, 0.95, 0.99])
-<a id="__codelineno-180-7" name="__codelineno-180-7" href="#__codelineno-180-7"></a>// Creates: latency_p50, latency_p95, latency_p99
-<a id="__codelineno-180-8" name="__codelineno-180-8" href="#__codelineno-180-8"></a>
-<a id="__codelineno-180-9" name="__codelineno-180-9" href="#__codelineno-180-9"></a>// High-precision percentiles
-<a id="__codelineno-180-10" name="__codelineno-180-10" href="#__codelineno-180-10"></a>track_percentiles(&quot;latency&quot;, e.duration_ms, [0.999, 0.9999])
-<a id="__codelineno-180-11" name="__codelineno-180-11" href="#__codelineno-180-11"></a>// Creates: latency_p99.9, latency_p99.99
-<a id="__codelineno-180-12" name="__codelineno-180-12" href="#__codelineno-180-12"></a>
-<a id="__codelineno-180-13" name="__codelineno-180-13" href="#__codelineno-180-13"></a>// Per-endpoint tracking
-<a id="__codelineno-180-14" name="__codelineno-180-14" href="#__codelineno-180-14"></a>track_percentiles(&quot;latency_&quot; + e.endpoint, e.response_time, [0.95, 0.99])
-<a id="__codelineno-180-15" name="__codelineno-180-15" href="#__codelineno-180-15"></a>
-<a id="__codelineno-180-16" name="__codelineno-180-16" href="#__codelineno-180-16"></a>// Safe with conversions that may fail
-<a id="__codelineno-180-17" name="__codelineno-180-17" href="#__codelineno-180-17"></a>let latency = e.latency_str.to_float()  // Returns () on error
-<a id="__codelineno-180-18" name="__codelineno-180-18" href="#__codelineno-180-18"></a>track_percentiles(&quot;api_p95&quot;, latency)   // Skips () values
+<div class="highlight"><pre><span></span><code><a id="__codelineno-183-1" name="__codelineno-183-1" href="#__codelineno-183-1"></a>// Default percentiles [0.50, 0.95, 0.99]
+<a id="__codelineno-183-2" name="__codelineno-183-2" href="#__codelineno-183-2"></a>track_percentiles(&quot;api_latency&quot;, e.response_time)
+<a id="__codelineno-183-3" name="__codelineno-183-3" href="#__codelineno-183-3"></a>// Creates: api_latency_p50, api_latency_p95, api_latency_p99
+<a id="__codelineno-183-4" name="__codelineno-183-4" href="#__codelineno-183-4"></a>
+<a id="__codelineno-183-5" name="__codelineno-183-5" href="#__codelineno-183-5"></a>// Custom percentiles
+<a id="__codelineno-183-6" name="__codelineno-183-6" href="#__codelineno-183-6"></a>track_percentiles(&quot;latency&quot;, e.duration_ms, [0.50, 0.95, 0.99])
+<a id="__codelineno-183-7" name="__codelineno-183-7" href="#__codelineno-183-7"></a>// Creates: latency_p50, latency_p95, latency_p99
+<a id="__codelineno-183-8" name="__codelineno-183-8" href="#__codelineno-183-8"></a>
+<a id="__codelineno-183-9" name="__codelineno-183-9" href="#__codelineno-183-9"></a>// High-precision percentiles
+<a id="__codelineno-183-10" name="__codelineno-183-10" href="#__codelineno-183-10"></a>track_percentiles(&quot;latency&quot;, e.duration_ms, [0.999, 0.9999])
+<a id="__codelineno-183-11" name="__codelineno-183-11" href="#__codelineno-183-11"></a>// Creates: latency_p99.9, latency_p99.99
+<a id="__codelineno-183-12" name="__codelineno-183-12" href="#__codelineno-183-12"></a>
+<a id="__codelineno-183-13" name="__codelineno-183-13" href="#__codelineno-183-13"></a>// Per-endpoint tracking
+<a id="__codelineno-183-14" name="__codelineno-183-14" href="#__codelineno-183-14"></a>track_percentiles(&quot;latency_&quot; + e.endpoint, e.response_time, [0.95, 0.99])
+<a id="__codelineno-183-15" name="__codelineno-183-15" href="#__codelineno-183-15"></a>
+<a id="__codelineno-183-16" name="__codelineno-183-16" href="#__codelineno-183-16"></a>// Safe with conversions that may fail
+<a id="__codelineno-183-17" name="__codelineno-183-17" href="#__codelineno-183-17"></a>let latency = e.latency_str.to_float()  // Returns () on error
+<a id="__codelineno-183-18" name="__codelineno-183-18" href="#__codelineno-183-18"></a>track_percentiles(&quot;api_p95&quot;, latency)   // Skips () values
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">When to Use Percentiles vs. Average</p>
@@ -9252,22 +9382,22 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 - <code>{key}_p50</code>, <code>{key}_p95</code>, <code>{key}_p99</code> - Percentiles (default)</p>
 <p><strong>Default percentiles:</strong> <code>[0.50, 0.95, 0.99]</code> when no array provided.</p>
 <p><strong>Percentile notation:</strong> Same as <code>track_percentiles()</code> - use 0.0-1.0 range (quantile notation).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-181-1" name="__codelineno-181-1" href="#__codelineno-181-1"></a>// Default percentiles [0.50, 0.95, 0.99]
-<a id="__codelineno-181-2" name="__codelineno-181-2" href="#__codelineno-181-2"></a>track_stats(&quot;response_time&quot;, e.duration_ms)
-<a id="__codelineno-181-3" name="__codelineno-181-3" href="#__codelineno-181-3"></a>// Creates: response_time_min, response_time_max, response_time_avg,
-<a id="__codelineno-181-4" name="__codelineno-181-4" href="#__codelineno-181-4"></a>//          response_time_count, response_time_sum,
-<a id="__codelineno-181-5" name="__codelineno-181-5" href="#__codelineno-181-5"></a>//          response_time_p50, response_time_p95, response_time_p99
-<a id="__codelineno-181-6" name="__codelineno-181-6" href="#__codelineno-181-6"></a>
-<a id="__codelineno-181-7" name="__codelineno-181-7" href="#__codelineno-181-7"></a>// Custom percentiles
-<a id="__codelineno-181-8" name="__codelineno-181-8" href="#__codelineno-181-8"></a>track_stats(&quot;latency&quot;, e.duration, [0.50, 0.90, 0.99, 0.999])
-<a id="__codelineno-181-9" name="__codelineno-181-9" href="#__codelineno-181-9"></a>// Creates all basic stats plus: latency_p50, latency_p90, latency_p99, latency_p99.9
-<a id="__codelineno-181-10" name="__codelineno-181-10" href="#__codelineno-181-10"></a>
-<a id="__codelineno-181-11" name="__codelineno-181-11" href="#__codelineno-181-11"></a>// Per-endpoint comprehensive tracking
-<a id="__codelineno-181-12" name="__codelineno-181-12" href="#__codelineno-181-12"></a>track_stats(&quot;api_&quot; + e.endpoint, e.response_time)
-<a id="__codelineno-181-13" name="__codelineno-181-13" href="#__codelineno-181-13"></a>
-<a id="__codelineno-181-14" name="__codelineno-181-14" href="#__codelineno-181-14"></a>// Safe with conversions that may fail
-<a id="__codelineno-181-15" name="__codelineno-181-15" href="#__codelineno-181-15"></a>let duration = e.duration_str.to_float()  // Returns () on error
-<a id="__codelineno-181-16" name="__codelineno-181-16" href="#__codelineno-181-16"></a>track_stats(&quot;request_ms&quot;, duration)        // Skips () values
+<div class="highlight"><pre><span></span><code><a id="__codelineno-184-1" name="__codelineno-184-1" href="#__codelineno-184-1"></a>// Default percentiles [0.50, 0.95, 0.99]
+<a id="__codelineno-184-2" name="__codelineno-184-2" href="#__codelineno-184-2"></a>track_stats(&quot;response_time&quot;, e.duration_ms)
+<a id="__codelineno-184-3" name="__codelineno-184-3" href="#__codelineno-184-3"></a>// Creates: response_time_min, response_time_max, response_time_avg,
+<a id="__codelineno-184-4" name="__codelineno-184-4" href="#__codelineno-184-4"></a>//          response_time_count, response_time_sum,
+<a id="__codelineno-184-5" name="__codelineno-184-5" href="#__codelineno-184-5"></a>//          response_time_p50, response_time_p95, response_time_p99
+<a id="__codelineno-184-6" name="__codelineno-184-6" href="#__codelineno-184-6"></a>
+<a id="__codelineno-184-7" name="__codelineno-184-7" href="#__codelineno-184-7"></a>// Custom percentiles
+<a id="__codelineno-184-8" name="__codelineno-184-8" href="#__codelineno-184-8"></a>track_stats(&quot;latency&quot;, e.duration, [0.50, 0.90, 0.99, 0.999])
+<a id="__codelineno-184-9" name="__codelineno-184-9" href="#__codelineno-184-9"></a>// Creates all basic stats plus: latency_p50, latency_p90, latency_p99, latency_p99.9
+<a id="__codelineno-184-10" name="__codelineno-184-10" href="#__codelineno-184-10"></a>
+<a id="__codelineno-184-11" name="__codelineno-184-11" href="#__codelineno-184-11"></a>// Per-endpoint comprehensive tracking
+<a id="__codelineno-184-12" name="__codelineno-184-12" href="#__codelineno-184-12"></a>track_stats(&quot;api_&quot; + e.endpoint, e.response_time)
+<a id="__codelineno-184-13" name="__codelineno-184-13" href="#__codelineno-184-13"></a>
+<a id="__codelineno-184-14" name="__codelineno-184-14" href="#__codelineno-184-14"></a>// Safe with conversions that may fail
+<a id="__codelineno-184-15" name="__codelineno-184-15" href="#__codelineno-184-15"></a>let duration = e.duration_str.to_float()  // Returns () on error
+<a id="__codelineno-184-16" name="__codelineno-184-16" href="#__codelineno-184-16"></a>track_stats(&quot;request_ms&quot;, duration)        // Skips () values
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">When to Use track_stats() vs. Individual Functions</p>
@@ -9298,47 +9428,47 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <p>All file output functions require the <code>--allow-fs-writes</code> flag.</p>
 <h4 id="append_filepath-text_or_array"><code>append_file(path, text_or_array)</code><a class="headerlink" href="#append_filepath-text_or_array" title="Permanent link">&para;</a></h4>
 <p>Append line(s) to file; arrays append one line per element.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-182-1" name="__codelineno-182-1" href="#__codelineno-182-1"></a>append_file(&quot;errors.log&quot;, e.message)
-<a id="__codelineno-182-2" name="__codelineno-182-2" href="#__codelineno-182-2"></a>append_file(&quot;batch.log&quot;, [e.line1, e.line2, e.line3])
+<div class="highlight"><pre><span></span><code><a id="__codelineno-185-1" name="__codelineno-185-1" href="#__codelineno-185-1"></a>append_file(&quot;errors.log&quot;, e.message)
+<a id="__codelineno-185-2" name="__codelineno-185-2" href="#__codelineno-185-2"></a>append_file(&quot;batch.log&quot;, [e.line1, e.line2, e.line3])
 </code></pre></div>
 <h4 id="truncate_filepath"><code>truncate_file(path)</code><a class="headerlink" href="#truncate_filepath" title="Permanent link">&para;</a></h4>
 <p>Create or zero-length a file for fresh output.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-183-1" name="__codelineno-183-1" href="#__codelineno-183-1"></a>truncate_file(&quot;output.log&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-186-1" name="__codelineno-186-1" href="#__codelineno-186-1"></a>truncate_file(&quot;output.log&quot;)
 </code></pre></div>
 <h4 id="mkdirpath-recursive"><code>mkdir(path [, recursive])</code><a class="headerlink" href="#mkdirpath-recursive" title="Permanent link">&para;</a></h4>
 <p>Create directory (set recursive=true to create parents).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-184-1" name="__codelineno-184-1" href="#__codelineno-184-1"></a>mkdir(&quot;logs&quot;)
-<a id="__codelineno-184-2" name="__codelineno-184-2" href="#__codelineno-184-2"></a>mkdir(&quot;deep/nested/path&quot;, true)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-187-1" name="__codelineno-187-1" href="#__codelineno-187-1"></a>mkdir(&quot;logs&quot;)
+<a id="__codelineno-187-2" name="__codelineno-187-2" href="#__codelineno-187-2"></a>mkdir(&quot;deep/nested/path&quot;, true)
 </code></pre></div>
 <hr />
 <h2 id="event-manipulation">Event Manipulation<a class="headerlink" href="#event-manipulation" title="Permanent link">&para;</a></h2>
 <h4 id="emit_eacharray-base_map"><code>emit_each(array [, base_map])</code><a class="headerlink" href="#emit_eacharray-base_map" title="Permanent link">&para;</a></h4>
 <p>Fan out array elements as separate events (returns emitted count).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-185-1" name="__codelineno-185-1" href="#__codelineno-185-1"></a>emit_each(e.users)                                    // Each user becomes an event
-<a id="__codelineno-185-2" name="__codelineno-185-2" href="#__codelineno-185-2"></a>emit_each(e.items, #{batch_id: e.batch_id})           // Add batch_id to each
-<a id="__codelineno-185-3" name="__codelineno-185-3" href="#__codelineno-185-3"></a>
-<a id="__codelineno-185-4" name="__codelineno-185-4" href="#__codelineno-185-4"></a>// Use return value to track emission count
-<a id="__codelineno-185-5" name="__codelineno-185-5" href="#__codelineno-185-5"></a>let count = emit_each(e.batch_items, #{batch_id: e.id})
-<a id="__codelineno-185-6" name="__codelineno-185-6" href="#__codelineno-185-6"></a>track_sum(&quot;items_emitted&quot;, count)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-188-1" name="__codelineno-188-1" href="#__codelineno-188-1"></a>emit_each(e.users)                                    // Each user becomes an event
+<a id="__codelineno-188-2" name="__codelineno-188-2" href="#__codelineno-188-2"></a>emit_each(e.items, #{batch_id: e.batch_id})           // Add batch_id to each
+<a id="__codelineno-188-3" name="__codelineno-188-3" href="#__codelineno-188-3"></a>
+<a id="__codelineno-188-4" name="__codelineno-188-4" href="#__codelineno-188-4"></a>// Use return value to track emission count
+<a id="__codelineno-188-5" name="__codelineno-188-5" href="#__codelineno-188-5"></a>let count = emit_each(e.batch_items, #{batch_id: e.id})
+<a id="__codelineno-188-6" name="__codelineno-188-6" href="#__codelineno-188-6"></a>track_sum(&quot;items_emitted&quot;, count)
 </code></pre></div>
 <h4 id="e"><code>e = ()</code><a class="headerlink" href="#e" title="Permanent link">&para;</a></h4>
 <p>Clear entire event (remove all fields).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-186-1" name="__codelineno-186-1" href="#__codelineno-186-1"></a>if e.should_drop {
-<a id="__codelineno-186-2" name="__codelineno-186-2" href="#__codelineno-186-2"></a>    e = ()  // Event is filtered out
-<a id="__codelineno-186-3" name="__codelineno-186-3" href="#__codelineno-186-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-189-1" name="__codelineno-189-1" href="#__codelineno-189-1"></a>if e.should_drop {
+<a id="__codelineno-189-2" name="__codelineno-189-2" href="#__codelineno-189-2"></a>    e = ()  // Event is filtered out
+<a id="__codelineno-189-3" name="__codelineno-189-3" href="#__codelineno-189-3"></a>}
 </code></pre></div>
 <h4 id="efield"><code>e.field = ()</code><a class="headerlink" href="#efield" title="Permanent link">&para;</a></h4>
 <p>Remove individual field from event.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-187-1" name="__codelineno-187-1" href="#__codelineno-187-1"></a>e.password = ()                                       // Remove sensitive field
-<a id="__codelineno-187-2" name="__codelineno-187-2" href="#__codelineno-187-2"></a>e.temp_data = ()                                      // Clean up temporary field
+<div class="highlight"><pre><span></span><code><a id="__codelineno-190-1" name="__codelineno-190-1" href="#__codelineno-190-1"></a>e.password = ()                                       // Remove sensitive field
+<a id="__codelineno-190-2" name="__codelineno-190-2" href="#__codelineno-190-2"></a>e.temp_data = ()                                      // Clean up temporary field
 </code></pre></div>
 <h4 id="eabsorb_kvfield-options"><code>e.absorb_kv(field [, options])</code><a class="headerlink" href="#eabsorb_kvfield-options" title="Permanent link">&para;</a></h4>
 <p>Parse inline <code>key=value</code> tokens from a string field, merge the pairs into the event, and get a status report back. Returns a map with <code>status</code>, <code>data</code>, <code>written</code>, <code>remainder</code>, <code>removed_source</code>, and <code>error</code> so scripts can branch without guessing.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-188-1" name="__codelineno-188-1" href="#__codelineno-188-1"></a>let res = e.absorb_kv(&quot;msg&quot;, #{ sep: &quot;,&quot;, kv_sep: &quot;=&quot;, keep_source: true });
-<a id="__codelineno-188-2" name="__codelineno-188-2" href="#__codelineno-188-2"></a>if res.status == &quot;applied&quot; {
-<a id="__codelineno-188-3" name="__codelineno-188-3" href="#__codelineno-188-3"></a>    e.cleaned_msg = res.remainder ?? &quot;&quot;;
-<a id="__codelineno-188-4" name="__codelineno-188-4" href="#__codelineno-188-4"></a>    // Parsed keys now live on the event; res.data mirrors the inserted pairs
-<a id="__codelineno-188-5" name="__codelineno-188-5" href="#__codelineno-188-5"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-191-1" name="__codelineno-191-1" href="#__codelineno-191-1"></a>let res = e.absorb_kv(&quot;msg&quot;, #{ sep: &quot;,&quot;, kv_sep: &quot;=&quot;, keep_source: true });
+<a id="__codelineno-191-2" name="__codelineno-191-2" href="#__codelineno-191-2"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-191-3" name="__codelineno-191-3" href="#__codelineno-191-3"></a>    e.cleaned_msg = res.remainder ?? &quot;&quot;;
+<a id="__codelineno-191-4" name="__codelineno-191-4" href="#__codelineno-191-4"></a>    // Parsed keys now live on the event; res.data mirrors the inserted pairs
+<a id="__codelineno-191-5" name="__codelineno-191-5" href="#__codelineno-191-5"></a>}
 </code></pre></div>
 <p>Options:</p>
 <ul>
@@ -9350,12 +9480,12 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <p>Unknown option keys set <code>status = "invalid_option"</code>; in <code>--strict</code> mode this aborts the pipeline.</p>
 <h4 id="eabsorb_jsonfield-options"><code>e.absorb_json(field [, options])</code><a class="headerlink" href="#eabsorb_jsonfield-options" title="Permanent link">&para;</a></h4>
 <p>Parse a JSON object from a string field, merge its keys into the event, and return the same status map as <code>absorb_kv()</code>. On success the source field is deleted unless <code>keep_source</code> is true, and <code>remainder</code> is always <code>()</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-189-1" name="__codelineno-189-1" href="#__codelineno-189-1"></a>let res = e.absorb_json(&quot;payload&quot;);
-<a id="__codelineno-189-2" name="__codelineno-189-2" href="#__codelineno-189-2"></a>if res.status == &quot;applied&quot; {
-<a id="__codelineno-189-3" name="__codelineno-189-3" href="#__codelineno-189-3"></a>    e.actor = e.actor ?? e.user;      // merged from payload
-<a id="__codelineno-189-4" name="__codelineno-189-4" href="#__codelineno-189-4"></a>} else if res.status == &quot;parse_error&quot; {
-<a id="__codelineno-189-5" name="__codelineno-189-5" href="#__codelineno-189-5"></a>    warn(`bad payload: ${res.error}`);
-<a id="__codelineno-189-6" name="__codelineno-189-6" href="#__codelineno-189-6"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-192-1" name="__codelineno-192-1" href="#__codelineno-192-1"></a>let res = e.absorb_json(&quot;payload&quot;);
+<a id="__codelineno-192-2" name="__codelineno-192-2" href="#__codelineno-192-2"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-192-3" name="__codelineno-192-3" href="#__codelineno-192-3"></a>    e.actor = e.actor ?? e.user;      // merged from payload
+<a id="__codelineno-192-4" name="__codelineno-192-4" href="#__codelineno-192-4"></a>} else if res.status == &quot;parse_error&quot; {
+<a id="__codelineno-192-5" name="__codelineno-192-5" href="#__codelineno-192-5"></a>    warn(`bad payload: ${res.error}`);
+<a id="__codelineno-192-6" name="__codelineno-192-6" href="#__codelineno-192-6"></a>}
 </code></pre></div>
 <p>Options:</p>
 <ul>
@@ -9366,16 +9496,16 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <h4 id="eabsorb_regexfield-pattern-options"><code>e.absorb_regex(field, pattern [, options])</code><a class="headerlink" href="#eabsorb_regexfield-pattern-options" title="Permanent link">&para;</a></h4>
 <p>Extract named capture groups from a string field using a regular expression pattern, merge the extracted values into the event, and return a status map (same structure as <code>absorb_kv()</code> and <code>absorb_json()</code>).</p>
 <p>The pattern must use <strong>named capture groups</strong> (<code>(?P&lt;name&gt;...)</code>) to define which parts of the text to extract. Only named captures become event fields; numbered groups are ignored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-190-1" name="__codelineno-190-1" href="#__codelineno-190-1"></a>// Extract user and IP from log message
-<a id="__codelineno-190-2" name="__codelineno-190-2" href="#__codelineno-190-2"></a>let res = e.absorb_regex(&quot;msg&quot;, r&quot;User (?P&lt;user&gt;\w+) logged in from (?P&lt;ip&gt;[\d.]+)&quot;);
-<a id="__codelineno-190-3" name="__codelineno-190-3" href="#__codelineno-190-3"></a>if res.status == &quot;applied&quot; {
-<a id="__codelineno-190-4" name="__codelineno-190-4" href="#__codelineno-190-4"></a>    print(`${e.user} from ${e.ip}`);  // Extracted fields now on event
-<a id="__codelineno-190-5" name="__codelineno-190-5" href="#__codelineno-190-5"></a>}
-<a id="__codelineno-190-6" name="__codelineno-190-6" href="#__codelineno-190-6"></a>
-<a id="__codelineno-190-7" name="__codelineno-190-7" href="#__codelineno-190-7"></a>// Parse structured log line with multiple fields
-<a id="__codelineno-190-8" name="__codelineno-190-8" href="#__codelineno-190-8"></a>let pattern = r&quot;(?P&lt;date&gt;[\d-]+) (?P&lt;level&gt;\w+) (?P&lt;file&gt;[\w.]+):(?P&lt;line&gt;\d+) (?P&lt;message&gt;.+)&quot;;
-<a id="__codelineno-190-9" name="__codelineno-190-9" href="#__codelineno-190-9"></a>e.absorb_regex(&quot;line&quot;, pattern);
-<a id="__codelineno-190-10" name="__codelineno-190-10" href="#__codelineno-190-10"></a>// Now e.date, e.level, e.file, e.line, e.message are all populated
+<div class="highlight"><pre><span></span><code><a id="__codelineno-193-1" name="__codelineno-193-1" href="#__codelineno-193-1"></a>// Extract user and IP from log message
+<a id="__codelineno-193-2" name="__codelineno-193-2" href="#__codelineno-193-2"></a>let res = e.absorb_regex(&quot;msg&quot;, r&quot;User (?P&lt;user&gt;\w+) logged in from (?P&lt;ip&gt;[\d.]+)&quot;);
+<a id="__codelineno-193-3" name="__codelineno-193-3" href="#__codelineno-193-3"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-193-4" name="__codelineno-193-4" href="#__codelineno-193-4"></a>    print(`${e.user} from ${e.ip}`);  // Extracted fields now on event
+<a id="__codelineno-193-5" name="__codelineno-193-5" href="#__codelineno-193-5"></a>}
+<a id="__codelineno-193-6" name="__codelineno-193-6" href="#__codelineno-193-6"></a>
+<a id="__codelineno-193-7" name="__codelineno-193-7" href="#__codelineno-193-7"></a>// Parse structured log line with multiple fields
+<a id="__codelineno-193-8" name="__codelineno-193-8" href="#__codelineno-193-8"></a>let pattern = r&quot;(?P&lt;date&gt;[\d-]+) (?P&lt;level&gt;\w+) (?P&lt;file&gt;[\w.]+):(?P&lt;line&gt;\d+) (?P&lt;message&gt;.+)&quot;;
+<a id="__codelineno-193-9" name="__codelineno-193-9" href="#__codelineno-193-9"></a>e.absorb_regex(&quot;line&quot;, pattern);
+<a id="__codelineno-193-10" name="__codelineno-193-10" href="#__codelineno-193-10"></a>// Now e.date, e.level, e.file, e.line, e.message are all populated
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <ul>
@@ -9398,67 +9528,67 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <li><strong>absorb_json()</strong> – Parse JSON objects (type-aware)</li>
 <li><strong>Regex input format</strong> (<code>-f regex</code>) – Use for whole-log parsing at input time</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-191-1" name="__codelineno-191-1" href="#__codelineno-191-1"></a>// Complex example: parse Apache access log format
-<a id="__codelineno-191-2" name="__codelineno-191-2" href="#__codelineno-191-2"></a>let apache_pattern = r#&quot;(?P&lt;ip&gt;\S+) \S+ \S+ \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\S+) (?P&lt;path&gt;\S+)[^&quot;]*&quot; (?P&lt;status&gt;\d+) (?P&lt;bytes&gt;\d+)&quot;#;
-<a id="__codelineno-191-3" name="__codelineno-191-3" href="#__codelineno-191-3"></a>e.absorb_regex(&quot;line&quot;, apache_pattern);
-<a id="__codelineno-191-4" name="__codelineno-191-4" href="#__codelineno-191-4"></a>
-<a id="__codelineno-191-5" name="__codelineno-191-5" href="#__codelineno-191-5"></a>// Keep source for debugging
-<a id="__codelineno-191-6" name="__codelineno-191-6" href="#__codelineno-191-6"></a>e.absorb_regex(&quot;raw_message&quot;, r&quot;ERROR: (?P&lt;error_code&gt;\d+) - (?P&lt;error_msg&gt;.+)&quot;,
-<a id="__codelineno-191-7" name="__codelineno-191-7" href="#__codelineno-191-7"></a>               #{ keep_source: true });
+<div class="highlight"><pre><span></span><code><a id="__codelineno-194-1" name="__codelineno-194-1" href="#__codelineno-194-1"></a>// Complex example: parse Apache access log format
+<a id="__codelineno-194-2" name="__codelineno-194-2" href="#__codelineno-194-2"></a>let apache_pattern = r#&quot;(?P&lt;ip&gt;\S+) \S+ \S+ \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\S+) (?P&lt;path&gt;\S+)[^&quot;]*&quot; (?P&lt;status&gt;\d+) (?P&lt;bytes&gt;\d+)&quot;#;
+<a id="__codelineno-194-3" name="__codelineno-194-3" href="#__codelineno-194-3"></a>e.absorb_regex(&quot;line&quot;, apache_pattern);
+<a id="__codelineno-194-4" name="__codelineno-194-4" href="#__codelineno-194-4"></a>
+<a id="__codelineno-194-5" name="__codelineno-194-5" href="#__codelineno-194-5"></a>// Keep source for debugging
+<a id="__codelineno-194-6" name="__codelineno-194-6" href="#__codelineno-194-6"></a>e.absorb_regex(&quot;raw_message&quot;, r&quot;ERROR: (?P&lt;error_code&gt;\d+) - (?P&lt;error_msg&gt;.+)&quot;,
+<a id="__codelineno-194-7" name="__codelineno-194-7" href="#__codelineno-194-7"></a>               #{ keep_source: true });
 </code></pre></div>
 <h2 id="span-context-span-close-only">Span Context – <code>--span-close</code> Only<a class="headerlink" href="#span-context-span-close-only" title="Permanent link">&para;</a></h2>
 <p>A read-only <code>span</code> object is injected into scope whenever a <code>--span-close</code> script runs. Use it to emit per-span rollups after Kelora closes a count- or time-based window.</p>
 <h3 id="span-identity">Span Identity<a class="headerlink" href="#span-identity" title="Permanent link">&para;</a></h3>
 <p><code>span.id</code> returns the current span identifier. Count-based spans use <code>#&lt;index&gt;</code> (zero-based). Time-based spans use <code>ISO_START/DURATION</code> (e.g. <code>2024-05-19T12:00:00Z/5m</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-192-1" name="__codelineno-192-1" href="#__codelineno-192-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-195-1" name="__codelineno-195-1" href="#__codelineno-195-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
 </code></pre></div>
 <h3 id="span-boundaries">Span Boundaries<a class="headerlink" href="#span-boundaries" title="Permanent link">&para;</a></h3>
 <p><code>span.start</code> and <code>span.end</code> expose the half-open window bounds as <code>DateTime</code> values. Count-based spans return <code>()</code> for both fields.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-193-1" name="__codelineno-193-1" href="#__codelineno-193-1"></a>if span.start != () {
-<a id="__codelineno-193-2" name="__codelineno-193-2" href="#__codelineno-193-2"></a>    print(`Window: ${span.start} → ${span.end}`);
-<a id="__codelineno-193-3" name="__codelineno-193-3" href="#__codelineno-193-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-196-1" name="__codelineno-196-1" href="#__codelineno-196-1"></a>if span.start != () {
+<a id="__codelineno-196-2" name="__codelineno-196-2" href="#__codelineno-196-2"></a>    print(`Window: ${span.start} → ${span.end}`);
+<a id="__codelineno-196-3" name="__codelineno-196-3" href="#__codelineno-196-3"></a>}
 </code></pre></div>
 <h3 id="span-size-and-events">Span Size and Events<a class="headerlink" href="#span-size-and-events" title="Permanent link">&para;</a></h3>
 <p><code>span.size</code> reports how many events survived filters and were buffered in the span. <code>span.events</code> returns those events in arrival order. Each map includes span metadata fields (<code>span_status</code>, <code>span_id</code>, <code>span_start</code>, <code>span_end</code>) alongside the original event data.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-194-1" name="__codelineno-194-1" href="#__codelineno-194-1"></a>let included = span.events
-<a id="__codelineno-194-2" name="__codelineno-194-2" href="#__codelineno-194-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
-<a id="__codelineno-194-3" name="__codelineno-194-3" href="#__codelineno-194-3"></a>    .len();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-197-1" name="__codelineno-197-1" href="#__codelineno-197-1"></a>let included = span.events
+<a id="__codelineno-197-2" name="__codelineno-197-2" href="#__codelineno-197-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
+<a id="__codelineno-197-3" name="__codelineno-197-3" href="#__codelineno-197-3"></a>    .len();
 </code></pre></div>
 <h3 id="metrics-snapshot">Metrics Snapshot<a class="headerlink" href="#metrics-snapshot" title="Permanent link">&para;</a></h3>
 <p><code>span.metrics</code> contains per-span deltas from <code>track_*</code> calls. Values reset automatically after each span closes, so you can emit per-span summaries without manual bookkeeping.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-195-1" name="__codelineno-195-1" href="#__codelineno-195-1"></a>let metrics = span.metrics;
-<a id="__codelineno-195-2" name="__codelineno-195-2" href="#__codelineno-195-2"></a>let hits = metrics[&quot;events&quot;];          // from track_count(&quot;events&quot;)
-<a id="__codelineno-195-3" name="__codelineno-195-3" href="#__codelineno-195-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_count(&quot;failures&quot;)
-<a id="__codelineno-195-4" name="__codelineno-195-4" href="#__codelineno-195-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
-<a id="__codelineno-195-5" name="__codelineno-195-5" href="#__codelineno-195-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-198-1" name="__codelineno-198-1" href="#__codelineno-198-1"></a>let metrics = span.metrics;
+<a id="__codelineno-198-2" name="__codelineno-198-2" href="#__codelineno-198-2"></a>let hits = metrics[&quot;events&quot;];          // from track_count(&quot;events&quot;)
+<a id="__codelineno-198-3" name="__codelineno-198-3" href="#__codelineno-198-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_count(&quot;failures&quot;)
+<a id="__codelineno-198-4" name="__codelineno-198-4" href="#__codelineno-198-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
+<a id="__codelineno-198-5" name="__codelineno-198-5" href="#__codelineno-198-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
 </code></pre></div>
 <hr />
 <h2 id="quick-reference-by-use-case">Quick Reference by Use Case<a class="headerlink" href="#quick-reference-by-use-case" title="Permanent link">&para;</a></h2>
 <p><strong>Error Extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-196-1" name="__codelineno-196-1" href="#__codelineno-196-1"></a>e.error_code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-199-1" name="__codelineno-199-1" href="#__codelineno-199-1"></a>e.error_code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1)
 </code></pre></div></p>
 <p><strong>IP Anonymization:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-197-1" name="__codelineno-197-1" href="#__codelineno-197-1"></a>e.masked_ip = e.client_ip.mask_ip()
-<a id="__codelineno-197-2" name="__codelineno-197-2" href="#__codelineno-197-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-200-1" name="__codelineno-200-1" href="#__codelineno-200-1"></a>e.masked_ip = e.client_ip.mask_ip()
+<a id="__codelineno-200-2" name="__codelineno-200-2" href="#__codelineno-200-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
 </code></pre></div></p>
 <p><strong>Time Filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-198-1" name="__codelineno-198-1" href="#__codelineno-198-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
-<a id="__codelineno-198-2" name="__codelineno-198-2" href="#__codelineno-198-2"></a>    // Process recent events
-<a id="__codelineno-198-3" name="__codelineno-198-3" href="#__codelineno-198-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-201-1" name="__codelineno-201-1" href="#__codelineno-201-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
+<a id="__codelineno-201-2" name="__codelineno-201-2" href="#__codelineno-201-2"></a>    // Process recent events
+<a id="__codelineno-201-3" name="__codelineno-201-3" href="#__codelineno-201-3"></a>}
 </code></pre></div></p>
 <p><strong>Metrics Tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-199-1" name="__codelineno-199-1" href="#__codelineno-199-1"></a>track_count(e.service)
-<a id="__codelineno-199-2" name="__codelineno-199-2" href="#__codelineno-199-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
-<a id="__codelineno-199-3" name="__codelineno-199-3" href="#__codelineno-199-3"></a>track_unique(&quot;users&quot;, e.user_id)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-202-1" name="__codelineno-202-1" href="#__codelineno-202-1"></a>track_count(e.service)
+<a id="__codelineno-202-2" name="__codelineno-202-2" href="#__codelineno-202-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
+<a id="__codelineno-202-3" name="__codelineno-202-3" href="#__codelineno-202-3"></a>track_unique(&quot;users&quot;, e.user_id)
 </code></pre></div></p>
 <p><strong>Array Fan-Out:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-200-1" name="__codelineno-200-1" href="#__codelineno-200-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-203-1" name="__codelineno-203-1" href="#__codelineno-203-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
 </code></pre></div></p>
 <p><strong>Safe Field Access:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-201-1" name="__codelineno-201-1" href="#__codelineno-201-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
-<a id="__codelineno-201-2" name="__codelineno-201-2" href="#__codelineno-201-2"></a>if e.has_path(&quot;error.details.code&quot;) {
-<a id="__codelineno-201-3" name="__codelineno-201-3" href="#__codelineno-201-3"></a>    e.detailed = true
-<a id="__codelineno-201-4" name="__codelineno-201-4" href="#__codelineno-201-4"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-204-1" name="__codelineno-204-1" href="#__codelineno-204-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
+<a id="__codelineno-204-2" name="__codelineno-204-2" href="#__codelineno-204-2"></a>if e.has_path(&quot;error.details.code&quot;) {
+<a id="__codelineno-204-3" name="__codelineno-204-3" href="#__codelineno-204-3"></a>    e.detailed = true
+<a id="__codelineno-204-4" name="__codelineno-204-4" href="#__codelineno-204-4"></a>}
 </code></pre></div></p>
 <hr />
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
@@ -9469,9 +9599,9 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <li><a href="../../how-to/extract-and-mask-sensitive-data/">How-To: Sanitize Logs Before Sharing</a> - Practical examples</li>
 </ul>
 <p>For more details, run:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-202-1" name="__codelineno-202-1" href="#__codelineno-202-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># This reference in CLI form</span>
-<a id="__codelineno-202-2" name="__codelineno-202-2" href="#__codelineno-202-2"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai language guide</span>
-<a id="__codelineno-202-3" name="__codelineno-202-3" href="#__codelineno-202-3"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-205-1" name="__codelineno-205-1" href="#__codelineno-205-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">    </span><span class="c1"># This reference in CLI form</span>
+<a id="__codelineno-205-2" name="__codelineno-205-2" href="#__codelineno-205-2"></a>kelora<span class="w"> </span>--help-rhai<span class="w">         </span><span class="c1"># Rhai language guide</span>
+<a id="__codelineno-205-3" name="__codelineno-205-3" href="#__codelineno-205-3"></a>kelora<span class="w"> </span>--help-examples<span class="w">     </span><span class="c1"># Common usage patterns</span>
 </code></pre></div></p>
 
 

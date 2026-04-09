@@ -3921,12 +3921,12 @@
 <p><strong>How it works:</strong></p>
 <ol>
 <li><code>-I examples/helpers.rhai</code> loads the function definitions</li>
-<li>Functions become available in <code>--exec</code>, <code>--exec-file</code>, <code>--begin</code>, and <code>--end</code> stages</li>
+<li>Functions become available in <code>--exec</code>, <code>--exec-file</code>, <code>--begin</code>, <code>--end</code>, and <code>--filter</code></li>
 <li>Call them like any built-in function</li>
 </ol>
 <div class="admonition note">
-<p class="admonition-title">Filter Limitations</p>
-<p><code>--include</code> does not work with <code>--filter</code> because filters must be pure expressions. Use <code>--exec</code> instead for filtering with custom functions.</p>
+<p class="admonition-title">Using Includes With Filters</p>
+<p><code>--include</code> can be used with <code>--filter</code> for helper functions, but the included file must contain only function definitions. Top-level statements are rejected for filter-stage includes.</p>
 </div>
 <h3 id="multiple-include-files">Multiple Include Files<a class="headerlink" href="#multiple-include-files" title="Permanent link">&para;</a></h3>
 <p>You can load multiple libraries:</p>

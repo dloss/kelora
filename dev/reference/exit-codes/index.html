@@ -2880,9 +2880,9 @@
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Still processing error (like parse errors)</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1"># Usage error (incompatible flags)</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>kelora<span class="w"> </span>-I<span class="w"> </span>helper.rhai<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>⚠️<span class="w"> </span>--include<span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>supported<span class="w"> </span>with<span class="w"> </span>--filter
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1"># Usage error (invalid filter-stage include file)</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>kelora<span class="w"> </span>-I<span class="w"> </span>helper.rhai<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;is_error(e.level)&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>⚠️<span class="w"> </span>--include<span class="w"> </span>file<span class="w"> </span><span class="s1">&#39;helper.rhai&#39;</span><span class="w"> </span>cannot<span class="w"> </span>contain<span class="w"> </span>statements<span class="w"> </span>when<span class="w"> </span>used<span class="w"> </span>with<span class="w"> </span>--filter<span class="p">;</span><span class="w"> </span>only<span class="w"> </span><span class="k">function</span><span class="w"> </span>definitions<span class="w"> </span>are<span class="w"> </span>allowed
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
 <a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="m">2</span><span class="w">  </span><span class="c1"># Usage error</span>
 </code></pre></div>

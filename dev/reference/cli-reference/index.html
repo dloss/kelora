@@ -6528,8 +6528,12 @@ for a full walkthrough and tradeoff discussion.</p>
 </code></pre></div>
 <h4 id="-filter-expression"><code>--filter &lt;EXPRESSION&gt;</code><a class="headerlink" href="#-filter-expression" title="Permanent link">&para;</a></h4>
 <p>Boolean filter expression. Events where expression returns <code>true</code> are kept. Multiple filters are combined with AND logic.</p>
+<p>Can be combined with <code>--include</code> to call helper functions defined in a Rhai
+library. When <code>--include</code> is used with <code>--filter</code>, the included file must
+contain only function definitions; top-level statements are rejected.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span>app.log
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span>app.log<span class="w">   </span><span class="c1"># Use -l for level filtering (faster than Rhai)</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;is_error(e.level)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-e-exec-script"><code>-e, --exec &lt;SCRIPT&gt;</code><a class="headerlink" href="#-e-exec-script" title="Permanent link">&para;</a></h4>
 <p>Transform/process script evaluated on each event. Multiple <code>--exec</code> scripts run in order.</p>
@@ -6578,7 +6582,16 @@ for a full walkthrough and tradeoff discussion.</p>
 <p><strong>Note:</strong> Like <code>--filter</code>, assertions must be pure boolean expressions (no includes supported).</p>
 <h4 id="-i-include-file"><code>-I, --include &lt;FILE&gt;</code><a class="headerlink" href="#-i-include-file" title="Permanent link">&para;</a></h4>
 <p>Include Rhai files before script stages (library imports).</p>
+<p>Placement on the command line determines which stage the file applies to:</p>
+<ul>
+<li>Before <code>--exec</code> / <code>-e</code> - loaded into that exec stage</li>
+<li>Before <code>--filter</code> - loaded into that filter stage</li>
+<li>Before all script stages - loaded into the begin stage</li>
+</ul>
+<p>When used with <code>--filter</code>, the included file must contain only function
+definitions; top-level statements are rejected.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.custom = my_helper(e)&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>-I<span class="w"> </span>helpers.rhai<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;is_error(e.level)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-end-script"><code>--end &lt;SCRIPT&gt;</code><a class="headerlink" href="#-end-script" title="Permanent link">&para;</a></h4>
 <p>Run once after processing completes (post-processing stage). Access global <code>metrics</code> map from <code>track_*()</code> calls here.</p>
