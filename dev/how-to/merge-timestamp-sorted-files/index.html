@@ -2419,7 +2419,9 @@ streams into one ordered stream</strong>.</p>
 <p>Those approaches make sense for a different class of feature. For normal
 operations work, a streaming merge is usually the better tradeoff.</p>
 <h2 id="recommended-usage-pattern">Recommended Usage Pattern<a class="headerlink" href="#recommended-usage-pattern" title="Permanent link">&para;</a></h2>
-<p>Be explicit about the parser so Kelora can extract timestamps predictably:</p>
+<p>Be explicit about the parser so Kelora can extract timestamps predictably.
+Kelora auto-detects common timestamp field names such as <code>timestamp</code> and <code>ts</code>;
+add <code>--ts-field &lt;field&gt;</code> only when your data uses a different key:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>shard-*.jsonl<span class="w"> </span>--merge-ts<span class="w"> </span>-J
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app-*.log<span class="w"> </span>--merge-ts<span class="w"> </span>--ts-field<span class="w"> </span>ts<span class="w"> </span>-F<span class="w"> </span>json
 </code></pre></div>
@@ -2440,7 +2442,7 @@ operations work, a streaming merge is usually the better tradeoff.</p>
 <li><code>--merge-ts</code> is incompatible with <code>--parallel</code></li>
 <li>Auto-detection must resolve to a concrete format before merging</li>
 <li>If one file is internally out of order, the final output may also be out of order</li>
-<li>Events without usable timestamps are skipped in resilient mode and fail immediately with <code>--strict</code></li>
+<li>Events without usable timestamps are skipped in resilient mode and fail immediately with <code>--strict</code>; use <code>--ts-field &lt;field&gt;</code> when the timestamp is stored under a non-default key</li>
 <li>Resilient mode still exits non-zero when merge input errors occur; it is best-effort, not fully successful</li>
 </ul>
 <p>When you suspect disorder inside a file, inspect a sample first:</p>

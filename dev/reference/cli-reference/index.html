@@ -6367,7 +6367,9 @@ contains <code>10:04</code> followed later by <code>10:01</code>, Kelora will on
 after <code>10:04</code> has already been emitted.</p>
 <p>In resilient mode, events without a usable timestamp are skipped and per-file
 disorder is tolerated, but the run still exits non-zero because input errors
-occurred. With <code>--strict</code>, either condition becomes a fatal error immediately.</p>
+occurred. With <code>--strict</code>, either condition becomes a fatal error immediately.
+If your timestamps live in a non-standard field, specify it explicitly with
+<code>--ts-field &lt;field&gt;</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-1.jsonl<span class="w"> </span>api-2.jsonl<span class="w"> </span>api-3.jsonl<span class="w"> </span>--merge-ts<span class="w"> </span>-J
 </code></pre></div>
 <p>Practical examples:</p>
