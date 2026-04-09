@@ -2440,6 +2440,8 @@ operations work, a streaming merge is usually the better tradeoff.</p>
 <li><code>--merge-ts</code> is incompatible with <code>--parallel</code></li>
 <li>Auto-detection must resolve to a concrete format before merging</li>
 <li>If one file is internally out of order, the final output may also be out of order</li>
+<li>Events without usable timestamps are skipped in resilient mode and fail immediately with <code>--strict</code></li>
+<li>Resilient mode still exits non-zero when merge input errors occur; it is best-effort, not fully successful</li>
 </ul>
 <p>When you suspect disorder inside a file, inspect a sample first:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>shard-01.jsonl<span class="w"> </span>--take<span class="w"> </span><span class="m">20</span><span class="w"> </span>-k<span class="w"> </span>timestamp,message

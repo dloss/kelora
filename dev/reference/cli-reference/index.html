@@ -6365,6 +6365,9 @@ memory-bounded, but it is <strong>not</strong> a full global sort.</p>
 <p>Do <strong>not</strong> expect <code>--merge-ts</code> to repair disorder within a file. If one file
 contains <code>10:04</code> followed later by <code>10:01</code>, Kelora will only discover <code>10:01</code>
 after <code>10:04</code> has already been emitted.</p>
+<p>In resilient mode, events without a usable timestamp are skipped and per-file
+disorder is tolerated, but the run still exits non-zero because input errors
+occurred. With <code>--strict</code>, either condition becomes a fatal error immediately.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-1.jsonl<span class="w"> </span>api-2.jsonl<span class="w"> </span>api-3.jsonl<span class="w"> </span>--merge-ts<span class="w"> </span>-J
 </code></pre></div>
 <p>Practical examples:</p>
