@@ -274,6 +274,11 @@ enum SequentialInput {
 
 struct MergedFileReader {
     files: Vec<String>,
+    format: config::InputFormat,
+    strict: bool,
+    cols_sep: Option<String>,
+    extract_prefix: Option<String>,
+    prefix_sep: String,
     ts_field: String,
     ts_format: Option<String>,
     default_timezone: Option<String>,
@@ -289,24 +294,11 @@ struct MergeKey {
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 struct MergeState {
     file_index: usize,
-    line_number: usize,
     line: String,
 }
 
-impl MergedFileReader {
-    fn new(
-        files: Vec<String>,
-        ts_field: String,
-        ts_format: Option<String>,
-        default_timezone: Option<String>,
-    ) -> Self {
-        Self {
-            files,
-            ts_field,
-            ts_format,
-            default_timezone,
-        }
-    }
+enum MergeTimestampParser {
+    Generic(Box<dyn pipeline::EventParser>),
 }
 
 enum ReaderMessage {
@@ -342,21 +334,21 @@ fn run_pipeline_sequential<W: Write>(
         let sorted_files =
             pipeline::builders::sort_files(&config.input.files, &config.input.file_order)?;
         if config.input.merge_ts {
-            if !matches!(config.input.format, config::InputFormat::Json) {
-                return Err(anyhow::anyhow!(
-                    "--merge-ts currently requires JSON input (-j or -f json)"
-                ));
-            }
-            SequentialInput::MergedFiles(MergedFileReader::new(
-                sorted_files,
-                config
+            SequentialInput::MergedFiles(MergedFileReader {
+                files: sorted_files,
+                format: config.input.format.clone(),
+                strict: config.processing.strict,
+                cols_sep: config.input.cols_sep.clone(),
+                extract_prefix: config.input.extract_prefix.clone(),
+                prefix_sep: config.input.prefix_sep.clone(),
+                ts_field: config
                     .input
                     .ts_field
                     .clone()
                     .unwrap_or_else(|| "ts".to_string()),
-                config.input.ts_format.clone(),
-                config.input.default_timezone.clone(),
-            ))
+                ts_format: config.input.ts_format.clone(),
+                default_timezone: config.input.default_timezone.clone(),
+            })
         } else {
             SequentialInput::Files(readers::MultiFileReader::new(
                 sorted_files,
@@ -499,21 +491,21 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
         }
 
         let input = if final_config.input.merge_ts {
-            if !matches!(final_config.input.format, config::InputFormat::Json) {
-                return Err(anyhow::anyhow!(
-                    "--merge-ts currently requires JSON input (-j or -f json)"
-                ));
-            }
-            SequentialInput::MergedFiles(MergedFileReader::new(
-                sorted_files,
-                final_config
+            SequentialInput::MergedFiles(MergedFileReader {
+                files: sorted_files,
+                format: final_config.input.format.clone(),
+                strict: final_config.processing.strict,
+                cols_sep: final_config.input.cols_sep.clone(),
+                extract_prefix: final_config.input.extract_prefix.clone(),
+                prefix_sep: final_config.input.prefix_sep.clone(),
+                ts_field: final_config
                     .input
                     .ts_field
                     .clone()
                     .unwrap_or_else(|| "ts".to_string()),
-                final_config.input.ts_format.clone(),
-                final_config.input.default_timezone.clone(),
-            ))
+                ts_format: final_config.input.ts_format.clone(),
+                default_timezone: final_config.input.default_timezone.clone(),
+            })
         } else {
             SequentialInput::Files(readers::MultiFileReader::new(
                 sorted_files,
@@ -640,37 +632,102 @@ fn spawn_file_reader(
     })
 }
 
-fn extract_json_timestamp(
-    line: &str,
-    ts_field: &str,
-    ts_format: Option<&str>,
-    default_timezone: Option<&str>,
-) -> Result<chrono::DateTime<chrono::Utc>> {
-    let parsed: serde_json::Value = serde_json::from_str(line)
-        .map_err(|e| anyhow::anyhow!("invalid JSON while merging by timestamp: {}", e))?;
-    let object = parsed
-        .as_object()
-        .ok_or_else(|| anyhow::anyhow!("expected JSON object while merging by timestamp"))?;
-    let value = object
-        .get(ts_field)
-        .ok_or_else(|| anyhow::anyhow!("missing timestamp field '{}'", ts_field))?;
-
-    let ts_str = match value {
-        serde_json::Value::String(s) => s.clone(),
-        serde_json::Value::Number(n) => n.to_string(),
-        _ => {
+fn build_simple_merge_parser(
+    format: &config::InputFormat,
+    strict: bool,
+    cols_sep: Option<String>,
+) -> Result<Box<dyn pipeline::EventParser>> {
+    let parser: Box<dyn pipeline::EventParser> = match format {
+        config::InputFormat::Json => {
+            Box::new(crate::parsers::JsonlParser::new().with_strict(strict))
+        }
+        config::InputFormat::Line => Box::new(crate::parsers::LineParser::new()),
+        config::InputFormat::Raw => Box::new(crate::parsers::RawParser::new()),
+        config::InputFormat::Logfmt => Box::new(crate::parsers::LogfmtParser::new()),
+        config::InputFormat::Syslog => Box::new(crate::parsers::SyslogParser::new()?),
+        config::InputFormat::Cef => Box::new(crate::parsers::CefParser::new().with_strict(strict)),
+        config::InputFormat::Combined => Box::new(crate::parsers::CombinedParser::new()?),
+        config::InputFormat::Cols(spec) => {
+            Box::new(crate::parsers::ColsParser::new(spec.clone(), cols_sep).with_strict(strict))
+        }
+        config::InputFormat::Regex(pattern) => {
+            Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(strict))
+        }
+        config::InputFormat::Cascade(formats) => {
+            let mut entries: Vec<(String, Box<dyn pipeline::EventParser>)> = Vec::new();
+            for fmt in formats {
+                let inner = build_simple_merge_parser(fmt, strict, cols_sep.clone())?;
+                entries.push((fmt.cascade_name().to_string(), inner));
+            }
+            Box::new(crate::parsers::CascadingParser::new(entries))
+        }
+        config::InputFormat::Auto => {
             return Err(anyhow::anyhow!(
-                "timestamp field '{}' must be string or number",
-                ts_field
+                "--merge-ts requires a concrete input format after auto-detection"
+            ));
+        }
+        config::InputFormat::Csv(_)
+        | config::InputFormat::Tsv(_)
+        | config::InputFormat::Csvnh
+        | config::InputFormat::Tsvnh => {
+            return Err(anyhow::anyhow!(
+                "unexpected CSV family format in generic parser builder"
             ));
         }
     };
+    Ok(parser)
+}
 
-    crate::timestamp::with_thread_local_parser(|parser| {
-        parser
-            .parse_ts_with_config(&ts_str, ts_format, default_timezone)
-            .ok_or_else(|| anyhow::anyhow!("could not parse timestamp '{}'", ts_str))
-    })
+fn build_merge_timestamp_parser(
+    format: &config::InputFormat,
+    strict: bool,
+    cols_sep: Option<String>,
+) -> Result<MergeTimestampParser> {
+    let parser = match format {
+        config::InputFormat::Csv(_)
+        | config::InputFormat::Tsv(_)
+        | config::InputFormat::Csvnh
+        | config::InputFormat::Tsvnh => {
+            return Err(anyhow::anyhow!(
+                "--merge-ts is not yet supported for CSV/TSV formats (header semantics across merged files)"
+            ));
+        }
+        other => MergeTimestampParser::Generic(build_simple_merge_parser(other, strict, cols_sep)?),
+    };
+    Ok(parser)
+}
+
+fn preprocess_merge_line(line: &str, extract_prefix: Option<&str>, prefix_sep: &str) -> String {
+    if extract_prefix.is_some() {
+        if let Some((_, rest)) = line.split_once(prefix_sep) {
+            return rest.to_string();
+        }
+    }
+    line.to_string()
+}
+
+fn parse_merge_timestamp(
+    parser: &mut MergeTimestampParser,
+    line: &str,
+    ts_config: &crate::timestamp::TsConfig,
+) -> Result<Option<chrono::DateTime<chrono::Utc>>> {
+    let mut event = match parser {
+        MergeTimestampParser::Generic(parser) => parser.parse(line)?,
+    };
+
+    if event
+        .fields
+        .get("__skip__")
+        .and_then(|v| v.clone().try_cast::<bool>())
+        .unwrap_or(false)
+    {
+        return Ok(None);
+    }
+
+    // Force timestamp extraction with merge-time configuration.
+    event.parsed_ts = None;
+    event.extract_timestamp_with_config(None, ts_config);
+    Ok(event.parsed_ts)
 }
 
 fn spawn_merged_file_reader(
@@ -679,42 +736,59 @@ fn spawn_merged_file_reader(
     ctrl_rx: Receiver<Ctrl>,
 ) -> thread::JoinHandle<Result<()>> {
     thread::spawn(move || {
-        let mut readers: Vec<BufReader<decompression::DecompressionReader>> = Vec::new();
+        let mut readers: Vec<(
+            BufReader<decompression::DecompressionReader>,
+            MergeTimestampParser,
+            usize,
+        )> = Vec::new();
         for file in &reader.files {
             let decompressed = decompression::DecompressionReader::new(file)?;
-            readers.push(BufReader::new(decompressed));
+            readers.push((
+                BufReader::new(decompressed),
+                build_merge_timestamp_parser(
+                    &reader.format,
+                    reader.strict,
+                    reader.cols_sep.clone(),
+                )?,
+                0,
+            ));
         }
 
         let mut heap: BinaryHeap<Reverse<(MergeKey, MergeState)>> = BinaryHeap::new();
-        let ts_format = reader.ts_format.as_deref();
-        let default_tz = reader.default_timezone.as_deref();
+        let ts_config = crate::timestamp::TsConfig {
+            custom_field: Some(reader.ts_field.clone()),
+            custom_format: reader.ts_format.clone(),
+            default_timezone: reader.default_timezone.clone(),
+        };
+        let extract_prefix = reader.extract_prefix.as_deref();
 
-        for (file_index, file_reader) in readers.iter_mut().enumerate() {
-            let mut line = String::new();
-            let read = file_reader.read_line(&mut line)?;
-            if read == 0 {
-                continue;
+        for (file_index, (file_reader, parser, line_number)) in readers.iter_mut().enumerate() {
+            loop {
+                let mut line = String::new();
+                let read = file_reader.read_line(&mut line)?;
+                if read == 0 {
+                    break;
+                }
+                *line_number += 1;
+                let line = line.trim_end_matches(&['\n', '\r'][..]).to_string();
+                let parse_line = preprocess_merge_line(&line, extract_prefix, &reader.prefix_sep);
+                match parse_merge_timestamp(parser, &parse_line, &ts_config)? {
+                    Some(timestamp) => {
+                        let key = MergeKey {
+                            timestamp,
+                            file_index,
+                            line_number: *line_number,
+                        };
+                        let state = MergeState { file_index, line };
+                        heap.push(Reverse((key, state)));
+                        break;
+                    }
+                    None => {
+                        // Header/skip line for this format; continue scanning.
+                        continue;
+                    }
+                }
             }
-            let line = line.trim_end_matches(&['\n', '\r'][..]).to_string();
-            let timestamp = extract_json_timestamp(&line, &reader.ts_field, ts_format, default_tz)
-                .map_err(|e| {
-                    anyhow::anyhow!(
-                        "failed to parse timestamp in '{}': {}",
-                        reader.files[file_index],
-                        e
-                    )
-                })?;
-            let key = MergeKey {
-                timestamp,
-                file_index,
-                line_number: 1,
-            };
-            let state = MergeState {
-                file_index,
-                line_number: 1,
-                line,
-            };
-            heap.push(Reverse((key, state)));
         }
 
         while let Some(Reverse((_key, state))) = heap.pop() {
@@ -741,30 +815,36 @@ fn spawn_merged_file_reader(
                 break;
             }
 
-            let file_reader = &mut readers[state.file_index];
-            let mut next_line = String::new();
-            let read = file_reader.read_line(&mut next_line)?;
-            if read == 0 {
-                continue;
+            let (file_reader, parser, line_number) = &mut readers[state.file_index];
+            loop {
+                let mut next_line = String::new();
+                let read = file_reader.read_line(&mut next_line)?;
+                if read == 0 {
+                    break;
+                }
+                *line_number += 1;
+                let next_line = next_line.trim_end_matches(&['\n', '\r'][..]).to_string();
+                let parse_line =
+                    preprocess_merge_line(&next_line, extract_prefix, &reader.prefix_sep);
+                match parse_merge_timestamp(parser, &parse_line, &ts_config).map_err(|e| {
+                    anyhow::anyhow!("failed to parse timestamp in '{}': {}", filename, e)
+                })? {
+                    Some(timestamp) => {
+                        let key = MergeKey {
+                            timestamp,
+                            file_index: state.file_index,
+                            line_number: *line_number,
+                        };
+                        let next_state = MergeState {
+                            file_index: state.file_index,
+                            line: next_line,
+                        };
+                        heap.push(Reverse((key, next_state)));
+                        break;
+                    }
+                    None => continue,
+                }
             }
-            let next_line = next_line.trim_end_matches(&['\n', '\r'][..]).to_string();
-            let next_line_number = state.line_number + 1;
-            let timestamp =
-                extract_json_timestamp(&next_line, &reader.ts_field, ts_format, default_tz)
-                    .map_err(|e| {
-                        anyhow::anyhow!("failed to parse timestamp in '{}': {}", filename, e)
-                    })?;
-            let key = MergeKey {
-                timestamp,
-                file_index: state.file_index,
-                line_number: next_line_number,
-            };
-            let next_state = MergeState {
-                file_index: state.file_index,
-                line_number: next_line_number,
-                line: next_line,
-            };
-            heap.push(Reverse((key, next_state)));
         }
 
         let _ = sender.send(ReaderMessage::Eof);
