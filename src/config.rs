@@ -1306,15 +1306,17 @@ fn create_timestamp_format_config(
     cli: &crate::Cli,
     default_timezone: Option<String>,
 ) -> TimestampFormatConfig {
+    let auto_format_all = cli.format_timestamps_local || cli.format_timestamps_utc;
+
     let mut format_fields = Vec::new();
-    if let Some(ref ts_field) = cli.ts_field {
-        let trimmed = ts_field.trim();
-        if !trimmed.is_empty() {
-            format_fields.push(trimmed.to_string());
+    if auto_format_all {
+        if let Some(ref ts_field) = cli.ts_field {
+            let trimmed = ts_field.trim();
+            if !trimmed.is_empty() {
+                format_fields.push(trimmed.to_string());
+            }
         }
     }
-
-    let auto_format_all = cli.format_timestamps_local || cli.format_timestamps_utc;
     let format_as_utc = cli.format_timestamps_utc;
 
     TimestampFormatConfig {
