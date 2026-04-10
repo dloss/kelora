@@ -2422,14 +2422,14 @@
 <h2 id="step-2-drop-or-whitelist-fields">Step 2: Drop or Whitelist Fields<a class="headerlink" href="#step-2-drop-or-whitelist-fields" title="Permanent link">&para;</a></h2>
 <p>Remove fields you definitely do not need, or rebuild each event with only the essentials.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/security_audit.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.password = (); e.token = (); e.session = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let keep = #{timestamp: e.timestamp, service: e.service, message: e.message}; e = keep&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e = e.drop([&quot;password&quot;, &quot;token&quot;, &quot;session&quot;])&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e = e.keep([&quot;timestamp&quot;, &quot;service&quot;, &quot;message&quot;])&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-F<span class="w"> </span>json
 </code></pre></div>
 <p>Tips:</p>
 <ul>
-<li>Assigning <code>()</code> deletes a field.</li>
-<li>Rebuilding the event (as above) ensures no unexpected data leaks.</li>
+<li><code>drop([...])</code> removes a batch of known-sensitive fields.</li>
+<li><code>keep([...])</code> whitelists the final output shape so unexpected fields do not leak through.</li>
 <li><code>--exclude-keys field1,field2</code> works when the data is already flat.</li>
 </ul>
 <h2 id="step-3-mask-direct-identifiers">Step 3: Mask Direct Identifiers<a class="headerlink" href="#step-3-mask-direct-identifiers" title="Permanent link">&para;</a></h2>
