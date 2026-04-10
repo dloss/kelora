@@ -8154,7 +8154,7 @@
 <p>PII-oriented patterns are opt-in on purpose:</p>
 <ul>
 <li><code>credit_card</code> - Luhn-validated payment card numbers</li>
-<li><code>ssn</code> - SSA-aware US Social Security number validation</li>
+<li><code>ssn</code> - US Social Security numbers in strict <code>XXX-XX-XXXX</code> format (hyphens required; spaces/dots not matched); rejects SSA-invalid area codes (000, 666, 900–999), group 00, and serial 0000</li>
 <li><code>phone</code> - NANP-aware validation for US/CA numbers, with permissive support for other international numbers</li>
 </ul>
 <p><strong>Common use case</strong> - Pattern discovery:
