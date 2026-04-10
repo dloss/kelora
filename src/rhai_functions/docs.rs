@@ -54,7 +54,7 @@ text.mask_ip([octets])               Mask IP address by zeroing the suffix (IPv4
 text.normalized([patterns])          Replace patterns with placeholders (<ipv4>, <email>, <credit_card>, etc.)
                                      Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
                                      sha1, sha256, path, oauth, function, hexcolor, version, hexnum,
-                                     duration, num, credit_card (Luhn-validated), ssn (SSA-validated), phone (NANP-aware for US/CA; permissive for international numbers)
+                                     duration, num, credit_card (Luhn-validated), ssn (SSA-validated, strict XXX-XX-XXXX format only), phone (NANP-aware for US/CA; permissive for international numbers)
 text.parse_cef()                     Parse Common Event Format line into fields
 text.parse_cols(spec [,sep])         Parse columns according to spec
 text.parse_combined()                Parse Apache/Nginx combined log line
@@ -287,7 +287,7 @@ drain_templates()                    Return array of templates with same fields 
                                      Default filters: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid,
                                      mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
                                      hexnum, duration, timestamp, date, time, num
-                                     PII filters (opt-in): credit_card (Luhn-validated), ssn (SSA-validated), phone (NANP-aware for US/CA; permissive for international numbers)
+                                     PII filters (opt-in): credit_card (Luhn-validated), ssn (SSA-validated, strict XXX-XX-XXXX format only), phone (NANP-aware for US/CA; permissive for international numbers)
                                      Options: depth, max_children, similarity, filters, line_num
 
 STATE MANAGEMENT (sequential mode only; errors in --parallel mode):

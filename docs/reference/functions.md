@@ -428,7 +428,7 @@ e.custom = e.message.normalized(["uuid", "sha256", "url"])
 PII-oriented patterns are opt-in on purpose:
 
 - `credit_card` - Luhn-validated payment card numbers
-- `ssn` - SSA-aware US Social Security number validation
+- `ssn` - US Social Security numbers in strict `XXX-XX-XXXX` format (hyphens required; spaces/dots not matched); rejects SSA-invalid area codes (000, 666, 900–999), group 00, and serial 0000
 - `phone` - NANP-aware validation for US/CA numbers, with permissive support for other international numbers
 
 **Common use case** - Pattern discovery:
