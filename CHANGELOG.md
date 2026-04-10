@@ -9,14 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **Per-file auto-detection** - Added `-f auto-per-file` for batches where each file is internally consistent but different files use different formats.
-- **`--include` now works with `--filter`** - Helper functions defined in an include file (`-I`) can now be called from `--filter` expressions. Note: include files used with `--filter` must contain only function definitions; top-level statements are rejected with a clear error.
+- **`--include` now works with `--filter`** - Helper functions defined in an include file (`-I`) can now be called from `--filter` expressions. **Constraint:** the include file must contain only function definitions — top-level statements are rejected with a clear error.
 - **Schema discovery mode** - Added `--discover[=table|json]` for parsed-input schema profiling and `--discover-final[=table|json]` for post-filter/post-transform output schema profiling. Discovery includes nested field flattening, reservoir-sampled examples, and cap warnings for high-cardinality streams.
 - **Cascade format mode** - Pass a comma-separated list to `-f` (e.g. `-f json,line`) to try each parser in order per line; the first success wins. Each event is tagged with the winning parser name in `_format`. Supported formats: `json`, `logfmt`, `syslog`, `cef`, `combined`, `line`, `raw`. Put `line` last as a catch-all fallback.
 - **Chronological merge for sorted files** - Added `--merge-sorted` to merge multiple already-sorted inputs into one chronological stream with a memory-bounded k-way merge. This is intended for structured batch files with reliable timestamps, works with any input format except `-f auto-per-file`, and aborts on missing timestamps, merge-time parse failures, and per-file disorder.
-- **New Rhai output helpers** - Added `human_bytes`, `human_bytes_si`, `format_decimals`, and `format_percent`.
-- **New Rhai text formatting helpers** - Added Unicode-width-aware `ljust`, `rjust`, `center`, and `shorten` string helpers.
-- **New Rhai ANSI styling helpers** - Added `red`, `green`, `yellow`, `blue`, `cyan`, `magenta`, `bold`, and `dim`.
-- **New Rhai chart helpers** - Added `bar(value, max, width)` and `sparkline(array)` helpers for end-of-stream metrics output. For a pre-normalized ratio, pass `max` as `1` (e.g. `bar(0.42, 1, 10)`).
+- **New Rhai display helpers** - A cohesive set for scripted terminal summaries:
+  - *Numeric:* `human_bytes` / `human_bytes_si`, `format_decimals(v, n)`, `format_percent(ratio, n)`
+  - *Alignment (Unicode-width-aware):* `ljust(n)`, `rjust(n)`, `center(n)`, `shorten(n)`
+  - *ANSI styling:* `red()`, `green()`, `yellow()`, `blue()`, `cyan()`, `magenta()`, `bold()`, `dim()` — chainable; no-op when colour is disabled
+  - *Charts:* `bar(value, max, width)` for block bars; `sparkline(array)` for trend lines. For ratios in 0.0–1.0, set `max` to `1.0`.
 - **New Rhai projection helpers** - Added `map.keep()` and `map.drop()` for event field projection.
 - **New Rhai time/random helpers** - Added `dt.ceil_to()` and `sample_prob()`.
 - **New PII validators** - Added `ssn` and `phone` pattern validators to `normalized()`, including SSA-aware SSN checks and NANP-aware validation for US/CA numbers plus permissive support for other international numbers.
