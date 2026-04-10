@@ -188,6 +188,14 @@ fn human_bytes_impl(n: f64, si: bool) -> String {
         idx += 1;
     }
 
+    // If formatting to one decimal place would round up to the base value
+    // (e.g. 1023.999... → "1024.0"), bump to the next unit so the output
+    // stays sensible (e.g. "1.0 GiB" rather than "1024.0 MiB").
+    if idx < units.len() - 1 && (value * 10.0).round() >= base * 10.0 {
+        value /= base;
+        idx += 1;
+    }
+
     let sign = if negative { "-" } else { "" };
     if idx == 0 {
         // Bytes: no decimals
@@ -457,6 +465,16 @@ mod tests {
     }
 
     #[test]
+    fn test_human_bytes_binary_rounding_boundary() {
+        // Values just below a unit threshold must not display as "1024.0 KiB"
+        // (which equals the next unit) — they should bump up instead.
+        assert_eq!(human_bytes_impl(1048575.0, false), "1.0 MiB"); // 1 MiB - 1 B
+        assert_eq!(human_bytes_impl(1073741823.0, false), "1.0 GiB"); // 1 GiB - 1 B
+                                                                      // Values that round down should stay in the lower unit
+        assert_eq!(human_bytes_impl(1_047_552.0, false), "1023.0 KiB"); // 1023 * 1024 exactly
+    }
+
+    #[test]
     fn test_human_bytes_si_basic() {
         assert_eq!(human_bytes_impl(0.0, true), "0 B");
         assert_eq!(human_bytes_impl(999.0, true), "999 B");
@@ -464,6 +482,13 @@ mod tests {
         assert_eq!(human_bytes_impl(1500.0, true), "1.5 KB");
         assert_eq!(human_bytes_impl(1_000_000.0, true), "1.0 MB");
         assert_eq!(human_bytes_impl(1_500_000_000.0, true), "1.5 GB");
+    }
+
+    #[test]
+    fn test_human_bytes_si_rounding_boundary() {
+        // Same rounding-at-boundary check for SI units.
+        assert_eq!(human_bytes_impl(999_999.0, true), "1.0 MB"); // 1 MB - 1 B
+        assert_eq!(human_bytes_impl(999_999_999.0, true), "1.0 GB"); // 1 GB - 1 B
     }
 
     #[test]

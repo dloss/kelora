@@ -25,13 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **CLI diagnostics** - Improved actionable guidance for wrong mode, wrong format, missing `--keys`, missing input, and common flag conflicts without changing behavior.
 - **CLI option validation** - `--discover`/`--drain` conflicts with `--parallel` are now validated at CLI parse time with clearer errors.
-- **ANSI readability** - Bright variants are now used for blue and cyan terminal colors for better readability.
 
 ### Fixed
 
 - **Auto-detection behavior** - `-f auto` and `-f auto-per-file` now consistently detect from the first non-empty line, matching the built-in help and format reference. `-f auto-per-file` also now preserves sequential state across files and reports detected formats per file in `--stats`.
 - **Parser strict mode behavior** - JSON and CEF parsers now correctly respect the strict parsing flag.
 - **Pre-epoch rounding** - Fixed `round_to`/`ceil_to` behavior for timestamps before Unix epoch.
+- **`human_bytes`/`human_bytes_si` display at unit boundaries** - Values just below a unit threshold (e.g. 1 GiB − 1 byte) no longer display as `1024.0 MiB`; they now round up to the next unit (`1.0 GiB`).
 
 ## [1.4.10] - 2026-03-10
 
