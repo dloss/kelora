@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#merge-timestamp-sorted-files" class="md-skip">
+        <a href="#merge-sorted-files-by-timestamp" class="md-skip">
           Skip to content
         </a>
       
@@ -1340,10 +1340,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-merge-ts-actually-guarantees" class="md-nav__link">
+  <a href="#what-merge-sorted-actually-guarantees" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What --merge-ts Actually Guarantees
+        What --merge-sorted Actually Guarantees
       
     </span>
   </a>
@@ -2260,10 +2260,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-merge-ts-actually-guarantees" class="md-nav__link">
+  <a href="#what-merge-sorted-actually-guarantees" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What --merge-ts Actually Guarantees
+        What --merge-sorted Actually Guarantees
       
     </span>
   </a>
@@ -2356,7 +2356,7 @@
   
 
 
-<h1 id="merge-timestamp-sorted-files">Merge Timestamp-Sorted Files<a class="headerlink" href="#merge-timestamp-sorted-files" title="Permanent link">&para;</a></h1>
+<h1 id="merge-sorted-files-by-timestamp">Merge Sorted Files by Timestamp<a class="headerlink" href="#merge-sorted-files-by-timestamp" title="Permanent link">&para;</a></h1>
 <p>Combine multiple log files into one chronological stream without loading
 everything into memory first.</p>
 <h2 id="when-this-guide-helps">When This Guide Helps<a class="headerlink" href="#when-this-guide-helps" title="Permanent link">&para;</a></h2>
@@ -2366,9 +2366,9 @@ everything into memory first.</p>
 <li>You want to reconstruct a single incident timeline across those files.</li>
 <li>The files are large enough that pre-sorting them would be expensive or awkward.</li>
 </ul>
-<h2 id="what-merge-ts-actually-guarantees">What <code>--merge-ts</code> Actually Guarantees<a class="headerlink" href="#what-merge-ts-actually-guarantees" title="Permanent link">&para;</a></h2>
-<p><code>--merge-ts</code> merges <strong>already sorted</strong> inputs. It does not perform a full global
-sort over all events in all files.</p>
+<h2 id="what-merge-sorted-actually-guarantees">What <code>--merge-sorted</code> Actually Guarantees<a class="headerlink" href="#what-merge-sorted-actually-guarantees" title="Permanent link">&para;</a></h2>
+<p><code>--merge-sorted</code> merges <strong>already sorted</strong> inputs. It does not perform a full
+global sort over all events in all files.</p>
 <p>Kelora keeps one pending event from each input file, emits the earliest
 timestamp, then advances only that file. The result is efficient and
 streaming-friendly:</p>
@@ -2377,8 +2377,9 @@ streaming-friendly:</p>
 <li>Output becomes available immediately instead of after a full read/sort pass.</li>
 <li>Large archive sets remain practical to process in one command.</li>
 </ul>
-<p>The tradeoff is straightforward: if a single file is out of order, Kelora
-aborts at the first out-of-order event instead of guessing.</p>
+<p>The tradeoff is straightforward: Kelora is strict about mergeability. If one
+file is out of order, missing timestamps, or cannot be parsed well enough to
+extract timestamps, the merge aborts instead of guessing.</p>
 <h2 id="practical-example">Practical Example<a class="headerlink" href="#practical-example" title="Permanent link">&para;</a></h2>
 <p>Imagine three collectors writing one JSONL file each:</p>
 <ul>
@@ -2389,7 +2390,7 @@ aborts at the first out-of-order event instead of guessing.</p>
 <p>Each file is chronological on its own, but the timestamps overlap across files.
 You want one merged view for an outage investigation.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-a.jsonl<span class="w"> </span>api-b.jsonl<span class="w"> </span>worker.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--merge-ts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--merge-sorted<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,level,message
 </code></pre></div>
 <p>This gives you a single interleaved timeline such as:</p>
@@ -2408,8 +2409,8 @@ multiple already-ordered sources, without paying for a heavyweight sort step.</p
 <li>One collector output per host</li>
 <li>One rotated file per process</li>
 </ul>
-<p>For those cases, <code>--merge-ts</code> solves the real problem: <strong>merge several ordered
-streams into one ordered stream</strong>.</p>
+<p>For those cases, <code>--merge-sorted</code> solves the real problem: <strong>merge several
+ordered streams into one ordered stream</strong>.</p>
 <p>A true global sort would require one of these heavier approaches:</p>
 <ul>
 <li>Buffer all events in memory</li>
@@ -2422,8 +2423,8 @@ operations work, a streaming merge is usually the better tradeoff.</p>
 <p>Be explicit about the parser so Kelora can extract timestamps predictably.
 Kelora auto-detects common timestamp field names such as <code>timestamp</code> and <code>ts</code>;
 add <code>--ts-field &lt;field&gt;</code> only when your data uses a different key:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>shard-*.jsonl<span class="w"> </span>--merge-ts<span class="w"> </span>-J
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app-*.log<span class="w"> </span>--merge-ts<span class="w"> </span>--ts-field<span class="w"> </span>ts<span class="w"> </span>-F<span class="w"> </span>json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>shard-*.jsonl<span class="w"> </span>--merge-sorted<span class="w"> </span>-J
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app-*.log<span class="w"> </span>--merge-sorted<span class="w"> </span>--ts-field<span class="w"> </span>ts<span class="w"> </span>-F<span class="w"> </span>json
 </code></pre></div>
 <p>Good fits:</p>
 <ul>
@@ -2435,15 +2436,16 @@ add <code>--ts-field &lt;field&gt;</code> only when your data uses a different k
 <ul>
 <li>Files known to contain clock rewrites or backfilled old events</li>
 <li>Inputs that mix unrelated formats line by line</li>
-<li>CSV/TSV workflows, which are not supported by <code>--merge-ts</code> today</li>
+<li>CSV/TSV workflows, which are not supported by <code>--merge-sorted</code> today</li>
 </ul>
 <h2 id="common-gotchas">Common Gotchas<a class="headerlink" href="#common-gotchas" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>--merge-ts</code> is incompatible with <code>--parallel</code></li>
+<li><code>--merge-sorted</code> is incompatible with <code>--parallel</code></li>
 <li>Auto-detection must resolve to a concrete format before merging</li>
-<li>If one file is internally out of order, <code>--merge-ts</code> aborts at the first offending event</li>
-<li>Events without usable timestamps are skipped in resilient mode and fail immediately with <code>--strict</code>; use <code>--ts-field &lt;field&gt;</code> when the timestamp is stored under a non-default key</li>
-<li>Output already emitted before the failure remains valid; Kelora stops instead of trying to recover ordering</li>
+<li>Before emitting the first event, Kelora must find one timestamped event in every input file</li>
+<li>If one file is internally out of order, <code>--merge-sorted</code> aborts at the first offending event</li>
+<li>Missing timestamps and merge-time parse failures are fatal in all modes; use <code>--ts-field &lt;field&gt;</code> when the timestamp is stored under a non-default key</li>
+<li>Output is still streamed. If a late merge error occurs after some events were emitted, that prefix remains valid; Kelora stops instead of trying to recover ordering</li>
 </ul>
 <p>When you suspect disorder inside a file, inspect a sample first:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>shard-01.jsonl<span class="w"> </span>--take<span class="w"> </span><span class="m">20</span><span class="w"> </span>-k<span class="w"> </span>timestamp,message
@@ -2451,7 +2453,7 @@ add <code>--ts-field &lt;field&gt;</code> only when your data uses a different k
 <h2 id="incident-oriented-variant">Incident-Oriented Variant<a class="headerlink" href="#incident-oriented-variant" title="Permanent link">&para;</a></h2>
 <p>Merge first, then apply your normal filters:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-*.jsonl<span class="w"> </span>worker-*.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--merge-ts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--merge-sorted<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--since<span class="w"> </span><span class="s1">&#39;2026-04-09 09:40&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--until<span class="w"> </span><span class="s1">&#39;2026-04-09 10:00&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>-l<span class="w"> </span>error,warn<span class="w"> </span><span class="se">\</span>
@@ -2461,7 +2463,7 @@ add <code>--ts-field &lt;field&gt;</code> only when your data uses a different k
 logged to its own ordered file.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../reference/cli-reference/#merge-ts">CLI Reference</a> for the flag contract and constraints</li>
+<li><a href="../../reference/cli-reference/#merge-sorted">CLI Reference</a> for the flag contract and constraints</li>
 <li><a href="../batch-process-archives/">Process Archives at Scale</a> for throughput and batch-processing tradeoffs</li>
 <li><a href="../integrate-external-tools/">Integrate Kelora with External Tools</a> when you need a heavier external sort or pre-filter step</li>
 </ul>

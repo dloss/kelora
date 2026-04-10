@@ -2153,10 +2153,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#merge-ts" class="md-nav__link">
+  <a href="#merge-sorted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --merge-ts
+        --merge-sorted
       
     </span>
   </a>
@@ -3692,10 +3692,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-discover-scope-scope" class="md-nav__link">
+  <a href="#-discover-final" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --discover-scope &lt;SCOPE&gt;
+        --discover-final
       
     </span>
   </a>
@@ -4358,10 +4358,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#merge-ts" class="md-nav__link">
+  <a href="#merge-sorted" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --merge-ts
+        --merge-sorted
       
     </span>
   </a>
@@ -5897,10 +5897,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-discover-scope-scope" class="md-nav__link">
+  <a href="#-discover-final" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --discover-scope &lt;SCOPE&gt;
+        --discover-final
       
     </span>
   </a>
@@ -6353,25 +6353,28 @@ details.</p>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>--file-order<span class="w"> </span>mtime<span class="w"> </span>logs/*.log
 </code></pre></div>
-<h4 id="merge-ts"><code>--merge-ts</code><a class="headerlink" href="#merge-ts" title="Permanent link">&para;</a></h4>
-<p>Merge multiple timestamp-sorted input files into one chronological stream.</p>
+<h4 id="merge-sorted"><code>--merge-sorted</code><a class="headerlink" href="#merge-sorted" title="Permanent link">&para;</a></h4>
+<p>Merge multiple already-sorted input files into one chronological stream.</p>
 <p>Kelora does this as a streaming k-way merge: it keeps one pending event per
 input file and emits the earliest timestamp currently visible. This is fast and
 memory-bounded, but it is <strong>not</strong> a full global sort.</p>
-<p>Use <code>--merge-ts</code> when:</p>
+<p>Use <code>--merge-sorted</code> when:</p>
 <ul>
 <li>Each input file is already in chronological order on its own</li>
 <li>You want one merged timeline across rotated shards, hosts, or services</li>
 <li>The dataset is too large to sort as a separate pre-processing step</li>
 </ul>
-<p>Do <strong>not</strong> expect <code>--merge-ts</code> to repair disorder within a file. If one file
+<p>Do <strong>not</strong> expect <code>--merge-sorted</code> to repair disorder within a file. If one file
 contains <code>10:04</code> followed later by <code>10:01</code>, Kelora aborts as soon as it
 discovers that out-of-order event.</p>
-<p>Events without a usable timestamp are still skipped in resilient mode and fail
-immediately with <code>--strict</code>. Per-file disorder is always fatal because it would
-break the chronological output guarantee. If your timestamps live in a
-non-standard field, specify it explicitly with <code>--ts-field &lt;field&gt;</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-1.jsonl<span class="w"> </span>api-2.jsonl<span class="w"> </span>api-3.jsonl<span class="w"> </span>--merge-ts<span class="w"> </span>-J
+<p>Before emitting output, Kelora must find one timestamped event in every input
+file. Missing timestamps, merge-time parse failures, and per-file disorder are
+always fatal because they would break the chronological output guarantee. If
+your timestamps live in a non-standard field, specify it explicitly with
+<code>--ts-field &lt;field&gt;</code>.</p>
+<p>Output remains streamed. If a late merge error occurs after some events were
+already emitted, that prefix remains valid and the command exits non-zero.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-1.jsonl<span class="w"> </span>api-2.jsonl<span class="w"> </span>api-3.jsonl<span class="w"> </span>--merge-sorted<span class="w"> </span>-J
 </code></pre></div>
 <p>Practical examples:</p>
 <ul>
@@ -6385,7 +6388,7 @@ non-standard field, specify it explicitly with <code>--ts-field &lt;field&gt;</c
 <li>Not supported with <code>--parallel</code> or manual thread overrides</li>
 <li>Not yet supported for CSV/TSV inputs</li>
 </ul>
-<p>See <a href="../../how-to/merge-timestamp-sorted-files/">Merge Timestamp-Sorted Files</a>
+<p>See <a href="../../how-to/merge-timestamp-sorted-files/">Merge Sorted Files by Timestamp</a>
 for a full walkthrough and tradeoff discussion.</p>
 <h3 id="line-filtering">Line Filtering<a class="headerlink" href="#line-filtering" title="Permanent link">&para;</a></h3>
 <h4 id="-skip-lines-n"><code>--skip-lines &lt;N&gt;</code><a class="headerlink" href="#-skip-lines-n" title="Permanent link">&para;</a></h4>
@@ -6983,14 +6986,19 @@ Sequential mode only (not supported with <code>--parallel</code> or thread overr
 <a id="__codelineno-80-4" name="__codelineno-80-4" href="#__codelineno-80-4"></a><span class="c1"># JSON output</span>
 <a id="__codelineno-80-5" name="__codelineno-80-5" href="#__codelineno-80-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover<span class="o">=</span>json
 </code></pre></div>
-<h4 id="-discover-scope-scope"><code>--discover-scope &lt;SCOPE&gt;</code><a class="headerlink" href="#-discover-scope-scope" title="Permanent link">&para;</a></h4>
-<p>Choose where field discovery observes data:</p>
+<h4 id="-discover-final"><code>--discover-final</code><a class="headerlink" href="#-discover-final" title="Permanent link">&para;</a></h4>
+<p>Profile final emitted fields instead of parsed input fields.
+Use this when you want to inspect the schema after filters and scripts have run.</p>
+<p><strong>Formats:</strong></p>
 <ul>
-<li><code>input</code> (default) - Profile parsed fields before scripts/filters</li>
-<li><code>output</code> - Profile fields after scripts and filters</li>
+<li><code>table</code> (default) - Human-readable summary</li>
+<li><code>json</code> - Machine-readable output</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a><span class="c1"># Discover only fields that survive filtering/transforms</span>
-<a id="__codelineno-81-2" name="__codelineno-81-2" href="#__codelineno-81-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover<span class="w"> </span>--discover-scope<span class="o">=</span>output<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-81-2" name="__codelineno-81-2" href="#__codelineno-81-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover-final<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-81-3" name="__codelineno-81-3" href="#__codelineno-81-3"></a>
+<a id="__codelineno-81-4" name="__codelineno-81-4" href="#__codelineno-81-4"></a><span class="c1"># JSON output of final fields</span>
+<a id="__codelineno-81-5" name="__codelineno-81-5" href="#__codelineno-81-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover-final<span class="o">=</span>json<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
 </code></pre></div>
 <h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <h3 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">&para;</a></h3>

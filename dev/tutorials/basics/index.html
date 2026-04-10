@@ -3436,11 +3436,11 @@
 <p>If you want machine-readable output for tooling, use JSON:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span>--discover<span class="o">=</span>json
 </code></pre></div>
-<p>If you're profiling the result after filters or transforms, switch to output scope. This is the version you want when you care about the fields that survive your pipeline, not just the raw parsed input:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span>--discover<span class="w"> </span>--discover-scope<span class="o">=</span>output<span class="w"> </span><span class="se">\</span>
+<p>If you're profiling the result after filters or transforms, use <code>--discover-final</code>. This is the version you want when you care about the fields that survive your pipeline, not just the raw parsed input:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/basics.jsonl<span class="w"> </span>--discover-final<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
 </code></pre></div>
-<p>Use <code>--discover</code> early when exploring a new file. Once you start adding <code>--filter</code>, <code>--exec</code>, or other transformations, <code>--discover --discover-scope=output</code> becomes the better inspection tool because it shows the schema after your pipeline logic runs.</p>
+<p>Use <code>--discover</code> early when exploring a new file. Once you start adding <code>--filter</code>, <code>--exec</code>, or other transformations, <code>--discover-final</code> becomes the better inspection tool because it shows the schema after your pipeline logic runs.</p>
 <hr />
 <h2 id="part-3-understanding-the-default-display">Part 3: Understanding the Default Display<a class="headerlink" href="#part-3-understanding-the-default-display" title="Permanent link">&para;</a></h2>
 <p>Let's examine what Kelora shows by default:</p>
@@ -3676,7 +3676,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: json
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 6 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 6 total, 6 output, 0 filtered (0.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 4475 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 4072 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: timestamp (auto-detected) - 6/6 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:03:00+00:00 (3m)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Levels seen: DEBUG,ERROR,INFO,WARN
