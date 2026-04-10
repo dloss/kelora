@@ -235,10 +235,10 @@ bar(value, max, width)               Render a horizontal bar of `width` cells sh
                                      using Unicode eighth-blocks (▏▎▍▌▋▊▉█) for sub-cell resolution.
                                      Pads with spaces so the result has exactly `width` display columns.
                                      Values outside 0..max are clamped; max<=0 renders empty.
-                                     For a pre-normalized ratio, pass max as 1 (e.g. bar(0.42, 1, 10)).
-                                     Examples: bar(7, 10, 10)  → "███████   "
-                                               bar(3, 8, 4)    → "█▌  "
-                                               bar(0.42, 1, 10) → "████▏     "
+                                     For ratios in 0.0–1.0 (error rate, CPU fraction, etc.), set max to 1.0.
+                                     Examples: bar(7, 10, 10)    → "███████   "
+                                               bar(3, 8, 4)      → "█▌  "
+                                               bar(0.42, 1.0, 10) → "████▏     "
 sparkline(array)                     Render an array of numbers as a single-line sparkline (▁▂▃▄▅▆▇█)
                                      scaled to 0..max(array). Negatives and non-numerics render as space.
                                      Empty arrays return "".

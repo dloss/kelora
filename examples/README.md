@@ -308,6 +308,29 @@ Functions:
 
 Copy and customize the file to add organization-specific field names.
 
+### `display_helpers.rhai`
+
+Visual and formatting helpers for building terminal output in `--end` summary hooks. Demonstrates field projection, time bucketing, probabilistic sampling, and a complete colour-coded service health table.
+
+```bash
+# Slim output — verbose debug fields stripped
+kelora -j examples/api_logs.jsonl --exec-file examples/display_helpers.rhai
+
+# Statistical sample — forward ~5% of events
+kelora -j examples/api_logs.jsonl --filter 'sample_prob(0.05)'
+
+# Format byte sizes from a transfer field
+kelora -j examples/api_logs.jsonl \
+  --exec 'e.size_fmt = human_bytes(e.get_path("content_length", 0))'
+
+# Full service health table with bars, sparkline, and colour (see file for --end block)
+kelora -j examples/api_logs.jsonl -q -m \
+  --exec-file examples/display_helpers.rhai \
+  --end '...'
+```
+
+Helpers demonstrated: `bar()`, `sparkline()`, `human_bytes()`, `format_percent()`, `format_decimals()`, `ljust()`, `rjust()`, `shorten()`, `bold()`, `dim()`, `red()`, `green()`, `map.keep()`, `map.drop()`, `sample_prob()`, `dt.ceil_to()`
+
 ### `patterns.rhai`
 
 Pattern detection and extraction using curated regex patterns for common data types (IPs, emails, URLs, durations, UUIDs, etc.). See file header for usage examples.
