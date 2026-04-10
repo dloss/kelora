@@ -2377,8 +2377,8 @@ streaming-friendly:</p>
 <li>Output becomes available immediately instead of after a full read/sort pass.</li>
 <li>Large archive sets remain practical to process in one command.</li>
 </ul>
-<p>The tradeoff is straightforward: if a single file is out of order, the merged
-output can also become out of order.</p>
+<p>The tradeoff is straightforward: if a single file is out of order, Kelora
+aborts at the first out-of-order event instead of guessing.</p>
 <h2 id="practical-example">Practical Example<a class="headerlink" href="#practical-example" title="Permanent link">&para;</a></h2>
 <p>Imagine three collectors writing one JSONL file each:</p>
 <ul>
@@ -2441,9 +2441,9 @@ add <code>--ts-field &lt;field&gt;</code> only when your data uses a different k
 <ul>
 <li><code>--merge-ts</code> is incompatible with <code>--parallel</code></li>
 <li>Auto-detection must resolve to a concrete format before merging</li>
-<li>If one file is internally out of order, the final output may also be out of order</li>
+<li>If one file is internally out of order, <code>--merge-ts</code> aborts at the first offending event</li>
 <li>Events without usable timestamps are skipped in resilient mode and fail immediately with <code>--strict</code>; use <code>--ts-field &lt;field&gt;</code> when the timestamp is stored under a non-default key</li>
-<li>Resilient mode still exits non-zero when merge input errors occur; it is best-effort, not fully successful</li>
+<li>Output already emitted before the failure remains valid; Kelora stops instead of trying to recover ordering</li>
 </ul>
 <p>When you suspect disorder inside a file, inspect a sample first:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>shard-01.jsonl<span class="w"> </span>--take<span class="w"> </span><span class="m">20</span><span class="w"> </span>-k<span class="w"> </span>timestamp,message
