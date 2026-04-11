@@ -1,8 +1,12 @@
 # Kelora
 
-**Turn messy logs into structured data.**
+**Scriptable log analysis for terminals.**
 
-Kelora is a scriptable log processor for the command line. Parse structured or semi-structured logs, filter with complex logic, and analyze streams using embedded [Rhai](https://rhai.rs) scripting—all in a single binary.
+Kelora helps you parse, filter, transform, and summarize logs in one command. It works with JSON, Logfmt, and mixed text logs, and adds embedded [Rhai](https://rhai.rs) scripting when simple filters are not enough.
+
+For a concrete tour of standout capabilities—pattern mining, embedded JSON extraction, deterministic sampling, pseudonymization, span windows, and more—see **[Core Features](features.md)**.
+
+Kelora is best used as a flexible analysis layer in your toolkit: use it on its own, or combine it with `grep`, `jq`, and other Unix tools.
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
 

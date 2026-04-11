@@ -69,6 +69,7 @@ extra:
 
 nav:
   - Home: index.md
+  - Core Features: features.md
   - Quickstart: quickstart.md
   - Tutorials:
       - Overview: tutorials/index.md
