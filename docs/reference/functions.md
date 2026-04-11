@@ -1625,6 +1625,46 @@ let recent_vals = window.pluck_as_nums("value")
 e.spike = e.value > (recent_vals.reduce(|s, x| s + x, 0) / recent_vals.len()) * 2
 ```
 
+#### `prev(field)` / `lag(field, n)` / strict variants
+Read values from prior records in stream order (**sequential mode only**). `prev(field)` is shorthand for `lag(field, 1)`.
+
+- Resilient forms (`prev`, `lag`) return `()` when history is missing.
+- Strict forms (`prev_strict`, `lag_strict`) raise runtime errors when history/field values are missing.
+- `n` must be `>= 1` and `<= 10_000`.
+
+```rhai
+e.prev_ms = prev("duration_ms")
+e.prev2_ms = lag("duration_ms", 2)
+e.prev_status = lag("status", 1)
+```
+
+#### `delta(field [,n])` / `delta_strict(field [,n])`
+Compute `current - lagged` using the current event value and a prior record value.
+
+- Only native numbers are accepted (`int`/`float`).
+- Numeric strings (for example `"123"`) are treated as non-numeric.
+- Resilient `delta` returns `()` for missing/non-numeric values.
+- `delta_strict` raises runtime errors with the offending value/type.
+
+```rhai
+e.delta_ms = delta("duration_ms")            // current - previous
+e.delta_5 = delta("duration_ms", 5)          // current - value 5 records back
+```
+
+#### `ewma(key, value, alpha)` / `ewma_strict(...)`
+Compute an exponential weighted moving average:
+
+`S_t = alpha * x_t + (1 - alpha) * S_{t-1}`
+
+- First observation initializes `S_0 = x_0`.
+- State is tracked per `key`.
+- `alpha` must be in `(0, 1]`.
+- Sequential mode only.
+
+```rhai
+e.latency_smooth = ewma("latency_ms", e.latency_ms, 0.2)
+```
+
 ---
 
 ## State Management Functions
