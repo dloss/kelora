@@ -29,11 +29,12 @@ cleaner after earlier ones land.
 
 ### R1 — Merge the duplicated hot-path methods in `pipeline/mod.rs`
 
-**Problem.** `process_line` and `process_chunk_directly` are ~500 lines each and
-nearly identical. The comment in `process_chunk_directly` even says: *"This is
-the same logic as in process_line starting from the 'Parse stage' comment."*
-Any bug fix or feature addition in the parse-to-output path currently requires
-editing two copies.
+**Problem.** `process_line` (`pipeline/mod.rs:355`, ~200 lines) and
+`process_chunk_directly` (`pipeline/mod.rs:820`, ~165 lines) share nearly all
+of their parse→track→script→output logic. The comment in
+`process_chunk_directly` even says: *"This is the same logic as in
+process_line starting from the 'Parse stage' comment."* Any bug fix or feature
+addition in the parse-to-output path currently requires editing two copies.
 
 **Goal.** One shared `process_chunk(chunk: String, ctx: &mut PipelineContext)
 -> Result<Vec<FormattedOutput>>` private method that both call.
@@ -61,9 +62,9 @@ tests verify the behaviour.
 
 ### R2 — Factor out `apply_script_result` duplication
 
-**Problem.** The `Emit` and `EmitMultiple` branches of `apply_script_result`
-in `src/pipeline/mod.rs` are ~200 lines each of near-identical stat tracking,
-span handling, limiter checks, and output logic.
+**Problem.** `apply_script_result` (`pipeline/mod.rs:555`, ~265 lines total)
+has `Emit` and `EmitMultiple` branches that are near-identical: stat tracking,
+span handling, limiter checks, and output logic are duplicated between them.
 
 **Goal.** A private `fn apply_single_event(event: Event, ...) ->
 Result<Option<FormattedOutput>>` helper, with `EmitMultiple` iterating over it.
@@ -111,29 +112,43 @@ because the public surface stays the same.
 
 ---
 
-### R4 — Remove dead `DebugTracker` code
+### R4 — Audit and prune `DebugTracker` / `DebugConfig`
 
 **Depends on R3** (so the code is visible in isolation).
 
-**Problem.** `DebugTracker` and `DebugConfig` in `engine.rs` are compiled in
-but never reachable from the CLI binary. They add ~300 lines of noise and the
-`#[allow(dead_code)]` annotation at the top of the file is there to suppress
-the resulting warnings.
+**Problem.** `DebugTracker` and `DebugConfig` add ~300 lines to `engine.rs`
+and the file carries a module-level `#[allow(dead_code)]` that may in part be
+covering this code. However, they are **not** entirely unreachable:
+`DebugConfig` is constructed at `pipeline/builders.rs:437` and `:770` and
+passed to `rhai_engine.setup_debugging(...)`, which internally builds a
+`DebugTracker`. So a blanket delete would break the build.
 
-**Goal.** Delete `engine/debug.rs`. Remove the `#[allow(dead_code)]` attribute
-if it was only covering this code.
+The open question is whether the tracker actually influences any observable
+CLI output, or whether `setup_debugging` and its downstream calls are
+effectively no-ops that can be removed along with their call sites.
+
+**Goal.** Determine which parts of the debug scaffolding have user-visible
+effect and delete the rest. Best case: remove the whole subsystem plus its two
+callers in `builders.rs`. Worst case: keep `DebugConfig` + the one reachable
+code path and delete the rest.
 
 **Approach.**
 
-1. Confirm no public or crate-level callsites: `grep -r "DebugTracker\|DebugConfig" src/`.
-2. Delete `engine/debug.rs`.
-3. Remove its `mod debug;` declaration and any re-exports.
-4. Remove the module-level `#[allow(dead_code)]` if it is now unneeded.
+1. Trace every method on `DebugTracker` (constructors, `record_*`, `report_*`,
+   etc.) and check whether any call site eventually writes to stdout/stderr,
+   mutates user-visible state, or changes control flow.
+2. Run the binary with `--verbose` and compare output with the tracker
+   temporarily stubbed to no-ops — if output is identical, the tracker is
+   functionally dead.
+3. Delete the unreachable / no-op portions. Leave any code path that is
+   demonstrably reachable and observable.
+4. Remove `#[allow(dead_code)]` from `engine.rs` only if it is no longer
+   needed (check by temporarily deleting it and running `cargo build`).
 
-**Verification.** `cargo check --all-targets` must emit zero dead-code
-warnings for the engine module.
+**Verification.** `cargo check --all-targets` with zero new dead-code
+warnings. `just test`. Manual spot-check of `--verbose` output before/after.
 
-**Risk.** Very low. Dead code removal.
+**Risk.** Low. Requires actual investigation — do not rely on grep alone.
 
 ---
 
@@ -326,7 +341,7 @@ adding clarity.
 | R1 | Merge `process_line`/`process_chunk_directly` | Low | — |
 | R2 | Factor out `apply_script_result` duplication | Low-medium | R1 (cleaner after) |
 | R3 | Split `engine.rs` into module | Very low | — |
-| R4 | Remove dead `DebugTracker` | Very low | R3 |
+| R4 | Audit and prune `DebugTracker` / `DebugConfig` | Low | R3 |
 | R5 | Split `tracking.rs` into module | Very low | — |
 | R6 | Replace `lazy_static` / `once_cell` with std | Very low | — |
 | R7 | Extract timestamp anchor resolution | Low | — |
