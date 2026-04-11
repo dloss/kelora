@@ -10,17 +10,22 @@ Kelora can estimate cardinality with HyperLogLog and compute streaming metrics, 
 
 > “Have I seen this value/template before?”
 
-Exact sets can be memory-heavy at high cardinality. A Bloom filter provides bounded memory membership tests with no false negatives and tunable false-positive rate.
+Two use cases exist with different requirements:
+
+- **Best-effort novelty detection**: memory matters more than catching every new item. A Bloom filter provides bounded memory with tunable error rate.
+- **Comprehensive novelty detection**: every new item must be surfaced; occasional duplicate alerts are acceptable. Requires exact membership storage up to a configurable cap.
 
 ## 2) Goals & Non-Goals
 
 ### Goals
 
-1. Add first-seen detection primitive:
-   - `is_new(value, namespace)`
-2. Keep memory bounded and configurable.
+1. Add first-seen detection primitives with explicit, distinct guarantees:
+   - `is_new(value, namespace)` — exact, never misses a new item
+   - `is_new_approx(value, namespace)` — approximate (Bloom), bounded memory, may miss new items
+2. Keep memory bounded and configurable for both variants.
 3. Support sequential mode and design for parallel mergeability.
 4. Provide transparent observability of approximation behavior.
+5. Make failure modes visible in the API, not just the docs.
 
 ### Non-Goals (v1)
 
@@ -32,11 +37,23 @@ Exact sets can be memory-heavy at high cardinality. A Bloom filter provides boun
 
 ## 3.1 Function Signatures
 
-Core:
+Two variants with distinct guarantees:
 
 ```rhai
 is_new(value: Dynamic, namespace: &str) -> bool
+// Exact set. Never misses a new item. Returns true on first occurrence, false thereafter.
+// May re-fire on a value after the namespace cap is reached (eviction). See §4.4.
+
+is_new_approx(value: Dynamic, namespace: &str) -> bool
+// Approximate (Bloom filter). Bounded memory. May silently suppress genuinely new items.
+// When true: item is DEFINITELY new. When false: item is PROBABLY seen (but may be wrong).
+// See §4.4 for the full error asymmetry.
 ```
+
+Naming rationale: names that try to encode the error direction in the function name
+(e.g. `maybe_new`, `is_definitely_new`) misplace the uncertainty and mislead users.
+The `_approx` suffix signals "check the docs before relying on this" without implying
+a specific direction. The distinction between the two functions makes the choice explicit.
 
 Advanced (optional v1.1):
 
@@ -50,9 +67,9 @@ bloom_clear(namespace: &str) -> ()
 Configuration:
 
 ```bash
---bloom-default-capacity 1000000
---bloom-default-fp-rate 0.01
---bloom-max-bytes 64MB
+--bloom-default-capacity 1000000     // applies to is_new exact cap and is_new_approx
+--bloom-default-fp-rate 0.01         // is_new_approx only
+--bloom-max-bytes 64MB               // is_new_approx only
 ```
 
 or purely script-level config (alternative):
@@ -63,6 +80,8 @@ bloom_config("templates", #{capacity: 2_000_000, fp_rate: 0.005})
 
 ## 3.2 Example Usage
 
+Use `is_new` when you must catch every new occurrence (e.g. security alerts, audit trails):
+
 ```bash
 kelora --drain -k message --exec '
   let tpl = drain_template(e.message).template;
@@ -72,9 +91,13 @@ kelora --drain -k message --exec '
 '
 ```
 
+Use `is_new_approx` when dataset is too large for exact storage and occasional misses are acceptable
+(e.g. dashboards, high-cardinality stream summaries):
+
 ```bash
 kelora -j app.jsonl --exec '
-  if is_new(e.user_id, "users") { track_count("new_users") }
+  // Approximate: a small fraction of genuinely new user_ids will be silently skipped.
+  if is_new_approx(e.user_id, "users") { track_count("new_users") }
 ' --metrics
 ```
 
@@ -82,7 +105,7 @@ kelora -j app.jsonl --exec '
 
 ## 4.1 Namespace behavior
 
-- Each namespace has an independent Bloom filter instance.
+- Each namespace has an independent filter instance (exact set or Bloom depending on function used).
 - First call in namespace lazily creates filter using defaults/config.
 
 ## 4.2 Type canonicalization
@@ -106,16 +129,40 @@ Recommendation:
 
 Alternative is strict error; default should be non-disruptive.
 
-## 4.4 False positives
+## 4.4 Error asymmetry
 
-- Possible: returning “seen” for actually new item.
-- Impossible: returning “new” for previously inserted item (assuming deterministic hashing).
+**`is_new` (exact):**
+- Below cap: no errors in either direction.
+- After cap/eviction: may return `true` (new) for a previously seen item that was evicted.
+  This is a *duplicate alert*, not a silent miss — the user's handler fires again.
 
-Docs must explicitly state this.
+**`is_new_approx` (Bloom):**
+
+The error direction is important and counterintuitive:
+
+| Return value | Meaning |
+|---|---|
+| `true` | Item is **definitely** new — certain, no false negatives |
+| `false` | Item is **probably** seen — but may be wrong (false positive) |
+
+The failure mode is a **silent miss**: `is_new_approx` returns `false` for a genuinely
+new item. The user's “new item” handler never fires. There is no warning or signal that
+anything was suppressed.
+
+This makes the Bloom variant unsuitable for use cases that must surface every new event
+(security alerts, audit trails, deduplication). For those, use `is_new`.
+
+The nominal FP rate (default 1%) applies only at or below the configured capacity.
+As inserts exceed capacity, the effective FP rate rises — see §4.5.
+
+Docs and `--help-functions` output must state the error direction explicitly, not just
+note that “approximation is used.” A one-liner is sufficient:
+*”Returns true only when the item is definitely new; false means probably seen but may be wrong.”*
 
 ## 4.5 Saturation behavior
 
-As inserts exceed planned capacity, FP rate rises.
+**`is_new_approx` (Bloom):** as inserts exceed planned capacity, FP rate rises silently.
+Silent misses become more frequent without any per-event signal.
 
 Policy options:
 1. Warn once when saturation threshold exceeded.
@@ -123,6 +170,12 @@ Policy options:
 3. Freeze and continue with degraded quality.
 
 Recommendation v1: warn once + continue.
+
+**`is_new` (exact):** as inserts approach the cap, behavior is configurable:
+1. Evict LRU entries — previously seen items may re-trigger (duplicate alerts, not silent misses).
+2. Hard stop — refuse further inserts with a diagnostic.
+
+Recommendation v1: evict LRU + warn once. Duplicate alerts are preferable to silent misses.
 
 ## 4.6 Parallel mode semantics
 
@@ -194,10 +247,13 @@ Update docs generator text.
 ## 7) Documentation Plan
 
 Update:
-1. `src/rhai_functions/docs.rs`: function entries + warnings about FP behavior.
-2. `docs/reference/functions.md`: full semantics, examples, caveats.
+1. `src/rhai_functions/docs.rs`: entries for both `is_new` and `is_new_approx`. The
+   `is_new_approx` entry must lead with the error direction, not bury it: *"Returns true
+   only when the item is definitely new; false means probably seen but may be wrong."*
+2. `docs/reference/functions.md`: full semantics for both variants, side-by-side comparison
+   of guarantees, when-to-use guidance, and examples.
 3. `docs/reference/cli-reference.md`: new bloom-related CLI knobs if introduced.
-4. `--help-examples`: first-seen template detection example.
+4. `--help-examples`: show both variants with contrasting use cases (audit trail vs. high-cardinality summary).
 
 ## 8) Test Plan
 
@@ -206,10 +262,14 @@ Unit tests:
 2. type-tag separation (`42` int vs `"42"` string)
 3. namespace isolation
 4. `is_new` returns true first call, false subsequent call (single-thread)
-5. unit value behavior
-6. invalid config errors
-7. saturation warning path
-8. blob serialize/deserialize roundtrip
+5. `is_new_approx` returns true first call, false subsequent call (single-thread)
+6. unit value behavior
+7. invalid config errors
+8. saturation warning path
+9. blob serialize/deserialize roundtrip
+10. `is_new` never returns false for a genuinely new item below cap (completeness property)
+11. `is_new` re-fires after LRU eviction (duplicate alert, not silent miss)
+12. `is_new_approx` FP rate within configured bound for fixed seed + synthetic dataset
 
 Parallel tests:
 1. two worker blooms OR-merge correctness
@@ -238,7 +298,8 @@ Set default guardrails to prevent accidental huge allocations.
 ## 10) Rollout Strategy
 
 Phase 1:
-- `is_new(value, namespace)` with fixed defaults
+- `is_new(value, namespace)` — exact, with LRU cap
+- `is_new_approx(value, namespace)` — Bloom, with fixed defaults
 - sequential mode only (or documented worker-local semantics if parallel enabled)
 
 Phase 2:
@@ -258,9 +319,11 @@ Phase 3:
 
 ## 12) Open Questions
 
-1. Should `is_new` be sequential-only initially for strict semantic clarity?
+1. Should both variants be sequential-only initially for strict semantic clarity?
 2. CLI-level config vs Rhai `bloom_config()` vs both?
-3. Default behavior on saturation: warn-only or auto-grow?
-4. Should `is_new` insert on query (yes, recommended), or split contains/add only?
+3. `is_new_approx` saturation: warn-only or auto-grow?
+4. Should `is_new` / `is_new_approx` insert on query (yes, recommended), or split contains/add only?
 5. Do we need namespace eviction (`bloom_clear`) in v1?
+6. What is the default cap for `is_new` exact? (Suggested: 100k entries; user must opt in to larger.)
+7. Should mixing `is_new` and `is_new_approx` on the same namespace be a hard error?
 
