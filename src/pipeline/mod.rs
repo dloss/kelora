@@ -357,165 +357,19 @@ impl Pipeline {
         line: String,
         ctx: &mut PipelineContext,
     ) -> Result<Vec<FormattedOutput>> {
-        let mut results = Vec::new();
-
         // Line filter stage
         if let Some(filter) = &self.line_filter {
             if !filter.should_keep(&line) {
-                return Ok(results);
+                return Ok(Vec::new());
             }
         }
 
         // Chunker stage (for multi-line records)
         if let Some(chunk) = self.chunker.feed_line(line) {
-            // Parse stage
-            let mut event = match self.parser.parse(&chunk) {
-                Ok(mut e) => {
-                    // Event was successfully created from chunk
-                    crate::stats::stats_add_event_created();
-
-                    // Track timestamp for time span statistics
-                    if let Some(ts) = e.parsed_ts {
-                        crate::stats::stats_update_timestamp(ts);
-                    }
-
-                    // Collect discovered levels and keys for stats
-                    collect_discovered_levels_and_keys(&e, ctx);
-
-                    // Field discovery: observe input fields (pre-script)
-                    if crate::field_discovery::is_enabled()
-                        && !crate::field_discovery::is_discover_final()
-                    {
-                        crate::field_discovery::observe_event_fields(&e.fields);
-                    }
-
-                    // Also track in Rhai context for parallel processing
-                    ctx.internal_tracker
-                        .entry("__kelora_stats_events_created".to_string())
-                        .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                        .or_insert(rhai::Dynamic::from(1i64));
-                    ctx.internal_tracker.insert(
-                        "__op___kelora_stats_events_created".to_string(),
-                        rhai::Dynamic::from("count"),
-                    );
-
-                    // Copy metadata from context to event
-                    if let Some(line_num) = ctx.meta.line_num {
-                        e.set_metadata(line_num, ctx.meta.filename.clone());
-                    }
-
-                    e
-                }
-                Err(err) => {
-                    crate::stats::stats_add_line_error();
-
-                    // Use unified error tracking system
-                    crate::rhai_functions::tracking::track_error(
-                        "parse",
-                        ctx.meta.line_num,
-                        &err.to_string(),
-                        Some(&chunk),
-                        ctx.meta.filename.as_deref(),
-                        ctx.config.verbose,
-                        ctx.config.quiet_level,
-                        Some(&ctx.config),
-                        ctx.config.format_name.as_deref(),
-                    );
-
-                    ctx.internal_tracker
-                        .entry("__kelora_stats_lines_errors".to_string())
-                        .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                        .or_insert(rhai::Dynamic::from(1i64));
-                    ctx.internal_tracker.insert(
-                        "__op___kelora_stats_lines_errors".to_string(),
-                        rhai::Dynamic::from("count"),
-                    );
-
-                    // New resiliency model: skip unparseable lines by default,
-                    // only propagate errors in strict mode
-                    if ctx.config.strict {
-                        return Err(err);
-                    } else {
-                        // Skip this line and continue processing
-                        return Ok(results);
-                    }
-                }
-            };
-
-            if let Some(span_processor) = self.span_processor.as_mut() {
-                span_processor.prepare_event(&mut event, ctx)?;
-            }
-
-            // Update window manager
-            self.window_manager.update(&event);
-            ctx.window = self.window_manager.get_window();
-
-            // Reset per-event skip flag for Rhai skip()
-            crate::rhai_functions::process::clear_skip_request();
-
-            file_ops::clear_pending_ops();
-            ctx.pending_file_ops.clear();
-
-            // Apply script stages (filters, execs, etc.)
-            let mut result = ScriptResult::Emit(event);
-
-            for stage in &mut self.script_stages {
-                result = match result {
-                    ScriptResult::Emit(event) => stage.apply(event, ctx),
-                    ScriptResult::EmitMultiple(events) => {
-                        // Process each event through remaining stages
-                        let mut multi_results = Vec::new();
-                        for event in events {
-                            let original_line = event.original_line.clone(); // Capture before consuming
-                            match stage.apply(event, ctx) {
-                                ScriptResult::Emit(e) => multi_results.push(e),
-                                ScriptResult::EmitMultiple(mut es) => multi_results.append(&mut es),
-                                ScriptResult::Skip => {}
-                                ScriptResult::Error(msg) => {
-                                    // Use unified error tracking system
-                                    crate::rhai_functions::tracking::track_error(
-                                        "script",
-                                        ctx.meta.line_num,
-                                        &msg,
-                                        Some(&original_line),
-                                        ctx.meta.filename.as_deref(),
-                                        ctx.config.verbose,
-                                        ctx.config.quiet_level,
-                                        Some(&ctx.config),
-                                        None,
-                                    );
-
-                                    // New resiliency model: use strict flag
-                                    if ctx.config.strict {
-                                        return Err(anyhow::anyhow!(msg));
-                                    } else {
-                                        // Skip errors in resilient mode and continue processing
-                                        return Ok(results);
-                                    }
-                                }
-                            }
-                        }
-                        ScriptResult::EmitMultiple(multi_results)
-                    }
-                    other => other, // Skip or Error, stop processing
-                };
-
-                match &result {
-                    ScriptResult::Skip | ScriptResult::Error(_) => break,
-                    _ => {}
-                }
-            }
-
-            // Handle final result
-            let remaining_ops = file_ops::take_pending_ops();
-            if !remaining_ops.is_empty() {
-                ctx.pending_file_ops.extend(remaining_ops);
-            }
-
-            self.apply_script_result(result, ctx, &mut results)?;
+            self.process_chunk(chunk, ctx)
+        } else {
+            Ok(Vec::new())
         }
-
-        Ok(results)
     }
 
     /// Flush any remaining chunks from the chunker
@@ -822,9 +676,17 @@ impl Pipeline {
         chunk: String,
         ctx: &mut PipelineContext,
     ) -> Result<Vec<FormattedOutput>> {
+        self.process_chunk(chunk, ctx)
+    }
+
+    fn process_chunk(
+        &mut self,
+        chunk: String,
+        ctx: &mut PipelineContext,
+    ) -> Result<Vec<FormattedOutput>> {
         let mut results = Vec::new();
 
-        // This is the same logic as in process_line starting from the "Parse stage" comment
+        // Parse stage
         let mut event = match self.parser.parse(&chunk) {
             Ok(mut e) => {
                 // Event was successfully created from chunk
