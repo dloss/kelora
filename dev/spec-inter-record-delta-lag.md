@@ -1,44 +1,44 @@
 # Spec: Inter-Record Delta/Lag Functions
 
-Status: Draft for implementation planning  
+Status: Planned (v1 scope locked)  
 Owner: Kelora core  
 Scope: Rhai built-ins + pipeline runtime state + docs/tests
 
 ## 1) Problem Statement
 
-Kelora has strong per-event scripting and window analytics, but common sequential time-series operations require awkward manual scripting. Today users can access `window` when `--window` is set, yet there is no first-class `prev/lag/delta/rate/ewma` family for adjacent-record reasoning.
+Kelora has strong per-event scripting and window analytics, but common sequential time-series operations still require awkward manual scripting. Adjacent-record helpers should be first-class for core workflows.
 
-This leaves major analysis workflows verbose and error-prone:
+Primary target workflows:
+
 - Detect latency jumps (`current - previous`)
-- Compute request-rate from counters (`delta(counter)/delta(time)`)
+- Compute value deltas over N records
 - Smooth noisy metrics in-stream (`ewma`)
 
-## 2) Goals & Non-Goals
+## 2) Goals and Non-Goals
 
-### Goals
+### Goals (v1)
 
-1. Add ergonomic, predictable built-ins:
+1. Add ergonomic built-ins for adjacent-record analysis:
    - `prev(field)`
    - `lag(field, n)`
-   - `delta(field)`
-   - `delta(field, n)`
-   - `rate(value_field, time_field)`
+   - `delta(field)` / `delta(field, n)`
    - `ewma(key, value, alpha)`
-2. Keep streaming behavior O(1) for `prev/delta/rate` and O(n) bounded by small `n` for `lag(field, n)`.
-3. Provide resilient defaults (`()` for unavailable/invalid values) plus strict variants for fail-fast workflows.
-4. Be explicit about parallel semantics from day one.
-5. Integrate with existing docs/help style and test rigor.
+2. Keep streaming behavior predictable and memory-bounded.
+3. Provide resilient defaults (`()`) plus strict fail-fast variants.
+4. Define deterministic lifecycle semantics and sequential-only behavior up front.
+5. Ship clear docs/help examples and comprehensive tests.
 
 ### Non-Goals (v1)
 
-1. Arbitrary SQL-style window functions (`lead`, `rank`, partition by key).
-2. Stateful joins across unrelated streams.
-3. Retroactive correction if out-of-order events appear.
-4. Generalized user-defined rolling computations (future work).
+1. Timestamp-derived `rate*` helpers (deferred)
+2. `*_or` fallback variants (deferred)
+3. SQL-style window functions (`lead`, `rank`, partitioning)
+4. Parallel cross-worker adjacency stitching
+5. Retroactive correction for out-of-order events
 
 ## 3) User Experience
 
-## 3.1 Function Signatures (v1)
+### 3.1 Function Signatures (v1)
 
 Resilient variants (default):
 
@@ -47,7 +47,6 @@ prev(field: &str) -> Dynamic | ()
 lag(field: &str, n: int) -> Dynamic | ()
 delta(field: &str) -> f64 | ()
 delta(field: &str, n: int) -> f64 | ()
-rate(value_field: &str, time_field: &str) -> f64 | ()
 ewma(key: &str, value: f64, alpha: f64) -> f64
 ```
 
@@ -58,20 +57,10 @@ prev_strict(field: &str) -> Dynamic
 lag_strict(field: &str, n: int) -> Dynamic
 delta_strict(field: &str) -> f64
 delta_strict(field: &str, n: int) -> f64
-rate_strict(value_field: &str, time_field: &str) -> f64
 ewma_strict(key: &str, value: f64, alpha: f64) -> f64
 ```
 
-Optional fallback variants (if implemented in same release):
-
-```rhai
-prev_or(field: &str, fallback: Dynamic) -> Dynamic
-lag_or(field: &str, n: int, fallback: Dynamic) -> Dynamic
-delta_or(field: &str, fallback: f64) -> f64
-rate_or(value_field: &str, time_field: &str, fallback: f64) -> f64
-```
-
-## 3.2 Example Usage
+### 3.2 Example Usage
 
 ```bash
 kelora -j app.jsonl --exec '
@@ -81,183 +70,170 @@ kelora -j app.jsonl --exec '
 ```
 
 ```bash
-kelora -j counters.jsonl --exec '
-  e.rps = rate("requests_total", "ts");
-  e.rps_smooth = ewma("rps", e.rps ?? 0.0, 0.2);
+kelora -j metrics.jsonl --exec '
+  e.latency_smooth = ewma("latency_ms", e.latency_ms, 0.2);
 '
 ```
 
-## 3.3 UX Rules
+### 3.3 UX Rules
 
-1. Functions do **not** require `--window`.
-2. Missing history returns `()` in resilient variants.
+1. These functions do **not** require `--window`.
+2. Missing history returns `()` in resilient mode.
 3. Strict variants raise runtime errors with actionable messages.
 4. `lag(..., n)` requires `n >= 1`.
-5. Time deltas that are `<= 0` return `()` (or error in strict mode).
 
-## 4) Semantics and Edge Cases
+## 4) Event Lifecycle Contract (exact integration/update point)
 
-## 4.1 History Unit
+v1 uses **processed-event adjacency** and one deterministic update point.
 
-History is based on **post-parse event processing order** as seen by the pipeline in sequential mode.
+For each event in sequential processing order:
 
-## 4.2 Inclusion Rule
+1. Parse event.
+2. Run per-event script stages (`begin` / `filter` / `exec` / `end` as configured).
+3. During scripting, `prev/lag/delta` read only previously committed history.
+4. After per-event scripting completes, commit current event fields/state for the next event.
 
-History updates after each event completes per-event script stages. If an event is filtered out by the user filter stage, it still contributes to adjacency only if we place update before filter finalization; otherwise not. Choose one policy and document clearly.
+Policy clarifications:
 
-**Recommendation:** only events that reach exec stage and survive parse contribute. Filtered events still passed through scripting decisions; include them for deterministic “event-to-event” progression.
+- Filtered-out events still advance history if they reached per-event scripting.
+- History continuity is by stream order and continues across files.
 
-## 4.3 Type Coercion
+Rationale (short): this model is deterministic, simple to explain, and aligns with script-stage processing rather than output-only visibility.
 
-`delta/rate` should accept:
-- int/float directly
-- numeric strings only in resilient mode if parsing succeeds
-- otherwise `()` (or strict error)
+## 5) Semantics and Edge Cases
 
-## 4.4 Time Parsing for `rate`
+### 5.1 Coercion policy
 
-`rate(value_field, time_field)` time field accepted forms:
-1. `DateTimeWrapper`
-2. RFC3339/string parseable by existing timestamp helper
-3. numeric epoch seconds or milliseconds (heuristic optional; better explicit in v1)
+**No implicit coercion in v1.**
 
-Recommendation for v1: support `DateTimeWrapper` + RFC3339 string only; avoid ambiguous numeric epoch unit inference.
+- `delta*` accepts only native numeric values.
+- Numeric strings (e.g., `"123"`) are invalid:
+  - resilient: return `()`
+  - strict: runtime error
 
-## 4.5 EWMA
+### 5.2 EWMA
 
 Formula:
 
 `S_t = alpha * x_t + (1 - alpha) * S_{t-1}`
 
 Rules:
+
 - `alpha` in `(0, 1]`
 - first observation initializes `S_0 = x_0`
-- keyed state namespace shared across run by `key`
+- state is keyed by `key` across the run
 
-## 4.6 File Boundaries
+### 5.3 File boundaries
 
 Default behavior: history continues across input files in stream order.
-Future optional flag: `--reset-history-per-file`.
 
-## 4.7 Parallel Mode
+## 6) Parallel Mode
 
-### v1 recommendation
+All v1 functions are **sequential-only**.
 
-Mark all functions as **sequential-only** and raise explicit runtime error in `--parallel` mode.
+In `--parallel`, calling these functions must raise an explicit runtime error (same style as existing sequential-only stateful helpers).
 
-Rationale: cross-worker adjacency is undefined without boundary stitching.
+## 7) Error Handling
 
-### future
+### 7.1 Resilient mode
 
-Add optional approximate per-worker semantics only with explicit opt-in (e.g., `--lag-local-worker`), not default.
-
-## 5) Error Handling
-
-## 5.1 Resilient Mode (default)
-
-- Invalid/missing value => return `()`
+- Invalid/missing value => `()`
 - Insufficient history => `()`
-- Invalid `n`/`alpha` => runtime error (argument contract violations should be hard errors)
+- Invalid argument contract (`n`, `alpha`) => runtime error
 
-## 5.2 Strict Variants
+### 7.2 Strict variants
 
-Runtime errors include:
+Runtime errors should include:
+
 - function name
-- offending field name
+- offending field and/or argument
 - offending type/value
-- fix suggestion
+- fix hint
 
-Example:
+Example shape:
 
-`delta_strict("duration_ms"): expected numeric current and lagged values; got string="abc" at current event`
+`delta_strict("duration_ms"): expected numeric current and lagged values; got string="abc"`
 
-## 6) Internal Design
+## 8) Internal Design
 
-## 6.1 New module
+### 8.1 Module and registration
 
-Create `src/rhai_functions/lag.rs` (or `inter_record.rs`) with registration in `mod.rs`.
+- Implement in `src/rhai_functions/inter_record.rs` (or `lag.rs`)
+- Register in `src/rhai_functions/mod.rs`
 
-## 6.2 Runtime storage
+### 8.2 Runtime storage
 
-Thread-local per worker in sequential mode:
+Thread-local state for sequential mode:
 
-```text
-history[field] = ring buffer of recent Dynamic values (for lag n)
-last_time[field] / last_value[field] (for fast rate/delta)
-ewma[key] = f64
-```
+- `history[field]`: ring buffer of recent values for lag lookup
+- `ewma[key]`: f64 accumulator
 
-Memory:
-- `prev/delta/rate`: O(fields)
-- `lag(n)`: O(fields * max_n_requested)
+Complexity:
 
-If dynamic `n` becomes large, enforce cap (e.g. 10_000) and error if exceeded.
+- `prev`/`delta`: O(1) typical per call
+- `lag(field, n)`: O(1) lookup, O(fields * max_n_requested) memory
 
-## 6.3 Pipeline touchpoints
+Safety cap:
 
-Need deterministic update point in event lifecycle. Preferred location: after parse success and after per-event script stage completion for current event, before moving to next event.
+- `lag(n)` capped at `10_000` (error above cap)
 
-## 6.4 Mode guard
+### 8.3 Mode guard
 
-Mirror existing state/drain availability pattern for parallel guard and error text.
+Mirror existing sequential-only guard behavior/messages (as used by `state`/other stateful helpers).
 
-## 7) Documentation Plan
+## 9) Documentation Plan
 
 Update:
-1. `src/rhai_functions/docs.rs` built-in catalog and examples.
-2. `docs/reference/functions.md` detailed semantics and edge cases.
-3. `docs/reference/script-variables.md` section clarifying adjacency semantics.
-4. `--help-functions` examples for practical recipes.
 
-## 8) Test Plan
+1. `src/rhai_functions/docs.rs` (`--help-functions` catalog + examples)
+2. `docs/reference/functions.md` (detailed semantics)
+3. `docs/reference/script-variables.md` (adjacency and lifecycle semantics)
+4. `--help-functions` examples for filtered-event progression and common recipes
 
-Unit tests:
+## 10) Test Plan
+
+### Unit tests
+
 1. `prev` first event => `()`
 2. `prev` second event returns first value
 3. `lag(n)` with insufficient history
-4. `delta` int, float, numeric string
-5. `delta` non-numeric returns `()`
+4. `delta` int/float happy-path
+5. `delta` non-numeric and numeric-string behavior
 6. strict variants raise expected errors
-7. `rate` with valid DateTime string sequence
-8. `rate` with zero/negative dt
-9. `ewma` initialization and recurrence
-10. alpha bounds checks
+7. `ewma` initialization and recurrence
+8. alpha bounds checks
+9. cap enforcement for `lag(n) > 10_000`
 
-Integration tests:
-1. CLI pipeline with `--exec` and `--filter` examples.
-2. Cross-file behavior in stream order.
-3. Parallel mode explicit error message.
+### Integration tests
 
-Property tests (optional):
-- EWMA boundedness for bounded inputs.
+1. CLI pipeline with `--exec` and `--filter`
+2. filtered events still advancing history
+3. cross-file behavior in stream order
+4. parallel mode explicit error message
 
-## 9) Performance Considerations
+### Property tests (optional)
 
-1. Use small ring buffers and avoid cloning large objects where possible.
-2. Cache field lookup indices if feasible.
-3. Benchmark with and without lag functions to estimate overhead.
+- EWMA boundedness for bounded inputs
 
-Target overhead guideline:
-- `<10%` additional CPU for `prev/delta` usage at typical workloads.
+## 11) Performance Considerations
 
-## 10) Rollout Strategy
+1. Avoid unnecessary `Dynamic` cloning
+2. Keep ring buffers compact and bounded
+3. Benchmark with and without inter-record helpers
 
-Phase 1:
+Target guideline:
+
+- `<10%` additional CPU for typical `prev/delta` usage
+
+## 12) Rollout Strategy
+
+Phase 1 (this spec):
+
 - `prev`, `lag`, `delta`, `ewma` (+ strict variants)
+- lifecycle contract above
 - sequential-only guard
 
-Phase 2:
-- `rate` with robust timestamp handling
-- fallback variants (`*_or`)
+Future phase:
 
-Phase 3:
-- optional parallel semantics (only with explicit opt-in)
-
-## 11) Open Questions
-
-1. Should filtered events advance history?
-2. Should numeric string parsing be enabled by default in resilient mode?
-3. Should `rate` infer epoch units from numerics?
-4. What cap should apply to `lag(n)`?
-5. Should we expose reset functions (`reset_lag("field")`, `reset_ewma("key")`)?
-
+- `rate*` once timestamp semantics are finalized and tested
+- optional additional ergonomic variants if needed
