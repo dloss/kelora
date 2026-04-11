@@ -421,14 +421,6 @@ fn main() -> Result<()> {
         }
     }
 
-    // Validate arguments early
-    if let Err(e) = validate_cli_args(&cli) {
-        stderr
-            .writeln(&config.format_error_message(&format!("Error: {}", e)))
-            .unwrap_or(());
-        ExitCode::InvalidUsage.exit();
-    }
-
     if let Some(ref gap_str) = cli.mark_gaps {
         match crate::rhai_functions::datetime::to_duration(gap_str) {
             Ok(duration) => {
