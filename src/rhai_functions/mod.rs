@@ -15,7 +15,6 @@ pub mod extractors;
 pub mod file_ops;
 pub mod formatting;
 pub mod hashing;
-pub mod inter_record;
 pub mod maps;
 pub mod math;
 pub mod micro_search;
@@ -56,7 +55,6 @@ pub fn register_all_functions(engine: &mut Engine) {
     file_ops::register_functions(engine);
     formatting::register_functions(engine);
     hashing::register_functions(engine);
-    inter_record::register_functions(engine);
     extractors::register_functions(engine);
     parsers::register_functions(engine);
     serializers::register_functions(engine);

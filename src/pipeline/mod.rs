@@ -461,15 +461,11 @@ impl Pipeline {
 
             for stage in &mut self.script_stages {
                 result = match result {
-                    ScriptResult::Emit(event) => {
-                        crate::rhai_functions::inter_record::set_current_event(&event);
-                        stage.apply(event, ctx)
-                    }
+                    ScriptResult::Emit(event) => stage.apply(event, ctx),
                     ScriptResult::EmitMultiple(events) => {
                         // Process each event through remaining stages
                         let mut multi_results = Vec::new();
                         for event in events {
-                            crate::rhai_functions::inter_record::set_current_event(&event);
                             let original_line = event.original_line.clone(); // Capture before consuming
                             match stage.apply(event, ctx) {
                                 ScriptResult::Emit(e) => multi_results.push(e),
@@ -491,11 +487,9 @@ impl Pipeline {
 
                                     // New resiliency model: use strict flag
                                     if ctx.config.strict {
-                                        crate::rhai_functions::inter_record::clear_current_event();
                                         return Err(anyhow::anyhow!(msg));
                                     } else {
                                         // Skip errors in resilient mode and continue processing
-                                        crate::rhai_functions::inter_record::clear_current_event();
                                         return Ok(results);
                                     }
                                 }
@@ -510,13 +504,6 @@ impl Pipeline {
                     ScriptResult::Skip | ScriptResult::Error(_) => break,
                     _ => {}
                 }
-            }
-
-            match &result {
-                ScriptResult::Error(_) => {
-                    crate::rhai_functions::inter_record::clear_current_event()
-                }
-                _ => crate::rhai_functions::inter_record::commit_current_event(),
             }
 
             // Handle final result

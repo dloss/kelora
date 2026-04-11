@@ -25,7 +25,6 @@ Pick the scenario that matches your job-to-be-done and follow the playbook. Each
 ## Performance & Aggregation
 - [Process Archives at Scale](batch-process-archives.md)
 - [Roll Up Logs with Span Windows](span-aggregation-cookbook.md)
-- [Analyze Sequential Deltas and Trends](inter-record-analysis.md)
 
 ## Advanced Techniques
 - [Power-User Techniques](power-user-techniques.md) - Discover overlooked features like pattern normalization, deterministic sampling, JWT parsing, and multi-level fan-out

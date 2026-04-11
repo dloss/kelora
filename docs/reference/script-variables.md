@@ -25,16 +25,6 @@ Kelora exposes several built-in variables to Rhai scripts. Their availability de
 - Type: `Map`
 - Event map during per-event stages. Mutating `e` inside `--exec` updates the emitted event; setting a field to `()` removes it; assigning `e = ()` clears the entire event. Writable.
 
-### Inter-record helper lifecycle (`prev` / `lag` / `delta` / `ewma`)
-
-Kelora commits inter-record history once per processed event, after per-event scripting finishes for that event.
-
-- During `--filter` / `--exec`, helper calls read only previously committed history.
-- After scripting completes, the current event snapshot becomes available to the next event.
-- Filtered-out events still advance history if they reached per-event scripting.
-- History continues across input files in stream order.
-- In `--parallel` mode, these helpers raise runtime errors (sequential-only).
-
 ### `meta`
 - Type: `Map`
 - Metadata derived from the pipeline and span system. Attempting to mutate `meta` fields has no effect; use event fields on `e` for custom annotations instead. Read-only.
