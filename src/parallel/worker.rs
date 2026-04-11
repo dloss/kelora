@@ -28,6 +28,7 @@ pub(crate) fn worker_thread(
     ctrl_rx: Receiver<Ctrl>,
 ) -> Result<()> {
     crate::rhai_functions::strings::set_parallel_mode(true);
+    crate::rhai_functions::inter_record::reset_state();
 
     stats_start_timer();
 

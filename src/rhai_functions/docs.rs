@@ -280,6 +280,16 @@ type_of(value)                       Get type name as string (builtin)
 window.pluck(field)                  Extract field values from window array (requires --window)
 window.pluck_as_nums(field)          Extract numeric field values from window array (requires --window)
 
+INTER-RECORD HELPERS (sequential mode only; errors in --parallel mode):
+prev(field)                          Return prior event's field value, else ()
+lag(field, n)                        Return field value n events back (n >= 1, max 10_000), else ()
+delta(field [,n])                    Return numeric current-lag difference, else ()
+ewma(key, value, alpha)              Exponential weighted moving average (alpha in (0, 1])
+prev_strict(field)                   Strict prev; errors when history/value missing
+lag_strict(field, n)                 Strict lag; errors when history/value missing
+delta_strict(field [,n])             Strict delta; errors on missing/non-numeric values
+ewma_strict(key, value, alpha)       Strict EWMA; validates alpha and mode
+
 DRAIN TEMPLATE MINING (sequential mode only; errors in --parallel mode):
 drain_template(text [,options])      Add line to Drain model; returns {template, template_id, count,
                                      is_new, sample, first_line, last_line}

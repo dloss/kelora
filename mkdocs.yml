@@ -97,6 +97,7 @@ nav:
       - Flatten Nested JSON for Analysis: how-to/fan-out-nested-structures.md
       - Design Streaming Alerts: how-to/build-streaming-alerts.md
       - Process Archives at Scale: how-to/batch-process-archives.md
+      - Analyze Sequential Deltas and Trends: how-to/inter-record-analysis.md
       - Merge Timestamp-Sorted Files: how-to/merge-timestamp-sorted-files.md
       - Roll Up Logs with Span Windows: how-to/span-aggregation-cookbook.md
       - Integrate Kelora with External Tools: how-to/integrate-external-tools.md

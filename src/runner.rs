@@ -152,6 +152,7 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
     output: W,
     ctrl_rx: &Receiver<Ctrl>,
 ) -> Result<PipelineResult> {
+    crate::rhai_functions::inter_record::reset_state();
     let terminal_output = std::io::stderr().is_terminal();
 
     // Handle auto-detection for parallel mode
@@ -1061,6 +1062,7 @@ fn run_pipeline_sequential_internal<W: Write>(
     ctrl_rx: Receiver<Ctrl>,
     input: SequentialInput,
 ) -> Result<()> {
+    crate::rhai_functions::inter_record::reset_state();
     let (mut pipeline, begin_stage, end_stage, mut ctx) = create_pipeline_from_config(config)?;
 
     file_ops::set_mode(FileOpMode::Sequential);
