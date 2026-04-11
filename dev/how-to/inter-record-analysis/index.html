@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://dloss.github.io/kelora/dev/how-to/">
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/how-to/inter-record-analysis/">
       
       
-        <link rel="prev" href="../tutorials/composed-pipelines/">
+        <link rel="prev" href="../batch-process-archives/">
       
       
-        <link rel="next" href="incident-response-playbooks/">
+        <link rel="next" href="../merge-timestamp-sorted-files/">
       
       
         
       
       
-      <link rel="icon" href="../kelora-logo.svg">
+      <link rel="icon" href="../../kelora-logo.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Overview - Kelora</title>
+        <title>Analyze Sequential Deltas and Trends - Kelora</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,13 +53,13 @@
       
     
     
-      <link rel="stylesheet" href="../assets/_markdown_exec_pyodide.css">
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
     
-      <link rel="stylesheet" href="../assets/_markdown_exec_ansi.css">
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
     
-      <link rel="stylesheet" href="../stylesheets/ansi-colors.css">
+      <link rel="stylesheet" href="../../stylesheets/ansi-colors.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-guides" class="md-skip">
+        <a href="#analyze-sequential-changes-with-prev-lag-delta-and-ewma" class="md-skip">
           Skip to content
         </a>
       
@@ -102,9 +102,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+    <a href="../.." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
       
-  <img src="../kelora-logo.svg" alt="logo">
+  <img src="../../kelora-logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              Analyze Sequential Deltas and Trends
             
           </span>
         </div>
@@ -234,7 +234,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -253,7 +253,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../quickstart/" class="md-tabs__link">
+      <a href="../../quickstart/" class="md-tabs__link">
         
   
   
@@ -274,7 +274,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../tutorials/" class="md-tabs__link">
+        <a href="../../tutorials/" class="md-tabs__link">
           
   
   
@@ -296,7 +296,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -316,7 +316,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../concepts/" class="md-tabs__link">
+        <a href="../../concepts/" class="md-tabs__link">
           
   
   
@@ -336,7 +336,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reference/" class="md-tabs__link">
+        <a href="../../reference/" class="md-tabs__link">
           
   
   
@@ -370,9 +370,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+    <a href="../.." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
       
-  <img src="../kelora-logo.svg" alt="logo">
+  <img src="../../kelora-logo.svg" alt="logo">
 
     </a>
     Kelora
@@ -399,7 +399,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -426,7 +426,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../quickstart/" class="md-nav__link">
+      <a href="../../quickstart/" class="md-nav__link">
         
   
   
@@ -505,7 +505,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/" class="md-nav__link">
+      <a href="../../tutorials/" class="md-nav__link">
         
   
   
@@ -533,7 +533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/basics/" class="md-nav__link">
+      <a href="../../tutorials/basics/" class="md-nav__link">
         
   
   
@@ -561,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/intro-to-rhai/" class="md-nav__link">
+      <a href="../../tutorials/intro-to-rhai/" class="md-nav__link">
         
   
   
@@ -589,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/working-with-time/" class="md-nav__link">
+      <a href="../../tutorials/working-with-time/" class="md-nav__link">
         
   
   
@@ -617,7 +617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/metrics-and-tracking/" class="md-nav__link">
+      <a href="../../tutorials/metrics-and-tracking/" class="md-nav__link">
         
   
   
@@ -645,7 +645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/begin-end-stages/" class="md-nav__link">
+      <a href="../../tutorials/begin-end-stages/" class="md-nav__link">
         
   
   
@@ -673,7 +673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/advanced-scripting/" class="md-nav__link">
+      <a href="../../tutorials/advanced-scripting/" class="md-nav__link">
         
   
   
@@ -701,7 +701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/parsing-custom-formats/" class="md-nav__link">
+      <a href="../../tutorials/parsing-custom-formats/" class="md-nav__link">
         
   
   
@@ -729,7 +729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/span-aggregation/" class="md-nav__link">
+      <a href="../../tutorials/span-aggregation/" class="md-nav__link">
         
   
   
@@ -757,7 +757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/configuration-and-reusability/" class="md-nav__link">
+      <a href="../../tutorials/configuration-and-reusability/" class="md-nav__link">
         
   
   
@@ -785,7 +785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorials/composed-pipelines/" class="md-nav__link">
+      <a href="../../tutorials/composed-pipelines/" class="md-nav__link">
         
   
   
@@ -874,37 +874,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -920,103 +893,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#debugging-troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Debugging &amp; Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#operational-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Operational Response
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#traffic-ingress" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Traffic &amp; Ingress
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#data-preparation-hygiene" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data Preparation &amp; Hygiene
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-aggregation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance &amp; Aggregation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-techniques" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Techniques
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration &amp; Workflow
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1029,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="incident-response-playbooks/" class="md-nav__link">
+      <a href="../incident-response-playbooks/" class="md-nav__link">
         
   
   
@@ -1057,7 +933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="debug-issues/" class="md-nav__link">
+      <a href="../debug-issues/" class="md-nav__link">
         
   
   
@@ -1085,7 +961,7 @@
   
   
     <li class="md-nav__item">
-      <a href="find-errors-in-logs/" class="md-nav__link">
+      <a href="../find-errors-in-logs/" class="md-nav__link">
         
   
   
@@ -1113,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="analyze-web-traffic/" class="md-nav__link">
+      <a href="../analyze-web-traffic/" class="md-nav__link">
         
   
   
@@ -1141,7 +1017,7 @@
   
   
     <li class="md-nav__item">
-      <a href="monitor-application-health/" class="md-nav__link">
+      <a href="../monitor-application-health/" class="md-nav__link">
         
   
   
@@ -1169,7 +1045,7 @@
   
   
     <li class="md-nav__item">
-      <a href="parse-syslog-files/" class="md-nav__link">
+      <a href="../parse-syslog-files/" class="md-nav__link">
         
   
   
@@ -1197,7 +1073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="handle-multiline-stacktraces/" class="md-nav__link">
+      <a href="../handle-multiline-stacktraces/" class="md-nav__link">
         
   
   
@@ -1225,7 +1101,7 @@
   
   
     <li class="md-nav__item">
-      <a href="extract-and-mask-sensitive-data/" class="md-nav__link">
+      <a href="../extract-and-mask-sensitive-data/" class="md-nav__link">
         
   
   
@@ -1253,7 +1129,7 @@
   
   
     <li class="md-nav__item">
-      <a href="pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+      <a href="../pseudonymize-identifiers-for-analytics/" class="md-nav__link">
         
   
   
@@ -1281,7 +1157,7 @@
   
   
     <li class="md-nav__item">
-      <a href="process-csv-data/" class="md-nav__link">
+      <a href="../process-csv-data/" class="md-nav__link">
         
   
   
@@ -1309,7 +1185,7 @@
   
   
     <li class="md-nav__item">
-      <a href="fan-out-nested-structures/" class="md-nav__link">
+      <a href="../fan-out-nested-structures/" class="md-nav__link">
         
   
   
@@ -1337,7 +1213,7 @@
   
   
     <li class="md-nav__item">
-      <a href="build-streaming-alerts/" class="md-nav__link">
+      <a href="../build-streaming-alerts/" class="md-nav__link">
         
   
   
@@ -1365,7 +1241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="batch-process-archives/" class="md-nav__link">
+      <a href="../batch-process-archives/" class="md-nav__link">
         
   
   
@@ -1390,10 +1266,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="inter-record-analysis/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze Sequential Deltas and Trends
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1409,6 +1312,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-alert-on-sudden-latency-jumps-delta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Alert on sudden latency jumps (delta)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-compare-against-an-older-baseline-lag-n-delta-n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Compare against an older baseline (lag(..., n) + delta(..., n))
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-smooth-noisy-telemetry-in-stream-ewma" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Smooth noisy telemetry in-stream (ewma)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-fail-fast-with-strict-variants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Fail fast with strict variants
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1421,7 +1388,7 @@
   
   
     <li class="md-nav__item">
-      <a href="merge-timestamp-sorted-files/" class="md-nav__link">
+      <a href="../merge-timestamp-sorted-files/" class="md-nav__link">
         
   
   
@@ -1449,7 +1416,7 @@
   
   
     <li class="md-nav__item">
-      <a href="span-aggregation-cookbook/" class="md-nav__link">
+      <a href="../span-aggregation-cookbook/" class="md-nav__link">
         
   
   
@@ -1477,7 +1444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="integrate-external-tools/" class="md-nav__link">
+      <a href="../integrate-external-tools/" class="md-nav__link">
         
   
   
@@ -1505,7 +1472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="power-user-techniques/" class="md-nav__link">
+      <a href="../power-user-techniques/" class="md-nav__link">
         
   
   
@@ -1592,7 +1559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/" class="md-nav__link">
+      <a href="../../concepts/" class="md-nav__link">
         
   
   
@@ -1620,7 +1587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/pipeline-model/" class="md-nav__link">
+      <a href="../../concepts/pipeline-model/" class="md-nav__link">
         
   
   
@@ -1648,7 +1615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/events-and-fields/" class="md-nav__link">
+      <a href="../../concepts/events-and-fields/" class="md-nav__link">
         
   
   
@@ -1676,7 +1643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/scripting-stages/" class="md-nav__link">
+      <a href="../../concepts/scripting-stages/" class="md-nav__link">
         
   
   
@@ -1704,7 +1671,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/error-handling/" class="md-nav__link">
+      <a href="../../concepts/error-handling/" class="md-nav__link">
         
   
   
@@ -1732,7 +1699,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/multiline-strategies/" class="md-nav__link">
+      <a href="../../concepts/multiline-strategies/" class="md-nav__link">
         
   
   
@@ -1760,7 +1727,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/performance-model/" class="md-nav__link">
+      <a href="../../concepts/performance-model/" class="md-nav__link">
         
   
   
@@ -1788,7 +1755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/performance-comparisons/" class="md-nav__link">
+      <a href="../../concepts/performance-comparisons/" class="md-nav__link">
         
   
   
@@ -1816,7 +1783,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/benchmark-results/" class="md-nav__link">
+      <a href="../../concepts/benchmark-results/" class="md-nav__link">
         
   
   
@@ -1844,7 +1811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../concepts/configuration-system/" class="md-nav__link">
+      <a href="../../concepts/configuration-system/" class="md-nav__link">
         
   
   
@@ -1931,7 +1898,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -1959,7 +1926,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../faq/" class="md-nav__link">
+      <a href="../../faq/" class="md-nav__link">
         
   
   
@@ -1987,7 +1954,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../glossary/" class="md-nav__link">
+      <a href="../../glossary/" class="md-nav__link">
         
   
   
@@ -2015,7 +1982,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/common-errors/" class="md-nav__link">
+      <a href="../../reference/common-errors/" class="md-nav__link">
         
   
   
@@ -2043,7 +2010,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/cli-reference/" class="md-nav__link">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
         
   
   
@@ -2071,7 +2038,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/formats/" class="md-nav__link">
+      <a href="../../reference/formats/" class="md-nav__link">
         
   
   
@@ -2099,7 +2066,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/time-reference/" class="md-nav__link">
+      <a href="../../reference/time-reference/" class="md-nav__link">
         
   
   
@@ -2127,7 +2094,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/functions/" class="md-nav__link">
+      <a href="../../reference/functions/" class="md-nav__link">
         
   
   
@@ -2155,7 +2122,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/script-variables/" class="md-nav__link">
+      <a href="../../reference/script-variables/" class="md-nav__link">
         
   
   
@@ -2183,7 +2150,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/rhai-cheatsheet/" class="md-nav__link">
+      <a href="../../reference/rhai-cheatsheet/" class="md-nav__link">
         
   
   
@@ -2211,7 +2178,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/exit-codes/" class="md-nav__link">
+      <a href="../../reference/exit-codes/" class="md-nav__link">
         
   
   
@@ -2266,10 +2233,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#debugging-troubleshooting" class="md-nav__link">
+  <a href="#1-alert-on-sudden-latency-jumps-delta" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Debugging &amp; Troubleshooting
+        1) Alert on sudden latency jumps (delta)
       
     </span>
   </a>
@@ -2277,10 +2244,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#operational-response" class="md-nav__link">
+  <a href="#2-compare-against-an-older-baseline-lag-n-delta-n" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Operational Response
+        2) Compare against an older baseline (lag(..., n) + delta(..., n))
       
     </span>
   </a>
@@ -2288,10 +2255,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#traffic-ingress" class="md-nav__link">
+  <a href="#3-smooth-noisy-telemetry-in-stream-ewma" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Traffic &amp; Ingress
+        3) Smooth noisy telemetry in-stream (ewma)
       
     </span>
   </a>
@@ -2299,43 +2266,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#data-preparation-hygiene" class="md-nav__link">
+  <a href="#4-fail-fast-with-strict-variants" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Preparation &amp; Hygiene
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-aggregation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Performance &amp; Aggregation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-techniques" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Advanced Techniques
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration &amp; Workflow
+        4) Fail fast with strict variants
       
     </span>
   </a>
@@ -2362,47 +2296,61 @@
   
 
 
-<h1 id="how-to-guides">How-To Guides<a class="headerlink" href="#how-to-guides" title="Permanent link">&para;</a></h1>
-<p>Pick the scenario that matches your job-to-be-done and follow the playbook. Each guide links to deeper concepts and tutorials when you want more background.</p>
-<h2 id="debugging-troubleshooting">Debugging &amp; Troubleshooting<a class="headerlink" href="#debugging-troubleshooting" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="debug-issues/">Debug Issues Systematically</a> - Diagnose problems, use debugging tools, and fix common issues</li>
-</ul>
-<h2 id="operational-response">Operational Response<a class="headerlink" href="#operational-response" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="incident-response-playbooks/">Incident Response Playbooks</a> - Copy-paste commands for common production incidents (latency spikes, error investigation, auth failures, resource exhaustion)</li>
-<li><a href="find-errors-in-logs/">Triage Production Errors</a></li>
-<li><a href="monitor-application-health/">Build a Service Health Snapshot</a></li>
-<li><a href="build-streaming-alerts/">Design Streaming Alerts</a></li>
-</ul>
-<h2 id="traffic-ingress">Traffic &amp; Ingress<a class="headerlink" href="#traffic-ingress" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="analyze-web-traffic/">Analyze Web Traffic</a></li>
-<li><a href="parse-syslog-files/">Investigate Syslog Sources</a></li>
-<li><a href="handle-multiline-stacktraces/">Choose a Multiline Strategy</a></li>
-</ul>
-<h2 id="data-preparation-hygiene">Data Preparation &amp; Hygiene<a class="headerlink" href="#data-preparation-hygiene" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="extract-and-mask-sensitive-data/">Sanitize Logs Before Sharing</a></li>
-<li><a href="pseudonymize-identifiers-for-analytics/">Pseudonymize Identifiers for Analytics</a></li>
-<li><a href="process-csv-data/">Prepare CSV Exports for Analytics</a></li>
-<li><a href="fan-out-nested-structures/">Flatten Nested JSON for Analysis</a></li>
-</ul>
-<h2 id="performance-aggregation">Performance &amp; Aggregation<a class="headerlink" href="#performance-aggregation" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="batch-process-archives/">Process Archives at Scale</a></li>
-<li><a href="span-aggregation-cookbook/">Roll Up Logs with Span Windows</a></li>
-<li><a href="inter-record-analysis/">Analyze Sequential Deltas and Trends</a></li>
-</ul>
-<h2 id="advanced-techniques">Advanced Techniques<a class="headerlink" href="#advanced-techniques" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="power-user-techniques/">Power-User Techniques</a> - Discover overlooked features like pattern normalization, deterministic sampling, JWT parsing, and multi-level fan-out</li>
-</ul>
-<h2 id="integration-workflow">Integration &amp; Workflow<a class="headerlink" href="#integration-workflow" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="integrate-external-tools/">Integrate Kelora with External Tools</a></li>
-<li><a href="merge-timestamp-sorted-files/">Merge Sorted Files by Timestamp</a></li>
-</ul>
+<h1 id="analyze-sequential-changes-with-prev-lag-delta-and-ewma">Analyze Sequential Changes with <code>prev</code>, <code>lag</code>, <code>delta</code>, and <code>ewma</code><a class="headerlink" href="#analyze-sequential-changes-with-prev-lag-delta-and-ewma" title="Permanent link">&para;</a></h1>
+<p>Use inter-record helpers when you need to compare each event to earlier events in the same stream.
+These helpers are ideal for latency jumps, drift detection, and smoothing noisy metrics.</p>
+<blockquote>
+<p>These functions are <strong>sequential-only</strong>. In <code>--parallel</code>, Kelora raises a runtime error.</p>
+</blockquote>
+<h2 id="1-alert-on-sudden-latency-jumps-delta">1) Alert on sudden latency jumps (<code>delta</code>)<a class="headerlink" href="#1-alert-on-sudden-latency-jumps-delta" title="Permanent link">&para;</a></h2>
+<p>Detect requests whose latency increased sharply compared to the previous record:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt;&#39;JSON&#39; &gt; latency.jsonl</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="s">{&quot;svc&quot;:&quot;api&quot;,&quot;duration_ms&quot;:100}</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s">{&quot;svc&quot;:&quot;api&quot;,&quot;duration_ms&quot;:120}</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s">{&quot;svc&quot;:&quot;api&quot;,&quot;duration_ms&quot;:900}</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s">{&quot;svc&quot;:&quot;api&quot;,&quot;duration_ms&quot;:910}</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s">JSON</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>latency.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.delta_ms = delta(&quot;duration_ms&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.delta_ms != () &amp;&amp; e.delta_ms &gt; 500&#39;</span>
+</code></pre></div>
+<p>Expected output includes the jump event with <code>delta_ms</code> around <code>780</code>.</p>
+<h2 id="2-compare-against-an-older-baseline-lag-n-delta-n">2) Compare against an older baseline (<code>lag(..., n)</code> + <code>delta(..., n)</code>)<a class="headerlink" href="#2-compare-against-an-older-baseline-lag-n-delta-n" title="Permanent link">&para;</a></h2>
+<p>Compare current values to values from three records ago:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt;&#39;JSON&#39; &gt; throughput.jsonl</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="s">{&quot;value&quot;:10}</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="s">{&quot;value&quot;:20}</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="s">{&quot;value&quot;:30}</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="s">{&quot;value&quot;:50}</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="s">JSON</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>throughput.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="s1">    e.baseline_3 = lag(&quot;value&quot;, 3);</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="s1">    e.delta_3 = delta(&quot;value&quot;, 3);</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.delta_3 != () &amp;&amp; e.delta_3 &gt;= 40&#39;</span>
+</code></pre></div>
+<p>This returns the last event with <code>baseline_3 = 10</code> and <code>delta_3 = 40</code>.</p>
+<h2 id="3-smooth-noisy-telemetry-in-stream-ewma">3) Smooth noisy telemetry in-stream (<code>ewma</code>)<a class="headerlink" href="#3-smooth-noisy-telemetry-in-stream-ewma" title="Permanent link">&para;</a></h2>
+<p>Compute an EWMA for latency:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt;&#39;JSON&#39; &gt; noisy.jsonl</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="s">{&quot;latency_ms&quot;:100}</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="s">{&quot;latency_ms&quot;:200}</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s">{&quot;latency_ms&quot;:50}</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s">JSON</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-F<span class="w"> </span>json<span class="w"> </span>noisy.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.latency_smooth = ewma(&quot;latency_ms&quot;, e.latency_ms.to_float(), 0.5)&#39;</span>
+</code></pre></div>
+<p>With <code>alpha = 0.5</code>, the smoothed values are approximately <code>100</code>, <code>150</code>, <code>100</code>.</p>
+<h2 id="4-fail-fast-with-strict-variants">4) Fail fast with strict variants<a class="headerlink" href="#4-fail-fast-with-strict-variants" title="Permanent link">&para;</a></h2>
+<p>Use strict variants when missing history or non-numeric values should stop the run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>data.jsonl<span class="w"> </span>--strict<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.delta = delta_strict(&quot;duration_ms&quot;)&#39;</span>
+</code></pre></div>
+<p>If the field is missing or non-numeric, Kelora exits with a runtime error that points to the offending function/value.</p>
 
 
 
@@ -2468,12 +2416,12 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="../assets/_markdown_exec_pyodide.js"></script>
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
       
     
   </body>
