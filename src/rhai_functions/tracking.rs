@@ -1,59 +1,23 @@
 use hyperloglog::HyperLogLog;
 use rhai::{Dynamic, Engine};
-use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use tdigests::TDigest;
 
 #[path = "tracking_errors.rs"]
 mod errors;
+#[path = "tracking_state.rs"]
+mod state;
 #[cfg(test)]
 use errors::format_error_location;
 pub use errors::{
     extract_error_summary_from_tracking, format_fatal_error_line, has_errors_in_tracking,
     track_error,
 };
-
-/// Snapshot of tracking state separated into user-visible metrics and internal-only data.
-#[derive(Debug, Clone, Default)]
-pub struct TrackingSnapshot {
-    pub user: HashMap<String, Dynamic>,
-    pub internal: HashMap<String, Dynamic>,
-}
-
-impl TrackingSnapshot {
-    pub fn from_parts(user: HashMap<String, Dynamic>, internal: HashMap<String, Dynamic>) -> Self {
-        Self { user, internal }
-    }
-}
-
-// Thread-local storage for tracking state
-thread_local! {
-    pub static THREAD_TRACKING_STATE: RefCell<TrackingSnapshot> = RefCell::new(TrackingSnapshot::default());
-}
-
-pub fn get_thread_snapshot() -> TrackingSnapshot {
-    THREAD_TRACKING_STATE.with(|state| state.borrow().clone())
-}
-
-pub fn with_user_tracking<F, R>(f: F) -> R
-where
-    F: FnOnce(&mut HashMap<String, Dynamic>) -> R,
-{
-    THREAD_TRACKING_STATE.with(|state| {
-        let mut snapshot = state.borrow_mut();
-        f(&mut snapshot.user)
-    })
-}
-
-pub fn with_internal_tracking<F, R>(f: F) -> R
-where
-    F: FnOnce(&mut HashMap<String, Dynamic>) -> R,
-{
-    THREAD_TRACKING_STATE.with(|state| {
-        let mut snapshot = state.borrow_mut();
-        f(&mut snapshot.internal)
-    })
-}
+pub use state::{
+    get_thread_internal_state, get_thread_snapshot, get_thread_tracking_state,
+    set_thread_internal_state, set_thread_tracking_state, with_internal_tracking,
+    with_user_tracking, TrackingSnapshot,
+};
 
 fn record_operation_metadata(key: &str, operation: &str) {
     with_internal_tracking(|internal| {
@@ -62,28 +26,6 @@ fn record_operation_metadata(key: &str, operation: &str) {
             Dynamic::from(operation.to_string()),
         );
     });
-}
-
-pub fn set_thread_tracking_state(metrics: &HashMap<String, Dynamic>) {
-    THREAD_TRACKING_STATE.with(|state| {
-        let mut snapshot = state.borrow_mut();
-        snapshot.user = metrics.clone();
-    });
-}
-
-pub fn get_thread_tracking_state() -> HashMap<String, Dynamic> {
-    THREAD_TRACKING_STATE.with(|state| state.borrow().user.clone())
-}
-
-pub fn set_thread_internal_state(metrics: &HashMap<String, Dynamic>) {
-    THREAD_TRACKING_STATE.with(|state| {
-        let mut snapshot = state.borrow_mut();
-        snapshot.internal = metrics.clone();
-    });
-}
-
-pub fn get_thread_internal_state() -> HashMap<String, Dynamic> {
-    THREAD_TRACKING_STATE.with(|state| state.borrow().internal.clone())
 }
 
 fn merge_numeric(existing: Option<Dynamic>, new_value: Dynamic) -> Dynamic {
@@ -2497,6 +2439,7 @@ pub fn extract_error_summary(metrics: &HashMap<String, Dynamic>) -> Option<Strin
 
 #[cfg(test)]
 mod tests {
+    use super::state::THREAD_TRACKING_STATE;
     use super::*;
     use crate::stats::ProcessingStats;
     use rhai::Dynamic;
