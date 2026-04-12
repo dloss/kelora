@@ -587,7 +587,9 @@ pub fn parse_anchored_timestamp(
 
 pub type ResolvedTimeRange = (Option<DateTime<Utc>>, Option<DateTime<Utc>>);
 
-/// Resolve --since/--until range values, including anchored expressions.
+/// Resolve --since/--until arguments, including anchored forms that depend on
+/// each other (`since+`/`since-`/`until+`/`until-`), while preventing circular
+/// dependencies.
 pub fn resolve_time_range(
     since_str: Option<&str>,
     until_str: Option<&str>,
@@ -1369,6 +1371,50 @@ mod tests {
         let result = resolve_time_range(None, Some("since+30m"), None);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Invalid --until timestamp"));
+    }
+
+    #[test]
+    fn test_resolve_time_range_independent_values() {
+        let (since, until) = resolve_time_range(
+            Some("2024-01-15T10:00:00Z"),
+            Some("2024-01-15T11:00:00Z"),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(
+            since,
+            Some(chrono::Utc.with_ymd_and_hms(2024, 1, 15, 10, 0, 0).unwrap())
+        );
+        assert_eq!(
+            until,
+            Some(chrono::Utc.with_ymd_and_hms(2024, 1, 15, 11, 0, 0).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_resolve_time_range_until_anchor_dependency() {
+        let (since, until) =
+            resolve_time_range(Some("2024-01-15T10:00:00Z"), Some("since+30m"), None).unwrap();
+
+        assert_eq!(
+            since,
+            Some(chrono::Utc.with_ymd_and_hms(2024, 1, 15, 10, 0, 0).unwrap())
+        );
+        assert_eq!(
+            until,
+            Some(
+                chrono::Utc
+                    .with_ymd_and_hms(2024, 1, 15, 10, 30, 0)
+                    .unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn test_resolve_time_range_circular_dependency_error() {
+        let err = resolve_time_range(Some("until+1h"), Some("since+1h"), None).unwrap_err();
+        assert!(err.contains("Cannot use both 'since' and 'until' anchors"));
     }
 
     #[test]
