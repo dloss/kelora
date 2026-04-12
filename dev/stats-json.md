@@ -17,11 +17,18 @@ Compatible with all processing modes (sequential, parallel, streaming). Does
 not suppress `--stats` human output if both are specified. Does **not** require
 `--allow-fs-writes` (Kelora-initiated write, same as `--metrics-file`).
 
+Written only when the run completes normally. If `exit(1)` aborts the run, no
+stats file is written (same behaviour as `--metrics-file`).
+
 ### `--stats-json-fields` (default: off)
 
 Include per-field coverage statistics in the report. Off by default because it
 requires tracking field presence across all events, with memory proportional to
 the number of distinct fields seen.
+
+**Not supported in parallel mode.** When `--stats-json-fields` is set and
+`--parallel` is active, Kelora emits a warning to stderr and the `fields` key
+is `null` in the report.
 
 ---
 
@@ -37,8 +44,7 @@ the number of distinct fields seen.
     "mode": "sequential",
     "input_format": "json",
     "sources": ["app-2026-04-11.jsonl", "app-2026-04-10.jsonl"],
-    "bytes_read": 104857600,
-    "aborted": false
+    "bytes_read": null
   },
   "events": {
     "read": 948000,
@@ -74,31 +80,41 @@ the number of distinct fields seen.
 **Top-level**
 
 - `kelora_stats_version`: integer, always 1. Incremented only on breaking
-  changes. New fields may be added without a version bump; consumers must
-  ignore unknown fields. `null` is used for "not available" throughout, never
-  field omission, so consumers can rely on key presence.
+  changes (field removal, type change, semantic change). New fields may be
+  added without a version bump; consumers must ignore unknown fields. `null` is
+  used for "not available" throughout, never field omission, so consumers can
+  rely on key presence.
 
 **`run`**
 
-- `started_at` / `finished_at`: ISO 8601 UTC wall-clock timestamps.
+- `started_at` / `finished_at`: ISO 8601 UTC wall-clock timestamps. Captured
+  via `Utc::now()` at run start and at the point the stats file is written;
+  this is new infrastructure (not derived from the existing `Instant`-based
+  throughput timer).
 - `wall_seconds`: float, elapsed seconds.
 - `mode`: `"sequential"` or `"parallel"`.
-- `input_format`: format string as passed (e.g. `"json"`, `"json,syslog"` for
-  cascade, `"auto"`).
-- `sources`: array of input paths. `["<stdin>"]` for stdin.
-- `bytes_read`: total bytes consumed across all sources. `null` if unavailable
-  (some stdin scenarios).
-- `aborted`: `true` if the run was cut short by `exit(1)` in a script;
-  `false` otherwise.
+- `input_format`: format string as passed on the CLI (e.g. `"json"`,
+  `"json,syslog"` for cascade, `"auto"`). Taken from config, not from
+  auto-detection results — use `--stats` human output to see what `"auto"`
+  resolved to.
+- `sources`: array of input paths exactly as passed on the CLI, in order.
+  `["<stdin>"]` for stdin. Sourced from config, not from runtime measurement;
+  glob patterns are expanded before this list is populated.
+- `bytes_read`: always `null` in v1. Byte tracking requires reader-level
+  instrumentation that is not yet implemented. Reserved for a future version;
+  consumers should treat it as always `null` and not branch on its presence.
 
 **`events`**
 
-- `read`: lines/chunks presented to the parser.
-- `parsed`: successfully parsed into events.
-- `parse_errors`: lines that failed parsing.
-- `parse_error_rate`: `parse_errors / read`, float.
-- `filtered_out`: events dropped by `--filter` scripts.
-- `emitted`: events written to output.
+- `read`: lines/chunks presented to the parser (`lines_read` in internal
+  stats).
+- `parsed`: events successfully parsed (`events_created`).
+- `parse_errors`: lines that failed parsing (`lines_errors`).
+- `parse_error_rate`: `parse_errors / read` as a float. `0.0` when `read` is
+  zero.
+- `filtered_out`: events dropped by `--filter` scripts (`events_filtered`).
+- `emitted`: events written to output (`events_output`, not `lines_output`;
+  counts events before any `--emit-each` expansion).
 - `assert_failures`: count of `assert_fail()` calls. Equal to
   `run.total_failures` in the assert report when `--assert-report` is also
   active. `null` when `assert_fail` was never called during the run.
@@ -107,17 +123,24 @@ the number of distinct fields seen.
 
 - `first` / `last`: ISO 8601 UTC timestamps of earliest and latest events
   parsed from logs (not wall clock).
-- `source_field`: which field was used for timestamps (e.g. `"ts"`,
-  `"timestamp"`). `null` if no timestamp field was found.
+- `source_field`: the timestamp field name used for `first`/`last`. When
+  multiple field names are observed across events, the most frequently seen
+  name is used. If `--timestamp-field` is set, that value is used regardless.
+  `null` if no timestamp field was found.
 - Entire `time_range` object is `null` if no timestamps were parsed.
 
-**`parse_errors.sample`**
+**`parse_errors`**
 
-- Up to 5 parse error examples, sampled from across the run (not just the
-  first 5).
-- `raw` is truncated at 200 characters.
-- `line_number` is 1-based within the source file. `null` for stdin.
-- `source_size`: always 5. Consumers should not assume all 5 slots are filled.
+- `sample`: up to 5 structured parse error examples, sampled from across the
+  run (not just the first 5). Each entry has:
+  - `line_number`: 1-based within the source file. `null` for stdin.
+  - `source`: input file path. `"<stdin>"` for stdin.
+  - `raw`: the failing line, truncated at 200 characters.
+  - `reason`: the parser's error message.
+- `sample_size`: maximum number of samples collected (5). The `sample` array
+  may have fewer entries. Requires a new structured sample vec in
+  `ProcessingStats`; the current `recoverable_error_samples: Vec<String>` is
+  insufficient and must be replaced or supplemented.
 
 ---
 
@@ -155,35 +178,59 @@ the number of distinct fields seen.
 
 - `top_fields`: sorted by `present_in` descending. Capped at 200 fields.
 - `types_seen`: all distinct Kelora-inferred types observed for that field
-  across all events. Useful for detecting accidental type mixing.
+  across all events (`string`, `int`, `float`, `bool`, `null`, `array`,
+  `map`). Useful for detecting accidental type mixing.
 - Nested fields are dot-notated (`"request.headers.content_type"`), up to the
   same depth cap as `--discover`.
 - `truncated`: `true` if more than 200 distinct fields were seen.
 - `truncated_at`: 200 when truncated, `null` otherwise.
-- `fields` is `null` (not the object) when `--stats-json-fields` is not set.
+- `fields` is `null` (not the object) when `--stats-json-fields` is not set,
+  or when running in parallel mode.
+
+---
+
+## Implementation notes
+
+Fields sourced from existing infrastructure, mapped directly:
+
+| Report field | Internal source |
+|---|---|
+| `events.read` | `stats.lines_read` |
+| `events.parsed` | `stats.events_created` |
+| `events.parse_errors` | `stats.lines_errors` |
+| `events.filtered_out` | `stats.events_filtered` |
+| `events.emitted` | `stats.events_output` |
+| `events.assert_failures` | `stats.assertion_failures` (or `null`) |
+| `time_range.first/last` | `stats.first_timestamp` / `stats.last_timestamp` |
+| `run.input_format` | `config.input.format.to_display_string()` |
+| `run.sources` | `config.input.files` |
+| `run.mode` | `config.should_use_parallel()` |
+
+Fields requiring new infrastructure:
+
+| Report field | What's needed |
+|---|---|
+| `run.started_at` / `finished_at` | Capture `Utc::now()` at start and write time |
+| `parse_errors.sample` (structured) | New `Vec<ParseErrorSample>` in `ProcessingStats` |
+| `bytes_read` | Reader-level byte counter; deferred to future version (`null` for now) |
 
 ---
 
 ## Interaction with other flags
 
-- `--stats`: both can be set simultaneously; `--stats-json` does not suppress
-  human-readable output.
-- `--assert-report`: when both are active, `events.assert_failures` reflects
-  the same count as `run.total_failures` in the assert report.
-- `--metrics-file`: complementary, not overlapping. Metrics from `track_*()`
-  functions appear in `--metrics-file`; aggregate run statistics appear here.
+- `--stats`: both can be set simultaneously; human output is not suppressed.
+- `--assert-report`: `events.assert_failures` reflects `run.total_failures`.
+- `--metrics-file`: complementary. `track_*()` metrics go there; run
+  statistics go here.
 - `--discover-final`: separate output, not subsumed by `--stats-json`.
-- Parallel mode: counts are aggregated correctly across threads, following the
-  existing internal stats aggregation.
-- Aborted run (`exit(1)` in a script): stats file is written with whatever was
-  collected; `run.aborted` is set to `true`.
+- Parallel mode: base stats aggregated correctly across threads via existing
+  merge step. `fields` is `null` (see above).
 
 ---
 
 ## Schema stability contract
 
-- `kelora_stats_version` increments only on breaking changes (field removal,
-  type change, semantic change).
+- `kelora_stats_version` increments only on breaking changes.
 - New fields may be added at any version without a version bump.
 - `null` is used for "not available" throughout; consumers can rely on all
   documented keys being present.
@@ -195,3 +242,5 @@ the number of distinct fields seen.
 - Per-file breakdown (bytes, events per source) — aggregate only.
 - Histogram of event timestamps — `time_range.first`/`last` is sufficient.
 - Metrics from `track_*()` functions — covered by `--metrics-file`.
+- Partial stats on `exit(1)` abort — no file is written if the run is cut
+  short.
