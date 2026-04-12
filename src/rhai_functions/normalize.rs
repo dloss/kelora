@@ -1,7 +1,7 @@
-use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use rhai::{Dynamic, Engine, Map};
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 /// SSN validation based on SSA assignment rules.
 /// Rejects structurally invalid SSNs: area 000/666/900-999, group 00, serial 0000.
@@ -124,7 +124,7 @@ fn is_valid_luhn(digits: &str) -> bool {
 }
 
 /// Pattern name to regex mapping for normalization
-static PATTERNS: Lazy<HashMap<&'static str, Vec<Regex>>> = Lazy::new(|| {
+static PATTERNS: LazyLock<HashMap<&'static str, Vec<Regex>>> = LazyLock::new(|| {
     let mut map = HashMap::new();
 
     // IPv4 address with proper octet validation - using word boundaries
@@ -271,7 +271,7 @@ static PATTERNS: Lazy<HashMap<&'static str, Vec<Regex>>> = Lazy::new(|| {
 
 /// Patterns that require additional validation beyond regex matching
 type Validator = fn(&str) -> bool;
-static VALIDATORS: Lazy<HashMap<&'static str, Validator>> = Lazy::new(|| {
+static VALIDATORS: LazyLock<HashMap<&'static str, Validator>> = LazyLock::new(|| {
     let mut map: HashMap<&'static str, Validator> = HashMap::new();
     map.insert("credit_card", is_valid_luhn as Validator);
     map.insert("ssn", is_valid_ssn as Validator);

@@ -56,8 +56,6 @@ zstd = "0.13"  # Zstandard decompression for reading .zst log files
 # Data structures and utilities
 indexmap = "2.0"  # Order-preserving hash maps for JSON objects and logfmt key-value pairs
 shell-words = "1.1"  # Parsing shell-like command strings in config files
-once_cell = "1.19"  # Lazy static initialization for global resources
-lazy_static = "1.4"  # Static initialization for compiled regexes and constants
 lru = "0.16.3"  # LRU cache for optimizing repeated operations
 fastrand = "2.0"  # Fast random number generation for sampling
 

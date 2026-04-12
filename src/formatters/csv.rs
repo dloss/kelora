@@ -1,15 +1,15 @@
 use crate::event::{flatten_dynamic, Event, FlattenStyle};
 use crate::pipeline;
 
-use once_cell::sync::Lazy;
 use rhai::Dynamic;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 
 /// Global header tracking registry for CSV formatters in parallel mode
 /// Key format: "{delimiter}_{keys_hash}" for uniqueness across different CSV configurations
-static CSV_FORMATTER_HEADER_REGISTRY: Lazy<Mutex<HashMap<String, bool>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+static CSV_FORMATTER_HEADER_REGISTRY: LazyLock<Mutex<HashMap<String, bool>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// Check if a CSV value needs quoting
 pub(crate) fn needs_csv_quoting(value: &str, delimiter: char) -> bool {

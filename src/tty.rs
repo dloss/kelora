@@ -134,10 +134,10 @@ pub fn get_terminal_width() -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
     use std::sync::Mutex;
 
-    static ENV_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+    static ENV_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
     struct EnvGuard {
         vars: Vec<(&'static str, Option<String>)>,

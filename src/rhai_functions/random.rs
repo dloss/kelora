@@ -1,11 +1,9 @@
 use rhai::{Engine, EvalAltResult};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 
-lazy_static::lazy_static! {
-    static ref RNG: Mutex<fastrand::Rng> = Mutex::new(fastrand::Rng::new());
-}
+static RNG: LazyLock<Mutex<fastrand::Rng>> = LazyLock::new(|| Mutex::new(fastrand::Rng::new()));
 
 // Thread-local counters for sample_every() - each N value gets its own counter
 thread_local! {
