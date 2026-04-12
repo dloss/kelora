@@ -3,12 +3,8 @@
 
 use rhai::Engine;
 
-mod core;
-mod output;
-mod regex;
-mod slice;
-mod substring;
-mod trim;
+mod ops;
+mod regex_ops;
 
 // Re-export capture module functions for backward compatibility
 #[allow(unused_imports)]
@@ -20,12 +16,8 @@ pub use crate::rhai_functions::capture::{
 };
 
 pub fn register_functions(engine: &mut Engine) {
-    output::register_functions(engine);
-    core::register_functions(engine);
-    slice::register_functions(engine);
-    substring::register_functions(engine);
-    trim::register_functions(engine);
-    regex::register_functions(engine);
+    ops::register_functions(engine);
+    regex_ops::register_functions(engine);
 }
 
 #[cfg(test)]

@@ -1,11 +1,12 @@
-use once_cell::sync::Lazy;
 use regex::Regex;
 use rhai::{Array, Dynamic, Engine, Map};
 use std::collections::HashSet;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 
 /// Cache of regex patterns we've already warned about to avoid spamming stderr.
-static REGEX_WARNING_CACHE: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+static REGEX_WARNING_CACHE: LazyLock<Mutex<HashSet<String>>> =
+    LazyLock::new(|| Mutex::new(HashSet::new()));
 
 /// Emit a one-time warning for an invalid regex pattern.
 fn warn_invalid_regex(pattern: &str, error: &regex::Error) {

@@ -7,10 +7,10 @@ use argon2::{Argon2, PasswordHasher};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use hkdf::Hkdf;
 use hmac::{Hmac, Mac};
-use once_cell::sync::Lazy;
 use rhai::Engine;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use std::sync::{Mutex, RwLock};
 use xxhash_rust::xxh3::xxh3_64;
 
@@ -23,8 +23,8 @@ pub struct HashingRuntimeConfig {
     pub use_emoji: bool,
 }
 
-static RUNTIME_CONFIG: Lazy<RwLock<HashingRuntimeConfig>> =
-    Lazy::new(|| RwLock::new(HashingRuntimeConfig::default()));
+static RUNTIME_CONFIG: LazyLock<RwLock<HashingRuntimeConfig>> =
+    LazyLock::new(|| RwLock::new(HashingRuntimeConfig::default()));
 
 /// Set runtime configuration for hashing functions
 pub fn set_runtime_config(config: HashingRuntimeConfig) {
@@ -46,7 +46,7 @@ fn log_pseudonym_init(message: &str) {
 }
 
 /// Master key for pseudonymization (derived once at startup)
-static MASTER_KEY: Lazy<MasterKeyState> = Lazy::new(|| {
+static MASTER_KEY: LazyLock<MasterKeyState> = LazyLock::new(|| {
     match std::env::var("KELORA_SECRET") {
         Ok(secret) if !secret.is_empty() => {
             match derive_master_key_from_secret(&secret) {
@@ -79,8 +79,8 @@ static MASTER_KEY: Lazy<MasterKeyState> = Lazy::new(|| {
 });
 
 /// Domain-specific derived keys (cached)
-static DOMAIN_KEYS: Lazy<Mutex<HashMap<String, [u8; 32]>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+static DOMAIN_KEYS: LazyLock<Mutex<HashMap<String, [u8; 32]>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 enum MasterKeyState {
     Stable([u8; 32]),
