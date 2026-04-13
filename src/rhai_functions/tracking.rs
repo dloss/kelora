@@ -24,8 +24,8 @@ pub use format::{format_metrics_json, format_metrics_output};
 use merge::{deserialize_hll, is_hll_blob};
 use merge::{merge_numeric, record_operation_metadata};
 use metrics::{
-    track_cardinality_impl, track_cardinality_with_error_impl, track_percentiles_impl,
-    track_stats_impl,
+    track_avg_impl, track_cardinality_impl, track_cardinality_with_error_impl, track_max_impl,
+    track_min_impl, track_percentiles_impl, track_stats_impl,
 };
 use rank::{
     track_bottom_count_impl, track_bottom_weighted_impl, track_bucket_impl, track_top_count_impl,
@@ -103,145 +103,19 @@ pub fn register_functions(engine: &mut Engine) {
     // track_avg overloads for different number types
     // Stores both sum and count as a map for proper averaging in parallel mode
     engine.register_fn("track_avg", |key: &str, value: i64| {
-        with_user_tracking(|state| {
-            let current = state.get(key).cloned();
-            let (new_sum, new_count) = if let Some(existing) = current {
-                // Try to extract existing map with sum and count
-                if let Some(map) = existing.try_cast::<rhai::Map>() {
-                    let existing_sum = map
-                        .get("sum")
-                        .and_then(|v| {
-                            if v.is_float() {
-                                v.as_float().ok()
-                            } else if v.is_int() {
-                                v.as_int().ok().map(|i| i as f64)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or(0.0);
-                    let existing_count =
-                        map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                    (existing_sum + value as f64, existing_count + 1)
-                } else {
-                    // Legacy case: if existing is just a number, treat it as sum with count 1
-                    (value as f64, 1)
-                }
-            } else {
-                (value as f64, 1)
-            };
-
-            let mut map = rhai::Map::new();
-            map.insert("sum".into(), Dynamic::from(new_sum));
-            map.insert("count".into(), Dynamic::from(new_count));
-            state.insert(key.to_string(), Dynamic::from(map));
-        });
-        record_operation_metadata(key, "avg");
+        track_avg_impl(key, value as f64);
     });
 
     engine.register_fn("track_avg", |key: &str, value: i32| {
-        with_user_tracking(|state| {
-            let current = state.get(key).cloned();
-            let (new_sum, new_count) = if let Some(existing) = current {
-                if let Some(map) = existing.try_cast::<rhai::Map>() {
-                    let existing_sum = map
-                        .get("sum")
-                        .and_then(|v| {
-                            if v.is_float() {
-                                v.as_float().ok()
-                            } else if v.is_int() {
-                                v.as_int().ok().map(|i| i as f64)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or(0.0);
-                    let existing_count =
-                        map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                    (existing_sum + value as f64, existing_count + 1)
-                } else {
-                    (value as f64, 1)
-                }
-            } else {
-                (value as f64, 1)
-            };
-
-            let mut map = rhai::Map::new();
-            map.insert("sum".into(), Dynamic::from(new_sum));
-            map.insert("count".into(), Dynamic::from(new_count));
-            state.insert(key.to_string(), Dynamic::from(map));
-        });
-        record_operation_metadata(key, "avg");
+        track_avg_impl(key, value as f64);
     });
 
     engine.register_fn("track_avg", |key: &str, value: f64| {
-        with_user_tracking(|state| {
-            let current = state.get(key).cloned();
-            let (new_sum, new_count) = if let Some(existing) = current {
-                if let Some(map) = existing.try_cast::<rhai::Map>() {
-                    let existing_sum = map
-                        .get("sum")
-                        .and_then(|v| {
-                            if v.is_float() {
-                                v.as_float().ok()
-                            } else if v.is_int() {
-                                v.as_int().ok().map(|i| i as f64)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or(0.0);
-                    let existing_count =
-                        map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                    (existing_sum + value, existing_count + 1)
-                } else {
-                    (value, 1)
-                }
-            } else {
-                (value, 1)
-            };
-
-            let mut map = rhai::Map::new();
-            map.insert("sum".into(), Dynamic::from(new_sum));
-            map.insert("count".into(), Dynamic::from(new_count));
-            state.insert(key.to_string(), Dynamic::from(map));
-        });
-        record_operation_metadata(key, "avg");
+        track_avg_impl(key, value);
     });
 
     engine.register_fn("track_avg", |key: &str, value: f32| {
-        with_user_tracking(|state| {
-            let current = state.get(key).cloned();
-            let (new_sum, new_count) = if let Some(existing) = current {
-                if let Some(map) = existing.try_cast::<rhai::Map>() {
-                    let existing_sum = map
-                        .get("sum")
-                        .and_then(|v| {
-                            if v.is_float() {
-                                v.as_float().ok()
-                            } else if v.is_int() {
-                                v.as_int().ok().map(|i| i as f64)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or(0.0);
-                    let existing_count =
-                        map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                    (existing_sum + value as f64, existing_count + 1)
-                } else {
-                    (value as f64, 1)
-                }
-            } else {
-                (value as f64, 1)
-            };
-
-            let mut map = rhai::Map::new();
-            map.insert("sum".into(), Dynamic::from(new_sum));
-            map.insert("count".into(), Dynamic::from(new_count));
-            state.insert(key.to_string(), Dynamic::from(map));
-        });
-        record_operation_metadata(key, "avg");
+        track_avg_impl(key, value as f64);
     });
 
     // Unit overload - no-op for missing/empty values
@@ -251,98 +125,19 @@ pub fn register_functions(engine: &mut Engine) {
 
     // track_min overloads for different number types
     engine.register_fn("track_min", |key: &str, value: i64| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MAX) as f64
-            } else {
-                current.as_float().unwrap_or(f64::INFINITY)
-            };
-            let value_f64 = value as f64;
-            if value_f64 < current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "min");
-        }
+        track_min_impl(key, Dynamic::from(value), value as f64);
     });
 
     engine.register_fn("track_min", |key: &str, value: i32| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MAX) as f64
-            } else {
-                current.as_float().unwrap_or(f64::INFINITY)
-            };
-            let value_f64 = value as f64;
-            if value_f64 < current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "min");
-        }
+        track_min_impl(key, Dynamic::from(value), value as f64);
     });
 
     engine.register_fn("track_min", |key: &str, value: f64| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MAX) as f64
-            } else {
-                current.as_float().unwrap_or(f64::INFINITY)
-            };
-            if value < current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "min");
-        }
+        track_min_impl(key, Dynamic::from(value), value);
     });
 
     engine.register_fn("track_min", |key: &str, value: f32| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MAX) as f64
-            } else {
-                current.as_float().unwrap_or(f64::INFINITY)
-            };
-            let value_f64 = value as f64;
-            if value_f64 < current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "min");
-        }
+        track_min_impl(key, Dynamic::from(value), value as f64);
     });
 
     // Unit overload - no-op for missing/empty values
@@ -352,98 +147,19 @@ pub fn register_functions(engine: &mut Engine) {
 
     // track_max overloads for different number types
     engine.register_fn("track_max", |key: &str, value: i64| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::NEG_INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MIN) as f64
-            } else {
-                current.as_float().unwrap_or(f64::NEG_INFINITY)
-            };
-            let value_f64 = value as f64;
-            if value_f64 > current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "max");
-        }
+        track_max_impl(key, Dynamic::from(value), value as f64);
     });
 
     engine.register_fn("track_max", |key: &str, value: i32| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::NEG_INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MIN) as f64
-            } else {
-                current.as_float().unwrap_or(f64::NEG_INFINITY)
-            };
-            let value_f64 = value as f64;
-            if value_f64 > current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "max");
-        }
+        track_max_impl(key, Dynamic::from(value), value as f64);
     });
 
     engine.register_fn("track_max", |key: &str, value: f64| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::NEG_INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MIN) as f64
-            } else {
-                current.as_float().unwrap_or(f64::NEG_INFINITY)
-            };
-            if value > current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "max");
-        }
+        track_max_impl(key, Dynamic::from(value), value);
     });
 
     engine.register_fn("track_max", |key: &str, value: f32| {
-        let updated = with_user_tracking(|state| {
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::NEG_INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MIN) as f64
-            } else {
-                current.as_float().unwrap_or(f64::NEG_INFINITY)
-            };
-            let value_f64 = value as f64;
-            if value_f64 > current_val {
-                state.insert(key.to_string(), Dynamic::from(value));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "max");
-        }
+        track_max_impl(key, Dynamic::from(value), value as f64);
     });
 
     // Unit overload - no-op for missing/empty values

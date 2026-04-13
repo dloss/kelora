@@ -7,6 +7,94 @@ use rhai::Dynamic;
 use std::collections::HashSet;
 use tdigests::TDigest;
 
+fn extract_avg_parts(existing: Option<Dynamic>) -> (f64, i64) {
+    if let Some(existing) = existing {
+        if let Some(map) = existing.try_cast::<rhai::Map>() {
+            let existing_sum = map
+                .get("sum")
+                .and_then(|v| {
+                    if v.is_float() {
+                        v.as_float().ok()
+                    } else if v.is_int() {
+                        v.as_int().ok().map(|i| i as f64)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(0.0);
+            let existing_count = map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
+            (existing_sum, existing_count)
+        } else {
+            (0.0, 0)
+        }
+    } else {
+        (0.0, 0)
+    }
+}
+
+pub(super) fn track_avg_impl(key: &str, value: f64) {
+    with_user_tracking(|state| {
+        let (existing_sum, existing_count) = extract_avg_parts(state.get(key).cloned());
+
+        let mut map = rhai::Map::new();
+        map.insert("sum".into(), Dynamic::from(existing_sum + value));
+        map.insert("count".into(), Dynamic::from(existing_count + 1));
+        state.insert(key.to_string(), Dynamic::from(map));
+    });
+    record_operation_metadata(key, "avg");
+}
+
+fn dynamic_to_cmp_f64(current: &Dynamic, default_int: i64, default_float: f64) -> f64 {
+    if current.is_int() {
+        current.as_int().unwrap_or(default_int) as f64
+    } else {
+        current.as_float().unwrap_or(default_float)
+    }
+}
+
+fn track_extreme_impl(key: &str, stored: Dynamic, value_f64: f64, is_min: bool) {
+    let default = if is_min {
+        Dynamic::from(f64::INFINITY)
+    } else {
+        Dynamic::from(f64::NEG_INFINITY)
+    };
+    let default_int = if is_min { i64::MAX } else { i64::MIN };
+    let default_float = if is_min {
+        f64::INFINITY
+    } else {
+        f64::NEG_INFINITY
+    };
+
+    let updated = with_user_tracking(|state| {
+        let current = state.get(key).cloned().unwrap_or(default);
+        let current_val = dynamic_to_cmp_f64(&current, default_int, default_float);
+        let should_update = if is_min {
+            value_f64 < current_val
+        } else {
+            value_f64 > current_val
+        };
+
+        if should_update {
+            state.insert(key.to_string(), stored);
+            true
+        } else {
+            false
+        }
+    });
+
+    if updated {
+        record_operation_metadata(key, if is_min { "min" } else { "max" });
+    }
+}
+
+pub(super) fn track_min_impl(key: &str, stored: Dynamic, value_f64: f64) {
+    track_extreme_impl(key, stored, value_f64, true);
+}
+
+pub(super) fn track_max_impl(key: &str, stored: Dynamic, value_f64: f64) {
+    track_extreme_impl(key, stored, value_f64, false);
+}
+
 pub(super) fn track_cardinality_impl<V: std::hash::Hash>(key: &str, value: &V) {
     with_user_tracking(|state| {
         let mut hll = if let Some(existing) = state.get(key) {
@@ -180,37 +268,7 @@ pub(super) fn track_stats_impl(
     record_operation_metadata(&max_key, "max");
 
     let avg_key = format!("{}_avg", key);
-    with_user_tracking(|state| {
-        let current = state.get(&avg_key).cloned();
-        let (new_sum, new_count) = if let Some(existing) = current {
-            if let Some(map) = existing.try_cast::<rhai::Map>() {
-                let existing_sum = map
-                    .get("sum")
-                    .and_then(|v| {
-                        if v.is_float() {
-                            v.as_float().ok()
-                        } else if v.is_int() {
-                            v.as_int().ok().map(|i| i as f64)
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap_or(0.0);
-                let existing_count = map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                (existing_sum + value, existing_count + 1)
-            } else {
-                (value, 1)
-            }
-        } else {
-            (value, 1)
-        };
-
-        let mut map = rhai::Map::new();
-        map.insert("sum".into(), Dynamic::from(new_sum));
-        map.insert("count".into(), Dynamic::from(new_count));
-        state.insert(avg_key.clone(), Dynamic::from(map));
-    });
-    record_operation_metadata(&avg_key, "avg");
+    track_avg_impl(&avg_key, value);
 
     let count_key = format!("{}_count", key);
     with_user_tracking(|state| {
