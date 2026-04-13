@@ -1,6 +1,5 @@
 use rhai::{Dynamic, Engine};
-use std::collections::{HashMap, HashSet};
-use tdigests::TDigest;
+use std::collections::HashMap;
 
 #[path = "tracking_errors.rs"]
 mod errors;
@@ -8,178 +7,29 @@ mod errors;
 mod format;
 #[path = "tracking_merge.rs"]
 mod merge;
+#[path = "tracking_metrics.rs"]
+mod metrics;
 #[path = "tracking_state.rs"]
 mod state;
 #[cfg(test)]
 use errors::format_error_location;
-#[cfg(test)]
-use merge::is_hll_blob;
 pub use errors::{
     extract_error_summary_from_tracking, format_fatal_error_line, has_errors_in_tracking,
     track_error,
 };
 pub use format::{format_metrics_json, format_metrics_output};
-use merge::{
-    deserialize_hll, deserialize_tdigest, merge_numeric, new_hll, new_hll_with_error,
-    record_operation_metadata, serialize_hll, serialize_tdigest,
+#[cfg(test)]
+use merge::{deserialize_hll, is_hll_blob};
+use merge::{merge_numeric, record_operation_metadata};
+use metrics::{
+    track_cardinality_impl, track_cardinality_with_error_impl, track_percentiles_impl,
+    track_stats_impl,
 };
 pub use state::{
     get_thread_internal_state, get_thread_snapshot, get_thread_tracking_state,
     set_thread_internal_state, set_thread_tracking_state, with_internal_tracking,
     with_user_tracking, TrackingSnapshot,
 };
-
-/// Implementation of track_cardinality for a hashable value
-fn track_cardinality_impl<V: std::hash::Hash>(key: &str, value: &V) {
-    with_user_tracking(|state| {
-        // Get existing HLL or create new one
-        let mut hll = if let Some(existing) = state.get(key) {
-            if let Ok(bytes) = existing.clone().into_blob() {
-                deserialize_hll(&bytes).unwrap_or_else(new_hll)
-            } else {
-                new_hll()
-            }
-        } else {
-            new_hll()
-        };
-
-        // Insert the new value
-        hll.insert(value);
-
-        // Serialize and store
-        let bytes = serialize_hll(&hll);
-        state.insert(key.to_string(), Dynamic::from_blob(bytes));
-    });
-
-    record_operation_metadata(key, "cardinality");
-}
-
-/// Implementation of track_cardinality with custom error rate
-fn track_cardinality_with_error_impl<V: std::hash::Hash>(key: &str, value: &V, error_rate: f64) {
-    // Clamp error rate to reasonable bounds (0.1% to 26%)
-    let error_rate = error_rate.clamp(0.001, 0.26);
-
-    with_user_tracking(|state| {
-        // Get existing HLL or create new one with specified error rate
-        let mut hll = if let Some(existing) = state.get(key) {
-            if let Ok(bytes) = existing.clone().into_blob() {
-                deserialize_hll(&bytes).unwrap_or_else(|| new_hll_with_error(error_rate))
-            } else {
-                new_hll_with_error(error_rate)
-            }
-        } else {
-            new_hll_with_error(error_rate)
-        };
-
-        // Insert the new value
-        hll.insert(value);
-
-        // Serialize and store
-        let bytes = serialize_hll(&hll);
-        state.insert(key.to_string(), Dynamic::from_blob(bytes));
-    });
-
-    record_operation_metadata(key, "cardinality");
-}
-
-/// Implementation of track_percentiles for a given numeric type
-fn track_percentiles_impl(
-    key: &str,
-    value: f64,
-    percentiles: rhai::Array,
-) -> Result<(), Box<rhai::EvalAltResult>> {
-    // Validate percentiles array is not empty
-    if percentiles.is_empty() {
-        return Err("track_percentiles requires a non-empty array of percentiles".into());
-    }
-
-    // Parse and validate percentiles (0.0-1.0 range, representing quantiles)
-    let mut valid_percentiles = Vec::new();
-    let mut seen = HashSet::new();
-
-    for p in percentiles {
-        let percentile = if p.is_int() {
-            p.as_int().map_err(|_| -> Box<rhai::EvalAltResult> {
-                "track_percentiles percentile must be a number".into()
-            })? as f64
-        } else if p.is_float() {
-            p.as_float().map_err(|_| -> Box<rhai::EvalAltResult> {
-                "track_percentiles percentile must be a number".into()
-            })?
-        } else {
-            return Err("track_percentiles percentile must be a number".into());
-        };
-
-        // Validate range [0.0, 1.0] (quantile notation)
-        if !(0.0..=1.0).contains(&percentile) {
-            return Err(format!(
-                "track_percentiles percentile must be in range [0.0, 1.0], got {}",
-                percentile
-            )
-            .into());
-        }
-
-        // Deduplicate
-        if !seen.contains(&percentile.to_bits()) {
-            seen.insert(percentile.to_bits());
-            valid_percentiles.push(percentile);
-        }
-    }
-
-    // Filter out NaN and Infinity
-    if !value.is_finite() {
-        // Silently skip invalid values (like track_min does with Unit)
-        return Ok(());
-    }
-
-    // Track each percentile independently (auto-suffixing behavior)
-    for percentile in valid_percentiles {
-        // Convert to percentage for suffix (0.95 → 95, 0.999 → 99.9)
-        let percentage = percentile * 100.0;
-
-        // Format percentile: remove trailing zeros and decimal point if whole number
-        let percentile_str = if percentage.fract() == 0.0 {
-            format!("p{}", percentage as i64)
-        } else {
-            // Format with minimal decimal places, remove trailing zeros
-            let formatted = format!("{:.10}", percentage);
-            let trimmed = formatted.trim_end_matches('0').trim_end_matches('.');
-            format!("p{}", trimmed)
-        };
-
-        let metric_key = format!("{}_{}", key, percentile_str);
-
-        with_user_tracking(|state| {
-            // Create a new digest with just this value
-            let new_digest = TDigest::from_values(vec![value]);
-
-            // Get existing digest or use the new one
-            let digest = if let Some(existing) = state.get(&metric_key) {
-                // Try to deserialize existing digest and merge
-                if let Ok(bytes) = existing.clone().into_blob() {
-                    if let Some(existing_digest) = deserialize_tdigest(&bytes) {
-                        existing_digest.merge(&new_digest)
-                    } else {
-                        new_digest
-                    }
-                } else {
-                    new_digest
-                }
-            } else {
-                new_digest
-            };
-
-            // Serialize and store
-            let bytes = serialize_tdigest(&digest);
-            state.insert(metric_key.clone(), Dynamic::from_blob(bytes));
-        });
-
-        // Record operation metadata for parallel merging
-        record_operation_metadata(&metric_key, "percentiles");
-    }
-
-    Ok(())
-}
 
 pub fn register_functions(engine: &mut Engine) {
     // Track functions using thread-local storage - clean user API
@@ -683,111 +533,6 @@ pub fn register_functions(engine: &mut Engine) {
     // track_stats - comprehensive statistics tracking (min, max, avg, count, sum, percentiles)
     // Auto-suffixes metric names with _min, _max, _avg, _count, _sum, _pXX
     // This is a convenience function that combines track_min, track_max, track_avg, and track_percentiles
-
-    /// Implementation of track_stats for a given numeric type
-    fn track_stats_impl(
-        key: &str,
-        value: f64,
-        percentiles: rhai::Array,
-    ) -> Result<(), Box<rhai::EvalAltResult>> {
-        // Filter out NaN and Infinity
-        if !value.is_finite() {
-            // Silently skip invalid values (consistent with other track_* functions)
-            return Ok(());
-        }
-
-        // Track min
-        let min_key = format!("{}_min", key);
-        with_user_tracking(|state| {
-            let current = state
-                .get(&min_key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MAX) as f64
-            } else {
-                current.as_float().unwrap_or(f64::INFINITY)
-            };
-            if value < current_val {
-                state.insert(min_key.clone(), Dynamic::from(value));
-            }
-        });
-        record_operation_metadata(&min_key, "min");
-
-        // Track max
-        let max_key = format!("{}_max", key);
-        with_user_tracking(|state| {
-            let current = state
-                .get(&max_key)
-                .cloned()
-                .unwrap_or(Dynamic::from(f64::NEG_INFINITY));
-            let current_val = if current.is_int() {
-                current.as_int().unwrap_or(i64::MIN) as f64
-            } else {
-                current.as_float().unwrap_or(f64::NEG_INFINITY)
-            };
-            if value > current_val {
-                state.insert(max_key.clone(), Dynamic::from(value));
-            }
-        });
-        record_operation_metadata(&max_key, "max");
-
-        // Track avg (stores sum and count for proper parallel merging)
-        let avg_key = format!("{}_avg", key);
-        with_user_tracking(|state| {
-            let current = state.get(&avg_key).cloned();
-            let (new_sum, new_count) = if let Some(existing) = current {
-                if let Some(map) = existing.try_cast::<rhai::Map>() {
-                    let existing_sum = map
-                        .get("sum")
-                        .and_then(|v| {
-                            if v.is_float() {
-                                v.as_float().ok()
-                            } else if v.is_int() {
-                                v.as_int().ok().map(|i| i as f64)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or(0.0);
-                    let existing_count =
-                        map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                    (existing_sum + value, existing_count + 1)
-                } else {
-                    (value, 1)
-                }
-            } else {
-                (value, 1)
-            };
-
-            let mut map = rhai::Map::new();
-            map.insert("sum".into(), Dynamic::from(new_sum));
-            map.insert("count".into(), Dynamic::from(new_count));
-            state.insert(avg_key.clone(), Dynamic::from(map));
-        });
-        record_operation_metadata(&avg_key, "avg");
-
-        // Track count (as a separate metric for convenience)
-        let count_key = format!("{}_count", key);
-        with_user_tracking(|state| {
-            let updated = merge_numeric(state.get(&count_key).cloned(), Dynamic::from(1_i64));
-            state.insert(count_key.clone(), updated);
-        });
-        record_operation_metadata(&count_key, "count");
-
-        // Track sum (as a separate metric for convenience)
-        let sum_key = format!("{}_sum", key);
-        with_user_tracking(|state| {
-            let updated = merge_numeric(state.get(&sum_key).cloned(), Dynamic::from(value));
-            state.insert(sum_key.clone(), updated);
-        });
-        record_operation_metadata(&sum_key, "sum");
-
-        // Track percentiles using the existing implementation
-        track_percentiles_impl(key, value, percentiles)?;
-
-        Ok(())
-    }
 
     engine.register_fn(
         "track_stats",
