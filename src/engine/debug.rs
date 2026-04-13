@@ -27,16 +27,6 @@ impl DebugConfig {
     }
 }
 
-/// Truncate text for display, respecting UTF-8 character boundaries.
-fn truncate_for_display(text: &str, max_len: usize) -> String {
-    if text.chars().count() > max_len {
-        let truncated: String = text.chars().take(max_len.saturating_sub(3)).collect();
-        format!("{}...", truncated)
-    } else {
-        text.to_string()
-    }
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct ExecutionContext {
     pub position: Option<rhai::Position>,
@@ -121,8 +111,13 @@ impl ErrorEnhancer {
         execution_context: &ExecutionContext,
     ) -> String {
         let mut output = String::new();
+        let (stage_prefix, hint_prefix) = if self.debug_config.use_emoji {
+            ("🔸", "💡")
+        } else {
+            ("Error:", "Hint:")
+        };
 
-        output.push_str(&format!("🔸 Stage {} failed\n", stage));
+        output.push_str(&format!("{stage_prefix} Stage {} failed\n", stage));
         output.push_str(&format!("  Code: {}\n", script.trim()));
         output.push_str(&format!("  Error: {}\n", error));
 
@@ -131,7 +126,7 @@ impl ErrorEnhancer {
         }
 
         if let Some(suggestions) = self.generate_suggestions(error, scope, Some(script)) {
-            output.push_str(&format!("   💡 {}\n", suggestions));
+            output.push_str(&format!("   {hint_prefix} {}\n", suggestions));
         }
 
         if self.debug_config.is_enabled() {

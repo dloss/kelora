@@ -1,4 +1,4 @@
-#![allow(dead_code)] // Debugging/tracing scaffolding kept for verbose dev builds and future CLI toggles
+#![allow(dead_code)] // Engine keeps analysis/helpers that are not all exercised by the current binary
 use anyhow::Result;
 use indexmap::IndexMap;
 use rhai::{BinaryExpr, Dynamic, Engine, EvalAltResult, Expr, FnCallExpr, Scope, Stmt, Token, AST};
@@ -222,72 +222,6 @@ impl Clone for ExecutionTracer {
             step_counter: Arc::clone(&self.step_counter),
         }
     }
-}
-
-// Performance and Statistics Tracking using thread-local storage
-// This integrates with kelora's parallel processing infrastructure like track_count()
-
-use std::cell::RefCell;
-
-#[derive(Debug, Clone, Default)]
-pub struct DebugStatistics {
-    pub start_time: Option<std::time::Instant>,
-    pub events_processed: u64,
-    pub events_passed: u64,
-    pub errors_encountered: u64,
-    pub script_executions: u64,
-}
-
-impl DebugStatistics {
-    pub fn new() -> Self {
-        DebugStatistics {
-            start_time: Some(std::time::Instant::now()),
-            events_processed: 0,
-            events_passed: 0,
-            errors_encountered: 0,
-            script_executions: 0,
-        }
-    }
-}
-
-// Thread-local storage for debug statistics (following track_count pattern)
-thread_local! {
-    static THREAD_DEBUG_STATS: RefCell<DebugStatistics> = RefCell::new(DebugStatistics::new());
-}
-
-// Debug statistics collection functions (following stats.rs pattern)
-pub fn debug_stats_increment_events_processed() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().events_processed += 1;
-    });
-}
-
-pub fn debug_stats_increment_events_passed() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().events_passed += 1;
-    });
-}
-
-pub fn debug_stats_increment_errors() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().errors_encountered += 1;
-    });
-}
-
-pub fn debug_stats_increment_script_executions() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().script_executions += 1;
-    });
-}
-
-pub fn debug_stats_get_thread_state() -> DebugStatistics {
-    THREAD_DEBUG_STATS.with(|stats| stats.borrow().clone())
-}
-
-pub fn debug_stats_set_thread_state(stats: &DebugStatistics) {
-    THREAD_DEBUG_STATS.with(|local_stats| {
-        *local_stats.borrow_mut() = stats.clone();
-    });
 }
 
 /// Represents the type of access to a field in a Rhai expression
@@ -1206,68 +1140,6 @@ impl RhaiEngine {
         rhai_functions::tracking::get_thread_internal_state()
     }
 
-    fn format_rhai_error(err: Box<EvalAltResult>, script_name: &str, _script_text: &str) -> String {
-        match *err {
-            EvalAltResult::ErrorParsing(parse_err, pos) => {
-                format!("Syntax error in {} at {}: {}", script_name, pos, parse_err)
-            }
-            EvalAltResult::ErrorRuntime(runtime_err, pos) => {
-                format!(
-                    "Runtime error in {} at {}: {}",
-                    script_name, pos, runtime_err
-                )
-            }
-            EvalAltResult::ErrorVariableNotFound(var, pos) => {
-                format!("Variable '{}' not found in {} at {}", var, script_name, pos)
-            }
-            EvalAltResult::ErrorFunctionNotFound(func, pos) => {
-                Self::format_function_not_found_error(func, script_name, pos)
-            }
-            EvalAltResult::ErrorMismatchDataType(expected, actual, pos) => {
-                format!("Type mismatch in {} at {}: expected {}, got {} (this often indicates a function was called with incorrect argument types)", 
-                        script_name, pos, expected, actual)
-            }
-            EvalAltResult::ErrorInFunctionCall(func, _source, inner_err, pos) => {
-                let inner_msg = Self::format_rhai_error(inner_err, "function", "");
-                format!(
-                    "Error in function '{}' in {} at {}: {}",
-                    func, script_name, pos, inner_msg
-                )
-            }
-            EvalAltResult::ErrorPropertyNotFound(prop, pos) => {
-                format!(
-                    "Property '{}' not found in {} at {}",
-                    prop, script_name, pos
-                )
-            }
-            EvalAltResult::ErrorIndexNotFound(index, pos) => {
-                format!("Index '{}' not found in {} at {}", index, script_name, pos)
-            }
-            EvalAltResult::ErrorDotExpr(msg, pos) => {
-                format!(
-                    "Property access error in {} at {}: {}",
-                    script_name, pos, msg
-                )
-            }
-            EvalAltResult::ErrorArithmetic(msg, pos) => {
-                format!("Arithmetic error in {} at {}: {}", script_name, pos, msg)
-            }
-            EvalAltResult::ErrorTooManyOperations(pos) => {
-                format!("Too many operations in {} at {}", script_name, pos)
-            }
-            EvalAltResult::ErrorStackOverflow(pos) => {
-                format!("Stack overflow in {} at {}", script_name, pos)
-            }
-            EvalAltResult::ErrorDataTooLarge(msg, pos) => {
-                format!("Data too large in {} at {}: {}", script_name, pos, msg)
-            }
-            EvalAltResult::ErrorTerminated(val, pos) => {
-                format!("Script terminated in {} at {}: {}", script_name, pos, val)
-            }
-            _ => format!("Error in {}: {}", script_name, err),
-        }
-    }
-
     fn format_function_not_found_error(
         func_signature: String,
         script_name: &str,
@@ -1903,18 +1775,9 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
-        let mut stats_recorded = false;
-
         if let Some(native) = &compiled.native_predicate {
             Self::set_thread_tracking_state(metrics, internal);
-            debug_stats_increment_events_processed();
-            debug_stats_increment_script_executions();
-            stats_recorded = true;
-
             if let Some(result) = native.evaluate(event) {
-                if result {
-                    debug_stats_increment_events_passed();
-                }
                 *metrics = Self::get_thread_tracking_state();
                 *internal = Self::get_thread_internal_state();
                 return Ok(result);
@@ -1928,12 +1791,6 @@ impl RhaiEngine {
             compiled.meta_usage,
             compiled.uses_conf,
         );
-
-        // Debug statistics tracking
-        if !stats_recorded {
-            debug_stats_increment_events_processed();
-            debug_stats_increment_script_executions();
-        }
 
         // Add execution tracing for filter execution
         if let Some(ref tracer) = self.execution_tracer {
@@ -1963,9 +1820,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<bool>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "filter",
@@ -1999,11 +1853,6 @@ impl RhaiEngine {
             }
         }
 
-        // Track successful events in debug statistics
-        if result {
-            debug_stats_increment_events_passed();
-        }
-
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(result)
@@ -2023,9 +1872,6 @@ impl RhaiEngine {
             compiled.meta_usage,
             compiled.uses_conf,
         );
-
-        // Debug statistics tracking
-        debug_stats_increment_script_executions();
 
         // Add execution tracing for exec execution
         if let Some(ref tracer) = self.execution_tracer {
@@ -2055,9 +1901,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "exec",
@@ -2254,10 +2097,6 @@ impl RhaiEngine {
         Self::set_thread_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
 
-        // Debug statistics tracking
-        debug_stats_increment_events_processed();
-        debug_stats_increment_script_executions();
-
         // Add execution tracing for windowed filter execution
         if let Some(ref tracer) = self.execution_tracer {
             let event_num = tracer.next_event();
@@ -2297,9 +2136,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<bool>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "filter",
@@ -2333,11 +2169,6 @@ impl RhaiEngine {
             }
         }
 
-        // Track successful events in debug statistics
-        if result {
-            debug_stats_increment_events_passed();
-        }
-
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(result)
@@ -2353,9 +2184,6 @@ impl RhaiEngine {
     ) -> Result<()> {
         Self::set_thread_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
-
-        // Debug statistics tracking
-        debug_stats_increment_script_executions();
 
         // Add execution tracing for windowed exec execution
         if let Some(ref tracer) = self.execution_tracer {
@@ -2396,9 +2224,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "exec",
@@ -2887,6 +2712,42 @@ mod tests {
         assert!(
             out.contains("status"),
             "output should surface available fields even when verbosity is zero"
+        );
+    }
+
+    #[test]
+    fn verbose_diagnostic_respects_no_emoji_setting() {
+        let tracker = DebugTracker::new(DebugConfig::new(1).with_emoji(false));
+        let mut scope = Scope::new();
+        let mut e_map = Map::new();
+        e_map.insert("status".into(), Dynamic::from("OK"));
+        scope.push("e", e_map);
+
+        let err = Box::new(EvalAltResult::ErrorPropertyNotFound(
+            "statsu".into(),
+            rhai::Position::NONE,
+        ));
+        let out = RhaiEngine::format_rhai_diagnostic(
+            err,
+            "filter",
+            "filter expression",
+            "e.statsu",
+            Some(&scope),
+            Some(&tracker),
+            false,
+        );
+
+        assert!(
+            out.starts_with("Error: Stage filter failed"),
+            "verbose diagnostic should use text prefix when emoji are disabled: {out}"
+        );
+        assert!(
+            out.contains("Hint:"),
+            "verbose diagnostic should use text hint prefix when emoji are disabled: {out}"
+        );
+        assert!(
+            !out.contains('🔸') && !out.contains('💡'),
+            "verbose diagnostic should not contain emoji when disabled: {out}"
         );
     }
 
