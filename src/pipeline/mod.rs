@@ -7,7 +7,6 @@ use std::collections::{HashMap, HashSet};
 use crate::engine::RhaiEngine;
 use crate::event::{Event, SpanStatus};
 use crate::rhai_functions::file_ops::{self, FileOp};
-use crate::rhai_functions::tracking;
 use span::SpanProcessor;
 
 // Re-export submodules
@@ -83,20 +82,6 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
                         .insert(level_str.clone());
                     crate::stats::stats_add_discovered_level(level_str.clone());
 
-                    // Add to thread-local tracking state (sequential)
-                    tracking::with_internal_tracking(|state| {
-                        let level_dynamic = Dynamic::from(level_str.clone());
-                        let key = "__kelora_stats_discovered_levels";
-                        let current = state
-                            .get(key)
-                            .cloned()
-                            .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-                        if let Ok(mut arr) = current.into_array() {
-                            arr.push(level_dynamic.clone());
-                            state.insert(key.to_string(), Dynamic::from(arr));
-                            state.insert(format!("__op_{}", key), Dynamic::from("unique"));
-                        }
-                    });
                     break; // Only take the first level field found
                 }
             }
@@ -104,25 +89,11 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
     }
 
     // Collect discovered keys
-    let mut discovered_key_updates = rhai::Array::new();
     for field_key in event.fields.keys() {
         if ctx.discovered_keys.insert(field_key.clone()) {
-            discovered_key_updates.push(Dynamic::from(field_key.clone()));
             ctx.internal_stats.discovered_keys.insert(field_key.clone());
             crate::stats::stats_add_discovered_key(field_key.clone());
         }
-    }
-
-    if !discovered_key_updates.is_empty() {
-        // Also add to thread-local tracking state
-        tracking::with_internal_tracking(|state| {
-            let key = "__kelora_stats_discovered_keys";
-            state.insert(
-                key.to_string(),
-                Dynamic::from(discovered_key_updates.clone()),
-            );
-            state.insert(format!("__op_{}", key), Dynamic::from("unique"));
-        });
     }
 }
 

@@ -8,7 +8,7 @@ pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: 
 
     let mut user_values: Vec<_> = metrics
         .iter()
-        .filter(|(k, _)| !k.starts_with("__op_") && !k.starts_with("__kelora_stats_"))
+        .filter(|(k, _)| !k.starts_with("__op_"))
         .collect();
 
     if user_values.is_empty() {
@@ -211,10 +211,7 @@ pub fn format_metrics_json(
     let mut json_obj = serde_json::Map::new();
 
     for (key, value) in metrics.iter() {
-        if key.starts_with("__op_")
-            || key.starts_with("__kelora_stats_")
-            || key.starts_with("__kelora_error_")
-        {
+        if key.starts_with("__op_") || key.starts_with("__kelora_error_") {
             continue;
         }
 
