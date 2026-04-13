@@ -504,15 +504,6 @@ impl ParallelProcessor {
         self.global_tracker.get_final_stats()
     }
 
-    /// Extract stats from tracking system into global stats
-    pub fn extract_final_stats_from_tracking(
-        &self,
-        final_tracked: &TrackingSnapshot,
-    ) -> Result<()> {
-        self.global_tracker
-            .extract_final_stats_from_tracking(&final_tracked.internal)
-    }
-
     /// Preprocess CSV headers and return a reader that includes the first line if it's data
     fn preprocess_csv_with_reader<R: std::io::BufRead + Send + 'static>(
         mut reader: R,

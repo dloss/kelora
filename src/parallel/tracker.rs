@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use tdigests::TDigest;
 
+use crate::pipeline::InternalStats;
 use crate::rhai_functions::tracking::TrackingSnapshot;
 use crate::stats::ProcessingStats;
 
@@ -200,89 +201,24 @@ impl GlobalTracker {
         Ok(())
     }
 
-    pub fn extract_final_stats_from_tracking(
-        &self,
-        metrics: &HashMap<String, Dynamic>,
-    ) -> Result<()> {
+    pub fn merge_internal_stats(&self, internal_stats: &InternalStats) -> Result<()> {
         let mut stats = self.lock_stats();
-
-        let output = metrics
-            .get("__kelora_stats_output")
-            .and_then(|v| v.as_int().ok())
-            .unwrap_or(0) as usize;
-        // Note: Line-level filtering is not used - all filtering is done at event level
-        let lines_errors = metrics
-            .get("__kelora_stats_lines_errors")
-            .and_then(|v| v.as_int().ok())
-            .unwrap_or(0) as usize;
-        let events_created = metrics
-            .get("__kelora_stats_events_created")
-            .and_then(|v| v.as_int().ok())
-            .unwrap_or(0) as usize;
-        let events_output = metrics
-            .get("__kelora_stats_events_output")
-            .and_then(|v| v.as_int().ok())
-            .unwrap_or(0) as usize;
-        let events_filtered = metrics
-            .get("__kelora_stats_events_filtered")
-            .and_then(|v| v.as_int().ok())
-            .unwrap_or(0) as usize;
-        let assertion_failures = metrics
-            .get("__kelora_stats_assertion_failures")
-            .and_then(|v| v.as_int().ok())
-            .unwrap_or(0) as usize;
-
-        stats.lines_output = output;
-        stats.lines_errors = lines_errors;
-        stats.errors = lines_errors; // Keep errors field for backward compatibility
-        stats.events_created = events_created;
-        stats.events_output = events_output;
-        stats.events_filtered = events_filtered;
-        stats.assertion_failures = assertion_failures;
-
-        // Extract discovered levels from tracking data
-        if let Some(levels_dynamic) = metrics.get("__kelora_stats_discovered_levels") {
-            if let Ok(levels_array) = levels_dynamic.clone().into_array() {
-                for level in levels_array {
-                    if let Ok(level_str) = level.into_string() {
-                        stats.discovered_levels.insert(level_str);
-                    }
-                }
-            }
-        }
-
-        // Extract discovered keys from tracking data
-        if let Some(keys_dynamic) = metrics.get("__kelora_stats_discovered_keys") {
-            if let Ok(keys_array) = keys_dynamic.clone().into_array() {
-                for key in keys_array {
-                    if let Ok(key_str) = key.into_string() {
-                        stats.discovered_keys.insert(key_str);
-                    }
-                }
-            }
-        }
-
-        // Extract discovered levels output from tracking data
-        if let Some(levels_dynamic) = metrics.get("__kelora_stats_discovered_levels_output") {
-            if let Ok(levels_array) = levels_dynamic.clone().into_array() {
-                for level in levels_array {
-                    if let Ok(level_str) = level.into_string() {
-                        stats.discovered_levels_output.insert(level_str);
-                    }
-                }
-            }
-        }
-
-        // Extract discovered keys output from tracking data
-        if let Some(keys_dynamic) = metrics.get("__kelora_stats_discovered_keys_output") {
-            if let Ok(keys_array) = keys_dynamic.clone().into_array() {
-                for key in keys_array {
-                    if let Ok(key_str) = key.into_string() {
-                        stats.discovered_keys_output.insert(key_str);
-                    }
-                }
-            }
-        }
+        stats.lines_output += internal_stats.lines_output as usize;
+        stats.events_created += internal_stats.events_created as usize;
+        stats.events_output += internal_stats.events_output as usize;
+        stats.events_filtered += internal_stats.events_filtered as usize;
+        stats
+            .discovered_levels
+            .extend(internal_stats.discovered_levels.iter().cloned());
+        stats
+            .discovered_keys
+            .extend(internal_stats.discovered_keys.iter().cloned());
+        stats
+            .discovered_levels_output
+            .extend(internal_stats.discovered_levels_output.iter().cloned());
+        stats
+            .discovered_keys_output
+            .extend(internal_stats.discovered_keys_output.iter().cloned());
 
         Ok(())
     }

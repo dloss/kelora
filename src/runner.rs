@@ -236,12 +236,6 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
     // Merge the parallel metrics state with our pipeline context
     let parallel_snapshot = processor.get_final_tracked_state();
 
-    // Extract internal stats from tracking system before merging
-    // This is needed for error reporting, not just when --stats is enabled
-    processor
-        .extract_final_stats_from_tracking(&parallel_snapshot)
-        .unwrap_or(());
-
     // Filter out stats and errors from user-visible context and merge the rest
     for (key, dynamic_value) in &parallel_snapshot.user {
         if !key.starts_with("__internal_")

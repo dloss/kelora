@@ -55,6 +55,19 @@ impl FormattedOutput {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct InternalStats {
+    pub lines_output: u64,
+    pub lines_errors: u64,
+    pub events_created: u64,
+    pub events_output: u64,
+    pub events_filtered: u64,
+    pub discovered_levels: HashSet<String>,
+    pub discovered_keys: HashSet<String>,
+    pub discovered_levels_output: HashSet<String>,
+    pub discovered_keys_output: HashSet<String>,
+}
+
 /// Helper function to collect discovered levels and keys from an event for stats
 fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) {
     if !crate::stats::stats_enabled() {
@@ -65,20 +78,24 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
         if let Some(value) = event.fields.get(*level_field_name) {
             if let Ok(level_str) = value.clone().into_string() {
                 if !level_str.is_empty() && ctx.discovered_levels.insert(level_str.clone()) {
-                    let level_dynamic = Dynamic::from(level_str);
-                    let key = "__kelora_stats_discovered_levels".to_string();
+                    let level_dynamic = Dynamic::from(level_str.clone());
+                    ctx.internal_stats
+                        .discovered_levels
+                        .insert(level_str.clone());
 
-                    // Add to ctx.internal_tracker (for parallel)
-                    let current = ctx
-                        .internal_tracker
-                        .get(&key)
-                        .cloned()
-                        .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-                    if let Ok(mut arr) = current.into_array() {
-                        arr.push(level_dynamic.clone());
-                        ctx.internal_tracker.insert(key.clone(), Dynamic::from(arr));
-                        ctx.internal_tracker
-                            .insert(format!("__op_{}", key), Dynamic::from("unique"));
+                    if !crate::rhai_functions::strings::is_parallel_mode() {
+                        let key = "__kelora_stats_discovered_levels".to_string();
+                        let current = ctx
+                            .internal_tracker
+                            .get(&key)
+                            .cloned()
+                            .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
+                        if let Ok(mut arr) = current.into_array() {
+                            arr.push(level_dynamic.clone());
+                            ctx.internal_tracker.insert(key.clone(), Dynamic::from(arr));
+                            ctx.internal_tracker
+                                .insert(format!("__op_{}", key), Dynamic::from("unique"));
+                        }
                     }
 
                     // Add to thread-local tracking state (sequential)
@@ -101,35 +118,32 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
     }
 
     // Collect discovered keys
-    let key = "__kelora_stats_discovered_keys".to_string();
-    let current = ctx
-        .internal_tracker
-        .get(&key)
-        .cloned()
-        .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-
-    if let Ok(mut arr) = current.into_array() {
-        let mut added = false;
-        for field_key in event.fields.keys() {
-            if ctx.discovered_keys.insert(field_key.clone()) {
-                arr.push(Dynamic::from(field_key.clone()));
-                added = true;
-            }
+    let mut discovered_key_updates = rhai::Array::new();
+    for field_key in event.fields.keys() {
+        if ctx.discovered_keys.insert(field_key.clone()) {
+            discovered_key_updates.push(Dynamic::from(field_key.clone()));
+            ctx.internal_stats.discovered_keys.insert(field_key.clone());
         }
+    }
 
-        if added {
+    if !discovered_key_updates.is_empty() {
+        if !crate::rhai_functions::strings::is_parallel_mode() {
+            let key = "__kelora_stats_discovered_keys".to_string();
             ctx.internal_tracker
-                .insert(key.clone(), Dynamic::from(arr.clone()));
+                .insert(key.clone(), Dynamic::from(discovered_key_updates.clone()));
             ctx.internal_tracker
                 .insert(format!("__op_{}", key), Dynamic::from("unique"));
-
-            // Also add to thread-local tracking state
-            tracking::with_internal_tracking(|state| {
-                let key = "__kelora_stats_discovered_keys";
-                state.insert(key.to_string(), Dynamic::from(arr.clone()));
-                state.insert(format!("__op_{}", key), Dynamic::from("unique"));
-            });
         }
+
+        // Also add to thread-local tracking state
+        tracking::with_internal_tracking(|state| {
+            let key = "__kelora_stats_discovered_keys";
+            state.insert(
+                key.to_string(),
+                Dynamic::from(discovered_key_updates.clone()),
+            );
+            state.insert(format!("__op_{}", key), Dynamic::from("unique"));
+        });
     }
 }
 
@@ -144,21 +158,9 @@ fn collect_output_levels_and_keys(event: &Event, ctx: &mut PipelineContext) {
         if let Some(value) = event.fields.get(*level_field_name) {
             if let Ok(level_str) = value.clone().into_string() {
                 if !level_str.is_empty() && ctx.discovered_levels_output.insert(level_str.clone()) {
-                    let level_dynamic = Dynamic::from(level_str.clone());
-                    let key = "__kelora_stats_discovered_levels_output".to_string();
-
-                    // Add to ctx.internal_tracker (for parallel)
-                    let current = ctx
-                        .internal_tracker
-                        .get(&key)
-                        .cloned()
-                        .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-                    if let Ok(mut arr) = current.into_array() {
-                        arr.push(level_dynamic.clone());
-                        ctx.internal_tracker.insert(key.clone(), Dynamic::from(arr));
-                        ctx.internal_tracker
-                            .insert(format!("__op_{}", key), Dynamic::from("unique"));
-                    }
+                    ctx.internal_stats
+                        .discovered_levels_output
+                        .insert(level_str.clone());
 
                     // Add to thread-local stats (for sequential)
                     crate::stats::stats_add_output_level(level_str);
@@ -170,30 +172,14 @@ fn collect_output_levels_and_keys(event: &Event, ctx: &mut PipelineContext) {
     }
 
     // Collect output keys
-    let key = "__kelora_stats_discovered_keys_output".to_string();
-    let current = ctx
-        .internal_tracker
-        .get(&key)
-        .cloned()
-        .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
+    for field_key in event.fields.keys() {
+        if ctx.discovered_keys_output.insert(field_key.clone()) {
+            ctx.internal_stats
+                .discovered_keys_output
+                .insert(field_key.clone());
 
-    if let Ok(mut arr) = current.into_array() {
-        let mut added = false;
-        for field_key in event.fields.keys() {
-            if ctx.discovered_keys_output.insert(field_key.clone()) {
-                arr.push(Dynamic::from(field_key.clone()));
-                added = true;
-
-                // Add to thread-local stats (for sequential)
-                crate::stats::stats_add_output_key(field_key.clone());
-            }
-        }
-
-        if added {
-            ctx.internal_tracker
-                .insert(key.clone(), Dynamic::from(arr.clone()));
-            ctx.internal_tracker
-                .insert(format!("__op_{}", key), Dynamic::from("unique"));
+            // Add to thread-local stats (for sequential)
+            crate::stats::stats_add_output_key(field_key.clone());
         }
     }
 }
@@ -229,6 +215,7 @@ pub struct PipelineContext {
     pub config: PipelineConfig,
     pub tracker: HashMap<String, Dynamic>,
     pub internal_tracker: HashMap<String, Dynamic>,
+    pub internal_stats: InternalStats,
     pub window: Vec<Event>, // window[0] = current event, rest are previous
     pub rhai: RhaiEngine,
     pub meta: MetaData,
@@ -443,15 +430,7 @@ impl Pipeline {
             }
             ScriptResult::Skip => {
                 crate::stats::stats_add_event_filtered();
-
-                ctx.internal_tracker
-                    .entry("__kelora_stats_events_filtered".to_string())
-                    .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                    .or_insert(rhai::Dynamic::from(1i64));
-                ctx.internal_tracker.insert(
-                    "__op___kelora_stats_events_filtered".to_string(),
-                    rhai::Dynamic::from("count"),
-                );
+                ctx.internal_stats.events_filtered += 1;
 
                 if let Some(span) = self.span_processor.as_mut() {
                     span.handle_skip(ctx);
@@ -505,15 +484,7 @@ impl Pipeline {
             if event.fields.is_empty() {
                 event.span.status = Some(SpanStatus::Filtered);
                 crate::stats::stats_add_event_filtered();
-
-                ctx.internal_tracker
-                    .entry("__kelora_stats_events_filtered".to_string())
-                    .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                    .or_insert(rhai::Dynamic::from(1i64));
-                ctx.internal_tracker.insert(
-                    "__op___kelora_stats_events_filtered".to_string(),
-                    rhai::Dynamic::from("count"),
-                );
+                ctx.internal_stats.events_filtered += 1;
 
                 if let Some(span) = self.span_processor.as_mut() {
                     span.handle_skip(ctx);
@@ -524,6 +495,7 @@ impl Pipeline {
                 }
             } else {
                 crate::stats::stats_add_event_output();
+                ctx.internal_stats.events_output += 1;
 
                 // Collect output levels and keys for stats
                 collect_output_levels_and_keys(&event, ctx);
@@ -543,15 +515,6 @@ impl Pipeline {
                     crate::stats::stats_update_result_timestamp(result_ts);
                 }
 
-                ctx.internal_tracker
-                    .entry("__kelora_stats_events_output".to_string())
-                    .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                    .or_insert(rhai::Dynamic::from(1i64));
-                ctx.internal_tracker.insert(
-                    "__op___kelora_stats_events_output".to_string(),
-                    rhai::Dynamic::from("count"),
-                );
-
                 if let Some(span) = self.span_processor.as_mut() {
                     span.record_emitted_event(&event, ctx)?;
                 }
@@ -562,15 +525,7 @@ impl Pipeline {
             }
         } else {
             crate::stats::stats_add_event_filtered();
-
-            ctx.internal_tracker
-                .entry("__kelora_stats_events_filtered".to_string())
-                .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                .or_insert(rhai::Dynamic::from(1i64));
-            ctx.internal_tracker.insert(
-                "__op___kelora_stats_events_filtered".to_string(),
-                rhai::Dynamic::from("count"),
-            );
+            ctx.internal_stats.events_filtered += 1;
 
             event.span.status = Some(SpanStatus::Filtered);
             if let Some(span) = self.span_processor.as_mut() {
@@ -606,6 +561,7 @@ impl Pipeline {
             Ok(mut e) => {
                 // Event was successfully created from chunk
                 crate::stats::stats_add_event_created();
+                ctx.internal_stats.events_created += 1;
 
                 // Track timestamp for time span statistics
                 if let Some(ts) = e.parsed_ts {
@@ -622,16 +578,6 @@ impl Pipeline {
                     crate::field_discovery::observe_event_fields(&e.fields);
                 }
 
-                // Also track in Rhai context for parallel processing
-                ctx.internal_tracker
-                    .entry("__kelora_stats_events_created".to_string())
-                    .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                    .or_insert(rhai::Dynamic::from(1i64));
-                ctx.internal_tracker.insert(
-                    "__op___kelora_stats_events_created".to_string(),
-                    rhai::Dynamic::from("count"),
-                );
-
                 // Copy metadata from context to event
                 if let Some(line_num) = ctx.meta.line_num {
                     e.set_metadata(line_num, ctx.meta.filename.clone());
@@ -641,6 +587,7 @@ impl Pipeline {
             }
             Err(err) => {
                 crate::stats::stats_add_line_error();
+                ctx.internal_stats.lines_errors += 1;
 
                 // Use unified error tracking system
                 crate::rhai_functions::tracking::track_error(
@@ -653,15 +600,6 @@ impl Pipeline {
                     ctx.config.quiet_level,
                     Some(&ctx.config),
                     ctx.config.format_name.as_deref(),
-                );
-
-                ctx.internal_tracker
-                    .entry("__kelora_stats_lines_errors".to_string())
-                    .and_modify(|v| *v = rhai::Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                    .or_insert(rhai::Dynamic::from(1i64));
-                ctx.internal_tracker.insert(
-                    "__op___kelora_stats_lines_errors".to_string(),
-                    rhai::Dynamic::from("count"),
                 );
 
                 // New resiliency model: skip unparseable lines by default,
