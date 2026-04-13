@@ -417,6 +417,24 @@ pub fn stats_add_output_level(level: String) {
     });
 }
 
+pub fn stats_add_discovered_level(level: String) {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().discovered_levels.insert(level);
+    });
+}
+
+pub fn stats_add_discovered_key(key: String) {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().discovered_keys.insert(key);
+    });
+}
+
 pub fn stats_add_output_key(key: String) {
     if !stats_enabled() {
         return;
@@ -573,34 +591,6 @@ impl ProcessingStats {
         }
 
         summary
-    }
-
-    /// Extract discovered levels and keys from tracking data (for sequential processing)
-    pub fn extract_discovered_from_tracking(
-        &mut self,
-        tracking_data: &std::collections::HashMap<String, rhai::Dynamic>,
-    ) {
-        // Extract discovered levels from tracking data
-        if let Some(levels_dynamic) = tracking_data.get("__kelora_stats_discovered_levels") {
-            if let Ok(levels_array) = levels_dynamic.clone().into_array() {
-                for level in levels_array {
-                    if let Ok(level_str) = level.into_string() {
-                        self.discovered_levels.insert(level_str);
-                    }
-                }
-            }
-        }
-
-        // Extract discovered keys from tracking data
-        if let Some(keys_dynamic) = tracking_data.get("__kelora_stats_discovered_keys") {
-            if let Ok(keys_array) = keys_dynamic.clone().into_array() {
-                for key in keys_array {
-                    if let Ok(key_str) = key.into_string() {
-                        self.discovered_keys.insert(key_str);
-                    }
-                }
-            }
-        }
     }
 
     /// Format stats according to the specification
@@ -957,7 +947,6 @@ impl ProcessingStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
 
     fn reset_thread_stats() {
         THREAD_STATS.with(|stats| {
@@ -999,24 +988,13 @@ mod tests {
     }
 
     #[test]
-    fn extract_discovered_from_tracking_loads_sets() {
-        let mut stats = ProcessingStats::new();
-        let mut tracking: HashMap<String, rhai::Dynamic> = HashMap::new();
+    fn discovered_field_helpers_load_sets() {
+        reset_thread_stats();
 
-        let levels = vec![rhai::Dynamic::from("INFO")];
-        tracking.insert(
-            "__kelora_stats_discovered_levels".to_string(),
-            rhai::Dynamic::from(levels),
-        );
+        stats_add_discovered_level("INFO".to_string());
+        stats_add_discovered_key("request_id".to_string());
 
-        let keys = vec![rhai::Dynamic::from("request_id")];
-        tracking.insert(
-            "__kelora_stats_discovered_keys".to_string(),
-            rhai::Dynamic::from(keys),
-        );
-
-        stats.extract_discovered_from_tracking(&tracking);
-
+        let stats = get_thread_stats();
         assert!(stats.discovered_levels.contains("INFO"));
         assert!(stats.discovered_keys.contains("request_id"));
     }

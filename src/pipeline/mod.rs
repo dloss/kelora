@@ -78,28 +78,14 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
         if let Some(value) = event.fields.get(*level_field_name) {
             if let Ok(level_str) = value.clone().into_string() {
                 if !level_str.is_empty() && ctx.discovered_levels.insert(level_str.clone()) {
-                    let level_dynamic = Dynamic::from(level_str.clone());
                     ctx.internal_stats
                         .discovered_levels
                         .insert(level_str.clone());
-
-                    if !crate::rhai_functions::strings::is_parallel_mode() {
-                        let key = "__kelora_stats_discovered_levels".to_string();
-                        let current = ctx
-                            .internal_tracker
-                            .get(&key)
-                            .cloned()
-                            .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-                        if let Ok(mut arr) = current.into_array() {
-                            arr.push(level_dynamic.clone());
-                            ctx.internal_tracker.insert(key.clone(), Dynamic::from(arr));
-                            ctx.internal_tracker
-                                .insert(format!("__op_{}", key), Dynamic::from("unique"));
-                        }
-                    }
+                    crate::stats::stats_add_discovered_level(level_str.clone());
 
                     // Add to thread-local tracking state (sequential)
                     tracking::with_internal_tracking(|state| {
+                        let level_dynamic = Dynamic::from(level_str.clone());
                         let key = "__kelora_stats_discovered_levels";
                         let current = state
                             .get(key)
@@ -123,18 +109,11 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
         if ctx.discovered_keys.insert(field_key.clone()) {
             discovered_key_updates.push(Dynamic::from(field_key.clone()));
             ctx.internal_stats.discovered_keys.insert(field_key.clone());
+            crate::stats::stats_add_discovered_key(field_key.clone());
         }
     }
 
     if !discovered_key_updates.is_empty() {
-        if !crate::rhai_functions::strings::is_parallel_mode() {
-            let key = "__kelora_stats_discovered_keys".to_string();
-            ctx.internal_tracker
-                .insert(key.clone(), Dynamic::from(discovered_key_updates.clone()));
-            ctx.internal_tracker
-                .insert(format!("__op_{}", key), Dynamic::from("unique"));
-        }
-
         // Also add to thread-local tracking state
         tracking::with_internal_tracking(|state| {
             let key = "__kelora_stats_discovered_keys";
