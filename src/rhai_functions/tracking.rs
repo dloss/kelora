@@ -9,6 +9,8 @@ mod format;
 mod merge;
 #[path = "tracking_metrics.rs"]
 mod metrics;
+#[path = "tracking_rank.rs"]
+mod rank;
 #[path = "tracking_state.rs"]
 mod state;
 #[cfg(test)]
@@ -24,6 +26,11 @@ use merge::{merge_numeric, record_operation_metadata};
 use metrics::{
     track_cardinality_impl, track_cardinality_with_error_impl, track_percentiles_impl,
     track_stats_impl,
+};
+use rank::{
+    track_bottom_count_impl, track_bottom_weighted_impl, track_bucket_impl, track_top_count_impl,
+    track_top_weighted_impl, track_unique_f64_impl, track_unique_i64_impl,
+    track_unique_string_impl,
 };
 pub use state::{
     get_thread_internal_state, get_thread_snapshot, get_thread_tracking_state,
@@ -615,140 +622,23 @@ pub fn register_functions(engine: &mut Engine) {
     });
 
     engine.register_fn("track_unique", |key: &str, value: &str| {
-        let updated = with_user_tracking(|state| {
-            // Get existing set or create new one
-            let current = state.get(key).cloned().unwrap_or_else(|| {
-                // Create a new array to store unique values
-                Dynamic::from(rhai::Array::new())
-            });
-
-            if let Ok(mut arr) = current.into_array() {
-                let value_dynamic = Dynamic::from(value.to_string());
-                // Check if value already exists in array
-                if !arr
-                    .iter()
-                    .any(|v| v.clone().into_string().unwrap_or_default() == value)
-                {
-                    arr.push(value_dynamic);
-                }
-                state.insert(key.to_string(), Dynamic::from(arr));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "unique");
-        }
+        track_unique_string_impl(key, value);
     });
 
     engine.register_fn("track_unique", |key: &str, value: i64| {
-        let updated = with_user_tracking(|state| {
-            // Get existing set or create new one
-            let current = state.get(key).cloned().unwrap_or_else(|| {
-                // Create a new array to store unique values
-                Dynamic::from(rhai::Array::new())
-            });
-
-            if let Ok(mut arr) = current.into_array() {
-                let value_dynamic = Dynamic::from(value);
-                // Check if value already exists in array
-                if !arr.iter().any(|v| v.as_int().unwrap_or(i64::MIN) == value) {
-                    arr.push(value_dynamic);
-                }
-                state.insert(key.to_string(), Dynamic::from(arr));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "unique");
-        }
+        track_unique_i64_impl(key, value);
     });
 
     engine.register_fn("track_unique", |key: &str, value: i32| {
-        let updated = with_user_tracking(|state| {
-            // Get existing set or create new one
-            let current = state.get(key).cloned().unwrap_or_else(|| {
-                // Create a new array to store unique values
-                Dynamic::from(rhai::Array::new())
-            });
-
-            if let Ok(mut arr) = current.into_array() {
-                let value_dynamic = Dynamic::from(value);
-                // Check if value already exists in array
-                if !arr
-                    .iter()
-                    .any(|v| v.as_int().unwrap_or(i64::MIN) == (value as i64))
-                {
-                    arr.push(value_dynamic);
-                }
-                state.insert(key.to_string(), Dynamic::from(arr));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "unique");
-        }
+        track_unique_i64_impl(key, value as i64);
     });
 
     engine.register_fn("track_unique", |key: &str, value: f64| {
-        let updated = with_user_tracking(|state| {
-            // Get existing set or create new one
-            let current = state.get(key).cloned().unwrap_or_else(|| {
-                // Create a new array to store unique values
-                Dynamic::from(rhai::Array::new())
-            });
-
-            if let Ok(mut arr) = current.into_array() {
-                let value_dynamic = Dynamic::from(value);
-                // Check if value already exists in array
-                if !arr
-                    .iter()
-                    .any(|v| v.as_float().unwrap_or(f64::NAN) == value)
-                {
-                    arr.push(value_dynamic);
-                }
-                state.insert(key.to_string(), Dynamic::from(arr));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "unique");
-        }
+        track_unique_f64_impl(key, value);
     });
 
     engine.register_fn("track_unique", |key: &str, value: f32| {
-        let updated = with_user_tracking(|state| {
-            // Get existing set or create new one
-            let current = state.get(key).cloned().unwrap_or_else(|| {
-                // Create a new array to store unique values
-                Dynamic::from(rhai::Array::new())
-            });
-
-            if let Ok(mut arr) = current.into_array() {
-                let value_dynamic = Dynamic::from(value);
-                // Check if value already exists in array
-                if !arr
-                    .iter()
-                    .any(|v| v.as_float().unwrap_or(f64::NAN) == (value as f64))
-                {
-                    arr.push(value_dynamic);
-                }
-                state.insert(key.to_string(), Dynamic::from(arr));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "unique");
-        }
+        track_unique_f64_impl(key, value as f64);
     });
 
     // Unit overload - no-op for missing/empty values
@@ -838,134 +728,23 @@ pub fn register_functions(engine: &mut Engine) {
     );
 
     engine.register_fn("track_bucket", |key: &str, bucket: &str| {
-        let updated = with_user_tracking(|state| {
-            // Get existing map or create new one
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or_else(|| Dynamic::from(rhai::Map::new()));
-
-            if let Some(mut map) = current.try_cast::<rhai::Map>() {
-                let count = map.get(bucket).cloned().unwrap_or(Dynamic::from(0i64));
-                let new_count = count.as_int().unwrap_or(0) + 1;
-                map.insert(bucket.into(), Dynamic::from(new_count));
-                state.insert(key.to_string(), Dynamic::from(map));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "bucket");
-        }
+        track_bucket_impl(key, bucket);
     });
 
     engine.register_fn("track_bucket", |key: &str, bucket: i64| {
-        let updated = with_user_tracking(|state| {
-            // Get existing map or create new one
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or_else(|| Dynamic::from(rhai::Map::new()));
-
-            if let Some(mut map) = current.try_cast::<rhai::Map>() {
-                let bucket_str = bucket.to_string();
-                let count = map
-                    .get(bucket_str.as_str())
-                    .cloned()
-                    .unwrap_or(Dynamic::from(0i64));
-                let new_count = count.as_int().unwrap_or(0) + 1;
-                map.insert(bucket_str.into(), Dynamic::from(new_count));
-                state.insert(key.to_string(), Dynamic::from(map));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "bucket");
-        }
+        track_bucket_impl(key, &bucket.to_string());
     });
 
     engine.register_fn("track_bucket", |key: &str, bucket: i32| {
-        let updated = with_user_tracking(|state| {
-            // Get existing map or create new one
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or_else(|| Dynamic::from(rhai::Map::new()));
-
-            if let Some(mut map) = current.try_cast::<rhai::Map>() {
-                let bucket_str = bucket.to_string();
-                let count = map
-                    .get(bucket_str.as_str())
-                    .cloned()
-                    .unwrap_or(Dynamic::from(0i64));
-                let new_count = count.as_int().unwrap_or(0) + 1;
-                map.insert(bucket_str.into(), Dynamic::from(new_count));
-                state.insert(key.to_string(), Dynamic::from(map));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "bucket");
-        }
+        track_bucket_impl(key, &bucket.to_string());
     });
 
     engine.register_fn("track_bucket", |key: &str, bucket: f64| {
-        let updated = with_user_tracking(|state| {
-            // Get existing map or create new one
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or_else(|| Dynamic::from(rhai::Map::new()));
-
-            if let Some(mut map) = current.try_cast::<rhai::Map>() {
-                let bucket_str = bucket.to_string();
-                let count = map
-                    .get(bucket_str.as_str())
-                    .cloned()
-                    .unwrap_or(Dynamic::from(0i64));
-                let new_count = count.as_int().unwrap_or(0) + 1;
-                map.insert(bucket_str.into(), Dynamic::from(new_count));
-                state.insert(key.to_string(), Dynamic::from(map));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "bucket");
-        }
+        track_bucket_impl(key, &bucket.to_string());
     });
 
     engine.register_fn("track_bucket", |key: &str, bucket: f32| {
-        let updated = with_user_tracking(|state| {
-            // Get existing map or create new one
-            let current = state
-                .get(key)
-                .cloned()
-                .unwrap_or_else(|| Dynamic::from(rhai::Map::new()));
-
-            if let Some(mut map) = current.try_cast::<rhai::Map>() {
-                let bucket_str = bucket.to_string();
-                let count = map
-                    .get(bucket_str.as_str())
-                    .cloned()
-                    .unwrap_or(Dynamic::from(0i64));
-                let new_count = count.as_int().unwrap_or(0) + 1;
-                map.insert(bucket_str.into(), Dynamic::from(new_count));
-                state.insert(key.to_string(), Dynamic::from(map));
-                true
-            } else {
-                false
-            }
-        });
-        if updated {
-            record_operation_metadata(key, "bucket");
-        }
+        track_bucket_impl(key, &bucket.to_string());
     });
 
     // Unit overload - no-op for missing/empty values
@@ -980,92 +759,7 @@ pub fn register_functions(engine: &mut Engine) {
             if n < 1 {
                 return Err(format!("track_top requires n >= 1, got {}", n).into());
             }
-
-            let updated = with_user_tracking(|state| {
-                // Get existing array or create new one
-                let current = state
-                    .get(key)
-                    .cloned()
-                    .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-
-                if let Ok(mut arr) = current.into_array() {
-                    // Find existing item in array
-                    let mut found_idx = None;
-                    for (idx, elem) in arr.iter().enumerate() {
-                        if let Some(map) = elem.clone().try_cast::<rhai::Map>() {
-                            if let Some(k) = map.get("key") {
-                                if k.clone().into_string().unwrap_or_default() == item_key {
-                                    found_idx = Some(idx);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // Update count or add new item
-                    if let Some(idx) = found_idx {
-                        // Increment count for existing item
-                        if let Some(map) = arr[idx].clone().try_cast::<rhai::Map>() {
-                            let count = map.get("count").cloned().unwrap_or(Dynamic::from(0i64));
-                            let new_count = count.as_int().unwrap_or(0) + 1;
-                            let mut new_map = rhai::Map::new();
-                            new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                            new_map.insert("count".into(), Dynamic::from(new_count));
-                            arr[idx] = Dynamic::from(new_map);
-                        }
-                    } else {
-                        // Add new item with count=1
-                        let mut new_map = rhai::Map::new();
-                        new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                        new_map.insert("count".into(), Dynamic::from(1i64));
-                        arr.push(Dynamic::from(new_map));
-                    }
-
-                    // Sort by count descending, then by key ascending (stable sort)
-                    arr.sort_by(|a, b| {
-                        let a_map = a.clone().try_cast::<rhai::Map>();
-                        let b_map = b.clone().try_cast::<rhai::Map>();
-
-                        if let (Some(a_m), Some(b_m)) = (a_map, b_map) {
-                            let a_count =
-                                a_m.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                            let b_count =
-                                b_m.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                            let a_key = a_m
-                                .get("key")
-                                .and_then(|v| v.clone().into_string().ok())
-                                .unwrap_or_default();
-                            let b_key = b_m
-                                .get("key")
-                                .and_then(|v| v.clone().into_string().ok())
-                                .unwrap_or_default();
-
-                            // Sort by count descending, then key ascending
-                            match b_count.cmp(&a_count) {
-                                std::cmp::Ordering::Equal => a_key.cmp(&b_key),
-                                other => other,
-                            }
-                        } else {
-                            std::cmp::Ordering::Equal
-                        }
-                    });
-
-                    // Trim to top N
-                    if arr.len() > n as usize {
-                        arr.truncate(n as usize);
-                    }
-
-                    state.insert(key.to_string(), Dynamic::from(arr));
-                    true
-                } else {
-                    false
-                }
-            });
-
-            if updated {
-                record_operation_metadata(key, "top");
-            }
-            Ok(())
+            track_top_count_impl(key, item_key, n)
         },
     );
 
@@ -1169,92 +863,7 @@ pub fn register_functions(engine: &mut Engine) {
             if n < 1 {
                 return Err(format!("track_bottom requires n >= 1, got {}", n).into());
             }
-
-            let updated = with_user_tracking(|state| {
-                // Get existing array or create new one
-                let current = state
-                    .get(key)
-                    .cloned()
-                    .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-
-                if let Ok(mut arr) = current.into_array() {
-                    // Find existing item in array
-                    let mut found_idx = None;
-                    for (idx, elem) in arr.iter().enumerate() {
-                        if let Some(map) = elem.clone().try_cast::<rhai::Map>() {
-                            if let Some(k) = map.get("key") {
-                                if k.clone().into_string().unwrap_or_default() == item_key {
-                                    found_idx = Some(idx);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // Update count or add new item
-                    if let Some(idx) = found_idx {
-                        // Increment count for existing item
-                        if let Some(map) = arr[idx].clone().try_cast::<rhai::Map>() {
-                            let count = map.get("count").cloned().unwrap_or(Dynamic::from(0i64));
-                            let new_count = count.as_int().unwrap_or(0) + 1;
-                            let mut new_map = rhai::Map::new();
-                            new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                            new_map.insert("count".into(), Dynamic::from(new_count));
-                            arr[idx] = Dynamic::from(new_map);
-                        }
-                    } else {
-                        // Add new item with count=1
-                        let mut new_map = rhai::Map::new();
-                        new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                        new_map.insert("count".into(), Dynamic::from(1i64));
-                        arr.push(Dynamic::from(new_map));
-                    }
-
-                    // Sort by count ascending, then by key ascending (stable sort)
-                    arr.sort_by(|a, b| {
-                        let a_map = a.clone().try_cast::<rhai::Map>();
-                        let b_map = b.clone().try_cast::<rhai::Map>();
-
-                        if let (Some(a_m), Some(b_m)) = (a_map, b_map) {
-                            let a_count =
-                                a_m.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                            let b_count =
-                                b_m.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
-                            let a_key = a_m
-                                .get("key")
-                                .and_then(|v| v.clone().into_string().ok())
-                                .unwrap_or_default();
-                            let b_key = b_m
-                                .get("key")
-                                .and_then(|v| v.clone().into_string().ok())
-                                .unwrap_or_default();
-
-                            // Sort by count ascending, then key ascending
-                            match a_count.cmp(&b_count) {
-                                std::cmp::Ordering::Equal => a_key.cmp(&b_key),
-                                other => other,
-                            }
-                        } else {
-                            std::cmp::Ordering::Equal
-                        }
-                    });
-
-                    // Trim to bottom N
-                    if arr.len() > n as usize {
-                        arr.truncate(n as usize);
-                    }
-
-                    state.insert(key.to_string(), Dynamic::from(arr));
-                    true
-                } else {
-                    false
-                }
-            });
-
-            if updated {
-                record_operation_metadata(key, "bottom");
-            }
-            Ok(())
+            track_bottom_count_impl(key, item_key, n)
         },
     );
 
@@ -1350,214 +959,6 @@ pub fn register_functions(engine: &mut Engine) {
             Ok(())
         },
     );
-}
-
-/// Helper function for track_top weighted mode
-fn track_top_weighted_impl(
-    key: &str,
-    item_key: &str,
-    n: i64,
-    value: f64,
-) -> Result<(), Box<rhai::EvalAltResult>> {
-    let updated = with_user_tracking(|state| {
-        // Get existing array or create new one
-        let current = state
-            .get(key)
-            .cloned()
-            .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-
-        if let Ok(mut arr) = current.into_array() {
-            // Find existing item in array
-            let mut found_idx = None;
-            for (idx, elem) in arr.iter().enumerate() {
-                if let Some(map) = elem.clone().try_cast::<rhai::Map>() {
-                    if let Some(k) = map.get("key") {
-                        if k.clone().into_string().unwrap_or_default() == item_key {
-                            found_idx = Some(idx);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Update value or add new item
-            if let Some(idx) = found_idx {
-                // Update value for existing item (take max)
-                if let Some(map) = arr[idx].clone().try_cast::<rhai::Map>() {
-                    let current_val = map
-                        .get("value")
-                        .and_then(|v| v.as_float().ok())
-                        .unwrap_or(f64::NEG_INFINITY);
-                    let new_val = value.max(current_val);
-                    let mut new_map = rhai::Map::new();
-                    new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                    new_map.insert("value".into(), Dynamic::from(new_val));
-                    arr[idx] = Dynamic::from(new_map);
-                }
-            } else {
-                // Add new item
-                let mut new_map = rhai::Map::new();
-                new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                new_map.insert("value".into(), Dynamic::from(value));
-                arr.push(Dynamic::from(new_map));
-            }
-
-            // Sort by value descending, then by key ascending (stable sort)
-            arr.sort_by(|a, b| {
-                let a_map = a.clone().try_cast::<rhai::Map>();
-                let b_map = b.clone().try_cast::<rhai::Map>();
-
-                if let (Some(a_m), Some(b_m)) = (a_map, b_map) {
-                    let a_val = a_m
-                        .get("value")
-                        .and_then(|v| v.as_float().ok())
-                        .unwrap_or(f64::NEG_INFINITY);
-                    let b_val = b_m
-                        .get("value")
-                        .and_then(|v| v.as_float().ok())
-                        .unwrap_or(f64::NEG_INFINITY);
-                    let a_key = a_m
-                        .get("key")
-                        .and_then(|v| v.clone().into_string().ok())
-                        .unwrap_or_default();
-                    let b_key = b_m
-                        .get("key")
-                        .and_then(|v| v.clone().into_string().ok())
-                        .unwrap_or_default();
-
-                    // Sort by value descending, then key ascending
-                    match b_val
-                        .partial_cmp(&a_val)
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                    {
-                        std::cmp::Ordering::Equal => a_key.cmp(&b_key),
-                        other => other,
-                    }
-                } else {
-                    std::cmp::Ordering::Equal
-                }
-            });
-
-            // Trim to top N
-            if arr.len() > n as usize {
-                arr.truncate(n as usize);
-            }
-
-            state.insert(key.to_string(), Dynamic::from(arr));
-            true
-        } else {
-            false
-        }
-    });
-
-    if updated {
-        record_operation_metadata(key, "top");
-    }
-    Ok(())
-}
-
-/// Helper function for track_bottom weighted mode
-fn track_bottom_weighted_impl(
-    key: &str,
-    item_key: &str,
-    n: i64,
-    value: f64,
-) -> Result<(), Box<rhai::EvalAltResult>> {
-    let updated = with_user_tracking(|state| {
-        // Get existing array or create new one
-        let current = state
-            .get(key)
-            .cloned()
-            .unwrap_or_else(|| Dynamic::from(rhai::Array::new()));
-
-        if let Ok(mut arr) = current.into_array() {
-            // Find existing item in array
-            let mut found_idx = None;
-            for (idx, elem) in arr.iter().enumerate() {
-                if let Some(map) = elem.clone().try_cast::<rhai::Map>() {
-                    if let Some(k) = map.get("key") {
-                        if k.clone().into_string().unwrap_or_default() == item_key {
-                            found_idx = Some(idx);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Update value or add new item
-            if let Some(idx) = found_idx {
-                // Update value for existing item (take min)
-                if let Some(map) = arr[idx].clone().try_cast::<rhai::Map>() {
-                    let current_val = map
-                        .get("value")
-                        .and_then(|v| v.as_float().ok())
-                        .unwrap_or(f64::INFINITY);
-                    let new_val = value.min(current_val);
-                    let mut new_map = rhai::Map::new();
-                    new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                    new_map.insert("value".into(), Dynamic::from(new_val));
-                    arr[idx] = Dynamic::from(new_map);
-                }
-            } else {
-                // Add new item
-                let mut new_map = rhai::Map::new();
-                new_map.insert("key".into(), Dynamic::from(item_key.to_string()));
-                new_map.insert("value".into(), Dynamic::from(value));
-                arr.push(Dynamic::from(new_map));
-            }
-
-            // Sort by value ascending, then by key ascending (stable sort)
-            arr.sort_by(|a, b| {
-                let a_map = a.clone().try_cast::<rhai::Map>();
-                let b_map = b.clone().try_cast::<rhai::Map>();
-
-                if let (Some(a_m), Some(b_m)) = (a_map, b_map) {
-                    let a_val = a_m
-                        .get("value")
-                        .and_then(|v| v.as_float().ok())
-                        .unwrap_or(f64::INFINITY);
-                    let b_val = b_m
-                        .get("value")
-                        .and_then(|v| v.as_float().ok())
-                        .unwrap_or(f64::INFINITY);
-                    let a_key = a_m
-                        .get("key")
-                        .and_then(|v| v.clone().into_string().ok())
-                        .unwrap_or_default();
-                    let b_key = b_m
-                        .get("key")
-                        .and_then(|v| v.clone().into_string().ok())
-                        .unwrap_or_default();
-
-                    // Sort by value ascending, then key ascending
-                    match a_val
-                        .partial_cmp(&b_val)
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                    {
-                        std::cmp::Ordering::Equal => a_key.cmp(&b_key),
-                        other => other,
-                    }
-                } else {
-                    std::cmp::Ordering::Equal
-                }
-            });
-
-            // Trim to bottom N
-            if arr.len() > n as usize {
-                arr.truncate(n as usize);
-            }
-
-            state.insert(key.to_string(), Dynamic::from(arr));
-            true
-        } else {
-            false
-        }
-    });
-
-    if updated {
-        record_operation_metadata(key, "bottom");
-    }
-    Ok(())
 }
 
 /// Merge thread-local tracking state into context tracker for sequential mode
