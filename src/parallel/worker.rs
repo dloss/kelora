@@ -92,6 +92,37 @@ fn processing_stats_delta(
     delta
 }
 
+fn processing_stats_is_empty(stats: &crate::stats::ProcessingStats) -> bool {
+    stats.lines_errors == 0
+        && stats.errors == 0
+        && stats.assertion_failures == 0
+        && stats.assertion_failures_by_expr.is_empty()
+        && stats.files_processed == 0
+        && stats.script_executions == 0
+        && stats.timestamp_detected_events == 0
+        && stats.timestamp_parsed_events == 0
+        && stats.timestamp_absent_events == 0
+        && stats.timestamp_fields.is_empty()
+        && stats.timestamp_override_field.is_none()
+        && stats.timestamp_override_format.is_none()
+        && !stats.timestamp_override_failed
+        && stats.timestamp_override_warning.is_none()
+        && stats.yearless_timestamps == 0
+        && stats.cascade_format_counts.is_empty()
+}
+
+fn internal_stats_is_empty(stats: &pipeline::InternalStats) -> bool {
+    stats.lines_output == 0
+        && stats.lines_errors == 0
+        && stats.events_created == 0
+        && stats.events_output == 0
+        && stats.events_filtered == 0
+        && stats.discovered_levels.is_empty()
+        && stats.discovered_keys.is_empty()
+        && stats.discovered_levels_output.is_empty()
+        && stats.discovered_keys_output.is_empty()
+}
+
 /// Worker thread: processes batches in parallel
 pub(crate) fn worker_thread(
     _worker_id: usize,
@@ -284,6 +315,7 @@ fn worker_flush_pipeline(
     final_flush: bool,
 ) -> Result<()> {
     ctx.internal_stats = pipeline::InternalStats::default();
+    let before_worker_stats = get_thread_stats();
     match pipeline.flush(ctx) {
         Ok(mut flush_results) => {
             if final_flush {
@@ -292,10 +324,6 @@ fn worker_flush_pipeline(
                         flush_results.push(trailing);
                     }
                 }
-            }
-
-            if flush_results.is_empty() {
-                return Ok(());
             }
 
             let mut flush_batch_results = Vec::with_capacity(flush_results.len());
@@ -316,6 +344,17 @@ fn worker_flush_pipeline(
                     timestamp,
                     file_ops,
                 });
+            }
+
+            let flush_internal_stats = std::mem::take(&mut ctx.internal_stats);
+            let flush_worker_stats =
+                processing_stats_delta(&before_worker_stats, &get_thread_stats());
+
+            if flush_batch_results.is_empty()
+                && internal_stats_is_empty(&flush_internal_stats)
+                && processing_stats_is_empty(&flush_worker_stats)
+            {
+                return Ok(());
             }
 
             let mut flush_user_updates = HashMap::new();
@@ -358,8 +397,8 @@ fn worker_flush_pipeline(
                 results: flush_batch_results,
                 user_tracked_updates: flush_user_updates,
                 internal_tracked_updates: flush_internal_updates,
-                internal_stats: std::mem::take(&mut ctx.internal_stats),
-                worker_stats: crate::stats::ProcessingStats::new(),
+                internal_stats: flush_internal_stats,
+                worker_stats: flush_worker_stats,
             };
 
             let _ = result_sender.send(flush_batch_result);
