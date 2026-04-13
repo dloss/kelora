@@ -6,8 +6,6 @@ use super::RhaiEngine;
 #[derive(Debug, Clone)]
 pub struct DebugConfig {
     pub verbosity: u8,
-    pub show_timing: bool,
-    pub trace_events: bool,
     pub use_emoji: bool,
 }
 
@@ -15,8 +13,6 @@ impl DebugConfig {
     pub fn new(verbose_count: u8) -> Self {
         DebugConfig {
             verbosity: verbose_count,
-            show_timing: verbose_count >= 1,
-            trace_events: verbose_count >= 2,
             use_emoji: true, // Default to true, will be overridden
         }
     }
@@ -52,8 +48,6 @@ pub struct ExecutionContext {
 pub struct DebugTracker {
     pub config: DebugConfig,
     pub(crate) context: Arc<Mutex<ExecutionContext>>,
-    event_count: Arc<Mutex<u64>>,
-    error_count: Arc<Mutex<u64>>,
 }
 
 impl DebugTracker {
@@ -61,8 +55,6 @@ impl DebugTracker {
         DebugTracker {
             config,
             context: Arc::new(Mutex::new(ExecutionContext::default())),
-            event_count: Arc::new(Mutex::new(0)),
-            error_count: Arc::new(Mutex::new(0)),
         }
     }
 
@@ -81,42 +73,6 @@ impl DebugTracker {
     pub fn log_step(&self, step_info: &str, result: &str) {
         if self.config.is_enabled() && self.config.verbosity >= 3 {
             eprintln!("  → {} → {}", step_info, result);
-        }
-    }
-
-    pub fn log_execution_start(&self, stage: &str, script: &str, event_data: &str) {
-        match self.config.verbosity {
-            1 => {
-                if self.config.is_enabled() {
-                    let prefix = if self.config.use_emoji {
-                        "🔹"
-                    } else {
-                        "kelora: "
-                    };
-                    eprintln!("{} Executing {} stage", prefix, stage);
-                }
-            }
-            2 => {
-                if self.config.is_enabled() {
-                    eprintln!("{} execution started", stage);
-                    eprintln!("  Script: {}", truncate_for_display(script, 100));
-                }
-            }
-            3.. => {
-                if self.config.is_enabled() {
-                    eprintln!("{} execution trace:", stage);
-                    eprintln!("  Script: {}", script.trim());
-                    eprintln!("  Event: {}", truncate_for_display(event_data, 150));
-                }
-            }
-            _ => {}
-        }
-    }
-
-    pub fn log_execution_result(&self, stage: &str, success: bool, result_info: &str) {
-        if self.config.is_enabled() && self.config.verbosity >= 2 {
-            let status = if success { "✓" } else { "✗" };
-            eprintln!("{} {} ({})", stage, status, result_info);
         }
     }
 
@@ -143,8 +99,6 @@ impl Clone for DebugTracker {
         DebugTracker {
             config: self.config.clone(),
             context: Arc::clone(&self.context),
-            event_count: Arc::clone(&self.event_count),
-            error_count: Arc::clone(&self.error_count),
         }
     }
 }

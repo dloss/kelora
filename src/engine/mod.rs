@@ -1651,15 +1651,7 @@ impl RhaiEngine {
         // essential for our debugging features. We'll update when a stable replacement is available.
         #[allow(deprecated)]
         self.engine.register_debugger(
-            move |_engine, debugger| {
-                // Set up breakpoint-based tracing for enhanced debugging
-                if debug_config.trace_events {
-                    // Enable step-by-step debugging mode for detailed tracing
-                    // Note: Specific breakpoint methods may not be available in current Rhai version
-                    // The debugger will still trigger Step events for detailed tracing
-                }
-                debugger
-            },
+            move |_engine, debugger| debugger,
             move |_context, event, node, source, pos| {
                 // Update execution context
                 debug_tracker.update_context(Some(pos), source);
