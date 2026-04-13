@@ -152,27 +152,6 @@ impl ExecutionTracer {
         }
     }
 
-    pub fn trace_variable_access(&self, var_name: &str, value: &str) {
-        if self.config.verbosity >= 3 {
-            eprintln!(
-                "    Access: {} = {}",
-                var_name,
-                truncate_for_display(value, 30)
-            );
-        }
-    }
-
-    pub fn trace_function_call(&self, func_name: &str, args: &str, result: &str) {
-        if self.config.verbosity >= 3 {
-            eprintln!(
-                "    Call: {}({}) → {}",
-                func_name,
-                args,
-                truncate_for_display(result, 30)
-            );
-        }
-    }
-
     // Enhanced detailed tracing for -vvv level
     pub fn trace_detailed_step(
         &self,
@@ -225,29 +204,12 @@ impl ExecutionTracer {
         }
     }
 
-    pub fn trace_ast_node(&self, node_type: &str, position: &str, source: &str) {
-        if self.config.verbosity >= 3 {
-            eprintln!(
-                "    AST: {} at {} → \"{}\"",
-                node_type,
-                position,
-                truncate_for_display(source, 40)
-            );
-        }
-    }
-
     pub fn next_event(&self) -> u64 {
         if let Ok(mut counter) = self.current_event.lock() {
             *counter += 1;
             *counter
         } else {
             0
-        }
-    }
-
-    pub fn reset_step_counter(&self) {
-        if let Ok(mut counter) = self.step_counter.lock() {
-            *counter = 0;
         }
     }
 }
@@ -1575,9 +1537,6 @@ impl RhaiEngine {
         // Register custom functions for log analysis (includes eprint() for stderr output)
         rhai_functions::register_all_functions(&mut engine);
 
-        // Register variable access callback for tracking functions
-        Self::register_variable_resolver(&mut engine);
-
         let mut scope_template = Scope::new();
         scope_template.push("line", "");
         scope_template.push("e", rhai::Map::new());
@@ -2281,11 +2240,6 @@ impl RhaiEngine {
         *internal = Self::get_thread_internal_state();
 
         Ok(())
-    }
-
-    fn register_variable_resolver(_engine: &mut Engine) {
-        // For now, keep this empty - we'll implement proper function-based approach
-        // Variable resolver is not the right tool for function calls
     }
 
     // Window-aware execution methods
