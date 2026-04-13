@@ -1,4 +1,4 @@
-use super::{deserialize_hll, deserialize_tdigest, is_hll_blob};
+use super::merge::{deserialize_hll, deserialize_tdigest, is_hll_blob};
 use rhai::Dynamic;
 use std::collections::{HashMap, HashSet};
 
@@ -348,13 +348,13 @@ mod tests {
     #[test]
     fn test_format_metrics_output_formats_hll_cardinality() {
         let mut metrics = HashMap::new();
-        let mut hll = super::super::new_hll();
+        let mut hll = super::super::merge::new_hll();
         hll.insert(&"alice");
         hll.insert(&"bob");
         hll.insert(&"alice");
         metrics.insert(
             "users".to_string(),
-            Dynamic::from_blob(super::super::serialize_hll(&hll)),
+            Dynamic::from_blob(super::super::merge::serialize_hll(&hll)),
         );
 
         let output = format_metrics_output(&metrics, 1);
@@ -378,13 +378,13 @@ mod tests {
     #[test]
     fn test_format_metrics_json_formats_hll_cardinality() {
         let mut metrics = HashMap::new();
-        let mut hll = super::super::new_hll();
+        let mut hll = super::super::merge::new_hll();
         hll.insert(&"one");
         hll.insert(&"two");
         hll.insert(&"three");
         metrics.insert(
             "users".to_string(),
-            Dynamic::from_blob(super::super::serialize_hll(&hll)),
+            Dynamic::from_blob(super::super::merge::serialize_hll(&hll)),
         );
 
         let json = format_metrics_json(&metrics).unwrap();
