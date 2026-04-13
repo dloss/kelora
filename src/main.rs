@@ -668,7 +668,7 @@ fn handle_pipeline_success(
 
     detection::emit_parse_failure_warning(
         config,
-        Some(&pipeline_result.tracking_data),
+        pipeline_result.stats.as_ref(),
         auto_detected_non_line,
         events_were_output,
         std::io::stderr().is_terminal(),

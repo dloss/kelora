@@ -239,8 +239,6 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
     // Filter out stats and errors from user-visible context and merge the rest
     for (key, dynamic_value) in &parallel_snapshot.user {
         if !key.starts_with("__internal_")
-            && !key.starts_with("__kelora_stats_")
-            && !key.starts_with("__op___kelora_stats_")
             && !key.starts_with("__kelora_error_")
             && !key.starts_with("__op___kelora_error_")
         {
