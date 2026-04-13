@@ -1,17 +1,11 @@
 use rhai::{Dynamic, Engine};
 use std::collections::HashMap;
 
-#[path = "tracking_errors.rs"]
 mod errors;
-#[path = "tracking_format.rs"]
 mod format;
-#[path = "tracking_merge.rs"]
 mod merge;
-#[path = "tracking_metrics.rs"]
 mod metrics;
-#[path = "tracking_rank.rs"]
 mod rank;
-#[path = "tracking_state.rs"]
 mod state;
 #[cfg(test)]
 use errors::format_error_location;
