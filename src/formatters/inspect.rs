@@ -1,4 +1,5 @@
 use crate::event::Event;
+use crate::formatters::utils::escape_for_display;
 use crate::pipeline;
 
 use rhai::Dynamic;
@@ -214,7 +215,7 @@ impl InspectFormatter {
     fn describe_scalar(&self, value: &Dynamic) -> (String, String) {
         if value.is_string() {
             if let Ok(inner) = value.clone().into_string() {
-                let escaped = self.escape_for_display(&inner);
+                let escaped = escape_for_display(&inner);
                 let (truncated, was_truncated) = self.truncate_value(&escaped);
                 let mut rendered = format!("\"{}\"", truncated);
                 if was_truncated {
@@ -246,7 +247,7 @@ impl InspectFormatter {
             if let Ok(c) = value.as_char() {
                 return (
                     "char".to_string(),
-                    format!("'{}'", self.escape_for_display(&c.to_string())),
+                    format!("'{}'", escape_for_display(&c.to_string())),
                 );
             }
         }
@@ -257,30 +258,13 @@ impl InspectFormatter {
 
         // Fallback for other scalar types
         let type_label = value.type_name().to_string();
-        let rendered = self.escape_for_display(&value.to_string());
+        let rendered = escape_for_display(&value.to_string());
         let (truncated, was_truncated) = self.truncate_value(&rendered);
         let mut repr = truncated;
         if was_truncated {
             repr.push_str("...");
         }
         (type_label, repr)
-    }
-
-    fn escape_for_display(&self, input: &str) -> String {
-        let mut escaped = String::with_capacity(input.len());
-        for ch in input.chars() {
-            match ch {
-                '\\' => escaped.push_str("\\\\"),
-                '\n' => escaped.push_str("\\n"),
-                '\r' => escaped.push_str("\\r"),
-                '\t' => escaped.push_str("\\t"),
-                c if c.is_control() => {
-                    escaped.push_str(&format!("\\x{:02X}", c as u32));
-                }
-                c => escaped.push(c),
-            }
-        }
-        escaped
     }
 
     fn truncate_value(&self, value: &str) -> (String, bool) {

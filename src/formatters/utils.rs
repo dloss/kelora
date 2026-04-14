@@ -1,5 +1,26 @@
 use rhai::Dynamic;
 
+/// Escape a string for single-line display: backslashes and common control
+/// characters become visible escape sequences, other control characters are
+/// rendered as `\xNN`. Double quotes are left untouched; callers wrap the
+/// result in quotes themselves when needed.
+pub(crate) fn escape_for_display(input: &str) -> String {
+    let mut escaped = String::with_capacity(input.len());
+    for ch in input.chars() {
+        match ch {
+            '\\' => escaped.push_str("\\\\"),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            '\t' => escaped.push_str("\\t"),
+            c if c.is_control() => {
+                escaped.push_str(&format!("\\x{:02X}", c as u32));
+            }
+            c => escaped.push(c),
+        }
+    }
+    escaped
+}
+
 /// Format a Dynamic value as a string representation suitable for output
 /// Returns (string_value, needs_quotes) - the second bool indicates if it should be quoted
 pub(crate) fn format_dynamic_value(value: &Dynamic) -> (String, bool) {

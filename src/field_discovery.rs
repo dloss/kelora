@@ -708,10 +708,13 @@ fn scalar_to_json(value: &Dynamic) -> serde_json::Value {
 
 fn sample_json_display(value: &serde_json::Value) -> std::string::String {
     match value {
-        // Empty strings would render as a bare separator gap (", , ,") in the
-        // examples column, making them invisible. Show them as `""` instead.
-        serde_json::Value::String(s) if s.is_empty() => "\"\"".to_string(),
-        serde_json::Value::String(s) => truncate_sample(s),
+        // Render strings in inspect-style: escaped and wrapped in double quotes.
+        // This makes types unambiguous (so `"42"` is distinguishable from `42`)
+        // and naturally surfaces empty strings as `""`.
+        serde_json::Value::String(s) => {
+            let truncated = truncate_sample(s);
+            format!("\"{}\"", crate::formatters::escape_for_display(&truncated))
+        }
         serde_json::Value::Null => "null".to_string(),
         _ => truncate_sample(&value.to_string()),
     }
@@ -1191,8 +1194,8 @@ mod tests {
         assert!(table.contains("1"));
         assert!(table.contains("0%"));
         assert!(
-            table.contains("  examples: req_001")
-                || table.lines().any(|line| line.starts_with("  req_001")),
+            table.contains("  examples: \"req_001\"")
+                || table.lines().any(|line| line.starts_with("  \"req_001\"")),
             "{table}"
         );
     }
@@ -1291,12 +1294,16 @@ mod tests {
         let examples = format_examples(&profile);
 
         assert!(
-            examples.contains("hello"),
-            "string sample should render: {examples}"
+            examples.contains("\"hello\""),
+            "string sample should render quoted: {examples}"
         );
         assert!(
             examples.contains("42"),
             "int sample should render: {examples}"
+        );
+        assert!(
+            !examples.contains("\"42\""),
+            "int sample should not be quoted: {examples}"
         );
         assert!(
             examples.contains("true"),
@@ -1305,6 +1312,29 @@ mod tests {
         assert_eq!(
             profile.samples, before,
             "display formatting must not mutate samples"
+        );
+    }
+
+    #[test]
+    fn test_format_examples_quotes_and_escapes_strings() {
+        let mut profile = FieldProfile::new();
+        profile.observe(&make_string(""));
+        profile.observe(&make_string("a\nb"));
+        profile.observe(&make_string("tab\there"));
+
+        let examples = format_examples(&profile);
+
+        assert!(
+            examples.contains("\"\""),
+            "empty string should render as \"\": {examples}"
+        );
+        assert!(
+            examples.contains("\"a\\nb\""),
+            "newlines should be escaped inside quoted strings: {examples}"
+        );
+        assert!(
+            examples.contains("\"tab\\there\""),
+            "tabs should be escaped inside quoted strings: {examples}"
         );
     }
 

@@ -18,6 +18,7 @@ pub use inspect::InspectFormatter;
 pub use json::JsonFormatter;
 pub use logfmt::LogfmtFormatter;
 pub use tailmap::TailmapFormatter;
+pub(crate) use utils::escape_for_display;
 
 #[cfg(test)]
 pub(crate) use csv::{escape_csv_value, needs_csv_quoting};
