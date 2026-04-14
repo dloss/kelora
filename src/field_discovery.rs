@@ -24,6 +24,11 @@ const MAX_SAMPLES: usize = 8;
 /// Maximum character length for stored sample values.
 const MAX_SAMPLE_LEN: usize = 80;
 
+/// Default table width for `--discover` when output is redirected (not a TTY)
+/// and no `COLUMNS` override is set. Chosen wide enough that the examples
+/// column has room to breathe in files and pipes.
+const REDIRECTED_TABLE_WIDTH: usize = 200;
+
 /// Maximum number of distinct fields to track (memory safety).
 const MAX_TRACKED_FIELDS: usize = 1_000;
 
@@ -359,7 +364,18 @@ impl FieldDiscovery {
 
     /// Format the discovery results as a human-readable table.
     pub fn format_table(&self) -> std::string::String {
-        self.format_table_for_width(crate::tty::get_terminal_width())
+        let width = if crate::tty::is_stdout_tty() {
+            crate::tty::get_terminal_width()
+        } else {
+            // Honor an explicit COLUMNS override even when piped; otherwise
+            // fall back to a generous default so examples have room to expand.
+            std::env::var("COLUMNS")
+                .ok()
+                .and_then(|s| s.parse::<usize>().ok())
+                .filter(|&c| c > 0)
+                .unwrap_or(REDIRECTED_TABLE_WIDTH)
+        };
+        self.format_table_for_width(width)
     }
 
     fn format_table_for_width(&self, terminal_width: usize) -> std::string::String {
@@ -620,22 +636,20 @@ fn format_cardinality(profile: &FieldProfile) -> std::string::String {
 }
 
 /// Format the examples column.
+///
+/// Produces the full comma-separated list of samples; the caller is
+/// responsible for truncating to the available column width at render time.
 fn format_examples(profile: &FieldProfile) -> std::string::String {
     if profile.samples.is_empty() {
         return std::string::String::new();
     }
 
-    let joined = profile
+    profile
         .samples
         .iter()
         .map(sample_json_display)
         .collect::<Vec<_>>()
-        .join(", ");
-    if joined.chars().count() > 60 {
-        truncate_for_display(&joined, 60)
-    } else {
-        joined
-    }
+        .join(", ")
 }
 
 /// Get a display string for a scalar Dynamic value.
@@ -1347,10 +1361,84 @@ mod tests {
         assert_eq!(profile.samples.len(), 1);
         assert_eq!(profile.samples[0], serde_json::json!(long));
 
+        // Per-sample truncation still applies: the raw content is capped at
+        // MAX_SAMPLE_LEN chars (with `...`), plus 2 for the surrounding quotes.
         let examples = format_examples(&profile);
         assert!(
-            examples.chars().count() <= 60,
-            "table examples should remain display-truncated: {examples}"
+            examples.chars().count() <= MAX_SAMPLE_LEN + 2,
+            "per-sample display truncation should still apply: {examples}"
+        );
+        assert!(
+            examples.starts_with('"') && examples.ends_with("...\""),
+            "truncated sample should stay quoted: {examples}"
+        );
+    }
+
+    #[test]
+    fn test_format_examples_not_capped_at_60_chars() {
+        let tags = [
+            "alpha_tag",
+            "bravo_tag",
+            "charlie_tag",
+            "delta_tag",
+            "echo_tag",
+            "foxtrot_tag",
+            "golf_tag",
+            "hotel_tag",
+        ];
+        let mut profile = FieldProfile::new();
+        for tag in tags {
+            profile.observe(&make_string(tag));
+        }
+
+        let examples = format_examples(&profile);
+        assert!(
+            examples.chars().count() > 60,
+            "examples should not be capped at 60 chars: {examples}"
+        );
+        // All samples should be present in full (no mid-sample truncation).
+        for tag in tags {
+            assert!(
+                examples.contains(&format!("\"{tag}\"")),
+                "sample {tag:?} missing from examples: {examples}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_format_table_uses_wide_terminal_for_examples() {
+        let tags = [
+            "alpha_tag",
+            "bravo_tag",
+            "charlie_tag",
+            "delta_tag",
+            "echo_tag",
+            "foxtrot_tag",
+            "golf_tag",
+            "hotel_tag",
+        ];
+        let mut discovery = FieldDiscovery::new();
+        for tag in tags {
+            let mut per_event = IndexMap::new();
+            per_event.insert("tag".to_string(), make_string(tag));
+            discovery.observe_event(&per_event);
+        }
+
+        // At 200 chars wide the full sample list should appear unclipped.
+        let table = discovery.format_table_for_width(200);
+        for tag in tags {
+            assert!(
+                table.contains(&format!("\"{tag}\"")),
+                "wide table should include full example {tag:?}: {table}"
+            );
+        }
+
+        // At 60 chars wide the list should be truncated (at least one sample
+        // missing or cut off with an ellipsis).
+        let table = discovery.format_table_for_width(60);
+        assert!(
+            table.contains("..."),
+            "narrow table should truncate examples: {table}"
         );
     }
 
