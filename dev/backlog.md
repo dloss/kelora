@@ -106,146 +106,36 @@ kelora -j app.jsonl --template ecs > ecs.jsonl
 
 ---
 
-## Klogg-Inspired Features
+## Considered and Rejected (Klogg / Logana Reviews)
 
-Reviewed [klogg](https://github.com/variar/klogg) (GUI log viewer) for ideas that
-fit Kelora's CLI / streaming / Rhai architecture without breaking it. Items
-below are additive and do not require breaking changes. Skipped: SIMD/MT search
-(already covered), 2.1B-line support (streaming handles it), GUI affordances
-(scratchpad, tabs, favorites menu, context overview), "search within results"
-(already covered by chained `--filter`).
+Reviewed [klogg](https://github.com/variar/klogg) and
+[logana](https://github.com/pauloremoli/logana) for features Kelora might
+borrow. After a fresh-eye stress test, **none survived**. Recording the
+rejections here so the same ideas don't get re-suggested without new
+information.
 
-### 1. Input Encoding Auto-Detection
+GUI affordances (tabs, marks, annotations, scratchpad, vim navigation, mouse,
+session persistence, remappable keybindings, context overview) are skipped on
+principle — they don't map to a streaming CLI tool.
 
-**What:** Detect non-UTF-8 input encodings (UTF-16, CP1251, Latin-1, Shift-JIS,
-GBK, …) and transcode to UTF-8 at the input stage. Add a `--encoding <name>`
-override for cases where detection is wrong or undesired.
+| Idea | Source | Why rejected |
+|---|---|---|
+| Input encoding auto-detection (UTF-16/CP1251/…) | klogg | Speculative future user; auto-detection is unreliable on small samples and can corrupt data silently; modern Windows logs export as UTF-8. A manual `--encoding` flag could be added if a real user asks. |
+| Context lines `-A`/`-B`/`-C` | klogg | **Already supported.** |
+| Native `--follow` mode | klogg | `tail -F` already handles rotation; PowerShell `Get-Content -Wait` covers Windows. The win over `tail -F \| kelora` is small and the watcher bug surface (NFS, symlinks, truncation races, multi-file) is large. |
+| Configurable highlighter framework | klogg | Kelora's primary output is machine-readable; interactive coloring is a secondary use case. Level coloring already exists; broader highlighting is overreach for a framework with diminishing returns. `bat`/`grcat`/`lnav` cover the niche. |
+| Boolean quick-filter `-g`/`--grep` | klogg | Contradicts Kelora's "use grep for simple text search" positioning; adds a third filter mechanism; it's a dead-end DSL that can't reference fields or compose with Rhai. |
+| Named filter/pipeline profiles | klogg | Shell aliases, shell functions, and `Justfile` recipes already solve this with transferable skills. Adding a profile schema duplicates the existing `.kelora.ini` defaults and creates precedence/composition slopes. |
+| Expanded archive formats (bz2/zip/tar.\*) | logana | bz2 is largely obsolete in 2026 (gzip and zstd dominate; xz already supported). zip and tar are multi-file containers with real design questions, not single-stream decoders. Wait for a request. |
+| OTLP/JSON parser | logana | Without a gRPC/HTTP receiver, only catches the file-capture/debug audience, not live OTel pipelines. The audience that has OTLP/JSON files usually also has the Collector itself with OTTL. Revisit only if Kelora makes OTel a strategic priority. |
+| journalctl convenience parser | logana | `journalctl -o json \| kelora -j` already works; the only thing a built-in adds is field renaming, which is a one-line `--exec`. Sets a bad precedent (`-f kubectl`, `-f aws-cli`, …). |
+| Markdown output format `-F md` | logana | CSV/TSV already covers the "paste into a doc" workflow (GitHub/Notion/Docs auto-render). Markdown tables degrade past ~6 columns. Real ticket workflows use fenced code blocks of raw lines, not tables. |
+| MCP server mode | logana | Major architectural shift (long-running process, session/handle abstraction). Marginal benefit over Bash-invoked Kelora for agentic harnesses that already have shell access. Should be a deliberate strategic call, not a backlog drift item. |
 
-**Why useful:** Real-world Windows event logs, legacy syslog dumps, and CJK
-logs are commonly non-UTF-8. Kelora currently can't handle them. Klogg uses
-`uchardet` for this; the Rust equivalent is `chardetng` (used by Firefox).
-
-**Scope:** Input stage only. No impact on parsers, Rhai, or output.
-
-**Implementation:** Wrap the input reader in an encoding-detecting decoder
-(BOM sniff → `chardetng` sample → fall back to UTF-8). Per-file detection for
-multi-file mode. ~150 lines plus a dependency.
-
----
-
-### 2. Context Lines for Filter Matches (`-A` / `-B` / `-C`)
-
-**What:** When `--filter` matches an event, also emit N preceding and/or
-following events. Standard `grep -A/-B/-C` semantics.
-
-**Why useful:** Klogg's whole UI is about seeing matches in context. On the
-CLI, `grep -C 3` is the universal idiom. Especially valuable for chasing
-errors that need surrounding stack frames or request-flow context.
-
-**Scope:** Processing stage. Maintain a small ring buffer of recent events
-plus a "lines remaining to emit" counter. Streaming-safe and bounded memory.
-
-**Implementation:** ~120 lines wrapping the filter stage. Interaction with
-parallel mode needs thought (probably sequential-only initially).
-
----
-
-### 3. Native Follow Mode (`--follow` / `-F`)
-
-**What:** Built-in `tail -f`-equivalent on a file path, with log rotation
-handling (track inode, reopen on rename/truncate).
-
-**Why useful:** Kelora documents `tail -f app.log | kelora …` but a built-in
-is better UX, handles rotation correctly, and works on Windows where `tail -f`
-isn't standard. Klogg's "watches for file changes on disk and reloads it"
-covers the same need.
-
-**Scope:** Input stage. The streaming pipeline already supports unbounded
-input, so this is purely a smarter file reader.
-
-**Implementation:** `notify` crate or polling-based watcher with rotation
-detection. Mutually exclusive with `--merge-sorted` and `--parallel`. ~200
-lines plus a dependency.
-
----
-
-### 4. Highlighter Sets (Configurable Terminal Colorization)
-
-**What:** Named highlighter rules in `.kelora.ini` that colorize output by
-regex match or field/value. E.g. red bold for `level=ERROR`, dim grey for
-health-check paths, yellow for slow `duration_ms > 1000`.
-
-**Why useful:** Klogg's customizable highlighter sets are one of its
-most-praised productivity features. Kelora's `default` output format already
-emits emoji prefixes; structured colorization is the natural next step for
-interactive log inspection.
-
-**Scope:** Output stage only. Disabled when not a TTY or when `--no-color`
-is set.
-
-**Example config:**
-```ini
-[highlighter.errors]
-match = 'level == "ERROR"'
-style = "red,bold"
-
-[highlighter.slow]
-match = 'duration_ms > 1000'
-style = "yellow"
-
-[highlighter.healthcheck]
-regex = '/healthz|/readyz'
-style = "dim"
-```
-
-**Implementation:** ~200 lines in `src/output/`. Reuses Rhai for the `match`
-expressions; regex variant for raw text matching.
-
----
-
-### 5. Boolean Quick-Filter Shortcut (`-g` / `--grep`)
-
-**What:** A grep-style shortcut filter using boolean regex syntax:
-`-g "pattern1 AND pattern2 NOT pattern3"`. Compiles to an equivalent Rhai
-filter under the hood.
-
-**Why useful:** Klogg's signature filter syntax. Kelora's `--filter` (Rhai) is
-strictly more powerful but verbose for the 80% case of "lines containing X
-and Y but not Z". Easy on-ramp for klogg/grep users.
-
-**Scope:** Pure CLI sugar — desugars into existing `--filter` machinery.
-Optional; doesn't change semantics.
-
-**Implementation:** Small parser for `AND`/`OR`/`NOT`/`(`/`)` over regex
-literals, ~80 lines.
-
----
-
-### 6. Named Filter/Pipeline Profiles
-
-**What:** `[profile.<name>]` sections in `.kelora.ini` bundling `format`,
-`levels`, `filter`, `exec`, `keys`, `output-format`, etc. Invoked via
-`--profile <name>`.
-
-**Why useful:** Klogg has favorites and saved searches. Lets teams share
-common pipelines (e.g. `--profile nginx-errors`, `--profile k8s-audit`)
-without long shell aliases.
-
-**Scope:** Config stage only. Profile values merge with CLI flags using
-the existing precedence rules (CLI > profile > config defaults).
-
-**Implementation:** Extend the existing `.kelora.ini` loader, ~150 lines.
-
----
-
-### Recommended Priority
-
-1. **Encoding auto-detection** — biggest real-world capability gap
-2. **Context lines (`-A`/`-B`/`-C`)** — standard CLI idiom, currently missing
-3. **Native `--follow`** — better than piping `tail -f`, fixes Windows UX
-4. **Highlighter sets** — quality-of-life for interactive use
-5. **`-g` boolean quick-filter sugar** — optional on-ramp
-6. **Named profiles** — optional team workflow improvement
+Useful meta-observation: Kelora's existing design space is more complete than
+a feature-comparison-with-other-tools exercise suggests. The remaining gaps
+relative to klogg/logana are either already covered, GUI-only, architecturally
+incompatible with the streaming CLI model, or features looking for users.
 
 ---
 
