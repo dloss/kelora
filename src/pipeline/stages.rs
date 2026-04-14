@@ -524,6 +524,20 @@ impl ScriptStage for ExecStage {
                     None,
                 );
 
+                // Preserve error tracking state across the rollback boundary.
+                // execute_compiled_exec's error path skips the thread-local→ctx
+                // sync, so any track_error writes (which go to thread-local) would
+                // be overwritten on the next event when set_thread_tracking_state
+                // reinstalls ctx.internal_tracker. Manually copy just the
+                // error-tracking keys back so counts and samples accumulate.
+                let thread_internal = crate::engine::RhaiEngine::get_thread_internal_state();
+                for (key, value) in thread_internal {
+                    if key.starts_with("__kelora_error_") || key.starts_with("__op___kelora_error_")
+                    {
+                        ctx.internal_tracker.insert(key, value);
+                    }
+                }
+
                 // New resiliency model: atomic rollback - return original event unchanged
                 // unless in strict mode, where errors still propagate
                 if e.downcast_ref::<crate::engine::ConfMutationError>()

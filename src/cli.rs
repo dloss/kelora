@@ -663,6 +663,15 @@ pub struct Cli {
     )]
     pub discover_final_fields: Option<DiscoverFieldsFormat>,
 
+    /// Maximum depth for flattening nested maps/arrays during field discovery.
+    #[arg(
+        long = "discover-depth",
+        value_name = "N",
+        help_heading = "Field Discovery",
+        help = "Maximum depth for flattening nested maps/arrays into dotted keys (default: 3).\nDepth counts descents from the event root: a.b.c is depth 3.\nUse a higher value to inspect deeply nested JSON; use 1 to see only top-level fields.\n\nExamples:\n  --discover --discover-depth=5    Descend up to 5 levels deep\n  --discover --discover-depth=1    Top-level fields only"
+    )]
+    pub discover_depth: Option<usize>,
+
     /// Specify custom configuration file path
     #[arg(long = "config-file", help_heading = "Configuration Options")]
     pub config_file: Option<String>,

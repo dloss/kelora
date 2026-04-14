@@ -212,6 +212,21 @@ ERROR HANDLING MODES:
   --strict mode:
     • Any error → abort with exit code 1
 
+EXEC ROLLBACK SEMANTICS (-e):
+  Each -e script runs transactionally per event. If the script fails partway
+  through, all of its mutations are rolled back and the unmodified original
+  event is forwarded to the next stage. Rolled back on error:
+    • Field assignments and deletions (e.field = ..., e.field = ())
+    • Tracking calls (track_count, track_stats, track_unique, track_bucket, ...)
+    • emit_each() calls and skip() requests
+    • Pending file operations (append_file, write_file)
+  State that intentionally survives the rollback:
+    • Error counts and samples (visible in --metrics and the diagnostics
+      summary)
+  This means a track_count() that ran two lines before the failure leaves
+  no trace in metrics — the whole script body is all-or-nothing. Use
+  --strict to turn any exec error into a fatal abort instead.
+
 SCRIPT OUTPUT (print/eprint):
   print("msg")                        Write to stdout (visible by default)
   eprint("err")                       Write to stderr (visible by default)

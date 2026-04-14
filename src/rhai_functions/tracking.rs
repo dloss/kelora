@@ -2837,6 +2837,77 @@ pub fn format_metrics_json(
     serde_json::to_string_pretty(&json_obj)
 }
 
+/// Finalize a single tracking value for exposure to user-visible Rhai scopes
+/// (`--end`, `--span-close`, etc.).
+///
+/// Internal tracking state stores average progress as a `{sum, count}` map
+/// and stores t-digest / HLL sketches as opaque blobs. `--metrics` formatting
+/// deserializes these on the fly, but when the `metrics` map is handed to a
+/// user script it needs to contain plain numeric values so that scripts can
+/// render them with helpers like `format_decimals` and `bar`. This helper
+/// returns the finalized `Dynamic` for a metric key/value pair.
+fn finalize_metric_value(key: &str, value: &Dynamic) -> Dynamic {
+    // Average tracking: {sum, count} map → mean as f64
+    if let Some(map) = value.clone().try_cast::<rhai::Map>() {
+        if map.contains_key("sum") && map.contains_key("count") {
+            let sum = map
+                .get("sum")
+                .and_then(|v| {
+                    if v.is_float() {
+                        v.as_float().ok()
+                    } else if v.is_int() {
+                        v.as_int().ok().map(|i| i as f64)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(0.0);
+            let count = map.get("count").and_then(|v| v.as_int().ok()).unwrap_or(0);
+            let avg = if count > 0 { sum / count as f64 } else { 0.0 };
+            return Dynamic::from(avg);
+        }
+    }
+
+    // Sketch blobs: HyperLogLog (cardinality) or t-digest (percentile)
+    if let Ok(blob) = value.clone().into_blob() {
+        if is_hll_blob(&blob) {
+            if let Some(hll) = deserialize_hll(&blob) {
+                return Dynamic::from(hll.len() as i64);
+            }
+        }
+        if let Some(digest) = deserialize_tdigest(&blob) {
+            if let Some(p_pos) = key.rfind("_p") {
+                if let Ok(percentile) = key[p_pos + 2..].parse::<f64>() {
+                    let quantile = percentile / 100.0;
+                    return Dynamic::from(digest.estimate_quantile(quantile));
+                }
+            }
+        }
+    }
+
+    // Everything else (counts, min/max, sum, track_unique / top / bottom / bucket
+    // arrays, user-set values) is already script-friendly.
+    value.clone()
+}
+
+/// Build a finalized `rhai::Map` suitable for exposing as the `metrics`
+/// global inside `--end` / `--span-close` / other post-processing stages.
+/// Internal bookkeeping keys (`__op_*`, `__kelora_stats_*`, `__kelora_error_*`)
+/// are filtered out, and sketch-backed metrics are finalized to plain numbers.
+pub fn finalize_metrics_for_script(metrics: &HashMap<String, Dynamic>) -> rhai::Map {
+    let mut out = rhai::Map::new();
+    for (key, value) in metrics.iter() {
+        if key.starts_with("__op_")
+            || key.starts_with("__kelora_stats_")
+            || key.starts_with("__kelora_error_")
+        {
+            continue;
+        }
+        out.insert(key.clone().into(), finalize_metric_value(key, value));
+    }
+    out
+}
+
 /// Extract error summary from tracking state
 #[allow(dead_code)] // Retained for potential future CLI summary output
 pub fn extract_error_summary(metrics: &HashMap<String, Dynamic>) -> Option<String> {
@@ -4382,5 +4453,135 @@ mod tests {
 
         let restored = deserialize_hll(&bytes).unwrap();
         assert!((hll.len() - restored.len()).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_finalize_metrics_for_script_stats() {
+        // Regression test: inside `--end`, scripts must see finalized numeric
+        // values for track_stats percentile / average metrics, not the raw
+        // internal t-digest blob or {sum,count} map.
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        for v in [100.0_f64, 150.0, 200.0, 250.0, 300.0] {
+            engine
+                .eval::<()>(&format!(
+                    "track_stats(\"latency\", {}, [0.50, 0.95, 0.99])",
+                    v
+                ))
+                .unwrap();
+        }
+
+        let state = get_thread_tracking_state();
+
+        // Raw state keeps internal representations (this is intentional).
+        assert!(state.get("latency_p50").unwrap().is_blob());
+        assert!(state.get("latency_p95").unwrap().is_blob());
+        assert!(state.get("latency_avg").unwrap().is::<rhai::Map>());
+
+        // Finalized view exposes plain numbers.
+        let finalized = finalize_metrics_for_script(&state);
+
+        let p50 = finalized
+            .get("latency_p50")
+            .expect("latency_p50 missing")
+            .as_float()
+            .expect("latency_p50 should be a float");
+        assert!((100.0..=300.0).contains(&p50), "p50 out of range: {}", p50);
+
+        let p99 = finalized
+            .get("latency_p99")
+            .expect("latency_p99 missing")
+            .as_float()
+            .expect("latency_p99 should be a float");
+        assert!(p99 >= p50, "p99 ({}) should be >= p50 ({})", p99, p50);
+
+        let avg = finalized
+            .get("latency_avg")
+            .expect("latency_avg missing")
+            .as_float()
+            .expect("latency_avg should be a float");
+        assert!((avg - 200.0).abs() < 1e-9, "avg should be 200, got {}", avg);
+
+        // Scalar fields (count, min, max, sum) pass through unchanged.
+        let count = finalized
+            .get("latency_count")
+            .expect("latency_count missing")
+            .as_int()
+            .expect("latency_count should be int");
+        assert_eq!(count, 5);
+
+        let min = finalized
+            .get("latency_min")
+            .expect("latency_min missing")
+            .as_float()
+            .unwrap();
+        let max = finalized
+            .get("latency_max")
+            .expect("latency_max missing")
+            .as_float()
+            .unwrap();
+        assert!((min - 100.0).abs() < 1e-9);
+        assert!((max - 300.0).abs() < 1e-9);
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_finalize_metrics_for_script_cardinality() {
+        // track_cardinality() stores an HLL blob; finalize should expose the
+        // cardinality estimate as a plain integer.
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        for v in ["a", "b", "c", "a", "d", "b"] {
+            engine
+                .eval::<()>(&format!("track_cardinality(\"uniq\", \"{}\")", v))
+                .unwrap();
+        }
+
+        let state = get_thread_tracking_state();
+        assert!(state.get("uniq").unwrap().is_blob());
+
+        let finalized = finalize_metrics_for_script(&state);
+        let cardinality = finalized
+            .get("uniq")
+            .expect("uniq missing")
+            .as_int()
+            .expect("uniq should be int after finalize");
+        assert_eq!(
+            cardinality, 4,
+            "expected 4 distinct values, got {}",
+            cardinality
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_finalize_metrics_for_script_filters_internal_keys() {
+        // Internal bookkeeping keys must not leak into user-visible scripts.
+        clear_tracking_state();
+
+        with_user_tracking(|state| {
+            state.insert("visible".to_string(), Dynamic::from(1_i64));
+            state.insert("__op_hidden".to_string(), Dynamic::from(1_i64));
+            state.insert("__kelora_stats_hidden".to_string(), Dynamic::from(1_i64));
+            state.insert("__kelora_error_hidden".to_string(), Dynamic::from(1_i64));
+        });
+
+        let state = get_thread_tracking_state();
+        let finalized = finalize_metrics_for_script(&state);
+
+        assert!(finalized.contains_key("visible"));
+        assert!(!finalized.contains_key("__op_hidden"));
+        assert!(!finalized.contains_key("__kelora_stats_hidden"));
+        assert!(!finalized.contains_key("__kelora_error_hidden"));
+
+        clear_tracking_state();
     }
 }

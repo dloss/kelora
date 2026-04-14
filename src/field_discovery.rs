@@ -27,9 +27,10 @@ const MAX_SAMPLE_LEN: usize = 80;
 /// Maximum number of distinct fields to track (memory safety).
 const MAX_TRACKED_FIELDS: usize = 1_000;
 
-/// Maximum depth for flattening nested maps and arrays into dotted keys.
-/// Depth counts descents from the event root: `a.b.c` is depth 3.
-const MAX_FLATTEN_DEPTH: usize = 3;
+/// Default maximum depth for flattening nested maps and arrays into dotted
+/// keys. Depth counts descents from the event root: `a.b.c` is depth 3.
+/// Override with `--discover-depth=N`.
+pub const DEFAULT_FLATTEN_DEPTH: usize = 3;
 
 /// Cap on the per-field dedup set for reservoir sampling.
 /// Once reached, samples may include duplicates.
@@ -266,15 +267,29 @@ pub struct FieldDiscovery {
     capped: bool,
     /// Whether nested field flattening stopped at the maximum depth.
     flatten_depth_capped: bool,
+    /// Configured depth limit for nested field flattening.
+    flatten_depth: usize,
+}
+
+impl Default for FieldDiscovery {
+    fn default() -> Self {
+        Self::with_depth(DEFAULT_FLATTEN_DEPTH)
+    }
 }
 
 impl FieldDiscovery {
+    #[cfg(test)]
     pub fn new() -> Self {
+        Self::with_depth(DEFAULT_FLATTEN_DEPTH)
+    }
+
+    pub fn with_depth(flatten_depth: usize) -> Self {
         Self {
             fields: IndexMap::new(),
             total_events: 0,
             capped: false,
             flatten_depth_capped: false,
+            flatten_depth: flatten_depth.max(1),
         }
     }
 
@@ -296,7 +311,7 @@ impl FieldDiscovery {
     fn observe_path(&mut self, path: &str, value: &Dynamic, depth: usize) {
         self.record(path, value);
 
-        if depth >= MAX_FLATTEN_DEPTH {
+        if depth >= self.flatten_depth {
             if value.is_map() || value.is_array() {
                 self.flatten_depth_capped = true;
             }
@@ -482,8 +497,8 @@ impl FieldDiscovery {
         }
         if self.flatten_depth_capped {
             output.push_str(&format!(
-                "\nNote: Nested field flattening stopped at depth {}; deeper children are not shown.\n",
-                MAX_FLATTEN_DEPTH
+                "\nNote: Nested field flattening stopped at depth {}; deeper children are not shown. Use --discover-depth=N to descend further.\n",
+                self.flatten_depth
             ));
         }
 
@@ -534,7 +549,7 @@ impl FieldDiscovery {
             "total_events": self.total_events,
             "fields": fields_json,
             "truncated": self.capped,
-            "flatten_depth_limit": MAX_FLATTEN_DEPTH,
+            "flatten_depth_limit": self.flatten_depth,
             "flatten_depth_capped": self.flatten_depth_capped,
         });
 
@@ -693,6 +708,9 @@ fn scalar_to_json(value: &Dynamic) -> serde_json::Value {
 
 fn sample_json_display(value: &serde_json::Value) -> std::string::String {
     match value {
+        // Empty strings would render as a bare separator gap (", , ,") in the
+        // examples column, making them invisible. Show them as `""` instead.
+        serde_json::Value::String(s) if s.is_empty() => "\"\"".to_string(),
         serde_json::Value::String(s) => truncate_sample(s),
         serde_json::Value::Null => "null".to_string(),
         _ => truncate_sample(&value.to_string()),
@@ -902,12 +920,19 @@ static ENABLED: AtomicBool = AtomicBool::new(false);
 /// Whether discovery should observe final emitted fields.
 static DISCOVER_FINAL: AtomicBool = AtomicBool::new(false);
 
+/// Configured flatten depth for field discovery (set once at startup).
+static FLATTEN_DEPTH: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(DEFAULT_FLATTEN_DEPTH);
+
 thread_local! {
-    static THREAD_DISCOVERY: RefCell<FieldDiscovery> = RefCell::new(FieldDiscovery::new());
+    static THREAD_DISCOVERY: RefCell<FieldDiscovery> = RefCell::new(FieldDiscovery::with_depth(
+        FLATTEN_DEPTH.load(Ordering::Relaxed),
+    ));
 }
 
 /// Enable field discovery (called once at startup).
-pub fn enable(discover_final: bool) {
+pub fn enable(discover_final: bool, flatten_depth: usize) {
+    FLATTEN_DEPTH.store(flatten_depth.max(1), Ordering::Relaxed);
     ENABLED.store(true, Ordering::Relaxed);
     DISCOVER_FINAL.store(discover_final, Ordering::Relaxed);
 }
@@ -932,9 +957,10 @@ pub fn observe_event_fields(fields: &IndexMap<String, Dynamic>) {
 
 /// Take the accumulated discovery data from the current thread.
 pub fn take_thread_discovery() -> FieldDiscovery {
+    let depth = FLATTEN_DEPTH.load(Ordering::Relaxed);
     THREAD_DISCOVERY.with(|d| {
         let mut discovery = d.borrow_mut();
-        std::mem::replace(&mut *discovery, FieldDiscovery::new())
+        std::mem::replace(&mut *discovery, FieldDiscovery::with_depth(depth))
     })
 }
 

@@ -60,6 +60,7 @@ pub struct OutputConfig {
     pub drain: Option<crate::cli::DrainFormat>,
     pub discover_fields: Option<crate::cli::DiscoverFieldsFormat>,
     pub discover_final: bool,
+    pub discover_depth: usize,
     pub mark_gaps: Option<chrono::Duration>,
     /// Timestamp formatting configuration (display-only)
     pub timestamp_formatting: TimestampFormatConfig,
@@ -1016,6 +1017,9 @@ impl KeloraConfig {
                 drain: cli.drain.clone(),
                 discover_fields,
                 discover_final: cli.discover_final_fields.is_some(),
+                discover_depth: cli
+                    .discover_depth
+                    .unwrap_or(crate::field_discovery::DEFAULT_FLATTEN_DEPTH),
                 mark_gaps: None,
                 timestamp_formatting: create_timestamp_format_config(cli, default_timezone.clone()),
             },
@@ -1116,6 +1120,7 @@ impl Default for KeloraConfig {
                 drain: None,
                 discover_fields: None,
                 discover_final: false,
+                discover_depth: crate::field_discovery::DEFAULT_FLATTEN_DEPTH,
                 mark_gaps: None,
                 timestamp_formatting: TimestampFormatConfig::default(),
             },

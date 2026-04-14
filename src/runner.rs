@@ -54,7 +54,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
 
     // Enable field discovery if requested
     if config.output.discover_fields.is_some() {
-        crate::field_discovery::enable(config.output.discover_final);
+        crate::field_discovery::enable(config.output.discover_final, config.output.discover_depth);
     }
 
     // Enable/disable stats collection up front to avoid per-event overhead when diagnostics are off

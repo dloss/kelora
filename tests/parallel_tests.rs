@@ -166,7 +166,7 @@ fn test_parallel_stats_output_counts_lines_and_events() {
             "--parallel",
             "--with-stats",
             "--exec",
-            "if status >= 400 { track_count(\"errors\"); }",
+            "if e.status >= 400 { track_count(\"errors\"); }",
         ],
         input,
     );
