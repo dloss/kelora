@@ -54,7 +54,7 @@ text.mask_ip([octets])               Mask IP address by zeroing the suffix (IPv4
 text.normalized([patterns])          Replace patterns with placeholders (<ipv4>, <email>, <credit_card>, etc.)
                                      Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
                                      sha1, sha256, path, oauth, function, hexcolor, version, hexnum,
-                                     duration, num, credit_card (Luhn-validated), ssn (SSA-validated, strict XXX-XX-XXXX format only), phone (NANP-aware for US/CA; permissive for international numbers)
+                                     duration, num, credit_card (Luhn), ssn (strict XXX-XX-XXXX), phone (NANP-aware for US/CA; permissive internationally)
 text.parse_cef()                     Parse Common Event Format line into fields
 text.parse_cols(spec [,sep])         Parse columns according to spec
 text.parse_combined()                Parse Apache/Nginx combined log line
@@ -86,15 +86,9 @@ text.to_float()                      Convert text to float (returns () on error)
 text.to_float(thousands, decimal)    Parse with explicit separators
                                      - thousands: remove ANY char in string (e.g., ',', ',. ', ",.'")
                                      - decimal: single char or empty (multi-char returns error)
-                                     Examples: "1,234.56".to_float(',', '.') → 1234.56 (US)
-                                               "1.234,56".to_float('.', ',') → 1234.56 (EU)
-                                               "1,234'567.89".to_float(",'", '.') → 1234567.89 (mixed)
 text.to_int()                        Convert text to integer (returns () on error)
 text.to_int(thousands)               Parse with thousands separator removal
                                      - thousands: remove ANY char in string (e.g., ',', '. ', ",.'")
-                                     Examples: "1,234,567".to_int(',') → 1234567 (US)
-                                               "1.234.567".to_int('.') → 1234567 (EU)
-                                               "1,234'567".to_int(",'") → 1234567 (mixed)
 text.or_empty()                      Convert empty string/array/map to () for removal/filtering
 text.to_lower()                      Convert to lowercase (builtin)
 text.to_upper()                      Convert to uppercase (builtin; also available as upper())
@@ -204,60 +198,40 @@ sample_every(n)                      Sample every Nth event (returns true on Nth
                                      Fast counter-based sampling (thread-local, approximate in parallel mode)
                                      For deterministic sampling, use: text.bucket() % n == 0
 sample_prob(p)                       Probabilistic sampling: returns true with probability p (0.0-1.0)
-                                     Example: sample_prob(0.01) keeps ~1% of events
 
 OUTPUT FORMATTING FUNCTIONS:
-human_bytes(n)                       Format byte count with binary/IEC units (1024-based): B, KiB, MiB, GiB, ...
-                                     Examples: human_bytes(1536) → "1.5 KiB"
-                                               human_bytes(1073741824) → "1.0 GiB"
-human_bytes_si(n)                    Format byte count with decimal/SI units (1000-based): B, KB, MB, GB, ...
-                                     Examples: human_bytes_si(1500) → "1.5 KB"
-                                               human_bytes_si(1_500_000_000) → "1.5 GB"
-format_decimals(value, decimals)     Format number with exactly N digits after the decimal point (returns string)
-                                     Examples: format_decimals(3.14159, 2) → "3.14"
-                                               format_decimals(1.0, 2) → "1.00"
-                                               format_decimals(1.0/3.0, 3) → "0.333"
-format_percent(ratio, decimals)      Format ratio as percentage string with N decimals and '%' suffix (returns string)
-                                     Input is multiplied by 100, so pass 0.042 to render "4.2%".
-                                     Examples: format_percent(0.042, 1) → "4.2%"
-                                               format_percent(0.5, 0) → "50%"
-                                               format_percent(1.5, 1) → "150.0%"
-text.ljust(n [,fill])                Left-justify: pad right to display width n (default fill: space). Unicode-width aware.
-text.rjust(n [,fill])                Right-justify: pad left to display width n (default fill: space).
-text.center(n [,fill])               Center within display width n (extra goes right on odd difference).
-text.shorten(n [,marker])            If text exceeds width n, keep start and append marker (default "…").
-                                     Examples: path.shorten(20) → "/home/user/projec…"
-                                               name.shorten(10, "...") → "longname..." (ASCII marker)
-text.shorten_middle(n [,marker])     If text exceeds width n, keep both ends, insert marker (default "…") in the middle.
-                                     Useful for paths/URLs/IDs where both ends are informative.
-                                     Examples: path.shorten_middle(30) → "/home/user/proj…formatting.rs"
 bar(value, max, width)               Render a horizontal bar of `width` cells showing value/max,
                                      using Unicode eighth-blocks (▏▎▍▌▋▊▉█) for sub-cell resolution.
                                      Pads with spaces so the result has exactly `width` display columns.
                                      Values outside 0..max are clamped; max<=0 renders empty.
                                      For ratios in 0.0–1.0 (error rate, CPU fraction, etc.), set max to 1.0.
-                                     Examples: bar(7, 10, 10)    → "███████   "
-                                               bar(3, 8, 4)      → "█▌  "
-                                               bar(0.42, 1.0, 10) → "████▏     "
+format_decimals(value, decimals)     Format number with exactly N digits after the decimal point (returns string)
+format_percent(ratio, decimals)      Format ratio as percentage string with N decimals and '%' suffix (returns string)
+                                     Input is multiplied by 100, so pass 0.042 to render "4.2%".
+human_bytes(n)                       Format byte count with binary/IEC units (1024-based): B, KiB, MiB, GiB, ...
+human_bytes_si(n)                    Format byte count with decimal/SI units (1000-based): B, KB, MB, GB, ...
 sparkline(array)                     Render an array of numbers as a single-line sparkline (▁▂▃▄▅▆▇█)
                                      scaled to 0..max(array). Negatives and non-numerics render as space.
                                      Empty arrays return "".
-                                     Example: sparkline([1,4,2,8,5,7]) → "▁▄▂█▅▇"
-text.red() / .green() / .yellow()    Wrap text with ANSI color/style; resets at end. Returns text unchanged
-text.blue() / .cyan() / .magenta()   when colors are disabled (non-TTY output, NO_COLOR, --no-color).
 text.bold() / .dim()                 Chainable: "X".bold().red() renders as bold red.
+text.blue() / .cyan() / .magenta()   Wrap text with ANSI color/style; resets at end. Returns text unchanged
+                                     when colors are disabled (non-TTY output, NO_COLOR, --no-color).
+text.ljust(n [,fill])                Left-justify: pad right to display width n (default fill: space). Unicode-width aware.
+text.rjust(n [,fill])                Right-justify: pad left to display width n (default fill: space).
+text.center(n [,fill])               Center within display width n (extra goes right on odd difference).
+text.shorten(n [,marker])            If text exceeds width n, keep start and append marker (default "…").
+text.shorten_middle(n [,marker])     If text exceeds width n, keep both ends, insert marker (default "…") in the middle.
+                                     Useful for paths/URLs/IDs where both ends are informative.
+text.red() / .green() / .yellow()    Wrap text with ANSI color/style; resets at end. Returns text unchanged
+                                     when colors are disabled (non-TTY output, NO_COLOR, --no-color).
 
 TYPE CONVERSION FUNCTIONS:
 to_int(value)                        Convert value to integer (returns () on error)
 to_int(value, thousands)             Parse integer, removing ANY char in thousands string
-                                     Example: "1,234,567".to_int(',') → 1234567
-                                              "1,234'567".to_int(",'") → 1234567 (removes both)
 to_float(value)                      Convert value to float (returns () on error)
 to_float(value, thousands, decimal)  Parse float with explicit separators
                                      - thousands: remove ANY char in string
                                      - decimal: single char or empty (multi-char → error)
-                                     Example: "1,234.56".to_float(',', '.') → 1234.56
-                                              "1.234,56".to_float('.', ',') → 1234.56 (EU)
 to_bool(value)                       Convert value to boolean (returns () on error)
 to_int_or(value, default)            Convert value to integer with fallback
 to_int_or(value, thousands, default) Parse integer with thousands removal and fallback
@@ -287,7 +261,7 @@ drain_templates()                    Return array of templates with same fields 
                                      Default filters: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid,
                                      mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
                                      hexnum, duration, timestamp, date, time, num
-                                     PII filters (opt-in): credit_card (Luhn-validated), ssn (SSA-validated, strict XXX-XX-XXXX format only), phone (NANP-aware for US/CA; permissive for international numbers)
+                                     PII filters (opt-in): credit_card (Luhn), ssn (strict XXX-XX-XXXX), phone (NANP-aware for US/CA; permissive internationally)
                                      Options: depth, max_children, similarity, filters, line_num
 
 STATE MANAGEMENT (sequential mode only; errors in --parallel mode):
@@ -311,8 +285,7 @@ track_avg(key, value)                Track average of numeric values for key (sk
 track_bottom(key, item, n)           Track bottom N least frequent items (counts occurrences; skips () items)
 track_bottom(key, item, n, score)    Track bottom N items by lowest scores (ranks by numeric value; skips () items/values)
 track_bucket(key, bucket)            Track values in buckets for histograms (skips () values)
-track_cardinality(key, value)        Estimate unique count using HyperLogLog (~1% error, ~12KB; skips () values)
-track_cardinality(key, value, err)   Estimate unique count with custom error rate (0.001-0.26)
+track_cardinality(key, value [,err]) Estimate unique count using HyperLogLog (~1% error, ~12KB; err range: 0.001-0.26; skips () values)
 track_count(key)                     Increment counter for key by 1 (string key; use to_string() for numbers)
 track_max(key, value)                Track maximum value for key (skips () values)
 track_min(key, value)                Track minimum value for key (skips () values)
@@ -664,9 +637,7 @@ COMMON IDIOMS:
 # Default value if missing     → e.referer ?? "direct"
 # Nested field with default    → e.get_path("user.profile.tier", "free")
 # Safe type conversion         → to_int_or(e.port, 8080)
-# Parse formatted numbers      → e.amount.to_float(',', '.')  (US: "1,234.56" → 1234.56)
-#                              → e.amount.to_float('.', ',')  (EU: "1.234,56" → 1234.56)
-#                              → e.count.to_int(",'")         (mixed: "1,234'567" → 1234567)
+# Parse formatted integers     → e.count.to_int(",'")         (mixed: "1,234'567" → 1234567)
 # Check field exists & not ()  → e.has("user_id")
 # Check nested field exists    → e.has_path("response.body.status")
 # Remove sensitive fields      → e.password = (); e.ssn = ()

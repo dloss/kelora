@@ -121,19 +121,6 @@ VARIABLE SCOPE BETWEEN STAGES:
   What persists:   e.field modifications, conf, metrics
   What doesn't:    let variables, function definitions (unless from --include)
 
-RESILIENT MODE SNAPSHOTTING:
-  Each successful stage creates a snapshot. On error, event reverts to last good state:
-
-  kelora --resilient -e 'e.safe = "ok"' -e 'e.risky = parse(e.raw)' -e 'e.done = true'
-  → If parse fails, event keeps 'safe' but not 'risky', continues with 'safe' field
-
-  Why use multiple stages:
-    - Error isolation (failures don't corrupt earlier work)
-    - Progressive checkpoints (partial success possible)
-  Why use semicolons in one stage:
-    - Share local variables
-    - All-or-nothing execution (no partial results)
-
 KELORA EVENT ACCESS:
   e                                    Current event (global variable in --filter/--exec)
   e.field                              Direct field access
@@ -212,10 +199,20 @@ ERROR HANDLING MODES:
   --strict mode:
     • Any error → abort with exit code 1
 
-EXEC ROLLBACK SEMANTICS (-e):
-  Each -e script runs transactionally per event. If the script fails partway
-  through, all of its mutations are rolled back and the unmodified original
-  event is forwarded to the next stage. Rolled back on error:
+EXEC SNAPSHOTTING & ROLLBACK SEMANTICS (-e):
+  Each successful stage creates a snapshot. On error, execution resumes from
+  the last good snapshot.
+
+  kelora -e 'e.safe = "ok"' -e 'e.risky = parse(e.raw)' -e 'e.done = true'
+  → If parse fails, event keeps 'safe' but not 'risky', then continues.
+
+  Why use multiple stages:
+    - Error isolation (failures don't corrupt earlier work)
+    - Progressive checkpoints (partial success possible)
+
+  Within a single -e stage, execution is transactional per event. If the stage
+  fails partway through, all mutations from that stage are rolled back and the
+  pre-stage event is forwarded to the next stage. Rolled back on error:
     • Field assignments and deletions (e.field = ..., e.field = ())
     • Tracking calls (track_count, track_stats, track_unique, track_bucket, ...)
     • emit_each() calls and skip() requests
