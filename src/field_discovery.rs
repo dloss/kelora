@@ -21,9 +21,6 @@ const EXACT_CARDINALITY_THRESHOLD: usize = 256;
 /// Maximum number of sample values to keep per field.
 const MAX_SAMPLES: usize = 8;
 
-/// Maximum character length for stored sample values.
-const MAX_SAMPLE_LEN: usize = 80;
-
 /// Default table width for `--discover` when output is redirected (not a TTY)
 /// and no `COLUMNS` override is set. Chosen wide enough that the examples
 /// column has room to breathe in files and pipes.
@@ -725,12 +722,17 @@ fn sample_json_display(value: &serde_json::Value) -> std::string::String {
         // Render strings in inspect-style: escaped and wrapped in double quotes.
         // This makes types unambiguous (so `"42"` is distinguishable from `42`)
         // and naturally surfaces empty strings as `""`.
+        //
+        // No per-sample length cap is applied here: the layout code truncates
+        // the joined examples string to fit the available column width at
+        // render time, so long samples can fill a wide terminal in the full
+        // table, and the dedicated examples line in the compact table gets to
+        // extend all the way to `terminal_width`.
         serde_json::Value::String(s) => {
-            let truncated = truncate_sample(s);
-            format!("\"{}\"", crate::formatters::escape_for_display(&truncated))
+            format!("\"{}\"", crate::formatters::escape_for_display(s))
         }
         serde_json::Value::Null => "null".to_string(),
-        _ => truncate_sample(&value.to_string()),
+        _ => value.to_string(),
     }
 }
 
@@ -740,15 +742,6 @@ fn hash_value(ft: &FieldType, display: &str) -> u64 {
     ft.hash(&mut hasher);
     display.hash(&mut hasher);
     hasher.finish()
-}
-
-/// Truncate a sample value for display.
-fn truncate_sample(s: &str) -> std::string::String {
-    if s.chars().count() <= MAX_SAMPLE_LEN {
-        s.to_string()
-    } else {
-        truncate_for_display(s, MAX_SAMPLE_LEN)
-    }
 }
 
 /// Truncate a string to `max_chars` with an ellipsis suffix, preserving valid
@@ -1365,24 +1358,53 @@ mod tests {
     }
 
     #[test]
-    fn test_long_string_samples_not_truncated_in_json() {
-        let long = "x".repeat(MAX_SAMPLE_LEN + 40);
+    fn test_long_string_samples_preserved_in_format_examples() {
+        let long = "x".repeat(200);
         let mut profile = FieldProfile::new();
         profile.observe(&make_string(&long));
 
+        // Profile storage keeps the full length (used for --discover JSON
+        // output, which should round-trip the original value).
         assert_eq!(profile.samples.len(), 1);
         assert_eq!(profile.samples[0], serde_json::json!(long));
 
-        // Per-sample truncation still applies: the raw content is capped at
-        // MAX_SAMPLE_LEN chars (with `...`), plus 2 for the surrounding quotes.
+        // format_examples preserves the full content too; the layout-level
+        // truncation in format_table_for_width is what bounds the displayed
+        // width, so that compact/full layouts can both extend examples all
+        // the way to terminal width on wide terminals.
         let examples = format_examples(&profile);
+        assert_eq!(examples, format!("\"{long}\""));
+    }
+
+    #[test]
+    fn test_compact_examples_line_fills_terminal_width() {
+        let long = "y".repeat(300);
+        let mut discovery = FieldDiscovery::new();
+        let mut fields = IndexMap::new();
+        fields.insert("sample".to_string(), make_string(&long));
+        discovery.observe_event(&fields);
+
+        // Width 40 forces the compact layout (examples on their own line).
+        let width = 40;
+        let table = discovery.format_table_for_width(width);
+
+        // Find the indented examples line.
+        let examples_line = table
+            .lines()
+            .find(|line| line.starts_with("  \""))
+            .unwrap_or_else(|| {
+                panic!("expected indented examples line in compact layout:\n{table}")
+            });
+
+        // The compact examples line should extend all the way to the terminal
+        // width (minus the trailing ellipsis boundary). Before the fix, the
+        // per-sample MAX_SAMPLE_LEN=80 cap made this line ~82 chars max — far
+        // short of the ~38 chars available after the 2-char indent here; with
+        // the cap removed it should fully fill the available width.
+        let line_width = display_width(examples_line);
         assert!(
-            examples.chars().count() <= MAX_SAMPLE_LEN + 2,
-            "per-sample display truncation should still apply: {examples}"
-        );
-        assert!(
-            examples.starts_with('"') && examples.ends_with("...\""),
-            "truncated sample should stay quoted: {examples}"
+            line_width >= width - 1 && line_width <= width,
+            "compact examples line should fill terminal width {width}, got {line_width}: {examples_line}"
         );
     }
 
