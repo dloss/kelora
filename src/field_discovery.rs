@@ -803,21 +803,29 @@ impl TableWidths {
         let miss = 4;
         let unique = row_width(rows, |row| display_width(&row.unique), "Uniq");
         let separators = 10;
-        let min_name = 12;
-        let min_types = 6;
-        let min_examples = 8;
-        let max_name = row_width(rows, |row| display_width(&row.name), "Field").clamp(min_name, 40);
-        let max_types =
-            row_width(rows, |row| display_width(&row.types), "Type").clamp(min_types, 30);
+        // Layout floors — the minimum width each column would like when there
+        // is ample room. They are clamped to the actual content width below so
+        // narrow content never inflates the column.
+        let layout_min_name = 12;
+        let layout_min_types = 6;
+        let layout_min_examples = 8;
+        let max_name = row_width(rows, |row| display_width(&row.name), "Field").min(40);
+        let max_types = row_width(rows, |row| display_width(&row.types), "Type").min(30);
         let max_examples = row_width(rows, |row| display_width(&row.examples), "Examples");
         let available = terminal_width.checked_sub(seen + miss + unique + separators)?;
-        if available < min_name + min_types + min_examples {
+
+        // Start each column at its natural floor — the layout minimum capped
+        // by the actual content width.
+        let floor_name = layout_min_name.min(max_name);
+        let floor_types = layout_min_types.min(max_types);
+        let floor_examples = layout_min_examples.min(max_examples.max(layout_min_examples));
+        if available < floor_name + floor_types + floor_examples {
             return None;
         }
 
-        let mut name = min_name.min(max_name);
-        let mut types = min_types.min(max_types);
-        let mut examples = min_examples.min(max_examples.max(min_examples));
+        let mut name = floor_name;
+        let mut types = floor_types;
+        let mut examples = floor_examples;
         let mut remaining = available.saturating_sub(name + types + examples);
 
         let name_target = max_name.min(26);
@@ -844,26 +852,30 @@ impl TableWidths {
         let miss = 4;
         let unique = row_width(rows, |row| display_width(&row.unique), "Uniq");
         let separators = 8;
-        let min_name = 12;
-        let min_types = 6;
-        let max_name = row_width(rows, |row| display_width(&row.name), "Field").clamp(min_name, 40);
-        let max_types =
-            row_width(rows, |row| display_width(&row.types), "Type").clamp(min_types, 30);
+        let layout_min_name = 12;
+        let layout_min_types = 6;
+        let max_name = row_width(rows, |row| display_width(&row.name), "Field").min(40);
+        let max_types = row_width(rows, |row| display_width(&row.types), "Type").min(30);
         let available = terminal_width.checked_sub(seen + miss + unique + separators)?;
-        if available < min_name + min_types {
+
+        let floor_name = layout_min_name.min(max_name);
+        let floor_types = layout_min_types.min(max_types);
+        if available < floor_name + floor_types {
             return None;
         }
 
-        let mut types = max_types.min((available / 3).max(min_types));
-        let mut name = available.saturating_sub(types);
-        if name < min_name || types < min_types {
+        // Prefer giving both columns their full content width; if that doesn't
+        // fit, shrink the name column (it's the more variable one) while
+        // keeping types at content width.
+        let (name, types) = if max_name + max_types <= available {
+            (max_name, max_types)
+        } else {
+            let types = max_types.min(available.saturating_sub(floor_name));
+            let name = available.saturating_sub(types).min(max_name);
+            (name, types)
+        };
+        if name < floor_name || types < floor_types {
             return None;
-        }
-
-        if name > max_name {
-            let extra = name - max_name;
-            name = max_name;
-            types = (types + extra).min(max_types);
         }
 
         Some(Self {
