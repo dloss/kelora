@@ -31,8 +31,15 @@ const MAX_TRACKED_FIELDS: usize = 1_000;
 
 /// Default maximum depth for flattening nested maps and arrays into dotted
 /// keys. Depth counts descents from the event root: `a.b.c` is depth 3.
-/// Override with `--discover-depth=N`.
+/// Override with `--discover-depth=N`. A value of `0` means unlimited.
 pub const DEFAULT_FLATTEN_DEPTH: usize = 3;
+
+/// Sentinel value meaning "descend without a depth cap".
+///
+/// Stored in the `flatten_depth` field when the user passes
+/// `--discover-depth=0`. Internally we compare against this sentinel before
+/// deciding whether to stop flattening.
+pub const UNLIMITED_FLATTEN_DEPTH: usize = 0;
 
 /// Cap on the per-field dedup set for reservoir sampling.
 /// Once reached, samples may include duplicates.
@@ -267,9 +274,15 @@ pub struct FieldDiscovery {
     pub total_events: usize,
     /// Whether we've hit the field cap.
     capped: bool,
-    /// Whether nested field flattening stopped at the maximum depth.
-    flatten_depth_capped: bool,
-    /// Configured depth limit for nested field flattening.
+    /// Types observed at the depth cutoff. Empty when nothing was cut.
+    ///
+    /// Each value represents the runtime type of a field whose descendants
+    /// were not flattened because the depth limit was reached. In practice
+    /// these are typically `Map` or `Array`, but scalar types are tracked too
+    /// so the message makes it clear whether deeper structure exists.
+    flatten_depth_capped_types: std::collections::BTreeSet<FieldType>,
+    /// Configured depth limit for nested field flattening. `0` means
+    /// unlimited.
     flatten_depth: usize,
 }
 
@@ -290,8 +303,11 @@ impl FieldDiscovery {
             fields: IndexMap::new(),
             total_events: 0,
             capped: false,
-            flatten_depth_capped: false,
-            flatten_depth: flatten_depth.max(1),
+            flatten_depth_capped_types: std::collections::BTreeSet::new(),
+            // `0` is reserved for "unlimited"; any other value is used
+            // verbatim. Callers pass user-supplied limits directly, so we do
+            // not clamp to 1 here — a small positive value is still meaningful.
+            flatten_depth,
         }
     }
 
@@ -313,9 +329,11 @@ impl FieldDiscovery {
     fn observe_path(&mut self, path: &str, value: &Dynamic, depth: usize) {
         self.record(path, value);
 
-        if depth >= self.flatten_depth {
+        // `0` means unlimited — never stop descending.
+        if self.flatten_depth != UNLIMITED_FLATTEN_DEPTH && depth >= self.flatten_depth {
             if value.is_map() || value.is_array() {
-                self.flatten_depth_capped = true;
+                self.flatten_depth_capped_types
+                    .insert(FieldType::from_dynamic(value));
             }
             return;
         }
@@ -508,10 +526,16 @@ impl FieldDiscovery {
                 MAX_TRACKED_FIELDS
             ));
         }
-        if self.flatten_depth_capped {
+        if !self.flatten_depth_capped_types.is_empty() {
+            let types_list = self
+                .flatten_depth_capped_types
+                .iter()
+                .map(|ft| ft.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
             output.push_str(&format!(
-                "\nNote: Nested field flattening stopped at depth {}; deeper children are not shown. Use --discover-depth=N to descend further.\n",
-                self.flatten_depth
+                "\nNote: Nested field flattening stopped at depth {}; deeper children are not shown (cut-off types: {}). Use --discover-depth=N to descend further, or --discover-depth=0 for unlimited.\n",
+                self.flatten_depth, types_list
             ));
         }
 
@@ -558,12 +582,19 @@ impl FieldDiscovery {
             fields_json.push(field_obj);
         }
 
+        let capped_types: Vec<String> = self
+            .flatten_depth_capped_types
+            .iter()
+            .map(|ft| ft.to_string())
+            .collect();
+
         let result = serde_json::json!({
             "total_events": self.total_events,
             "fields": fields_json,
             "truncated": self.capped,
             "flatten_depth_limit": self.flatten_depth,
-            "flatten_depth_capped": self.flatten_depth_capped,
+            "flatten_depth_capped": !self.flatten_depth_capped_types.is_empty(),
+            "flatten_depth_cutoff_types": capped_types,
         });
 
         serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".to_string())
@@ -952,9 +983,10 @@ thread_local! {
     ));
 }
 
-/// Enable field discovery (called once at startup).
+/// Enable field discovery (called once at startup). A `flatten_depth` of `0`
+/// is preserved verbatim and interpreted as "unlimited" downstream.
 pub fn enable(discover_final: bool, flatten_depth: usize) {
-    FLATTEN_DEPTH.store(flatten_depth.max(1), Ordering::Relaxed);
+    FLATTEN_DEPTH.store(flatten_depth, Ordering::Relaxed);
     ENABLED.store(true, Ordering::Relaxed);
     DISCOVER_FINAL.store(discover_final, Ordering::Relaxed);
 }
@@ -1542,11 +1574,95 @@ mod tests {
             table.contains("Nested field flattening stopped at depth 3"),
             "table should make depth cap explicit: {table}"
         );
+        assert!(
+            table.contains("cut-off types: map"),
+            "table should list the cut-off type at the boundary: {table}"
+        );
 
         let json = discovery.format_json();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed["flatten_depth_limit"], 3);
         assert_eq!(parsed["flatten_depth_capped"], true);
+        assert_eq!(
+            parsed["flatten_depth_cutoff_types"],
+            serde_json::json!(["map"])
+        );
+    }
+
+    #[test]
+    fn test_depth_cutoff_tracks_multiple_types() {
+        // At depth 2 the boundary has both a map child (profile) and an
+        // array child (tags). Both should be reported as cutoff types.
+        let nested = make_map(vec![
+            ("profile", make_map(vec![("name", make_string("alice"))])),
+            ("tags", make_array(vec![make_string("a")])),
+        ]);
+        let mut fields = IndexMap::new();
+        fields.insert("user".to_string(), nested);
+
+        let mut discovery = FieldDiscovery::with_depth(2);
+        discovery.observe_event(&fields);
+
+        let json = discovery.format_json();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["flatten_depth_capped"], true);
+        let types = parsed["flatten_depth_cutoff_types"].as_array().unwrap();
+        let type_strings: Vec<&str> = types.iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(
+            type_strings.contains(&"map"),
+            "expected map in {type_strings:?}"
+        );
+        assert!(
+            type_strings.contains(&"array"),
+            "expected array in {type_strings:?}"
+        );
+
+        let table = discovery.format_table();
+        assert!(
+            table.contains("cut-off types: array, map"),
+            "table should list both cutoff types sorted: {table}"
+        );
+    }
+
+    #[test]
+    fn test_unlimited_depth_descends_fully() {
+        // 5-deep nested map: a.b.c.d.e with --discover-depth=0 (unlimited).
+        let deep = make_map(vec![(
+            "b",
+            make_map(vec![(
+                "c",
+                make_map(vec![("d", make_map(vec![("e", make_string("bottom"))]))]),
+            )]),
+        )]);
+        let mut fields = IndexMap::new();
+        fields.insert("a".to_string(), deep);
+
+        let mut discovery = FieldDiscovery::with_depth(UNLIMITED_FLATTEN_DEPTH);
+        discovery.observe_event(&fields);
+
+        assert!(discovery.fields.contains_key("a.b.c.d.e"));
+        assert_eq!(
+            discovery.fields["a.b.c.d.e"].type_counts[&FieldType::String],
+            1
+        );
+
+        let json = discovery.format_json();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["flatten_depth_capped"], false);
+        assert_eq!(parsed["flatten_depth_limit"], 0);
+        assert_eq!(
+            parsed["flatten_depth_cutoff_types"]
+                .as_array()
+                .map(|a| a.len()),
+            Some(0)
+        );
+
+        // Table should not render a cut-off note at all.
+        let table = discovery.format_table();
+        assert!(
+            !table.contains("Nested field flattening stopped"),
+            "unlimited depth should not show cut-off note: {table}"
+        );
     }
 
     #[test]

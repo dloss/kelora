@@ -668,7 +668,7 @@ pub struct Cli {
         long = "discover-depth",
         value_name = "N",
         help_heading = "Field Discovery",
-        help = "Maximum depth for flattening nested maps/arrays into dotted keys (default: 3).\nDepth counts descents from the event root: a.b.c is depth 3.\nUse a higher value to inspect deeply nested JSON; use 1 to see only top-level fields.\n\nExamples:\n  --discover --discover-depth=5    Descend up to 5 levels deep\n  --discover --discover-depth=1    Top-level fields only"
+        help = "Maximum depth for flattening nested maps/arrays into dotted keys (default: 3).\nDepth counts descents from the event root: a.b.c is depth 3.\nUse a higher value to inspect deeply nested JSON; use 1 to see only top-level fields.\nUse 0 for unlimited depth (descend into every nested map and array).\n\nWhen the limit is hit, the footer note lists the data types at the cut-off\n(e.g. map, array) so you can tell whether deeper structure was skipped.\n\nExamples:\n  --discover --discover-depth=5    Descend up to 5 levels deep\n  --discover --discover-depth=1    Top-level fields only\n  --discover --discover-depth=0    Unlimited depth (deeply nested JSON)"
     )]
     pub discover_depth: Option<usize>,
 
