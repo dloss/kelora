@@ -732,7 +732,10 @@ fn handle_pipeline_success(
         if let Some(ref discovery) = pipeline_result.field_discovery {
             let formatted = match config.output.discover_fields {
                 Some(cli::DiscoverFieldsFormat::Json) => discovery.format_json(),
-                _ => discovery.format_table(),
+                _ => discovery.format_table(crate::tty::should_use_emoji_with_mode(
+                    &config.output.emoji,
+                    &config.output.color,
+                )),
             };
             stdout.writeln(&formatted).unwrap_or(());
         }
@@ -776,7 +779,10 @@ fn handle_pipeline_success(
                     summaries.push(tracking_summary);
                 }
 
-                let stats_summary = s.format_error_summary();
+                let stats_summary = s.format_error_summary(crate::tty::should_use_emoji_with_mode(
+                    &config.output.emoji,
+                    &config.output.color,
+                ));
                 if !stats_summary.is_empty() {
                     summaries.push(stats_summary);
                 }
@@ -838,7 +844,9 @@ fn handle_signal_termination(
             && !config.processing.suppress_diagnostics
         {
             // Error summary by default when errors occur (unless suppressed)
-            let mut formatted = config.format_error_message(&stats.format_error_summary());
+            let mut formatted = config.format_error_message(&stats.format_error_summary(
+                crate::tty::should_use_emoji_with_mode(&config.output.emoji, &config.output.color),
+            ));
             if !events_were_output {
                 formatted = formatted.trim_start_matches('\n').to_string();
             }

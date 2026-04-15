@@ -385,8 +385,9 @@ pub fn format_fatal_error_line(snapshot: &TrackingSnapshot) -> String {
                 .unwrap_or_else(|| "unknown error".to_string());
 
             // Truncate very long messages for single line
+            let ellipsis = crate::tty::ellipsis(crate::tty::should_use_emoji_for_stderr());
             let message = if message.len() > 80 {
-                format!("{}...", &message[..77])
+                format!("{}{}", &message[..77], ellipsis)
             } else {
                 message
             };
@@ -447,7 +448,7 @@ pub fn extract_error_summary_from_tracking(
     snapshot: &TrackingSnapshot,
     verbose: u8,
     stats: Option<&ProcessingStats>,
-    _config: Option<&crate::config::KeloraConfig>,
+    config: Option<&crate::config::KeloraConfig>,
 ) -> Option<String> {
     let mut total_errors = 0;
     let mut error_types = Vec::new();
@@ -540,8 +541,11 @@ pub fn extract_error_summary_from_tracking(
         if verbose > 0 {
             if let Some(orig_line) = original_line {
                 // Truncate very long lines for readability
+                let use_emoji = config.map_or_else(crate::tty::should_use_emoji_for_stderr, |c| {
+                    crate::tty::should_use_emoji_with_mode(&c.output.emoji, &c.output.color)
+                });
                 let display_line = if orig_line.len() > 100 {
-                    format!("{}...", &orig_line[..97])
+                    format!("{}{}", &orig_line[..97], crate::tty::ellipsis(use_emoji))
                 } else {
                     orig_line
                 };

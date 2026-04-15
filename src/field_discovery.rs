@@ -390,7 +390,7 @@ impl FieldDiscovery {
     }
 
     /// Format the discovery results as a human-readable table.
-    pub fn format_table(&self) -> std::string::String {
+    pub fn format_table(&self, use_emoji: bool) -> std::string::String {
         let width = if crate::tty::is_stdout_tty() {
             crate::tty::get_terminal_width()
         } else {
@@ -402,10 +402,14 @@ impl FieldDiscovery {
                 .filter(|&c| c > 0)
                 .unwrap_or(REDIRECTED_TABLE_WIDTH)
         };
-        self.format_table_for_width(width)
+        self.format_table_for_width(width, use_emoji)
     }
 
-    fn format_table_for_width(&self, terminal_width: usize) -> std::string::String {
+    fn format_table_for_width(
+        &self,
+        terminal_width: usize,
+        use_emoji: bool,
+    ) -> std::string::String {
         if self.fields.is_empty() {
             return format!("Scanned {} events: no fields found\n", self.total_events);
         }
@@ -436,12 +440,12 @@ impl FieldDiscovery {
 
             for row in &rows {
                 output.push_str(&pad_right_display(
-                    &truncate_for_display(&row.name, widths.name),
+                    &truncate_for_display(&row.name, widths.name, use_emoji),
                     widths.name,
                 ));
                 output.push_str("  ");
                 output.push_str(&pad_right_display(
-                    &truncate_for_display(&row.types, widths.types),
+                    &truncate_for_display(&row.types, widths.types, use_emoji),
                     widths.types,
                 ));
                 output.push_str("  ");
@@ -454,7 +458,11 @@ impl FieldDiscovery {
                 output.push_str("  ");
                 output.push_str(&pad_left_display(&row.unique, widths.unique));
                 output.push_str("  ");
-                output.push_str(&truncate_for_display(&row.examples, widths.examples));
+                output.push_str(&truncate_for_display(
+                    &row.examples,
+                    widths.examples,
+                    use_emoji,
+                ));
                 output.push('\n');
             }
         } else if let Some(widths) = TableWidths::for_compact_table(terminal_width, &rows) {
@@ -471,12 +479,12 @@ impl FieldDiscovery {
 
             for row in &rows {
                 output.push_str(&pad_right_display(
-                    &truncate_for_display(&row.name, widths.name),
+                    &truncate_for_display(&row.name, widths.name, use_emoji),
                     widths.name,
                 ));
                 output.push_str("  ");
                 output.push_str(&pad_right_display(
-                    &truncate_for_display(&row.types, widths.types),
+                    &truncate_for_display(&row.types, widths.types, use_emoji),
                     widths.types,
                 ));
                 output.push_str("  ");
@@ -494,6 +502,7 @@ impl FieldDiscovery {
                     output.push_str(&truncate_for_display(
                         &row.examples,
                         terminal_width.saturating_sub(2),
+                        use_emoji,
                     ));
                     output.push('\n');
                 }
@@ -503,7 +512,7 @@ impl FieldDiscovery {
                 if idx > 0 {
                     output.push('\n');
                 }
-                output.push_str(&truncate_for_display(&row.name, terminal_width));
+                output.push_str(&truncate_for_display(&row.name, terminal_width, use_emoji));
                 output.push('\n');
                 output.push_str(&format!(
                     "  seen: {}  miss: {:.0}%\n",
@@ -513,12 +522,14 @@ impl FieldDiscovery {
                 output.push_str(&truncate_for_display(
                     &row.types,
                     terminal_width.saturating_sub(8),
+                    use_emoji,
                 ));
                 output.push('\n');
                 output.push_str("  unique: ");
                 output.push_str(&truncate_for_display(
                     &row.unique,
                     terminal_width.saturating_sub(10),
+                    use_emoji,
                 ));
                 output.push('\n');
                 if !row.examples.is_empty() {
@@ -526,6 +537,7 @@ impl FieldDiscovery {
                     output.push_str(&truncate_for_display(
                         &row.examples,
                         terminal_width.saturating_sub(16),
+                        use_emoji,
                     ));
                     output.push('\n');
                 }
@@ -776,8 +788,12 @@ fn hash_value(ft: &FieldType, display: &str) -> u64 {
 
 /// Truncate a string to `max_chars` with an ellipsis suffix, preserving valid
 /// UTF-8 boundaries.
-fn truncate_for_display(s: &str, max_chars: usize) -> std::string::String {
-    if max_chars <= 3 {
+fn truncate_for_display(s: &str, max_chars: usize, use_emoji: bool) -> std::string::String {
+    let marker = crate::tty::ellipsis(use_emoji);
+    let marker_len = marker.chars().count();
+
+    if max_chars <= marker_len {
+        // Not enough room for a proper marker; fill with dots.
         return ".".repeat(max_chars);
     }
     let char_count = s.chars().count();
@@ -785,9 +801,9 @@ fn truncate_for_display(s: &str, max_chars: usize) -> std::string::String {
         return s.to_string();
     }
 
-    let keep = max_chars - 3;
+    let keep = max_chars - marker_len;
     let mut out = s.chars().take(keep).collect::<std::string::String>();
-    out.push_str("...");
+    out.push_str(marker);
     out
 }
 
@@ -1250,7 +1266,7 @@ mod tests {
         fields.insert("msg".to_string(), make_string("test"));
         discovery.observe_event(&fields);
 
-        let table = discovery.format_table();
+        let table = discovery.format_table(false);
         assert!(table.contains("Scanned 1 events"));
         assert!(table.contains("level"));
         assert!(table.contains("msg"));
@@ -1267,7 +1283,7 @@ mod tests {
         );
         discovery.observe_event(&fields);
 
-        let table = discovery.format_table_for_width(56);
+        let table = discovery.format_table_for_width(56, false);
         assert!(table.contains("Field"));
         assert!(table.contains("Type"));
         assert!(table.contains("Seen"));
@@ -1284,7 +1300,7 @@ mod tests {
         fields.insert("request_id".to_string(), make_string("req_001"));
         discovery.observe_event(&fields);
 
-        let table = discovery.format_table_for_width(38);
+        let table = discovery.format_table_for_width(38, false);
         assert!(table.contains("request_id"));
         assert!(table.contains("req_001"));
         assert!(table.contains("1"));
@@ -1315,7 +1331,7 @@ mod tests {
     #[test]
     fn test_empty_discovery() {
         let discovery = FieldDiscovery::new();
-        let table = discovery.format_table();
+        let table = discovery.format_table(false);
         assert!(table.contains("Scanned 0 events"));
         assert!(table.contains("no fields found"));
     }
@@ -1463,7 +1479,7 @@ mod tests {
 
         // Width 40 forces the compact layout (examples on their own line).
         let width = 40;
-        let table = discovery.format_table_for_width(width);
+        let table = discovery.format_table_for_width(width, false);
 
         // Find the indented examples line.
         let examples_line = table
@@ -1536,7 +1552,7 @@ mod tests {
         }
 
         // At 200 chars wide the full sample list should appear unclipped.
-        let table = discovery.format_table_for_width(200);
+        let table = discovery.format_table_for_width(200, false);
         for tag in tags {
             assert!(
                 table.contains(&format!("\"{tag}\"")),
@@ -1546,7 +1562,7 @@ mod tests {
 
         // At 60 chars wide the list should be truncated (at least one sample
         // missing or cut off with an ellipsis).
-        let table = discovery.format_table_for_width(60);
+        let table = discovery.format_table_for_width(60, false);
         assert!(
             table.contains("..."),
             "narrow table should truncate examples: {table}"
@@ -1614,7 +1630,7 @@ mod tests {
         assert!(!discovery.fields.contains_key("a.b.c.d"));
         assert!(!discovery.fields.contains_key("a.b.c.d.e"));
 
-        let table = discovery.format_table();
+        let table = discovery.format_table(false);
         assert!(
             table.contains("Nested field flattening stopped at depth 3"),
             "table should make depth cap explicit: {table}"
@@ -1649,7 +1665,7 @@ mod tests {
         assert!(discovery.fields.contains_key("a.b.c.d"));
         assert!(discovery.fields.contains_key("a.b.c.d.e"));
 
-        let table = discovery.format_table();
+        let table = discovery.format_table(false);
         assert!(
             !table.contains("Nested field flattening stopped"),
             "unlimited depth should not emit a depth-cap note: {table}"
@@ -1677,7 +1693,7 @@ mod tests {
         assert_eq!(discovery.total_events, 1);
 
         // Formatting must not panic
-        let table = discovery.format_table();
+        let table = discovery.format_table(false);
         assert!(table.contains("tags[]"));
         let json = discovery.format_json();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();

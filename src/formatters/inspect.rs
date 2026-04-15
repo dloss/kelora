@@ -7,6 +7,7 @@ use rhai::Dynamic;
 // Inspect formatter - detailed, type-aware introspection output
 pub struct InspectFormatter {
     max_inline_chars: usize,
+    use_emoji: bool,
 }
 
 struct LineSpec<'a> {
@@ -21,7 +22,7 @@ struct LineSpec<'a> {
 impl InspectFormatter {
     const KEY_WIDTH_CAP: usize = 40;
 
-    pub fn new(verbosity: u8) -> Self {
+    pub fn new(verbosity: u8, use_emoji: bool) -> Self {
         // Gradually relax truncation with higher verbosity levels
         let max_inline_chars = match verbosity {
             0 => 80,
@@ -29,7 +30,10 @@ impl InspectFormatter {
             _ => usize::MAX,
         };
 
-        Self { max_inline_chars }
+        Self {
+            max_inline_chars,
+            use_emoji,
+        }
     }
 
     fn format_entries<'a, I>(&self, lines: &mut Vec<String>, entries: I, indent: usize)
@@ -219,7 +223,7 @@ impl InspectFormatter {
                 let (truncated, was_truncated) = self.truncate_value(&escaped);
                 let mut rendered = format!("\"{}\"", truncated);
                 if was_truncated {
-                    rendered.push_str("...");
+                    rendered.push_str(crate::tty::ellipsis(self.use_emoji));
                 }
                 return ("string".to_string(), rendered);
             }
@@ -262,7 +266,7 @@ impl InspectFormatter {
         let (truncated, was_truncated) = self.truncate_value(&rendered);
         let mut repr = truncated;
         if was_truncated {
-            repr.push_str("...");
+            repr.push_str(crate::tty::ellipsis(self.use_emoji));
         }
         (type_label, repr)
     }

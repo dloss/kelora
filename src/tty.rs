@@ -110,6 +110,19 @@ pub fn should_use_emoji_for_stderr() -> bool {
     true
 }
 
+/// Return the appropriate ellipsis string based on emoji/Unicode settings.
+///
+/// When `use_emoji` is `true`, returns the Unicode ellipsis character (U+2026, "…"),
+/// which takes less horizontal space and is visually distinct from literal `...` in data.
+/// When `false` (e.g. under `--no-emoji`), returns the ASCII three-dot sequence `"..."`.
+pub fn ellipsis(use_emoji: bool) -> &'static str {
+    if use_emoji {
+        "…"
+    } else {
+        "..."
+    }
+}
+
 /// Get terminal width for word-wrapping, with fallback to default width
 /// Checks in order: COLUMNS environment variable, terminal size detection, default (100)
 pub fn get_terminal_width() -> usize {

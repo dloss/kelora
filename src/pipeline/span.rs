@@ -633,9 +633,11 @@ impl SpanProcessor {
         if platform::SHOULD_TERMINATE.load(std::sync::atomic::Ordering::Relaxed)
             && !self.signal_notice_shown
         {
-            let message = crate::config::format_error_message_auto(
-                "Received signal, waiting for span close... (Ctrl+C again to force quit)",
+            let signal_msg = format!(
+                "Received signal, waiting for span close{} (Ctrl+C again to force quit)",
+                crate::tty::ellipsis(crate::tty::should_use_emoji_for_stderr()),
             );
+            let message = crate::config::format_error_message_auto(&signal_msg);
             let _ = SafeStderr::new().writeln(&message);
             self.signal_notice_shown = true;
         }

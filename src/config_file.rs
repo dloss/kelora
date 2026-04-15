@@ -277,7 +277,12 @@ impl ConfigFile {
         };
 
         // Print the file being edited
-        println!("Opening {} in {}...", config_path.display(), editor);
+        println!(
+            "Opening {} in {}{}",
+            config_path.display(),
+            editor,
+            crate::tty::ellipsis(crate::tty::should_use_emoji_for_stderr()),
+        );
 
         // Spawn editor and wait for it to complete
         match Command::new(&editor).arg(&config_path).status() {

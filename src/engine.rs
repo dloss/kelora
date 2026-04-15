@@ -11,10 +11,14 @@ use crate::rhai_functions;
 use crate::rhai_functions::datetime::DateTimeWrapper;
 
 /// Truncate text for display, respecting UTF-8 character boundaries
-fn truncate_for_display(text: &str, max_len: usize) -> String {
+fn truncate_for_display(text: &str, max_len: usize, use_emoji: bool) -> String {
     if text.chars().count() > max_len {
-        let truncated: String = text.chars().take(max_len.saturating_sub(3)).collect();
-        format!("{}...", truncated)
+        let marker = crate::tty::ellipsis(use_emoji);
+        let truncated: String = text
+            .chars()
+            .take(max_len.saturating_sub(marker.chars().count()))
+            .collect();
+        format!("{}{}", truncated, marker)
     } else {
         text.to_string()
     }
@@ -180,14 +184,20 @@ impl DebugTracker {
             2 => {
                 if self.config.is_enabled() {
                     eprintln!("{} execution started", stage);
-                    eprintln!("  Script: {}", truncate_for_display(script, 100));
+                    eprintln!(
+                        "  Script: {}",
+                        truncate_for_display(script, 100, self.config.use_emoji)
+                    );
                 }
             }
             3.. => {
                 if self.config.is_enabled() {
                     eprintln!("{} execution trace:", stage);
                     eprintln!("  Script: {}", script.trim());
-                    eprintln!("  Event: {}", truncate_for_display(event_data, 150));
+                    eprintln!(
+                        "  Event: {}",
+                        truncate_for_display(event_data, 150, self.config.use_emoji)
+                    );
                 }
             }
             _ => {}
@@ -270,7 +280,11 @@ impl ErrorEnhancer {
             for (name, _is_const, value) in scope.iter() {
                 let preview = format!("{:?}", value);
                 let preview = if preview.len() > 50 {
-                    format!("{}...", &preview[..47])
+                    format!(
+                        "{}{}",
+                        &preview[..47],
+                        crate::tty::ellipsis(self.debug_config.use_emoji)
+                    )
                 } else {
                     preview
                 };
@@ -338,7 +352,15 @@ impl ErrorEnhancer {
                             suggestions.push(format!(
                                 "Available fields include: {}{}",
                                 preview.join(", "),
-                                if preview.len() == 5 { " ..." } else { "" }
+                                if preview.len() == 5 {
+                                    if self.debug_config.use_emoji {
+                                        " …"
+                                    } else {
+                                        " ..."
+                                    }
+                                } else {
+                                    ""
+                                }
                             ));
                         }
                     }
@@ -728,7 +750,10 @@ impl ExecutionTracer {
     pub fn trace_event_start(&self, event_num: u64, event_data: &str) {
         if self.config.verbosity >= 2 {
             eprintln!("  Filter execution trace for event {}:", event_num);
-            eprintln!("    Event: {}", truncate_for_display(event_data, 100));
+            eprintln!(
+                "    Event: {}",
+                truncate_for_display(event_data, 100, self.config.use_emoji)
+            );
         }
     }
 
@@ -749,7 +774,7 @@ impl ExecutionTracer {
             eprintln!(
                 "    Access: {} = {}",
                 var_name,
-                truncate_for_display(value, 30)
+                truncate_for_display(value, 30, self.config.use_emoji)
             );
         }
     }
@@ -760,7 +785,7 @@ impl ExecutionTracer {
                 "    Call: {}({}) → {}",
                 func_name,
                 args,
-                truncate_for_display(result, 30)
+                truncate_for_display(result, 30, self.config.use_emoji)
             );
         }
     }
@@ -794,8 +819,8 @@ impl ExecutionTracer {
                 step_num,
                 context,
                 operation,
-                truncate_for_display(input, 30),
-                truncate_for_display(output, 30)
+                truncate_for_display(input, 30, self.config.use_emoji),
+                truncate_for_display(output, 30, self.config.use_emoji)
             );
 
             if step_type != "default" {
@@ -823,7 +848,7 @@ impl ExecutionTracer {
                 "    AST: {} at {} → \"{}\"",
                 node_type,
                 position,
-                truncate_for_display(source, 40)
+                truncate_for_display(source, 40, self.config.use_emoji)
             );
         }
     }

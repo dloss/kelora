@@ -42,7 +42,7 @@ fn test_inspect_formatter_basic() {
     event.set_field("code".to_string(), Dynamic::from(42_i64));
     event.set_field("active".to_string(), Dynamic::from(true));
 
-    let formatter = InspectFormatter::new(0);
+    let formatter = InspectFormatter::new(0, false);
     let output = formatter.format(&event);
     let lines: Vec<&str> = output.lines().collect();
     assert_eq!(lines[0], "---");
@@ -74,7 +74,7 @@ fn test_inspect_formatter_nested_structure() {
     let mut event = Event::default();
     event.set_field("meta".to_string(), Dynamic::from(inner));
 
-    let formatter = InspectFormatter::new(0);
+    let formatter = InspectFormatter::new(0, false);
     let output = formatter.format(&event);
     let lines: Vec<&str> = output.lines().collect();
     assert_eq!(lines[0], "---");
@@ -104,7 +104,7 @@ fn test_inspect_formatter_truncates_long_values() {
     let mut event = Event::default();
     event.set_field("payload".to_string(), Dynamic::from(long_value.clone()));
 
-    let formatter = InspectFormatter::new(0);
+    let formatter = InspectFormatter::new(0, false);
     let output = formatter.format(&event);
     let lines: Vec<&str> = output.lines().collect();
     assert_eq!(lines[0], "---");
@@ -119,7 +119,7 @@ fn test_inspect_formatter_truncates_long_values() {
         ]
     );
 
-    let verbose_formatter = InspectFormatter::new(2);
+    let verbose_formatter = InspectFormatter::new(2, false);
     let verbose_output = verbose_formatter.format(&event);
     let verbose_lines: Vec<&str> = verbose_output.lines().collect();
     assert_eq!(verbose_lines[0], "---");

@@ -126,9 +126,10 @@ impl SignalHandler {
                         SIGTERM => {
                             eprintln!(
                                 "{}",
-                                crate::config::format_error_message_auto(
-                                    "Received SIGTERM, shutting down gracefully..."
-                                )
+                                crate::config::format_error_message_auto(&format!(
+                                    "Received SIGTERM, shutting down gracefully{}",
+                                    crate::tty::ellipsis(crate::tty::should_use_emoji_for_stderr())
+                                ))
                             );
                             SHOULD_TERMINATE.store(true, Ordering::Relaxed);
                             TERMINATED_BY_SIGNAL.store(true, Ordering::Relaxed);

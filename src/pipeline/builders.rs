@@ -480,6 +480,7 @@ impl PipelineBuilder {
                 }
                 crate::OutputFormat::Inspect => Box::new(crate::formatters::InspectFormatter::new(
                     self.config.verbose,
+                    use_emoji,
                 )),
                 crate::OutputFormat::Logfmt => Box::new(crate::formatters::LogfmtFormatter::new()),
                 crate::OutputFormat::Levelmap => {
@@ -813,6 +814,7 @@ impl PipelineBuilder {
                 }
                 crate::OutputFormat::Inspect => Box::new(crate::formatters::InspectFormatter::new(
                     self.config.verbose,
+                    use_emoji,
                 )),
                 crate::OutputFormat::Logfmt => Box::new(crate::formatters::LogfmtFormatter::new()),
                 crate::OutputFormat::Levelmap => {

@@ -855,7 +855,7 @@ impl ProcessingStats {
     }
 
     /// Format a concise error summary for default output (when errors occur)
-    pub fn format_error_summary(&self) -> String {
+    pub fn format_error_summary(&self, use_emoji: bool) -> String {
         if !self.has_errors() {
             return String::new();
         }
@@ -906,7 +906,11 @@ impl ProcessingStats {
                     .join(", ");
 
                 if total > self.failed_file_samples.len() {
-                    message.push_str(&format!(" ({}, ...)", sample_joined));
+                    message.push_str(&format!(
+                        " ({}, {})",
+                        sample_joined,
+                        crate::tty::ellipsis(use_emoji)
+                    ));
                 } else {
                     message.push_str(&format!(" ({})", sample_joined));
                 }
@@ -1052,7 +1056,7 @@ mod tests {
             "input for 'api.log' is not sorted at line 42: 2026-04-09T10:01:00Z < previous 2026-04-09T10:04:00Z",
         );
 
-        let summary = get_thread_stats().format_error_summary();
+        let summary = get_thread_stats().format_error_summary(false);
 
         assert!(summary.contains("1 parse error"));
         assert!(summary.contains("api.log"));
