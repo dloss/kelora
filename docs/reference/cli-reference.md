@@ -1149,8 +1149,9 @@ kelora -j app.log --drain=json -k message
 #### `--discover[=FORMAT]`
 
 Profile observed fields across the stream: field names, inferred types, cardinality estimates, and sample values.
-Nested maps and arrays are flattened into dotted paths up to 3 levels deep (e.g. `user.name`, `user.roles[]`),
-and example values are drawn via reservoir sampling so rare distinct values surface even on long streams.
+Nested maps and arrays are flattened into dotted paths up to 3 levels deep by default (e.g. `user.name`, `user.roles[]`);
+use [`--discover-depth`](#--discover-depth-n) to change the limit (or pass `0` for unlimited).
+Example values are drawn via reservoir sampling so rare distinct values surface even on long streams.
 When deeper nesting is present, the table output adds an explicit note that flattening stopped at the depth cap,
 and JSON output includes `flatten_depth_limit` and `flatten_depth_capped`.
 Implies `-q/--quiet` (events are suppressed).
@@ -1185,6 +1186,24 @@ kelora -j app.log --discover-final --filter 'e.level == "ERROR"'
 
 # JSON output of final fields
 kelora -j app.log --discover-final=json --filter 'e.level == "ERROR"'
+```
+
+#### `--discover-depth <N>`
+
+Maximum depth for flattening nested maps and arrays into dotted keys during field
+discovery. Default is `3`. Depth counts descents from the event root, so `a.b.c`
+is depth 3. Use a higher value to inspect deeply nested JSON, `1` to see only
+top-level fields, or `0` for unlimited depth.
+
+```bash
+# Descend up to 5 levels deep
+kelora -j app.log --discover --discover-depth=5
+
+# Top-level fields only
+kelora -j app.log --discover --discover-depth=1
+
+# Unlimited depth (flatten all the way down)
+kelora -j app.log --discover --discover-depth=0
 ```
 
 ## Configuration Options

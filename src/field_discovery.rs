@@ -31,7 +31,7 @@ const MAX_TRACKED_FIELDS: usize = 1_000;
 
 /// Default maximum depth for flattening nested maps and arrays into dotted
 /// keys. Depth counts descents from the event root: `a.b.c` is depth 3.
-/// Override with `--discover-depth=N`.
+/// Override with `--discover-depth=N` (use `0` for unlimited).
 pub const DEFAULT_FLATTEN_DEPTH: usize = 3;
 
 /// Cap on the per-field dedup set for reservoir sampling.
@@ -285,13 +285,17 @@ impl FieldDiscovery {
         Self::with_depth(DEFAULT_FLATTEN_DEPTH)
     }
 
+    /// Build a [`FieldDiscovery`] with a specific flatten depth limit.
+    ///
+    /// A `flatten_depth` of `0` means unlimited: nested maps and arrays will
+    /// be flattened all the way down.
     pub fn with_depth(flatten_depth: usize) -> Self {
         Self {
             fields: IndexMap::new(),
             total_events: 0,
             capped: false,
             flatten_depth_capped: false,
-            flatten_depth: flatten_depth.max(1),
+            flatten_depth,
         }
     }
 
@@ -310,10 +314,13 @@ impl FieldDiscovery {
 
     /// Observe a value under a given dotted path, then recurse into map/array
     /// children if depth permits.
+    ///
+    /// A configured `flatten_depth` of `0` means unlimited: recursion only
+    /// stops when maps and arrays run out.
     fn observe_path(&mut self, path: &str, value: &Dynamic, depth: usize) {
         self.record(path, value);
 
-        if depth >= self.flatten_depth {
+        if self.flatten_depth != 0 && depth >= self.flatten_depth {
             if value.is_map() || value.is_array() {
                 self.flatten_depth_capped = true;
             }
@@ -510,7 +517,7 @@ impl FieldDiscovery {
         }
         if self.flatten_depth_capped {
             output.push_str(&format!(
-                "\nNote: Nested field flattening stopped at depth {}; deeper children are not shown. Use --discover-depth=N to descend further.\n",
+                "\nNote: Nested field flattening stopped at depth {}; deeper children are not shown. Use --discover-depth=N to descend further (0 = unlimited).\n",
                 self.flatten_depth
             ));
         }
@@ -953,8 +960,11 @@ thread_local! {
 }
 
 /// Enable field discovery (called once at startup).
+///
+/// A `flatten_depth` of `0` means unlimited: nested maps and arrays will be
+/// flattened all the way down.
 pub fn enable(discover_final: bool, flatten_depth: usize) {
-    FLATTEN_DEPTH.store(flatten_depth.max(1), Ordering::Relaxed);
+    FLATTEN_DEPTH.store(flatten_depth, Ordering::Relaxed);
     ENABLED.store(true, Ordering::Relaxed);
     DISCOVER_FINAL.store(discover_final, Ordering::Relaxed);
 }
@@ -1547,6 +1557,41 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed["flatten_depth_limit"], 3);
         assert_eq!(parsed["flatten_depth_capped"], true);
+    }
+
+    #[test]
+    fn test_depth_limit_unlimited() {
+        // Build a 5-deep nested map: a.b.c.d.e
+        let deep = make_map(vec![(
+            "b",
+            make_map(vec![(
+                "c",
+                make_map(vec![("d", make_map(vec![("e", make_string("bottom"))]))]),
+            )]),
+        )]);
+        let mut fields = IndexMap::new();
+        fields.insert("a".to_string(), deep);
+
+        // Depth 0 means unlimited: every level should be recorded.
+        let mut discovery = FieldDiscovery::with_depth(0);
+        discovery.observe_event(&fields);
+
+        assert!(discovery.fields.contains_key("a"));
+        assert!(discovery.fields.contains_key("a.b"));
+        assert!(discovery.fields.contains_key("a.b.c"));
+        assert!(discovery.fields.contains_key("a.b.c.d"));
+        assert!(discovery.fields.contains_key("a.b.c.d.e"));
+
+        let table = discovery.format_table();
+        assert!(
+            !table.contains("Nested field flattening stopped"),
+            "unlimited depth should not emit a depth-cap note: {table}"
+        );
+
+        let json = discovery.format_json();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["flatten_depth_limit"], 0);
+        assert_eq!(parsed["flatten_depth_capped"], false);
     }
 
     #[test]
