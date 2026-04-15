@@ -3405,18 +3405,18 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Scanned 6 events
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Field            Type    Seen  Miss  Uniq  Examples
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp        string     6    0%     6  2024-01-15T10:00:00Z, 2024-01-15T10:00:10Z, 2024-01-15...
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>level            string     6    0%     4  INFO, DEBUG, WARN, ERROR
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>service          string     6    0%     3  api, database, auth
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>message          string     6    0%     6  Application started, Connection pool initialized, High...
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>version          string     1   83%     1  1.2.3
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp        string     6    0%     6  &quot;2024-01-15T10:00:00Z&quot;, &quot;2024-01-15T10:00:10Z&quot;, &quot;2024-01-15T10:01:00Z&quot;, &quot;2024-01-15T10:01:30Z&quot;, &quot;2024-01-15T10:02:00Z&quot;, &quot;2024-01-15T10:03:00Z&quot;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>level            string     6    0%     4  &quot;INFO&quot;, &quot;DEBUG&quot;, &quot;WARN&quot;, &quot;ERROR&quot;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>service          string     6    0%     3  &quot;api&quot;, &quot;database&quot;, &quot;auth&quot;
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>message          string     6    0%     6  &quot;Application started&quot;, &quot;Connection pool initialized&quot;, &quot;High memory usage detected&quot;, &quot;Query timeout&quot;, &quot;Request received&quot;, &quot;Account locked&quot;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>version          string     1   83%     1  &quot;1.2.3&quot;
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>max_connections  int        1   83%     1  50
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>memory_percent   int        1   83%     1  85
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>query            string     1   83%     1  SELECT * FROM users
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>query            string     1   83%     1  &quot;SELECT * FROM users&quot;
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>duration_ms      int        1   83%     1  5000
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>method           string     1   83%     1  GET
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>path             string     1   83%     1  /api/users
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>username         string     1   83%     1  admin
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>method           string     1   83%     1  &quot;GET&quot;
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>path             string     1   83%     1  &quot;/api/users&quot;
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>username         string     1   83%     1  &quot;admin&quot;
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>attempts         int        1   83%     1  5
 </code></pre></div>
 <p><code>--discover</code> gives you a field profile instead of printing events. The default table shows:</p>
@@ -3676,7 +3676,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: json
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 6 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 6 total, 6 output, 0 filtered (0.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 4065 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 4276 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: timestamp (auto-detected) - 6/6 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:03:00+00:00 (3m)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Levels seen: DEBUG,ERROR,INFO,WARN
