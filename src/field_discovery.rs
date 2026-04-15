@@ -243,8 +243,31 @@ impl FieldProfile {
     }
 
     /// Returns `(count, is_exact)`. For map/array-only fields returns `(0, true)`.
+    ///
+    /// HLL estimates are clamped to the number of scalar observations of this
+    /// field, since the true distinct-value count cannot exceed the number of
+    /// values that were ever inserted. Without the clamp, HLL's ~1% error can
+    /// produce visibly nonsensical results (e.g. "uniq > seen") right after
+    /// graduation. Clamping does not make the value exact — the estimate could
+    /// still undershoot — so the `is_exact` flag remains `false`.
     pub fn cardinality(&self) -> (usize, bool) {
-        self.cardinality.cardinality()
+        let (count, exact) = self.cardinality.cardinality();
+        if exact {
+            (count, true)
+        } else {
+            (count.min(self.scalar_observation_count()), false)
+        }
+    }
+
+    /// Number of scalar observations seen for this field — i.e. observations
+    /// that contributed to the cardinality tracker. Null, array, and map
+    /// values are excluded.
+    fn scalar_observation_count(&self) -> usize {
+        self.type_counts
+            .iter()
+            .filter(|(ft, _)| !matches!(ft, FieldType::Null | FieldType::Array | FieldType::Map))
+            .map(|(_, count)| *count)
+            .sum()
     }
 
     /// Types sorted by frequency (descending).
@@ -1134,11 +1157,55 @@ mod tests {
 
         let (card, exact) = profile.cardinality();
         assert!(!exact, "Should have graduated to HLL");
-        // HLL estimate should be in the ballpark
+        // HLL estimate should be in the ballpark, and clamped to scalar count.
         assert!(
-            (270..=330).contains(&card),
+            (270..=300).contains(&card),
             "HLL estimate {} out of range",
             card
+        );
+    }
+
+    #[test]
+    fn test_hll_estimate_clamped_to_scalar_observations() {
+        let mut profile = FieldProfile::new();
+        // Insert exactly enough unique scalar values to graduate to HLL,
+        // but keep the count small enough that HLL's ~1% error can plausibly
+        // overshoot. With each value seen only once, scalar_observation_count
+        // equals the number of inserts, so any overshoot must be clamped.
+        let n: usize = 400;
+        for i in 0..n {
+            profile.observe(&make_int(i as i64));
+        }
+
+        let (card, exact) = profile.cardinality();
+        assert!(!exact, "Should have graduated to HLL");
+        assert!(
+            card <= n,
+            "Cardinality {card} must not exceed scalar observation count {n}"
+        );
+        // Sanity: clamping should not collapse the estimate to zero.
+        assert!(card > n / 2, "Clamped cardinality {card} unexpectedly low");
+    }
+
+    #[test]
+    fn test_hll_estimate_clamp_excludes_nulls() {
+        let mut profile = FieldProfile::new();
+        // 300 distinct scalars + 100 nulls.
+        for i in 0..300 {
+            profile.observe(&make_int(i));
+        }
+        for _ in 0..100 {
+            profile.observe(&make_null());
+        }
+
+        let (card, exact) = profile.cardinality();
+        assert!(!exact);
+        // Null observations don't contribute to cardinality, so the clamp
+        // ceiling is 300 (scalar observations), not 400 (seen_count).
+        assert!(
+            card <= 300,
+            "Cardinality {card} must be clamped to scalar count 300, \
+             not seen_count 400"
         );
     }
 
