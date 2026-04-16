@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://dloss.github.io/kelora/dev/concepts/">
+        <link rel="canonical" href="https://dloss.github.io/kelora/dev/features/">
       
       
-        <link rel="prev" href="../how-to/power-user-techniques/">
+        <link rel="prev" href="..">
       
       
-        <link rel="next" href="pipeline-model/">
+        <link rel="next" href="../quickstart/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Overview - Kelora</title>
+        <title>Core Features - Kelora</title>
       
     
     
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#concepts" class="md-skip">
+        <a href="#core-features" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              Core Features
             
           </span>
         </div>
@@ -251,9 +251,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../features/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -329,13 +331,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../concepts/" class="md-tabs__link">
           
   
   
@@ -442,10 +442,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../features/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Features
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -461,6 +488,136 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#highlights-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Highlights at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parse-mixed-input-formats-in-one-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parse mixed input formats in one workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scriptable-filtering-and-transformation-with-rhai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scriptable filtering and transformation with Rhai
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extract-structure-from-messy-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract structure from messy logs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stateful-streaming-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stateful streaming analysis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-for-downstream-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output for downstream workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-discovery-and-normalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern discovery and normalization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deterministic-sampling-and-high-volume-triage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic sampling and high-volume triage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-aware-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy-aware processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-for-tool-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built for tool composition
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1426,31 +1583,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -1468,7 +1620,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1483,19 +1635,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
         
   
   
@@ -1511,7 +1654,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1524,7 +1666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="pipeline-model/" class="md-nav__link">
+      <a href="../concepts/pipeline-model/" class="md-nav__link">
         
   
   
@@ -1552,7 +1694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="events-and-fields/" class="md-nav__link">
+      <a href="../concepts/events-and-fields/" class="md-nav__link">
         
   
   
@@ -1580,7 +1722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="scripting-stages/" class="md-nav__link">
+      <a href="../concepts/scripting-stages/" class="md-nav__link">
         
   
   
@@ -1608,7 +1750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="error-handling/" class="md-nav__link">
+      <a href="../concepts/error-handling/" class="md-nav__link">
         
   
   
@@ -1636,7 +1778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="multiline-strategies/" class="md-nav__link">
+      <a href="../concepts/multiline-strategies/" class="md-nav__link">
         
   
   
@@ -1664,7 +1806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="performance-model/" class="md-nav__link">
+      <a href="../concepts/performance-model/" class="md-nav__link">
         
   
   
@@ -1692,7 +1834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="performance-comparisons/" class="md-nav__link">
+      <a href="../concepts/performance-comparisons/" class="md-nav__link">
         
   
   
@@ -1720,7 +1862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="benchmark-results/" class="md-nav__link">
+      <a href="../concepts/benchmark-results/" class="md-nav__link">
         
   
   
@@ -1748,7 +1890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration-system/" class="md-nav__link">
+      <a href="../concepts/configuration-system/" class="md-nav__link">
         
   
   
@@ -2163,6 +2305,124 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#highlights-at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Highlights at a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parse-mixed-input-formats-in-one-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parse mixed input formats in one workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scriptable-filtering-and-transformation-with-rhai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scriptable filtering and transformation with Rhai
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extract-structure-from-messy-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract structure from messy logs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stateful-streaming-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stateful streaming analysis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-for-downstream-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output for downstream workflows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-discovery-and-normalization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern discovery and normalization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deterministic-sampling-and-high-volume-triage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic sampling and high-volume triage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-aware-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy-aware processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#built-for-tool-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built for tool composition
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -2181,17 +2441,88 @@
   
 
 
-<h1 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h1>
-<p>Background material that explains Kelora's architecture and design. Read these when you want to understand how the streaming pipeline pieces fit together.</p>
+<h1 id="core-features">Core Features<a class="headerlink" href="#core-features" title="Permanent link">&para;</a></h1>
+<p>Kelora focuses on practical log-analysis workflows you can run, iterate on, and share from the terminal.</p>
+<h2 id="highlights-at-a-glance">Highlights at a glance<a class="headerlink" href="#highlights-at-a-glance" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="pipeline-model/">Pipeline Model</a></li>
-<li><a href="events-and-fields/">Events and Fields</a></li>
-<li><a href="scripting-stages/">Scripting Stages</a></li>
-<li><a href="error-handling/">Error Handling</a></li>
-<li><a href="multiline-strategies/">Multiline Strategies</a></li>
-<li><a href="performance-model/">Performance Model</a></li>
-<li><a href="configuration-system/">Configuration System</a></li>
+<li><strong>Pattern mining</strong> with Drain templates (<code>--drain</code>)</li>
+<li><strong>Embedded JSON extraction</strong> from text (<code>extract_json()</code>)</li>
+<li><strong>Deterministic sampling</strong> for repeatable slices (<code>bucket()</code>)</li>
+<li><strong>Pseudonymization helpers</strong> for privacy-safe analytics</li>
+<li><strong>Span windows</strong> for rollups and service-level summaries</li>
+<li><strong>Composable output</strong> for JSON/CSV/table pipelines</li>
 </ul>
+<h2 id="parse-mixed-input-formats-in-one-workflow">Parse mixed input formats in one workflow<a class="headerlink" href="#parse-mixed-input-formats-in-one-workflow" title="Permanent link">&para;</a></h2>
+<p>Process JSON, Logfmt, syslog, CSV/TSV, and unstructured lines without rewriting your pipeline for each source.</p>
+<ul>
+<li>Auto-detect common formats or force a parser explicitly</li>
+<li>Parse custom text with column and regex strategies</li>
+<li>Mix files and compressed inputs in a single run</li>
+</ul>
+<p>See also: <a href="../reference/formats/">Format Reference</a></p>
+<h2 id="scriptable-filtering-and-transformation-with-rhai">Scriptable filtering and transformation with Rhai<a class="headerlink" href="#scriptable-filtering-and-transformation-with-rhai" title="Permanent link">&para;</a></h2>
+<p>Start with simple predicates and grow into richer logic as needed.</p>
+<ul>
+<li><code>--filter</code> for expressive conditions</li>
+<li><code>--exec</code>, <code>--begin</code>, <code>--end</code> for transformation and lifecycle stages</li>
+<li>Reusable helper scripts via includes and config aliases</li>
+</ul>
+<p>See also: <a href="../tutorials/intro-to-rhai/">Introduction to Rhai</a>, <a href="../tutorials/advanced-scripting/">Advanced Scripting</a></p>
+<h2 id="extract-structure-from-messy-logs">Extract structure from messy logs<a class="headerlink" href="#extract-structure-from-messy-logs" title="Permanent link">&para;</a></h2>
+<p>Promote hidden structure into first-class fields so downstream analysis is easier.</p>
+<ul>
+<li>Extract embedded JSON from text payloads (<code>extract_json()</code>)</li>
+<li>Parse key-value fragments and nested paths</li>
+<li>Flatten nested arrays/objects for tabular output</li>
+</ul>
+<p>See also: <a href="../how-to/power-user-techniques/">Power-User Techniques</a>, <a href="../how-to/fan-out-nested-structures/">Flatten Nested JSON for Analysis</a></p>
+<h2 id="stateful-streaming-analysis">Stateful streaming analysis<a class="headerlink" href="#stateful-streaming-analysis" title="Permanent link">&para;</a></h2>
+<p>Maintain running state while reading events, without handing off to a separate script.</p>
+<ul>
+<li>Counters, sums, minima/maxima, and per-key tracking</li>
+<li>Sliding windows and span-style rollups</li>
+<li>End-stage summaries and report-style outputs</li>
+</ul>
+<p>See also: <a href="../tutorials/metrics-and-tracking/">Metrics and Tracking</a>, <a href="../how-to/span-aggregation-cookbook/">Roll Up Logs with Span Windows</a></p>
+<h2 id="output-for-downstream-workflows">Output for downstream workflows<a class="headerlink" href="#output-for-downstream-workflows" title="Permanent link">&para;</a></h2>
+<p>Shape results for humans or tools without post-processing scripts.</p>
+<ul>
+<li>Emit JSON, CSV/TSV, Logfmt, and table-friendly output</li>
+<li>Select fields and control formatting for report-style views</li>
+<li>Keep outputs stable so commands are easy to reuse and share</li>
+</ul>
+<h2 id="pattern-discovery-and-normalization">Pattern discovery and normalization<a class="headerlink" href="#pattern-discovery-and-normalization" title="Permanent link">&para;</a></h2>
+<p>Find repeated error shapes quickly, even when values differ.</p>
+<ul>
+<li>Template mining with Drain (<code>--drain</code>)</li>
+<li>Normalize UUID/IP/email-like values into comparable patterns</li>
+<li>Group noisy events into actionable clusters</li>
+</ul>
+<p>See also: <a href="../#3-pattern-discovery-template-mining">Pattern Discovery Example</a></p>
+<h2 id="deterministic-sampling-and-high-volume-triage">Deterministic sampling and high-volume triage<a class="headerlink" href="#deterministic-sampling-and-high-volume-triage" title="Permanent link">&para;</a></h2>
+<p>Reduce volume while preserving stable slices across repeated runs.</p>
+<ul>
+<li>Deterministic bucketing with <code>bucket()</code></li>
+<li>Selective inspection of high-volume traffic</li>
+<li>Combine sampling with field filters and aggregations</li>
+</ul>
+<p>See also: <a href="../how-to/power-user-techniques/#deterministic-sampling-with-bucket">Power-User Techniques</a></p>
+<h2 id="privacy-aware-processing">Privacy-aware processing<a class="headerlink" href="#privacy-aware-processing" title="Permanent link">&para;</a></h2>
+<p>Analyze behavior without exposing sensitive identifiers.</p>
+<ul>
+<li>Built-in pseudonymization and hashing helpers</li>
+<li>Preserve joinability while masking raw values</li>
+<li>Support safer sharing of derived outputs</li>
+</ul>
+<p>See also: <a href="../how-to/pseudonymize-identifiers-for-analytics/">Pseudonymize Identifiers for Analytics</a>, <a href="../how-to/extract-and-mask-sensitive-data/">Sanitize Logs Before Sharing</a></p>
+<h2 id="built-for-tool-composition">Built for tool composition<a class="headerlink" href="#built-for-tool-composition" title="Permanent link">&para;</a></h2>
+<p>Kelora does not require an all-or-nothing workflow.</p>
+<ul>
+<li>Pipe data in/out of <code>grep</code>, <code>jq</code>, <code>qsv</code>, and shell tools</li>
+<li>Export JSON/CSV for notebooks, BI, or follow-up automation</li>
+<li>Keep transformations reproducible as single commands</li>
+</ul>
+<p>See also: <a href="../how-to/integrate-external-tools/">Integrate Kelora with External Tools</a></p>
 
 
 
