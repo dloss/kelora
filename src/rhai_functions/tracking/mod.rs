@@ -14,9 +14,9 @@ pub use errors::{
     track_error,
 };
 pub use format::{format_metrics_json, format_metrics_output};
-#[cfg(test)]
-use merge::{deserialize_hll, is_hll_blob};
-use merge::{merge_numeric, record_operation_metadata};
+use merge::{
+    deserialize_hll, deserialize_tdigest, is_hll_blob, merge_numeric, record_operation_metadata,
+};
 use metrics::{
     track_avg_impl, track_cardinality_impl, track_cardinality_with_error_impl, track_max_impl,
     track_min_impl, track_percentiles_impl, track_stats_impl,
@@ -681,7 +681,6 @@ pub fn merge_thread_tracking_to_context(ctx: &mut crate::pipeline::PipelineConte
         ctx.internal_tracker.insert(key, value);
     }
 }
-
 
 /// Finalize a single tracking value for exposure to user-visible Rhai scopes
 /// (`--end`, `--span-close`, etc.).
