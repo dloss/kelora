@@ -393,35 +393,19 @@ pub fn format_fatal_error_line(snapshot: &TrackingSnapshot) -> String {
 
             format!("1 {} error: {}", error_type, message)
         } else if *count <= 3 && all_samples.len() as i64 == *count {
-            // Few errors: show line numbers for all
-            let lines: Vec<String> = all_samples
-                .iter()
-                .map(|s| {
-                    s.get("line_num")
-                        .and_then(|v| v.as_int().ok())
-                        .map(|n| n.to_string())
-                        .unwrap_or_else(|| "?".to_string())
-                })
-                .collect();
+            // Few errors: show locations for all
+            let locations: Vec<String> = all_samples.iter().map(format_sample_location).collect();
 
             format!(
-                "{} {} errors at lines {}",
+                "{} {} errors at {}",
                 count,
                 error_type,
-                lines.join(", ")
+                locations.join(", ")
             )
         } else if !all_samples.is_empty() {
             // More errors: show count + first error location
             let first_sample = &all_samples[0];
-            let first_line = first_sample
-                .get("line_num")
-                .and_then(|v| v.as_int().ok())
-                .unwrap_or(0);
-            let first_location = first_sample
-                .get("filename")
-                .and_then(|v| v.clone().into_string().ok())
-                .map(|filename| format!("{}:{}", filename, first_line))
-                .unwrap_or_else(|| format!("line {}", first_line));
+            let first_location = format_sample_location(first_sample);
 
             format!(
                 "{} {} errors (first at: {})",
@@ -446,6 +430,21 @@ pub fn format_fatal_error_line(snapshot: &TrackingSnapshot) -> String {
             format!("{} errors (mixed types)", total_errors)
         }
     }
+}
+
+fn format_sample_location(sample: &rhai::Map) -> String {
+    let line = sample
+        .get("line_num")
+        .and_then(|v| v.as_int().ok())
+        .unwrap_or(0);
+    let filename = sample
+        .get("filename")
+        .and_then(|v| v.clone().into_string().ok())
+        .filter(|name| !name.is_empty() && name != "stdin");
+
+    filename
+        .map(|name| format!("{}:{}", name, line))
+        .unwrap_or_else(|| format!("line {}", line))
 }
 
 /// Extract error summary from tracking state with different verbosity levels
@@ -511,7 +510,7 @@ pub fn extract_error_summary_from_tracking(
         ));
     }
 
-    // Show up to 3 examples with filename:line format
+    // Show up to 3 examples with file-aware locations when available
     let mut shown_samples = 0;
     for sample_obj in &sample_objects {
         if shown_samples >= 3 {
@@ -519,26 +518,14 @@ pub fn extract_error_summary_from_tracking(
         }
 
         // Extract data from sample object
-        let line_num = sample_obj
-            .get("line_num")
-            .and_then(|v| v.as_int().ok())
-            .unwrap_or(0);
         let message = sample_obj
             .get("message")
             .and_then(|v| v.clone().into_string().ok())
             .unwrap_or_else(|| "unknown error".to_string());
-        let filename = sample_obj
-            .get("filename")
-            .and_then(|v| v.clone().into_string().ok())
-            .unwrap_or_else(|| "stdin".to_string());
         let original_line = sample_obj
             .get("original_line")
             .and_then(|v| v.clone().into_string().ok());
-
-        // Format location using same smart logic as immediate errors
-        let input_files = &[];
-
-        let location = format_error_location(Some(line_num as usize), Some(&filename), input_files);
+        let location = format_sample_location(sample_obj);
 
         summary.push_str(&format!("\n  {}: {}", location, message));
 
@@ -3576,6 +3563,59 @@ mod tests {
         let summary = format_fatal_error_line(&snapshot);
 
         assert_eq!(summary, "18 parse errors (first at: line 98)");
+    }
+
+    #[test]
+    fn test_format_fatal_error_line_for_few_errors_uses_file_aware_locations() {
+        let mut internal = HashMap::new();
+        internal.insert(
+            "__kelora_error_count_parse".to_string(),
+            Dynamic::from(2i64),
+        );
+
+        let mut first = rhai::Map::new();
+        first.insert("error_type".into(), Dynamic::from("parse"));
+        first.insert("line_num".into(), Dynamic::from(10i64));
+        first.insert("filename".into(), Dynamic::from("a.log"));
+
+        let mut second = rhai::Map::new();
+        second.insert("error_type".into(), Dynamic::from("parse"));
+        second.insert("line_num".into(), Dynamic::from(22i64));
+
+        internal.insert(
+            "__kelora_error_samples_parse".to_string(),
+            Dynamic::from(vec![Dynamic::from(first), Dynamic::from(second)]),
+        );
+
+        let snapshot = TrackingSnapshot::from_parts(HashMap::new(), internal);
+        let summary = format_fatal_error_line(&snapshot);
+
+        assert_eq!(summary, "2 parse errors at a.log:10, line 22");
+    }
+
+    #[test]
+    fn test_extract_error_summary_from_tracking_includes_filename_in_examples() {
+        let mut internal = HashMap::new();
+        internal.insert(
+            "__kelora_error_count_parse".to_string(),
+            Dynamic::from(1i64),
+        );
+
+        let mut sample_obj = rhai::Map::new();
+        sample_obj.insert("error_type".into(), Dynamic::from("parse"));
+        sample_obj.insert("line_num".into(), Dynamic::from(7i64));
+        sample_obj.insert("message".into(), Dynamic::from("bad event"));
+        sample_obj.insert("filename".into(), Dynamic::from("events.log"));
+
+        internal.insert(
+            "__kelora_error_samples_parse".to_string(),
+            Dynamic::from(vec![Dynamic::from(sample_obj)]),
+        );
+
+        let snapshot = TrackingSnapshot::from_parts(HashMap::new(), internal);
+        let summary = extract_error_summary_from_tracking(&snapshot, 0, None, None).unwrap();
+
+        assert!(summary.contains("events.log:7: bad event"));
     }
 
     #[test]
