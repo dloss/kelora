@@ -412,14 +412,20 @@ pub fn format_fatal_error_line(snapshot: &TrackingSnapshot) -> String {
             )
         } else if !all_samples.is_empty() {
             // More errors: show count + first error location
-            let first_line = all_samples[0]
+            let first_sample = &all_samples[0];
+            let first_line = first_sample
                 .get("line_num")
                 .and_then(|v| v.as_int().ok())
                 .unwrap_or(0);
+            let first_location = first_sample
+                .get("filename")
+                .and_then(|v| v.clone().into_string().ok())
+                .map(|filename| format!("{}:{}", filename, first_line))
+                .unwrap_or_else(|| format!("line {}", first_line));
 
             format!(
-                "{} {} errors (first at line {})",
-                count, error_type, first_line
+                "{} {} errors (first at: {})",
+                count, error_type, first_location
             )
         } else {
             // No samples available: just show count
@@ -3521,6 +3527,55 @@ mod tests {
 
         assert!(summary.contains("Year-less timestamp format detected"));
         assert!(summary.contains("5 parse"));
+    }
+
+    #[test]
+    fn test_format_fatal_error_line_includes_filename_for_first_parse_error() {
+        let mut internal = HashMap::new();
+        internal.insert(
+            "__kelora_error_count_parse".to_string(),
+            Dynamic::from(18i64),
+        );
+
+        let mut sample_obj = rhai::Map::new();
+        sample_obj.insert("error_type".into(), Dynamic::from("parse"));
+        sample_obj.insert("line_num".into(), Dynamic::from(98i64));
+        sample_obj.insert("message".into(), Dynamic::from("invalid JSON"));
+        sample_obj.insert("filename".into(), Dynamic::from("filename.log"));
+
+        internal.insert(
+            "__kelora_error_samples_parse".to_string(),
+            Dynamic::from(vec![Dynamic::from(sample_obj)]),
+        );
+
+        let snapshot = TrackingSnapshot::from_parts(HashMap::new(), internal);
+        let summary = format_fatal_error_line(&snapshot);
+
+        assert_eq!(summary, "18 parse errors (first at: filename.log:98)");
+    }
+
+    #[test]
+    fn test_format_fatal_error_line_falls_back_to_line_without_filename() {
+        let mut internal = HashMap::new();
+        internal.insert(
+            "__kelora_error_count_parse".to_string(),
+            Dynamic::from(18i64),
+        );
+
+        let mut sample_obj = rhai::Map::new();
+        sample_obj.insert("error_type".into(), Dynamic::from("parse"));
+        sample_obj.insert("line_num".into(), Dynamic::from(98i64));
+        sample_obj.insert("message".into(), Dynamic::from("invalid JSON"));
+
+        internal.insert(
+            "__kelora_error_samples_parse".to_string(),
+            Dynamic::from(vec![Dynamic::from(sample_obj)]),
+        );
+
+        let snapshot = TrackingSnapshot::from_parts(HashMap::new(), internal);
+        let summary = format_fatal_error_line(&snapshot);
+
+        assert_eq!(summary, "18 parse errors (first at: line 98)");
     }
 
     #[test]
