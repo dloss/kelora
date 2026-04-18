@@ -1049,6 +1049,108 @@ Final multiline start
 }
 
 #[test]
+fn test_parallel_multiline_flush_filtered_event_updates_stats() {
+    let input = "Final event start\n  final continuation";
+
+    let (_stdout_seq, stderr_seq, exit_code_seq) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "--filter",
+            "false",
+            "--with-stats",
+        ],
+        input,
+    );
+    let (_stdout_par, stderr_par, exit_code_par) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "--filter",
+            "false",
+            "--with-stats",
+            "--parallel",
+            "--threads",
+            "1",
+            "--batch-size",
+            "1",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code_seq, 0);
+    assert_eq!(exit_code_par, 0);
+
+    let stats_seq = extract_stats_lines(&stderr_seq);
+    let stats_par = extract_stats_lines(&stderr_par);
+    assert_eq!(
+        stats_line(&stats_seq, "Events created:"),
+        "Events created: 1 total, 0 output, 1 filtered (100.0%)"
+    );
+    assert_eq!(
+        stats_line(&stats_seq, "Events created:"),
+        stats_line(&stats_par, "Events created:")
+    );
+}
+
+#[test]
+fn test_parallel_multiline_flush_preserves_assertion_failure_stats() {
+    let input = "Final event start\n  final continuation";
+
+    let (_stdout_seq, stderr_seq, exit_code_seq) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "--assert",
+            "false",
+            "--with-stats",
+        ],
+        input,
+    );
+    let (_stdout_par, stderr_par, exit_code_par) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "--assert",
+            "false",
+            "--with-stats",
+            "--parallel",
+            "--threads",
+            "1",
+            "--batch-size",
+            "1",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code_seq, 1);
+    assert_eq!(exit_code_par, 1);
+    assert!(
+        stderr_seq.contains("1 assertion failure"),
+        "Sequential stderr should report one assertion failure: {stderr_seq}"
+    );
+    assert!(
+        stderr_par.contains("1 assertion failure"),
+        "Parallel stderr should report one assertion failure: {stderr_par}"
+    );
+
+    let stats_seq = extract_stats_lines(&stderr_seq);
+    let stats_par = extract_stats_lines(&stderr_par);
+    assert_eq!(
+        stats_line(&stats_seq, "Events created:"),
+        stats_line(&stats_par, "Events created:")
+    );
+}
+
+#[test]
 fn test_parallel_multiline_vs_sequential_comprehensive() {
     // Comprehensive test comparing parallel vs sequential for multiple strategies and filters
 

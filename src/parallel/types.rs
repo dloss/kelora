@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use crate::parsers::type_conversion::TypeMap;
+use crate::pipeline::InternalStats;
 use crate::rhai_functions::file_ops::FileOp;
 use crate::stats::ProcessingStats;
 
@@ -145,6 +146,7 @@ pub struct BatchResult {
     pub results: Vec<ProcessedEvent>,
     pub user_tracked_updates: HashMap<String, Dynamic>,
     pub internal_tracked_updates: HashMap<String, Dynamic>,
+    pub internal_stats: InternalStats,
     pub worker_stats: ProcessingStats,
 }
 

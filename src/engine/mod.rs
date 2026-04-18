@@ -1,4 +1,4 @@
-#![allow(dead_code)] // Debugging/tracing scaffolding kept for verbose dev builds and future CLI toggles
+#![allow(dead_code)] // Engine keeps analysis/helpers that are not all exercised by the current binary
 use anyhow::Result;
 use indexmap::IndexMap;
 use rhai::{BinaryExpr, Dynamic, Engine, EvalAltResult, Expr, FnCallExpr, Scope, Stmt, Token, AST};
@@ -10,7 +10,12 @@ use crate::event::Event;
 use crate::rhai_functions;
 use crate::rhai_functions::datetime::DateTimeWrapper;
 
-/// Truncate text for display, respecting UTF-8 character boundaries
+mod debug;
+pub use debug::{DebugConfig, DebugTracker, ErrorEnhancer};
+
+use rhai::Map;
+
+/// Truncate text for display, respecting UTF-8 character boundaries.
 fn truncate_for_display(text: &str, max_len: usize) -> String {
     if text.chars().count() > max_len {
         let truncated: String = text.chars().take(max_len.saturating_sub(3)).collect();
@@ -18,45 +23,6 @@ fn truncate_for_display(text: &str, max_len: usize) -> String {
     } else {
         text.to_string()
     }
-}
-
-use rhai::Map;
-
-// Temporary debug types until module structure is fixed
-#[derive(Debug, Clone)]
-pub struct DebugConfig {
-    pub verbosity: u8,
-    pub show_timing: bool,
-    pub trace_events: bool,
-    pub use_emoji: bool,
-}
-
-impl DebugConfig {
-    pub fn new(verbose_count: u8) -> Self {
-        DebugConfig {
-            verbosity: verbose_count,
-            show_timing: verbose_count >= 1,
-            trace_events: verbose_count >= 2,
-            use_emoji: true, // Default to true, will be overridden
-        }
-    }
-
-    pub fn with_emoji(mut self, use_emoji: bool) -> Self {
-        self.use_emoji = use_emoji;
-        self
-    }
-
-    pub fn is_enabled(&self) -> bool {
-        self.verbosity > 0
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct ExecutionContext {
-    pub position: Option<rhai::Position>,
-    pub source_snippet: Option<String>,
-    pub last_operation: Option<String>,
-    pub error_location: Option<String>,
 }
 
 #[derive(Debug)]
@@ -130,564 +96,6 @@ fn maps_equal(lhs: &rhai::Map, rhs: &rhai::Map) -> bool {
 
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
-pub struct DebugTracker {
-    pub config: DebugConfig,
-    context: Arc<Mutex<ExecutionContext>>,
-    event_count: Arc<Mutex<u64>>,
-    error_count: Arc<Mutex<u64>>,
-}
-
-impl DebugTracker {
-    pub fn new(config: DebugConfig) -> Self {
-        DebugTracker {
-            config,
-            context: Arc::new(Mutex::new(ExecutionContext::default())),
-            event_count: Arc::new(Mutex::new(0)),
-            error_count: Arc::new(Mutex::new(0)),
-        }
-    }
-
-    pub fn log_basic(&self, message: &str) {
-        if self.config.is_enabled() && self.config.verbosity >= 1 {
-            eprintln!("{}", message);
-        }
-    }
-
-    pub fn log_detailed(&self, stage: &str, event_num: u64, operation: &str) {
-        if self.config.is_enabled() && self.config.verbosity >= 2 {
-            eprintln!("Trace: Event #{} {} → {}", event_num, stage, operation);
-        }
-    }
-
-    pub fn log_step(&self, step_info: &str, result: &str) {
-        if self.config.is_enabled() && self.config.verbosity >= 3 {
-            eprintln!("  → {} → {}", step_info, result);
-        }
-    }
-
-    pub fn log_execution_start(&self, stage: &str, script: &str, event_data: &str) {
-        match self.config.verbosity {
-            1 => {
-                if self.config.is_enabled() {
-                    let prefix = if self.config.use_emoji {
-                        "🔹"
-                    } else {
-                        "kelora: "
-                    };
-                    eprintln!("{} Executing {} stage", prefix, stage);
-                }
-            }
-            2 => {
-                if self.config.is_enabled() {
-                    eprintln!("{} execution started", stage);
-                    eprintln!("  Script: {}", truncate_for_display(script, 100));
-                }
-            }
-            3.. => {
-                if self.config.is_enabled() {
-                    eprintln!("{} execution trace:", stage);
-                    eprintln!("  Script: {}", script.trim());
-                    eprintln!("  Event: {}", truncate_for_display(event_data, 150));
-                }
-            }
-            _ => {}
-        }
-    }
-
-    pub fn log_execution_result(&self, stage: &str, success: bool, result_info: &str) {
-        if self.config.is_enabled() && self.config.verbosity >= 2 {
-            let status = if success { "✓" } else { "✗" };
-            eprintln!("{} {} ({})", stage, status, result_info);
-        }
-    }
-
-    pub fn update_context(&self, position: Option<rhai::Position>, source: Option<&str>) {
-        if self.config.is_enabled() {
-            if let Ok(mut ctx) = self.context.lock() {
-                ctx.position = position;
-                ctx.source_snippet = source.map(|s| s.to_string());
-            }
-        }
-    }
-
-    pub fn get_context(&self) -> ExecutionContext {
-        if let Ok(ctx) = self.context.lock() {
-            ctx.clone()
-        } else {
-            ExecutionContext::default()
-        }
-    }
-}
-
-impl Clone for DebugTracker {
-    fn clone(&self) -> Self {
-        DebugTracker {
-            config: self.config.clone(),
-            context: Arc::clone(&self.context),
-            event_count: Arc::clone(&self.event_count),
-            error_count: Arc::clone(&self.error_count),
-        }
-    }
-}
-
-pub struct ErrorEnhancer {
-    debug_config: DebugConfig,
-}
-
-impl ErrorEnhancer {
-    pub fn new(debug_config: DebugConfig) -> Self {
-        ErrorEnhancer { debug_config }
-    }
-
-    pub fn enhance_error(
-        &self,
-        error: &EvalAltResult,
-        scope: &Scope,
-        script: &str,
-        stage: &str,
-        execution_context: &ExecutionContext,
-    ) -> String {
-        let mut output = String::new();
-
-        // Basic error info
-        output.push_str(&format!("🔸 Stage {} failed\n", stage));
-        output.push_str(&format!("  Code: {}\n", script.trim()));
-        output.push_str(&format!("  Error: {}\n", error));
-
-        // Add execution context if available
-        if let Some(pos) = &execution_context.position {
-            output.push_str(&format!("   Position: {}\n", pos));
-        }
-
-        // Suggestions and stage tips should be shown even without verbose mode
-        if let Some(suggestions) = self.generate_suggestions(error, scope, Some(script)) {
-            output.push_str(&format!("   💡 {}\n", suggestions));
-        }
-
-        // Show scope information only if debug enabled (can be verbose)
-        if self.debug_config.is_enabled() {
-            output.push_str("\n   Variables in scope:\n");
-            for (name, _is_const, value) in scope.iter() {
-                let preview = format!("{:?}", value);
-                let preview = if preview.len() > 50 {
-                    format!("{}...", &preview[..47])
-                } else {
-                    preview
-                };
-                output.push_str(&format!(
-                    "   • {}: {} = {}\n",
-                    name,
-                    value.type_name(),
-                    preview
-                ));
-            }
-        }
-
-        // Add stage-specific help (applies even without debug verbosity)
-        output.push_str(&self.get_stage_help(stage, error));
-
-        output
-    }
-
-    fn generate_suggestions(
-        &self,
-        error: &EvalAltResult,
-        scope: &Scope,
-        script: Option<&str>,
-    ) -> Option<String> {
-        let base = match error {
-            EvalAltResult::ErrorVariableNotFound(var_name, _) => {
-                let similar = self.find_similar_variables(var_name, scope);
-                if !similar.is_empty() {
-                    Some(format!("Did you mean: {}?", similar.join(", ")))
-                } else {
-                    // Check for common patterns
-                    if var_name.contains('.') {
-                        Some("Check if the field exists and use safe access like 'if \"field\" in e { e.field } else { \"default\" }'".to_string())
-                    } else if var_name.starts_with("e.") {
-                        Some("Try using bracket notation for special characters: e[\"field-name\"] or e[\"field.with.dots\"]".to_string())
-                    } else {
-                        Some("Available variables: e (event), meta (metadata), conf (initialization data), line (raw line)".to_string())
-                    }
-                }
-            }
-            EvalAltResult::ErrorPropertyNotFound(prop_name, _) => {
-                let mut suggestions = Vec::new();
-
-                // Offer similar field names from `e` map if available
-                if let Some(fields) = self.event_field_names(scope) {
-                    let similar: Vec<_> = fields
-                        .iter()
-                        .filter(|name| {
-                            let sim = self.calculate_similarity(
-                                &prop_name.to_lowercase(),
-                                &name.to_lowercase(),
-                            );
-                            sim > 0.6
-                                || name.contains(prop_name)
-                                || prop_name.contains(name.as_str())
-                        })
-                        .take(3)
-                        .cloned()
-                        .collect();
-                    if !similar.is_empty() {
-                        suggestions.push(format!("Did you mean field: {}?", similar.join(", ")));
-                    } else {
-                        let preview: Vec<_> = fields.into_iter().take(5).collect();
-                        if !preview.is_empty() {
-                            suggestions.push(format!(
-                                "Available fields include: {}{}",
-                                preview.join(", "),
-                                if preview.len() == 5 { " ..." } else { "" }
-                            ));
-                        }
-                    }
-                }
-
-                suggestions
-                    .push("Try `--stats` or `-F inspect` to see available fields".to_string());
-                Some(suggestions.join(" "))
-            }
-            EvalAltResult::ErrorIndexNotFound(index, _) => Some(format!(
-                "Index '{}' not found. Check array bounds with 'if e.array.len() > {} {{ ... }}'",
-                index, index
-            )),
-            EvalAltResult::ErrorFunctionNotFound(func_sig, _) => {
-                self.suggest_function_alternatives(func_sig)
-            }
-            EvalAltResult::ErrorMismatchDataType(expected, actual, _) => {
-                let mut hints = vec![format!(
-                    "Type mismatch: expected {}, got {}.",
-                    expected, actual
-                )];
-
-                if expected.contains("bool") {
-                    hints.push(
-                        "Filters must return true/false; use comparisons like `e.level == \"ERROR\"` or `contains(...)`"
-                            .to_string(),
-                    );
-                }
-                if actual.contains("()") || expected.contains("()") {
-                    hints.push(
-                        "Missing fields return () by default; guard with e.has(\"field\") or e.get(\"field\", default) before chaining"
-                            .to_string(),
-                    );
-                }
-                hints.push(
-                    "Use type_of() to check types or to_string()/to_number()/parse_json() for conversion"
-                        .to_string(),
-                );
-
-                Some(hints.join(" "))
-            }
-            EvalAltResult::ErrorRuntime(msg, _) => {
-                // Detect custom error messages involving Unit type "()"
-                let msg_str = msg.to_string();
-                if msg_str.contains("got ()") {
-                    Some(
-                        "Received (), which means a field is missing or returned no value. \
-                         Use e.get_path('field.path', default) to provide defaults, \
-                         or e.has_path('field.path') to check if a field exists first."
-                            .to_string(),
-                    )
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        };
-
-        let raw_string_hint = script.and_then(|script| Self::raw_string_hint(error, script));
-
-        match (base, raw_string_hint) {
-            (Some(base), Some(hint)) => Some(format!("{} {}", base, hint)),
-            (Some(base), None) => Some(base),
-            (None, Some(hint)) => Some(hint),
-            (None, None) => None,
-        }
-    }
-
-    pub(crate) fn raw_string_hint(error: &EvalAltResult, script: &str) -> Option<String> {
-        match error {
-            EvalAltResult::ErrorParsing(_, _) if Self::contains_rust_raw_string(script) => Some(
-                "It looks like a Rust raw string (r\"...\"). Rhai raw strings use #\"...\"# (or ##\"...\"## for embedded quotes)."
-                    .to_string(),
-            ),
-            _ => None,
-        }
-    }
-
-    fn contains_rust_raw_string(script: &str) -> bool {
-        let bytes = script.as_bytes();
-        let mut i = 0;
-        while i < bytes.len() {
-            if bytes[i] == b'r' {
-                let prev = if i == 0 { None } else { Some(bytes[i - 1]) };
-                let starts_token = prev.is_none_or(|c| !Self::is_ident_char(c));
-                if starts_token {
-                    let mut j = i + 1;
-                    while j < bytes.len() && bytes[j] == b'#' {
-                        j += 1;
-                    }
-                    if j < bytes.len() && bytes[j] == b'"' {
-                        return true;
-                    }
-                }
-            }
-            i += 1;
-        }
-        false
-    }
-
-    fn is_ident_char(byte: u8) -> bool {
-        byte.is_ascii_alphanumeric() || byte == b'_'
-    }
-
-    fn suggest_function_alternatives(&self, func_sig: &str) -> Option<String> {
-        // Detect operations on missing fields (unit type)
-        if func_sig.contains("()") {
-            let func_name = func_sig.split('(').next().unwrap_or("").trim();
-
-            // Check for binary operations with () operand
-            if matches!(
-                func_name,
-                "+" | "-"
-                    | "*"
-                    | "/"
-                    | "%"
-                    | "=="
-                    | "!="
-                    | "<"
-                    | ">"
-                    | "<="
-                    | ">="
-                    | "&&"
-                    | "||"
-                    | "&"
-                    | "|"
-                    | "^"
-            ) {
-                return Some(format!(
-                    "Field is missing. Use e.has(\"field\") or e.get_path(\"field\", default) before using '{}'",
-                    func_name
-                ));
-            }
-
-            // Check for method/function calls with () as parameter
-            // Matches: "method (())", "method ((), other)", "method (other, ())", etc.
-            if func_sig.contains(" (())")
-                || func_sig.contains("((), ")
-                || func_sig.contains(", ())")
-            {
-                return Some(
-                    "Field is missing. Use e.has(\"field\") to check, or e.get_path(\"field\", default) to provide a default"
-                        .to_string(),
-                );
-            }
-        }
-
-        let func_name = func_sig.split('(').next().unwrap_or(func_sig).trim();
-
-        let mut best: Vec<(String, f64)> = RhaiEngine::function_catalog()
-            .into_iter()
-            .map(|candidate| {
-                let sim =
-                    self.calculate_similarity(&func_name.to_lowercase(), &candidate.to_lowercase());
-                (candidate, sim)
-            })
-            .filter(|(_, sim)| *sim > 0.45)
-            .collect();
-
-        best.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        best.truncate(3);
-
-        if !best.is_empty() {
-            return Some(format!(
-                "Did you mean: {}?",
-                best.iter()
-                    .map(|(c, _)| c.clone())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ));
-        }
-
-        // Common function alternatives as fallbacks
-        match func_name {
-            "length" => Some("Use 'len()' instead of 'length()'".to_string()),
-            "size" => Some("Use 'len()' instead of 'size()'".to_string()),
-            "substr" | "substring" => Some(
-                "Use string slicing: s[start..end] or extract_regex() for pattern matching"
-                    .to_string(),
-            ),
-            "indexOf" | "index_of" => Some(
-                "Use 'contains()' to check existence or 'split()' to find positions".to_string(),
-            ),
-            "push_back" | "append" => Some("Use 'push()' to add elements to arrays".to_string()),
-            "to_int" | "parseInt" => {
-                Some("Use 'parse()' or to_number() for type conversion".to_string())
-            }
-            "to_str" | "toString" => Some("Use 'to_string()' for string conversion".to_string()),
-            "match" => Some(
-                "Use 'extract_regex()' for regex matching or 'contains()' for simple checks"
-                    .to_string(),
-            ),
-            name if name.ends_with("_re") => Some(
-                "Regex functions: extract_regex(), extract_regexes(), extract_regex_maps(), split_regex(), replace_regex()"
-                    .to_string(),
-            ),
-            _ => None,
-        }
-    }
-
-    fn find_similar_variables(&self, target: &str, scope: &Scope) -> Vec<String> {
-        let mut suggestions = Vec::new();
-        let target_lower = target.to_lowercase();
-
-        for (name, _is_const, _value) in scope.iter() {
-            let name_lower = name.to_lowercase();
-            let similarity = self.calculate_similarity(&target_lower, &name_lower);
-
-            // Include variables with good similarity or common patterns
-            if similarity > 0.6
-                || name_lower.contains(&target_lower)
-                || target_lower.contains(&name_lower)
-                || self.has_common_prefix(&target_lower, &name_lower)
-            {
-                suggestions.push(name.to_string());
-            }
-        }
-
-        // Sort by similarity (best matches first)
-        suggestions.sort_by(|a, b| {
-            let sim_a = self.calculate_similarity(&target_lower, &a.to_lowercase());
-            let sim_b = self.calculate_similarity(&target_lower, &b.to_lowercase());
-            sim_b
-                .partial_cmp(&sim_a)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-
-        // Return top 3 suggestions
-        suggestions.truncate(3);
-        suggestions
-    }
-
-    fn event_field_names(&self, scope: &Scope) -> Option<Vec<String>> {
-        if let Some(e_map) = scope.get_value::<Map>("e") {
-            let mut keys: Vec<String> = e_map
-                .into_keys()
-                .map(|k| k.to_string())
-                .filter(|k| !k.is_empty())
-                .collect();
-            keys.sort();
-            keys.dedup();
-            return Some(keys);
-        }
-        None
-    }
-
-    fn calculate_similarity(&self, s1: &str, s2: &str) -> f64 {
-        if s1 == s2 {
-            return 1.0;
-        }
-        if s1.is_empty() || s2.is_empty() {
-            return 0.0;
-        }
-
-        // Simple Levenshtein-based similarity
-        let len1 = s1.len();
-        let len2 = s2.len();
-        let max_len = len1.max(len2);
-
-        let distance = self.levenshtein_distance(s1, s2);
-        1.0 - (distance as f64 / max_len as f64)
-    }
-
-    fn levenshtein_distance(&self, s1: &str, s2: &str) -> usize {
-        let chars1: Vec<char> = s1.chars().collect();
-        let chars2: Vec<char> = s2.chars().collect();
-        let len1 = chars1.len();
-        let len2 = chars2.len();
-
-        if len1 == 0 {
-            return len2;
-        }
-        if len2 == 0 {
-            return len1;
-        }
-
-        let mut prev_row: Vec<usize> = (0..=len2).collect();
-
-        for i in 1..=len1 {
-            let mut curr_row = vec![i];
-
-            for j in 1..=len2 {
-                let cost = if chars1[i - 1] == chars2[j - 1] { 0 } else { 1 };
-                curr_row.push(
-                    (curr_row[j - 1] + 1) // insertion
-                        .min(prev_row[j] + 1) // deletion
-                        .min(prev_row[j - 1] + cost), // substitution
-                );
-            }
-
-            prev_row = curr_row;
-        }
-
-        prev_row[len2]
-    }
-
-    fn has_common_prefix(&self, s1: &str, s2: &str) -> bool {
-        if s1.len() < 2 || s2.len() < 2 {
-            return false;
-        }
-        let prefix_len = 2.min(s1.len()).min(s2.len());
-        s1[..prefix_len] == s2[..prefix_len]
-    }
-
-    fn get_stage_help(&self, stage: &str, error: &EvalAltResult) -> String {
-        let mut help = String::new();
-
-        match stage {
-            "filter" => {
-                help.push_str("\n   🔹 Filter stage tips:\n");
-                help.push_str("   • Filters must return true/false (boolean values)\n");
-                help.push_str("   • Use 'e.field_name' to access event fields\n");
-                help.push_str(
-                    "   • Use 'e[\"field-with-special-chars\"]' for complex field names\n",
-                );
-                help.push_str("   • Use 'if \"field\" in e { ... }' to check field existence\n");
-
-                if let EvalAltResult::ErrorMismatchDataType(_, _, _) = error {
-                    help.push_str(
-                        "   • Remember: filters need boolean results, not strings or numbers\n",
-                    );
-                }
-            }
-            "exec" => {
-                help.push_str("\n   🔹 Exec stage tips:\n");
-                help.push_str("   • Use 'e.new_field = value' to add fields to events\n");
-                help.push_str("   • Use 'e.field = ()' to remove fields from events\n");
-                help.push_str("   • Use 'e = ()' to remove entire event (filter out)\n");
-                help.push_str("   • Use 'let variable = value' for temporary variables\n");
-                help.push_str("   • Use 'print(\"debug: \" + value)' for debugging output\n");
-            }
-            "begin" => {
-                help.push_str("\n   🔹 Begin stage tips:\n");
-                help.push_str("   • Use 'conf.field = value' to set global initialization data\n");
-                help.push_str("   • Use 'read_file(\"path\")' to load external data\n");
-                help.push_str("   • Variables set here are available in all event processing\n");
-            }
-            "end" => {
-                help.push_str("\n   🔹 End stage tips:\n");
-                help.push_str("   • Use 'metrics.key' to access accumulated tracking data\n");
-                help.push_str("   • Use 'print()' to output final results\n");
-                help.push_str("   • This runs after all events are processed\n");
-            }
-            _ => {}
-        }
-
-        help
-    }
-}
 
 // Execution Tracer for step-by-step debugging
 pub struct ExecutionTracer {
@@ -744,27 +152,6 @@ impl ExecutionTracer {
         }
     }
 
-    pub fn trace_variable_access(&self, var_name: &str, value: &str) {
-        if self.config.verbosity >= 3 {
-            eprintln!(
-                "    Access: {} = {}",
-                var_name,
-                truncate_for_display(value, 30)
-            );
-        }
-    }
-
-    pub fn trace_function_call(&self, func_name: &str, args: &str, result: &str) {
-        if self.config.verbosity >= 3 {
-            eprintln!(
-                "    Call: {}({}) → {}",
-                func_name,
-                args,
-                truncate_for_display(result, 30)
-            );
-        }
-    }
-
     // Enhanced detailed tracing for -vvv level
     pub fn trace_detailed_step(
         &self,
@@ -817,29 +204,12 @@ impl ExecutionTracer {
         }
     }
 
-    pub fn trace_ast_node(&self, node_type: &str, position: &str, source: &str) {
-        if self.config.verbosity >= 3 {
-            eprintln!(
-                "    AST: {} at {} → \"{}\"",
-                node_type,
-                position,
-                truncate_for_display(source, 40)
-            );
-        }
-    }
-
     pub fn next_event(&self) -> u64 {
         if let Ok(mut counter) = self.current_event.lock() {
             *counter += 1;
             *counter
         } else {
             0
-        }
-    }
-
-    pub fn reset_step_counter(&self) {
-        if let Ok(mut counter) = self.step_counter.lock() {
-            *counter = 0;
         }
     }
 }
@@ -852,72 +222,6 @@ impl Clone for ExecutionTracer {
             step_counter: Arc::clone(&self.step_counter),
         }
     }
-}
-
-// Performance and Statistics Tracking using thread-local storage
-// This integrates with kelora's parallel processing infrastructure like track_count()
-
-use std::cell::RefCell;
-
-#[derive(Debug, Clone, Default)]
-pub struct DebugStatistics {
-    pub start_time: Option<std::time::Instant>,
-    pub events_processed: u64,
-    pub events_passed: u64,
-    pub errors_encountered: u64,
-    pub script_executions: u64,
-}
-
-impl DebugStatistics {
-    pub fn new() -> Self {
-        DebugStatistics {
-            start_time: Some(std::time::Instant::now()),
-            events_processed: 0,
-            events_passed: 0,
-            errors_encountered: 0,
-            script_executions: 0,
-        }
-    }
-}
-
-// Thread-local storage for debug statistics (following track_count pattern)
-thread_local! {
-    static THREAD_DEBUG_STATS: RefCell<DebugStatistics> = RefCell::new(DebugStatistics::new());
-}
-
-// Debug statistics collection functions (following stats.rs pattern)
-pub fn debug_stats_increment_events_processed() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().events_processed += 1;
-    });
-}
-
-pub fn debug_stats_increment_events_passed() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().events_passed += 1;
-    });
-}
-
-pub fn debug_stats_increment_errors() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().errors_encountered += 1;
-    });
-}
-
-pub fn debug_stats_increment_script_executions() {
-    THREAD_DEBUG_STATS.with(|stats| {
-        stats.borrow_mut().script_executions += 1;
-    });
-}
-
-pub fn debug_stats_get_thread_state() -> DebugStatistics {
-    THREAD_DEBUG_STATS.with(|stats| stats.borrow().clone())
-}
-
-pub fn debug_stats_set_thread_state(stats: &DebugStatistics) {
-    THREAD_DEBUG_STATS.with(|local_stats| {
-        *local_stats.borrow_mut() = stats.clone();
-    });
 }
 
 /// Represents the type of access to a field in a Rhai expression
@@ -1836,68 +1140,6 @@ impl RhaiEngine {
         rhai_functions::tracking::get_thread_internal_state()
     }
 
-    fn format_rhai_error(err: Box<EvalAltResult>, script_name: &str, _script_text: &str) -> String {
-        match *err {
-            EvalAltResult::ErrorParsing(parse_err, pos) => {
-                format!("Syntax error in {} at {}: {}", script_name, pos, parse_err)
-            }
-            EvalAltResult::ErrorRuntime(runtime_err, pos) => {
-                format!(
-                    "Runtime error in {} at {}: {}",
-                    script_name, pos, runtime_err
-                )
-            }
-            EvalAltResult::ErrorVariableNotFound(var, pos) => {
-                format!("Variable '{}' not found in {} at {}", var, script_name, pos)
-            }
-            EvalAltResult::ErrorFunctionNotFound(func, pos) => {
-                Self::format_function_not_found_error(func, script_name, pos)
-            }
-            EvalAltResult::ErrorMismatchDataType(expected, actual, pos) => {
-                format!("Type mismatch in {} at {}: expected {}, got {} (this often indicates a function was called with incorrect argument types)", 
-                        script_name, pos, expected, actual)
-            }
-            EvalAltResult::ErrorInFunctionCall(func, _source, inner_err, pos) => {
-                let inner_msg = Self::format_rhai_error(inner_err, "function", "");
-                format!(
-                    "Error in function '{}' in {} at {}: {}",
-                    func, script_name, pos, inner_msg
-                )
-            }
-            EvalAltResult::ErrorPropertyNotFound(prop, pos) => {
-                format!(
-                    "Property '{}' not found in {} at {}",
-                    prop, script_name, pos
-                )
-            }
-            EvalAltResult::ErrorIndexNotFound(index, pos) => {
-                format!("Index '{}' not found in {} at {}", index, script_name, pos)
-            }
-            EvalAltResult::ErrorDotExpr(msg, pos) => {
-                format!(
-                    "Property access error in {} at {}: {}",
-                    script_name, pos, msg
-                )
-            }
-            EvalAltResult::ErrorArithmetic(msg, pos) => {
-                format!("Arithmetic error in {} at {}: {}", script_name, pos, msg)
-            }
-            EvalAltResult::ErrorTooManyOperations(pos) => {
-                format!("Too many operations in {} at {}", script_name, pos)
-            }
-            EvalAltResult::ErrorStackOverflow(pos) => {
-                format!("Stack overflow in {} at {}", script_name, pos)
-            }
-            EvalAltResult::ErrorDataTooLarge(msg, pos) => {
-                format!("Data too large in {} at {}: {}", script_name, pos, msg)
-            }
-            EvalAltResult::ErrorTerminated(val, pos) => {
-                format!("Script terminated in {} at {}: {}", script_name, pos, val)
-            }
-            _ => format!("Error in {}: {}", script_name, err),
-        }
-    }
-
     fn format_function_not_found_error(
         func_signature: String,
         script_name: &str,
@@ -2167,9 +1409,6 @@ impl RhaiEngine {
         // Register custom functions for log analysis (includes eprint() for stderr output)
         rhai_functions::register_all_functions(&mut engine);
 
-        // Register variable access callback for tracking functions
-        Self::register_variable_resolver(&mut engine);
-
         let mut scope_template = Scope::new();
         scope_template.push("line", "");
         scope_template.push("e", rhai::Map::new());
@@ -2243,15 +1482,7 @@ impl RhaiEngine {
         // essential for our debugging features. We'll update when a stable replacement is available.
         #[allow(deprecated)]
         self.engine.register_debugger(
-            move |_engine, debugger| {
-                // Set up breakpoint-based tracing for enhanced debugging
-                if debug_config.trace_events {
-                    // Enable step-by-step debugging mode for detailed tracing
-                    // Note: Specific breakpoint methods may not be available in current Rhai version
-                    // The debugger will still trigger Step events for detailed tracing
-                }
-                debugger
-            },
+            move |_engine, debugger| debugger,
             move |_context, event, node, source, pos| {
                 // Update execution context
                 debug_tracker.update_context(Some(pos), source);
@@ -2544,18 +1775,9 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
-        let mut stats_recorded = false;
-
         if let Some(native) = &compiled.native_predicate {
             Self::set_thread_tracking_state(metrics, internal);
-            debug_stats_increment_events_processed();
-            debug_stats_increment_script_executions();
-            stats_recorded = true;
-
             if let Some(result) = native.evaluate(event) {
-                if result {
-                    debug_stats_increment_events_passed();
-                }
                 *metrics = Self::get_thread_tracking_state();
                 *internal = Self::get_thread_internal_state();
                 return Ok(result);
@@ -2569,12 +1791,6 @@ impl RhaiEngine {
             compiled.meta_usage,
             compiled.uses_conf,
         );
-
-        // Debug statistics tracking
-        if !stats_recorded {
-            debug_stats_increment_events_processed();
-            debug_stats_increment_script_executions();
-        }
 
         // Add execution tracing for filter execution
         if let Some(ref tracer) = self.execution_tracer {
@@ -2604,9 +1820,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<bool>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "filter",
@@ -2640,11 +1853,6 @@ impl RhaiEngine {
             }
         }
 
-        // Track successful events in debug statistics
-        if result {
-            debug_stats_increment_events_passed();
-        }
-
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(result)
@@ -2664,9 +1872,6 @@ impl RhaiEngine {
             compiled.meta_usage,
             compiled.uses_conf,
         );
-
-        // Debug statistics tracking
-        debug_stats_increment_script_executions();
 
         // Add execution tracing for exec execution
         if let Some(ref tracer) = self.execution_tracer {
@@ -2696,9 +1901,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "exec",
@@ -2883,11 +2085,6 @@ impl RhaiEngine {
         Ok(())
     }
 
-    fn register_variable_resolver(_engine: &mut Engine) {
-        // For now, keep this empty - we'll implement proper function-based approach
-        // Variable resolver is not the right tool for function calls
-    }
-
     // Window-aware execution methods
     pub fn execute_compiled_filter_with_window(
         &mut self,
@@ -2899,10 +2096,6 @@ impl RhaiEngine {
     ) -> Result<bool> {
         Self::set_thread_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
-
-        // Debug statistics tracking
-        debug_stats_increment_events_processed();
-        debug_stats_increment_script_executions();
 
         // Add execution tracing for windowed filter execution
         if let Some(ref tracer) = self.execution_tracer {
@@ -2943,9 +2136,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<bool>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "filter",
@@ -2979,11 +2169,6 @@ impl RhaiEngine {
             }
         }
 
-        // Track successful events in debug statistics
-        if result {
-            debug_stats_increment_events_passed();
-        }
-
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(result)
@@ -2999,9 +2184,6 @@ impl RhaiEngine {
     ) -> Result<()> {
         Self::set_thread_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
-
-        // Debug statistics tracking
-        debug_stats_increment_script_executions();
 
         // Add execution tracing for windowed exec execution
         if let Some(ref tracer) = self.execution_tracer {
@@ -3042,9 +2224,6 @@ impl RhaiEngine {
             .engine
             .eval_ast_with_scope::<Dynamic>(&mut scope, &compiled.ast)
             .map_err(|e| {
-                // Track errors in debug statistics
-                debug_stats_increment_errors();
-
                 let detailed_msg = Self::format_rhai_diagnostic(
                     e,
                     "exec",
@@ -3526,13 +2705,49 @@ mod tests {
         scope.push("e", e_map);
 
         let err = EvalAltResult::ErrorPropertyNotFound("statsu".into(), rhai::Position::NONE);
-        let ctx = ExecutionContext::default();
+        let ctx = debug::ExecutionContext::default();
         let out = enhancer.enhance_error(&err, &scope, "e.statsu", "filter", &ctx);
 
         eprintln!("enhanced error:\n{}", out);
         assert!(
             out.contains("status"),
             "output should surface available fields even when verbosity is zero"
+        );
+    }
+
+    #[test]
+    fn verbose_diagnostic_respects_no_emoji_setting() {
+        let tracker = DebugTracker::new(DebugConfig::new(1).with_emoji(false));
+        let mut scope = Scope::new();
+        let mut e_map = Map::new();
+        e_map.insert("status".into(), Dynamic::from("OK"));
+        scope.push("e", e_map);
+
+        let err = Box::new(EvalAltResult::ErrorPropertyNotFound(
+            "statsu".into(),
+            rhai::Position::NONE,
+        ));
+        let out = RhaiEngine::format_rhai_diagnostic(
+            err,
+            "filter",
+            "filter expression",
+            "e.statsu",
+            Some(&scope),
+            Some(&tracker),
+            false,
+        );
+
+        assert!(
+            out.starts_with("Error: Stage filter failed"),
+            "verbose diagnostic should use text prefix when emoji are disabled: {out}"
+        );
+        assert!(
+            out.contains("Hint:"),
+            "verbose diagnostic should use text hint prefix when emoji are disabled: {out}"
+        );
+        assert!(
+            !out.contains('🔸') && !out.contains('💡'),
+            "verbose diagnostic should not contain emoji when disabled: {out}"
         );
     }
 
@@ -3546,7 +2761,7 @@ mod tests {
             "track_count requires a string key; got ()".into(),
             rhai::Position::NONE,
         );
-        let ctx = ExecutionContext::default();
+        let ctx = debug::ExecutionContext::default();
         let out = enhancer.enhance_error(&err, &scope, "track_count(e.endpoint)", "exec", &ctx);
 
         eprintln!("enhanced error:\n{}", out);
@@ -3779,7 +2994,7 @@ mod tests {
         let scope = Scope::new();
         let err =
             EvalAltResult::ErrorFunctionNotFound("length(string)".into(), rhai::Position::NONE);
-        let ctx = ExecutionContext::default();
+        let ctx = debug::ExecutionContext::default();
         let out = enhancer.enhance_error(&err, &scope, "length(s)", "filter", &ctx);
         assert!(
             out.contains("len"),
@@ -3839,7 +3054,7 @@ mod tests {
             "string".into(),
             rhai::Position::NONE,
         );
-        let ctx = ExecutionContext::default();
+        let ctx = debug::ExecutionContext::default();
         let out = enhancer.enhance_error(&err, &scope, "e.level", "filter", &ctx);
         assert!(
             out.contains("Filters must return true/false"),

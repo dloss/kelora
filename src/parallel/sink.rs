@@ -120,9 +120,11 @@ fn pipeline_ordered_result_sink<W: std::io::Write>(
         let batch_id = batch_result.batch_id;
         let user_tracked_updates = std::mem::take(&mut batch_result.user_tracked_updates);
         let internal_tracked_updates = std::mem::take(&mut batch_result.internal_tracked_updates);
+        let internal_stats = std::mem::take(&mut batch_result.internal_stats);
 
         // Merge global state and stats
         global_tracker.merge_worker_state(user_tracked_updates, internal_tracked_updates)?;
+        global_tracker.merge_internal_stats(&internal_stats)?;
         global_tracker.merge_worker_stats(&batch_result.worker_stats)?;
 
         // Handle special batches
@@ -227,10 +229,7 @@ fn pipeline_unordered_result_sink<W: std::io::Write>(
             }
             Ok(Ctrl::PrintStats) => {
                 // Print current parallel stats from coordinator
-                let mut current_stats = global_tracker.get_final_stats();
-                // Extract discovered keys/levels from current internal tracking
-                let internal_tracking = global_tracker.lock_internal_tracked().clone();
-                current_stats.extract_discovered_from_tracking(&internal_tracking);
+                let current_stats = global_tracker.get_final_stats();
                 let stats_message = config.format_stats_message(
                     &current_stats.format_stats_for_signal(config.input.multiline.is_some(), false),
                     true, // Always show header for signal handler
@@ -257,7 +256,9 @@ fn pipeline_unordered_result_sink<W: std::io::Write>(
         // Merge global state and stats
         let user_updates = std::mem::take(&mut batch_result.user_tracked_updates);
         let internal_updates = std::mem::take(&mut batch_result.internal_tracked_updates);
+        let internal_stats = std::mem::take(&mut batch_result.internal_stats);
         global_tracker.merge_worker_state(user_updates, internal_updates)?;
+        global_tracker.merge_internal_stats(&internal_stats)?;
         global_tracker.merge_worker_stats(&batch_result.worker_stats)?;
 
         // Handle special batches

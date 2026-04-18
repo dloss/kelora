@@ -12,8 +12,8 @@ use crate::decompression;
 use crate::parsers;
 use crate::pipeline;
 use crate::readers;
-use crate::rhai_functions::tracking::TrackingSnapshot;
 use crate::stats;
+use crate::stats::ProcessingStats;
 
 /// Result of format detection
 #[derive(Debug, Clone)]
@@ -209,27 +209,10 @@ pub fn emit_detected_format_notice(
 }
 
 /// Extract a counter value from tracking data
-pub fn extract_counter_from_tracking(tracking: &TrackingSnapshot, key: &str) -> i64 {
-    tracking
-        .internal
-        .get(key)
-        .or_else(|| tracking.user.get(key))
-        .and_then(|value| {
-            if value.is_int() {
-                value.as_int().ok()
-            } else if value.is_float() {
-                value.as_float().ok().map(|v| v as i64)
-            } else {
-                None
-            }
-        })
-        .unwrap_or(0)
-}
-
 /// Format a warning message about parse failures
 pub fn parse_failure_warning_message(
     config: &KeloraConfig,
-    tracking: Option<&TrackingSnapshot>,
+    stats: Option<&ProcessingStats>,
     auto_detected_non_line: bool,
     events_were_output: bool,
     terminal_output: bool,
@@ -238,10 +221,9 @@ pub fn parse_failure_warning_message(
         return None;
     }
 
-    let tracking = tracking?;
-
-    let parse_errors = extract_counter_from_tracking(tracking, "__kelora_error_count_parse");
-    let events_created = extract_counter_from_tracking(tracking, "__kelora_stats_events_created");
+    let stats = stats?;
+    let parse_errors = stats.lines_errors as i64;
+    let events_created = stats.events_created as i64;
 
     let seen = std::cmp::max(1, events_created + parse_errors);
     let should_warn = (parse_errors >= 10 && parse_errors * 3 >= seen)
@@ -263,14 +245,14 @@ pub fn parse_failure_warning_message(
 /// Emit a warning about parse failures to stderr
 pub fn emit_parse_failure_warning(
     config: &KeloraConfig,
-    tracking: Option<&TrackingSnapshot>,
+    stats: Option<&ProcessingStats>,
     auto_detected_non_line: bool,
     events_were_output: bool,
     terminal_output: bool,
 ) {
     if let Some(message) = parse_failure_warning_message(
         config,
-        tracking,
+        stats,
         auto_detected_non_line,
         events_were_output,
         terminal_output,
@@ -283,7 +265,6 @@ pub fn emit_parse_failure_warning(
 mod tests {
     use super::*;
     use crate::config::{ColorMode, EmojiMode};
-    use rhai::Dynamic;
 
     fn base_config() -> KeloraConfig {
         let mut cfg = KeloraConfig::default();
@@ -315,17 +296,13 @@ mod tests {
     #[test]
     fn parse_failure_warning_triggers_on_heavy_errors() {
         let cfg = base_config();
-        let mut tracking = TrackingSnapshot::default();
-        tracking.internal.insert(
-            "__kelora_error_count_parse".to_string(),
-            Dynamic::from(10_i64),
-        );
-        tracking.internal.insert(
-            "__kelora_stats_events_created".to_string(),
-            Dynamic::from(0_i64),
-        );
+        let stats = ProcessingStats {
+            lines_errors: 10,
+            events_created: 0,
+            ..Default::default()
+        };
 
-        let message = parse_failure_warning_message(&cfg, Some(&tracking), true, false, true)
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
             .expect("expected warning");
 
         assert!(
@@ -341,18 +318,14 @@ mod tests {
     #[test]
     fn parse_failure_warning_skips_light_error_rates() {
         let cfg = base_config();
-        let mut tracking = TrackingSnapshot::default();
-        tracking.internal.insert(
-            "__kelora_error_count_parse".to_string(),
-            Dynamic::from(2_i64),
-        );
-        tracking.internal.insert(
-            "__kelora_stats_events_created".to_string(),
-            Dynamic::from(10_i64),
-        );
+        let stats = ProcessingStats {
+            lines_errors: 2,
+            events_created: 10,
+            ..Default::default()
+        };
 
         assert!(
-            parse_failure_warning_message(&cfg, Some(&tracking), true, false, true).is_none(),
+            parse_failure_warning_message(&cfg, Some(&stats), true, false, true).is_none(),
             "should not warn on low error rate"
         );
     }

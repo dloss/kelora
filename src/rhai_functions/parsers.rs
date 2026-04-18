@@ -5,9 +5,9 @@
 
 use base64::engine::general_purpose::{URL_SAFE, URL_SAFE_NO_PAD};
 use base64::Engine as _;
-use once_cell::sync::Lazy;
 use rhai::{Array, Dynamic, Engine, Map};
 use std::path::Path;
+use std::sync::LazyLock;
 use url::Url;
 
 use crate::event::Event;
@@ -17,12 +17,12 @@ use crate::pipeline::EventParser;
 /// Maximum length for parsed inputs (1MB)
 const MAX_PARSE_LEN: usize = 1_048_576;
 
-static LOGFMT_PARSER: Lazy<LogfmtParser> = Lazy::new(LogfmtParser::new);
-static SYSLOG_PARSER: Lazy<SyslogParser> =
-    Lazy::new(|| SyslogParser::new().expect("failed to initialize syslog parser"));
-static CEF_PARSER: Lazy<CefParser> = Lazy::new(CefParser::new);
-static COMBINED_PARSER: Lazy<CombinedParser> =
-    Lazy::new(|| CombinedParser::new().expect("failed to initialize combined parser"));
+static LOGFMT_PARSER: LazyLock<LogfmtParser> = LazyLock::new(LogfmtParser::new);
+static SYSLOG_PARSER: LazyLock<SyslogParser> =
+    LazyLock::new(|| SyslogParser::new().expect("failed to initialize syslog parser"));
+static CEF_PARSER: LazyLock<CefParser> = LazyLock::new(CefParser::new);
+static COMBINED_PARSER: LazyLock<CombinedParser> =
+    LazyLock::new(|| CombinedParser::new().expect("failed to initialize combined parser"));
 
 // ============================================================================
 // Helper functions

@@ -1635,10 +1635,10 @@ mod tests {
     use super::*;
     use crate::cli::Cli;
     use clap::Parser;
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
     use std::sync::Mutex;
 
-    static ENV_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+    static ENV_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
     struct EnvGuard {
         vars: Vec<(&'static str, Option<String>)>,

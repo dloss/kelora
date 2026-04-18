@@ -585,6 +585,96 @@ pub fn parse_anchored_timestamp(
     }
 }
 
+pub type ResolvedTimeRange = (Option<DateTime<Utc>>, Option<DateTime<Utc>>);
+
+/// Resolve --since/--until arguments, including anchored forms that depend on
+/// each other (`since+`/`since-`/`until+`/`until-`), while preventing circular
+/// dependencies.
+pub fn resolve_time_range(
+    since_str: Option<&str>,
+    until_str: Option<&str>,
+    default_timezone: Option<&str>,
+) -> Result<ResolvedTimeRange, String> {
+    // Check for anchor dependencies
+    let since_uses_until_anchor =
+        since_str.is_some_and(|s| s.starts_with("until+") || s.starts_with("until-"));
+    let until_uses_since_anchor =
+        until_str.is_some_and(|u| u.starts_with("since+") || u.starts_with("since-"));
+
+    // Detect circular dependency
+    if since_uses_until_anchor && until_uses_since_anchor {
+        return Err(
+            "Cannot use both 'since' and 'until' anchors: --since uses 'until' anchor and --until uses 'since' anchor"
+                .to_string(),
+        );
+    }
+
+    if until_uses_since_anchor {
+        // Parse --since first, then use it as anchor for --until
+        let since = if let Some(since_str) = since_str {
+            Some(
+                parse_timestamp_arg_with_timezone(since_str, default_timezone)
+                    .map_err(|e| format!("Invalid --since timestamp '{}': {}", since_str, e))?,
+            )
+        } else {
+            None
+        };
+
+        let until = if let Some(until_str) = until_str {
+            Some(
+                parse_anchored_timestamp(until_str, since, None, default_timezone)
+                    .map_err(|e| format!("Invalid --until timestamp '{}': {}", until_str, e))?,
+            )
+        } else {
+            None
+        };
+
+        Ok((since, until))
+    } else if since_uses_until_anchor {
+        // Parse --until first, then use it as anchor for --since
+        let until = if let Some(until_str) = until_str {
+            Some(
+                parse_timestamp_arg_with_timezone(until_str, default_timezone)
+                    .map_err(|e| format!("Invalid --until timestamp '{}': {}", until_str, e))?,
+            )
+        } else {
+            None
+        };
+
+        let since = if let Some(since_str) = since_str {
+            Some(
+                parse_anchored_timestamp(since_str, None, until, default_timezone)
+                    .map_err(|e| format!("Invalid --since timestamp '{}': {}", since_str, e))?,
+            )
+        } else {
+            None
+        };
+
+        Ok((since, until))
+    } else {
+        // No anchors, parse independently
+        let since = if let Some(since_str) = since_str {
+            Some(
+                parse_timestamp_arg_with_timezone(since_str, default_timezone)
+                    .map_err(|e| format!("Invalid --since timestamp '{}': {}", since_str, e))?,
+            )
+        } else {
+            None
+        };
+
+        let until = if let Some(until_str) = until_str {
+            Some(
+                parse_timestamp_arg_with_timezone(until_str, default_timezone)
+                    .map_err(|e| format!("Invalid --until timestamp '{}': {}", until_str, e))?,
+            )
+        } else {
+            None
+        };
+
+        Ok((since, until))
+    }
+}
+
 /// Check if a string looks like a relative time expression (e.g., "1h", "30m", "2d", "1 hour")
 fn looks_like_relative_time(arg: &str) -> bool {
     // Must start with a digit
@@ -1250,6 +1340,81 @@ mod tests {
         assert_eq!(dt.year(), 2024);
         assert_eq!(dt.month(), 1);
         assert_eq!(dt.day(), 15);
+    }
+
+    #[test]
+    fn test_resolve_time_range_rejects_circular_anchors() {
+        let result = resolve_time_range(Some("until-1h"), Some("since+1h"), None);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("Cannot use both 'since' and 'until' anchors"));
+    }
+
+    #[test]
+    fn test_resolve_time_range_parses_until_anchored_to_since() {
+        let (since, until) =
+            resolve_time_range(Some("2024-01-15T10:00:00Z"), Some("since+30m"), Some("UTC"))
+                .unwrap();
+
+        let expected_since = chrono::Utc.with_ymd_and_hms(2024, 1, 15, 10, 0, 0).unwrap();
+        let expected_until = chrono::Utc
+            .with_ymd_and_hms(2024, 1, 15, 10, 30, 0)
+            .unwrap();
+
+        assert_eq!(since, Some(expected_since));
+        assert_eq!(until, Some(expected_until));
+    }
+
+    #[test]
+    fn test_resolve_time_range_reports_missing_anchor_with_cli_context() {
+        let result = resolve_time_range(None, Some("since+30m"), None);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid --until timestamp"));
+    }
+
+    #[test]
+    fn test_resolve_time_range_independent_values() {
+        let (since, until) = resolve_time_range(
+            Some("2024-01-15T10:00:00Z"),
+            Some("2024-01-15T11:00:00Z"),
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(
+            since,
+            Some(chrono::Utc.with_ymd_and_hms(2024, 1, 15, 10, 0, 0).unwrap())
+        );
+        assert_eq!(
+            until,
+            Some(chrono::Utc.with_ymd_and_hms(2024, 1, 15, 11, 0, 0).unwrap())
+        );
+    }
+
+    #[test]
+    fn test_resolve_time_range_until_anchor_dependency() {
+        let (since, until) =
+            resolve_time_range(Some("2024-01-15T10:00:00Z"), Some("since+30m"), None).unwrap();
+
+        assert_eq!(
+            since,
+            Some(chrono::Utc.with_ymd_and_hms(2024, 1, 15, 10, 0, 0).unwrap())
+        );
+        assert_eq!(
+            until,
+            Some(
+                chrono::Utc
+                    .with_ymd_and_hms(2024, 1, 15, 10, 30, 0)
+                    .unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn test_resolve_time_range_circular_dependency_error() {
+        let err = resolve_time_range(Some("until+1h"), Some("since+1h"), None).unwrap_err();
+        assert!(err.contains("Cannot use both 'since' and 'until' anchors"));
     }
 
     #[test]

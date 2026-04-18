@@ -15,7 +15,6 @@ use std::time::{Duration, Instant};
 use crate::config::{self, KeloraConfig};
 use crate::decompression;
 use crate::detection::{self, DetectedFormat};
-use crate::engine::RhaiEngine;
 use crate::parallel::{ParallelConfig, ParallelProcessor};
 use crate::parsers;
 use crate::parsers::type_conversion::TypeMap;
@@ -127,9 +126,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         let tracking_data = TrackingSnapshot::from_parts(tracking_user, tracking_internal);
         // Always collect stats for error reporting, even if --stats not used
         stats_finish_processing();
-        let mut stats = get_thread_stats();
-        stats.extract_discovered_from_tracking(&tracking_data.internal);
-        let final_stats = Some(stats);
+        let final_stats = Some(get_thread_stats());
 
         let field_discovery = if crate::field_discovery::is_enabled() {
             Some(crate::field_discovery::take_thread_discovery())
@@ -236,17 +233,9 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
     // Merge the parallel metrics state with our pipeline context
     let parallel_snapshot = processor.get_final_tracked_state();
 
-    // Extract internal stats from tracking system before merging
-    // This is needed for error reporting, not just when --stats is enabled
-    processor
-        .extract_final_stats_from_tracking(&parallel_snapshot)
-        .unwrap_or(());
-
     // Filter out stats and errors from user-visible context and merge the rest
     for (key, dynamic_value) in &parallel_snapshot.user {
         if !key.starts_with("__internal_")
-            && !key.starts_with("__kelora_stats_")
-            && !key.starts_with("__op___kelora_stats_")
             && !key.starts_with("__kelora_error_")
             && !key.starts_with("__op___kelora_error_")
         {
@@ -1164,9 +1153,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                         }
                         Ok(Ctrl::PrintStats) => {
                             // Print current stats to stderr (sequential mode)
-                            let mut current_stats = get_thread_stats();
-                            let internal_tracking = RhaiEngine::get_thread_internal_state();
-                            current_stats.extract_discovered_from_tracking(&internal_tracking);
+                            let current_stats = get_thread_stats();
                             let stats_message = config.format_stats_message(
                                 &current_stats.format_stats_for_signal(
                                     config.input.multiline.is_some(),
@@ -1234,9 +1221,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                         }
                         Ok(Ctrl::PrintStats) => {
                             // Print current stats to stderr (sequential mode)
-                            let mut current_stats = get_thread_stats();
-                            let internal_tracking = RhaiEngine::get_thread_internal_state();
-                            current_stats.extract_discovered_from_tracking(&internal_tracking);
+                            let current_stats = get_thread_stats();
                             let stats_message = config.format_stats_message(
                                 &current_stats.format_stats_for_signal(
                                     config.input.multiline.is_some(),

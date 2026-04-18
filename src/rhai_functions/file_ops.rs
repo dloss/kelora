@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use once_cell::sync::Lazy;
 use rhai::{Array, Engine, ImmutableString};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -7,6 +6,7 @@ use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::LazyLock;
 use std::sync::{Arc, Mutex, RwLock};
 
 /// Runtime configuration controlling whether file operations are permitted and how errors behave.
@@ -35,18 +35,19 @@ pub enum FileOp {
 }
 
 /// Shared runtime configuration for all threads.
-static RUNTIME_CONFIG: Lazy<RwLock<RuntimeConfig>> =
-    Lazy::new(|| RwLock::new(RuntimeConfig::default()));
+static RUNTIME_CONFIG: LazyLock<RwLock<RuntimeConfig>> =
+    LazyLock::new(|| RwLock::new(RuntimeConfig::default()));
 
 /// One-time warning guard for missing `--allow-fs-writes`.
 static WARNED_DISALLOWED: AtomicBool = AtomicBool::new(false);
 
 /// Cache of emitted error warnings to avoid spamming.
-static ERROR_LOG_CACHE: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new(HashSet::new()));
+static ERROR_LOG_CACHE: LazyLock<Mutex<HashSet<String>>> =
+    LazyLock::new(|| Mutex::new(HashSet::new()));
 
 /// Memorised per-path mutexes to serialize append operations when needed.
-static PATH_LOCKS: Lazy<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+static PATH_LOCKS: LazyLock<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// Current execution mode (sequential / parallel).
 static FILE_OP_MODE: AtomicU8 = AtomicU8::new(FileOpMode::Sequential as u8);
@@ -339,11 +340,11 @@ fn normalise_line(mut line: String) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
     use std::sync::Mutex;
     use tempfile::tempdir;
 
-    static TEST_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
+    static TEST_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
     fn with_runtime<F: FnOnce() -> T, T>(allow: bool, strict: bool, quiet: u8, f: F) -> T {
         let _guard = TEST_LOCK.lock().unwrap();

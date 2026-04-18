@@ -3,9 +3,9 @@
 //! Provides functions for extracting patterns (IPs, URLs, emails, JSON) from text.
 
 use crate::event::json_to_dynamic;
-use once_cell::sync::Lazy;
 use regex::Regex;
 use rhai::{Array, Dynamic, Engine};
+use std::sync::LazyLock;
 
 // Regex patterns (IPv4 validates 0-255 range for each octet)
 const IPV4_PATTERN: &str = r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b";
@@ -15,16 +15,17 @@ const EMAIL_PATTERN: &str = r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b
 const EMAIL_DOMAIN_PATTERN: &str = r##"[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"##;
 
 // Compiled regex instances
-static IPV4_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(IPV4_PATTERN).expect("failed to compile IPv4 regex"));
-static URL_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(URL_PATTERN).expect("failed to compile URL regex"));
-static URL_DOMAIN_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(URL_DOMAIN_PATTERN).expect("failed to compile URL domain regex"));
-static EMAIL_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(EMAIL_PATTERN).expect("failed to compile email regex"));
-static EMAIL_DOMAIN_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(EMAIL_DOMAIN_PATTERN).expect("failed to compile email domain regex"));
+static IPV4_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(IPV4_PATTERN).expect("failed to compile IPv4 regex"));
+static URL_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(URL_PATTERN).expect("failed to compile URL regex"));
+static URL_DOMAIN_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(URL_DOMAIN_PATTERN).expect("failed to compile URL domain regex"));
+static EMAIL_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(EMAIL_PATTERN).expect("failed to compile email regex"));
+static EMAIL_DOMAIN_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(EMAIL_DOMAIN_PATTERN).expect("failed to compile email domain regex")
+});
 
 // ============================================================================
 // IP Extraction

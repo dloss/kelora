@@ -4,7 +4,6 @@
 
 use anyhow::Result;
 use crossbeam_channel::{select, Receiver, Sender};
-use rhai::Dynamic;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -16,6 +15,113 @@ use crate::rhai_functions::tracking;
 use crate::stats::{get_thread_stats, stats_finish_processing, stats_start_timer};
 
 use super::types::{Batch, BatchResult, EventBatch, ProcessedEvent, WorkMessage};
+
+fn processing_stats_delta(
+    before: &crate::stats::ProcessingStats,
+    after: &crate::stats::ProcessingStats,
+) -> crate::stats::ProcessingStats {
+    let mut delta = crate::stats::ProcessingStats {
+        lines_errors: after.lines_errors.saturating_sub(before.lines_errors),
+        errors: after.errors.saturating_sub(before.errors),
+        assertion_failures: after
+            .assertion_failures
+            .saturating_sub(before.assertion_failures),
+        files_processed: after.files_processed.saturating_sub(before.files_processed),
+        script_executions: after
+            .script_executions
+            .saturating_sub(before.script_executions),
+        timestamp_detected_events: after
+            .timestamp_detected_events
+            .saturating_sub(before.timestamp_detected_events),
+        timestamp_parsed_events: after
+            .timestamp_parsed_events
+            .saturating_sub(before.timestamp_parsed_events),
+        timestamp_absent_events: after
+            .timestamp_absent_events
+            .saturating_sub(before.timestamp_absent_events),
+        yearless_timestamps: after
+            .yearless_timestamps
+            .saturating_sub(before.yearless_timestamps),
+        timestamp_override_failed: after.timestamp_override_failed,
+        timestamp_override_field: after.timestamp_override_field.clone(),
+        timestamp_override_format: after.timestamp_override_format.clone(),
+        timestamp_override_warning: after.timestamp_override_warning.clone(),
+        ..Default::default()
+    };
+
+    for (expr, count) in &after.assertion_failures_by_expr {
+        let before_count = before
+            .assertion_failures_by_expr
+            .get(expr)
+            .copied()
+            .unwrap_or(0);
+        let delta_count = count.saturating_sub(before_count);
+        if delta_count > 0 {
+            delta
+                .assertion_failures_by_expr
+                .insert(expr.clone(), delta_count);
+        }
+    }
+
+    for (field, stat) in &after.timestamp_fields {
+        let before_stat = before.timestamp_fields.get(field);
+        let detected = stat
+            .detected
+            .saturating_sub(before_stat.map_or(0, |s| s.detected));
+        let parsed = stat
+            .parsed
+            .saturating_sub(before_stat.map_or(0, |s| s.parsed));
+        if detected > 0 || parsed > 0 {
+            delta.timestamp_fields.insert(
+                field.clone(),
+                crate::stats::TimestampFieldStat { detected, parsed },
+            );
+        }
+    }
+
+    for (name, count) in &after.cascade_format_counts {
+        let before_count = before.cascade_format_counts.get(name).copied().unwrap_or(0);
+        let delta_count = count.saturating_sub(before_count);
+        if delta_count > 0 {
+            delta
+                .cascade_format_counts
+                .insert(name.clone(), delta_count);
+        }
+    }
+
+    delta
+}
+
+fn processing_stats_is_empty(stats: &crate::stats::ProcessingStats) -> bool {
+    stats.lines_errors == 0
+        && stats.errors == 0
+        && stats.assertion_failures == 0
+        && stats.assertion_failures_by_expr.is_empty()
+        && stats.files_processed == 0
+        && stats.script_executions == 0
+        && stats.timestamp_detected_events == 0
+        && stats.timestamp_parsed_events == 0
+        && stats.timestamp_absent_events == 0
+        && stats.timestamp_fields.is_empty()
+        && stats.timestamp_override_field.is_none()
+        && stats.timestamp_override_format.is_none()
+        && !stats.timestamp_override_failed
+        && stats.timestamp_override_warning.is_none()
+        && stats.yearless_timestamps == 0
+        && stats.cascade_format_counts.is_empty()
+}
+
+fn internal_stats_is_empty(stats: &pipeline::InternalStats) -> bool {
+    stats.lines_output == 0
+        && stats.lines_errors == 0
+        && stats.events_created == 0
+        && stats.events_output == 0
+        && stats.events_filtered == 0
+        && stats.discovered_levels.is_empty()
+        && stats.discovered_keys.is_empty()
+        && stats.discovered_levels_output.is_empty()
+        && stats.discovered_keys_output.is_empty()
+}
 
 /// Worker thread: processes batches in parallel
 pub(crate) fn worker_thread(
@@ -208,6 +314,8 @@ fn worker_flush_pipeline(
     result_sender: &Sender<BatchResult>,
     final_flush: bool,
 ) -> Result<()> {
+    ctx.internal_stats = pipeline::InternalStats::default();
+    let before_worker_stats = get_thread_stats();
     match pipeline.flush(ctx) {
         Ok(mut flush_results) => {
             if final_flush {
@@ -216,10 +324,6 @@ fn worker_flush_pipeline(
                         flush_results.push(trailing);
                     }
                 }
-            }
-
-            if flush_results.is_empty() {
-                return Ok(());
             }
 
             let mut flush_batch_results = Vec::with_capacity(flush_results.len());
@@ -240,6 +344,17 @@ fn worker_flush_pipeline(
                     timestamp,
                     file_ops,
                 });
+            }
+
+            let flush_internal_stats = std::mem::take(&mut ctx.internal_stats);
+            let flush_worker_stats =
+                processing_stats_delta(&before_worker_stats, &get_thread_stats());
+
+            if flush_batch_results.is_empty()
+                && internal_stats_is_empty(&flush_internal_stats)
+                && processing_stats_is_empty(&flush_worker_stats)
+            {
+                return Ok(());
             }
 
             let mut flush_user_updates = HashMap::new();
@@ -282,7 +397,8 @@ fn worker_flush_pipeline(
                 results: flush_batch_results,
                 user_tracked_updates: flush_user_updates,
                 internal_tracked_updates: flush_internal_updates,
-                worker_stats: crate::stats::ProcessingStats::new(),
+                internal_stats: flush_internal_stats,
+                worker_stats: flush_worker_stats,
             };
 
             let _ = result_sender.send(flush_batch_result);
@@ -332,7 +448,8 @@ fn worker_process_batch(
         ctx.rhai = new_ctx.rhai;
     }
 
-    let before_internal = ctx.internal_tracker.clone();
+    ctx.internal_stats = pipeline::InternalStats::default();
+    let before_worker_stats = get_thread_stats();
 
     let mut batch_results = Vec::with_capacity(batch.lines.len());
 
@@ -347,14 +464,7 @@ fn worker_process_batch(
         match pipeline.process_line(line.clone(), ctx) {
             Ok(formatted_results) => {
                 if !formatted_results.is_empty() {
-                    ctx.internal_tracker
-                        .entry("__kelora_stats_output".to_string())
-                        .and_modify(|v| *v = Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                        .or_insert(Dynamic::from(1i64));
-                    ctx.internal_tracker.insert(
-                        "__op___kelora_stats_output".to_string(),
-                        Dynamic::from("count"),
-                    );
+                    ctx.internal_stats.lines_output += 1;
                 }
 
                 let captured_prints = crate::rhai_functions::strings::take_captured_prints();
@@ -426,65 +536,7 @@ fn worker_process_batch(
         }
     }
 
-    let mut internal_deltas = std::collections::HashMap::new();
-    for (key, value) in &ctx.internal_tracker {
-        if key.starts_with("__op_") {
-            // Operation metadata is added alongside the associated value when needed
-            continue;
-        }
-
-        let op_key = format!("__op_{}", key);
-        let operation = ctx
-            .internal_tracker
-            .get(&op_key)
-            .and_then(|v| v.clone().into_string().ok())
-            .unwrap_or_else(|| "replace".to_string());
-
-        match operation.as_str() {
-            "count" | "sum" => {
-                let before_value = before_internal.get(key);
-                let diff_dynamic =
-                    if value.is_float() || before_value.map(|v| v.is_float()).unwrap_or(false) {
-                        let current = if value.is_float() {
-                            value.as_float().unwrap_or(0.0)
-                        } else {
-                            value.as_int().unwrap_or(0) as f64
-                        };
-                        let previous = before_value
-                            .and_then(|v| {
-                                if v.is_float() {
-                                    v.as_float().ok()
-                                } else {
-                                    v.as_int().ok().map(|i| i as f64)
-                                }
-                            })
-                            .unwrap_or(0.0);
-                        Dynamic::from(current - previous)
-                    } else {
-                        let current = value.as_int().unwrap_or(0);
-                        let previous = before_value.and_then(|v| v.as_int().ok()).unwrap_or(0);
-                        Dynamic::from(current - previous)
-                    };
-
-                let is_zero = if diff_dynamic.is_float() {
-                    diff_dynamic.as_float().unwrap_or(0.0).abs() < f64::EPSILON
-                } else {
-                    diff_dynamic.as_int().unwrap_or(0) == 0
-                };
-
-                if !is_zero {
-                    internal_deltas.insert(key.clone(), diff_dynamic);
-                    internal_deltas.insert(op_key.clone(), Dynamic::from(operation));
-                }
-            }
-            _ => {
-                internal_deltas.insert(key.clone(), value.clone());
-                if let Some(op_value) = ctx.internal_tracker.get(&op_key) {
-                    internal_deltas.insert(op_key.clone(), op_value.clone());
-                }
-            }
-        }
-    }
+    let internal_deltas = std::collections::HashMap::new();
 
     let mut user_deltas = std::collections::HashMap::new();
     let thread_user = tracking::get_thread_tracking_state();
@@ -505,7 +557,8 @@ fn worker_process_batch(
         results: batch_results,
         user_tracked_updates: user_deltas,
         internal_tracked_updates: internal_deltas,
-        worker_stats: get_thread_stats(),
+        internal_stats: std::mem::take(&mut ctx.internal_stats),
+        worker_stats: processing_stats_delta(&before_worker_stats, &get_thread_stats()),
     };
 
     if result_sender.send(batch_result).is_err() {
@@ -551,7 +604,8 @@ fn worker_process_event_batch(
         ctx.rhai = new_ctx.rhai;
     }
 
-    let before_internal = ctx.internal_tracker.clone();
+    ctx.internal_stats = pipeline::InternalStats::default();
+    let before_worker_stats = get_thread_stats();
 
     let mut batch_results = Vec::with_capacity(event_batch.events.len());
 
@@ -567,14 +621,7 @@ fn worker_process_event_batch(
         match pipeline.process_event_string(event_string.clone(), ctx) {
             Ok(formatted_results) => {
                 if !formatted_results.is_empty() {
-                    ctx.internal_tracker
-                        .entry("__kelora_stats_output".to_string())
-                        .and_modify(|v| *v = Dynamic::from(v.as_int().unwrap_or(0) + 1))
-                        .or_insert(Dynamic::from(1i64));
-                    ctx.internal_tracker.insert(
-                        "__op___kelora_stats_output".to_string(),
-                        Dynamic::from("count"),
-                    );
+                    ctx.internal_stats.lines_output += 1;
                 }
 
                 let captured_prints = crate::rhai_functions::strings::take_captured_prints();
@@ -646,64 +693,7 @@ fn worker_process_event_batch(
         }
     }
 
-    let mut internal_deltas = std::collections::HashMap::new();
-    for (key, value) in &ctx.internal_tracker {
-        if key.starts_with("__op_") {
-            continue;
-        }
-
-        let op_key = format!("__op_{}", key);
-        let operation = ctx
-            .internal_tracker
-            .get(&op_key)
-            .and_then(|v| v.clone().into_string().ok())
-            .unwrap_or_else(|| "replace".to_string());
-
-        match operation.as_str() {
-            "count" | "sum" => {
-                let before_value = before_internal.get(key);
-                let diff_dynamic =
-                    if value.is_float() || before_value.map(|v| v.is_float()).unwrap_or(false) {
-                        let current = if value.is_float() {
-                            value.as_float().unwrap_or(0.0)
-                        } else {
-                            value.as_int().unwrap_or(0) as f64
-                        };
-                        let previous = before_value
-                            .and_then(|v| {
-                                if v.is_float() {
-                                    v.as_float().ok()
-                                } else {
-                                    v.as_int().ok().map(|i| i as f64)
-                                }
-                            })
-                            .unwrap_or(0.0);
-                        Dynamic::from(current - previous)
-                    } else {
-                        let current = value.as_int().unwrap_or(0);
-                        let previous = before_value.and_then(|v| v.as_int().ok()).unwrap_or(0);
-                        Dynamic::from(current - previous)
-                    };
-
-                let is_zero = if diff_dynamic.is_float() {
-                    diff_dynamic.as_float().unwrap_or(0.0).abs() < f64::EPSILON
-                } else {
-                    diff_dynamic.as_int().unwrap_or(0) == 0
-                };
-
-                if !is_zero {
-                    internal_deltas.insert(key.clone(), diff_dynamic);
-                    internal_deltas.insert(op_key.clone(), Dynamic::from(operation));
-                }
-            }
-            _ => {
-                internal_deltas.insert(key.clone(), value.clone());
-                if let Some(op_value) = ctx.internal_tracker.get(&op_key) {
-                    internal_deltas.insert(op_key.clone(), op_value.clone());
-                }
-            }
-        }
-    }
+    let internal_deltas = std::collections::HashMap::new();
 
     let mut user_deltas = std::collections::HashMap::new();
     let thread_user = tracking::get_thread_tracking_state();
@@ -716,7 +706,8 @@ fn worker_process_event_batch(
         results: batch_results,
         user_tracked_updates: user_deltas,
         internal_tracked_updates: internal_deltas,
-        worker_stats: get_thread_stats(),
+        internal_stats: std::mem::take(&mut ctx.internal_stats),
+        worker_stats: processing_stats_delta(&before_worker_stats, &get_thread_stats()),
     };
 
     if result_sender.send(batch_result).is_err() {
