@@ -10,7 +10,6 @@ extern crate onig;
 include!(concat!(env!("OUT_DIR"), "/patterns.rs"));
 
 use onig::{Captures, Regex};
-use std::collections::hash_map::Iter as MapIter;
 use std::collections::{BTreeMap, HashMap};
 use std::error::Error as StdError;
 use std::fmt;
@@ -32,18 +31,27 @@ pub fn patterns<'a>() -> &'a [(&'a str, &'a str)] {
 #[derive(Debug)]
 pub struct Matches<'a> {
     captures: Captures<'a>,
-    names: &'a HashMap<String, u32>,
+    names: &'a [(String, u32)],
+    name_to_index: &'a HashMap<String, u32>,
 }
 
 impl<'a> Matches<'a> {
     /// Instantiates the matches for a pattern after the match.
-    pub fn new(captures: Captures<'a>, names: &'a HashMap<String, u32>) -> Self {
-        Matches { captures, names }
+    pub fn new(
+        captures: Captures<'a>,
+        names: &'a [(String, u32)],
+        name_to_index: &'a HashMap<String, u32>,
+    ) -> Self {
+        Matches {
+            captures,
+            names,
+            name_to_index,
+        }
     }
 
     /// Gets the value for the name (or) alias if found, `None` otherwise.
     pub fn get(&self, name_or_alias: &str) -> Option<&str> {
-        match self.names.get(name_or_alias) {
+        match self.name_to_index.get(name_or_alias) {
             Some(found) => self.captures.at(*found as usize),
             None => None,
         }
@@ -72,7 +80,7 @@ impl<'a> Matches<'a> {
 
 pub struct MatchesIter<'a> {
     captures: &'a Captures<'a>,
-    names: MapIter<'a, String, u32>,
+    names: std::slice::Iter<'a, (String, u32)>,
 }
 
 impl<'a> Iterator for MatchesIter<'a> {
@@ -91,7 +99,8 @@ impl<'a> Iterator for MatchesIter<'a> {
 #[derive(Debug)]
 pub struct Pattern {
     regex: Regex,
-    names: HashMap<String, u32>,
+    names: Vec<(String, u32)>,
+    name_to_index: HashMap<String, u32>,
 }
 
 impl Pattern {
@@ -100,16 +109,28 @@ impl Pattern {
     pub fn new(regex: &str, alias: &HashMap<String, String>) -> Result<Self, Error> {
         match Regex::new(regex) {
             Ok(r) => Ok({
-                let mut names = HashMap::new();
+                let mut names = Vec::new();
+                let mut name_to_index = HashMap::new();
                 r.foreach_name(|cap_name, cap_idx| {
                     let name = match alias.iter().find(|&(_k, v)| *v == cap_name) {
                         Some(item) => item.0.clone(),
                         None => String::from(cap_name),
                     };
-                    names.insert(name, cap_idx[0]);
+                    let index = cap_idx[0];
+                    name_to_index.insert(name.clone(), index);
+                    names.push((name, index));
                     true
                 });
-                Pattern { regex: r, names }
+                // Keep deterministic iteration order regardless of HashMap randomization.
+                // Sort by capture index (regex declaration order), then name for ties.
+                names.sort_by(|(left_name, left_idx), (right_name, right_idx)| {
+                    left_idx.cmp(right_idx).then_with(|| left_name.cmp(right_name))
+                });
+                Pattern {
+                    regex: r,
+                    names,
+                    name_to_index,
+                }
             }),
             Err(_) => Err(Error::RegexCompilationFailed(regex.into())),
         }
@@ -119,7 +140,7 @@ impl Pattern {
     pub fn match_against<'a>(&'a self, text: &'a str) -> Option<Matches<'a>> {
         self.regex
             .captures(text)
-            .map(|cap| Matches::new(cap, &self.names))
+            .map(|cap| Matches::new(cap, &self.names, &self.name_to_index))
     }
 }
 
@@ -435,6 +456,29 @@ mod tests {
         assert_eq!("March", matches.get("MONTH").unwrap());
         assert_eq!("2012", matches.get("YEAR").unwrap());
         assert_eq!(None, matches.get("unknown"));
+    }
+
+    #[test]
+    fn test_iteration_order_follows_capture_order() {
+        let mut grok = Grok::empty();
+        grok.insert_definition("WORD", r"[A-Za-z]+");
+        grok.insert_definition("NUMBER", r"\d+");
+        let pattern = grok
+            .compile("%{WORD:first} %{NUMBER:second}", false)
+            .expect("Error while compiling!");
+
+        let matches = pattern
+            .match_against("alpha 42")
+            .expect("No matches found!");
+        let mut iter = matches.iter();
+
+        let first = iter.next().expect("expected first match");
+        assert_eq!(first.0, "first");
+        assert_eq!(first.1, "alpha");
+
+        let second = iter.next().expect("expected second match");
+        assert_eq!(second.0, "second");
+        assert_eq!(second.1, "42");
     }
 
     #[test]
