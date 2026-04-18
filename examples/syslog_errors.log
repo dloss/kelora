@@ -1,0 +1,742 @@
+<27>Mar 14 08:00:01 worker01 checkout[5331]: Connection timeout to database host db-replica-1.prod.internal after 10404ms
+<27>Mar 14 08:00:03 api01 worker[5571]: Payment gateway gw.adyen.com rejected transaction 6e103d7d-af55-46fe-9d50-50c4b2cd0029: insufficient_funds
+<27>Mar 14 08:00:05 api01 checkout[5735]: Connection timeout to database host db-replica-1.prod.internal after 22354ms
+<27>Mar 14 08:00:06 edge01 checkout[8861]: Upstream https://search.internal/query returned 504 for request 01f7a192-f4e6-4327-9e02-14dffbd3b7b3
+<27>Mar 14 08:00:09 api02 checkout[2996]: Connection timeout to database host db-replica-2.prod.internal after 26137ms
+<27>Mar 14 08:00:11 worker02 checkout[3399]: Connection timeout to database host db-shard-3.prod.internal after 7504ms
+<27>Mar 14 08:00:13 web01 checkout[2294]: Connection timeout to database host db-shard-3.prod.internal after 12361ms
+<27>Mar 14 08:00:15 edge01 checkout[8849]: Connection timeout to database host db-replica-1.prod.internal after 15399ms
+<27>Mar 14 08:00:16 api01 checkout[5450]: Connection timeout to database host db-replica-2.prod.internal after 914ms
+<27>Mar 14 08:00:18 web02 worker[4972]: Connection timeout to database host db-replica-1.prod.internal after 5072ms
+<27>Mar 14 08:00:20 api01 worker[1860]: Connection timeout to database host db-primary.prod.internal after 20126ms
+<27>Mar 14 08:00:22 worker02 checkout[8739]: Failed to acquire lock on resource /var/lib/app/cache.lock after 14300ms
+<27>Mar 14 08:00:24 web03 api[3587]: Connection timeout to database host db-shard-3.prod.internal after 16129ms
+<27>Mar 14 08:00:27 edge01 scheduler[4267]: Connection timeout to database host db-shard-3.prod.internal after 27239ms
+<27>Mar 14 08:00:29 worker01 checkout[1969]: Upstream https://auth.internal/v2/verify returned 502 for request 7e7ab56d-2d21-4dfc-a370-6af275cf2f89
+<27>Mar 14 08:00:30 api01 api[3868]: Failed to acquire lock on resource /var/lib/app/session.lock after 9196ms
+<27>Mar 14 08:00:33 web03 api[7504]: Upstream https://notifications.internal/send returned 503 for request 657faa99-9100-4cf1-ae04-b53123e59a58
+<27>Mar 14 08:00:35 web03 checkout[1613]: Connection timeout to database host db-replica-1.prod.internal after 12918ms
+<27>Mar 14 08:00:36 api02 api[6489]: Connection timeout to database host db-primary.prod.internal after 17428ms
+<27>Mar 14 08:00:39 edge01 scheduler[3198]: Connection timeout to database host db-shard-3.prod.internal after 24362ms
+<27>Mar 14 08:00:41 api02 worker[2845]: Upstream https://notifications.internal/send returned 504 for request 0e92d829-99f4-4732-972f-e22de6e6422e
+<27>Mar 14 08:00:43 web03 scheduler[5215]: Connection timeout to database host db-replica-1.prod.internal after 6732ms
+<27>Mar 14 08:00:44 web01 checkout[5833]: Upstream https://notifications.internal/send returned 502 for request ff639fc0-dcd5-4dd0-9ec1-c7eec4ef7da3
+<27>Mar 14 08:00:46 web03 scheduler[8007]: Connection timeout to database host db-replica-1.prod.internal after 9625ms
+<27>Mar 14 08:00:49 web02 scheduler[2562]: Connection timeout to database host db-replica-2.prod.internal after 14855ms
+<27>Mar 14 08:00:50 web03 scheduler[6301]: Connection timeout to database host db-shard-3.prod.internal after 15262ms
+<27>Mar 14 08:00:52 web01 checkout[7284]: Connection timeout to database host db-replica-1.prod.internal after 27721ms
+<27>Mar 14 08:00:54 edge01 checkout[6400]: Failed to acquire lock on resource /tmp/deploy.lock after 10394ms
+<27>Mar 14 08:00:57 web01 checkout[6890]: Upstream https://search.internal/query returned 503 for request 719122ef-40e5-4249-b69f-176caa53032c
+<27>Mar 14 08:00:58 web01 api[8625]: Upstream https://notifications.internal/send returned 504 for request da4b8d53-009f-4e1b-b272-30e18167864c
+<27>Mar 14 08:01:01 web03 scheduler[9233]: Upstream https://billing.internal/charge returned 504 for request eb8ba593-522f-46da-9944-0cc68acec9bf
+<27>Mar 14 08:01:03 web02 checkout[7021]: Upstream https://notifications.internal/send returned 503 for request 7d74b9a6-2660-4876-a91e-3a0e97329323
+<27>Mar 14 08:01:04 api01 worker[8834]: Connection timeout to database host db-shard-3.prod.internal after 21037ms
+<27>Mar 14 08:01:06 edge01 checkout[7813]: Connection timeout to database host db-shard-3.prod.internal after 15185ms
+<27>Mar 14 08:01:09 api01 worker[2341]: Connection timeout to database host db-primary.prod.internal after 29311ms
+<27>Mar 14 08:01:11 worker01 api[2838]: Connection timeout to database host db-primary.prod.internal after 22674ms
+<27>Mar 14 08:01:12 api01 worker[3695]: Connection timeout to database host db-replica-1.prod.internal after 23376ms
+<27>Mar 14 08:01:15 edge01 api[4365]: Connection timeout to database host db-replica-1.prod.internal after 24911ms
+<27>Mar 14 08:01:17 web02 scheduler[1911]: Upstream https://billing.internal/charge returned 504 for request dfcb7dfd-1424-4af0-aa40-22f61a21b1be
+<27>Mar 14 08:01:19 web03 scheduler[8484]: Connection timeout to database host db-replica-1.prod.internal after 24095ms
+<27>Mar 14 08:01:20 edge01 checkout[1356]: Upstream https://search.internal/query returned 500 for request b76388aa-e4ec-4397-8ec0-4b72042a4ffc
+<27>Mar 14 08:01:23 api02 api[4570]: Connection timeout to database host db-primary.prod.internal after 24842ms
+<27>Mar 14 08:01:24 web01 scheduler[6644]: Upstream https://search.internal/query returned 504 for request 0f7403f9-5ff4-43ac-88b3-10cfd79977a0
+<27>Mar 14 08:01:26 web01 api[8734]: Connection timeout to database host db-primary.prod.internal after 26590ms
+<27>Mar 14 08:01:28 api02 scheduler[3948]: Upstream https://search.internal/query returned 503 for request abbc2ce4-677a-4251-bf2e-7a426e672c03
+<27>Mar 14 08:01:30 worker02 checkout[7266]: Connection timeout to database host db-replica-1.prod.internal after 16498ms
+<27>Mar 14 08:01:33 worker02 scheduler[2314]: Payment gateway gw.stripe.com rejected transaction cd8e939f-d737-4707-b57b-d1400a5ada8e: insufficient_funds
+<27>Mar 14 08:01:34 worker01 api[3924]: Connection timeout to database host db-primary.prod.internal after 18589ms
+<27>Mar 14 08:01:37 web03 worker[1056]: Upstream https://notifications.internal/send returned 504 for request 8d0108f5-8327-48d3-9fb6-7fe25e67e521
+<27>Mar 14 08:01:38 api02 scheduler[9920]: Connection timeout to database host db-primary.prod.internal after 22625ms
+<27>Mar 14 08:01:41 worker02 worker[5055]: Connection timeout to database host db-replica-1.prod.internal after 24545ms
+<27>Mar 14 08:01:43 worker01 worker[5516]: Connection timeout to database host db-primary.prod.internal after 13293ms
+<27>Mar 14 08:01:44 web02 api[7868]: Upstream https://auth.internal/v2/verify returned 500 for request dbae0da0-498f-4cf3-916b-14a8e2e07fba
+<27>Mar 14 08:01:46 api01 worker[2102]: Connection timeout to database host db-primary.prod.internal after 29274ms
+<27>Mar 14 08:01:48 web01 scheduler[1797]: Connection timeout to database host db-primary.prod.internal after 2001ms
+<27>Mar 14 08:01:50 web01 scheduler[8191]: Connection timeout to database host db-replica-2.prod.internal after 22417ms
+<27>Mar 14 08:01:52 api01 api[3295]: Connection timeout to database host db-replica-1.prod.internal after 19782ms
+<27>Mar 14 08:01:55 api01 checkout[6253]: Connection timeout to database host db-replica-1.prod.internal after 22933ms
+<27>Mar 14 08:01:56 api02 worker[9540]: Connection timeout to database host db-replica-2.prod.internal after 3560ms
+<27>Mar 14 08:01:58 worker02 checkout[5508]: Failed to acquire lock on resource /var/lib/app/cache.lock after 6105ms
+<27>Mar 14 08:02:00 web03 scheduler[9120]: Payment gateway gw.braintree.com rejected transaction f1559515-c3ff-4247-8517-7c20024ac3a4: insufficient_funds
+<27>Mar 14 08:02:02 worker01 scheduler[9592]: Connection timeout to database host db-replica-2.prod.internal after 7383ms
+<27>Mar 14 08:02:05 worker02 scheduler[3444]: Connection timeout to database host db-primary.prod.internal after 20048ms
+<27>Mar 14 08:02:07 worker02 worker[9813]: Connection timeout to database host db-replica-1.prod.internal after 12608ms
+<27>Mar 14 08:02:09 api01 worker[5927]: Connection timeout to database host db-replica-2.prod.internal after 2759ms
+<27>Mar 14 08:02:10 edge01 api[7761]: Connection timeout to database host db-shard-3.prod.internal after 16699ms
+<27>Mar 14 08:02:13 web03 scheduler[4978]: Connection timeout to database host db-shard-3.prod.internal after 1312ms
+<27>Mar 14 08:02:15 api01 checkout[2295]: Connection timeout to database host db-shard-3.prod.internal after 8494ms
+<27>Mar 14 08:02:17 worker01 api[9775]: Failed to acquire lock on resource /tmp/deploy.lock after 2140ms
+<27>Mar 14 08:02:18 web01 checkout[7179]: Connection timeout to database host db-shard-3.prod.internal after 2145ms
+<27>Mar 14 08:02:20 web02 worker[4555]: Connection timeout to database host db-shard-3.prod.internal after 22375ms
+<27>Mar 14 08:02:23 api01 checkout[5967]: Upstream https://notifications.internal/send returned 500 for request 7ec366d4-4a35-45a0-9cb9-219b6681395d
+<27>Mar 14 08:02:24 api01 worker[2922]: Connection timeout to database host db-replica-1.prod.internal after 28041ms
+<27>Mar 14 08:02:27 api01 worker[7498]: Connection timeout to database host db-shard-3.prod.internal after 14988ms
+<27>Mar 14 08:02:28 worker01 checkout[7236]: Failed to acquire lock on resource /var/lib/app/session.lock after 8046ms
+<27>Mar 14 08:02:31 worker01 checkout[5285]: Upstream https://auth.internal/v2/verify returned 504 for request bb359779-a04b-4057-89fe-dc237573df47
+<27>Mar 14 08:02:33 edge01 scheduler[2615]: Connection timeout to database host db-shard-3.prod.internal after 3958ms
+<27>Mar 14 08:02:35 worker01 worker[7073]: Connection timeout to database host db-primary.prod.internal after 19849ms
+<27>Mar 14 08:02:37 worker02 api[4625]: Failed to acquire lock on resource /var/lib/app/queue.lock after 7730ms
+<27>Mar 14 08:02:38 web01 checkout[7841]: Failed to acquire lock on resource /var/lib/app/queue.lock after 1125ms
+<27>Mar 14 08:02:41 web03 worker[6404]: Payment gateway gw.stripe.com rejected transaction e823b963-4152-438c-b349-7ac33e216f2c: insufficient_funds
+<27>Mar 14 08:02:42 worker02 worker[9180]: Connection timeout to database host db-shard-3.prod.internal after 7520ms
+<27>Mar 14 08:02:45 api02 scheduler[9037]: Connection timeout to database host db-primary.prod.internal after 5471ms
+<27>Mar 14 08:02:47 web03 checkout[3773]: Connection timeout to database host db-replica-2.prod.internal after 5794ms
+<27>Mar 14 08:02:48 edge01 worker[9882]: Connection timeout to database host db-primary.prod.internal after 12903ms
+<27>Mar 14 08:02:50 web01 api[1794]: Failed to acquire lock on resource /tmp/deploy.lock after 6120ms
+<27>Mar 14 08:02:52 worker02 worker[4791]: Connection timeout to database host db-shard-3.prod.internal after 23346ms
+<27>Mar 14 08:02:54 web03 api[4583]: Connection timeout to database host db-replica-1.prod.internal after 14770ms
+<27>Mar 14 08:02:57 worker01 api[8916]: Connection timeout to database host db-shard-3.prod.internal after 9560ms
+<27>Mar 14 08:02:59 web01 api[9719]: Connection timeout to database host db-primary.prod.internal after 8005ms
+<27>Mar 14 08:03:01 web01 api[9673]: Connection timeout to database host db-replica-1.prod.internal after 10692ms
+<27>Mar 14 08:03:03 api02 api[9228]: Failed to acquire lock on resource /var/lib/app/cache.lock after 7240ms
+<27>Mar 14 08:03:05 web03 api[2578]: Upstream https://billing.internal/charge returned 504 for request ab76180c-eac4-41f2-90c9-2830b960b162
+<27>Mar 14 08:03:06 api01 worker[9625]: Connection timeout to database host db-replica-1.prod.internal after 23129ms
+<27>Mar 14 08:03:09 worker01 checkout[7502]: Upstream https://search.internal/query returned 504 for request 1d877a46-5a07-4394-bf45-25a63e9c0c7f
+<27>Mar 14 08:03:10 worker01 scheduler[8520]: Connection timeout to database host db-replica-2.prod.internal after 29762ms
+<27>Mar 14 08:03:12 api01 checkout[2320]: Upstream https://search.internal/query returned 500 for request 3540fc00-5bc9-4360-a253-95f7bd1865c2
+<27>Mar 14 08:03:14 web02 scheduler[7213]: Connection timeout to database host db-replica-2.prod.internal after 15357ms
+<27>Mar 14 08:03:17 edge01 api[1154]: Upstream https://search.internal/query returned 500 for request 6b4605b3-729c-433e-a820-37afc916c0fd
+<27>Mar 14 08:03:18 web02 scheduler[8109]: Connection timeout to database host db-primary.prod.internal after 15423ms
+<27>Mar 14 08:03:21 web02 api[4764]: Connection timeout to database host db-shard-3.prod.internal after 11188ms
+<27>Mar 14 08:03:22 edge01 checkout[1762]: Connection timeout to database host db-primary.prod.internal after 24084ms
+<27>Mar 14 08:03:24 api02 api[3938]: Connection timeout to database host db-replica-2.prod.internal after 13645ms
+<27>Mar 14 08:03:27 web01 worker[3362]: Connection timeout to database host db-replica-1.prod.internal after 23962ms
+<27>Mar 14 08:03:29 web02 checkout[3661]: Upstream https://notifications.internal/send returned 502 for request 05f4c570-4ae5-48a6-90e7-898858cf38de
+<27>Mar 14 08:03:30 worker02 checkout[7288]: Connection timeout to database host db-shard-3.prod.internal after 11827ms
+<27>Mar 14 08:03:32 web02 checkout[1879]: Failed to acquire lock on resource /var/lib/app/queue.lock after 5458ms
+<27>Mar 14 08:03:34 worker02 worker[2245]: Connection timeout to database host db-primary.prod.internal after 29238ms
+<27>Mar 14 08:03:37 worker02 checkout[1485]: Upstream https://search.internal/query returned 504 for request 45af2e1a-f89e-4624-bbd6-2a815a606470
+<27>Mar 14 08:03:39 edge01 scheduler[4737]: Connection timeout to database host db-replica-1.prod.internal after 2604ms
+<27>Mar 14 08:03:41 worker02 scheduler[4043]: Connection timeout to database host db-primary.prod.internal after 3570ms
+<27>Mar 14 08:03:43 web02 checkout[5037]: Upstream https://search.internal/query returned 503 for request 431d6dc7-7eff-476a-8b15-dd0a5b2ba597
+<27>Mar 14 08:03:44 web02 checkout[3526]: Connection timeout to database host db-replica-1.prod.internal after 24702ms
+<27>Mar 14 08:03:47 web03 scheduler[6188]: Upstream https://auth.internal/v2/verify returned 500 for request 6653a834-bb18-459f-bdcf-94ef11828a77
+<27>Mar 14 08:03:49 web02 api[1085]: Connection timeout to database host db-replica-1.prod.internal after 19085ms
+<27>Mar 14 08:03:51 edge01 checkout[5419]: Failed to acquire lock on resource /tmp/deploy.lock after 6553ms
+<27>Mar 14 08:03:52 web03 api[4070]: Connection timeout to database host db-replica-2.prod.internal after 28118ms
+<27>Mar 14 08:03:55 edge01 scheduler[2692]: Upstream https://notifications.internal/send returned 503 for request d86108bd-675f-4c20-babc-8684e066b56a
+<27>Mar 14 08:03:56 web02 checkout[2524]: Upstream https://notifications.internal/send returned 500 for request 18d8275b-167b-420d-ae5d-ab459f1a74a8
+<27>Mar 14 08:03:59 worker02 api[5781]: Upstream https://auth.internal/v2/verify returned 502 for request f0e4c186-762b-4254-8eae-6595a5cc15f6
+<27>Mar 14 08:04:01 worker02 api[4977]: Failed to acquire lock on resource /tmp/deploy.lock after 8957ms
+<27>Mar 14 08:04:02 worker02 worker[3274]: Connection timeout to database host db-replica-2.prod.internal after 25189ms
+<27>Mar 14 08:04:05 api02 checkout[9079]: Connection timeout to database host db-replica-1.prod.internal after 26760ms
+<27>Mar 14 08:04:06 web02 worker[8121]: Connection timeout to database host db-primary.prod.internal after 1529ms
+<27>Mar 14 08:04:09 worker02 checkout[8933]: Connection timeout to database host db-replica-2.prod.internal after 8524ms
+<27>Mar 14 08:04:10 worker01 checkout[5040]: Payment gateway gw.stripe.com rejected transaction ce72944b-ab8e-4317-81c2-f7ee5942a395: insufficient_funds
+<27>Mar 14 08:04:13 api01 scheduler[2752]: Connection timeout to database host db-replica-1.prod.internal after 14583ms
+<27>Mar 14 08:04:14 api02 api[7483]: Payment gateway gw.adyen.com rejected transaction 3b635433-600c-45da-b15b-1b3bacc4554d: insufficient_funds
+<27>Mar 14 08:04:17 worker02 checkout[8212]: Connection timeout to database host db-shard-3.prod.internal after 5093ms
+<27>Mar 14 08:04:19 worker02 worker[5922]: Upstream https://search.internal/query returned 504 for request 89304ad0-c394-4fbc-84c8-9eeb590b167d
+<27>Mar 14 08:04:21 api01 scheduler[6147]: Connection timeout to database host db-replica-2.prod.internal after 17117ms
+<27>Mar 14 08:04:22 worker02 checkout[5775]: Connection timeout to database host db-primary.prod.internal after 16697ms
+<27>Mar 14 08:04:25 api01 checkout[7161]: Connection timeout to database host db-primary.prod.internal after 3306ms
+<27>Mar 14 08:04:27 worker02 checkout[2865]: Connection timeout to database host db-replica-2.prod.internal after 5075ms
+<27>Mar 14 08:04:28 web03 api[8563]: Connection timeout to database host db-shard-3.prod.internal after 18577ms
+<27>Mar 14 08:04:30 edge01 checkout[2133]: Connection timeout to database host db-shard-3.prod.internal after 12109ms
+<27>Mar 14 08:04:33 edge01 worker[5961]: Connection timeout to database host db-replica-2.prod.internal after 6541ms
+<27>Mar 14 08:04:34 api02 worker[7932]: Connection timeout to database host db-shard-3.prod.internal after 4465ms
+<27>Mar 14 08:04:37 web02 scheduler[8851]: Connection timeout to database host db-replica-1.prod.internal after 22546ms
+<27>Mar 14 08:04:39 worker02 api[6890]: Upstream https://search.internal/query returned 500 for request 2254cf4e-091b-4d3e-bd8c-152dc6500c4e
+<27>Mar 14 08:04:40 web02 worker[6816]: Failed to acquire lock on resource /tmp/deploy.lock after 5743ms
+<27>Mar 14 08:04:42 web01 scheduler[6432]: Upstream https://auth.internal/v2/verify returned 503 for request ea1a12f0-3a80-41b7-b38c-b710bf9aaa4b
+<27>Mar 14 08:04:45 web02 api[2615]: Connection timeout to database host db-primary.prod.internal after 25009ms
+<27>Mar 14 08:04:47 api01 worker[8303]: Connection timeout to database host db-replica-2.prod.internal after 19587ms
+<27>Mar 14 08:04:49 worker02 scheduler[9199]: Upstream https://billing.internal/charge returned 503 for request 7abf3678-fafe-4a93-996e-c88055599a92
+<27>Mar 14 08:04:50 worker01 api[8909]: Connection timeout to database host db-replica-1.prod.internal after 9443ms
+<27>Mar 14 08:04:52 api02 scheduler[2406]: Connection timeout to database host db-replica-1.prod.internal after 13556ms
+<27>Mar 14 08:04:54 web03 checkout[6110]: Upstream https://auth.internal/v2/verify returned 504 for request 445f3608-2f84-4b1b-a31c-54d4c55f728e
+<27>Mar 14 08:04:57 edge01 worker[9537]: Connection timeout to database host db-shard-3.prod.internal after 27820ms
+<27>Mar 14 08:04:59 worker01 scheduler[2599]: Connection timeout to database host db-shard-3.prod.internal after 20837ms
+<27>Mar 14 08:05:01 edge01 checkout[2100]: Upstream https://notifications.internal/send returned 503 for request cc628453-fa77-414c-bce7-d1018143f7e2
+<27>Mar 14 08:05:03 web01 api[1370]: Connection timeout to database host db-replica-2.prod.internal after 20319ms
+<27>Mar 14 08:05:05 web02 worker[4996]: Upstream https://auth.internal/v2/verify returned 503 for request c90cda87-90aa-4a2e-a52b-67f866bed1a9
+<27>Mar 14 08:05:06 web03 checkout[7985]: Connection timeout to database host db-primary.prod.internal after 8001ms
+<27>Mar 14 08:05:09 api01 scheduler[4022]: Connection timeout to database host db-replica-2.prod.internal after 13574ms
+<27>Mar 14 08:05:10 worker02 scheduler[1478]: Connection timeout to database host db-shard-3.prod.internal after 18879ms
+<27>Mar 14 08:05:12 edge01 scheduler[7370]: Connection timeout to database host db-replica-2.prod.internal after 27023ms
+<27>Mar 14 08:05:14 api01 worker[5560]: Connection timeout to database host db-replica-1.prod.internal after 9488ms
+<27>Mar 14 08:05:16 web02 worker[6993]: Connection timeout to database host db-primary.prod.internal after 23700ms
+<27>Mar 14 08:05:19 api01 scheduler[2867]: Upstream https://search.internal/query returned 504 for request 28658830-1213-45f9-a5f0-de74e51f42db
+<27>Mar 14 08:05:21 edge01 checkout[7367]: Connection timeout to database host db-shard-3.prod.internal after 6739ms
+<27>Mar 14 08:05:23 web02 checkout[6766]: Upstream https://search.internal/query returned 504 for request 02cc9609-d76b-4e4f-b783-aecb78fb100e
+<27>Mar 14 08:05:25 web03 checkout[2388]: Connection timeout to database host db-replica-1.prod.internal after 25831ms
+<27>Mar 14 08:05:26 worker01 api[4908]: Connection timeout to database host db-shard-3.prod.internal after 28806ms
+<27>Mar 14 08:05:29 web02 worker[7116]: Connection timeout to database host db-shard-3.prod.internal after 3478ms
+<27>Mar 14 08:05:30 worker02 scheduler[3258]: Upstream https://notifications.internal/send returned 500 for request b3f90e43-38a7-4d9a-a4a9-713b653c28c6
+<27>Mar 14 08:05:33 worker02 worker[8973]: Upstream https://auth.internal/v2/verify returned 500 for request c98a6e04-6a34-4f18-ac84-8091f70c2cc0
+<27>Mar 14 08:05:34 web03 scheduler[5732]: Connection timeout to database host db-replica-1.prod.internal after 10222ms
+<27>Mar 14 08:05:36 web03 checkout[8389]: Connection timeout to database host db-primary.prod.internal after 2157ms
+<27>Mar 14 08:05:38 worker01 api[8939]: Connection timeout to database host db-shard-3.prod.internal after 18515ms
+<27>Mar 14 08:05:40 api01 scheduler[9281]: Connection timeout to database host db-shard-3.prod.internal after 4238ms
+<27>Mar 14 08:05:43 worker02 scheduler[7809]: Failed to acquire lock on resource /var/lib/app/session.lock after 7163ms
+<27>Mar 14 08:05:45 edge01 worker[2354]: Connection timeout to database host db-replica-2.prod.internal after 22352ms
+<27>Mar 14 08:05:46 api01 checkout[1535]: Connection timeout to database host db-shard-3.prod.internal after 13497ms
+<27>Mar 14 08:05:49 api01 checkout[3755]: Upstream https://search.internal/query returned 504 for request 64126d94-305a-4754-91dc-e5362de14ca7
+<27>Mar 14 08:05:51 edge01 api[2871]: Connection timeout to database host db-replica-2.prod.internal after 5829ms
+<27>Mar 14 08:05:53 worker01 api[8231]: Upstream https://billing.internal/charge returned 504 for request a221aae5-afee-482d-921c-e84adb145551
+<27>Mar 14 08:05:54 worker02 api[5055]: Connection timeout to database host db-replica-2.prod.internal after 29293ms
+<27>Mar 14 08:05:57 web01 scheduler[5305]: Connection timeout to database host db-replica-2.prod.internal after 29346ms
+<27>Mar 14 08:05:59 web02 scheduler[2923]: Connection timeout to database host db-shard-3.prod.internal after 13970ms
+<27>Mar 14 08:06:00 api01 checkout[8015]: Failed to acquire lock on resource /var/lib/app/cache.lock after 4531ms
+<27>Mar 14 08:06:02 web03 worker[4390]: Payment gateway gw.stripe.com rejected transaction c18a4c30-ecc6-4ebe-a10d-9d84258050e6: insufficient_funds
+<27>Mar 14 08:06:04 worker01 checkout[9827]: Connection timeout to database host db-replica-1.prod.internal after 24202ms
+<27>Mar 14 08:06:06 worker01 checkout[5740]: Upstream https://search.internal/query returned 503 for request d4ec4eeb-2ead-419d-aef4-b734eaa70930
+<27>Mar 14 08:06:09 web02 worker[7743]: Connection timeout to database host db-primary.prod.internal after 2286ms
+<27>Mar 14 08:06:10 api02 worker[3174]: Connection timeout to database host db-shard-3.prod.internal after 16413ms
+<27>Mar 14 08:06:12 web03 checkout[5055]: Upstream https://auth.internal/v2/verify returned 504 for request 868c77a6-95db-414c-8851-1362084b4f9b
+<27>Mar 14 08:06:15 edge01 worker[5402]: Connection timeout to database host db-primary.prod.internal after 3676ms
+<27>Mar 14 08:06:17 worker02 scheduler[2237]: Connection timeout to database host db-primary.prod.internal after 24161ms
+<27>Mar 14 08:06:18 worker02 checkout[7046]: Upstream https://billing.internal/charge returned 503 for request 2ccc63ff-82c6-42f3-81ed-24156b4cc4d8
+<27>Mar 14 08:06:21 edge01 checkout[1040]: Connection timeout to database host db-replica-2.prod.internal after 20543ms
+<27>Mar 14 08:06:22 edge01 checkout[2037]: Failed to acquire lock on resource /var/lib/app/queue.lock after 14627ms
+<27>Mar 14 08:06:25 api01 scheduler[4470]: Upstream https://notifications.internal/send returned 500 for request 9a16fb48-b5bb-4642-9149-91dd5687654a
+<27>Mar 14 08:06:27 api02 checkout[5646]: Connection timeout to database host db-replica-2.prod.internal after 6351ms
+<27>Mar 14 08:06:29 web03 scheduler[6631]: Connection timeout to database host db-shard-3.prod.internal after 29536ms
+<27>Mar 14 08:06:30 web01 api[8529]: Connection timeout to database host db-replica-2.prod.internal after 14746ms
+<27>Mar 14 08:06:32 web02 worker[8230]: Connection timeout to database host db-replica-1.prod.internal after 12325ms
+<27>Mar 14 08:06:35 web01 scheduler[4314]: Connection timeout to database host db-primary.prod.internal after 25493ms
+<27>Mar 14 08:06:36 api02 worker[5489]: Upstream https://auth.internal/v2/verify returned 504 for request dc17495a-0902-4e5f-b956-0791080ee128
+<27>Mar 14 08:06:38 worker01 checkout[2350]: Upstream https://notifications.internal/send returned 503 for request 990e2036-5bb7-411b-8e49-671ae9296a20
+<27>Mar 14 08:06:41 web03 api[7493]: Failed to acquire lock on resource /var/lib/app/session.lock after 3535ms
+<27>Mar 14 08:06:43 api01 scheduler[2494]: Connection timeout to database host db-shard-3.prod.internal after 3038ms
+<27>Mar 14 08:06:44 web01 worker[8812]: Connection timeout to database host db-primary.prod.internal after 23694ms
+<27>Mar 14 08:06:46 web03 worker[9510]: Connection timeout to database host db-primary.prod.internal after 28573ms
+<27>Mar 14 08:06:49 web01 api[6629]: Upstream https://notifications.internal/send returned 504 for request eca03b4a-d7f8-4562-bde2-526b4270a57c
+<27>Mar 14 08:06:50 worker02 worker[8826]: Upstream https://search.internal/query returned 500 for request 1374fc59-743c-4e94-80b9-71db8415f910
+<27>Mar 14 08:06:52 api01 scheduler[2463]: Upstream https://search.internal/query returned 502 for request 1c58d06b-ec46-4305-9a86-8aa3da476f22
+<27>Mar 14 08:06:54 web02 checkout[7022]: Failed to acquire lock on resource /tmp/deploy.lock after 12813ms
+<27>Mar 14 08:06:57 web03 scheduler[3181]: Connection timeout to database host db-primary.prod.internal after 19642ms
+<27>Mar 14 08:06:58 web02 api[3688]: Upstream https://search.internal/query returned 500 for request f8501326-347a-4789-94f6-30fd9aada57f
+<27>Mar 14 08:07:01 worker01 worker[3480]: Upstream https://billing.internal/charge returned 500 for request 9a16c4da-285b-4292-afc0-36bba8da6e5c
+<27>Mar 14 08:07:03 edge01 worker[2420]: Connection timeout to database host db-shard-3.prod.internal after 19809ms
+<27>Mar 14 08:07:04 web03 api[7291]: Upstream https://billing.internal/charge returned 504 for request 8c491da6-7d88-49fd-b851-2b017d8d0c01
+<27>Mar 14 08:07:07 worker02 checkout[3290]: Connection timeout to database host db-replica-1.prod.internal after 8123ms
+<27>Mar 14 08:07:08 api02 api[5065]: Connection timeout to database host db-replica-1.prod.internal after 29382ms
+<27>Mar 14 08:07:11 web01 checkout[4366]: Upstream https://auth.internal/v2/verify returned 502 for request 7496e92d-fc39-4643-9c25-991a667c4ac3
+<27>Mar 14 08:07:12 worker02 checkout[1894]: Failed to acquire lock on resource /var/lib/app/cache.lock after 7132ms
+<27>Mar 14 08:07:14 edge01 scheduler[2847]: Connection timeout to database host db-shard-3.prod.internal after 26787ms
+<27>Mar 14 08:07:16 edge01 api[9655]: Failed to acquire lock on resource /tmp/deploy.lock after 4743ms
+<27>Mar 14 08:07:18 worker01 checkout[3162]: Failed to acquire lock on resource /var/lib/app/queue.lock after 12042ms
+<27>Mar 14 08:07:21 worker02 checkout[9951]: Connection timeout to database host db-primary.prod.internal after 15457ms
+<27>Mar 14 08:07:22 edge01 api[1273]: Connection timeout to database host db-replica-1.prod.internal after 22445ms
+<27>Mar 14 08:07:24 web01 checkout[4534]: Connection timeout to database host db-replica-1.prod.internal after 17076ms
+<27>Mar 14 08:07:26 web01 scheduler[9300]: Connection timeout to database host db-shard-3.prod.internal after 23239ms
+<27>Mar 14 08:07:29 worker02 scheduler[7590]: Connection timeout to database host db-replica-2.prod.internal after 11559ms
+<27>Mar 14 08:07:30 web03 checkout[2369]: Upstream https://billing.internal/charge returned 503 for request fa4d712f-2d29-4ec3-b0f6-d094eebbcb94
+<27>Mar 14 08:07:33 web02 worker[3545]: Connection timeout to database host db-replica-1.prod.internal after 25917ms
+<27>Mar 14 08:07:35 worker02 api[6081]: Upstream https://search.internal/query returned 504 for request 07c04a2a-5199-4ed0-a4e0-2474107540ca
+<27>Mar 14 08:07:37 api01 api[5005]: Connection timeout to database host db-replica-2.prod.internal after 15881ms
+<27>Mar 14 08:07:38 worker02 api[8428]: Connection timeout to database host db-replica-2.prod.internal after 15659ms
+<27>Mar 14 08:07:40 api02 worker[2956]: Connection timeout to database host db-primary.prod.internal after 24411ms
+<27>Mar 14 08:07:42 web03 api[3684]: Failed to acquire lock on resource /var/lib/app/queue.lock after 8147ms
+<27>Mar 14 08:07:45 worker01 checkout[3735]: Upstream https://billing.internal/charge returned 502 for request 4f232dd2-adaa-4fe4-b3c7-e9e096bc08e9
+<27>Mar 14 08:07:47 web03 checkout[2934]: Payment gateway gw.adyen.com rejected transaction 324d2584-0fc3-4428-8131-9b4fbe67b8b2: insufficient_funds
+<27>Mar 14 08:07:48 worker01 scheduler[5456]: Connection timeout to database host db-shard-3.prod.internal after 27446ms
+<27>Mar 14 08:07:50 api02 api[9128]: Upstream https://auth.internal/v2/verify returned 502 for request 77956b33-2eb9-469d-8bed-a427f02bf958
+<27>Mar 14 08:07:53 worker01 api[9185]: Failed to acquire lock on resource /var/lib/app/queue.lock after 6736ms
+<27>Mar 14 08:07:54 worker01 worker[5179]: Upstream https://auth.internal/v2/verify returned 504 for request 0f40a01a-699f-43f8-baa9-d649ee168457
+<27>Mar 14 08:07:56 web02 worker[9336]: Connection timeout to database host db-replica-1.prod.internal after 24038ms
+<27>Mar 14 08:07:58 web01 api[5006]: Connection timeout to database host db-replica-2.prod.internal after 2668ms
+<27>Mar 14 08:08:00 edge01 checkout[7274]: Connection timeout to database host db-primary.prod.internal after 2014ms
+<27>Mar 14 08:08:02 web03 api[7870]: Connection timeout to database host db-primary.prod.internal after 12263ms
+<27>Mar 14 08:08:04 worker01 worker[7819]: Connection timeout to database host db-replica-1.prod.internal after 9242ms
+<27>Mar 14 08:08:07 api02 api[7108]: Connection timeout to database host db-replica-2.prod.internal after 25685ms
+<27>Mar 14 08:08:08 web01 worker[4656]: Upstream https://auth.internal/v2/verify returned 504 for request 2948a223-1143-4097-b695-9525c4f5e0dd
+<27>Mar 14 08:08:10 worker02 api[8620]: Failed to acquire lock on resource /tmp/deploy.lock after 7532ms
+<27>Mar 14 08:08:13 api02 checkout[2415]: Upstream https://notifications.internal/send returned 500 for request 64c3a605-398d-461c-a3a4-43a7e7c22cb4
+<27>Mar 14 08:08:15 web01 checkout[4287]: Connection timeout to database host db-primary.prod.internal after 8773ms
+<27>Mar 14 08:08:17 api02 worker[8600]: Connection timeout to database host db-replica-1.prod.internal after 23647ms
+<27>Mar 14 08:08:19 edge01 worker[9954]: Failed to acquire lock on resource /var/lib/app/queue.lock after 7636ms
+<27>Mar 14 08:08:20 web03 api[7718]: Payment gateway gw.adyen.com rejected transaction fc517981-5270-4afd-a11e-c73d28461bc6: insufficient_funds
+<27>Mar 14 08:08:22 api01 checkout[1157]: Connection timeout to database host db-replica-2.prod.internal after 8183ms
+<27>Mar 14 08:08:25 web01 scheduler[6038]: Connection timeout to database host db-replica-2.prod.internal after 25485ms
+<27>Mar 14 08:08:26 api01 worker[7878]: Connection timeout to database host db-replica-1.prod.internal after 18002ms
+<27>Mar 14 08:08:29 web01 worker[5584]: Connection timeout to database host db-replica-2.prod.internal after 7761ms
+<27>Mar 14 08:08:30 web01 worker[9515]: Connection timeout to database host db-replica-1.prod.internal after 19470ms
+<27>Mar 14 08:08:33 worker01 scheduler[2391]: Failed to acquire lock on resource /var/lib/app/session.lock after 14225ms
+<27>Mar 14 08:08:34 web03 scheduler[2226]: Connection timeout to database host db-replica-1.prod.internal after 10207ms
+<27>Mar 14 08:08:36 worker02 worker[4879]: Upstream https://search.internal/query returned 502 for request df9822d6-7b3a-4932-89c9-ea6a599a4466
+<27>Mar 14 08:08:39 api02 checkout[7438]: Connection timeout to database host db-primary.prod.internal after 10457ms
+<27>Mar 14 08:08:41 worker01 scheduler[5455]: Connection timeout to database host db-replica-1.prod.internal after 27257ms
+<27>Mar 14 08:08:42 web02 worker[3230]: Connection timeout to database host db-shard-3.prod.internal after 7670ms
+<27>Mar 14 08:08:44 web03 api[3693]: Upstream https://auth.internal/v2/verify returned 504 for request 4e7fd02a-6efb-4eed-8757-2c7146e9e178
+<27>Mar 14 08:08:47 edge01 checkout[7660]: Connection timeout to database host db-shard-3.prod.internal after 20043ms
+<27>Mar 14 08:08:48 worker01 worker[8404]: Upstream https://auth.internal/v2/verify returned 504 for request d9ad1b2a-384f-4049-9b7c-889c1a3db364
+<27>Mar 14 08:08:51 edge01 checkout[2964]: Connection timeout to database host db-replica-1.prod.internal after 22089ms
+<27>Mar 14 08:08:52 web03 checkout[1660]: Connection timeout to database host db-primary.prod.internal after 13122ms
+<27>Mar 14 08:08:54 worker01 worker[2494]: Failed to acquire lock on resource /var/lib/app/cache.lock after 11900ms
+<27>Mar 14 08:08:56 worker01 scheduler[9412]: Connection timeout to database host db-replica-1.prod.internal after 8316ms
+<27>Mar 14 08:08:58 api02 checkout[3848]: Failed to acquire lock on resource /var/lib/app/queue.lock after 10977ms
+<27>Mar 14 08:09:00 worker02 scheduler[5093]: Connection timeout to database host db-replica-1.prod.internal after 15738ms
+<27>Mar 14 08:09:02 edge01 api[3290]: Connection timeout to database host db-shard-3.prod.internal after 13856ms
+<27>Mar 14 08:09:04 web01 api[4641]: Connection timeout to database host db-replica-1.prod.internal after 8257ms
+<27>Mar 14 08:09:06 api01 scheduler[7098]: Connection timeout to database host db-replica-1.prod.internal after 26710ms
+<27>Mar 14 08:09:08 api02 api[1357]: Upstream https://auth.internal/v2/verify returned 502 for request c7c53781-37c1-4e96-bb42-deedb39bf99f
+<27>Mar 14 08:09:10 api01 scheduler[3110]: Upstream https://search.internal/query returned 500 for request 01852c04-2936-4a7d-996d-7a5655a60de7
+<27>Mar 14 08:09:12 worker01 api[1699]: Connection timeout to database host db-shard-3.prod.internal after 4946ms
+<27>Mar 14 08:09:15 web01 worker[8096]: Connection timeout to database host db-replica-1.prod.internal after 27079ms
+<27>Mar 14 08:09:17 edge01 api[7270]: Connection timeout to database host db-replica-2.prod.internal after 11505ms
+<27>Mar 14 08:09:19 web03 checkout[4517]: Connection timeout to database host db-replica-1.prod.internal after 8077ms
+<27>Mar 14 08:09:20 api02 checkout[8307]: Connection timeout to database host db-primary.prod.internal after 13108ms
+<27>Mar 14 08:09:22 web01 worker[5835]: Upstream https://notifications.internal/send returned 503 for request d23629e7-0a36-4b7b-8ff2-cd7c5b5a629b
+<27>Mar 14 08:09:25 worker02 scheduler[1999]: Connection timeout to database host db-replica-1.prod.internal after 20996ms
+<27>Mar 14 08:09:26 api02 scheduler[3248]: Upstream https://notifications.internal/send returned 502 for request b2d8e105-df62-43cc-8316-45d0ad987db1
+<27>Mar 14 08:09:29 api01 worker[9907]: Upstream https://auth.internal/v2/verify returned 502 for request 5c442191-29e8-4db1-a167-ab521f212146
+<27>Mar 14 08:09:30 worker02 checkout[8859]: Upstream https://notifications.internal/send returned 504 for request 7cd3815f-fec3-4f2c-a1dd-e76b18ea1338
+<27>Mar 14 08:09:33 worker01 checkout[7363]: Connection timeout to database host db-replica-1.prod.internal after 6786ms
+<27>Mar 14 08:09:35 web03 api[6224]: Connection timeout to database host db-primary.prod.internal after 2486ms
+<27>Mar 14 08:09:36 web01 checkout[1959]: Connection timeout to database host db-primary.prod.internal after 22838ms
+<27>Mar 14 08:09:39 worker01 worker[3615]: Failed to acquire lock on resource /tmp/deploy.lock after 14631ms
+<27>Mar 14 08:09:40 api01 worker[5366]: Connection timeout to database host db-replica-1.prod.internal after 21803ms
+<27>Mar 14 08:09:42 api01 scheduler[6813]: Connection timeout to database host db-shard-3.prod.internal after 26960ms
+<27>Mar 14 08:09:44 web03 worker[6210]: Connection timeout to database host db-replica-2.prod.internal after 15736ms
+<27>Mar 14 08:09:47 web01 checkout[3328]: Connection timeout to database host db-shard-3.prod.internal after 22176ms
+<27>Mar 14 08:09:48 edge01 checkout[3876]: Failed to acquire lock on resource /tmp/deploy.lock after 9584ms
+<27>Mar 14 08:09:51 web01 api[1920]: Connection timeout to database host db-replica-2.prod.internal after 28079ms
+<27>Mar 14 08:09:52 api01 api[9625]: Upstream https://auth.internal/v2/verify returned 503 for request 22e77619-5bf6-4921-9975-9d175f9c49a1
+<27>Mar 14 08:09:55 web01 checkout[4300]: Connection timeout to database host db-shard-3.prod.internal after 16977ms
+<27>Mar 14 08:09:56 worker01 worker[6301]: Connection timeout to database host db-replica-1.prod.internal after 21997ms
+<27>Mar 14 08:09:58 web01 worker[3320]: Failed to acquire lock on resource /var/lib/app/session.lock after 14128ms
+<27>Mar 14 08:10:00 worker01 api[7120]: Connection timeout to database host db-replica-1.prod.internal after 28892ms
+<27>Mar 14 08:10:03 web02 checkout[5944]: Payment gateway gw.stripe.com rejected transaction 82e23199-44f6-48ec-a35c-d7495f24ceec: insufficient_funds
+<27>Mar 14 08:10:05 web03 worker[8157]: Connection timeout to database host db-replica-2.prod.internal after 15482ms
+<27>Mar 14 08:10:07 worker01 worker[6846]: Upstream https://search.internal/query returned 502 for request d6ddab9c-7a83-4f75-8758-3cbb942266e7
+<27>Mar 14 08:10:08 web03 scheduler[6026]: Connection timeout to database host db-shard-3.prod.internal after 9617ms
+<27>Mar 14 08:10:11 web03 worker[1029]: Connection timeout to database host db-replica-2.prod.internal after 8346ms
+<27>Mar 14 08:10:13 web01 worker[6213]: Payment gateway gw.stripe.com rejected transaction fe165728-d644-43da-92c9-00c35d0906e1: insufficient_funds
+<27>Mar 14 08:10:14 web02 scheduler[3304]: Connection timeout to database host db-replica-2.prod.internal after 12141ms
+<27>Mar 14 08:10:17 web02 worker[6682]: Upstream https://billing.internal/charge returned 502 for request 028e68c1-aeb1-4e45-a05b-279461fa6be5
+<27>Mar 14 08:10:19 web03 api[6500]: Connection timeout to database host db-primary.prod.internal after 28716ms
+<27>Mar 14 08:10:21 web01 checkout[4435]: Connection timeout to database host db-shard-3.prod.internal after 20367ms
+<27>Mar 14 08:10:22 web02 checkout[5205]: Connection timeout to database host db-replica-2.prod.internal after 18666ms
+<27>Mar 14 08:10:24 web01 api[7323]: Failed to acquire lock on resource /tmp/deploy.lock after 14836ms
+<27>Mar 14 08:10:27 worker02 worker[7783]: Connection timeout to database host db-replica-2.prod.internal after 2821ms
+<27>Mar 14 08:10:29 worker02 checkout[9946]: Failed to acquire lock on resource /tmp/deploy.lock after 12671ms
+<27>Mar 14 08:10:31 web02 scheduler[4695]: Connection timeout to database host db-replica-1.prod.internal after 5949ms
+<27>Mar 14 08:10:32 edge01 api[1547]: Failed to acquire lock on resource /var/lib/app/queue.lock after 6321ms
+<27>Mar 14 08:10:35 web01 checkout[5278]: Connection timeout to database host db-replica-1.prod.internal after 5032ms
+<27>Mar 14 08:10:36 web02 checkout[3787]: Connection timeout to database host db-replica-2.prod.internal after 25248ms
+<27>Mar 14 08:10:39 web03 api[9962]: Upstream https://search.internal/query returned 503 for request 55db9e0a-fa76-41e8-b949-cdd0428d68dc
+<27>Mar 14 08:10:40 worker01 scheduler[1507]: Failed to acquire lock on resource /var/lib/app/queue.lock after 9149ms
+<27>Mar 14 08:10:43 web03 scheduler[3573]: Connection timeout to database host db-replica-1.prod.internal after 20669ms
+<27>Mar 14 08:10:44 web02 checkout[4367]: Failed to acquire lock on resource /tmp/deploy.lock after 12953ms
+<27>Mar 14 08:10:46 worker02 checkout[5612]: Connection timeout to database host db-primary.prod.internal after 25364ms
+<27>Mar 14 08:10:49 api01 api[1813]: Failed to acquire lock on resource /var/lib/app/cache.lock after 2180ms
+<27>Mar 14 08:10:51 edge01 worker[1893]: Upstream https://billing.internal/charge returned 503 for request 8b7f9ec6-a576-4df4-ac41-92ce92d990c7
+<27>Mar 14 08:10:53 web01 scheduler[2435]: Upstream https://billing.internal/charge returned 502 for request 04ebb251-7bae-414a-9bd6-1bb1bbe58ad5
+<27>Mar 14 08:10:55 edge01 worker[2589]: Connection timeout to database host db-replica-2.prod.internal after 8321ms
+<27>Mar 14 08:10:56 api01 worker[5781]: Failed to acquire lock on resource /var/lib/app/cache.lock after 1100ms
+<27>Mar 14 08:10:58 edge01 api[6052]: Upstream https://search.internal/query returned 502 for request 60362cd7-e51d-4585-b881-77daa11015d8
+<27>Mar 14 08:11:01 edge01 scheduler[5341]: Connection timeout to database host db-replica-1.prod.internal after 16069ms
+<27>Mar 14 08:11:02 worker02 worker[7078]: Connection timeout to database host db-primary.prod.internal after 22791ms
+<27>Mar 14 08:11:05 worker01 worker[8303]: Failed to acquire lock on resource /var/lib/app/session.lock after 5477ms
+<27>Mar 14 08:11:06 api02 scheduler[8619]: Failed to acquire lock on resource /var/lib/app/queue.lock after 6655ms
+<27>Mar 14 08:11:09 api01 checkout[2009]: Failed to acquire lock on resource /var/lib/app/session.lock after 5938ms
+<27>Mar 14 08:11:10 web02 api[6632]: Connection timeout to database host db-replica-2.prod.internal after 1944ms
+<27>Mar 14 08:11:13 api01 api[7342]: Connection timeout to database host db-shard-3.prod.internal after 27676ms
+<27>Mar 14 08:11:15 edge01 worker[8803]: Connection timeout to database host db-shard-3.prod.internal after 22766ms
+<27>Mar 14 08:11:17 web02 scheduler[1568]: Failed to acquire lock on resource /tmp/deploy.lock after 3878ms
+<27>Mar 14 08:11:18 web02 scheduler[3832]: Connection timeout to database host db-shard-3.prod.internal after 14124ms
+<27>Mar 14 08:11:20 api01 worker[3067]: Upstream https://notifications.internal/send returned 500 for request e95245e2-1f1d-4258-b5ac-6bc5a6954c31
+<27>Mar 14 08:11:22 worker02 api[8133]: Failed to acquire lock on resource /var/lib/app/session.lock after 10115ms
+<27>Mar 14 08:11:24 web03 checkout[6238]: Failed to acquire lock on resource /var/lib/app/cache.lock after 6761ms
+<27>Mar 14 08:11:26 web02 scheduler[7510]: Upstream https://auth.internal/v2/verify returned 500 for request d31e2382-5cbd-4d6b-86f7-05c1447764ef
+<27>Mar 14 08:11:29 api02 scheduler[1202]: Connection timeout to database host db-shard-3.prod.internal after 8728ms
+<27>Mar 14 08:11:31 web02 scheduler[3451]: Payment gateway gw.braintree.com rejected transaction 809de2ef-e1f6-4f2c-8a01-d4c610e34715: insufficient_funds
+<27>Mar 14 08:11:32 web02 api[2654]: Connection timeout to database host db-primary.prod.internal after 22564ms
+<27>Mar 14 08:11:35 worker01 scheduler[5327]: Upstream https://notifications.internal/send returned 503 for request d2cdca5f-4f5d-4278-943e-3fed2b32fedc
+<27>Mar 14 08:11:37 edge01 scheduler[1613]: Upstream https://billing.internal/charge returned 504 for request f4377960-ae41-4ecd-a1af-be447b12d9b6
+<27>Mar 14 08:11:38 api02 scheduler[3356]: Connection timeout to database host db-replica-1.prod.internal after 25518ms
+<27>Mar 14 08:11:41 web01 scheduler[6431]: Connection timeout to database host db-replica-1.prod.internal after 7804ms
+<27>Mar 14 08:11:42 web01 scheduler[5400]: Upstream https://billing.internal/charge returned 503 for request 3c0b3050-df41-4fb4-90d9-0b191eb9c5f1
+<27>Mar 14 08:11:45 web01 checkout[5965]: Connection timeout to database host db-shard-3.prod.internal after 13262ms
+<27>Mar 14 08:11:47 api02 scheduler[2609]: Payment gateway gw.braintree.com rejected transaction 036d8d88-10c1-489a-a1d2-5b39c0df65ee: insufficient_funds
+<27>Mar 14 08:11:48 web03 checkout[8259]: Connection timeout to database host db-shard-3.prod.internal after 11649ms
+<27>Mar 14 08:11:51 api02 scheduler[2462]: Upstream https://auth.internal/v2/verify returned 500 for request 1fb0dac6-c1c4-4f14-84dc-b4685b27ba8a
+<27>Mar 14 08:11:52 edge01 worker[7671]: Connection timeout to database host db-primary.prod.internal after 18980ms
+<27>Mar 14 08:11:55 worker01 api[9442]: Upstream https://auth.internal/v2/verify returned 504 for request 200202b6-949b-4468-b242-de1f7ab4a5c0
+<27>Mar 14 08:11:56 web02 checkout[9303]: Connection timeout to database host db-replica-2.prod.internal after 17061ms
+<27>Mar 14 08:11:59 web03 api[3846]: Connection timeout to database host db-primary.prod.internal after 12089ms
+<27>Mar 14 08:12:00 api01 api[5087]: Upstream https://auth.internal/v2/verify returned 504 for request 2a5756e4-5357-4a03-9987-beca6fdfcc88
+<27>Mar 14 08:12:02 edge01 api[6904]: Failed to acquire lock on resource /var/lib/app/session.lock after 13520ms
+<27>Mar 14 08:12:04 api02 checkout[8605]: Upstream https://auth.internal/v2/verify returned 503 for request bfe4e238-dfa9-44da-ad63-11dcc00ebbb4
+<27>Mar 14 08:12:07 web02 api[4963]: Connection timeout to database host db-replica-1.prod.internal after 23587ms
+<27>Mar 14 08:12:09 edge01 scheduler[3909]: Connection timeout to database host db-primary.prod.internal after 3250ms
+<27>Mar 14 08:12:11 worker01 checkout[3679]: Upstream https://billing.internal/charge returned 504 for request c5d907e4-54fe-4b5b-98a7-220464e0a8e3
+<27>Mar 14 08:12:13 web02 checkout[1449]: Connection timeout to database host db-shard-3.prod.internal after 11957ms
+<27>Mar 14 08:12:15 web01 worker[4511]: Upstream https://search.internal/query returned 503 for request 9d39006a-24aa-48a4-952d-7f4a44ee41f1
+<27>Mar 14 08:12:16 api01 worker[5408]: Upstream https://auth.internal/v2/verify returned 504 for request afea53e1-8bf4-451b-aae6-5a4ebf67851f
+<27>Mar 14 08:12:19 web01 api[8767]: Failed to acquire lock on resource /tmp/deploy.lock after 8432ms
+<27>Mar 14 08:12:20 web03 api[4666]: Connection timeout to database host db-shard-3.prod.internal after 11523ms
+<27>Mar 14 08:12:23 api02 checkout[7943]: Connection timeout to database host db-replica-1.prod.internal after 9166ms
+<27>Mar 14 08:12:25 worker01 scheduler[5128]: Upstream https://billing.internal/charge returned 502 for request 713ebb91-e1be-4017-84f2-d6af06354c5d
+<27>Mar 14 08:12:26 edge01 checkout[9530]: Connection timeout to database host db-primary.prod.internal after 19462ms
+<27>Mar 14 08:12:29 web02 api[9380]: Upstream https://billing.internal/charge returned 502 for request cf108330-db49-4cf3-ac5e-e6687942bc73
+<27>Mar 14 08:12:31 api02 checkout[2771]: Connection timeout to database host db-primary.prod.internal after 13035ms
+<27>Mar 14 08:12:33 web02 checkout[5529]: Upstream https://search.internal/query returned 502 for request 446f6816-0030-4761-a9f0-ae1aac9c7919
+<27>Mar 14 08:12:35 api02 checkout[5895]: Connection timeout to database host db-shard-3.prod.internal after 16509ms
+<27>Mar 14 08:12:36 web03 worker[1930]: Connection timeout to database host db-primary.prod.internal after 25840ms
+<27>Mar 14 08:12:39 worker01 worker[1417]: Payment gateway gw.braintree.com rejected transaction 796ac466-64d2-4017-acce-6fbea883ff41: insufficient_funds
+<27>Mar 14 08:12:41 api02 checkout[7857]: Connection timeout to database host db-replica-1.prod.internal after 2745ms
+<27>Mar 14 08:12:43 worker02 api[4111]: Connection timeout to database host db-primary.prod.internal after 11967ms
+<27>Mar 14 08:12:45 api01 scheduler[6873]: Connection timeout to database host db-primary.prod.internal after 2900ms
+<27>Mar 14 08:12:47 web03 worker[5813]: Upstream https://auth.internal/v2/verify returned 504 for request c8fa9ca1-f844-4abf-900a-495e497ad80a
+<27>Mar 14 08:12:48 edge01 worker[5237]: Connection timeout to database host db-replica-2.prod.internal after 7467ms
+<27>Mar 14 08:12:50 worker01 api[4641]: Upstream https://notifications.internal/send returned 502 for request 3afafc0a-1f17-4b92-b110-ae9d30a34a9a
+<27>Mar 14 08:12:53 api01 checkout[7889]: Connection timeout to database host db-shard-3.prod.internal after 10506ms
+<27>Mar 14 08:12:55 worker01 checkout[5817]: Failed to acquire lock on resource /var/lib/app/session.lock after 7475ms
+<27>Mar 14 08:12:57 web02 scheduler[1879]: Payment gateway gw.stripe.com rejected transaction e363b4d1-8c63-4e52-8a78-0432f8f06c48: insufficient_funds
+<27>Mar 14 08:12:58 edge01 worker[9199]: Failed to acquire lock on resource /tmp/deploy.lock after 2204ms
+<27>Mar 14 08:13:00 worker02 checkout[7768]: Upstream https://notifications.internal/send returned 500 for request a8f9dadb-801e-4237-991f-053ff0e77cf1
+<27>Mar 14 08:13:02 web03 worker[4281]: Payment gateway gw.braintree.com rejected transaction 946e6424-0406-424f-a7ab-f1628d54ae23: insufficient_funds
+<27>Mar 14 08:13:05 worker02 scheduler[3346]: Connection timeout to database host db-replica-1.prod.internal after 26300ms
+<27>Mar 14 08:13:07 web03 api[8988]: Failed to acquire lock on resource /tmp/deploy.lock after 14847ms
+<27>Mar 14 08:13:09 web03 checkout[1950]: Failed to acquire lock on resource /tmp/deploy.lock after 9633ms
+<27>Mar 14 08:13:10 edge01 checkout[4430]: Connection timeout to database host db-shard-3.prod.internal after 2421ms
+<27>Mar 14 08:13:12 web03 scheduler[2442]: Connection timeout to database host db-primary.prod.internal after 9799ms
+<27>Mar 14 08:13:14 worker02 scheduler[7609]: Connection timeout to database host db-replica-2.prod.internal after 3794ms
+<27>Mar 14 08:13:17 edge01 scheduler[1076]: Connection timeout to database host db-shard-3.prod.internal after 9377ms
+<27>Mar 14 08:13:18 api01 checkout[1230]: Connection timeout to database host db-primary.prod.internal after 10722ms
+<27>Mar 14 08:13:21 api01 api[1067]: Connection timeout to database host db-shard-3.prod.internal after 22694ms
+<27>Mar 14 08:13:22 api01 checkout[6113]: Upstream https://billing.internal/charge returned 504 for request 7e0cd263-2b36-4136-9498-9b76387b0298
+<27>Mar 14 08:13:24 web02 scheduler[9246]: Upstream https://billing.internal/charge returned 503 for request 7a5a4935-cd08-4731-bc94-8844983ac608
+<27>Mar 14 08:13:27 web03 api[1749]: Connection timeout to database host db-primary.prod.internal after 29437ms
+<27>Mar 14 08:13:29 api02 scheduler[9524]: Connection timeout to database host db-primary.prod.internal after 22127ms
+<27>Mar 14 08:13:31 worker02 worker[6615]: Upstream https://billing.internal/charge returned 502 for request 8ed83e83-4c7e-41d4-a362-92e4218dfbea
+<27>Mar 14 08:13:33 worker01 worker[3701]: Upstream https://search.internal/query returned 503 for request 4e8bce75-15df-4c40-8f04-c4157ef2c1a9
+<27>Mar 14 08:13:35 web01 worker[4675]: Connection timeout to database host db-replica-2.prod.internal after 27387ms
+<27>Mar 14 08:13:36 api01 api[9267]: Connection timeout to database host db-primary.prod.internal after 3524ms
+<27>Mar 14 08:13:38 web02 checkout[1612]: Failed to acquire lock on resource /var/lib/app/session.lock after 3579ms
+<27>Mar 14 08:13:41 api02 api[1785]: Connection timeout to database host db-replica-2.prod.internal after 26192ms
+<27>Mar 14 08:13:42 web01 api[2897]: Upstream https://auth.internal/v2/verify returned 502 for request 5c26fb4f-deff-4f06-b4ec-f0f4b52598af
+<27>Mar 14 08:13:45 edge01 scheduler[3024]: Connection timeout to database host db-shard-3.prod.internal after 8766ms
+<27>Mar 14 08:13:47 edge01 worker[4366]: Connection timeout to database host db-shard-3.prod.internal after 18071ms
+<27>Mar 14 08:13:48 api02 scheduler[2654]: Connection timeout to database host db-replica-2.prod.internal after 12028ms
+<27>Mar 14 08:13:51 web03 scheduler[2718]: Upstream https://billing.internal/charge returned 503 for request 7f79d447-01f7-43f6-addc-485dad9b207a
+<27>Mar 14 08:13:52 api02 api[2741]: Connection timeout to database host db-replica-2.prod.internal after 2373ms
+<27>Mar 14 08:13:55 api01 worker[5308]: Connection timeout to database host db-replica-1.prod.internal after 23861ms
+<27>Mar 14 08:13:56 worker01 scheduler[5839]: Connection timeout to database host db-shard-3.prod.internal after 11226ms
+<27>Mar 14 08:13:58 web01 scheduler[4402]: Upstream https://auth.internal/v2/verify returned 502 for request b23a0b0b-c8b2-46b6-9802-a1d3cf99ad3a
+<27>Mar 14 08:14:01 worker01 worker[1044]: Connection timeout to database host db-primary.prod.internal after 20476ms
+<27>Mar 14 08:14:02 web02 api[9095]: Upstream https://auth.internal/v2/verify returned 504 for request 111bc35c-b6be-4eb1-8de3-f044b90b1735
+<27>Mar 14 08:14:04 web02 api[2659]: Connection timeout to database host db-replica-1.prod.internal after 12434ms
+<27>Mar 14 08:14:07 api01 scheduler[5850]: Failed to acquire lock on resource /tmp/deploy.lock after 11845ms
+<27>Mar 14 08:14:09 edge01 api[2635]: Connection timeout to database host db-shard-3.prod.internal after 3861ms
+<27>Mar 14 08:14:10 web01 checkout[6901]: Connection timeout to database host db-replica-2.prod.internal after 12448ms
+<27>Mar 14 08:14:13 worker02 api[2556]: Upstream https://auth.internal/v2/verify returned 503 for request 2b44e169-846a-4219-95ea-1390df73b1aa
+<27>Mar 14 08:14:14 web01 worker[3793]: Upstream https://billing.internal/charge returned 503 for request 6ae3a066-16d9-436b-8179-dd7d9735ce28
+<27>Mar 14 08:14:17 worker01 scheduler[5395]: Connection timeout to database host db-replica-2.prod.internal after 13469ms
+<27>Mar 14 08:14:18 worker01 checkout[3996]: Connection timeout to database host db-replica-2.prod.internal after 20282ms
+<27>Mar 14 08:14:20 worker02 scheduler[8479]: Connection timeout to database host db-primary.prod.internal after 11578ms
+<27>Mar 14 08:14:23 worker02 scheduler[7909]: Upstream https://search.internal/query returned 503 for request b18b777a-509b-4bd9-8223-10e345db27cb
+<27>Mar 14 08:14:24 web02 worker[1960]: Upstream https://search.internal/query returned 504 for request eb9f6ba3-752b-457d-af7e-5879116b937a
+<27>Mar 14 08:14:26 web02 scheduler[8908]: Upstream https://billing.internal/charge returned 500 for request 24b440b4-51b3-4405-96ea-c292f4bf3c24
+<27>Mar 14 08:14:29 web03 scheduler[6875]: Upstream https://search.internal/query returned 504 for request e8fd3637-d9d6-428b-820b-afe22608b8f3
+<27>Mar 14 08:14:30 web03 scheduler[8997]: Failed to acquire lock on resource /var/lib/app/cache.lock after 1474ms
+<27>Mar 14 08:14:32 worker02 scheduler[1753]: Connection timeout to database host db-replica-2.prod.internal after 1753ms
+<27>Mar 14 08:14:34 api02 checkout[1202]: Connection timeout to database host db-replica-2.prod.internal after 16007ms
+<27>Mar 14 08:14:36 worker01 api[8091]: Connection timeout to database host db-shard-3.prod.internal after 12368ms
+<27>Mar 14 08:14:38 edge01 checkout[7305]: Connection timeout to database host db-replica-2.prod.internal after 3114ms
+<27>Mar 14 08:14:40 web01 api[3571]: Failed to acquire lock on resource /tmp/deploy.lock after 10648ms
+<27>Mar 14 08:14:43 edge01 worker[2226]: Connection timeout to database host db-replica-2.prod.internal after 23352ms
+<27>Mar 14 08:14:45 worker01 worker[6421]: Upstream https://search.internal/query returned 502 for request 19ee3b6c-a181-4a75-8919-4040d4cdf531
+<27>Mar 14 08:14:47 web01 worker[7203]: Upstream https://notifications.internal/send returned 504 for request 0bc2da8f-6f15-4f55-b733-20b018df745b
+<27>Mar 14 08:14:49 api01 api[8521]: Connection timeout to database host db-replica-2.prod.internal after 22237ms
+<27>Mar 14 08:14:51 edge01 api[9166]: Connection timeout to database host db-replica-1.prod.internal after 2990ms
+<27>Mar 14 08:14:53 worker01 api[9148]: Connection timeout to database host db-replica-2.prod.internal after 14799ms
+<27>Mar 14 08:14:54 web02 scheduler[7755]: Connection timeout to database host db-replica-2.prod.internal after 5998ms
+<27>Mar 14 08:14:56 web01 api[5990]: Connection timeout to database host db-replica-2.prod.internal after 14442ms
+<27>Mar 14 08:14:58 edge01 checkout[6953]: Connection timeout to database host db-shard-3.prod.internal after 2927ms
+<27>Mar 14 08:15:00 api01 scheduler[6439]: Connection timeout to database host db-primary.prod.internal after 8392ms
+<27>Mar 14 08:15:03 worker01 scheduler[2868]: Failed to acquire lock on resource /tmp/deploy.lock after 7785ms
+<27>Mar 14 08:15:04 api01 api[6592]: Connection timeout to database host db-replica-1.prod.internal after 21401ms
+<27>Mar 14 08:15:07 api02 checkout[2741]: Connection timeout to database host db-replica-2.prod.internal after 5669ms
+<27>Mar 14 08:15:08 web03 scheduler[3301]: Upstream https://search.internal/query returned 503 for request 287e110f-f635-4927-b330-f7d76c1fdc75
+<27>Mar 14 08:15:11 web02 checkout[4209]: Upstream https://search.internal/query returned 500 for request 9fe285ed-4804-42c7-9bab-03db843f7761
+<27>Mar 14 08:15:12 web02 scheduler[4532]: Upstream https://auth.internal/v2/verify returned 504 for request 2a97c49d-247c-478a-9e6d-e47a40d2e2f9
+<27>Mar 14 08:15:15 api01 checkout[2765]: Connection timeout to database host db-shard-3.prod.internal after 17838ms
+<27>Mar 14 08:15:17 web01 api[8381]: Connection timeout to database host db-replica-2.prod.internal after 29364ms
+<27>Mar 14 08:15:19 web03 scheduler[1071]: Connection timeout to database host db-replica-1.prod.internal after 3305ms
+<27>Mar 14 08:15:20 worker02 scheduler[9328]: Failed to acquire lock on resource /tmp/deploy.lock after 2816ms
+<27>Mar 14 08:15:22 web03 worker[2696]: Connection timeout to database host db-replica-1.prod.internal after 9498ms
+<27>Mar 14 08:15:25 worker01 scheduler[7859]: Upstream https://auth.internal/v2/verify returned 504 for request 25aee22c-2941-4c39-9c13-0137ae00028f
+<27>Mar 14 08:15:26 api02 scheduler[6617]: Failed to acquire lock on resource /var/lib/app/queue.lock after 14972ms
+<27>Mar 14 08:15:29 edge01 worker[3263]: Connection timeout to database host db-primary.prod.internal after 13242ms
+<27>Mar 14 08:15:31 api02 checkout[4560]: Failed to acquire lock on resource /var/lib/app/cache.lock after 8433ms
+<27>Mar 14 08:15:32 api01 checkout[6657]: Connection timeout to database host db-primary.prod.internal after 9639ms
+<27>Mar 14 08:15:34 web03 checkout[2890]: Upstream https://notifications.internal/send returned 503 for request 9a327369-4e49-4da6-94a9-50580e89f51f
+<27>Mar 14 08:15:37 edge01 scheduler[9747]: Failed to acquire lock on resource /var/lib/app/queue.lock after 2503ms
+<27>Mar 14 08:15:39 worker02 api[9564]: Upstream https://auth.internal/v2/verify returned 504 for request 4758d76d-9a8b-40cb-934e-3134d0437ce6
+<27>Mar 14 08:15:40 web01 scheduler[3381]: Connection timeout to database host db-replica-1.prod.internal after 10839ms
+<27>Mar 14 08:15:42 web01 worker[5374]: Connection timeout to database host db-replica-1.prod.internal after 9424ms
+<27>Mar 14 08:15:44 api02 checkout[3399]: Connection timeout to database host db-primary.prod.internal after 18890ms
+<27>Mar 14 08:15:46 api02 worker[9866]: Upstream https://notifications.internal/send returned 500 for request 510cf7e0-c4f1-4ecc-8eae-ec56198fe328
+<27>Mar 14 08:15:48 worker01 scheduler[2679]: Connection timeout to database host db-replica-1.prod.internal after 29155ms
+<27>Mar 14 08:15:50 worker02 worker[9370]: Connection timeout to database host db-primary.prod.internal after 11429ms
+<27>Mar 14 08:15:53 web01 scheduler[7349]: Upstream https://billing.internal/charge returned 502 for request abf7da5f-8aaf-45ce-8e82-7887df889bac
+<27>Mar 14 08:15:55 worker01 api[1212]: Connection timeout to database host db-shard-3.prod.internal after 4682ms
+<27>Mar 14 08:15:57 api01 scheduler[4695]: Connection timeout to database host db-replica-2.prod.internal after 26947ms
+<27>Mar 14 08:15:59 api01 worker[5819]: Connection timeout to database host db-primary.prod.internal after 23725ms
+<27>Mar 14 08:16:01 web03 api[4063]: Upstream https://auth.internal/v2/verify returned 500 for request a1144ec2-217b-4062-afea-ac9bfeaa813c
+<27>Mar 14 08:16:02 web02 scheduler[1665]: Connection timeout to database host db-primary.prod.internal after 27848ms
+<27>Mar 14 08:16:05 api02 checkout[3131]: Connection timeout to database host db-shard-3.prod.internal after 7723ms
+<27>Mar 14 08:16:06 api02 api[6415]: Connection timeout to database host db-replica-1.prod.internal after 28298ms
+<27>Mar 14 08:16:09 web03 api[3518]: Upstream https://auth.internal/v2/verify returned 502 for request 7670be80-770e-47f1-a94e-09a2c661fef5
+<27>Mar 14 08:16:11 web01 checkout[9037]: Connection timeout to database host db-replica-1.prod.internal after 4453ms
+<27>Mar 14 08:16:13 web02 checkout[9608]: Connection timeout to database host db-shard-3.prod.internal after 26247ms
+<27>Mar 14 08:16:14 web03 api[9276]: Connection timeout to database host db-primary.prod.internal after 29750ms
+<27>Mar 14 08:16:16 worker02 scheduler[2506]: Connection timeout to database host db-replica-1.prod.internal after 5328ms
+<27>Mar 14 08:16:19 api01 worker[6437]: Upstream https://auth.internal/v2/verify returned 504 for request 95fe9535-4476-440a-bd58-55f00483a8ec
+<27>Mar 14 08:16:21 worker01 checkout[4579]: Connection timeout to database host db-primary.prod.internal after 12955ms
+<27>Mar 14 08:16:23 web01 api[6668]: Upstream https://search.internal/query returned 504 for request 32f9585a-715d-47c0-a32f-dea252349e7b
+<27>Mar 14 08:16:25 api01 worker[1653]: Connection timeout to database host db-replica-2.prod.internal after 7861ms
+<27>Mar 14 08:16:27 worker02 api[7322]: Connection timeout to database host db-shard-3.prod.internal after 12933ms
+<27>Mar 14 08:16:29 api02 api[9468]: Failed to acquire lock on resource /var/lib/app/queue.lock after 5712ms
+<27>Mar 14 08:16:31 edge01 scheduler[1718]: Connection timeout to database host db-primary.prod.internal after 26099ms
+<27>Mar 14 08:16:33 api01 checkout[9419]: Failed to acquire lock on resource /var/lib/app/session.lock after 2076ms
+<27>Mar 14 08:16:34 web02 worker[9814]: Connection timeout to database host db-replica-1.prod.internal after 24635ms
+<27>Mar 14 08:16:36 web02 worker[4492]: Connection timeout to database host db-shard-3.prod.internal after 15247ms
+<27>Mar 14 08:16:39 web02 worker[9810]: Upstream https://billing.internal/charge returned 504 for request 066b382c-b1ae-4464-bf0c-da114b2a6a80
+<27>Mar 14 08:16:41 web02 worker[1389]: Connection timeout to database host db-primary.prod.internal after 29654ms
+<27>Mar 14 08:16:43 worker01 api[2433]: Connection timeout to database host db-primary.prod.internal after 12026ms
+<27>Mar 14 08:16:44 web01 worker[5127]: Connection timeout to database host db-primary.prod.internal after 1319ms
+<27>Mar 14 08:16:46 api01 checkout[7678]: Upstream https://billing.internal/charge returned 500 for request 3ca703ce-55de-4bfa-8331-282d3d8a30dd
+<27>Mar 14 08:16:49 edge01 scheduler[8094]: Upstream https://billing.internal/charge returned 502 for request 7b3aee5a-56cd-467a-8e14-97cf9ac7db9b
+<27>Mar 14 08:16:51 web01 scheduler[2938]: Connection timeout to database host db-replica-2.prod.internal after 4155ms
+<27>Mar 14 08:16:52 web02 api[2189]: Connection timeout to database host db-shard-3.prod.internal after 23677ms
+<27>Mar 14 08:16:55 web02 checkout[5937]: Connection timeout to database host db-replica-2.prod.internal after 26733ms
+<27>Mar 14 08:16:56 api02 scheduler[7249]: Connection timeout to database host db-replica-1.prod.internal after 28020ms
+<27>Mar 14 08:16:59 web01 scheduler[3561]: Connection timeout to database host db-shard-3.prod.internal after 26509ms
+<27>Mar 14 08:17:00 web03 scheduler[9941]: Payment gateway gw.adyen.com rejected transaction 47307cfd-6a7d-4685-bd08-66dbe69c6a5c: insufficient_funds
+<27>Mar 14 08:17:03 web03 checkout[7113]: Connection timeout to database host db-replica-2.prod.internal after 5594ms
+<27>Mar 14 08:17:04 web03 api[1684]: Upstream https://notifications.internal/send returned 502 for request e16d74d0-f634-4e44-93cb-e33a6a73a559
+<27>Mar 14 08:17:06 worker02 api[5992]: Upstream https://auth.internal/v2/verify returned 500 for request cb999d7a-ec05-4230-8a52-3be9f63fa895
+<27>Mar 14 08:17:08 worker01 worker[7760]: Connection timeout to database host db-replica-1.prod.internal after 26454ms
+<27>Mar 14 08:17:10 web03 worker[4617]: Upstream https://notifications.internal/send returned 503 for request d6766133-07fc-47eb-954a-7509439c0a18
+<27>Mar 14 08:17:13 api01 api[3971]: Connection timeout to database host db-replica-1.prod.internal after 4381ms
+<27>Mar 14 08:17:14 edge01 api[5762]: Upstream https://billing.internal/charge returned 504 for request b3616665-b825-4b47-8b04-7e181314100c
+<27>Mar 14 08:17:16 api02 api[4234]: Connection timeout to database host db-primary.prod.internal after 26879ms
+<27>Mar 14 08:17:19 worker01 checkout[3100]: Connection timeout to database host db-primary.prod.internal after 8647ms
+<27>Mar 14 08:17:20 web02 checkout[2143]: Connection timeout to database host db-replica-2.prod.internal after 18280ms
+<27>Mar 14 08:17:22 worker01 scheduler[8383]: Upstream https://search.internal/query returned 500 for request 69d54c7d-71d5-4b14-9ccc-8a079111858b
+<27>Mar 14 08:17:25 api02 worker[6971]: Connection timeout to database host db-replica-2.prod.internal after 25594ms
+<27>Mar 14 08:17:27 worker02 worker[1079]: Connection timeout to database host db-shard-3.prod.internal after 8462ms
+<27>Mar 14 08:17:29 api01 worker[8145]: Failed to acquire lock on resource /var/lib/app/queue.lock after 6277ms
+<27>Mar 14 08:17:31 worker01 worker[6432]: Failed to acquire lock on resource /var/lib/app/queue.lock after 2527ms
+<27>Mar 14 08:17:33 edge01 scheduler[6877]: Connection timeout to database host db-shard-3.prod.internal after 7788ms
+<27>Mar 14 08:17:35 edge01 api[3879]: Payment gateway gw.stripe.com rejected transaction 843483bd-d2ce-455e-ac56-7a34fa463603: insufficient_funds
+<27>Mar 14 08:17:36 api02 worker[9824]: Connection timeout to database host db-primary.prod.internal after 12949ms
+<27>Mar 14 08:17:38 api02 api[2235]: Connection timeout to database host db-replica-1.prod.internal after 5508ms
+<27>Mar 14 08:17:40 web01 scheduler[4485]: Connection timeout to database host db-shard-3.prod.internal after 1541ms
+<27>Mar 14 08:17:42 api02 scheduler[3435]: Upstream https://auth.internal/v2/verify returned 503 for request 9883eeb5-34ca-4630-9537-b3ae46c27118
+<27>Mar 14 08:17:45 worker02 worker[5767]: Upstream https://notifications.internal/send returned 504 for request bfce18f4-05ae-4fdd-8483-e0322c443b43
+<27>Mar 14 08:17:46 edge01 api[7500]: Connection timeout to database host db-shard-3.prod.internal after 5572ms
+<27>Mar 14 08:17:49 web01 worker[3717]: Upstream https://search.internal/query returned 502 for request 6e813e0a-a974-43a3-8f0a-1a3da6d23711
+<27>Mar 14 08:17:50 edge01 worker[3935]: Failed to acquire lock on resource /var/lib/app/session.lock after 7229ms
+<27>Mar 14 08:17:52 edge01 checkout[1662]: Connection timeout to database host db-replica-2.prod.internal after 23497ms
+<27>Mar 14 08:17:54 edge01 worker[2029]: Upstream https://auth.internal/v2/verify returned 502 for request 8422e7b9-c6ea-4091-b824-94a400535147
+<27>Mar 14 08:17:57 worker01 worker[1701]: Connection timeout to database host db-replica-1.prod.internal after 2363ms
+<27>Mar 14 08:17:58 worker01 scheduler[8695]: Connection timeout to database host db-replica-1.prod.internal after 27999ms
+<27>Mar 14 08:18:01 web01 api[6309]: Connection timeout to database host db-replica-1.prod.internal after 7862ms
+<27>Mar 14 08:18:02 api02 checkout[9918]: Connection timeout to database host db-primary.prod.internal after 13411ms
+<27>Mar 14 08:18:04 worker02 scheduler[6985]: Connection timeout to database host db-replica-2.prod.internal after 19418ms
+<27>Mar 14 08:18:06 api02 scheduler[4651]: Connection timeout to database host db-replica-2.prod.internal after 12006ms
+<27>Mar 14 08:18:09 worker01 checkout[8976]: Connection timeout to database host db-replica-2.prod.internal after 11652ms
+<27>Mar 14 08:18:11 web01 worker[8207]: Payment gateway gw.stripe.com rejected transaction 999261c4-4ff6-4c80-9d18-28a247d773d2: insufficient_funds
+<27>Mar 14 08:18:12 api01 api[9430]: Failed to acquire lock on resource /var/lib/app/queue.lock after 10608ms
+<27>Mar 14 08:18:15 api01 worker[4062]: Connection timeout to database host db-shard-3.prod.internal after 555ms
+<27>Mar 14 08:18:16 worker01 api[4773]: Connection timeout to database host db-replica-2.prod.internal after 26643ms
+<27>Mar 14 08:18:19 worker01 api[8889]: Upstream https://search.internal/query returned 502 for request b4023d8a-2f58-47ef-b1ba-22c1769f847b
+<27>Mar 14 08:18:21 edge01 worker[3641]: Connection timeout to database host db-replica-1.prod.internal after 6776ms
+<27>Mar 14 08:18:23 web01 worker[1706]: Connection timeout to database host db-shard-3.prod.internal after 5181ms
+<27>Mar 14 08:18:24 web03 worker[9399]: Connection timeout to database host db-primary.prod.internal after 13630ms
+<27>Mar 14 08:18:26 web03 api[3725]: Connection timeout to database host db-replica-2.prod.internal after 27677ms
+<27>Mar 14 08:18:29 web03 scheduler[1305]: Connection timeout to database host db-replica-1.prod.internal after 3839ms
+<27>Mar 14 08:18:31 web02 worker[8359]: Failed to acquire lock on resource /var/lib/app/queue.lock after 1861ms
+<27>Mar 14 08:18:33 edge01 worker[4594]: Connection timeout to database host db-replica-2.prod.internal after 9629ms
+<27>Mar 14 08:18:35 web03 worker[9369]: Connection timeout to database host db-replica-1.prod.internal after 4707ms
+<27>Mar 14 08:18:37 web03 checkout[8429]: Upstream https://auth.internal/v2/verify returned 502 for request 60c5aee5-ae6d-44bd-8705-ac09b968ad0a
+<27>Mar 14 08:18:38 api01 scheduler[7315]: Connection timeout to database host db-primary.prod.internal after 28396ms
+<27>Mar 14 08:18:40 web02 api[4315]: Upstream https://billing.internal/charge returned 500 for request 87ef7664-48a0-4b52-982c-ef10a4b73d96
+<27>Mar 14 08:18:43 web03 api[3906]: Failed to acquire lock on resource /var/lib/app/cache.lock after 12111ms
+<27>Mar 14 08:18:45 web01 api[2526]: Connection timeout to database host db-primary.prod.internal after 26007ms
+<27>Mar 14 08:18:47 web03 api[8069]: Connection timeout to database host db-replica-2.prod.internal after 25137ms
+<27>Mar 14 08:18:49 worker01 api[9680]: Connection timeout to database host db-replica-2.prod.internal after 16510ms
+<27>Mar 14 08:18:51 api01 scheduler[7246]: Payment gateway gw.braintree.com rejected transaction 3094a50c-8f80-4a1c-9e5e-a6c76ab6b136: insufficient_funds
+<27>Mar 14 08:18:53 web02 scheduler[3193]: Connection timeout to database host db-shard-3.prod.internal after 6512ms
+<27>Mar 14 08:18:55 edge01 worker[2373]: Upstream https://billing.internal/charge returned 503 for request c10925de-e1ec-4926-a186-b055f5c10036
+<27>Mar 14 08:18:57 worker02 checkout[4096]: Failed to acquire lock on resource /var/lib/app/cache.lock after 13727ms
+<27>Mar 14 08:18:58 web01 api[9515]: Failed to acquire lock on resource /var/lib/app/cache.lock after 1744ms
+<27>Mar 14 08:19:00 worker02 worker[6175]: Connection timeout to database host db-replica-2.prod.internal after 6458ms
+<27>Mar 14 08:19:03 worker01 api[3535]: Upstream https://notifications.internal/send returned 503 for request 9988a15b-b070-4d44-a76d-945f3068c2e4
+<27>Mar 14 08:19:05 api02 checkout[9783]: Failed to acquire lock on resource /var/lib/app/queue.lock after 10468ms
+<27>Mar 14 08:19:07 worker01 checkout[7511]: Connection timeout to database host db-replica-2.prod.internal after 13806ms
+<27>Mar 14 08:19:08 worker02 scheduler[3928]: Connection timeout to database host db-shard-3.prod.internal after 23325ms
+<27>Mar 14 08:19:11 edge01 checkout[6024]: Connection timeout to database host db-primary.prod.internal after 29955ms
+<27>Mar 14 08:19:13 worker02 worker[2951]: Connection timeout to database host db-primary.prod.internal after 805ms
+<27>Mar 14 08:19:14 edge01 worker[2642]: Connection timeout to database host db-replica-2.prod.internal after 3291ms
+<27>Mar 14 08:19:16 worker02 checkout[1852]: Upstream https://notifications.internal/send returned 503 for request 8713a0c3-d960-4301-8e49-01c6aa8bba6c
+<27>Mar 14 08:19:18 worker02 api[2492]: Upstream https://auth.internal/v2/verify returned 504 for request b9ad8b32-2e21-48f4-ae75-7b9e06652bed
+<27>Mar 14 08:19:20 edge01 scheduler[2444]: Connection timeout to database host db-shard-3.prod.internal after 21664ms
+<27>Mar 14 08:19:22 api02 worker[7075]: Connection timeout to database host db-shard-3.prod.internal after 20575ms
+<27>Mar 14 08:19:24 web01 scheduler[7564]: Failed to acquire lock on resource /var/lib/app/queue.lock after 8532ms
+<27>Mar 14 08:19:27 web01 worker[9099]: Upstream https://search.internal/query returned 502 for request 7b7dd5da-a59c-4155-ac2f-14df850faf5a
+<27>Mar 14 08:19:29 web01 worker[9489]: Upstream https://search.internal/query returned 504 for request 20dc96f2-8152-4b8c-ac01-ac9bb5d3b64c
+<27>Mar 14 08:19:31 api01 api[9364]: Connection timeout to database host db-shard-3.prod.internal after 8490ms
+<27>Mar 14 08:19:32 web03 api[6893]: Connection timeout to database host db-replica-1.prod.internal after 18377ms
+<27>Mar 14 08:19:34 web01 worker[2422]: Failed to acquire lock on resource /var/lib/app/queue.lock after 4986ms
+<27>Mar 14 08:19:37 worker02 checkout[7474]: Upstream https://auth.internal/v2/verify returned 500 for request b35cd198-884f-43b6-a023-1dd5cd72975f
+<27>Mar 14 08:19:39 api01 api[2124]: Connection timeout to database host db-replica-2.prod.internal after 20919ms
+<27>Mar 14 08:19:40 api02 checkout[6693]: Upstream https://notifications.internal/send returned 503 for request 5bd52833-f277-4450-9cd0-42222e79394e
+<27>Mar 14 08:19:43 api01 worker[8450]: Connection timeout to database host db-replica-1.prod.internal after 8846ms
+<27>Mar 14 08:19:45 web01 checkout[3867]: Payment gateway gw.braintree.com rejected transaction 6a8a4785-ab1d-415e-9134-05dfac57c359: insufficient_funds
+<27>Mar 14 08:19:47 web02 api[9243]: Connection timeout to database host db-replica-1.prod.internal after 24868ms
+<27>Mar 14 08:19:49 worker01 api[9409]: Upstream https://search.internal/query returned 504 for request a3038286-4a68-4b4c-adbf-06a398e61d0d
+<27>Mar 14 08:19:51 api02 scheduler[7178]: Connection timeout to database host db-shard-3.prod.internal after 2792ms
+<27>Mar 14 08:19:53 api01 checkout[8517]: Connection timeout to database host db-replica-2.prod.internal after 11061ms
+<27>Mar 14 08:19:55 web01 scheduler[2904]: Connection timeout to database host db-shard-3.prod.internal after 14933ms
+<27>Mar 14 08:19:57 web02 scheduler[4610]: Connection timeout to database host db-replica-2.prod.internal after 21471ms
+<27>Mar 14 08:19:58 worker01 scheduler[6785]: Failed to acquire lock on resource /var/lib/app/session.lock after 3347ms
+<27>Mar 14 08:20:00 api02 worker[5706]: Connection timeout to database host db-replica-2.prod.internal after 4840ms
+<27>Mar 14 08:20:02 worker02 checkout[2245]: Connection timeout to database host db-replica-2.prod.internal after 7171ms
+<27>Mar 14 08:20:04 edge01 checkout[6792]: Connection timeout to database host db-shard-3.prod.internal after 20854ms
+<27>Mar 14 08:20:06 api02 worker[4115]: Connection timeout to database host db-primary.prod.internal after 14237ms
+<27>Mar 14 08:20:09 api01 worker[4965]: Failed to acquire lock on resource /tmp/deploy.lock after 2624ms
+<27>Mar 14 08:20:11 api01 worker[4322]: Connection timeout to database host db-shard-3.prod.internal after 16413ms
+<27>Mar 14 08:20:12 worker01 worker[2747]: Connection timeout to database host db-primary.prod.internal after 20859ms
+<27>Mar 14 08:20:14 web02 scheduler[1108]: Failed to acquire lock on resource /tmp/deploy.lock after 13157ms
+<27>Mar 14 08:20:16 edge01 checkout[6167]: Failed to acquire lock on resource /var/lib/app/cache.lock after 5742ms
+<27>Mar 14 08:20:19 api02 scheduler[3996]: Upstream https://notifications.internal/send returned 503 for request 55ea7c89-95c9-4857-9750-955af4ddee81
+<27>Mar 14 08:20:21 worker02 worker[3101]: Failed to acquire lock on resource /var/lib/app/session.lock after 13572ms
+<27>Mar 14 08:20:22 worker02 scheduler[9859]: Connection timeout to database host db-primary.prod.internal after 19777ms
+<27>Mar 14 08:20:24 worker01 scheduler[3863]: Connection timeout to database host db-primary.prod.internal after 5034ms
+<27>Mar 14 08:20:27 web02 scheduler[6171]: Connection timeout to database host db-primary.prod.internal after 29025ms
+<27>Mar 14 08:20:28 web01 worker[7216]: Connection timeout to database host db-replica-2.prod.internal after 9044ms
+<27>Mar 14 08:20:30 worker01 checkout[5254]: Connection timeout to database host db-shard-3.prod.internal after 9847ms
+<27>Mar 14 08:20:32 api02 worker[5413]: Connection timeout to database host db-replica-2.prod.internal after 1404ms
+<27>Mar 14 08:20:35 worker01 checkout[4013]: Connection timeout to database host db-primary.prod.internal after 4165ms
+<27>Mar 14 08:20:37 worker02 worker[7866]: Upstream https://billing.internal/charge returned 502 for request 9652d8fc-2dfd-4848-9993-9d9d278dc55f
+<27>Mar 14 08:20:39 worker01 scheduler[5581]: Connection timeout to database host db-replica-2.prod.internal after 25629ms
+<27>Mar 14 08:20:41 web03 worker[4744]: Connection timeout to database host db-primary.prod.internal after 28634ms
+<27>Mar 14 08:20:42 api02 worker[8081]: Connection timeout to database host db-replica-1.prod.internal after 24014ms
+<27>Mar 14 08:20:45 api01 worker[3450]: Connection timeout to database host db-shard-3.prod.internal after 28465ms
+<27>Mar 14 08:20:47 web01 worker[7906]: Connection timeout to database host db-shard-3.prod.internal after 15732ms
+<27>Mar 14 08:20:49 web03 checkout[8972]: Connection timeout to database host db-replica-2.prod.internal after 3849ms
+<27>Mar 14 08:20:51 api02 api[7527]: Connection timeout to database host db-replica-2.prod.internal after 20682ms
+<27>Mar 14 08:20:52 web03 api[4530]: Upstream https://notifications.internal/send returned 500 for request 8f53fb92-2843-43b5-af0d-64671b8dac3d
+<27>Mar 14 08:20:55 edge01 api[8370]: Connection timeout to database host db-shard-3.prod.internal after 10243ms
+<27>Mar 14 08:20:57 api02 checkout[6903]: Connection timeout to database host db-replica-1.prod.internal after 9185ms
+<27>Mar 14 08:20:59 worker01 api[7746]: Upstream https://notifications.internal/send returned 503 for request b536a8b2-a708-4a73-82f9-5a3b7f0b2c87
+<27>Mar 14 08:21:00 worker01 worker[9821]: Connection timeout to database host db-primary.prod.internal after 15020ms
+<27>Mar 14 08:21:02 api02 checkout[6326]: Connection timeout to database host db-primary.prod.internal after 15911ms
+<27>Mar 14 08:21:05 edge01 api[7243]: Connection timeout to database host db-replica-2.prod.internal after 18712ms
+<27>Mar 14 08:21:07 edge01 worker[3745]: Upstream https://auth.internal/v2/verify returned 504 for request e441796b-c792-42f5-ac7b-2e0a1d5ab448
+<27>Mar 14 08:21:09 worker02 scheduler[2168]: Payment gateway gw.adyen.com rejected transaction c3f597e4-e2e2-4bcd-aad7-d3738575d122: insufficient_funds
+<27>Mar 14 08:21:10 web03 checkout[4739]: Failed to acquire lock on resource /var/lib/app/cache.lock after 3578ms
+<27>Mar 14 08:21:13 worker01 checkout[5382]: Upstream https://search.internal/query returned 502 for request 709c8148-80f0-49f2-9360-270c49f137a5
+<27>Mar 14 08:21:15 api02 scheduler[6950]: Connection timeout to database host db-primary.prod.internal after 3556ms
+<27>Mar 14 08:21:17 worker02 worker[4012]: Connection timeout to database host db-replica-2.prod.internal after 8737ms
+<27>Mar 14 08:21:18 web03 worker[5122]: Failed to acquire lock on resource /var/lib/app/queue.lock after 6129ms
+<27>Mar 14 08:21:20 api01 worker[7505]: Connection timeout to database host db-replica-2.prod.internal after 28362ms
+<27>Mar 14 08:21:22 web02 api[8752]: Connection timeout to database host db-replica-1.prod.internal after 2416ms
+<27>Mar 14 08:21:24 web01 scheduler[9584]: Upstream https://search.internal/query returned 503 for request c96bccfb-b68e-4fd6-9a84-fd6d63cb15db
+<27>Mar 14 08:21:26 web02 checkout[3544]: Connection timeout to database host db-replica-1.prod.internal after 18174ms
+<27>Mar 14 08:21:28 worker02 checkout[4757]: Connection timeout to database host db-primary.prod.internal after 25214ms
+<27>Mar 14 08:21:30 api02 scheduler[3071]: Connection timeout to database host db-replica-1.prod.internal after 13730ms
+<27>Mar 14 08:21:32 web03 api[1575]: Upstream https://auth.internal/v2/verify returned 504 for request fdf0a0e4-598f-40be-9b38-17170acdcb8b
+<27>Mar 14 08:21:35 worker01 scheduler[8654]: Connection timeout to database host db-replica-2.prod.internal after 7387ms
+<27>Mar 14 08:21:37 edge01 worker[9835]: Connection timeout to database host db-shard-3.prod.internal after 29899ms
+<27>Mar 14 08:21:38 edge01 scheduler[9576]: Connection timeout to database host db-shard-3.prod.internal after 23168ms
+<27>Mar 14 08:21:41 worker01 scheduler[9841]: Upstream https://notifications.internal/send returned 503 for request fdfe4c41-01fb-4eea-8a89-3a4c2c94c858
+<27>Mar 14 08:21:42 web02 scheduler[6044]: Connection timeout to database host db-shard-3.prod.internal after 7440ms
+<27>Mar 14 08:21:45 worker02 checkout[3551]: Connection timeout to database host db-primary.prod.internal after 25044ms
+<27>Mar 14 08:21:47 web01 api[9574]: Connection timeout to database host db-shard-3.prod.internal after 20026ms
+<27>Mar 14 08:21:48 worker01 checkout[8687]: Connection timeout to database host db-primary.prod.internal after 8602ms
+<27>Mar 14 08:21:50 edge01 scheduler[5908]: Failed to acquire lock on resource /var/lib/app/cache.lock after 2443ms
+<27>Mar 14 08:21:52 worker02 checkout[4788]: Connection timeout to database host db-shard-3.prod.internal after 13464ms
+<27>Mar 14 08:21:54 worker01 worker[7745]: Upstream https://search.internal/query returned 502 for request 020cbbe8-4b50-4b1a-b2fb-6d9f474b1c1f
+<27>Mar 14 08:21:57 worker02 worker[3675]: Connection timeout to database host db-replica-1.prod.internal after 16017ms
+<27>Mar 14 08:21:59 worker02 worker[5308]: Connection timeout to database host db-primary.prod.internal after 19310ms
+<27>Mar 14 08:22:00 worker02 worker[9464]: Connection timeout to database host db-replica-1.prod.internal after 10533ms
+<27>Mar 14 08:22:03 api02 checkout[7765]: Connection timeout to database host db-shard-3.prod.internal after 27716ms
+<27>Mar 14 08:22:04 web02 worker[3238]: Connection timeout to database host db-shard-3.prod.internal after 7450ms
+<27>Mar 14 08:22:07 web02 scheduler[8418]: Connection timeout to database host db-shard-3.prod.internal after 27557ms
+<27>Mar 14 08:22:09 edge01 worker[6253]: Connection timeout to database host db-replica-1.prod.internal after 22509ms
+<27>Mar 14 08:22:10 web03 api[9764]: Upstream https://notifications.internal/send returned 500 for request 6e962bcf-d691-4090-b6cd-fad1a893cf19
+<27>Mar 14 08:22:12 web03 api[5622]: Upstream https://billing.internal/charge returned 502 for request 63ed15c8-4e99-4bed-988d-26133c03cfbf
+<27>Mar 14 08:22:15 web03 scheduler[1134]: Upstream https://auth.internal/v2/verify returned 504 for request 021699d8-5842-45bd-b834-687af8483d0e
+<27>Mar 14 08:22:16 web02 worker[1241]: Upstream https://notifications.internal/send returned 500 for request eaafe0bd-bb70-4ec2-9a75-8b16d416f7f9
+<27>Mar 14 08:22:19 api01 checkout[7885]: Upstream https://search.internal/query returned 502 for request cdc59f68-b0cc-4472-b560-ff5a7398c9d0
+<27>Mar 14 08:22:21 edge01 checkout[8597]: Connection timeout to database host db-shard-3.prod.internal after 22288ms
+<27>Mar 14 08:22:22 worker01 api[3393]: Connection timeout to database host db-primary.prod.internal after 20460ms
+<27>Mar 14 08:22:24 api02 scheduler[2169]: Connection timeout to database host db-primary.prod.internal after 22384ms
+<27>Mar 14 08:22:27 web03 worker[5097]: Failed to acquire lock on resource /var/lib/app/cache.lock after 10406ms
+<27>Mar 14 08:22:29 web01 api[5078]: Upstream https://auth.internal/v2/verify returned 502 for request 37e394d0-a603-41b3-b34a-f9fdc5c97e40
+<27>Mar 14 08:22:31 edge01 worker[1549]: Connection timeout to database host db-primary.prod.internal after 4165ms
+<27>Mar 14 08:22:32 edge01 api[9538]: Connection timeout to database host db-primary.prod.internal after 25986ms
+<27>Mar 14 08:22:34 edge01 scheduler[6113]: Connection timeout to database host db-replica-1.prod.internal after 735ms
+<27>Mar 14 08:22:37 web03 api[9534]: Upstream https://auth.internal/v2/verify returned 500 for request fbaad47f-140d-46ba-aa29-bf04b85b4569
+<27>Mar 14 08:22:38 api02 scheduler[5895]: Connection timeout to database host db-primary.prod.internal after 5508ms
+<27>Mar 14 08:22:40 worker01 api[4568]: Payment gateway gw.stripe.com rejected transaction d2f9122a-63fb-410d-964f-2c798dd39153: insufficient_funds
+<27>Mar 14 08:22:42 api01 scheduler[6316]: Upstream https://billing.internal/charge returned 503 for request f0ee95ba-ee30-476b-b53c-be3f9b3d8937
+<27>Mar 14 08:22:44 web03 checkout[2960]: Upstream https://billing.internal/charge returned 503 for request a0fca93d-0a08-48e8-9122-579716cc4ced
+<27>Mar 14 08:22:47 api01 api[1688]: Upstream https://auth.internal/v2/verify returned 504 for request 4f537b13-cf58-4687-992d-6cca4e59fbe7
+<27>Mar 14 08:22:49 web03 checkout[2466]: Connection timeout to database host db-shard-3.prod.internal after 6454ms
+<27>Mar 14 08:22:50 web03 scheduler[2497]: Connection timeout to database host db-replica-1.prod.internal after 21376ms
+<27>Mar 14 08:22:53 web01 api[6824]: Failed to acquire lock on resource /var/lib/app/cache.lock after 6567ms
+<27>Mar 14 08:22:54 web02 worker[8992]: Upstream https://auth.internal/v2/verify returned 500 for request d26f3290-d7a2-4386-aada-dc820a9d7411
+<27>Mar 14 08:22:56 worker01 checkout[8187]: Upstream https://search.internal/query returned 503 for request 01bfe212-3ed7-478e-a6c5-d9b275457537
+<27>Mar 14 08:22:58 web01 scheduler[6868]: Connection timeout to database host db-replica-1.prod.internal after 5854ms
+<27>Mar 14 08:23:00 api02 api[8951]: Upstream https://notifications.internal/send returned 503 for request 0a00dbff-595d-49fd-a9f9-a500906a7dae
+<27>Mar 14 08:23:03 api02 scheduler[4109]: Upstream https://notifications.internal/send returned 502 for request e452f487-012e-4321-9b42-3f0b5ae9b7a9
+<27>Mar 14 08:23:04 worker01 checkout[8674]: Upstream https://search.internal/query returned 504 for request 6b5a5285-b6b8-4cf4-988d-c4a04e1a1120
+<27>Mar 14 08:23:07 web03 api[9702]: Connection timeout to database host db-primary.prod.internal after 3549ms
+<27>Mar 14 08:23:08 edge01 checkout[5314]: Failed to acquire lock on resource /tmp/deploy.lock after 12624ms
+<27>Mar 14 08:23:11 edge01 api[9289]: Upstream https://billing.internal/charge returned 502 for request 5a285456-7f29-472d-86c0-4a7dee6f9cc2
+<27>Mar 14 08:23:13 web03 api[6965]: Failed to acquire lock on resource /var/lib/app/session.lock after 5505ms
+<27>Mar 14 08:23:14 worker01 api[9830]: Connection timeout to database host db-primary.prod.internal after 25423ms
+<27>Mar 14 08:23:17 api01 scheduler[3525]: Failed to acquire lock on resource /var/lib/app/cache.lock after 2882ms
+<27>Mar 14 08:23:19 worker01 scheduler[6276]: Connection timeout to database host db-replica-1.prod.internal after 17135ms
+<27>Mar 14 08:23:20 web02 api[1717]: Connection timeout to database host db-replica-2.prod.internal after 25134ms
+<27>Mar 14 08:23:22 web03 api[4310]: Connection timeout to database host db-shard-3.prod.internal after 19172ms
+<27>Mar 14 08:23:24 edge01 worker[2617]: Connection timeout to database host db-shard-3.prod.internal after 29919ms
+<27>Mar 14 08:23:26 worker02 scheduler[9615]: Connection timeout to database host db-replica-1.prod.internal after 22460ms
+<27>Mar 14 08:23:29 web01 checkout[4616]: Upstream https://billing.internal/charge returned 500 for request e2019255-8b1e-480f-a8ca-593501e6fbf0
+<27>Mar 14 08:23:30 web01 worker[9051]: Upstream https://notifications.internal/send returned 504 for request 4345419f-52f3-4e4f-9444-d524df8366a1
+<27>Mar 14 08:23:32 edge01 api[6913]: Connection timeout to database host db-shard-3.prod.internal after 18136ms
+<27>Mar 14 08:23:35 worker01 api[5355]: Connection timeout to database host db-replica-1.prod.internal after 15367ms
+<27>Mar 14 08:23:36 web02 checkout[2276]: Upstream https://search.internal/query returned 503 for request 863987f5-4c0a-4d58-b4eb-ec7d546ff8a5
+<27>Mar 14 08:23:38 web02 api[4784]: Connection timeout to database host db-primary.prod.internal after 11877ms
+<27>Mar 14 08:23:41 api01 worker[9621]: Connection timeout to database host db-replica-2.prod.internal after 24978ms
+<27>Mar 14 08:23:42 web03 scheduler[2728]: Upstream https://billing.internal/charge returned 502 for request e3cd6e30-f0ad-4840-8977-65bdacb47871
+<27>Mar 14 08:23:45 edge01 scheduler[2705]: Connection timeout to database host db-replica-1.prod.internal after 26849ms
+<27>Mar 14 08:23:46 web03 scheduler[9268]: Connection timeout to database host db-primary.prod.internal after 7277ms
+<27>Mar 14 08:23:49 web03 scheduler[6772]: Failed to acquire lock on resource /tmp/deploy.lock after 2582ms
+<27>Mar 14 08:23:51 worker01 checkout[7755]: Upstream https://auth.internal/v2/verify returned 500 for request 37fc9f8d-bd61-47a2-84cf-e1923332a7f0
+<27>Mar 14 08:23:53 worker01 worker[9939]: Upstream https://billing.internal/charge returned 503 for request 899e64a4-1215-4362-a131-9b8e83cee473
+<27>Mar 14 08:23:54 worker02 checkout[6898]: Connection timeout to database host db-replica-2.prod.internal after 18628ms
+<27>Mar 14 08:23:57 edge01 scheduler[1003]: Upstream https://billing.internal/charge returned 502 for request 81fd6a23-aa64-4ca9-a0af-02035ce03714
+<27>Mar 14 08:23:58 api02 api[9480]: Connection timeout to database host db-primary.prod.internal after 29672ms
+<27>Mar 14 08:24:00 api02 api[5920]: Connection timeout to database host db-shard-3.prod.internal after 24229ms
+<27>Mar 14 08:24:02 api01 checkout[1355]: Failed to acquire lock on resource /var/lib/app/session.lock after 12252ms
+<27>Mar 14 08:24:05 web03 api[1618]: Connection timeout to database host db-primary.prod.internal after 9024ms
+<27>Mar 14 08:24:07 worker01 worker[3267]: Failed to acquire lock on resource /var/lib/app/queue.lock after 6120ms
+<27>Mar 14 08:24:09 worker01 worker[4817]: Failed to acquire lock on resource /var/lib/app/cache.lock after 11977ms
+<27>Mar 14 08:24:11 api02 api[7550]: Failed to acquire lock on resource /tmp/deploy.lock after 4674ms
+<27>Mar 14 08:24:12 web02 checkout[8905]: Upstream https://notifications.internal/send returned 500 for request 408581da-0acd-401b-a754-0ca510f199f7
+<27>Mar 14 08:24:14 edge01 api[5921]: Failed to acquire lock on resource /var/lib/app/cache.lock after 2965ms
+<27>Mar 14 08:24:16 worker02 api[1916]: Upstream https://auth.internal/v2/verify returned 504 for request f8799a65-9f25-4610-9367-bbe4cbe13272
+<27>Mar 14 08:24:19 worker01 scheduler[7824]: Upstream https://billing.internal/charge returned 504 for request c5235920-957e-4d33-bb5d-88ca2d628706
+<27>Mar 14 08:24:20 api01 api[7266]: Upstream https://auth.internal/v2/verify returned 502 for request 36b49642-5f69-44aa-be17-9f67a8f41baf
+<27>Mar 14 08:24:22 api02 api[6231]: Upstream https://auth.internal/v2/verify returned 503 for request 90ff5983-b6d1-402e-8c3c-042f775892bb
+<27>Mar 14 08:24:24 worker01 worker[3509]: Upstream https://notifications.internal/send returned 504 for request 4ec0c131-6603-4fa8-9d14-30af46de40ae
+<27>Mar 14 08:24:26 worker02 scheduler[9269]: Failed to acquire lock on resource /tmp/deploy.lock after 2099ms
+<27>Mar 14 08:24:28 api01 scheduler[5747]: Connection timeout to database host db-primary.prod.internal after 24827ms
+<27>Mar 14 08:24:31 web03 worker[6507]: Connection timeout to database host db-replica-2.prod.internal after 16903ms
+<27>Mar 14 08:24:32 edge01 api[9980]: Failed to acquire lock on resource /var/lib/app/session.lock after 13140ms
+<27>Mar 14 08:24:35 api02 api[7529]: Connection timeout to database host db-primary.prod.internal after 20795ms
+<27>Mar 14 08:24:37 web03 worker[8879]: Upstream https://notifications.internal/send returned 500 for request 59803030-67e8-42f2-8b5d-e1166bd674b2
+<27>Mar 14 08:24:38 edge01 scheduler[4212]: Connection timeout to database host db-replica-2.prod.internal after 22237ms
+<27>Mar 14 08:24:40 api01 api[5362]: Connection timeout to database host db-replica-1.prod.internal after 1870ms
+<27>Mar 14 08:24:43 worker01 api[2843]: Connection timeout to database host db-replica-1.prod.internal after 17250ms
