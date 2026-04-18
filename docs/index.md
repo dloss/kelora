@@ -1,10 +1,8 @@
 # Kelora
 
-**One command for messy logs.** Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, and plain text — with embedded [Rhai](https://rhai.rs) scripting when simple filters aren't enough.
+**One command for messy logs.** Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, plain text, and your own custom formats — with embedded [Rhai](https://rhai.rs) scripting when simple filters aren't enough.
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
-
-Kelora is AI-generated; see [Development Approach](#development-approach).
 
 ## See it
 
@@ -22,9 +20,7 @@ templates (4 items):
    23: Payment gateway <fqdn> rejected transaction <uuid> insufficient_funds
 ```
 
-One command. No temp files, no intermediate scripts, no manual regex. `--drain` auto-groups similar messages so you see the handful of patterns actually causing the noise.
-
-For a concrete tour of standout capabilities — pattern mining, embedded JSON extraction, deterministic sampling, pseudonymization, span windows, and more — see **[Core Features](features.md)**.
+One command. No temp files, no intermediate scripts, no manual regex. `--drain` auto-groups similar messages by inferring where values varied — `<fqdn>`, `<uuid>`, `<path>`, `<duration>` — so you see the handful of patterns actually causing the noise.
 
 ## When Kelora helps
 
@@ -121,22 +117,23 @@ Kelora trades raw [speed](concepts/performance-comparisons.md) for programmabili
     cat examples/audit.jsonl
     ```
 
-### 3. Pattern Discovery (Template Mining)
-*Scenario: You have thousands of error messages that differ only in IPs, emails, and UUIDs. Find the underlying patterns automatically.*
+### 3. Stateful Analysis (Streaming Percentiles)
+*Scenario: 800 API calls across three endpoints. The average latency looks fine — but the tail might not be. Compute p50/p95/p99 per endpoint in one pass, no external aggregator.*
 
 === "Command/Output"
 
     ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/production-errors.jsonl --drain -k message
+    kelora -j examples/api_latency_incident.jsonl -q -m \
+      --exec 'track_percentiles("latency_" + e.endpoint, e.response_time_ms)'
     ```
 
 === "Input Data"
 
     ```bash exec="on" result="ansi"
-    cat examples/production-errors.jsonl
+    head -3 examples/api_latency_incident.jsonl
     ```
 
-The Drain algorithm clusters similar messages and replaces variable parts with placeholders like `<ipv4>`, `<email>`, `<uuid>`. No regex required.
+`track_percentiles` maintains streaming state across events, so this scales to files of any size without holding everything in memory. `--exec` runs per event; metrics emit at end via `-m`.
 
 ---
 
