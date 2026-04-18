@@ -1,16 +1,30 @@
 # Kelora
 
-**Scriptable log analysis for terminals.**
-
-Kelora helps you parse, filter, transform, and summarize logs in one command. It works with JSON, Logfmt, and mixed text logs, and adds embedded [Rhai](https://rhai.rs) scripting when simple filters are not enough.
-
-For a concrete tour of standout capabilities—pattern mining, embedded JSON extraction, deterministic sampling, pseudonymization, span windows, and more—see **[Core Features](features.md)**.
-
-Kelora is best used as a flexible analysis layer in your toolkit: use it on its own, or combine it with `grep`, `jq`, and other Unix tools.
+**One command for messy logs.** Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, and plain text — with embedded [Rhai](https://rhai.rs) scripting when simple filters aren't enough.
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
 
 Kelora is AI-generated; see [Development Approach](#development-approach).
+
+## See it
+
+You have a log file full of errors. You want to know what's actually breaking — not scroll through hundreds of near-duplicates that differ only by hostname, UUID, or timestamp.
+
+```bash
+kelora -f syslog examples/syslog_errors.log --drain -k msg
+```
+
+```
+templates (4 items):
+  438: Connection timeout to database host <fqdn> after <duration>
+  187: Upstream <fqdn> returned <num> for request <uuid>
+   94: Failed to acquire lock on resource <path> after <duration>
+   23: Payment gateway <fqdn> rejected transaction <uuid> insufficient_funds
+```
+
+One command. No temp files, no intermediate scripts, no manual regex. `--drain` auto-groups similar messages so you see the handful of patterns actually causing the noise.
+
+For a concrete tour of standout capabilities — pattern mining, embedded JSON extraction, deterministic sampling, pseudonymization, span windows, and more — see **[Core Features](features.md)**.
 
 <a id="installation"></a>
 ## Installation
@@ -58,17 +72,16 @@ Kelora is AI-generated; see [Development Approach](#development-approach).
 
     See [all releases](https://github.com/dloss/kelora/releases) for ARM Linux, FreeBSD, OpenBSD, and more.
 
-## When to Use Kelora
+## When Kelora helps
 
-Reach for Kelora when:
+Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."
 
-- **You're chaining tools** - Replace `grep | awk | jq | custom-script.py` with one command
-- **You're parsing custom formats** - Use simple one-liners for non-standard logs (no regex required!) and output clean JSON
-- **Logs have embedded structure** - Extract JSON or key-value pairs buried in text lines
-- **You need stateful logic** - Count errors per service, tracking sessions, windowed metrics
-- **Fields are inconsistent** - Let missing data or errors be handled gracefully, with summary reports at the end
+- **Chained pipelines collapse into one command.** `grep | awk | jq | script.py` becomes `kelora`, with state preserved across the pipeline instead of lost between pipes.
+- **Messy formats parse cleanly.** Mixed JSON and plaintext in the same file, key=value pairs inside message strings, nested JSON fanned out to flat rows — without regex gymnastics.
+- **Embedded scripting when you need it.** Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.
+- **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
 
-Kelora prioritizes flexibility over [raw speed](concepts/performance-comparisons.md). It shines for exploratory analysis on **small to medium** log files. For larger files, pre-filter with `jq`, `ripgrep`, or `qsv` -- Kelora [plays well](how-to/integrate-external-tools.md) with all of them.
+Kelora trades raw [speed](concepts/performance-comparisons.md) for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. Kelora [plays well](how-to/integrate-external-tools.md) with `ripgrep`, `jq`, `qsv`, and other Unix tools.
 
 ---
 
@@ -177,6 +190,6 @@ Kelora is open source software licensed under the [MIT License](https://github.c
 
 ## Development Approach
 
-Kelora is an experiment in agentic AI development using [vibe-coding](https://en.wikipedia.org/wiki/Vibe_coding). AI agents generate all implementation and tests; I steer requirements but do not write or review code. Validation relies on a large automated test suite plus Rust security tools (`cargo audit` and `cargo deny`). Review the [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before production use.
+Kelora is an experiment in agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus `cargo audit` and `cargo deny`. Kelora is local-only with no networking or telemetry, enforced by a CI check.
 
-This is a spare-time, single-developer project, so support and updates are best-effort.
+This is a single-developer spare-time project, and support is best-effort. Review the [Security Policy](https://github.com/dloss/kelora/blob/main/SECURITY.md) before using it on sensitive data in production.
