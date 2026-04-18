@@ -476,6 +476,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#see-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -487,10 +498,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#when-to-use-kelora" class="md-nav__link">
+  <a href="#when-kelora-helps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When to Use Kelora
+        When Kelora helps
       
     </span>
   </a>
@@ -2316,6 +2327,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#see-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,10 +2349,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#when-to-use-kelora" class="md-nav__link">
+  <a href="#when-kelora-helps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When to Use Kelora
+        When Kelora helps
       
     </span>
   </a>
@@ -2452,32 +2474,41 @@
 
 
 <h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
-<p><strong>Scriptable log analysis for terminals.</strong></p>
-<p>Kelora helps you parse, filter, transform, and summarize logs in one command. It works with JSON, Logfmt, and mixed text logs, and adds embedded <a href="https://rhai.rs">Rhai</a> scripting when simple filters are not enough.</p>
-<p>For a concrete tour of standout capabilities—pattern mining, embedded JSON extraction, deterministic sampling, pseudonymization, span windows, and more—see <strong><a href="features/">Core Features</a></strong>.</p>
-<p>Kelora is best used as a flexible analysis layer in your toolkit: use it on its own, or combine it with <code>grep</code>, <code>jq</code>, and other Unix tools.</p>
+<p><strong>One command for messy logs.</strong> Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, and plain text — with embedded <a href="https://rhai.rs">Rhai</a> scripting when simple filters aren't enough.</p>
 <p>Watch Hack the Clown's <a href="https://www.youtube.com/watch?v=IwkicmS3RYo"><strong>5-minute introduction video</strong></a> to see Kelora in action.</p>
 <p>Kelora is AI-generated; see <a href="#development-approach">Development Approach</a>.</p>
+<h2 id="see-it">See it<a class="headerlink" href="#see-it" title="Permanent link">&para;</a></h2>
+<p>You have a log file full of errors. You want to know what's actually breaking — not scroll through hundreds of near-duplicates that differ only by hostname, UUID, or timestamp.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>examples/syslog_errors.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>templates (4 items):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  438: Connection timeout to database host &lt;fqdn&gt; after &lt;duration&gt;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  187: Upstream &lt;fqdn&gt; returned &lt;num&gt; for request &lt;uuid&gt;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   94: Failed to acquire lock on resource &lt;path&gt; after &lt;duration&gt;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   23: Payment gateway &lt;fqdn&gt; rejected transaction &lt;uuid&gt; insufficient_funds
+</code></pre></div>
+<p>One command. No temp files, no intermediate scripts, no manual regex. <code>--drain</code> auto-groups similar messages so you see the handful of patterns actually causing the noise.</p>
+<p>For a concrete tour of standout capabilities — pattern mining, embedded JSON extraction, deterministic sampling, pseudonymization, span windows, and more — see <strong><a href="features/">Core Features</a></strong>.</p>
 <p><a id="installation"></a></p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:5"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">macOS</label><label for="__tabbed_1_2">Linux</label><label for="__tabbed_1_3">Windows</label><label for="__tabbed_1_4">Cargo</label><label for="__tabbed_1_5">Other</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>tap<span class="w"> </span>dloss/kelora<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>brew<span class="w"> </span>install<span class="w"> </span>kelora
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>brew<span class="w"> </span>tap<span class="w"> </span>dloss/kelora<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>brew<span class="w"> </span>install<span class="w"> </span>kelora
 </code></pre></div>
 <p>Or download a signed binary: <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz">Apple Silicon</a> | <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz">Intel</a></p>
 </div>
 <div class="tabbed-block">
 <p><strong>Binary:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-LO<span class="w"> </span>https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>tar<span class="w"> </span>xzf<span class="w"> </span>kelora-x86_64-unknown-linux-musl.tar.gz
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>sudo<span class="w"> </span>mv<span class="w"> </span>kelora<span class="w"> </span>/usr/local/bin/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>curl<span class="w"> </span>-LO<span class="w"> </span>https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>tar<span class="w"> </span>xzf<span class="w"> </span>kelora-x86_64-unknown-linux-musl.tar.gz
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>sudo<span class="w"> </span>mv<span class="w"> </span>kelora<span class="w"> </span>/usr/local/bin/
 </code></pre></div></p>
 <p><strong>Debian/Ubuntu:</strong> download <a href="https://github.com/dloss/kelora/releases/latest">.deb</a>, then:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sudo<span class="w"> </span>dpkg<span class="w"> </span>-i<span class="w"> </span>kelora_*_amd64.deb
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sudo<span class="w"> </span>dpkg<span class="w"> </span>-i<span class="w"> </span>kelora_*_amd64.deb
 </code></pre></div></p>
 <p><strong>Fedora/RHEL:</strong> download <a href="https://github.com/dloss/kelora/releases/latest">.rpm</a>, then:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>kelora-*.x86_64.rpm
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>kelora-*.x86_64.rpm
 </code></pre></div></p>
 <p><strong>ARM:</strong> see <a href="https://github.com/dloss/kelora/releases">releases</a> for aarch64 binaries.</p>
 </div>
@@ -2485,7 +2516,7 @@
 <p>Download <a href="https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip">kelora-x86_64-pc-windows-msvc.zip</a>, extract, and add to PATH.</p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>cargo<span class="w"> </span>install<span class="w"> </span>kelora
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2493,16 +2524,15 @@
 </div>
 </div>
 </div>
-<h2 id="when-to-use-kelora">When to Use Kelora<a class="headerlink" href="#when-to-use-kelora" title="Permanent link">&para;</a></h2>
-<p>Reach for Kelora when:</p>
+<h2 id="when-kelora-helps">When Kelora helps<a class="headerlink" href="#when-kelora-helps" title="Permanent link">&para;</a></h2>
+<p>Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."</p>
 <ul>
-<li><strong>You're chaining tools</strong> - Replace <code>grep | awk | jq | custom-script.py</code> with one command</li>
-<li><strong>You're parsing custom formats</strong> - Use simple one-liners for non-standard logs (no regex required!) and output clean JSON</li>
-<li><strong>Logs have embedded structure</strong> - Extract JSON or key-value pairs buried in text lines</li>
-<li><strong>You need stateful logic</strong> - Count errors per service, tracking sessions, windowed metrics</li>
-<li><strong>Fields are inconsistent</strong> - Let missing data or errors be handled gracefully, with summary reports at the end</li>
+<li><strong>Chained pipelines collapse into one command.</strong> <code>grep | awk | jq | script.py</code> becomes <code>kelora</code>, with state preserved across the pipeline instead of lost between pipes.</li>
+<li><strong>Messy formats parse cleanly.</strong> Mixed JSON and plaintext in the same file, key=value pairs inside message strings, nested JSON fanned out to flat rows — without regex gymnastics.</li>
+<li><strong>Embedded scripting when you need it.</strong> Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.</li>
+<li><strong>Plays well with your existing tools.</strong> Pipe <code>ripgrep</code> or <code>jq</code> upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.</li>
 </ul>
-<p>Kelora prioritizes flexibility over <a href="concepts/performance-comparisons/">raw speed</a>. It shines for exploratory analysis on <strong>small to medium</strong> log files. For larger files, pre-filter with <code>jq</code>, <code>ripgrep</code>, or <code>qsv</code> -- Kelora <a href="how-to/integrate-external-tools/">plays well</a> with all of them.</p>
+<p>Kelora trades raw <a href="concepts/performance-comparisons/">speed</a> for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. Kelora <a href="how-to/integrate-external-tools/">plays well</a> with <code>ripgrep</code>, <code>jq</code>, <code>qsv</code>, and other Unix tools.</p>
 <hr />
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <h3 id="1-filter-convert-the-basics">1. Filter &amp; Convert (The Basics)<a class="headerlink" href="#1-filter-convert-the-basics" title="Permanent link">&para;</a></h3>
@@ -2628,8 +2658,8 @@
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>Kelora is open source software licensed under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>.</p>
 <h2 id="development-approach">Development Approach<a class="headerlink" href="#development-approach" title="Permanent link">&para;</a></h2>
-<p>Kelora is an experiment in agentic AI development using <a href="https://en.wikipedia.org/wiki/Vibe_coding">vibe-coding</a>. AI agents generate all implementation and tests; I steer requirements but do not write or review code. Validation relies on a large automated test suite plus Rust security tools (<code>cargo audit</code> and <code>cargo deny</code>). Review the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before production use.</p>
-<p>This is a spare-time, single-developer project, so support and updates are best-effort.</p>
+<p>Kelora is an experiment in agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus <code>cargo audit</code> and <code>cargo deny</code>. Kelora is local-only with no networking or telemetry, enforced by a CI check.</p>
+<p>This is a single-developer spare-time project, and support is best-effort. Review the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before using it on sensitive data in production.</p>
 
 
 
