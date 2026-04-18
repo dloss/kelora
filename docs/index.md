@@ -26,6 +26,17 @@ One command. No temp files, no intermediate scripts, no manual regex. `--drain` 
 
 For a concrete tour of standout capabilities — pattern mining, embedded JSON extraction, deterministic sampling, pseudonymization, span windows, and more — see **[Core Features](features.md)**.
 
+## When Kelora helps
+
+Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."
+
+- **Chained pipelines collapse into one command.** `grep | awk | jq | script.py` becomes `kelora`, with state preserved across the pipeline instead of lost between pipes.
+- **Messy formats parse cleanly.** Mixed JSON and plaintext in the same file, key=value pairs inside message strings, nested JSON fanned out to flat rows — without regex gymnastics.
+- **Embedded scripting when you need it.** Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.
+- **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
+
+Kelora trades raw [speed](concepts/performance-comparisons.md) for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. Kelora [plays well](how-to/integrate-external-tools.md) with `ripgrep`, `jq`, `qsv`, and other Unix tools.
+
 <a id="installation"></a>
 ## Installation
 
@@ -71,17 +82,6 @@ For a concrete tour of standout capabilities — pattern mining, embedded JSON e
 === "Other"
 
     See [all releases](https://github.com/dloss/kelora/releases) for ARM Linux, FreeBSD, OpenBSD, and more.
-
-## When Kelora helps
-
-Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."
-
-- **Chained pipelines collapse into one command.** `grep | awk | jq | script.py` becomes `kelora`, with state preserved across the pipeline instead of lost between pipes.
-- **Messy formats parse cleanly.** Mixed JSON and plaintext in the same file, key=value pairs inside message strings, nested JSON fanned out to flat rows — without regex gymnastics.
-- **Embedded scripting when you need it.** Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.
-- **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
-
-Kelora trades raw [speed](concepts/performance-comparisons.md) for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. Kelora [plays well](how-to/integrate-external-tools.md) with `ripgrep`, `jq`, `qsv`, and other Unix tools.
 
 ---
 
