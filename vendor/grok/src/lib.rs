@@ -106,16 +106,16 @@ pub struct Pattern {
 impl Pattern {
     /// Creates a new pattern from a raw regex string and an alias map to identify the
     /// fields properly.
-    pub fn new(regex: &str, alias: &HashMap<String, String>) -> Result<Self, Error> {
+    pub fn new(regex: &str, alias: &BTreeMap<String, String>) -> Result<Self, Error> {
         match Regex::new(regex) {
             Ok(r) => Ok({
                 let mut names = Vec::new();
                 let mut name_to_index = HashMap::new();
                 r.foreach_name(|cap_name, cap_idx| {
-                    let name = match alias.iter().find(|&(_k, v)| *v == cap_name) {
-                        Some(item) => item.0.clone(),
-                        None => String::from(cap_name),
-                    };
+                    let name = alias
+                        .get(cap_name)
+                        .cloned()
+                        .unwrap_or_else(|| String::from(cap_name));
                     let index = cap_idx[0];
                     name_to_index.insert(name.clone(), index);
                     names.push((name, index));
@@ -175,7 +175,7 @@ impl Grok {
     /// Compiles the given pattern, making it ready for matching.
     pub fn compile(&mut self, pattern: &str, with_alias_only: bool) -> Result<Pattern, Error> {
         let mut named_regex = String::from(pattern);
-        let mut alias: HashMap<String, String> = HashMap::new();
+        let mut alias: BTreeMap<String, String> = BTreeMap::new();
 
         let mut index = 0;
         let mut iteration_left = MAX_RECURSION;
@@ -241,11 +241,11 @@ impl Grok {
                         // match the name<index> conversion, otherwise just use
                         // the name of the pattern definition directly.
                         alias.insert(
+                            format!("name{}", index),
                             match m.at(ALIAS_INDEX) {
                                 Some(a) => a.into(),
                                 None => name.clone(),
                             },
-                            format!("name{}", index),
                         );
 
                         format!("(?<name{}>{})", index, pattern_definition)
