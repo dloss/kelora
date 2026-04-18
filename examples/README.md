@@ -187,6 +187,7 @@ Production-like log files for testing realistic use cases:
 - `auth_burst.jsonl` - Authentication burst patterns
 - `payments_latency.jsonl` - Payment processing latency
 - `email_logs.log` - Email delivery logs
+- `syslog_errors.log` - High-volume syslog error stream (great for `--drain`)
 - `duration_logs.jsonl` - Performance timing analysis
 - `uptime_windows.jsonl` - Service uptime windows
 - `incident_story.log` - Simulated incident timeline
