@@ -3110,11 +3110,11 @@
 <li><strong>Event-Level Processing</strong> - Structured data transformation and output</li>
 </ol>
 <p>This layered architecture enables efficient streaming with low memory usage while supporting both sequential and parallel processing modes.</p>
-<p><img alt="Kelora Pipeline Architecture" src="../pipeline-model.png#only-light" />
-<img alt="Kelora Pipeline Architecture" src="../pipeline-model-dark.png#only-dark" /></p>
-<p><strong>Diagram summary:</strong> Kelora runs <code>--begin</code> once to prepare shared <code>conf</code>, streams each event through input, line-level, parser, script, fixed post-processing, and output stages, then runs <code>--end</code> with final metrics. In <code>--parallel</code> mode, batches run through independent worker pipelines and merge output, metrics, and stats afterward.</p>
+<p><a href="../pipeline-data-flow.png"><img alt="Kelora pipeline data flow showing a concrete log line moving through decompression, raw-line filtering, multiline aggregation, parsing, CLI-ordered user stages, fixed event stages, formatting, and output" src="../pipeline-data-flow.png" /></a></p>
+<p><em>Click the diagram to open it full-size.</em></p>
+<p><strong>Diagram summary:</strong> Kelora runs raw-line options before parsing, then parses complete event strings into event maps. User stages (<code>--filter</code>, <code>--levels</code>, <code>--exec</code>, <code>--assert</code>, and related flags) run in CLI order. Fixed event stages such as timestamp filtering, key selection, and <code>--take</code> run afterward.</p>
 <p><span class="visually-hidden">
-Pipeline diagram description: the top lifecycle scope shows <code>--begin</code>, <code>conf</code>, <code>metrics</code>, and <code>--end</code>. The main per-event streaming pipeline flows from inputs to reader, line processing, parser, event context, user stages, fixed stages, limiter, formatter, and output. Dashed arrows show read-only access from <code>conf</code> to user stages and <code>track_*</code> updates from user stages to metrics. The bottom parallel mode row shows batch lines, worker pipelines, merge output, and merge metrics, with a note that spans force sequential mode.
+Pipeline diagram description: a sample compressed input file becomes raw log lines, then line processing drops unwanted lines before parsing. Multiline aggregation can combine stack traces into one event string. The parser creates event map <code>e</code>, user stages run in CLI order, fixed event stages run afterward, and the formatter emits structured output. A lifecycle rail shows <code>--begin</code>, <code>conf</code>, <code>track_*</code> metrics updates, and <code>--end</code>.
 </span></p>
 <h2 id="quick-start-what-youll-use-most">Quick Start: What You'll Use Most<a class="headerlink" href="#quick-start-what-youll-use-most" title="Permanent link">&para;</a></h2>
 <p><strong>For typical log analysis</strong>, you only interact with these stages:</p>
@@ -3286,16 +3286,22 @@ Buffers entire input as single event (use for structured files).</p>
 <h3 id="complete-stage-ordering">Complete Stage Ordering<a class="headerlink" href="#complete-stage-ordering" title="Permanent link">&para;</a></h3>
 <p><strong>User-controlled stages</strong> (run in the order you specify them on the CLI):</p>
 <ol>
-<li><code>--filter</code>, <code>--levels</code>, <code>--exclude-levels</code>, <code>--exec</code>, <code>--exec-file</code></li>
+<li><code>--filter</code>, <code>--levels</code>, <code>--exclude-levels</code>, <code>--exec</code>, <code>--exec-file</code>, <code>--assert</code></li>
 </ol>
-<p><strong>Fixed-position filters</strong> (always run after user-controlled stages, regardless of CLI order):</p>
+<p><strong>Fixed-position event stages</strong> (always run after user-controlled stages, regardless of CLI order):</p>
 <ol>
 <li><strong>Timestamp filtering</strong> – <code>--since</code>, <code>--until</code></li>
+<li><strong>Timestamp conversion</strong> – <code>--normalize-ts</code></li>
+<li><strong>Drain summary</strong> – <code>--drain</code> (sequential only)</li>
 <li><strong>Key filtering</strong> – <code>--keys</code>, <code>--exclude-keys</code></li>
+<li><strong>Take limit</strong> – <code>--take</code></li>
 </ol>
 <p>Place <code>--levels</code> before heavy transforms to prune work early, or add another <code>--levels</code> after a script if you synthesise a level field there.</p>
 <h3 id="span-processing">Span Processing<a class="headerlink" href="#span-processing" title="Permanent link">&para;</a></h3>
 <p>Groups events into spans for aggregation:</p>
+<p><a href="../pipeline-span-processing.png"><img alt="Kelora span processing showing span metadata assignment before user stages, dropped events excluded from span.events, emitted events recorded into the active span, and span-close hooks receiving span summaries" src="../pipeline-span-processing.png" /></a></p>
+<p><em>Click the diagram to open it full-size.</em></p>
+<p><strong>Diagram summary:</strong> Kelora assigns span metadata before user stages run, but only emitted events are stored in <code>span.events</code>. Dropped events are marked as filtered and excluded from the span buffer. When a span closes, <code>--span-close</code> runs once with the span binding and per-span metric deltas.</p>
 <p><strong>Count-based Spans:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--span<span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>--span-close<span class="w"> </span><span class="s1">&#39;print(&quot;Span complete: &quot; + meta.span_id)&#39;</span>
@@ -3308,11 +3314,11 @@ Closes span every N events that pass filters.</p>
 Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <p><strong>Span Processing Flow:</strong></p>
 <ol>
-<li>Event passes through filters/execs</li>
-<li>Span processor assigns <code>span_id</code> and <code>SpanStatus</code></li>
-<li>Event processed with span context</li>
-<li>When span closes → <code>--span-close</code> hook executes</li>
-<li>Hook has access to <code>meta.span_id</code>, <code>meta.span_start</code>, <code>meta.span_end</code>, <code>metrics</code></li>
+<li>Parser creates an event map</li>
+<li>Span processor assigns pending span metadata (<code>meta.span_id</code>, <code>meta.span_status</code>, <code>meta.span_start</code>, <code>meta.span_end</code>)</li>
+<li>User stages and fixed event stages run</li>
+<li>Only emitted events are recorded in <code>span.events</code>; dropped events are marked filtered and excluded</li>
+<li>When span closes → <code>--span-close</code> hook executes with <code>span</code> and <code>metrics</code></li>
 </ol>
 <p><strong>Constraints:</strong></p>
 <ul>
@@ -3363,23 +3369,30 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <hr />
 <h2 id="parallel-processing-model">Parallel Processing Model<a class="headerlink" href="#parallel-processing-model" title="Permanent link">&para;</a></h2>
 <p>Kelora's <code>--parallel</code> mode is <strong>batch-parallel</strong>, not stage-parallel.</p>
+<p><a href="../pipeline-parallel-mode.png"><img alt="Kelora parallel mode showing line batches, optional multiline chunking before workers, independent worker pipelines, ordering buffer, merged output, and merged metrics" src="../pipeline-parallel-mode.png" /></a></p>
+<p><em>Click the diagram to open it full-size.</em></p>
+<p><strong>Diagram summary:</strong> Parallel mode batches raw lines. Without multiline, workers receive line batches directly. With multiline enabled, a chunker thread builds complete event strings before worker processing. Workers run independent pipeline instances, then Kelora merges results, ordering, metrics, and stats.</p>
 <h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Sequential:  Line → Line filters → Multiline → Parse → Script stages → Output
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>             (one at a time)
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>Parallel:    Batch of lines → Worker pool
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>             Each worker: Line filters → Multiline → Parse → Script stages
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>             Results → Ordering buffer → Output
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>Parallel:    Lines → Line filters → Line batches
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>             Without multiline: batches → Worker pool
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>             With multiline: batches → Chunker thread → Event batches → Worker pool
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>             Each worker: Parse → Script stages → Fixed stages
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>             Results → Ordering buffer → Output
 </code></pre></div>
 <p>Where:</p>
 <ul>
-<li><strong>Line filters</strong> = <code>--skip-lines</code>, <code>--ignore-lines</code>, <code>--section-start</code>, etc.</li>
+<li><strong>Line filters</strong> = <code>--skip-lines</code>, section selection, <code>--keep-lines</code>, <code>--ignore-lines</code></li>
 <li><strong>Multiline</strong> = Event boundary detection (aggregates multiple lines into events)</li>
-<li><strong>Script stages</strong> = <code>--filter</code> and <code>--exec</code> in CLI order</li>
+<li><strong>Script stages</strong> = <code>--filter</code>, <code>--levels</code>, <code>--exclude-levels</code>, <code>--exec</code>, <code>--assert</code>, and <code>--exec-file</code> in CLI order</li>
 </ul>
 <h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
 <ol>
-<li><strong>Reader thread</strong> batches lines (default: 1000 lines, 200ms timeout)</li>
+<li><strong>Reader thread</strong> reads lines from input</li>
+<li><strong>Batcher thread</strong> applies early line processing and batches surviving lines (default: 1000 lines, 200ms timeout)</li>
+<li>With multiline enabled, a <strong>chunker thread</strong> converts line batches into complete event strings before worker processing</li>
 <li><strong>Worker pool</strong> processes batches independently (default: CPU count workers)</li>
 <li>Each worker has its own Pipeline instance</li>
 <li><strong>Results merged</strong> with ordering preservation (default) or unordered (<code>--unordered</code>)</li>
@@ -3400,9 +3413,9 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 </ul>
 <p><strong>Multiline Behavior:</strong></p>
 <ul>
-<li>Multiline chunking happens <strong>per-batch</strong></li>
-<li>Event boundaries may not span batch boundaries</li>
-<li>Consider larger batch sizes for multiline workloads</li>
+<li>With multiline enabled, a dedicated chunker thread creates complete event strings before workers run</li>
+<li>This avoids splitting multiline events at line-batch boundaries</li>
+<li>Multiline workloads may still parallelize less efficiently because chunking is a shared upstream step</li>
 </ul>
 <p><strong>Ordering:</strong></p>
 <ul>
@@ -3519,7 +3532,7 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>│  Layer 2: Line-Level Processing         │
 <a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>├─────────────────────────────────────────┤
 <a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>│  • --skip-lines (skip first N)          │
-<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>│  • --section-start/through (sections)   │
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>│  • --section-from/through (sections)    │
 <a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>│  • --ignore-lines/--keep-lines (regex)  │
 <a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>│  • Multiline chunker (event boundaries) │
 <a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>└──────────────┬──────────────────────────┘
@@ -3529,11 +3542,11 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>├─────────────────────────────────────────┤
 <a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a>│  • Parser → Event map                   │
 <a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>│  • Span preparation (assign span_id)    │
-<a id="__codelineno-24-23" name="__codelineno-24-23" href="#__codelineno-24-23"></a>│  • Script stages (--filter/--exec)      │
-<a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>│    - User stages in CLI order           │
-<a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>│    - Timestamp filtering (--since)      │
-<a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>│    - Level filtering (--levels)         │
-<a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>│    - Key filtering (--keys)             │
+<a id="__codelineno-24-23" name="__codelineno-24-23" href="#__codelineno-24-23"></a>│  • User stages in CLI order             │
+<a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>│    - --filter/--levels/--exec/--assert  │
+<a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>│  • Fixed event stages                   │
+<a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>│    - --since/--until, --keys, etc.      │
+<a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>│  • Take limiter (--take)                │
 <a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>│  • Span close hooks (--span-close)      │
 <a id="__codelineno-24-29" name="__codelineno-24-29" href="#__codelineno-24-29"></a>│  • Output formatting                    │
 <a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>└──────────────┬──────────────────────────┘
@@ -3542,10 +3555,10 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <a id="__codelineno-24-33" name="__codelineno-24-33" href="#__codelineno-24-33"></a>           stdout/files
 </code></pre></div>
 <p><strong>Parallel Mode Differences:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Line batching (1000 lines) → Worker pool
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Reader → line filtering/batching → optional multiline chunker → Worker pool
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>Each worker independently:
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>  - Line-level processing
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>  - Parse event strings
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>  - Event-level processing
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>Results → Ordering buffer → Merged output
 <a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>Metrics → GlobalTracker → Merged stats

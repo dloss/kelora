@@ -6992,7 +6992,7 @@ timestamp, date, time, num.</p>
 <h4 id="-discoverformat"><code>--discover[=FORMAT]</code><a class="headerlink" href="#-discoverformat" title="Permanent link">&para;</a></h4>
 <p>Profile observed fields across the stream: field names, inferred types, cardinality estimates, and sample values.
 Nested maps and arrays are flattened into dotted paths up to 3 levels deep by default (e.g. <code>user.name</code>, <code>user.roles[]</code>);
-use <a href="#--discover-depth-n"><code>--discover-depth</code></a> to change the limit (or pass <code>0</code> for unlimited).
+use <a href="#-discover-depth-n"><code>--discover-depth</code></a> to change the limit (or pass <code>0</code> for unlimited).
 Example values are drawn via reservoir sampling so rare distinct values surface even on long streams.
 When deeper nesting is present, the table output adds an explicit note that flattening stopped at the depth cap,
 and JSON output includes <code>flatten_depth_limit</code> and <code>flatten_depth_capped</code>.
