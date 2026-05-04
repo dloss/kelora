@@ -3495,7 +3495,8 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <li><strong>Parse errors:</strong> Skip line, continue processing</li>
 <li><strong>Filter errors:</strong> Treat as <code>false</code>, skip event</li>
 <li><strong>Transform errors:</strong> Return original event unchanged</li>
-<li><strong>Summary:</strong> Show error count at end</li>
+<li><strong>Summary:</strong> Show recovered runtime errors as warnings at end</li>
+<li><strong>Exit code:</strong> Recovered filter/exec errors exit <code>0</code>; use <code>--strict</code> to fail on them</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--verbose<span class="w">  </span><span class="c1"># Show errors as they occur</span>
 </code></pre></div>

@@ -3465,7 +3465,7 @@
 <hr />
 <h2 id="r">R<a class="headerlink" href="#r" title="Permanent link">&para;</a></h2>
 <h3 id="resilient-mode">Resilient Mode<a class="headerlink" href="#resilient-mode" title="Permanent link">&para;</a></h3>
-<p>Default error handling mode where parsing errors and script failures are logged but don't stop processing. Failed events are skipped and processing continues. Opposite of strict mode. See <a href="../concepts/error-handling/">Error Handling</a>.</p>
+<p>Default error handling mode where recovered filter and exec script failures are logged but don't stop processing or fail the process. Parse errors, file I/O failures, and assertion failures still fail the run. Opposite of strict mode. See <a href="../concepts/error-handling/">Error Handling</a>.</p>
 <h3 id="rhai">Rhai<a class="headerlink" href="#rhai" title="Permanent link">&para;</a></h3>
 <p>The embedded scripting language used for filters and transforms. Rust-based with JavaScript-like syntax. Provides 150+ built-in functions for log analysis. See <a href="../tutorials/intro-to-rhai/">Introduction to Rhai Tutorial</a> and <a href="../reference/rhai-cheatsheet/">Rhai Cheatsheet</a>.</p>
 <hr />

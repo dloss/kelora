@@ -2513,7 +2513,7 @@
 </ul>
 <h2 id="validate-and-hand-off">Validate and Hand Off<a class="headerlink" href="#validate-and-hand-off" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Inspect <code>--stats</code> output to ensure parse error counts are zero (exit code 1 indicates parse/runtime failures).</li>
+<li>Inspect <code>--stats</code> output to ensure parse error counts are zero. Exit code <code>1</code> indicates unrecovered failures; use <code>--strict</code> when recovered runtime errors should also fail the run.</li>
 <li>Sample a few events with <code>--take 20</code> before exporting to confirm filters captured the right incidents.</li>
 <li>Note any masking or redaction you applied so downstream teams know whether to consult raw logs.</li>
 </ul>

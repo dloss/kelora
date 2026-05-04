@@ -3598,7 +3598,8 @@
 <li><strong>Parse errors</strong>: Skip unparseable lines, continue with next line</li>
 <li><strong>Filter errors</strong>: Treat as <code>false</code>, skip event</li>
 <li><strong>Transform errors</strong>: Return original event unchanged (atomic rollback)</li>
-<li><strong>Summary</strong>: Show error count at end</li>
+<li><strong>Summary</strong>: Show recovered runtime errors as warnings at end</li>
+<li><strong>Exit code</strong>: <code>0</code> for recovered filter/exec errors; <code>1</code> for parse errors, assertion failures, and file I/O failures</li>
 </ul>
 <h3 id="when-to-use">When to Use<a class="headerlink" href="#when-to-use" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3633,6 +3634,7 @@
 <li>Event is skipped</li>
 <li>Error is recorded</li>
 <li>Processing continues</li>
+<li>Exit code remains <code>0</code> unless an unrecovered error also occurs</li>
 </ul>
 <h2 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h2>
 <h3 id="overview_1">Overview<a class="headerlink" href="#overview_1" title="Permanent link">&para;</a></h3>
@@ -3819,11 +3821,11 @@
 <tbody>
 <tr>
 <td><code>0</code></td>
-<td>Success (no errors)</td>
+<td>Success (no unrecovered processing failure)</td>
 </tr>
 <tr>
 <td><code>1</code></td>
-<td>Processing errors (parse/filter/exec/file errors)</td>
+<td>Processing errors (parse/assertion/file errors, strict-mode filter/exec errors)</td>
 </tr>
 <tr>
 <td><code>2</code></td>

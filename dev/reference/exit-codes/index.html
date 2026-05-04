@@ -2705,14 +2705,14 @@
 <tr>
 <td><code>0</code></td>
 <td>Success</td>
-<td>No errors occurred</td>
-<td>Clean processing, no parse/filter/exec/file errors</td>
+<td>Processing completed successfully</td>
+<td>Clean processing, or recovered filter/exec errors in resilient mode</td>
 </tr>
 <tr>
 <td><code>1</code></td>
 <td>General Error</td>
 <td>Processing errors occurred</td>
-<td>Parse errors, filter errors, exec errors, file I/O failures</td>
+<td>Parse errors, assertion failures, file I/O failures, strict-mode runtime errors</td>
 </tr>
 <tr>
 <td><code>2</code></td>
@@ -2751,8 +2751,8 @@
 </tbody>
 </table>
 <h2 id="exit-code-0-success">Exit Code 0: Success<a class="headerlink" href="#exit-code-0-success" title="Permanent link">&para;</a></h2>
-<p>Indicates <strong>successful processing</strong> with no errors. All lines parsed successfully, no filter/exec errors, and processing completed normally.</p>
-<p><strong>Important:</strong> Filtering events is <strong>not</strong> an error. If all events are filtered out, exit code is still <code>0</code>.</p>
+<p>Indicates <strong>successful processing</strong>. All required input was processed, and no unrecovered processing failure occurred.</p>
+<p><strong>Important:</strong> Filtering events is <strong>not</strong> an error. If all events are filtered out, exit code is still <code>0</code>. In resilient mode, recovered filter and exec runtime errors are reported as diagnostics but also exit <code>0</code>; use <code>--strict</code> when runtime errors should fail the process.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Returns 0 - filtering is not an error</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--levels<span class="w"> </span>critical
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
@@ -2764,7 +2764,7 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="m">1</span>
 </code></pre></div>
 <h2 id="exit-code-1-processing-errors">Exit Code 1: Processing Errors<a class="headerlink" href="#exit-code-1-processing-errors" title="Permanent link">&para;</a></h2>
-<p>Indicates errors occurred during processing. Five types:</p>
+<p>Indicates unrecovered errors occurred during processing. Four common types:</p>
 <table>
 <thead>
 <tr>
@@ -2780,16 +2780,6 @@
 <td>Invalid JSON/logfmt syntax</td>
 </tr>
 <tr>
-<td><strong>Filter errors</strong></td>
-<td><code>--filter</code> expressions failed during evaluation</td>
-<td>Missing field access, type errors</td>
-</tr>
-<tr>
-<td><strong>Exec errors</strong></td>
-<td><code>--exec</code> scripts failed during execution</td>
-<td>Runtime errors in Rhai code</td>
-</tr>
-<tr>
 <td><strong>Assertion failures</strong></td>
 <td><code>--assert</code> expressions evaluated to false</td>
 <td>Data quality violations, missing required fields</td>
@@ -2799,15 +2789,21 @@
 <td>Individual files failed to open or decompress</td>
 <td>Permission denied, file not readable, decompression failed</td>
 </tr>
+<tr>
+<td><strong>Strict-mode runtime errors</strong></td>
+<td>Filter/exec expressions failed while <code>--strict</code> was enabled</td>
+<td>Missing field access, type errors</td>
+</tr>
 </tbody>
 </table>
 <h3 id="resilient-mode-default">Resilient Mode (Default)<a class="headerlink" href="#resilient-mode-default" title="Permanent link">&para;</a></h3>
-<p>Errors are recorded but processing continues. Exit code <code>1</code> returned at the end if any errors occurred:</p>
+<p>Errors are recorded but processing continues. Recovered filter and exec runtime errors are warnings and do not change the exit code:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.value.to_int()&#39;</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># ... processing continues despite errors ...</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$?</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="m">1</span><span class="w">  </span><span class="c1"># Errors occurred but processing completed</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="m">0</span><span class="w">  </span><span class="c1"># Recovered runtime errors were reported, but processing completed</span>
 </code></pre></div>
+<p>For automation, use <code>--strict</code> to fail on script/runtime errors, and use <code>--assert</code> to fail on explicit data-quality requirements.</p>
 <h3 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h3>
 <p>Processing aborts immediately on first error with <code>--strict</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log
@@ -2824,10 +2820,10 @@
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Parse error</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{invalid json}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Filter error</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.missing_field.to_int()&#39;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Exec error</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.invalid.to_int()&#39;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Strict-mode filter error</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.missing_field.to_int()&#39;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Strict-mode exec error</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.result = e.invalid.to_int()&#39;</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Assertion failure</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--assert<span class="w"> </span><span class="s1">&#39;e.has(&quot;user_id&quot;)&#39;</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># File I/O error (some files failed)</span>
@@ -2900,9 +2896,9 @@
 <tbody>
 <tr>
 <td><strong>Resilient</strong> (default)</td>
-<td>Continue on errors</td>
-<td>At end if any errors occurred</td>
-<td>Production, collect all errors</td>
+<td>Continue on recovered runtime errors</td>
+<td>At end only for unrecovered failures</td>
+<td>Production, exploratory analysis</td>
 </tr>
 <tr>
 <td><strong>Strict</strong> (<code>--strict</code>)</td>
