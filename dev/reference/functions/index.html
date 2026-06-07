@@ -2092,10 +2092,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textextract_re_mapspattern-field" class="md-nav__link">
+  <a href="#textextract_regex_mapspattern-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.extract_re_maps(pattern, field)
+        text.extract_regex_maps(pattern, field)
       
     </span>
   </a>
@@ -2706,10 +2706,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textsplitseparator-textsplit_repattern" class="md-nav__link">
+  <a href="#textsplitseparator-textsplit_regexpattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.split(separator) / text.split_re(pattern)
+        text.split(separator) / text.split_regex(pattern)
       
     </span>
   </a>
@@ -5062,10 +5062,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textextract_re_mapspattern-field" class="md-nav__link">
+  <a href="#textextract_regex_mapspattern-field" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.extract_re_maps(pattern, field)
+        text.extract_regex_maps(pattern, field)
       
     </span>
   </a>
@@ -5676,10 +5676,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#textsplitseparator-textsplit_repattern" class="md-nav__link">
+  <a href="#textsplitseparator-textsplit_regexpattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        text.split(separator) / text.split_re(pattern)
+        text.split(separator) / text.split_regex(pattern)
       
     </span>
   </a>
@@ -7902,10 +7902,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>e.numbers = e.line.extract_regexes(r&quot;\d+&quot;)             // All numbers
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>e.codes = e.message.extract_regexes(r&quot;ERR-(\d+)&quot;, 1)   // All error codes
 </code></pre></div>
-<h4 id="textextract_re_mapspattern-field"><code>text.extract_re_maps(pattern, field)</code><a class="headerlink" href="#textextract_re_mapspattern-field" title="Permanent link">&para;</a></h4>
+<h4 id="textextract_regex_mapspattern-field"><code>text.extract_regex_maps(pattern, field)</code><a class="headerlink" href="#textextract_regex_mapspattern-field" title="Permanent link">&para;</a></h4>
 <p>Extract regex matches as array of maps for fan-out with <code>emit_each()</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>// Extract all error codes with context
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>let errors = e.log.extract_re_maps(r&quot;(?P&lt;code&gt;ERR-\d+): (?P&lt;msg&gt;[^\n]+)&quot;, &quot;error&quot;);
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>let errors = e.log.extract_regex_maps(r&quot;(?P&lt;code&gt;ERR-\d+): (?P&lt;msg&gt;[^\n]+)&quot;, &quot;error&quot;);
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>emit_each(errors)  // Each match becomes an event with &#39;code&#39; and &#39;msg&#39; fields
 </code></pre></div>
 <h4 id="textextract_ipnth"><code>text.extract_ip([nth])</code><a class="headerlink" href="#textextract_ipnth" title="Permanent link">&para;</a></h4>
@@ -8200,10 +8200,10 @@
 <p>Replace all occurrences of pattern.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>e.cleaned = e.text.replace(&quot;ERROR&quot;, &quot;WARN&quot;)
 </code></pre></div>
-<h4 id="textsplitseparator-textsplit_repattern"><code>text.split(separator)</code> / <code>text.split_re(pattern)</code><a class="headerlink" href="#textsplitseparator-textsplit_repattern" title="Permanent link">&para;</a></h4>
+<h4 id="textsplitseparator-textsplit_regexpattern"><code>text.split(separator)</code> / <code>text.split_regex(pattern)</code><a class="headerlink" href="#textsplitseparator-textsplit_regexpattern" title="Permanent link">&para;</a></h4>
 <p>Split string into array.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>e.parts = e.path.split(&quot;/&quot;)
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>e.tokens = e.line.split_re(r&quot;\s+&quot;)                    // Split on whitespace
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>e.tokens = e.line.split_regex(r&quot;\s+&quot;)                 // Split on whitespace
 </code></pre></div>
 <h3 id="string-testing">String Testing<a class="headerlink" href="#string-testing" title="Permanent link">&para;</a></h3>
 <h4 id="textcontainspattern"><code>text.contains(pattern)</code><a class="headerlink" href="#textcontainspattern" title="Permanent link">&para;</a></h4>

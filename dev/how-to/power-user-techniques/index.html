@@ -3689,10 +3689,10 @@ If you only need lightweight grouping, <code>normalized()</code> plus <code>trac
 </code></pre></div>
 <p>If your data has org-specific IDs that fragment templates, pre-normalize the field before Drain:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/app_monitoring.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.message = e.message.replace_re(&quot;Cache (hit|miss) for key [^ ]+&quot;, &quot;Cache $1 for key &lt;cache_key&gt;&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.message = e.message.replace_regex(&quot;Cache (hit|miss) for key [^ ]+&quot;, &quot;Cache $1 for key &lt;cache_key&gt;&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
 </code></pre></div>
-<p><code>replace_re</code> supports <code>$1</code>, <code>$2</code>, ... capture groups from the regex.</p>
+<p><code>replace_regex</code> supports <code>$1</code>, <code>$2</code>, ... capture groups from the regex.</p>
 <p><strong>Output formats:</strong></p>
 <ul>
 <li><code>--drain</code> or <code>--drain=table</code> - Clean list: count + template</li>
