@@ -642,8 +642,8 @@ COMMON IDIOMS:
 # Check nested field exists    → e.has_path("response.body.status")
 # Remove sensitive fields      → e.password = (); e.ssn = ()
 # Hash for sampling/bucketing  → e.session_id.bucket() % 100
-# Regex with raw strings       → e.log.extract_re(#"duration: (\d+)ms"#, 1)
-# Regex with regular strings   → e.log.extract_re("took (\\d+)", 1)
+# Regex with raw strings       → e.log.extract_regex(#"duration: (\d+)ms"#, 1)
+# Regex with regular strings   → e.log.extract_regex("took (\\d+)", 1)
 # Array bounds safety          → if e.items.len() > 0 { e.first = e.items[0] }
 # Negative array indexing      → e.last = e.items[-1]
 # Remove array duplicates      → e.unique_tags = e.tags.unique()

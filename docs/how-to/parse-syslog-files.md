@@ -51,7 +51,7 @@ kelora -f syslog /var/log/auth.log \
 ```
 
 - Combine multiple processes: `--filter 'e.process == "sudo" || e.process == "su"'`.
-- Use `extract_re()` or `parse_kv()` to decode structured messages (firewalls, network gear).
+- Use `extract_regex()` or `parse_kv()` to decode structured messages (firewalls, network gear).
 
 ## Step 4: Add Enrichment and Metrics
 Capture per-host or per-IP trends while reviewing raw events.

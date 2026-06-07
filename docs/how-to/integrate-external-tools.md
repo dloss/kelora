@@ -482,7 +482,7 @@ kelora -j logs/app.jsonl -e 'track_count(e.service)' -m
 kelora -f logfmt logs/mixed.log -J | \
   agrind '* | json | parse "user_id=*" as user | count by user'
 
-# Kelora equivalent using extract_re() or absorb_kv()
+# Kelora equivalent using extract_regex() or absorb_kv()
 kelora -f logfmt logs/mixed.log \
   -e 'e.user = e.message.extract_regex(r"user_id=(\S+)", 1)' \
   -e 'track_count(e.user)' -m
@@ -866,7 +866,7 @@ Before reaching for external tools, check if Kelora can handle it natively:
 
 - Time-based filtering (`--since`, `--until`) - no grep needed
 - Structured field filtering (`--filter 'e.status >= 500'`)
-- Pattern extraction (`extract_re()`, `extract_re_maps()`)
+- Pattern extraction (`extract_regex()`, `extract_regex_maps()`)
 - Parsing structured formats (`parse_url()`, `parse_kv()`, `parse_json()`, etc.)
 - Aggregation and counting (`track_count()`, `track_sum()`, `track_percentiles()`, `track_bucket()`)
 - Array operations (`sorted()`, `filter()`, `map()`, `percentile()`)

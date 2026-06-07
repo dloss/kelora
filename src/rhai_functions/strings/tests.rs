@@ -1830,7 +1830,7 @@ fn test_extract_regexes_with_group_function() {
 }
 
 #[test]
-fn test_extract_re_maps_function() {
+fn test_extract_regex_maps_function() {
     let mut engine = rhai::Engine::new();
     register_all_string_functions(&mut engine);
 
@@ -1841,18 +1841,10 @@ fn test_extract_re_maps_function() {
     let result: rhai::Array = engine
         .eval_with_scope(
             &mut scope,
-            r##"text.extract_re_maps("\\w+@\\w+\\.\\w+", "email")"##,
-        )
-        .unwrap();
-    assert_eq!(result.len(), 2);
-
-    let alias_result: rhai::Array = engine
-        .eval_with_scope(
-            &mut scope,
             r##"text.extract_regex_maps("\\w+@\\w+\\.\\w+", "email")"##,
         )
         .unwrap();
-    assert_eq!(alias_result.len(), 2);
+    assert_eq!(result.len(), 2);
 
     // Check first email map
     let first_map = result[0].clone().try_cast::<Map>().unwrap();
@@ -1883,7 +1875,7 @@ fn test_extract_re_maps_function() {
     let result: rhai::Array = engine
         .eval_with_scope(
             &mut scope,
-            r##"usertext.extract_re_maps("user=(\\w+)", "username")"##,
+            r##"usertext.extract_regex_maps("user=(\\w+)", "username")"##,
         )
         .unwrap();
     assert_eq!(result.len(), 2);
@@ -1915,20 +1907,20 @@ fn test_extract_re_maps_function() {
     let result: rhai::Array = engine
         .eval_with_scope(
             &mut scope,
-            r##"nomatch.extract_re_maps("\\w+@\\w+", "email")"##,
+            r##"nomatch.extract_regex_maps("\\w+@\\w+", "email")"##,
         )
         .unwrap();
     assert_eq!(result.len(), 0);
 
     // Invalid regex (returns empty array)
     let result: rhai::Array = engine
-        .eval_with_scope(&mut scope, r##"text.extract_re_maps("[", "invalid")"##)
+        .eval_with_scope(&mut scope, r##"text.extract_regex_maps("[", "invalid")"##)
         .unwrap();
     assert_eq!(result.len(), 0);
 }
 
 #[test]
-fn test_extract_re_maps_with_emit_each() {
+fn test_extract_regex_maps_with_emit_each() {
     let mut engine = rhai::Engine::new();
     register_all_string_functions(&mut engine);
     register_all_string_functions(&mut engine);
@@ -1941,7 +1933,7 @@ fn test_extract_re_maps_with_emit_each() {
         .eval_with_scope(
             &mut scope,
             r##"
-            let ip_maps = text.extract_re_maps("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b", "ip");
+            let ip_maps = text.extract_regex_maps("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b", "ip");
             emit_each(ip_maps)
         "##,
         )
@@ -1977,7 +1969,7 @@ fn test_extract_re_maps_with_emit_each() {
 }
 
 #[test]
-fn test_split_re_function() {
+fn test_split_regex_function() {
     let mut engine = rhai::Engine::new();
     register_all_string_functions(&mut engine);
 
@@ -1986,7 +1978,7 @@ fn test_split_re_function() {
 
     // Split by multiple delimiters
     let result: rhai::Array = engine
-        .eval_with_scope(&mut scope, r##"text.split_re("[,;:]")"##)
+        .eval_with_scope(&mut scope, r##"text.split_regex("[,;:]")"##)
         .unwrap();
     assert_eq!(result.len(), 4);
     assert_eq!(result[0].clone().into_string().unwrap(), "one");
@@ -1994,15 +1986,10 @@ fn test_split_re_function() {
     assert_eq!(result[2].clone().into_string().unwrap(), "three");
     assert_eq!(result[3].clone().into_string().unwrap(), "four");
 
-    let alias_result: rhai::Array = engine
-        .eval_with_scope(&mut scope, r##"text.split_regex("[,;:]")"##)
-        .unwrap();
-    assert_eq!(alias_result.len(), 4);
-
     // Split by whitespace
     scope.push("spaced", "hello    world\ttab\nnewline");
     let result: rhai::Array = engine
-        .eval_with_scope(&mut scope, r##"spaced.split_re("\\s+")"##)
+        .eval_with_scope(&mut scope, r##"spaced.split_regex("\\s+")"##)
         .unwrap();
     assert_eq!(result.len(), 4);
     assert_eq!(result[0].clone().into_string().unwrap(), "hello");
@@ -2010,7 +1997,7 @@ fn test_split_re_function() {
 
     // Invalid regex (returns original string)
     let result: rhai::Array = engine
-        .eval_with_scope(&mut scope, r##"text.split_re("[")"##)
+        .eval_with_scope(&mut scope, r##"text.split_regex("[")"##)
         .unwrap();
     assert_eq!(result.len(), 1);
     assert_eq!(
@@ -2020,7 +2007,7 @@ fn test_split_re_function() {
 }
 
 #[test]
-fn test_replace_re_function() {
+fn test_replace_regex_function() {
     let mut engine = rhai::Engine::new();
     register_all_string_functions(&mut engine);
 
@@ -2029,21 +2016,16 @@ fn test_replace_re_function() {
 
     // Replace all years with "YEAR"
     let result: String = engine
-        .eval_with_scope(&mut scope, r##"text.replace_re("\\d{4}", "YEAR")"##)
-        .unwrap();
-    assert_eq!(result, "The year YEAR and YEAR are here");
-
-    let alias_result: String = engine
         .eval_with_scope(&mut scope, r##"text.replace_regex("\\d{4}", "YEAR")"##)
         .unwrap();
-    assert_eq!(alias_result, "The year YEAR and YEAR are here");
+    assert_eq!(result, "The year YEAR and YEAR are here");
 
     // Replace with capture groups
     scope.push("emails", "Contact alice@example.com or bob@test.org");
     let result: String = engine
         .eval_with_scope(
             &mut scope,
-            r##"emails.replace_re("(\\w+)@(\\w+\\.\\w+)", "[$1 at $2]")"##,
+            r##"emails.replace_regex("(\\w+)@(\\w+\\.\\w+)", "[$1 at $2]")"##,
         )
         .unwrap();
     assert_eq!(
@@ -2053,13 +2035,16 @@ fn test_replace_re_function() {
 
     // No matches (returns original)
     let result: String = engine
-        .eval_with_scope(&mut scope, r##"text.replace_re("nomatch", "replacement")"##)
+        .eval_with_scope(
+            &mut scope,
+            r##"text.replace_regex("nomatch", "replacement")"##,
+        )
         .unwrap();
     assert_eq!(result, "The year 2023 and 2024 are here");
 
     // Invalid regex (returns original)
     let result: String = engine
-        .eval_with_scope(&mut scope, r##"text.replace_re("[", "replacement")"##)
+        .eval_with_scope(&mut scope, r##"text.replace_regex("[", "replacement")"##)
         .unwrap();
     assert_eq!(result, "The year 2023 and 2024 are here");
 }

@@ -42,12 +42,12 @@ e.numbers = e.line.extract_regexes(r"\d+")             // All numbers
 e.codes = e.message.extract_regexes(r"ERR-(\d+)", 1)   // All error codes
 ```
 
-#### `text.extract_re_maps(pattern, field)`
+#### `text.extract_regex_maps(pattern, field)`
 Extract regex matches as array of maps for fan-out with `emit_each()`.
 
 ```rhai
 // Extract all error codes with context
-let errors = e.log.extract_re_maps(r"(?P<code>ERR-\d+): (?P<msg>[^\n]+)", "error");
+let errors = e.log.extract_regex_maps(r"(?P<code>ERR-\d+): (?P<msg>[^\n]+)", "error");
 emit_each(errors)  // Each match becomes an event with 'code' and 'msg' fields
 ```
 
@@ -492,12 +492,12 @@ Replace all occurrences of pattern.
 e.cleaned = e.text.replace("ERROR", "WARN")
 ```
 
-#### `text.split(separator)` / `text.split_re(pattern)`
+#### `text.split(separator)` / `text.split_regex(pattern)`
 Split string into array.
 
 ```rhai
 e.parts = e.path.split("/")
-e.tokens = e.line.split_re(r"\s+")                    // Split on whitespace
+e.tokens = e.line.split_regex(r"\s+")                 // Split on whitespace
 ```
 
 ### String Testing

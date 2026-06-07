@@ -128,33 +128,6 @@ pub fn register_functions(engine: &mut Engine) {
     );
 
     engine.register_fn(
-        "extract_re_maps",
-        |text: &str, pattern: &str, field_name: &str| -> Array {
-            match Regex::new(pattern) {
-                Ok(re) => {
-                    let mut results = Array::new();
-                    for captures in re.captures_iter(text) {
-                        let match_value = if captures.len() > 1 {
-                            captures.get(1).map(|m| m.as_str()).unwrap_or("")
-                        } else {
-                            captures.get(0).map(|m| m.as_str()).unwrap_or("")
-                        };
-
-                        let mut map = Map::new();
-                        map.insert(field_name.into(), Dynamic::from(match_value.to_string()));
-                        results.push(Dynamic::from(map));
-                    }
-                    results
-                }
-                Err(e) => {
-                    warn_invalid_regex(pattern, &e);
-                    Array::new()
-                }
-            }
-        },
-    );
-
-    engine.register_fn(
         "extract_regex_maps",
         |text: &str, pattern: &str, field_name: &str| -> Array {
             match Regex::new(pattern) {
@@ -181,19 +154,6 @@ pub fn register_functions(engine: &mut Engine) {
         },
     );
 
-    engine.register_fn("split_re", |text: &str, pattern: &str| -> Array {
-        match Regex::new(pattern) {
-            Ok(re) => re
-                .split(text)
-                .map(|s| Dynamic::from(s.to_string()))
-                .collect(),
-            Err(e) => {
-                warn_invalid_regex(pattern, &e);
-                vec![Dynamic::from(text.to_string())]
-            }
-        }
-    });
-
     engine.register_fn("split_regex", |text: &str, pattern: &str| -> Array {
         match Regex::new(pattern) {
             Ok(re) => re
@@ -206,19 +166,6 @@ pub fn register_functions(engine: &mut Engine) {
             }
         }
     });
-
-    engine.register_fn(
-        "replace_re",
-        |text: &str, pattern: &str, replacement: &str| -> String {
-            match Regex::new(pattern) {
-                Ok(re) => re.replace_all(text, replacement).to_string(),
-                Err(e) => {
-                    warn_invalid_regex(pattern, &e);
-                    text.to_string()
-                }
-            }
-        },
-    );
 
     engine.register_fn(
         "replace_regex",
