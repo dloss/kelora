@@ -948,7 +948,15 @@ impl ProcessingStats {
 mod tests {
     use super::*;
 
-    fn reset_thread_stats() {
+    // `FILES_FAILED_TO_OPEN`, `FAILED_FILE_SAMPLES`, and `RECOVERABLE_ERROR_SAMPLES`
+    // are process-global, so concurrently running tests would clobber each other's
+    // samples between push and read. Serialize the stats tests on a single lock,
+    // held for the duration of each test, to keep that shared state stable.
+    static STATS_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    #[must_use = "hold the guard for the whole test to keep global stats state stable"]
+    fn reset_thread_stats() -> std::sync::MutexGuard<'static, ()> {
+        let guard = STATS_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         THREAD_STATS.with(|stats| {
             *stats.borrow_mut() = ProcessingStats::new();
         });
@@ -962,11 +970,12 @@ mod tests {
                 .expect("recoverable error sample lock")
                 .clear();
         }
+        guard
     }
 
     #[test]
     fn stats_counters_accumulate_expected_values() {
-        reset_thread_stats();
+        let _stats_guard = reset_thread_stats();
 
         stats_add_line_read();
         stats_add_line_filtered();
@@ -989,7 +998,7 @@ mod tests {
 
     #[test]
     fn discovered_field_helpers_load_sets() {
-        reset_thread_stats();
+        let _stats_guard = reset_thread_stats();
 
         stats_add_discovered_level("INFO".to_string());
         stats_add_discovered_key("request_id".to_string());
@@ -1001,7 +1010,7 @@ mod tests {
 
     #[test]
     fn timestamp_stats_track_detection_and_absence() {
-        reset_thread_stats();
+        let _stats_guard = reset_thread_stats();
 
         stats_record_timestamp_detection("timestamp", "2024-05-19T12:34:56Z", true);
         stats_record_timestamp_detection("timestamp", "not-a-date", false);
@@ -1023,7 +1032,7 @@ mod tests {
 
     #[test]
     fn error_summary_includes_first_recoverable_error_sample() {
-        reset_thread_stats();
+        let _stats_guard = reset_thread_stats();
 
         stats_add_line_error();
         stats_add_recoverable_error_sample(
