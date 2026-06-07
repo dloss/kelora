@@ -216,12 +216,41 @@ fn extract_domain_impl(text: &str) -> String {
 /// A Rhai Dynamic containing the parsed JSON (Map for objects, Array for arrays),
 /// or an empty string if not found or parsing fails
 fn extract_json_impl(text: &str, nth: i64) -> Dynamic {
-    if text.is_empty() || nth < 0 {
+    // nth follows the same convention as the other extractors:
+    // 1 = first, 2 = second, ..., -1 = last, -2 = second to last. 0 is invalid.
+    if text.is_empty() || nth == 0 {
         return Dynamic::from(String::new());
     }
 
-    let nth_usize = nth as usize;
-    let mut found_count = 0;
+    let matches = collect_json_values(text);
+    if matches.is_empty() {
+        return Dynamic::from(String::new());
+    }
+
+    // Handle negative indexing (from the end)
+    let idx = if nth < 0 {
+        let abs_nth = (-nth) as usize;
+        if abs_nth > matches.len() {
+            return Dynamic::from(String::new());
+        }
+        matches.len() - abs_nth
+    } else {
+        let nth_usize = nth as usize;
+        if nth_usize > matches.len() {
+            return Dynamic::from(String::new());
+        }
+        nth_usize - 1 // Convert to 0-indexed
+    };
+
+    json_to_dynamic(&matches[idx])
+}
+
+/// Scan text for all top-level JSON objects/arrays, in order of appearance.
+///
+/// Handles nested structures and strings (so braces inside string values do
+/// not confuse the scanner). Invalid or non-object/array candidates are skipped.
+fn collect_json_values(text: &str) -> Vec<serde_json::Value> {
+    let mut results = Vec::new();
     let bytes = text.as_bytes();
     let len = bytes.len();
 
@@ -288,11 +317,7 @@ fn extract_json_impl(text: &str, nth: i64) -> Dynamic {
             if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(candidate) {
                 // Check if it's an object or array
                 if json_value.is_object() || json_value.is_array() {
-                    if found_count == nth_usize {
-                        // This is the one we want!
-                        return json_to_dynamic(&json_value);
-                    }
-                    found_count += 1;
+                    results.push(json_value);
                 }
             }
 
@@ -304,8 +329,7 @@ fn extract_json_impl(text: &str, nth: i64) -> Dynamic {
         }
     }
 
-    // Not found
-    Dynamic::from(String::new())
+    results
 }
 
 /// Extract all JSON objects or arrays from text as strings
@@ -433,7 +457,7 @@ pub fn register_functions(engine: &mut Engine) {
 
     // JSON extraction
     engine.register_fn("extract_json", |text: &str| -> Dynamic {
-        extract_json_impl(text, 0)
+        extract_json_impl(text, 1)
     });
     engine.register_fn("extract_json", |text: &str, nth: i64| -> Dynamic {
         extract_json_impl(text, nth)
@@ -686,12 +710,35 @@ mod tests {
             r#"First: {"a": 1} Second: {"b": 2} Third: {"c": 3}"#,
         );
 
-        // Get second JSON (index 1)
-        let result: rhai::Map = engine
+        // 1-indexed, matching extract_ip/url/email: 1 = first
+        let first: rhai::Map = engine
             .eval_with_scope(&mut scope, r#"extract_json(text, 1)"#)
             .unwrap();
+        assert_eq!(first.get("a").unwrap().clone().as_int().unwrap(), 1);
 
-        assert_eq!(result.get("b").unwrap().clone().as_int().unwrap(), 2);
+        // 2 = second
+        let second: rhai::Map = engine
+            .eval_with_scope(&mut scope, r#"extract_json(text, 2)"#)
+            .unwrap();
+        assert_eq!(second.get("b").unwrap().clone().as_int().unwrap(), 2);
+
+        // -1 = last
+        let last: rhai::Map = engine
+            .eval_with_scope(&mut scope, r#"extract_json(text, -1)"#)
+            .unwrap();
+        assert_eq!(last.get("c").unwrap().clone().as_int().unwrap(), 3);
+
+        // 0 is invalid -> empty string
+        let zero: String = engine
+            .eval_with_scope(&mut scope, r#"extract_json(text, 0)"#)
+            .unwrap();
+        assert!(zero.is_empty());
+
+        // Out-of-range -> empty string
+        let oor: String = engine
+            .eval_with_scope(&mut scope, r#"extract_json(text, 4)"#)
+            .unwrap();
+        assert!(oor.is_empty());
     }
 
     #[test]
