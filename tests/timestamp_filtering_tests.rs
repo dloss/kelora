@@ -8,12 +8,24 @@ use common::{extract_stats_lines, stats_line};
 
 /// Helper function to run kelora with given arguments and input via stdin
 fn run_kelora_with_input(args: &[&str], input: &str) -> (String, String, i32) {
+    run_kelora_with_input_env(args, input, &[])
+}
+
+/// Like [`run_kelora_with_input`], but sets the given environment variables on
+/// the child process only. This avoids mutating the test process's global
+/// environment, which would race with other tests running in parallel.
+fn run_kelora_with_input_env(
+    args: &[&str],
+    input: &str,
+    envs: &[(&str, &str)],
+) -> (String, String, i32) {
     // Use CARGO_BIN_EXE_kelora env var set by cargo during test runs
     // This works correctly for regular builds, coverage builds, and custom target dirs
     let binary_path = env!("CARGO_BIN_EXE_kelora");
 
     let mut cmd = Command::new(binary_path)
         .args(args)
+        .envs(envs.iter().copied())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -250,11 +262,14 @@ fn test_different_timestamp_formats() {
 
     let since_ts = get_test_timestamp_iso(-45); // 45 minutes ago
 
-    // Set TZ=UTC for consistent test behavior regardless of system timezone
-    std::env::set_var("TZ", "UTC");
-    let (stdout, stderr, exit_code) =
-        run_kelora_with_input(&["-f", "json", "--since", &since_ts], &input);
-    std::env::remove_var("TZ");
+    // Set TZ=UTC for consistent test behavior regardless of system timezone.
+    // Pass it to the child only, so we don't mutate this process's global
+    // environment and race with other tests running in parallel.
+    let (stdout, stderr, exit_code) = run_kelora_with_input_env(
+        &["-f", "json", "--since", &since_ts],
+        &input,
+        &[("TZ", "UTC")],
+    );
 
     assert_eq!(
         exit_code, 0,

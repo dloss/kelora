@@ -20,4 +20,7 @@ pub mod stats;
 pub mod timestamp;
 pub mod tty;
 
+#[cfg(test)]
+mod test_env;
+
 pub use cli::{Cli, FileOrder, InputFormat, OutputFormat};

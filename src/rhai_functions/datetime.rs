@@ -632,12 +632,10 @@ pub fn register_functions(engine: &mut Engine) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{LazyLock, Mutex};
 
     // Serializes tests that mutate the process-wide `TZ` variable and restores
-    // its previous value afterwards, so they don't race each other.
-    static ENV_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
-
+    // its previous value afterwards. Uses the crate-wide environment lock so it
+    // also serializes against env-mutating tests in other modules.
     struct TzGuard {
         previous: Option<String>,
         _lock: std::sync::MutexGuard<'static, ()>,
@@ -645,7 +643,7 @@ mod tests {
 
     impl TzGuard {
         fn set(value: &str) -> Self {
-            let lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+            let lock = crate::test_env::lock_env();
             let previous = std::env::var("TZ").ok();
             std::env::set_var("TZ", value);
             Self {

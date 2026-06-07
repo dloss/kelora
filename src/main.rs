@@ -29,6 +29,8 @@ mod readers;
 mod rhai_functions;
 mod runner;
 mod stats;
+#[cfg(test)]
+mod test_env;
 mod timestamp;
 mod tty;
 

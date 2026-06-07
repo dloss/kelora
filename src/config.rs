@@ -1635,10 +1635,6 @@ mod tests {
     use super::*;
     use crate::cli::Cli;
     use clap::Parser;
-    use std::sync::LazyLock;
-    use std::sync::Mutex;
-
-    static ENV_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
     struct EnvGuard {
         vars: Vec<(&'static str, Option<String>)>,
@@ -1667,7 +1663,7 @@ mod tests {
     }
 
     fn with_env_lock<F: FnOnce()>(keys: &[&'static str], f: F) {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = crate::test_env::lock_env();
         let _guard = EnvGuard::new(keys);
         f();
     }
