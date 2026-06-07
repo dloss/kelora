@@ -2,17 +2,17 @@ mod common;
 use common::*;
 
 #[test]
-fn test_extract_re_maps_basic_functionality() {
+fn test_extract_regex_maps_basic_functionality() {
     let input = r#"{"log": "User alice@test.com logged in from 192.168.1.100"}
 {"log": "User bob@example.org failed login from 10.0.0.50"}
 {"log": "Error: no email addresses found in this line"}"#;
 
-    // Test basic extract_re_maps usage with emit_each
+    // Test basic extract_regex_maps usage with emit_each
     let (stdout, _stderr, exit_code) = run_kelora_with_input(
         &[
             "-f", "json",
             "-F", "json",
-            "--exec", "let email_maps = extract_re_maps(e.log, \"\\\\w+@\\\\w+\\\\.\\\\w+\", \"email\"); emit_each(email_maps)",
+            "--exec", "let email_maps = extract_regex_maps(e.log, \"\\\\w+@\\\\w+\\\\.\\\\w+\", \"email\"); emit_each(email_maps)",
         ],
         input,
     );
@@ -31,7 +31,7 @@ fn test_extract_re_maps_basic_functionality() {
 }
 
 #[test]
-fn test_extract_re_maps_with_capture_groups() {
+fn test_extract_regex_maps_with_capture_groups() {
     let input = r#"{"message": "user=alice status=200 response_time=45ms"}
 {"message": "user=bob status=404 response_time=12ms"}
 {"message": "user=charlie status=500 response_time=234ms"}"#;
@@ -41,7 +41,7 @@ fn test_extract_re_maps_with_capture_groups() {
         &[
             "-f", "json",
             "-F", "json",
-            "--exec", "let user_maps = extract_re_maps(e.message, \"user=([\\\\w]+)\", \"username\"); emit_each(user_maps)",
+            "--exec", "let user_maps = extract_regex_maps(e.message, \"user=([\\\\w]+)\", \"username\"); emit_each(user_maps)",
         ],
         input,
     );
@@ -62,7 +62,7 @@ fn test_extract_re_maps_with_capture_groups() {
 }
 
 #[test]
-fn test_extract_re_maps_with_base_context() {
+fn test_extract_regex_maps_with_base_context() {
     let input = r#"{"timestamp": "2023-07-18T15:04:23Z", "source": "webapp", "message": "IPs detected: 192.168.1.1 and 10.0.0.1"}
 {"timestamp": "2023-07-18T15:05:30Z", "source": "database", "message": "Connection from 172.16.0.100"}"#;
 
@@ -75,7 +75,7 @@ fn test_extract_re_maps_with_base_context() {
             "json",
             "--exec",
             r#"
-                let ip_maps = extract_re_maps(e.message, "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b", "ip");
+                let ip_maps = extract_regex_maps(e.message, "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b", "ip");
                 let base = #{timestamp: e.timestamp, source: e.source};
                 emit_each(ip_maps, base)
             "#,
@@ -113,7 +113,7 @@ fn test_extract_re_maps_with_base_context() {
 }
 
 #[test]
-fn test_extract_re_maps_composability() {
+fn test_extract_regex_maps_composability() {
     let input = r#"{"text": "Contact alice@test.com or call +1-555-123-4567"}
 {"text": "Email bob@example.org for support"}"#;
 
@@ -126,8 +126,8 @@ fn test_extract_re_maps_composability() {
             "json",
             "--exec",
             r#"
-                let email_maps = extract_re_maps(e.text, "\\w+@\\w+\\.\\w+", "contact");
-                let phone_maps = extract_re_maps(e.text, "\\+?1?-?\\d{3}-\\d{3}-\\d{4}", "contact");
+                let email_maps = extract_regex_maps(e.text, "\\w+@\\w+\\.\\w+", "contact");
+                let phone_maps = extract_regex_maps(e.text, "\\+?1?-?\\d{3}-\\d{3}-\\d{4}", "contact");
                 let all_contacts = email_maps + phone_maps;
                 if all_contacts.len() > 0 {
                     emit_each(all_contacts, #{source: "contact_extraction", original_text: e.text})
@@ -427,7 +427,7 @@ fn test_extract_json_with_nth_parameter() {
         serde_json::from_str(stdout.trim()).expect("Should be valid JSON");
     assert_eq!(output["first_id"].as_i64().unwrap(), 1);
 
-    // Extract second JSON object (nth=1)
+    // Extract second JSON object (nth=2)
     let (stdout, _stderr, exit_code) = run_kelora_with_input(
         &[
             "-f",
@@ -435,7 +435,7 @@ fn test_extract_json_with_nth_parameter() {
             "-F",
             "json",
             "--exec",
-            "let second = e.message.extract_json(1); e.second_id = second.id;",
+            "let second = e.message.extract_json(2); e.second_id = second.id;",
         ],
         input,
     );
@@ -501,7 +501,7 @@ fn test_extract_json_mixed_objects_and_arrays() {
             "-F",
             "json",
             "--exec",
-            "let first = e.message.extract_json(0); e.items = first;",
+            "let first = e.message.extract_json(1); e.items = first;",
         ],
         input,
     );
@@ -520,7 +520,7 @@ fn test_extract_json_mixed_objects_and_arrays() {
             "-F",
             "json",
             "--exec",
-            "let second = e.message.extract_json(1); e.status = second.status;",
+            "let second = e.message.extract_json(2); e.status = second.status;",
         ],
         input,
     );
