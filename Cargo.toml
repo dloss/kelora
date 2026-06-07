@@ -38,6 +38,7 @@ regex = "1.10"  # Pattern matching for filters and field extraction
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }  # Timestamp parsing, manipulation, and formatting
 chrono-tz = "0.10"  # Timezone database for timestamp conversion
+iana-time-zone = "0.1"  # Detect the system's local IANA timezone for to_local()
 humantime = "2.1"  # Human-readable duration parsing (e.g., "5m", "1h30s")
 
 # Multi-threading and concurrency

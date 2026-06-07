@@ -3,7 +3,7 @@ use chrono_tz::Tz;
 use rhai::{Engine, EvalAltResult, Position};
 use std::cell::RefCell;
 use std::fmt;
-use std::str::FromStr;
+use std::sync::OnceLock;
 
 /// Wrapper for chrono::DateTime to provide Rhai integration
 #[derive(Debug, Clone)]
@@ -392,6 +392,44 @@ pub fn ceil_to(
     Ok(DateTimeWrapper::new(ceiled_dt))
 }
 
+/// Resolve the system's local timezone for `to_local()`.
+///
+/// Resolution order:
+/// 1. The `TZ` environment variable, if it holds a valid IANA name
+///    (e.g. `Europe/Berlin`). `iana-time-zone` ignores `TZ` on most
+///    platforms, so we honor it explicitly to match Unix expectations and
+///    to keep the behavior testable.
+/// 2. The OS-reported local timezone via `iana-time-zone`.
+///
+/// Returns `None` if neither source yields a parseable IANA timezone.
+fn resolve_local_timezone() -> Option<Tz> {
+    if let Ok(tz) = std::env::var("TZ") {
+        if let Ok(parsed) = tz.parse::<Tz>() {
+            return Some(parsed);
+        }
+    }
+    iana_time_zone::get_timezone()
+        .ok()
+        .and_then(|name| name.parse::<Tz>().ok())
+}
+
+/// The system's local timezone, resolved once and cached for the process.
+///
+/// Falls back to UTC with a single diagnostic warning if the local timezone
+/// cannot be determined. Caching avoids re-resolving on every `to_local()`
+/// call in the streaming pipeline.
+fn local_timezone() -> Tz {
+    static LOCAL_TZ: OnceLock<Tz> = OnceLock::new();
+    *LOCAL_TZ.get_or_init(|| {
+        resolve_local_timezone().unwrap_or_else(|| {
+            eprintln!(
+                "kelora: could not determine system local timezone; to_local() falling back to UTC"
+            );
+            Tz::UTC
+        })
+    })
+}
+
 /// Register all datetime functions with the Rhai engine
 pub fn register_functions(engine: &mut Engine) {
     // Parsing functions
@@ -449,8 +487,7 @@ pub fn register_functions(engine: &mut Engine) {
     });
 
     engine.register_fn("to_local", |dt: &mut DateTimeWrapper| {
-        let local_tz = chrono_tz::Tz::from_str("UTC").unwrap(); // This should be system local timezone
-        DateTimeWrapper::new(dt.inner.with_timezone(&local_tz))
+        DateTimeWrapper::new(dt.inner.with_timezone(&local_timezone()))
     });
 
     engine.register_fn(
@@ -595,6 +632,55 @@ pub fn register_functions(engine: &mut Engine) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{LazyLock, Mutex};
+
+    // Serializes tests that mutate the process-wide `TZ` variable and restores
+    // its previous value afterwards, so they don't race each other.
+    static ENV_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
+
+    struct TzGuard {
+        previous: Option<String>,
+        _lock: std::sync::MutexGuard<'static, ()>,
+    }
+
+    impl TzGuard {
+        fn set(value: &str) -> Self {
+            let lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+            let previous = std::env::var("TZ").ok();
+            std::env::set_var("TZ", value);
+            Self {
+                previous,
+                _lock: lock,
+            }
+        }
+    }
+
+    impl Drop for TzGuard {
+        fn drop(&mut self) {
+            match &self.previous {
+                Some(v) => std::env::set_var("TZ", v),
+                None => std::env::remove_var("TZ"),
+            }
+        }
+    }
+
+    #[test]
+    fn test_resolve_local_timezone_honors_tz_env() {
+        let _guard = TzGuard::set("America/New_York");
+        assert_eq!(resolve_local_timezone(), Some(Tz::America__New_York));
+    }
+
+    #[test]
+    fn test_to_local_converts_using_resolved_timezone() {
+        // Regression test: to_local() must not silently stay in UTC.
+        let _guard = TzGuard::set("America/New_York");
+        let tz = resolve_local_timezone().expect("TZ should resolve");
+        let dt = to_datetime("2023-07-04T12:00:00Z", None, None).unwrap();
+        let local = dt.inner.with_timezone(&tz);
+        // New York observes EDT (UTC-4) in July, so 12:00 UTC -> 08:00 local.
+        assert_eq!(local.hour(), 8);
+        assert_eq!(local.day(), 4);
+    }
 
     #[test]
     fn test_duration_wrapper_always_positive() {

@@ -1028,6 +1028,7 @@ dependencies = [
  "html-escape",
  "humantime",
  "hyperloglog",
+ "iana-time-zone",
  "indexmap",
  "ipnet",
  "is-terminal",
