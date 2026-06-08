@@ -327,7 +327,10 @@ impl FieldDiscovery {
     /// Nested maps and arrays are flattened into dotted keys (`user.name`,
     /// `user.roles[]`) up to [`MAX_FLATTEN_DEPTH`] levels deep. The parent
     /// container is also observed so its size range remains visible.
-    pub fn observe_event(&mut self, fields: &IndexMap<std::string::String, Dynamic>) {
+    pub fn observe_event<S: std::hash::BuildHasher>(
+        &mut self,
+        fields: &IndexMap<std::string::String, Dynamic, S>,
+    ) {
         self.total_events += 1;
 
         for (key, value) in fields {
@@ -1003,7 +1006,7 @@ pub fn is_discover_final() -> bool {
 }
 
 /// Observe an event's fields (called from the pipeline).
-pub fn observe_event_fields(fields: &IndexMap<String, Dynamic>) {
+pub fn observe_event_fields<S: std::hash::BuildHasher>(fields: &IndexMap<String, Dynamic, S>) {
     if !is_enabled() {
         return;
     }

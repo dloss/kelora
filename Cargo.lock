@@ -1005,6 +1005,7 @@ dependencies = [
 name = "kelora"
 version = "1.5.0"
 dependencies = [
+ "ahash",
  "anyhow",
  "argon2",
  "base64",

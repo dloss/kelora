@@ -474,8 +474,8 @@ pub struct TsConfig {
 }
 
 /// Identify and extract timestamp from event fields
-pub fn identify_timestamp_field(
-    fields: &indexmap::IndexMap<String, rhai::Dynamic>,
+pub fn identify_timestamp_field<S: std::hash::BuildHasher>(
+    fields: &indexmap::IndexMap<String, rhai::Dynamic, S>,
     config: &TsConfig,
 ) -> Option<(String, String)> {
     // If custom field is specified, try that first

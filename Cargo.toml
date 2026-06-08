@@ -56,6 +56,7 @@ zstd = "0.13"  # Zstandard decompression for reading .zst log files
 
 # Data structures and utilities
 indexmap = "2.0"  # Order-preserving hash maps for JSON objects and logfmt key-value pairs
+ahash = "0.8"  # Fast non-cryptographic hasher for the per-event field map (hot path)
 shell-words = "1.1"  # Parsing shell-like command strings in config files
 lru = "0.16.3"  # LRU cache for optimizing repeated operations
 fastrand = "2.0"  # Fast random number generation for sampling

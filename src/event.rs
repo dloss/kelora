@@ -1,6 +1,12 @@
 #![allow(dead_code)] // Flattening helpers and type enums are kept for potential future output formats
 use chrono::{DateTime, Utc};
 use indexmap::IndexMap;
+
+/// Per-event field map. Uses ahash (fast, non-cryptographic) rather than the
+/// std SipHash default: this is built and probed on every parsed line, key
+/// material is local log field names (no DoS exposure), and IndexMap preserves
+/// insertion order regardless of hasher, so field ordering is unaffected.
+pub type FieldMap = IndexMap<String, Dynamic, ahash::RandomState>;
 use rhai::Dynamic;
 use serde::{Deserialize, Serialize};
 
@@ -370,7 +376,7 @@ pub fn ordered_fields(event: &Event) -> Vec<(&String, &rhai::Dynamic)> {
 
 #[derive(Debug, Clone, Default)]
 pub struct Event {
-    pub fields: IndexMap<String, Dynamic>,
+    pub fields: FieldMap,
     /// Flag indicating whether this event has been processed by key filtering (--keys/--exclude-keys)
     pub key_filtered: bool,
     pub original_line: String,
@@ -427,7 +433,7 @@ pub enum FieldValue {
 impl Event {
     pub fn with_capacity(original_line: String, capacity: usize) -> Self {
         Self {
-            fields: IndexMap::with_capacity(capacity),
+            fields: FieldMap::with_capacity_and_hasher(capacity, ahash::RandomState::default()),
             key_filtered: false,
             original_line,
             line_num: None,
@@ -461,7 +467,8 @@ impl Event {
 
     /// Filter to only show specified keys, keeping only fields that actually exist
     pub fn filter_keys(&mut self, keys: &[String]) {
-        let mut new_fields = IndexMap::with_capacity(keys.len());
+        let mut new_fields =
+            FieldMap::with_capacity_and_hasher(keys.len(), ahash::RandomState::default());
 
         // Only include fields that are both requested and exist
         for key in keys {

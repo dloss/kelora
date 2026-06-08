@@ -1,6 +1,5 @@
 #![allow(dead_code)] // Engine keeps analysis/helpers that are not all exercised by the current binary
 use anyhow::Result;
-use indexmap::IndexMap;
 use rhai::{BinaryExpr, Dynamic, Engine, EvalAltResult, Expr, FnCallExpr, Scope, Stmt, Token, AST};
 use std::collections::HashMap;
 
@@ -2463,7 +2462,10 @@ impl RhaiEngine {
             let mut remaining_entries: Vec<(String, Dynamic)> =
                 obj.into_iter().map(|(k, v)| (k.into(), v)).collect();
 
-            let mut reordered_fields = IndexMap::with_capacity(remaining_entries.len());
+            let mut reordered_fields = crate::event::FieldMap::with_capacity_and_hasher(
+                remaining_entries.len(),
+                ahash::RandomState::default(),
+            );
 
             for key in &original_order {
                 if let Some(pos) = remaining_entries.iter().position(|(k, _)| k == key) {
