@@ -17,6 +17,21 @@ just bench
 just bench-update
 ```
 
+### Simple-Cases Suite (Throughput)
+
+```bash
+# Full run (200k lines) - reports lines/s and MB/s per scenario
+just bench-simple
+
+# Quick run (50k lines, fewer runs)
+just bench-simple-quick
+
+# Set/refresh the local baseline
+just bench-simple-update
+```
+
+See [Simple-Cases Throughput Suite](#simple-cases-throughput-suite) below for details.
+
 ### External Tool Comparisons
 
 ```bash
@@ -143,6 +158,62 @@ Based on current optimizations (MacBook with SSD):
 **Note**: Times include "cold start" overhead (~0.3s first run). Subsequent runs are much faster (~0.01s).
 
 These are rough guidelines - actual performance depends on hardware and system load.
+
+---
+
+## Simple-Cases Throughput Suite
+
+`bench_simple_cases.py` targets the **per-event hot path** for the cases real
+users hit most often (parse → filter → format → write). Unlike
+`run_benchmarks.sh` it reports **throughput** (lines/s and MB/s) rather than
+raw wall-time, so results are comparable across machines and dataset sizes.
+
+It is self-contained: it generates its own **uniform-schema** datasets (so
+narrow-vs-wide event comparisons are controlled) and needs no external timing
+tools — timing uses Python's `perf_counter` around the binary with output sent
+to `/dev/null`. A validation pass runs every command once first and aborts if
+any exits non-zero, so a typo never gets silently timed as an error.
+
+```bash
+python3 benchmarks/bench_simple_cases.py            # full (200k lines)
+python3 benchmarks/bench_simple_cases.py --quick    # 50k lines, 3 runs
+python3 benchmarks/bench_simple_cases.py --lines 1000000
+python3 benchmarks/bench_simple_cases.py --filter parse,filter   # categories
+python3 benchmarks/bench_simple_cases.py --update-baseline
+```
+
+### Scenarios
+
+Scenarios are grouped by category, and several are **paired** so that the
+*delta* between them attributes cost to a single pipeline stage. Output is
+suppressed with `-q` except where formatting itself is being measured.
+
+| Category | Scenarios | What the comparison isolates |
+|----------|-----------|------------------------------|
+| **parse** | `parse_json_narrow/_wide`, `parse_logfmt`, `parse_csv`, `parse_line` | Parser cost per format; narrow vs wide isolates per-field parse cost |
+| **filter** | `filter_native_narrow/_wide`, `filter_rhai_narrow/_wide` | Native fast-path vs Rhai VM, each at 5 vs ~40 fields |
+| **output** | `output_quiet`, `output_default`, `output_json`, `output_logfmt` | Formatter cost over the parse-only floor (`output_quiet`) |
+| **select** | `select_high` (~100% pass), `select_low` (~25% pass) | Output/write cost as a function of selectivity |
+| **timestamp** | `ts_on` vs `ts_off` | Cost of automatic timestamp extraction |
+| **search** | `search_substr` | grep-like substring match on raw lines |
+
+The headline pairing:
+`(filter_rhai_wide − filter_rhai_narrow) − (filter_native_wide − filter_native_narrow)`
+estimates the cost of cloning every field into the Rhai event map.
+
+### Datasets (generated, git-ignored)
+
+Uniform schema for controlled comparisons:
+
+- `simple_narrow_<N>.jsonl` — 5 fields (timestamp, level, component, message, status)
+- `simple_wide_<N>.jsonl` — ~40 fields (same 5 + 35 padding fields)
+- `simple_narrow_<N>.logfmt`, `simple_narrow_<N>.csv` — same 5 fields, other formats
+- `simple_narrow_<N>.txt` — plain text lines (for `-f line` and substring search)
+- `simple_nots_<N>.jsonl` — narrow, but the timestamp field is renamed `tstamp`
+  (not an auto-recognized name) so timestamp extraction is skipped
+
+Results: `simple_cases_results.json`; baseline: `simple_cases_baseline.json`
+(both local-only). Baseline comparison flags >5% faster (green) / >10% slower (red).
 
 ---
 

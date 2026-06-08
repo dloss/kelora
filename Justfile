@@ -95,6 +95,18 @@ bench-quick:
 bench-update:
     ./benchmarks/run_benchmarks.sh --update-baseline
 
+# Benchmark common simple cases (throughput: lines/s, MB/s)
+bench-simple:
+    python3 benchmarks/bench_simple_cases.py
+
+# Quick simple-cases benchmark (50k dataset)
+bench-simple-quick:
+    python3 benchmarks/bench_simple_cases.py --quick
+
+# Update simple-cases benchmark baseline
+bench-simple-update:
+    python3 benchmarks/bench_simple_cases.py --update-baseline
+
 # Generate comparison datasets for external tool benchmarks
 bench-datasets:
     ./benchmarks/generate_comparison_data.sh

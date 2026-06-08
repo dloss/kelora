@@ -6,3 +6,11 @@ bench_500k.jsonl
 # Benchmark results (local only)
 benchmark_results.json
 baseline_results.json
+
+# Simple-cases suite: generated datasets + results (local only)
+simple_*.jsonl
+simple_*.logfmt
+simple_*.csv
+simple_*.txt
+simple_cases_results.json
+simple_cases_baseline.json
