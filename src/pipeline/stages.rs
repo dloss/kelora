@@ -242,6 +242,10 @@ impl FilterStage {
 }
 
 impl ScriptStage for FilterStage {
+    fn uses_window(&self) -> bool {
+        self.compiled_filter.uses_window()
+    }
+
     fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
         // Add stage-specific tracing
         if let Some(ref tracer) = ctx.rhai.get_execution_tracer() {
@@ -317,6 +321,10 @@ impl ExecStage {
 }
 
 impl ScriptStage for ExecStage {
+    fn uses_window(&self) -> bool {
+        self.compiled_exec.uses_window()
+    }
+
     fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
         // Add stage-specific tracing
         if let Some(ref tracer) = ctx.rhai.get_execution_tracer() {
@@ -637,6 +645,10 @@ impl AssertStage {
 }
 
 impl ScriptStage for AssertStage {
+    fn uses_window(&self) -> bool {
+        self.compiled_assertion.uses_window()
+    }
+
     fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
         // Add stage-specific tracing (same as FilterStage)
         if let Some(ref tracer) = ctx.rhai.get_execution_tracer() {

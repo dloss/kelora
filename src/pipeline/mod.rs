@@ -248,6 +248,12 @@ pub trait WindowManager: Send {
 /// Core script processing stage (filters, execs, etc.)
 pub trait ScriptStage: Send {
     fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult;
+
+    /// Whether this stage reads the `window` variable. Used to skip per-event
+    /// window maintenance entirely when no stage observes it.
+    fn uses_window(&self) -> bool {
+        false
+    }
 }
 
 /// Optional event limiting (--take N)
@@ -284,6 +290,10 @@ pub struct Pipeline {
     pub window_manager: Box<dyn WindowManager>,
     pub span_processor: Option<SpanProcessor>,
     pub ts_config: crate::timestamp::TsConfig,
+    /// Whether per-event window maintenance is needed: true if `--window` was
+    /// set or any script stage reads the `window` variable. When false, the
+    /// window manager is never touched, avoiding two event clones per line.
+    pub window_active: bool,
 }
 
 impl Pipeline {
@@ -567,9 +577,12 @@ impl Pipeline {
             span_processor.prepare_event(&mut event, ctx)?;
         }
 
-        // Update window manager
-        self.window_manager.update(&event);
-        ctx.window = self.window_manager.get_window();
+        // Update window manager (skipped entirely when no stage observes the
+        // `window` variable and --window was not set, avoiding two event clones).
+        if self.window_active {
+            self.window_manager.update(&event);
+            ctx.window = self.window_manager.get_window();
+        }
 
         // Reset per-event skip flag for Rhai skip()
         crate::rhai_functions::process::clear_skip_request();

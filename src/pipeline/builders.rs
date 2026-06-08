@@ -702,6 +702,11 @@ impl PipelineBuilder {
             default_timezone: self.default_timezone.clone(),
         };
 
+        // Window maintenance is only needed if --window was set or a stage
+        // reads the `window` variable.
+        let window_active =
+            self.window_size > 0 || script_stages.iter().any(|s| s.uses_window());
+
         // Create pipeline
         let pipeline = Pipeline {
             line_filter: None, // No line filter implementation yet
@@ -714,6 +719,7 @@ impl PipelineBuilder {
             window_manager,
             span_processor,
             ts_config,
+            window_active,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -1000,6 +1006,9 @@ impl PipelineBuilder {
             default_timezone: self.default_timezone.clone(),
         };
 
+        let window_active =
+            self.window_size > 0 || script_stages.iter().any(|s| s.uses_window());
+
         // Create worker pipeline (no output writer - results are collected by the processor)
         let pipeline = Pipeline {
             line_filter: None,
@@ -1012,6 +1021,7 @@ impl PipelineBuilder {
             window_manager,
             span_processor: None,
             ts_config,
+            window_active,
         };
 
         Ok((pipeline, ctx))
