@@ -359,6 +359,7 @@ struct VariableUsage {
     uses_meta: bool,
     uses_conf: bool,
     uses_line: bool,
+    uses_window: bool,
     meta_usage: MetaUsage,
 }
 
@@ -436,6 +437,9 @@ fn detect_variable_usage(ast: &AST) -> VariableUsage {
             }
             if node_str.contains("Variable(line)") {
                 usage.uses_line = true;
+            }
+            if node_str.contains("Variable(window)") {
+                usage.uses_window = true;
             }
         }
         true
@@ -901,12 +905,21 @@ pub struct CompiledExpression {
     uses_conf: bool,
     /// Whether this expression uses the `line` variable
     uses_line: bool,
+    /// Whether this expression uses the `window` variable
+    uses_window: bool,
 }
 
 impl CompiledExpression {
     /// Get the source expression
     pub fn source(&self) -> &str {
         &self.expr
+    }
+
+    /// Whether this expression references the `window` variable. When it does
+    /// not, evaluation is independent of window contents and can use the
+    /// lighter non-window path (which also enables the native fast-path).
+    pub fn uses_window(&self) -> bool {
+        self.uses_window
     }
 
     /// Get fields that are READ (including ReadWrite, excluding pure Write)
@@ -1648,6 +1661,7 @@ impl RhaiEngine {
             uses_meta: var_usage.uses_meta,
             uses_conf: var_usage.uses_conf,
             uses_line: var_usage.uses_line,
+            uses_window: var_usage.uses_window,
         })
     }
 
@@ -1677,6 +1691,7 @@ impl RhaiEngine {
             uses_meta: var_usage.uses_meta,
             uses_conf: var_usage.uses_conf,
             uses_line: var_usage.uses_line,
+            uses_window: var_usage.uses_window,
         })
     }
 
@@ -1705,6 +1720,7 @@ impl RhaiEngine {
             uses_meta: var_usage.uses_meta,
             uses_conf: var_usage.uses_conf,
             uses_line: var_usage.uses_line,
+            uses_window: var_usage.uses_window,
         })
     }
 
@@ -1733,6 +1749,7 @@ impl RhaiEngine {
             uses_meta: var_usage.uses_meta,
             uses_conf: var_usage.uses_conf,
             uses_line: var_usage.uses_line,
+            uses_window: var_usage.uses_window,
         })
     }
 
@@ -1761,6 +1778,7 @@ impl RhaiEngine {
             uses_meta: var_usage.uses_meta,
             uses_conf: var_usage.uses_conf,
             uses_line: var_usage.uses_line,
+            uses_window: var_usage.uses_window,
         })
     }
 
@@ -2663,6 +2681,33 @@ mod tests {
             !compiled.meta_usage.parsed_ts,
             "unreferenced meta.parsed_ts should not be requested"
         );
+    }
+
+    #[test]
+    fn compile_filter_detects_window_usage() {
+        let mut engine = RhaiEngine::new();
+
+        // Filters that do not reference `window` must report uses_window == false
+        // so the pipeline can route them to the lighter non-window evaluator
+        // (which also enables the native fast-path).
+        for expr in [
+            r#"e.level == "ERROR""#,
+            "e.message.len() > 5",
+            "e.status >= 500",
+        ] {
+            let compiled = engine.compile_filter(expr).expect("should compile");
+            assert!(
+                !compiled.uses_window(),
+                "filter `{expr}` does not reference window"
+            );
+        }
+
+        // Filters that do reference `window` must report uses_window == true so
+        // the window array is built and window semantics are preserved.
+        for expr in ["window.len() > 1", r#"window[1].level == "ERROR""#] {
+            let compiled = engine.compile_filter(expr).expect("should compile");
+            assert!(compiled.uses_window(), "filter `{expr}` references window");
+        }
     }
 
     #[test]

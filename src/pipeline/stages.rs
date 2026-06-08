@@ -65,7 +65,7 @@ impl FilterStage {
 
         file_ops::clear_pending_ops();
 
-        let eval_result = if ctx.window.is_empty() {
+        let eval_result = if ctx.window.is_empty() || !self.compiled_filter.uses_window() {
             ctx.rhai.execute_compiled_filter(
                 &self.compiled_filter,
                 event,
@@ -335,8 +335,8 @@ impl ScriptStage for ExecStage {
 
         file_ops::clear_pending_ops();
 
-        let result = if ctx.window.is_empty() {
-            // No window context - use standard method
+        let result = if ctx.window.is_empty() || !self.compiled_exec.uses_window() {
+            // No window context (or script doesn't use it) - use standard method
             ctx.rhai.execute_compiled_exec(
                 &self.compiled_exec,
                 &mut event_copy,
@@ -542,7 +542,7 @@ impl AssertStage {
 
         file_ops::clear_pending_ops();
 
-        let eval_result = if ctx.window.is_empty() {
+        let eval_result = if ctx.window.is_empty() || !self.compiled_assertion.uses_window() {
             ctx.rhai.execute_compiled_filter(
                 &self.compiled_assertion,
                 event,
