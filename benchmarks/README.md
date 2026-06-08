@@ -20,7 +20,7 @@ just bench-update
 ### Simple-Cases Suite (Throughput)
 
 ```bash
-# Full run (200k lines) - reports lines/s and MB/s per scenario
+# Full run (100k lines) - reports lines/s and MB/s per scenario
 just bench-simple
 
 # Quick run (50k lines, fewer runs)
@@ -175,11 +175,12 @@ to `/dev/null`. A validation pass runs every command once first and aborts if
 any exits non-zero, so a typo never gets silently timed as an error.
 
 ```bash
-python3 benchmarks/bench_simple_cases.py            # full (200k lines)
+python3 benchmarks/bench_simple_cases.py            # full (100k lines)
 python3 benchmarks/bench_simple_cases.py --quick    # 50k lines, 3 runs
 python3 benchmarks/bench_simple_cases.py --lines 1000000
-python3 benchmarks/bench_simple_cases.py --filter parse,filter   # categories
+python3 benchmarks/bench_simple_cases.py --filter width,filter   # categories
 python3 benchmarks/bench_simple_cases.py --update-baseline
+python3 benchmarks/bench_simple_cases.py --compare  # also vs jq/grep/rg
 ```
 
 ### Scenarios
@@ -191,26 +192,42 @@ suppressed with `-q` except where formatting itself is being measured.
 | Category | Scenarios | What the comparison isolates |
 |----------|-----------|------------------------------|
 | **parse** | `parse_json_narrow/_wide`, `parse_logfmt`, `parse_csv`, `parse_line` | Parser cost per format; narrow vs wide isolates per-field parse cost |
-| **filter** | `filter_native_narrow/_wide`, `filter_rhai_narrow/_wide` | Native fast-path vs Rhai VM, each at 5 vs ~40 fields |
+| **width** | `width_parse_NN`, `width_filter_NN` (5/8/12/20/40 fields) | The throughput-vs-field-count curve (the dominant lever) |
+| **filter** | `filter_native_narrow/_wide`, `filter_rhai_narrow/_wide` | Native fast-path vs Rhai VM, each at 5 vs 40 fields |
+| **exec** | `exec_narrow/_wide` | Cost of an `--exec` stage that mutates the event |
+| **parallel** | `parallel_narrow/_wide` (4 threads) | Multi-core scaling vs the sequential `filter_native_*` |
 | **output** | `output_quiet`, `output_default`, `output_json`, `output_logfmt` | Formatter cost over the parse-only floor (`output_quiet`) |
 | **select** | `select_high` (~100% pass), `select_low` (~25% pass) | Output/write cost as a function of selectivity |
 | **timestamp** | `ts_on` vs `ts_off` | Cost of automatic timestamp extraction |
+| **shape** | `shape_flat_wide`, `shape_nested`, `shape_longval` | Nested vs flat (same leaf count); per-byte (long values) vs per-field cost |
 | **search** | `search_substr` | grep-like substring match on raw lines |
 
-The headline pairing:
-`(filter_rhai_wide − filter_rhai_narrow) − (filter_native_wide − filter_native_narrow)`
-estimates the cost of cloning every field into the Rhai event map.
+Useful pairings:
+
+- `width_*` — maps where *your* data sits; real structured logs cluster at 8–20 fields.
+- `parallel_wide` vs `filter_native_wide` — how much `--parallel` recovers on wide data.
+- `shape_longval` vs `parse_json_narrow` — long values are nearly free; cost is **per-field**, not per-byte.
+- `(filter_rhai_wide − filter_rhai_narrow) − (filter_native_wide − filter_native_narrow)` — Rhai event-map clone cost.
+
+### External comparison (`--compare`)
+
+`--compare` adds an informational table pitting kelora's field filter against
+`jq` (equivalent `select`), and `grep`/`rg` (plain substring — a *floor*, not
+equivalent since they aren't field-aware), on 12- and 40-field data. Tools that
+aren't installed are skipped. These numbers are **not** part of the baseline.
 
 ### Datasets (generated, git-ignored)
 
 Uniform schema for controlled comparisons:
 
 - `simple_narrow_<N>.jsonl` — 5 fields (timestamp, level, component, message, status)
-- `simple_wide_<N>.jsonl` — ~40 fields (same 5 + 35 padding fields)
+- `simple_wide_<N>.jsonl` — 40 fields (same 5 + 35 padding fields)
+- `simple_w{8,12,20}_<N>.jsonl` — intermediate widths for the curve
 - `simple_narrow_<N>.logfmt`, `simple_narrow_<N>.csv` — same 5 fields, other formats
 - `simple_narrow_<N>.txt` — plain text lines (for `-f line` and substring search)
-- `simple_nots_<N>.jsonl` — narrow, but the timestamp field is renamed `tstamp`
-  (not an auto-recognized name) so timestamp extraction is skipped
+- `simple_nots_<N>.jsonl` — narrow, timestamp field renamed `tstamp` (not auto-recognized)
+- `simple_nested_<N>.jsonl` — ~40 leaves nested under objects + an array
+- `simple_longval_<N>.jsonl` — 5 fields, ~400-char message value
 
 Results: `simple_cases_results.json`; baseline: `simple_cases_baseline.json`
 (both local-only). Baseline comparison flags >5% faster (green) / >10% slower (red).
