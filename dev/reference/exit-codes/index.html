@@ -2739,6 +2739,11 @@
 <td>Interrupted by Ctrl+C</td>
 </tr>
 <tr>
+<td><code>134</code></td>
+<td>SIGABRT</td>
+<td>Internal thread panic (a bug — please report)</td>
+</tr>
+<tr>
 <td><code>141</code></td>
 <td>SIGPIPE</td>
 <td>Broken pipe (normal in Unix pipelines)</td>
@@ -2750,6 +2755,12 @@
 </tr>
 </tbody>
 </table>
+<p>Exit code <code>134</code> only appears on an unexpected internal panic in one of Kelora's
+processing threads (reader, worker, or sink). The release binary is built with
+<code>panic = "abort"</code>, so such a panic aborts the process immediately rather than
+unwinding. These are always bugs — the same conditions previously terminated the
+run with exit <code>1</code>/<code>101</code>; only the reported code changed. Please report any
+occurrence.</p>
 <h2 id="exit-code-0-success">Exit Code 0: Success<a class="headerlink" href="#exit-code-0-success" title="Permanent link">&para;</a></h2>
 <p>Indicates <strong>successful processing</strong>. All required input was processed, and no unrecovered processing failure occurred.</p>
 <p><strong>Important:</strong> Filtering events is <strong>not</strong> an error. If all events are filtered out, exit code is still <code>0</code>. In resilient mode, recovered filter and exec runtime errors are reported as diagnostics but also exit <code>0</code>; use <code>--strict</code> when runtime errors should fail the process.</p>
