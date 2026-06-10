@@ -1,4 +1,5 @@
-# ![Kelora logo](docs/kelora-logo.svg)
+<img src="docs/kelora-logo.svg" alt="Kelora logo" width="200">
+
 
 # Kelora
 
