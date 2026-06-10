@@ -69,6 +69,62 @@ fn test_metrics_output_has_no_leading_newline_when_events_suppressed() {
 }
 
 #[test]
+fn test_metrics_mode_surfaces_exec_errors_on_stderr() {
+    // Regression: --metrics implies suppress_diagnostics, which used to hide the
+    // per-event script-error summary entirely. Script errors go to stderr and
+    // cannot pollute the (stdout) metrics, so they must still be surfaced.
+    // track_count rejects a non-string (int) key with a helpful hint.
+    let input = r#"{"status": 500}
+{"status": 503}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--exec", "track_count(e.status)", "--metrics"],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "resilient runtime errors should not change the exit code"
+    );
+    assert!(
+        stderr.contains("Exec errors"),
+        "metrics mode should still surface the exec-error summary: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("to_string()"),
+        "the surfaced error should carry the actionable hint: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_silent_suppresses_metrics_exec_errors() {
+    // --silent is the one switch that does hide error summaries.
+    let input = r#"{"status": 500}
+{"status": 503}"#;
+
+    let (stdout, stderr, _exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(e.status)",
+            "--metrics",
+            "--silent",
+        ],
+        input,
+    );
+
+    assert_eq!(stdout.trim(), "", "--silent should suppress stdout");
+    assert!(
+        !stderr.contains("Exec errors"),
+        "--silent should suppress the exec-error summary: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_metrics_command_reports_when_nothing_was_tracked() {
     let input = r#"{"level": "INFO"}"#;
 

@@ -699,7 +699,13 @@ fn handle_pipeline_success(
 
     // Print output based on configuration (only if not terminated)
     if !SHOULD_TERMINATE.load(Ordering::Relaxed) {
-        let tracking_summary = if diagnostics_allowed_runtime {
+        // Script/parse error summaries are correctness signals, not informational
+        // diagnostics. They go to stderr (never polluting machine-readable stdout),
+        // so they survive the data-only modes (--metrics/--drain/--discover) that
+        // imply suppress_diagnostics. Only --silent (terminal_allowed == false)
+        // hides them.
+        let errors_allowed = terminal_allowed;
+        let tracking_summary = if errors_allowed {
             crate::rhai_functions::tracking::extract_error_summary_from_tracking(
                 &pipeline_result.tracking_data,
                 config.processing.verbose,
@@ -727,8 +733,9 @@ fn handle_pipeline_success(
                 } else {
                     stderr.writeln(&formatted).unwrap_or(());
                 }
-            } else if diagnostics_allowed_runtime {
-                // Error summary by default when errors occur (unless diagnostics suppressed)
+            } else if errors_allowed {
+                // Error summary by default when errors occur (survives data-only modes;
+                // only --silent suppresses it)
                 let mut summaries = Vec::new();
 
                 if let Some(tracking_summary) = tracking_summary.clone() {
@@ -761,7 +768,7 @@ fn handle_pipeline_success(
             if diagnostics_allowed_runtime && terminal_allowed {
                 maybe_print_zero_results_hint(config, s, stderr);
             }
-        } else if diagnostics_allowed_runtime {
+        } else if errors_allowed {
             if let Some(tracking_summary) = tracking_summary {
                 let formatted = config.format_error_message(&tracking_summary);
                 stderr

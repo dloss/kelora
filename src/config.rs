@@ -939,20 +939,29 @@ impl KeloraConfig {
             cli.output_format.clone().into()
         };
 
-        // Data-only modes suppress script output
+        // Data-only modes suppress script output. They also imply diagnostics
+        // suppression so machine-readable stdout stays clean — but an explicit
+        // `--diagnostics` must win over that implied suppression (otherwise the
+        // user has no way to re-enable diagnostics in these modes).
         if suppress_events_for_stats {
             suppress_script_output = true;
         }
         if suppress_events_for_metrics {
-            suppress_diagnostics = true;
+            if !cli.diagnostics {
+                suppress_diagnostics = true;
+            }
             suppress_script_output = true;
         }
         if suppress_events_for_drain {
-            suppress_diagnostics = true;
+            if !cli.diagnostics {
+                suppress_diagnostics = true;
+            }
             suppress_script_output = true;
         }
         if suppress_events_for_discover {
-            suppress_diagnostics = true;
+            if !cli.diagnostics {
+                suppress_diagnostics = true;
+            }
             suppress_script_output = true;
         }
 
