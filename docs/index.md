@@ -4,23 +4,46 @@
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
 
-## See it
+[Install Kelora](#installation){ .md-button }
 
-You have a log file full of errors. You want to know what's actually breaking — not scroll through hundreds of near-duplicates that differ only by hostname, UUID, or timestamp.
+## A quick tour
 
-```bash
-kelora -f syslog examples/syslog_errors.log --drain -k msg
-```
+**You don't even know what's in the file yet. Start there** — no flags, no regex. Kelora decompresses the gzip, recognizes the Apache combined format, and profiles every field with real sample values:
 
-```
-templates (4 items):
-  438: Connection timeout to database host <fqdn> after <duration>
-  187: Upstream <fqdn> returned <num> for request <uuid>
-   94: Failed to acquire lock on resource <path> after <duration>
-   23: Payment gateway <fqdn> rejected transaction <uuid> insufficient_funds
-```
+=== "Command/Output"
 
-One command. No temp files, no intermediate scripts, no manual regex. `--drain` auto-groups similar messages by inferring where values varied — `<fqdn>`, `<uuid>`, `<path>`, `<duration>` — so you see the handful of patterns actually causing the noise.
+    ```bash exec="on" source="above" result="ansi"
+    kelora examples/web_access_large.log.gz --discover
+    ```
+
+**Mixed formats in one file are the normal case, not the exception.** Give Kelora a cascade of parsers (`-f json,line`) and it tries each one per line, tagging every event with the winner in `_format` — so you keep the structured lines, drop the noise, and emit clean CSV in a single pass:
+
+=== "Command/Output"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora -f json,line examples/mixed_format.log \
+      --filter 'e._format == "json"' -k timestamp,level,msg -F csv
+    ```
+
+=== "Input Data"
+
+    ```bash exec="on" result="ansi"
+    cat examples/mixed_format.log
+    ```
+
+**And when those logs are a wall of near-duplicate errors that differ only by hostname, UUID, or timestamp, cut straight to what's actually breaking.** Point `--drain` at a field (`-k msg`, the syslog message here) and it groups near-identical lines by inferring where the values varied — `<fqdn>`, `<uuid>`, `<path>`, `<duration>` — so 742 noisy lines collapse into the handful of patterns causing the noise:
+
+=== "Command/Output"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora examples/syslog_errors.log --drain -k msg
+    ```
+
+=== "Input (8 of 742 lines)"
+
+    ```bash exec="on" result="ansi"
+    head -8 examples/syslog_errors.log
+    ```
 
 ## When Kelora helps
 
@@ -81,16 +104,16 @@ Kelora trades raw [speed](concepts/performance-comparisons.md) for programmabili
 
 ---
 
-## Examples
+## More examples
 
-### 1. Filter & Convert (The Basics)
+### Filter & Convert (The Basics)
 *Scenario: Filter a Logfmt file for slow requests and output clean JSON.*
 
 === "Command/Output"
 
     ```bash exec="on" source="above" result="ansi"
-    kelora -f logfmt examples/traffic_logfmt.log \
-      --filter 'e.status.to_int() >= 500 || e.latency_ms.to_int() > 1000' \
+    kelora examples/traffic_logfmt.log \
+      --filter 'e.status >= 500 || e.latency_ms > 1000' \
       -F json
     ```
 
@@ -100,13 +123,13 @@ Kelora trades raw [speed](concepts/performance-comparisons.md) for programmabili
     cat examples/traffic_logfmt.log
     ```
 
-### 2. Modify & Anonymize (Scripting)
+### Modify & Anonymize (Scripting)
 *Scenario: Mask user emails for privacy and convert milliseconds to seconds before printing.*
 
 === "Command/Output"
 
     ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/audit.jsonl \
+    kelora examples/audit.jsonl \
       --exec 'e.email = "***"; e.duration_sec = e.ms / 1000.0;' \
       --keys timestamp,user_id,email,duration_sec
     ```
@@ -117,14 +140,14 @@ Kelora trades raw [speed](concepts/performance-comparisons.md) for programmabili
     cat examples/audit.jsonl
     ```
 
-### 3. Stateful Analysis (Streaming Percentiles)
+### Stateful Analysis (Streaming Percentiles)
 *Scenario: 800 API calls across three endpoints. The average latency looks fine — but the tail might not be. Compute p50/p95/p99 per endpoint in one pass, no external aggregator.*
 
 === "Command/Output"
 
     ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/api_latency_incident.jsonl -q -m \
-      --exec 'track_percentiles("latency_" + e.endpoint, e.response_time_ms)'
+    kelora examples/api_latency_incident.jsonl --metrics \
+      --exec 'track_percentiles("latency_" + e.endpoint.after("/", -1), e.response_time_ms)'
     ```
 
 === "Input Data"
@@ -133,7 +156,7 @@ Kelora trades raw [speed](concepts/performance-comparisons.md) for programmabili
     head -3 examples/api_latency_incident.jsonl
     ```
 
-`track_percentiles` maintains streaming state across events, so this scales to files of any size without holding everything in memory. `--exec` runs per event; metrics emit at end via `-m`.
+`track_percentiles` maintains streaming state across events, so this scales to files of any size without holding everything in memory. `--exec` runs per event; `--metrics` prints just the tracked metrics at the end (it implies `--quiet`, so individual events are suppressed).
 
 ---
 

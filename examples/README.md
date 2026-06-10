@@ -155,7 +155,7 @@ Unix tools:
 
 ```bash
 # Extract and process JSON lines only
-grep '^{' mixed_format.log | kelora -f json --filter 'e.level == "error"'
+grep '^{' mixed_format.log | kelora -f json -l error
 
 # Process plain text lines separately
 grep -v '^{' mixed_format.log | kelora -f line --filter 'e.line.contains("ERROR")'

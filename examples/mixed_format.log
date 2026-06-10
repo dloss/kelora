@@ -1,10 +1,10 @@
-{"level":"info","msg":"JSON line 1","timestamp":"2024-01-15T10:00:00Z"}
-Plain text line - not JSON
-{"level":"error","msg":"JSON line 2","timestamp":"2024-01-15T10:00:01Z"}
-More plain text
-2024-01-15T10:00:02Z INFO Another format entirely
-{"level":"warn","msg":"JSON line 3","timestamp":"2024-01-15T10:00:03Z"}
-Even more unstructured text
-Stack trace line 1
-Stack trace line 2
-{"level":"info","msg":"JSON line 4","timestamp":"2024-01-15T10:00:04Z"}
+Server starting up, plaintext logger active before JSON init
+Loading config from /etc/checkout/config.yml
+{"timestamp":"2024-01-15T10:00:02Z","level":"INFO","msg":"Order 4412 captured for user alice"}
+{"timestamp":"2024-01-15T10:00:03Z","level":"WARN","msg":"Retrying upstream auth.svc after HTTP 503"}
+[legacy] 2024-01-15 10:00:04 ERROR gateway connection reset by peer
+{"timestamp":"2024-01-15T10:00:05Z","level":"ERROR","msg":"Upstream auth.svc timeout after 5000ms"}
+Traceback (most recent call last):
+  File "worker.py", line 42, in process_order
+{"timestamp":"2024-01-15T10:00:08Z","level":"INFO","msg":"Order 4413 captured for user bob"}
+{"timestamp":"2024-01-15T10:00:09Z","level":"WARN","msg":"Connection pool at 85% capacity"}

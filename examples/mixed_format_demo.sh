@@ -20,9 +20,9 @@ kelora -f json,line "$MIXED_LOG" -F json 2>/dev/null | head -5
 echo "   ..."
 echo
 echo "   Filter by winning parser:"
-echo "   Command: kelora -f json,line mixed_format.log --filter 'e._format == \"json\" && e.level == \"error\"'"
+echo "   Command: kelora -f json,line mixed_format.log --filter 'e._format == \"json\"' -l error"
 echo
-kelora -f json,line "$MIXED_LOG" --filter 'e._format == "json" && e.level == "error"' 2>/dev/null || echo "   (No matches)"
+kelora -f json,line "$MIXED_LOG" --filter 'e._format == "json"' -l error 2>/dev/null || echo "   (No matches)"
 echo
 echo "   Per-format event counts in --stats:"
 echo "   Command: kelora -f json,line mixed_format.log --stats -q"
@@ -35,9 +35,9 @@ echo
 
 # Example 1: Split by format - Process only JSON lines
 echo "1. Extract and process only JSON lines (manual preprocessing):"
-echo "   Command: grep '^{' mixed_format.log | kelora -f json --filter 'e.level == \"error\"'"
+echo "   Command: grep '^{' mixed_format.log | kelora -f json -l error"
 echo
-grep '^{' "$MIXED_LOG" | kelora -f json --filter 'e.level == "error"' 2>/dev/null || echo "   (No matches)"
+grep '^{' "$MIXED_LOG" | kelora -f json -l error 2>/dev/null || echo "   (No matches)"
 echo
 
 # Example 2: Split by format - Process only plain text lines

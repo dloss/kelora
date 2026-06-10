@@ -8,12 +8,50 @@
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
 
-## See it
+**Ready to dive in? [Jump to install ↓](#installation)**
 
-You have a log file full of errors. You want to know what's actually breaking — not scroll through hundreds of near-duplicates that differ only by hostname, UUID, or timestamp.
+## A quick tour
+
+**You don't even know what's in the file yet. Start there:**
 
 ```bash
-kelora -f syslog examples/syslog_errors.log --drain -k msg
+kelora examples/web_access_large.log.gz --discover
+```
+
+```
+Field    Type   Seen  Miss   Uniq  Examples
+ip       string 1200    0%  ~1200  "232.53.220.209", "111.136.161.142", ...
+method   string 1200    0%      6  "GET", "PUT", "POST", "PATCH", "HEAD", "DELETE"
+status   int    1200    0%     21  403, 201, 302, 304, 502, 503, 405, 200, ...
+bytes    int    1200    0%  ~1175  99162, 74740, 70145, 82195, ...
+user     string  580   52%   ~564  "macejkovic8736", "conroy2520", ...
+
+1200 events scanned | format: combined (auto-detected)
+```
+
+No flags, no regex — Kelora decompressed the gzip, recognized the Apache combined format on its own, and mapped every field with real sample values. (`user` is 52% missing: half these requests are unauthenticated.)
+
+**Mixed formats in one file are the normal case, not the exception:**
+
+```bash
+kelora -f json,line examples/mixed_format.log --filter 'e._format == "json"' -k timestamp,level,msg -F csv
+```
+
+```
+timestamp,level,msg
+2024-01-15T10:00:02Z,INFO,Order 4412 captured for user alice
+2024-01-15T10:00:03Z,WARN,Retrying upstream auth.svc after HTTP 503
+2024-01-15T10:00:05Z,ERROR,Upstream auth.svc timeout after 5000ms
+2024-01-15T10:00:08Z,INFO,Order 4413 captured for user bob
+2024-01-15T10:00:09Z,WARN,Connection pool at 85% capacity
+```
+
+JSON lines and plain text interleaved in the same file — give Kelora a cascade of parsers (`-f json,line`) and it tries each one per line, tagging every event with the winner in `_format`. Keep the structured ones, drop the noise, and emit clean CSV in a single pass.
+
+**And when those logs are a wall of near-duplicate errors that differ only by hostname, UUID, or timestamp — cut straight to what's actually breaking:**
+
+```bash
+kelora examples/syslog_errors.log --drain -k msg
 ```
 
 ```
@@ -24,7 +62,9 @@ templates (4 items):
    23: Payment gateway <fqdn> rejected transaction <uuid> insufficient_funds
 ```
 
-One command. No temp files, no intermediate scripts, no manual regex. `--drain` auto-groups similar messages so you see the handful of patterns actually causing the noise.
+`-k msg` tells `--drain` which field to mine — here the syslog message — and it groups near-identical lines by inferring where the values varied, so 742 noisy lines collapse into the four patterns causing the noise.
+
+One tool: understand an unknown file, tame mixed formats, and surface what matters — no temp files, no intermediate scripts, no manual regex.
 
 Kelora also handles live streams: `tail -f app.log | kelora -j -l error,warn`.
 
