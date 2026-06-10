@@ -720,6 +720,7 @@ pub struct Cli {
 
     /// Discover field names, types, and cardinality from the log stream.
     #[arg(
+        short = 'd',
         long = "discover",
         value_enum,
         value_name = "FORMAT",
@@ -728,7 +729,7 @@ pub struct Cli {
         default_missing_value = "table",
         conflicts_with = "discover_final_fields",
         help_heading = "Field Discovery",
-        help = "Profile fields: names, inferred types, cardinality estimates, and sample values.\nNested maps and arrays are flattened to 3 levels (e.g. user.name, user.roles[]).\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  --discover          Table summary\n  --discover=json     Machine-readable JSON"
+        help = "Profile fields: names, inferred types, cardinality estimates, and sample values.\nNested maps and arrays are flattened to 3 levels (e.g. user.name, user.roles[]).\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  -d, --discover      Table summary\n  -d=json, --discover=json     Machine-readable JSON"
     )]
     pub discover_fields: Option<DiscoverFieldsFormat>,
 

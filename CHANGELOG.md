@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **`-d` shortcut for `--discover`** - Field discovery, now the documented starting point for unknown files, gets a short flag: `kelora app.log -d` (use `-d=json` for the machine-readable form). Featured near the top of `kelora -h`.
 - **`--discover-depth=0` for unlimited flattening** - Pass `--discover-depth=0` to fully flatten deeply nested JSON during field discovery, removing the previous hard-coded 3-level cap.
 
 ### Changed
