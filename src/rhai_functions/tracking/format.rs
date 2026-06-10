@@ -81,7 +81,7 @@ pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: 
         }
 
         if let Some(avg) = average_value(value) {
-            output.push_str(&format!("{:<12} = {}\n", key, avg));
+            output.push_str(&format!("{:<12} = {}\n", key, format_metric_float(avg)));
             continue;
         }
 
@@ -98,7 +98,7 @@ pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: 
                     if let Ok(percentile) = key[p_pos + 2..].parse::<f64>() {
                         let quantile = percentile / 100.0;
                         let value = digest.estimate_quantile(quantile);
-                        output.push_str(&format!("{:<12} = {:.2}\n", key, value));
+                        output.push_str(&format!("{:<12} = {}\n", key, format_metric_float(value)));
                         continue;
                     }
                 }
@@ -111,7 +111,7 @@ pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: 
             output.push_str(&format!(
                 "{:<12} = {}\n",
                 key,
-                value.as_float().unwrap_or(0.0)
+                format_metric_float(value.as_float().unwrap_or(0.0))
             ));
         } else {
             output.push_str(&format!("{:<12} = {}\n", key, value));
@@ -130,9 +130,45 @@ fn push_ranked_item(output: &mut String, idx: usize, item: &Dynamic, field_name:
                 output.push_str(&format!("  #{:<2} {:<30} {}\n", idx + 1, key_str, count));
             } else {
                 let val = v.as_float().unwrap_or(0.0);
-                output.push_str(&format!("  #{:<2} {:<30} {:.2}\n", idx + 1, key_str, val));
+                output.push_str(&format!(
+                    "  #{:<2} {:<30} {}\n",
+                    idx + 1,
+                    key_str,
+                    format_metric_float(val)
+                ));
             }
         }
+    }
+}
+
+/// Round a float to a fixed number of significant figures for the human-readable
+/// `--metrics` text view, trimming trailing zeros (e.g. `146.6142714694471` →
+/// `146.614`, `914.090` → `914.09`, `0.0004123` → `0.0004123`).
+///
+/// Display-only: the stored value and the JSON / `--metrics-file` output keep
+/// full precision. Significant figures (rather than fixed decimals) keep
+/// sub-1 values from collapsing to `0.00`.
+fn format_metric_float(value: f64) -> String {
+    const SIG_FIGS: i32 = 6;
+
+    if !value.is_finite() {
+        return format!("{value}");
+    }
+    if value == 0.0 {
+        return "0".to_string();
+    }
+
+    let magnitude = value.abs().log10().floor() as i32;
+    let decimals = (SIG_FIGS - 1 - magnitude).max(0) as usize;
+    let formatted = format!("{value:.decimals$}");
+
+    if formatted.contains('.') {
+        formatted
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string()
+    } else {
+        formatted
     }
 }
 
@@ -327,6 +363,21 @@ mod tests {
 
         let avg = average_value(&Dynamic::from(map)).unwrap();
         assert!((avg - 2.25).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_format_metric_float_significant_figures() {
+        // Trims noisy trailing digits to ~6 significant figures.
+        assert_eq!(format_metric_float(146.6142714694471), "146.614");
+        // Trailing zeros are trimmed.
+        assert_eq!(format_metric_float(914.089985589136), "914.09");
+        // Whole-number floats print without a decimal point.
+        assert_eq!(format_metric_float(1000.0), "1000");
+        // Sub-1 values survive instead of collapsing to "0.00".
+        assert_eq!(format_metric_float(0.0004123), "0.0004123");
+        // Zero and non-finite values have sane fallbacks.
+        assert_eq!(format_metric_float(0.0), "0");
+        assert_eq!(format_metric_float(f64::INFINITY), "inf");
     }
 
     #[test]
