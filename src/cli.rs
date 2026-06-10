@@ -506,11 +506,15 @@ pub struct Cli {
     #[arg(short = 'q', long = "quiet", help_heading = "Output Options")]
     pub quiet: bool,
 
-    /// Enable diagnostics and error summaries
+    /// Show advisory diagnostics (zero-result hints, format/typo tips) even in
+    /// data-only modes like --metrics/--drain/--discover. Error summaries always
+    /// show unless --silent.
     #[arg(long = "diagnostics", help_heading = "Output Options", overrides_with_all = ["no_diagnostics", "diagnostics"])]
     pub diagnostics: bool,
 
-    /// Suppress diagnostics and error summaries (fatal line still allowed).
+    /// Suppress advisory diagnostics (zero-result hints, format/typo tips,
+    /// per-line verbose errors). Error and parse summaries still print; use
+    /// --silent to hide those too.
     #[arg(long = "no-diagnostics", hide = true, help_heading = "Output Options", overrides_with_all = ["diagnostics", "no_diagnostics"])]
     pub no_diagnostics: bool,
 
