@@ -297,6 +297,62 @@ fn test_zero_results_with_existing_filter_field_does_not_emit_typo_hint() {
 }
 
 #[test]
+fn test_level_filter_on_unstructured_input_hints_missing_level_field() {
+    // The newcomer's most natural first command on a plain app log:
+    // `kelora app.log -l error`. Plain `line` input has no level field, so the
+    // level filter drops everything. Instead of a silent empty result, point at
+    // the structural cause and offer a workaround.
+    let input = "[2025-01-15 10:00:00] INFO started\n[2025-01-15 10:00:05] ERROR boom";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "line", "-l", "error"], input);
+
+    assert_eq!(exit_code, 0, "a level miss should remain non-fatal");
+    assert!(stdout.is_empty(), "no events should be output: {}", stdout);
+    assert!(
+        stderr.contains("0 events matched") && stderr.contains("no level field"),
+        "stderr should explain the missing level field: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_level_filter_with_present_level_field_does_not_hint_missing_field() {
+    // When a level field exists but no value matches, the empty result is a
+    // legitimate mismatch, not a structural problem — no "missing level" hint.
+    let input = r#"{"level": "INFO", "message": "ok"}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json", "-l", "error"], input);
+
+    assert_eq!(
+        exit_code, 0,
+        "a non-matching level should remain successful"
+    );
+    assert!(
+        !stderr.contains("no level field"),
+        "stderr should not claim a missing level field when one exists: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_time_filter_without_timestamps_hints_missing_timestamp() {
+    // `--since` on input with no parseable timestamp silently drops everything;
+    // surface the structural cause and point at --ts-field/--ts-format.
+    let input = "just some text\nmore text without a timestamp";
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "--since", "2025-01-01T00:00:00Z"], input);
+
+    assert_eq!(exit_code, 0, "a time miss should remain non-fatal");
+    assert!(stdout.is_empty(), "no events should be output: {}", stdout);
+    assert!(
+        stderr.contains("0 events matched") && stderr.contains("no timestamps were parsed"),
+        "stderr should explain the missing timestamps: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_keep_lines_with_specific_pattern() {
     let input = r#"{"level": "INFO", "message": "User login successful"}
 {"level": "DEBUG", "message": "systemd startup complete"}

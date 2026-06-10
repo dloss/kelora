@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Zero-result hint for level/time filters on the wrong input** - Running `-l/--levels` against unstructured input that has no level field (e.g. plain `line` logs), or `--since/--until` against input with no parseable timestamp, silently dropped every event with no explanation. Kelora now prints a hint naming the structural cause and a workaround (parse levels with `-f cols/regex` or match text with `--filter`; set `--ts-field`/`--ts-format`), matching the existing "0 events matched" hint for unseen `--filter` fields. A genuine value mismatch (level present but unmatched, timestamps present but out of range) is still treated as a legitimate empty result.
 - **`track_stats` metrics now usable in `--end` and `span_close`** - Percentile, average, and cardinality sketches were exposed as raw blobs, making `metrics["foo_p95"]` unusable. They are now properly finalized to scalar values.
 - **Exec error counts no longer silently undercounted** - The exec stage's atomic-rollback path was discarding `track_error` writes; error counters now survive rollback.
 - **`--discover` HLL cardinality clamped to observation count** - The HyperLogLog estimate could exceed the number of times a field was seen; it is now clamped so "Uniq > Seen" rows no longer appear.
