@@ -248,6 +248,37 @@ fn test_zero_results_with_unseen_filter_field_emits_hint() {
 }
 
 #[test]
+fn test_bare_field_reference_suggests_e_prefix() {
+    // The most common newcomer mistake: referencing a field without the `e.`
+    // prefix. The hint should point straight at `e.<field>` rather than a
+    // string-similar scope variable.
+    let input = r#"{"level": "INFO", "status": 200}"#;
+
+    let (_stdout, stderr, _exit_code) =
+        run_kelora_with_input(&["-f", "json", "--filter", "status >= 500"], input);
+
+    assert!(
+        stderr.contains("e.status"),
+        "stderr should suggest the e.-prefixed field for a bare reference: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_near_miss_bare_field_suggests_closest_e_prefixed_field() {
+    let input = r#"{"level": "INFO", "status": 200}"#;
+
+    let (_stdout, stderr, _exit_code) =
+        run_kelora_with_input(&["-f", "json", "--filter", "statuss >= 500"], input);
+
+    assert!(
+        stderr.contains("e.status"),
+        "stderr should suggest the closest e.-prefixed field for a near-miss: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_zero_results_with_existing_filter_field_does_not_emit_typo_hint() {
     let input = r#"{"level": "INFO", "message": "ok"}"#;
 

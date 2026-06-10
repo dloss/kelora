@@ -159,15 +159,24 @@ impl ErrorEnhancer {
     ) -> Option<String> {
         let base = match error {
             EvalAltResult::ErrorVariableNotFound(var_name, _) => {
-                let similar = self.find_similar_variables(var_name, scope);
-                if !similar.is_empty() {
-                    Some(format!("Did you mean: {}?", similar.join(", ")))
-                } else if var_name.contains('.') {
-                    Some("Check if the field exists and use safe access like 'if \"field\" in e { e.field } else { \"default\" }'".to_string())
-                } else if var_name.starts_with("e.") {
-                    Some("Try using bracket notation for special characters: e[\"field-name\"] or e[\"field.with.dots\"]".to_string())
+                // The most common newcomer mistake is referencing an event field
+                // without the `e.` prefix (e.g. `status` instead of `e.status`).
+                // If the bare identifier matches—or closely resembles—a real field
+                // on the event, point straight at `e.<field>` rather than fall back
+                // to scope-variable lookups that only know about e/meta/conf/line.
+                if let Some(hint) = self.suggest_event_field_prefix(var_name, scope) {
+                    Some(hint)
                 } else {
-                    Some("Available variables: e (event), meta (metadata), conf (initialization data), line (raw line)".to_string())
+                    let similar = self.find_similar_variables(var_name, scope);
+                    if !similar.is_empty() {
+                        Some(format!("Did you mean: {}?", similar.join(", ")))
+                    } else if var_name.contains('.') {
+                        Some("Check if the field exists and use safe access like 'if \"field\" in e { e.field } else { \"default\" }'".to_string())
+                    } else if var_name.starts_with("e.") {
+                        Some("Try using bracket notation for special characters: e[\"field-name\"] or e[\"field.with.dots\"]".to_string())
+                    } else {
+                        Some("Available variables: e (event), meta (metadata), conf (initialization data), line (raw line)".to_string())
+                    }
                 }
             }
             EvalAltResult::ErrorPropertyNotFound(prop_name, _) => {
@@ -432,6 +441,44 @@ impl ErrorEnhancer {
             return Some(keys);
         }
         None
+    }
+
+    /// If a bare identifier (used without the `e.` prefix) matches or resembles a
+    /// field on the event, suggest the prefixed form `e.<field>`. Returns `None`
+    /// when the identifier already carries a dot/prefix or no field is a good
+    /// match, so the caller can fall back to scope-variable suggestions.
+    fn suggest_event_field_prefix(&self, var_name: &str, scope: &Scope) -> Option<String> {
+        if var_name.contains('.') {
+            return None;
+        }
+        let fields = self.event_field_names(scope)?;
+
+        // Exact field match: the missing `e.` prefix is the whole problem.
+        if fields.iter().any(|f| f.as_str() == var_name) {
+            return Some(format!(
+                "Did you mean: e.{var_name}? Event fields are accessed through `e`, e.g. `e.{var_name}`."
+            ));
+        }
+
+        // Otherwise offer the closest field names, already prefixed.
+        let target_lower = var_name.to_lowercase();
+        let similar: Vec<String> = fields
+            .iter()
+            .filter(|name| {
+                let name_lower = name.to_lowercase();
+                self.calculate_similarity(&target_lower, &name_lower) > 0.6
+                    || name_lower.contains(&target_lower)
+                    || target_lower.contains(&name_lower)
+            })
+            .take(3)
+            .map(|name| format!("e.{name}"))
+            .collect();
+
+        if similar.is_empty() {
+            None
+        } else {
+            Some(format!("Did you mean: {}?", similar.join(", ")))
+        }
     }
 
     fn calculate_similarity(&self, s1: &str, s2: &str) -> f64 {
