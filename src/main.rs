@@ -413,7 +413,11 @@ fn main() -> Result<()> {
         had_errors = true;
     }
 
-    if had_errors && !diagnostics_allowed_runtime {
+    // The terse fatal line is the *substitute* for the full error summary when
+    // output is suppressed. The summary now surfaces whenever stderr is allowed
+    // (everything except --silent), so the fatal line is only the fallback under
+    // --silent; otherwise it would duplicate the summary.
+    if had_errors && !terminal_allowed {
         let fatal_message = if let Some(ref tracking) = tracking_data {
             crate::rhai_functions::tracking::format_fatal_error_line(tracking)
         } else {
