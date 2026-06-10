@@ -1846,7 +1846,7 @@ impl RhaiEngine {
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
 
-        self.assert_conf_not_mutated(&scope)
+        self.assert_conf_not_mutated(&scope, compiled.uses_conf)
             .map_err(anyhow::Error::from)?;
 
         // Add execution result tracing
@@ -1927,7 +1927,7 @@ impl RhaiEngine {
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
 
-        self.assert_conf_not_mutated(&scope)
+        self.assert_conf_not_mutated(&scope, compiled.uses_conf)
             .map_err(anyhow::Error::from)?;
 
         // Add execution result tracing
@@ -2039,7 +2039,7 @@ impl RhaiEngine {
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
 
-        self.assert_conf_not_mutated(&scope)
+        self.assert_conf_not_mutated(&scope, compiled.uses_conf)
             .map_err(anyhow::Error::from)?;
 
         Ok(())
@@ -2087,7 +2087,7 @@ impl RhaiEngine {
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
 
-        self.assert_conf_not_mutated(&scope)
+        self.assert_conf_not_mutated(&scope, compiled.uses_conf)
             .map_err(anyhow::Error::from)?;
 
         let ops = crate::rhai_functions::file_ops::take_pending_ops();
@@ -2162,7 +2162,7 @@ impl RhaiEngine {
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
 
-        self.assert_conf_not_mutated(&scope)
+        self.assert_conf_not_mutated(&scope, compiled.uses_conf)
             .map_err(anyhow::Error::from)?;
 
         // Add execution result tracing
@@ -2250,7 +2250,7 @@ impl RhaiEngine {
                 anyhow::anyhow!("{}", detailed_msg)
             })?;
 
-        self.assert_conf_not_mutated(&scope)
+        self.assert_conf_not_mutated(&scope, compiled.uses_conf)
             .map_err(anyhow::Error::from)?;
 
         // Add execution result tracing
@@ -2277,7 +2277,20 @@ impl RhaiEngine {
         Ok(())
     }
 
-    fn assert_conf_not_mutated(&self, scope: &Scope) -> Result<(), ConfMutationError> {
+    fn assert_conf_not_mutated(
+        &self,
+        scope: &Scope,
+        uses_conf: bool,
+    ) -> Result<(), ConfMutationError> {
+        // Stages that don't reference `conf` never get the real conf map loaded
+        // into their scope (see `create_scope_for_event_optimized`); the scope
+        // keeps the template's empty placeholder instead. Skip the check for
+        // those stages — a script that never names `conf` cannot mutate it, and
+        // comparing the empty placeholder against the real map would be a false
+        // positive.
+        if !uses_conf {
+            return Ok(());
+        }
         if let Some(original) = &self.conf_map {
             match scope.get_value::<Map>("conf") {
                 Some(conf) if maps_equal(&conf, original) => Ok(()),

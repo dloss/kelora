@@ -155,6 +155,55 @@ fn test_init_map_immutability() {
 }
 
 #[test]
+fn test_conf_read_in_exec_then_non_conf_filter() {
+    // Regression: a --filter (or any stage) that does NOT reference `conf`
+    // skips loading the real conf map into its scope. The conf-immutability
+    // check must not treat that empty placeholder as a mutation. Previously
+    // this raised a spurious "conf map is read-only" error.
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+
+    let data_file = temp_dir.path().join("blocked.txt");
+    fs::write(&data_file, "192.168.1.100\n10.0.0.50\n").expect("Failed to write data file");
+
+    let begin_script = format!(
+        "conf.blocked = read_lines(\"{}\")",
+        data_file.to_str().unwrap()
+    );
+
+    let input = r#"{"ip": "192.168.1.100", "user": "admin"}
+{"ip": "192.168.1.200", "user": "alice"}
+{"ip": "10.0.0.50", "user": "bob"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--begin",
+            &begin_script,
+            "--exec",
+            "e.is_blocked = e.ip in conf.blocked",
+            "--filter",
+            "e.is_blocked",
+            "-k",
+            "ip,user,is_blocked",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "Command should succeed. stderr: {}", stderr);
+    assert!(
+        !stderr.contains("conf map is read-only"),
+        "Reading conf in --exec then filtering on a non-conf field must not \
+         trigger the immutability error. stderr: {}",
+        stderr
+    );
+    // Only the two blocked IPs should pass the filter.
+    assert!(stdout.contains("192.168.1.100"));
+    assert!(stdout.contains("10.0.0.50"));
+    assert!(!stdout.contains("192.168.1.200"));
+}
+
+#[test]
 fn test_read_functions_only_in_begin() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
 
