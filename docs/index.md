@@ -140,14 +140,14 @@ Kelora trades raw [speed](concepts/performance-comparisons.md) for programmabili
     cat examples/audit.jsonl
     ```
 
-### Stateful Analysis (Streaming Percentiles)
-*Scenario: 800 API calls across three endpoints. The average latency looks fine — but the tail might not be. Compute p50/p95/p99 per endpoint in one pass, no external aggregator.*
+### Stateful Analysis (Streaming Stats)
+*Scenario: 800 API calls across three endpoints. The average latency looks fine — but the tail might not be. Compute a full distribution summary (avg, min/max, p50/p95/p99) per endpoint in one pass, no external aggregator.*
 
 === "Command/Output"
 
     ```bash exec="on" source="above" result="ansi"
     kelora examples/api_latency_incident.jsonl --metrics \
-      --exec 'track_percentiles("latency_" + e.endpoint.after("/", -1), e.response_time_ms)'
+      --exec 'track_stats("latency_" + e.endpoint.after("/", -1), e.response_time_ms)'
     ```
 
 === "Input Data"
@@ -156,7 +156,7 @@ Kelora trades raw [speed](concepts/performance-comparisons.md) for programmabili
     head -3 examples/api_latency_incident.jsonl
     ```
 
-`track_percentiles` maintains streaming state across events, so this scales to files of any size without holding everything in memory. `--exec` runs per event; `--metrics` prints just the tracked metrics at the end (it implies `--quiet`, so individual events are suppressed).
+Look at `latency_posts`: the average (~147ms) looks healthy, but p99 is ~880ms — a 6× tail the average hides entirely. `track_stats` maintains streaming state across events (averages and counts directly, percentiles via t-digest), so this scales to files of any size without holding everything in memory. `--exec` runs per event; `--metrics` prints just the tracked metrics at the end (it implies `--quiet`, so individual events are suppressed).
 
 ---
 
