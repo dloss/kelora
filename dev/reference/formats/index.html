@@ -3155,16 +3155,34 @@ classification.</p>
 breakdown so silent misclassification surfaces immediately:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Cascade formats: json=9812, line=23
 </code></pre></div>
-<p><strong>Allowed in cascade:</strong> <code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>, <code>cef</code>,
-<code>combined</code>.</p>
-<p><strong>Not allowed in cascade</strong> (rejected at CLI parse time):</p>
+<p><strong>Allowed in a comma list:</strong> <code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>,
+<code>cef</code>, <code>combined</code>.</p>
+<p><strong>Not allowed in a comma list</strong> (rejected at CLI parse time):</p>
 <ul>
 <li><code>auto</code> — meaningless inside a cascade list; list the formats explicitly</li>
 <li><code>csv</code>, <code>tsv</code>, <code>csvnh</code>, <code>tsvnh</code> — schema-based; headers/types can't safely
   change mid-stream</li>
-<li><code>cols:&lt;spec&gt;</code>, <code>regex:&lt;pattern&gt;</code> — carry positional specs that tie them
-  to a single stream shape</li>
+<li><code>cols:&lt;spec&gt;</code>, <code>regex:&lt;pattern&gt;</code> — a regex pattern may itself contain
+  commas, so commas can't safely delimit them. Use <strong>repeated <code>-f</code></strong> instead.</li>
 </ul>
+<p><strong>Cascades with <code>cols:</code>/<code>regex:</code> — use repeated <code>-f</code>.</strong> Pass one <code>-f</code> per
+format and they are tried in order, exactly like a comma list, but each spec
+is taken whole so <code>cols:</code>/<code>regex:</code> work as members:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># JSON lines plus a &#39;timestamp LEVEL message&#39; app log in one file</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Selective regex first, raw line as the catch-all for anything else</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;ts&gt;\S+ \S+) (?P&lt;level&gt;\w+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log
+</code></pre></div>
+<p>A comma list and repeated <code>-f</code> can be combined; comma-list members are
+flattened into the cascade in order.</p>
+<p><strong>Catch-alls go last.</strong> <code>line</code>, <code>raw</code>, and <code>cols:</code> match essentially every
+line (in resilient mode <code>cols:</code> fills missing fields with <code>()</code> rather than
+failing), so anything listed after them would never run — Kelora rejects that
+ordering. <code>regex:</code> is selective: it declines non-matching lines, so it may sit
+earlier in the cascade and fall through to a later catch-all (as in the
+example above, where stack-trace lines that don't match the regex are kept by
+<code>line</code>).</p>
 <p><strong>Ordering matters.</strong> The first parser that returns <code>Ok</code> wins, so list
 high-confidence formats first and use <code>line</code> as the terminal fallback.
 Liberal grammars (like <code>logfmt</code>, which accepts any <code>key=value</code> substring)
@@ -3265,13 +3283,13 @@ reclassification is intentionally not supported.</p>
 - Request latency tracking
 - Any time-series numeric data where tail latencies matter</p>
 <p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>method<span class="w"> </span>access.log<span class="w">          </span><span class="c1"># Show HTTP method patterns</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>--keys<span class="w"> </span>status<span class="w"> </span>api.log<span class="w">         </span><span class="c1"># Show status field patterns</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log<span class="w">     </span><span class="c1"># Visualize response time distribution</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>query_time_ms<span class="w"> </span>db.log<span class="w">  </span><span class="c1"># Show database query performance</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>method<span class="w"> </span>access.log<span class="w">          </span><span class="c1"># Show HTTP method patterns</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>--keys<span class="w"> </span>status<span class="w"> </span>api.log<span class="w">         </span><span class="c1"># Show status field patterns</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log<span class="w">     </span><span class="c1"># Visualize response time distribution</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>query_time_ms<span class="w"> </span>db.log<span class="w">  </span><span class="c1"># Show database query performance</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
