@@ -70,12 +70,19 @@ Type annotations (csv/tsv/cols/regex)
   the annotation and convert in a script stage, e.g.
     -f csv --exec 'e.status = to_int_or(e.status, 0)'
 
-Named application-log formats (auto-detect only)
-  When no structured format matches, auto-detection also recognises a small set
-  of common application-log layouts and parses them with the regex engine:
-    glog/klog, nginx-error, log4j, python-logging, iso8601-level
-  These are tried just before the 'line' fallback, so they never override a
-  format detected earlier. Adapted from lnav (see THIRD_PARTY_LICENSES.md).
+Named application-log formats
+  A small set of common application-log layouts, parsed with the regex engine:
+    glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
+    nginx-error     nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
+    log4j           log4j / Java (2024-01-02 15:04:05,123 INFO [main] logger - msg)
+    python-logging  Python logging default (... ,123 - logger - INFO - msg)
+    iso8601-level   ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
+  Select explicitly with -f <name> (e.g. -f log4j), or in a cascade list
+  (e.g. -f log4j,line). They are also tried during auto-detection, just before
+  the 'line' fallback, so they never override a format detected earlier; when
+  one matches, the field names it produces are timestamp, level, msg, and
+  format-specific extras (thread, logger, pid, ...).
+  Adapted from lnav (BSD-3-Clause; see THIRD_PARTY_LICENSES.md).
 
 auto (default)
   Auto-detect format from first non-empty line

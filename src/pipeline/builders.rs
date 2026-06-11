@@ -102,6 +102,9 @@ fn build_simple_cascade_parser(
                 Box::new(crate::parsers::CombinedParser::new()?)
             }
         }
+        crate::config::InputFormat::Named(fmt) => {
+            Box::new(crate::parsers::RegexParser::new(fmt.pattern)?.with_strict(strict))
+        }
         other => {
             return Err(anyhow::anyhow!(
                 "format '{}' is not allowed inside a cascade list",
@@ -326,6 +329,9 @@ impl PipelineBuilder {
             }
             crate::config::InputFormat::Regex(ref pattern) => {
                 Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(self.strict))
+            }
+            crate::config::InputFormat::Named(fmt) => {
+                Box::new(crate::parsers::RegexParser::new(fmt.pattern)?.with_strict(self.strict))
             }
             crate::config::InputFormat::Cascade(ref formats) => {
                 build_cascading_parser(formats, custom_ts_config, self.strict)?

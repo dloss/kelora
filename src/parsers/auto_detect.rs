@@ -56,9 +56,10 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
     // 8. Built-in named application-log formats adapted from lnav.
     //    Tried last (just before the line fallback) so it can only reclassify
     //    input that would otherwise become `line` — never a format already
-    //    detected above. The matched pattern is handed to the regex parser.
+    //    detected above. Returns the named format (regex-backed) so the notice
+    //    and stats show its name (e.g. "log4j") rather than a bare "regex".
     if let Some(fmt) = crate::parsers::lnav_formats::detect(trimmed) {
-        return Ok(ConfigInputFormat::Regex(fmt.pattern.to_string()));
+        return Ok(ConfigInputFormat::Named(fmt));
     }
 
     // 9. Fallback to line format
@@ -244,18 +245,36 @@ mod tests {
     #[test]
     fn test_detect_lnav_named_formats() {
         // Application-log layouts that would previously fall through to `line`
-        // are now detected and routed to the regex parser.
-        for line in [
-            "2024-01-02T15:04:05.123Z INFO Starting service on port 8080",
-            "2024-01-02 15:04:05,123 INFO [main] com.example.Service - up",
-            "2024-01-02 15:04:05,123 - myapp.module - INFO - Service started",
-            "2024/01/02 15:04:05 [error] 29#29: *1 open() failed",
-            "I0102 15:04:05.123456 1234 server.go:42] Starting controller",
+        // are now detected as named, regex-backed formats (and the notice/stats
+        // show the name rather than a bare "regex").
+        for (line, expected) in [
+            (
+                "2024-01-02T15:04:05.123Z INFO Starting service on port 8080",
+                "iso8601-level",
+            ),
+            (
+                "2024-01-02 15:04:05,123 INFO [main] com.example.Service - up",
+                "log4j",
+            ),
+            (
+                "2024-01-02 15:04:05,123 - myapp.module - INFO - Service started",
+                "python-logging",
+            ),
+            (
+                "2024/01/02 15:04:05 [error] 29#29: *1 open() failed",
+                "nginx-error",
+            ),
+            (
+                "I0102 15:04:05.123456 1234 server.go:42] Starting controller",
+                "glog",
+            ),
         ] {
-            assert!(
-                matches!(detect_format(line).unwrap(), ConfigInputFormat::Regex(_)),
-                "expected regex detection for: {line}"
-            );
+            match detect_format(line).unwrap() {
+                ConfigInputFormat::Named(fmt) => {
+                    assert_eq!(fmt.name, expected, "wrong named format for: {line}")
+                }
+                other => panic!("expected named format {expected} for {line}, got {other:?}"),
+            }
         }
     }
 

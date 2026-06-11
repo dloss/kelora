@@ -40,20 +40,21 @@ use crate::pipeline::EventParser;
 /// A built-in named log format: an anchored [`RegexParser`] pattern plus
 /// representative sample lines used for self-validation.
 ///
-/// `name` and `samples` are currently consumed only by the self-validation
-/// tests (and reserved for surfacing the matched format in diagnostics); the
-/// detection path only needs `pattern`. They are kept as part of the public
-/// definition so each entry is self-describing and test-verified.
-#[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
+/// The `name` is a stable, user-facing identifier: it is shown in the
+/// auto-detect notice, accepted by `-f <name>` (including inside cascade
+/// lists), and listed in `--help-formats`. `samples` are consumed only by the
+/// self-validation tests, but are kept as part of the definition so each entry
+/// is self-describing and test-verified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LnavFormat {
-    /// Stable identifier for the format.
+    /// Stable, user-facing identifier (also usable with `-f`).
     pub name: &'static str,
     /// Pattern in `RegexParser` syntax. Outer `^...$` anchors are added by
     /// `RegexParser`, so they are omitted here.
     pub pattern: &'static str,
     /// Lines this format must parse. Used by the self-validation test and as
     /// living documentation of what each format looks like.
+    #[allow(dead_code)] // consumed only by the self-validation tests
     pub samples: &'static [&'static str],
 }
 
@@ -120,6 +121,23 @@ pub fn detect(line: &str) -> Option<&'static LnavFormat> {
             .map(|parser| parser.parse(line).is_ok())
             .unwrap_or(false)
     })
+}
+
+/// Look up a built-in named format by its identifier (e.g. for `-f log4j`).
+/// Names are lowercase; lookup is case-insensitive for friendliness.
+pub fn by_name(name: &str) -> Option<&'static LnavFormat> {
+    LNAV_FORMATS
+        .iter()
+        .find(|fmt| fmt.name.eq_ignore_ascii_case(name))
+}
+
+/// Comma-separated list of built-in format names, for help and error text.
+pub fn names_csv() -> String {
+    LNAV_FORMATS
+        .iter()
+        .map(|fmt| fmt.name)
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 #[cfg(test)]

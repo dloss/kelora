@@ -221,6 +221,10 @@ pub enum InputFormat {
     Combined,
     Cols(String),  // Contains the column spec
     Regex(String), // Contains the regex pattern with optional type annotations
+    /// Built-in named format adapted from lnav (e.g. log4j, glog). Backed by a
+    /// static regex definition; selectable via `-f <name>` and produced by
+    /// auto-detection. See `crate::parsers::lnav_formats`.
+    Named(&'static crate::parsers::lnav_formats::LnavFormat),
     /// Cascade: try each format in order, first success wins.
     /// Only contains formats that are safe to try per-line (no CSV/cols/regex/auto).
     Cascade(Vec<InputFormat>),
@@ -245,6 +249,7 @@ impl InputFormat {
             InputFormat::Combined => "combined".to_string(),
             InputFormat::Cols(_) => "cols".to_string(),
             InputFormat::Regex(_) => "regex".to_string(),
+            InputFormat::Named(fmt) => fmt.name.to_string(),
             InputFormat::Cascade(formats) => {
                 let names: Vec<String> = formats.iter().map(|f| f.to_display_string()).collect();
                 format!("cascade({})", names.join(","))
@@ -276,6 +281,7 @@ impl InputFormat {
             InputFormat::Combined => "combined",
             InputFormat::Cols(_) => "cols",
             InputFormat::Regex(_) => "regex",
+            InputFormat::Named(fmt) => fmt.name,
             InputFormat::Cascade(_) => "cascade",
         }
     }
@@ -1244,7 +1250,13 @@ pub(crate) fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat>
         "csvnh" => Ok(InputFormat::Csvnh),
         "tsvnh" => Ok(InputFormat::Tsvnh),
         "combined" => Ok(InputFormat::Combined),
-        _ => Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: json, line, csv, syslog, cef, logfmt, raw, tsv, csvnh, tsvnh, combined, auto, auto-per-file, cols:<spec>, and regex:<pattern>", spec)),
+        other => {
+            // Built-in named formats (adapted from lnav), e.g. -f log4j
+            if let Some(fmt) = crate::parsers::lnav_formats::by_name(other) {
+                return Ok(InputFormat::Named(fmt));
+            }
+            Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: json, line, csv, syslog, cef, logfmt, raw, tsv, csvnh, tsvnh, combined, auto, auto-per-file, cols:<spec>, regex:<pattern>, and named formats ({})", spec, crate::parsers::lnav_formats::names_csv()))
+        }
     }
 }
 
@@ -1296,11 +1308,18 @@ fn parse_cascade_spec(spec: &str) -> anyhow::Result<InputFormat> {
                     part
                 ));
             }
-            _ => {
-                return Err(anyhow::anyhow!(
-                    "Unknown format '{}' in cascade list. Allowed: json, line, raw, logfmt, syslog, cef, combined",
-                    part
-                ));
+            other => {
+                // Built-in named formats (adapted from lnav) are regex-backed and
+                // safe to try per-line, so they are allowed in cascade lists.
+                if let Some(fmt) = crate::parsers::lnav_formats::by_name(other) {
+                    InputFormat::Named(fmt)
+                } else {
+                    return Err(anyhow::anyhow!(
+                        "Unknown format '{}' in cascade list. Allowed: json, line, raw, logfmt, syslog, cef, combined, and named formats ({})",
+                        part,
+                        crate::parsers::lnav_formats::names_csv()
+                    ));
+                }
             }
         };
         let name = fmt.cascade_name();
@@ -1586,6 +1605,9 @@ impl From<InputFormat> for crate::InputFormat {
             InputFormat::Combined => crate::InputFormat::Combined,
             InputFormat::Cols(_) => crate::InputFormat::Cols,
             InputFormat::Regex(_) => crate::InputFormat::Regex,
+            // Named formats are regex-backed; map to Regex in the (unused) legacy
+            // CLI-enum conversion path.
+            InputFormat::Named(_) => crate::InputFormat::Regex,
             // Cascade has no direct equivalent in the CLI enum; fall back to Auto
             // for the (unused) legacy conversion path.
             InputFormat::Cascade(_) => crate::InputFormat::Auto,
@@ -1845,5 +1867,47 @@ mod tests {
         let parsed = parse_input_format_spec("json,logfmt,raw")
             .expect("raw should be allowed as the final fallback");
         assert!(matches!(parsed, InputFormat::Cascade(_)));
+    }
+
+    #[test]
+    fn parse_named_format_by_name() {
+        match parse_input_format_spec("log4j").expect("log4j is a named format") {
+            InputFormat::Named(fmt) => assert_eq!(fmt.name, "log4j"),
+            other => panic!("expected Named(log4j), got {other:?}"),
+        }
+        // Case-insensitive for friendliness.
+        match parse_input_format_spec("GLOG").expect("glog is a named format") {
+            InputFormat::Named(fmt) => assert_eq!(fmt.name, "glog"),
+            other => panic!("expected Named(glog), got {other:?}"),
+        }
+        assert_eq!(
+            parse_input_format_spec("log4j")
+                .unwrap()
+                .to_display_string(),
+            "log4j"
+        );
+    }
+
+    #[test]
+    fn parse_named_format_in_cascade() {
+        let parsed = parse_input_format_spec("log4j,line")
+            .expect("named formats are allowed in cascade lists");
+        match parsed {
+            InputFormat::Cascade(formats) => {
+                assert!(matches!(formats[0], InputFormat::Named(f) if f.name == "log4j"));
+                assert!(matches!(formats[1], InputFormat::Line));
+            }
+            other => panic!("expected cascade, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_unknown_format_lists_named_options() {
+        let err = parse_input_format_spec("log4jx").expect_err("unknown format should error");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("log4j"),
+            "error should list named formats: {msg}"
+        );
     }
 }

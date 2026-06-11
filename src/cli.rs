@@ -106,6 +106,7 @@ pub struct Cli {
 
     /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>.
     /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
+    /// Named formats (adapted from lnav): glog, nginx-error, log4j, python-logging, iso8601-level. Select with -f <name>; also recognized by auto-detection. See --help-formats.
     /// Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event.
     /// Examples: -f json, -f json,line, -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
     #[arg(
@@ -1227,12 +1228,15 @@ fn parse_format_value(s: &str) -> Result<String, String> {
             if p.is_empty() {
                 return Err(format!("Empty entry in cascade format list: '{}'", s));
             }
-            if !allowed.contains(&p.as_str()) {
+            // Built-in named formats (adapted from lnav) are also valid in cascade.
+            if !allowed.contains(&p.as_str()) && crate::parsers::lnav_formats::by_name(&p).is_none()
+            {
                 return Err(format!(
                     "Unknown or unsupported format '{}' in cascade list '{}'. \
-Allowed in cascade: json, line, raw, logfmt, syslog, cef, combined",
+Allowed in cascade: json, line, raw, logfmt, syslog, cef, combined, and named formats ({})",
                     part.trim(),
-                    s
+                    s,
+                    crate::parsers::lnav_formats::names_csv()
                 ));
             }
         }
@@ -1242,13 +1246,16 @@ Allowed in cascade: json, line, raw, logfmt, syslog, cef, combined",
     // Check if it's a standard format
     match s.to_lowercase().as_str() {
         "auto" | "auto-per-file" | "json" | "line" | "raw" | "logfmt" | "syslog" | "cef"
-        | "csv" | "tsv" | "csvnh" | "tsvnh" | "combined" | "cols" => {
-            Ok(s.to_string())
-        }
-        _ => {
+        | "csv" | "tsv" | "csvnh" | "tsvnh" | "combined" | "cols" => Ok(s.to_string()),
+        other => {
+            // Built-in named formats (adapted from lnav), e.g. -f log4j
+            if crate::parsers::lnav_formats::by_name(other).is_some() {
+                return Ok(s.to_string());
+            }
             Err(format!(
-                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols, csv:<spec>, tsv:<spec>, cols:<spec>, or regex:<pattern>",
-                s
+                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols, csv:<spec>, tsv:<spec>, cols:<spec>, regex:<pattern>, or a named format ({})",
+                s,
+                crate::parsers::lnav_formats::names_csv()
             ))
         }
     }
