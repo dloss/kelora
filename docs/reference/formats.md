@@ -424,16 +424,39 @@ breakdown so silent misclassification surfaces immediately:
 Cascade formats: json=9812, line=23
 ```
 
-**Allowed in cascade:** `json`, `line`, `raw`, `logfmt`, `syslog`, `cef`,
-`combined`.
+**Allowed in a comma list:** `json`, `line`, `raw`, `logfmt`, `syslog`,
+`cef`, `combined`.
 
-**Not allowed in cascade** (rejected at CLI parse time):
+**Not allowed in a comma list** (rejected at CLI parse time):
 
 - `auto` — meaningless inside a cascade list; list the formats explicitly
 - `csv`, `tsv`, `csvnh`, `tsvnh` — schema-based; headers/types can't safely
   change mid-stream
-- `cols:<spec>`, `regex:<pattern>` — carry positional specs that tie them
-  to a single stream shape
+- `cols:<spec>`, `regex:<pattern>` — a regex pattern may itself contain
+  commas, so commas can't safely delimit them. Use **repeated `-f`** instead.
+
+**Cascades with `cols:`/`regex:` — use repeated `-f`.** Pass one `-f` per
+format and they are tried in order, exactly like a comma list, but each spec
+is taken whole so `cols:`/`regex:` work as members:
+
+```bash
+# JSON lines plus a 'timestamp LEVEL message' app log in one file
+kelora -f json -f 'cols:ts(2) level *msg' app.log
+
+# Selective regex first, raw line as the catch-all for anything else
+kelora -f json -f 'regex:(?P<ts>\S+ \S+) (?P<level>\w+) (?P<msg>.*)' -f line app.log
+```
+
+A comma list and repeated `-f` can be combined; comma-list members are
+flattened into the cascade in order.
+
+**Catch-alls go last.** `line`, `raw`, and `cols:` match essentially every
+line (in resilient mode `cols:` fills missing fields with `()` rather than
+failing), so anything listed after them would never run — Kelora rejects that
+ordering. `regex:` is selective: it declines non-matching lines, so it may sit
+earlier in the cascade and fall through to a later catch-all (as in the
+example above, where stack-trace lines that don't match the regex are kept by
+`line`).
 
 **Ordering matters.** The first parser that returns `Ok` wins, so list
 high-confidence formats first and use `line` as the terminal fallback.

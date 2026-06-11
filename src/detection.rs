@@ -189,7 +189,7 @@ pub fn format_detected_format_notice(
         Some(message)
     } else if detected.fell_back_to_line() {
         let message = config.format_hint_message(
-            "No input format detected; using line. If your input is structured, try -j for JSON or specify -f <fmt>. See --help-formats for supported parsers.",
+            "No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(2) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(2) level *msg'. See --help-formats.",
         );
         Some(message)
     } else {

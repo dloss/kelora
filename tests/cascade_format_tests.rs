@@ -129,6 +129,105 @@ not json
     );
 }
 
+/// Repeated -f builds a cascade that includes a cols: member (which a comma
+/// list can't express). JSON lines stay JSON; plain text is parsed by cols.
+#[test]
+fn test_repeated_f_cascade_with_cols() {
+    let input = "{\"level\":\"warn\",\"msg\":\"slow\"}\n2026-06-11 09:14:02 INFO starting up\n";
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "-f", "cols:ts(2) level *msg", "-F", "json"],
+        input,
+    );
+    assert_eq!(
+        exit_code, 0,
+        "repeated -f cascade should succeed: {}",
+        stderr
+    );
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(lines.len(), 2);
+
+    let ev1: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
+    assert_eq!(ev1["_format"].as_str().unwrap(), "json");
+    assert_eq!(ev1["msg"].as_str().unwrap(), "slow");
+
+    let ev2: serde_json::Value = serde_json::from_str(lines[1]).unwrap();
+    assert_eq!(ev2["_format"].as_str().unwrap(), "cols");
+    assert_eq!(ev2["level"].as_str().unwrap(), "INFO");
+    assert_eq!(ev2["msg"].as_str().unwrap(), "starting up");
+}
+
+/// A selective regex: member declines non-matching lines so a later catch-all
+/// ('line') can pick them up, instead of mangling them like cols would.
+#[test]
+fn test_repeated_f_regex_then_line_fallthrough() {
+    let input = "2026-06-11 09:14:02 INFO hello\n\tat com.foo.Bar(Bar.java:1)\n";
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            r"regex:(?P<ts>\S+ \S+) (?P<level>INFO|WARN|ERROR) (?P<msg>.*)",
+            "-f",
+            "line",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(
+        exit_code, 0,
+        "regex+line cascade should succeed: {}",
+        stderr
+    );
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(lines.len(), 2);
+
+    let ev1: serde_json::Value = serde_json::from_str(lines[0]).unwrap();
+    assert_eq!(ev1["_format"].as_str().unwrap(), "regex");
+    assert_eq!(ev1["level"].as_str().unwrap(), "INFO");
+
+    // Stack-trace line doesn't match the regex, so it falls through to line.
+    let ev2: serde_json::Value = serde_json::from_str(lines[1]).unwrap();
+    assert_eq!(ev2["_format"].as_str().unwrap(), "line");
+}
+
+/// A catch-all cols: member must be last; anything after it would never run.
+#[test]
+fn test_repeated_f_cols_not_last_is_rejected() {
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "cols:ts level *msg", "-f", "json"], "{}");
+    assert_ne!(exit_code, 0, "cols before another format should fail");
+    assert!(
+        stderr.contains("cols") && stderr.to_lowercase().contains("last"),
+        "error should say cols must be last: {}",
+        stderr
+    );
+}
+
+/// Repeated -f still rejects schema-based formats as members.
+#[test]
+fn test_repeated_f_rejects_csv_member() {
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-f", "csv status:int"], "{}");
+    assert_ne!(exit_code, 0, "csv as cascade member should fail");
+    assert!(
+        stderr.to_lowercase().contains("csv") && stderr.to_lowercase().contains("schema"),
+        "error should mention csv schema restriction: {}",
+        stderr
+    );
+}
+
+/// The comma-list error for cols/regex points users at repeated -f.
+#[test]
+fn test_comma_cascade_with_cols_hints_repeated_f() {
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json,cols:ts level *msg"], "{}");
+    assert_ne!(exit_code, 0);
+    assert!(
+        stderr.contains("repeated -f"),
+        "comma-list rejection should hint at repeated -f: {}",
+        stderr
+    );
+}
+
 /// Cascade works in parallel mode; per-worker counts merge into global stats.
 #[test]
 fn test_cascade_parallel_mode_merges_counts() {

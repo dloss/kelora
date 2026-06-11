@@ -111,8 +111,17 @@ auto-per-file
   Put catch-all fallbacks like 'line' or 'raw' last so stricter parsers get first shot
   Adds an '_format' field to each event with the winning format name
   Stats (--stats) include per-format event counts
-  Allowed in cascade: json, line, raw, logfmt, syslog, cef, combined
-  NOT allowed: auto, csv/tsv/csvnh/tsvnh, cols:, regex: (schema-based or spec-based)
+  Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined
+  NOT in a comma list: auto, csv/tsv/csvnh/tsvnh (schema-based)
+
+  Repeated -f   (cascade including spec-based parsers)
+  Build the same cascade with one -f per format; this is the only way to put
+  cols:/regex: in a cascade (commas can't delimit a regex pattern safely):
+  Examples: -f json -f 'cols:ts(2) level *msg'          (JSON lines + app-log text)
+            -f json -f 'regex:(?P<ts>\S+) (?P<msg>.*)' -f line
+  Ordering rule: 'line', 'raw', and 'cols:' match every line, so they must be
+  last. 'regex:' is selective (it declines non-matching lines), so it may sit
+  earlier and fall through to a later catch-all.
   Multiline: uses the first listed format's strategy
 
 OUTPUT FORMATS:

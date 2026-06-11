@@ -52,13 +52,14 @@ use crate::readers::MultiFileReader;
 use crate::rhai_functions::file_ops::{self, RuntimeConfig};
 use crate::rhai_functions::hashing;
 
-/// Build a parser for one of the "simple" schema-less formats that are
-/// allowed inside a cascade list. Returns an error if `format` isn't one of
-/// those; callers should never pass CSV/cols/regex/auto here.
-fn build_simple_cascade_parser(
+/// Build a parser for a single cascade member. Handles the schema-less formats
+/// plus the spec-based `cols:`/`regex:` parsers (reachable via repeated `-f`).
+/// CSV-family and auto formats are rejected — they can't be mixed per line.
+fn build_cascade_member_parser(
     format: &crate::config::InputFormat,
     custom_ts_config: bool,
     strict: bool,
+    cols_sep: Option<&str>,
 ) -> Result<Box<dyn EventParser>> {
     let parser: Box<dyn EventParser> = match format {
         crate::config::InputFormat::Json => {
@@ -105,6 +106,13 @@ fn build_simple_cascade_parser(
         crate::config::InputFormat::Named(fmt) => {
             Box::new(crate::parsers::MultiRegexParser::new(fmt.patterns, strict)?)
         }
+        crate::config::InputFormat::Cols(spec) => Box::new(
+            crate::parsers::ColsParser::new(spec.clone(), cols_sep.map(str::to_string))
+                .with_strict(strict),
+        ),
+        crate::config::InputFormat::Regex(pattern) => {
+            Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(strict))
+        }
         other => {
             return Err(anyhow::anyhow!(
                 "format '{}' is not allowed inside a cascade list",
@@ -115,11 +123,12 @@ fn build_simple_cascade_parser(
     Ok(parser)
 }
 
-/// Assemble a CascadingParser from a list of simple formats.
+/// Assemble a CascadingParser from a list of cascade members.
 fn build_cascading_parser(
     formats: &[crate::config::InputFormat],
     custom_ts_config: bool,
     strict: bool,
+    cols_sep: Option<&str>,
 ) -> Result<Box<dyn EventParser>> {
     if formats.len() < 2 {
         return Err(anyhow::anyhow!(
@@ -129,7 +138,7 @@ fn build_cascading_parser(
     let mut parsers: Vec<(String, Box<dyn EventParser>)> = Vec::with_capacity(formats.len());
     for fmt in formats {
         let name = fmt.cascade_name().to_string();
-        let parser = build_simple_cascade_parser(fmt, custom_ts_config, strict)?;
+        let parser = build_cascade_member_parser(fmt, custom_ts_config, strict, cols_sep)?;
         parsers.push((name, parser));
     }
     Ok(Box::new(crate::parsers::CascadingParser::new(parsers)))
@@ -345,9 +354,12 @@ impl PipelineBuilder {
             crate::config::InputFormat::Named(fmt) => Box::new(
                 crate::parsers::MultiRegexParser::new(fmt.patterns, self.strict)?,
             ),
-            crate::config::InputFormat::Cascade(ref formats) => {
-                build_cascading_parser(formats, custom_ts_config, self.strict)?
-            }
+            crate::config::InputFormat::Cascade(ref formats) => build_cascading_parser(
+                formats,
+                custom_ts_config,
+                self.strict,
+                self.cols_sep.as_deref(),
+            )?,
         };
 
         let parser_with_prefix: Box<dyn EventParser> = if self.extract_prefix.is_some() {

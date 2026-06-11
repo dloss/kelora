@@ -108,15 +108,18 @@ pub struct Cli {
     /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
     /// Named formats (adapted from lnav): glog, nginx-error, apache-error, log4j, python-logging, redis, s3, haproxy, iso8601-level. Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
     /// Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event.
-    /// Examples: -f json, -f json,line, -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
+    /// Repeat -f to build a cascade that includes spec-based parsers: -f json -f 'cols:ts(2) level *msg'. Each -f is tried in order; put catch-alls ('line', 'raw', 'cols:') last (regex declines non-matching lines, so it can sit earlier).
+    /// Examples: -f json, -f json,line, -f json -f 'cols:ts level *msg', -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'csv status:int bytes:int'
     #[arg(
         short = 'f',
         long = "input-format",
         default_value = "auto",
+        action = clap::ArgAction::Append,
+        num_args = 1,
         help_heading = "Input Options",
         value_parser = parse_format_value
     )]
-    pub format: String,
+    pub format: Vec<String>,
 
     /// Shortcut for -f json
     #[arg(short = 'j', help_heading = "Input Options", conflicts_with = "format")]
@@ -1231,12 +1234,22 @@ fn parse_format_value(s: &str) -> Result<String, String> {
             // Built-in named formats (adapted from lnav) are also valid in cascade.
             if !allowed.contains(&p.as_str()) && crate::parsers::lnav_formats::by_name(&p).is_none()
             {
+                let hint = if p == "cols"
+                    || p == "regex"
+                    || p.starts_with("cols:")
+                    || p.starts_with("regex:")
+                {
+                    " To use cols:/regex: in a cascade, pass repeated -f flags instead, e.g. -f json -f 'cols:ts level *msg'."
+                } else {
+                    ""
+                };
                 return Err(format!(
                     "Unknown or unsupported format '{}' in cascade list '{}'. \
-Allowed in cascade: json, line, raw, logfmt, syslog, cef, combined, and named formats ({})",
+Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, and named formats ({}).{}",
                     part.trim(),
                     s,
-                    crate::parsers::lnav_formats::names_csv()
+                    crate::parsers::lnav_formats::names_csv(),
+                    hint
                 ));
             }
         }

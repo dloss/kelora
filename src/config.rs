@@ -1174,9 +1174,91 @@ impl Default for KeloraConfig {
     }
 }
 
-/// Parse input format from CLI options, handling the --input-format option
+/// Parse input format from CLI options, handling the --input-format option.
+///
+/// `-f` is repeatable. A single occurrence keeps the historical behavior
+/// (including comma-separated cascades like `json,line`). Two or more
+/// occurrences build a cascade from each spec in order, which is the only way
+/// to put spec-based parsers (`cols:`, `regex:`) into a cascade — commas can't
+/// safely delimit them because a regex pattern may itself contain commas.
 fn parse_input_format_from_cli(cli: &crate::Cli) -> anyhow::Result<InputFormat> {
-    parse_input_format_spec(&cli.format)
+    match cli.format.as_slice() {
+        [] => parse_input_format_spec("auto"),
+        [single] => parse_input_format_spec(single),
+        many => parse_repeated_format_specs(many),
+    }
+}
+
+/// Build a cascade from repeated `-f` specs. Each spec is parsed on its own
+/// (so `cols:`/`regex:` are allowed); any spec that is itself a comma cascade
+/// is flattened into the result. Schema/auto formats remain illegal as cascade
+/// members.
+fn parse_repeated_format_specs(specs: &[String]) -> anyhow::Result<InputFormat> {
+    let mut members: Vec<InputFormat> = Vec::with_capacity(specs.len());
+    for spec in specs {
+        match parse_input_format_spec(spec)? {
+            InputFormat::Cascade(inner) => members.extend(inner),
+            other => members.push(other),
+        }
+    }
+
+    for fmt in &members {
+        match fmt {
+            InputFormat::Json
+            | InputFormat::Line
+            | InputFormat::Raw
+            | InputFormat::Logfmt
+            | InputFormat::Syslog
+            | InputFormat::Cef
+            | InputFormat::Combined
+            | InputFormat::Cols(_)
+            | InputFormat::Regex(_)
+            | InputFormat::Named(_) => {}
+            InputFormat::Auto | InputFormat::AutoPerFile => {
+                return Err(anyhow::anyhow!(
+                    "'{}' cannot be combined with other formats; list concrete formats instead",
+                    fmt.cascade_name()
+                ));
+            }
+            InputFormat::Csv(_) | InputFormat::Tsv(_) | InputFormat::Csvnh | InputFormat::Tsvnh => {
+                return Err(anyhow::anyhow!(
+                    "'{}' is a schema-based format and cannot be mixed per-line in a cascade",
+                    fmt.cascade_name()
+                ));
+            }
+            InputFormat::Cascade(_) => unreachable!("cascades were flattened above"),
+        }
+    }
+
+    if members.len() < 2 {
+        return Err(anyhow::anyhow!(
+            "a cascade needs at least two formats; pass a single -f for just one"
+        ));
+    }
+
+    validate_cascade_order(&members)?;
+    Ok(InputFormat::Cascade(members))
+}
+
+/// Enforce that greedy catch-all parsers come last in a cascade. `line`, `raw`,
+/// and `cols:` accept essentially any line (in resilient mode `cols:` fills
+/// missing fields with () rather than failing), so anything after them would
+/// never run. `regex:` is selective (it declines non-matching lines), so it is
+/// allowed in any position.
+fn validate_cascade_order(formats: &[InputFormat]) -> anyhow::Result<()> {
+    for (idx, fmt) in formats.iter().enumerate() {
+        let is_catch_all = matches!(
+            fmt,
+            InputFormat::Line | InputFormat::Raw | InputFormat::Cols(_)
+        );
+        if is_catch_all && idx != formats.len() - 1 {
+            return Err(anyhow::anyhow!(
+                "'{}' matches every line, so it must be the last format in a cascade; later formats would never run",
+                fmt.cascade_name()
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Parse input format specification string (e.g., "cols:ts(2) level - *msg")
@@ -1304,7 +1386,7 @@ fn parse_cascade_spec(spec: &str) -> anyhow::Result<InputFormat> {
             }
             "cols" | "regex" | "cascade" => {
                 return Err(anyhow::anyhow!(
-                    "'{}' is not allowed inside a cascade list",
+                    "'{}' can't be a member of a comma-separated cascade (a regex pattern may contain commas). Use repeated -f flags instead, e.g. -f json -f 'cols:ts level *msg'",
                     part
                 ));
             }
@@ -1332,14 +1414,7 @@ fn parse_cascade_spec(spec: &str) -> anyhow::Result<InputFormat> {
         formats.push(fmt);
     }
 
-    for (idx, fmt) in formats.iter().enumerate() {
-        if matches!(fmt, InputFormat::Line | InputFormat::Raw) && idx != formats.len() - 1 {
-            return Err(anyhow::anyhow!(
-                "'{}' must be the last format in a cascade list; later formats would never run",
-                fmt.cascade_name()
-            ));
-        }
-    }
+    validate_cascade_order(&formats)?;
 
     Ok(InputFormat::Cascade(formats))
 }
