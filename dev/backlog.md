@@ -6,6 +6,10 @@ See also: [v2 behavior notes](v2-behavior-notes.md) for candidate breaking
 changes around resiliency, parser strictness, config validation, and scored
 auto-format detection.
 
+See also: [named formats](named-formats.md) for the built-in named log-format
+catalogue (state, limitations, and roadmap — auto-detect split, scored
+detection, user-loadable format files).
+
 ---
 
 ## New Rhai Functions
