@@ -466,7 +466,9 @@ impl ErrorEnhancer {
             .iter()
             .filter(|name| {
                 let name_lower = name.to_lowercase();
-                self.calculate_similarity(&target_lower, &name_lower) > 0.6
+                // `>=` (not `>`) so boundary-similarity transpositions like
+                // `levle` -> `level` (distance 2 over 5 chars == 0.6) are caught.
+                self.calculate_similarity(&target_lower, &name_lower) >= 0.6
                     || name_lower.contains(&target_lower)
                     || target_lower.contains(&name_lower)
             })

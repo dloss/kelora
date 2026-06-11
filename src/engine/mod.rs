@@ -3076,6 +3076,14 @@ mod tests {
             "partial bare field should suggest e.status; got: {out}"
         );
 
+        // A boundary-similarity transposition (distance 2 over 5 chars) too.
+        let err = EvalAltResult::ErrorVariableNotFound("levle".into(), rhai::Position::NONE);
+        let out = enhancer.enhance_error(&err, &scope, "levle == \"ERROR\"", "filter", &ctx);
+        assert!(
+            out.contains("e.level"),
+            "transposition typo should still suggest e.level; got: {out}"
+        );
+
         // A truly unknown identifier keeps the generic variable listing.
         let err = EvalAltResult::ErrorVariableNotFound("zzzzz".into(), rhai::Position::NONE);
         let out = enhancer.enhance_error(&err, &scope, "zzzzz == \"ERROR\"", "filter", &ctx);
