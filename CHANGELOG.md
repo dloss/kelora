@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **Auto-detection of common application-log formats** - When no structured format (json/syslog/cef/combined/logfmt/csv) matches, auto-detection now also recognises a small curated set of application-log layouts — glog/klog, nginx error logs, log4j/Java, Python `logging`, and generic ISO-8601-timestamp+level lines — and parses them into structured fields via the regex engine instead of falling back to opaque `line`. These are tried only as the last step before the `line` fallback, so no format Kelora already detected changes. The format definitions are adapted from [lnav](https://lnav.org) (BSD-3-Clause; see `THIRD_PARTY_LICENSES.md`).
 - **`-d` shortcut for `--discover`** - Field discovery, now the documented starting point for unknown files, gets a short flag: `kelora app.log -d` (use `-d=json` for the machine-readable form). Featured near the top of `kelora -h`.
 - **`--discover-depth=0` for unlimited flattening** - Pass `--discover-depth=0` to fully flatten deeply nested JSON during field discovery, removing the previous hard-coded 3-level cap.
 

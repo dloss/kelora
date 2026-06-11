@@ -13,7 +13,8 @@ use anyhow::Result;
 /// 4. Combined - contains common Apache/Nginx log patterns
 /// 5. Logfmt - contains key=value pairs
 /// 6. CSV/TSV - contains delimiters with reasonable structure
-/// 7. Line - fallback for everything else
+/// 7. Named application-log formats adapted from lnav (regex-based)
+/// 8. Line - fallback for everything else
 pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
     let trimmed = sample_line.trim();
 
@@ -52,7 +53,15 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
         return Ok(csv_format);
     }
 
-    // 8. Fallback to line format
+    // 8. Built-in named application-log formats adapted from lnav.
+    //    Tried last (just before the line fallback) so it can only reclassify
+    //    input that would otherwise become `line` — never a format already
+    //    detected above. The matched pattern is handed to the regex parser.
+    if let Some(fmt) = crate::parsers::lnav_formats::detect(trimmed) {
+        return Ok(ConfigInputFormat::Regex(fmt.pattern.to_string()));
+    }
+
+    // 9. Fallback to line format
     Ok(ConfigInputFormat::Line)
 }
 
@@ -230,6 +239,41 @@ mod tests {
             ConfigInputFormat::Tsvnh
         ));
         // All numeric, no headers
+    }
+
+    #[test]
+    fn test_detect_lnav_named_formats() {
+        // Application-log layouts that would previously fall through to `line`
+        // are now detected and routed to the regex parser.
+        for line in [
+            "2024-01-02T15:04:05.123Z INFO Starting service on port 8080",
+            "2024-01-02 15:04:05,123 INFO [main] com.example.Service - up",
+            "2024-01-02 15:04:05,123 - myapp.module - INFO - Service started",
+            "2024/01/02 15:04:05 [error] 29#29: *1 open() failed",
+            "I0102 15:04:05.123456 1234 server.go:42] Starting controller",
+        ] {
+            assert!(
+                matches!(detect_format(line).unwrap(), ConfigInputFormat::Regex(_)),
+                "expected regex detection for: {line}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_lnav_detection_does_not_shadow_existing_formats() {
+        // Formats detected before the lnav step must keep their classification.
+        assert_eq!(
+            detect_format(r#"{"a":1}"#).unwrap(),
+            ConfigInputFormat::Json
+        );
+        assert_eq!(
+            detect_format("Jan 15 10:30:45 server1 sshd[1234]: Accepted").unwrap(),
+            ConfigInputFormat::Syslog
+        );
+        assert_eq!(
+            detect_format("level=info msg=hi count=1").unwrap(),
+            ConfigInputFormat::Logfmt
+        );
     }
 
     #[test]

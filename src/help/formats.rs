@@ -70,14 +70,23 @@ Type annotations (csv/tsv/cols/regex)
   the annotation and convert in a script stage, e.g.
     -f csv --exec 'e.status = to_int_or(e.status, 0)'
 
+Named application-log formats (auto-detect only)
+  When no structured format matches, auto-detection also recognises a small set
+  of common application-log layouts and parses them with the regex engine:
+    glog/klog, nginx-error, log4j, python-logging, iso8601-level
+  These are tried just before the 'line' fallback, so they never override a
+  format detected earlier. Adapted from lnav (see THIRD_PARTY_LICENSES.md).
+
 auto (default)
   Auto-detect format from first non-empty line
-  Detection order: json → syslog → cef → combined → logfmt → csv → line
+  Detection order: json → syslog → cef → combined → logfmt → csv
+                   → named app-log formats (regex) → line
   Note: Detects once and applies to all lines
 
 auto-per-file
   Auto-detect format separately for each input file
-  Detection order: json → syslog → cef → combined → logfmt → csv → line
+  Detection order: json → syslog → cef → combined → logfmt → csv
+                   → named app-log formats (regex) → line
   Note: Detects once per file and applies to that file's lines
   stdin: behaves like 'auto' (single input stream)
 

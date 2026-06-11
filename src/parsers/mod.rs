@@ -6,6 +6,7 @@ pub mod combined;
 pub mod csv;
 pub mod json;
 pub mod line;
+pub mod lnav_formats;
 pub mod logfmt;
 pub mod raw;
 pub mod regex;
