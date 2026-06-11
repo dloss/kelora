@@ -9474,13 +9474,13 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <p>Extract named capture groups from a string field using a regular expression pattern, merge the extracted values into the event, and return a status map (same structure as <code>absorb_kv()</code> and <code>absorb_json()</code>).</p>
 <p>The pattern must use <strong>named capture groups</strong> (<code>(?P&lt;name&gt;...)</code>) to define which parts of the text to extract. Only named captures become event fields; numbered groups are ignored.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-192-1" name="__codelineno-192-1" href="#__codelineno-192-1"></a>// Extract user and IP from log message
-<a id="__codelineno-192-2" name="__codelineno-192-2" href="#__codelineno-192-2"></a>let res = e.absorb_regex(&quot;msg&quot;, r&quot;User (?P&lt;user&gt;\w+) logged in from (?P&lt;ip&gt;[\d.]+)&quot;);
+<a id="__codelineno-192-2" name="__codelineno-192-2" href="#__codelineno-192-2"></a>let res = e.absorb_regex(&quot;msg&quot;, #&quot;User (?P&lt;user&gt;\w+) logged in from (?P&lt;ip&gt;[\d.]+)&quot;#);
 <a id="__codelineno-192-3" name="__codelineno-192-3" href="#__codelineno-192-3"></a>if res.status == &quot;applied&quot; {
 <a id="__codelineno-192-4" name="__codelineno-192-4" href="#__codelineno-192-4"></a>    print(`${e.user} from ${e.ip}`);  // Extracted fields now on event
 <a id="__codelineno-192-5" name="__codelineno-192-5" href="#__codelineno-192-5"></a>}
 <a id="__codelineno-192-6" name="__codelineno-192-6" href="#__codelineno-192-6"></a>
 <a id="__codelineno-192-7" name="__codelineno-192-7" href="#__codelineno-192-7"></a>// Parse structured log line with multiple fields
-<a id="__codelineno-192-8" name="__codelineno-192-8" href="#__codelineno-192-8"></a>let pattern = r&quot;(?P&lt;date&gt;[\d-]+) (?P&lt;level&gt;\w+) (?P&lt;file&gt;[\w.]+):(?P&lt;line&gt;\d+) (?P&lt;message&gt;.+)&quot;;
+<a id="__codelineno-192-8" name="__codelineno-192-8" href="#__codelineno-192-8"></a>let pattern = #&quot;(?P&lt;date&gt;[\d-]+) (?P&lt;level&gt;\w+) (?P&lt;file&gt;[\w.]+):(?P&lt;line&gt;\d+) (?P&lt;message&gt;.+)&quot;#;
 <a id="__codelineno-192-9" name="__codelineno-192-9" href="#__codelineno-192-9"></a>e.absorb_regex(&quot;line&quot;, pattern);
 <a id="__codelineno-192-10" name="__codelineno-192-10" href="#__codelineno-192-10"></a>// Now e.date, e.level, e.file, e.line, e.message are all populated
 </code></pre></div>
