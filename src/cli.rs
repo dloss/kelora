@@ -106,7 +106,7 @@ pub struct Cli {
 
     /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>.
     /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
-    /// Named formats (adapted from lnav): glog, nginx-error, log4j, python-logging, iso8601-level. Select with -f <name>; also recognized by auto-detection. See --help-formats.
+    /// Named formats (adapted from lnav): glog, nginx-error, apache-error, log4j, python-logging, redis, s3, haproxy, iso8601-level. Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
     /// Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event.
     /// Examples: -f json, -f json,line, -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'cols:ts level *msg', -f 'csv status:int bytes:int'
     #[arg(

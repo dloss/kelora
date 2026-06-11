@@ -103,7 +103,7 @@ fn build_simple_cascade_parser(
             }
         }
         crate::config::InputFormat::Named(fmt) => {
-            Box::new(crate::parsers::RegexParser::new(fmt.pattern)?.with_strict(strict))
+            Box::new(crate::parsers::MultiRegexParser::new(fmt.patterns, strict)?)
         }
         other => {
             return Err(anyhow::anyhow!(
@@ -342,9 +342,9 @@ impl PipelineBuilder {
             crate::config::InputFormat::Regex(ref pattern) => {
                 Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(self.strict))
             }
-            crate::config::InputFormat::Named(fmt) => {
-                Box::new(crate::parsers::RegexParser::new(fmt.pattern)?.with_strict(self.strict))
-            }
+            crate::config::InputFormat::Named(fmt) => Box::new(
+                crate::parsers::MultiRegexParser::new(fmt.patterns, self.strict)?,
+            ),
             crate::config::InputFormat::Cascade(ref formats) => {
                 build_cascading_parser(formats, custom_ts_config, self.strict)?
             }

@@ -25,5 +25,5 @@ pub use json::JsonlParser;
 pub use line::LineParser;
 pub use logfmt::LogfmtParser;
 pub use raw::RawParser;
-pub use regex::RegexParser;
+pub use regex::{MultiRegexParser, RegexParser};
 pub use syslog::SyslogParser;

@@ -740,7 +740,7 @@ fn build_simple_merge_parser(
             Box::new(crate::parsers::RegexParser::new(pattern)?.with_strict(strict))
         }
         config::InputFormat::Named(fmt) => {
-            Box::new(crate::parsers::RegexParser::new(fmt.pattern)?.with_strict(strict))
+            Box::new(crate::parsers::MultiRegexParser::new(fmt.patterns, strict)?)
         }
         config::InputFormat::Cascade(formats) => {
             let mut entries: Vec<(String, Box<dyn pipeline::EventParser>)> = Vec::new();

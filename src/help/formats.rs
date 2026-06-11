@@ -74,15 +74,21 @@ Named application-log formats
   A small set of common application-log layouts, parsed with the regex engine:
     glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
     nginx-error     nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
+    apache-error    Apache error log ("[Fri Oct 11 14:32:52 2024] [core:error] ... msg")
     log4j           log4j / Java (2024-01-02 15:04:05,123 INFO [main] logger - msg)
     python-logging  Python logging default (... ,123 - logger - INFO - msg)
+    redis           Redis 3+ (12345:M 06 Feb 2024 12:00:00.123 * msg)
+    s3              AWS S3 server access log (owner bucket [date] ip ... "GET ..." 200 ...)
+    haproxy         HAProxy http/tcp traffic log (via syslog); use -f haproxy
     iso8601-level   ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
   Select explicitly with -f <name> (e.g. -f log4j), or in a cascade list
-  (e.g. -f log4j,line). They are also tried during auto-detection, just before
+  (e.g. -f log4j,line). Most are also tried during auto-detection, just before
   the 'line' fallback, so they never override a format detected earlier; when
   one matches, it emits 'ts' (timestamp), 'level', 'msg', and format-specific
-  extras (thread, logger, pid, ...). glog omits the year and timezone, so its
-  'ts' is resolved assuming the current year (like syslog).
+  extras (thread, logger, pid, ...).
+  Notes: glog/redis omit the year, so 'ts' assumes the current year (like
+  syslog). haproxy lines are syslog-wrapped, so under -f auto they are detected
+  as 'syslog' — pass -f haproxy to extract the structured fields.
   Adapted from lnav (BSD-3-Clause; see THIRD_PARTY_LICENSES.md).
 
 auto (default)

@@ -10,7 +10,9 @@ Kelora's built-in named log formats in `src/parsers/lnav_formats.rs` were adapte
 from the log-format definitions distributed with [lnav](https://lnav.org). The
 regular expressions were re-expressed in Kelora's `RegexParser` syntax and adapted
 to Kelora's field-naming conventions; they are derivative of lnav's format
-catalogue.
+catalogue. Specifically, they draw on lnav's `glog_log`, `error_log` (Apache),
+`redis_log`, `s3_log`, and `haproxy_log` definitions, plus the common log4j/Java,
+Python `logging`, nginx error, and generic ISO-8601 layouts.
 
 - Project: lnav (the logfile navigator)
 - Author/Copyright: Copyright (c) 2009-2025, Timothy Stack

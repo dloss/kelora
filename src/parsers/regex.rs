@@ -278,6 +278,41 @@ impl EventParser for RegexParser {
     }
 }
 
+/// Parser that tries several [`RegexParser`] patterns in order and returns the
+/// first match. Used for built-in named formats whose source emits more than one
+/// structurally distinct line layout (e.g. AWS S3 `std` vs `std-v2`), which
+/// cannot be expressed as a single regex because Rust's engine forbids reusing a
+/// capture-group name across alternation branches.
+#[derive(Debug)]
+pub struct MultiRegexParser {
+    parsers: Vec<RegexParser>,
+}
+
+impl MultiRegexParser {
+    /// Build from patterns (in priority order). `strict` is applied to each
+    /// inner parser's type conversions.
+    pub fn new(patterns: &[&str], strict: bool) -> Result<Self> {
+        let parsers = patterns
+            .iter()
+            .map(|p| RegexParser::new(p).map(|rp| rp.with_strict(strict)))
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self { parsers })
+    }
+}
+
+impl EventParser for MultiRegexParser {
+    fn parse(&self, line: &str) -> Result<Event> {
+        let mut last_err = None;
+        for parser in &self.parsers {
+            match parser.parse(line) {
+                Ok(event) => return Ok(event),
+                Err(e) => last_err = Some(e),
+            }
+        }
+        Err(last_err.unwrap_or_else(|| anyhow::anyhow!("no regex patterns configured")))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
