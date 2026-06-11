@@ -59,11 +59,11 @@ Capture per-host or per-IP trends while reviewing raw events.
 ```bash
 kelora -f syslog /var/log/syslog \
   --filter 'e.severity <= 3' \
-  -e 'let ip = e.message.extract_ip(); if ip != "" { track_count(ip) }' \
+  -e 'let ip = e.message.extract_ip(); if ip != "" { track_count("ip", ip) }' \
   --metrics
 ```
 
-- `track_count(e.hostname)` surfaces noisy machines.
+- `track_count("hostname", e.hostname)` surfaces noisy machines.
 - Record severity names for reporting:
   ```bash
   -e 'e.severity_name = ["EMERG","ALERT","CRIT","ERROR","WARN","NOTICE","INFO","DEBUG"][e.severity]'
@@ -97,7 +97,7 @@ kelora -f syslog app-5424.log \
   kelora -f syslog firewall.log \
     --filter 'e.facility == 4' \
     -e 'e.src_ip = e.message.extract_regex(r"SRC=([^ ]+)", 1)' \
-    -e 'track_count(e.src_ip)' \
+    -e 'track_count("src_ip", e.src_ip)' \
     --metrics
   ```
 
@@ -106,7 +106,7 @@ kelora -f syslog app-5424.log \
   kelora -f syslog /var/log/syslog \
     --since "1 hour ago" \
     -e 'e.hour = to_datetime(e.timestamp).format("%Y-%m-%d %H:00")' \
-    -e 'track_count(e.hour)' \
+    -e 'track_count("hour", e.hour)' \
     --metrics
   ```
 

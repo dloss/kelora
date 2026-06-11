@@ -374,7 +374,7 @@ meta.parsed_ts                        // Parsed UTC timestamp before scripts (or
 --filter 'conf.env == "prod" || e.level == "ERROR"'
 
 // Multi-file tracking
---exec 'if e.level == "ERROR" { track_count(meta.filename) }'
+--exec 'if e.level == "ERROR" { track_count("file", meta.filename) }'
 
 // Debugging with line numbers
 --exec 'eprint("Error at " + meta.filename + ":" + meta.line_num)'

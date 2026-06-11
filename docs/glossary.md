@@ -199,7 +199,7 @@ The process of accumulating metrics across events using `track_*()` functions:
 - `track_min/max(key, value)` - Track extremes
 - `track_unique(key, value)` - Collect unique values (exact, stores all)
 - `track_cardinality(key, value)` - Estimate unique count (HyperLogLog, ~1% error, ~12KB)
-- `track_bucket(key, bucket_value)` - Histogram buckets
+- `track_count(key, bucket_value)` - Histogram buckets
 - `track_top/bottom(key, item, n, [score])` - Top/bottom N items
 
 See [Metrics and Tracking Tutorial](tutorials/metrics-and-tracking.md).

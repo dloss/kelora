@@ -47,8 +47,8 @@ Quiet modes and counters help you avoid pager fatigue.
 
 ```bash
 tail -f /var/log/app.log | kelora -j -q \
-  -e 'track_count("total")' \
-  -e 'track_count("level|" + e.level)' \
+  -e 'track_sum("total", 1)' \
+  -e 'track_count("level", e.level)' \
   -m \
   --end '
     let total = metrics.get_path("total", 0);

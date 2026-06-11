@@ -61,12 +61,12 @@ Generate quick aggregates to prioritise remediation work or include in change re
 kelora -f combined examples/simple_combined.log \
   -e 'track_count("status_" + e.status)' \
   -e 'track_count("method_" + e.method)' \
-  -e 'track_count(e.ip)' \
+  -e 'track_count("ip", e.ip)' \
   --metrics
 ```
 
-- `track_count(e.ip)` highlights noisy consumers or suspicious sources.
-- Use `track_bucket()` with `request_time` to build latency histograms.
+- `track_count("ip", e.ip)` highlights noisy consumers or suspicious sources.
+- Use `track_count()` with `request_time` to build latency histograms.
 - Run with `--stats` for throughput metrics and parse error counts.
 
 ## Step 5: Export a Shareable Slice
@@ -89,7 +89,7 @@ Alternatives:
   ```bash
   kelora -f combined /var/log/nginx/access.log \
     --filter 'e.path.starts_with("/api/orders")' \
-    -e 'track_count(e.status)' \
+    -e 'track_count("status", e.status)' \
     --metrics
   ```
 
@@ -112,7 +112,7 @@ Alternatives:
   ```bash
   kelora -f combined /var/log/nginx/access.log*.gz \
     --parallel --unordered \
-    -e 'track_count(e.status)' \
+    -e 'track_count("status", e.status)' \
     --metrics
   ```
 

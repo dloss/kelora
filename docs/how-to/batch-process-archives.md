@@ -32,7 +32,7 @@ Use `--parallel` to leverage multiple cores. Let Kelora auto-detect thread count
 time kelora -j logs/2024-04-*.jsonl.gz \
   --parallel \
   -l error \
-  -e 'track_count(e.service)' \
+  -e 'track_count("service", e.service)' \
   --metrics
 ```
 
@@ -66,8 +66,8 @@ If output order is irrelevant (metrics only, exports to sorted files), add `--un
 ```bash
 kelora -j logs/2024-04-*.jsonl.gz \
   --parallel --unordered \
-  -e 'track_count(e.service)' \
-  -e 'track_count("errors")' \
+  -e 'track_count("service", e.service)' \
+  -e 'track_sum("errors", 1)' \
   --metrics
 ```
 
@@ -109,7 +109,7 @@ kelora -j "$OUTPUT" --stats
   ```bash
   find /archives/app -name "*.jsonl.gz" -print0 |
     xargs -0 kelora -j --parallel --unordered \
-      -e 'track_count(e.service)' \
+      -e 'track_count("service", e.service)' \
       --metrics
   ```
 

@@ -13,7 +13,7 @@ fn test_multiline_real_world_scenario() {
         "-f", "json",
         "-F", "json",
         "--filter", "e.status >= 400",
-        "--exec", "e.alert_level = if e.status >= 500 { \"critical\" } else { \"warning\" }; track_count(\"total_errors\");",
+        "--exec", "e.alert_level = if e.status >= 500 { \"critical\" } else { \"warning\" }; track_sum(\"total_errors\", 1);",
         "--end", "print(`Total errors processed: ${metrics[\"total_errors\"]}`);"
     ], input);
     assert_eq!(exit_code, 0, "kelora should exit successfully");

@@ -164,7 +164,7 @@ defaults = -f json
 [aliases]
 api-errors = --levels error --filter 'e.service == "api"'
 slow-db = --filter 'e.service == "database" && e.duration_ms > 100'
-alerts = --levels critical,error --exec 'track_count(e.service)'
+alerts = --levels critical,error --exec 'track_count("service", e.service)'
 ```
 
 **Pro tip:** Commit `.kelora.ini` to your repository so the whole team uses the same patterns!
@@ -218,7 +218,7 @@ You can put full pipelines in aliases:
 ```ini
 [aliases]
 analyze-api = -j --filter 'e.service == "api"' \
-              --exec 'track_count(e.level)' \
+              --exec 'track_count("level", e.level)' \
               --exec 'track_sum("total_duration", e.duration_ms)' \
               --metrics
 ```
@@ -367,7 +367,7 @@ kelora -a quick any-file.log
 [aliases]
 production-errors = -j --levels error,critical \
                     --filter 'e.environment == "production"' \
-                    --exec 'track_count(e.service)'
+                    --exec 'track_count("service", e.service)'
 
 # Anyone on team can run
 kelora -a production-errors logs/*.jsonl --metrics
@@ -397,7 +397,7 @@ if e.has("duration_ms") {
     e.duration_s = e.duration_ms / 1000;
 }
 
-track_count(e.service + ":" + e.level);
+track_count("service_level", e.service + ":" + e.level);
 
 # Use in pipeline
 kelora -j app.log -E transforms/normalize.rhai --metrics
@@ -468,7 +468,7 @@ defaults = -f json --stats
 errors = --levels error,critical -I scripts/helpers.rhai
 enrich = -I scripts/helpers.rhai -E scripts/enrich.rhai
 alerts = -a errors --exec 'add_alert_tag(e)' --filter 'e.alert'
-analyze = -a enrich --exec 'track_count(e.severity)' --metrics
+analyze = -a enrich --exec 'track_count("severity", e.severity)' --metrics
 ```
 
 ### Step 4: Use the Workflow
@@ -677,7 +677,7 @@ defaults = -f combined
 [aliases]
 api-errors = --filter 'e.status >= 400' --keys ip,status,method,path
 slow = --filter 'e.request_time.to_float() > 1.0' --keys ip,request_time,path
-traffic = --exec 'track_count(e.method); track_count(e.status.to_string())' --metrics
+traffic = --exec 'track_count("method", e.method); track_count("status", e.status)' --metrics
 ```
 </details>
 

@@ -28,13 +28,13 @@ kelora -j examples/simple_json.jsonl \
     print(`${span.id},events=${span.size},errors=${metrics.get_path("level|ERROR", 0)}`);
   ' \
   --exec '
-    track_count("total");
-    track_count("level|" + e.level);
+    track_sum("total", 1);
+    track_count("level", e.level);
   '
 ```
 
 - `span.id` is an incrementing identifier (`span-000001`, ...).
-- `span.metrics` exposes per-window values for additive aggregators (`track_count`, `track_sum`, `track_avg`, `track_unique`, `track_bucket`). Non-additive ones (`track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`, `track_bottom`) cannot be reduced to a single window, so they are omitted with a warning — iterate `span.events` to compute those per window.
+- `span.metrics` exposes per-window values for additive aggregators (`track_count`, `track_sum`, `track_avg`, `track_unique`). Non-additive ones (`track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`/`track_bottom`, `track_top_by`/`track_bottom_by`) cannot be reduced to a single window, so they are omitted with a warning — iterate `span.events` to compute those per window.
 - Because the original events are still streamed, you can attach more `--exec` or `--filter` stages before or after the span logic.
 
 ## Step 3: Time-Based Example
@@ -44,8 +44,8 @@ Roll up five-minute error summaries aligned to timestamps.
 kelora -j examples/simple_json.jsonl \
   --span 5m \
   --exec '
-    track_count("total");
-    track_count("level|" + e.level);
+    track_sum("total", 1);
+    track_count("level", e.level);
   ' \
   --span-close '
     let total = span.metrics.get_path("total", 0);
@@ -86,7 +86,7 @@ Write per-span summaries to files or feed them into downstream commands.
 ```bash
 kelora -j examples/simple_json.jsonl \
   --span 10m \
-  --exec 'track_count(e.service)' \
+  --exec 'track_count("service", e.service)' \
   --span-close '
     let path = "/tmp/span-" + span.id + ".csv";
     for (service, count) in span.metrics {

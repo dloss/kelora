@@ -6,6 +6,6 @@ e.issue_type = if e.level == "ERROR" {
 };
 
 // Track by type and service
-track_count(e.issue_type);
+track_count("issue_type", e.issue_type);
 track_top("service_issue", e.service + ":" + e.issue_type, 10);
 track_stats("response_time", e.get_path("response_time", 0.0));

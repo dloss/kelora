@@ -691,6 +691,7 @@ fn handle_pipeline_success(
                     };
                     let metrics_output = crate::rhai_functions::tracking::format_metrics_output(
                         &pipeline_result.tracking_data.user,
+                        &pipeline_result.tracking_data.internal,
                         metrics_level,
                     );
                     if !metrics_output.is_empty() {
@@ -711,6 +712,7 @@ fn handle_pipeline_success(
                 MetricsFormat::Json => {
                     if let Ok(json_output) = crate::rhai_functions::tracking::format_metrics_json(
                         &pipeline_result.tracking_data.user,
+                        &pipeline_result.tracking_data.internal,
                     ) {
                         if use_stdout {
                             stdout.writeln(&json_output).unwrap_or(());
@@ -744,6 +746,7 @@ fn handle_pipeline_success(
     if let Some(ref metrics_file) = config.output.metrics_file {
         if let Ok(json_output) = crate::rhai_functions::tracking::format_metrics_json(
             &pipeline_result.tracking_data.user,
+            &pipeline_result.tracking_data.internal,
         ) {
             if let Err(e) = std::fs::write(metrics_file, json_output) {
                 stderr
@@ -753,6 +756,38 @@ fn handle_pipeline_success(
                     )
                     .unwrap_or(());
             }
+        }
+    }
+
+    // Surface per-metric counts of skipped Unit () values (missing fields).
+    // The track_* functions skip missing values silently; a high skip count
+    // usually means a field-name typo, so it deserves a diagnostic line.
+    if diagnostics_allowed_runtime && !SHOULD_TERMINATE.load(Ordering::Relaxed) {
+        let mut skips: Vec<(String, i64)> = pipeline_result
+            .tracking_data
+            .internal
+            .iter()
+            .filter_map(|(key, value)| {
+                key.strip_prefix("__kelora_track_skipped_")
+                    .map(|name| (name.to_string(), value.as_int().unwrap_or(0)))
+            })
+            .filter(|(_, count)| *count > 0)
+            .collect();
+        if !skips.is_empty() {
+            skips.sort();
+            let detail = skips
+                .iter()
+                .map(|(name, count)| format!("{} ({})", name, count))
+                .collect::<Vec<_>>()
+                .join(", ");
+            let mut hint = config.format_hint_message(&format!(
+                "Tracking skipped events with missing values: {}. A high count can indicate a field-name typo.",
+                detail
+            ));
+            if !events_were_output {
+                hint = hint.trim_start_matches('\n').to_string();
+            }
+            stderr.writeln(&hint).unwrap_or(());
         }
     }
 

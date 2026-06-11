@@ -137,7 +137,7 @@ find /var/log -name "*.log" -print0 | \
 # Parallel file processing with xargs AND parallel Kelora processing
 find /archives -name "*.jsonl.gz" -print0 | \
   xargs -0 -P 4 -n 1 kelora -j --parallel --unordered \
-    -e 'track_count(e.service)' -m
+    -e 'track_count("service", e.service)' -m
 ```
 
 See [Process Archives at Scale](batch-process-archives.md) for parallel processing strategies.
@@ -213,7 +213,7 @@ docker compose logs -f | \
 
 # Stream with timestamps and time-based filtering
 docker logs -f --timestamps myapp --since 10m | \
-  kelora -f auto --since '5 minutes ago' -e 'track_count(e.level)' -m
+  kelora -f auto --since '5 minutes ago' -e 'track_count("level", e.level)' -m
 
 # Multiple containers with slow request detection
 docker compose logs -f api worker | \
@@ -222,8 +222,8 @@ docker compose logs -f api worker | \
 
 # Aggregate metrics per 1-minute windows
 docker logs -f --timestamps myapp | \
-  kelora -j --span 1m --span-close 'track_count("span_events")' \
-    -e 'track_count(e.level)' -m
+  kelora -j --span 1m --span-close 'track_sum("span_events", 1)' \
+    -e 'track_count("level", e.level)' -m
 ```
 
 ---
@@ -284,7 +284,7 @@ kelora -j app.jsonl -l error -J | \
   jq 'group_by(.service) | map({service: .[0].service, count: length})'
 
 # ...can often be done with Kelora's tracking functions:
-kelora -j app.jsonl -l error -e 'track_count(e.service)' -m
+kelora -j app.jsonl -l error -e 'track_count("service", e.service)' -m
 
 # When jq is better: Complex nested field extraction
 kelora -j logs/app.jsonl --filter 'e.status >= 500' -J | \
@@ -320,7 +320,7 @@ kelora -j logs/app.jsonl -l error -k error_code,service -F csv | \
   qsv sort --select count --reverse
 
 # Alternative: Use Kelora's tracking for simple counts
-kelora -j logs/app.jsonl -l error -e 'track_count(e.error_code)' -m
+kelora -j logs/app.jsonl -l error -e 'track_count("error_code", e.error_code)' -m
 
 # Join Kelora output with reference data (qsv excels here)
 kelora -j logs/orders.jsonl -k order_id,user_id,amount -F csv > orders.csv
@@ -476,7 +476,7 @@ kelora -j logs/app.jsonl -J | \
   agrind '* | json | count by service'
 
 # ...can be done natively with Kelora:
-kelora -j logs/app.jsonl -e 'track_count(e.service)' -m
+kelora -j logs/app.jsonl -e 'track_count("service", e.service)' -m
 
 # angle-grinder's parse pattern
 kelora -f logfmt logs/mixed.log -J | \
@@ -485,13 +485,13 @@ kelora -f logfmt logs/mixed.log -J | \
 # Kelora equivalent using extract_regex() or absorb_kv()
 kelora -f logfmt logs/mixed.log \
   -e 'e.user = e.message.extract_regex(r"user_id=(\S+)", 1)' \
-  -e 'track_count(e.user)' -m
+  -e 'track_count("user", e.user)' -m
 
 # For mixed prose + key=value tails, absorb them in-place
 kelora -f line logs/mixed.log \
   -e 'let res = e.absorb_kv("message");
       e.user = res.data["user_id"] ?? "";
-      track_count(e.user)' -m
+      track_count("user", e.user)' -m
 ```
 
 **When to use angle-grinder:** You prefer its query syntax, or need features Kelora doesn't have.
@@ -571,14 +571,14 @@ kelora -j logs/app.jsonl -l error,warn | ov
 
 Creates console histograms, bar graphs, tables, and heatmaps from streaming data. Quick visual insights without leaving the terminal.
 
-**Note:** Kelora's `track_bucket()` function can create histograms natively with `-m`. Use rare for visual charts.
+**Note:** Kelora's `track_count()` function can create histograms natively with `-m`. Use rare for visual charts.
 
 ```bash
 # Bar chart of log levels
 kelora -j logs/app.jsonl -k level -F tsv | rare histo --field level
 
 # Alternative: Kelora's native histogram tracking
-kelora -j logs/app.jsonl -e 'track_bucket("level", e.level)' -m
+kelora -j logs/app.jsonl -e 'track_count("level", e.level)' -m
 
 # Time-series histogram of events per minute
 kelora -j logs/app.jsonl -k timestamp -F tsv | \
@@ -586,14 +586,14 @@ kelora -j logs/app.jsonl -k timestamp -F tsv | \
 
 # Response time histogram with bucketing in Kelora
 kelora -j logs/app.jsonl \
-  -e 'let bucket = floor(e.response_time / 100) * 100; track_bucket("latency_ms", bucket)' \
+  -e 'let bucket = floor(e.response_time / 100) * 100; track_count("latency_ms", bucket)' \
   -m
 
 # Table summary of services and error counts - rare for visual output
 kelora -j logs/app.jsonl -l error -k service -F tsv | rare table
 
 # Or use Kelora tracking for text output
-kelora -j logs/app.jsonl -l error -e 'track_count(e.service)' -m
+kelora -j logs/app.jsonl -l error -e 'track_count("service", e.service)' -m
 ```
 
 [rare](https://github.com/zix99/rare)
@@ -678,7 +678,7 @@ curl -G "http://loki:3100/loki/api/v1/query_range" \
     -e 'for stream in e.get_path("data.result", []) {
           for value in stream.values { emit_each([value[1]]) }
         }' \
-    -e 'e.parse_json("message"); track_count(e.error_code)' -m
+    -e 'e.parse_json("message"); track_count("error_code", e.error_code)' -m
 ```
 
 [Loki documentation](https://grafana.com/docs/loki/)
@@ -736,7 +736,7 @@ kelora -j logs/app.jsonl \
 # Pre-aggregate before upload to reduce ingestion costs
 kelora -j logs/*.jsonl.gz --span 5m \
   --span-close 'print(span.metrics.to_json())' \
-  -e 'track_count("events"); track_sum("bytes", e.size)' -q | \
+  -e 'track_sum("events", 1); track_sum("bytes", e.size)' -q | \
   curl -X POST http://victorialogs:9428/insert/jsonl --data-binary @-
 ```
 
@@ -745,7 +745,7 @@ kelora -j logs/*.jsonl.gz --span 5m \
 ```bash
 # Query VictoriaLogs with LogsQL and post-process with Kelora
 curl "http://victorialogs:9428/select/logsql/query?query=level:error" | \
-  kelora -j -e 'track_count(e.service); track_percentiles("latency", e.response_time)' -m
+  kelora -j -e 'track_count("service", e.service); track_percentiles("latency", e.response_time)' -m
 
 # Export high-cardinality data and convert to CSV
 curl "http://victorialogs:9428/select/logsql/query?query=_time:5m | fields timestamp,trace_id,user_id,duration" | \
@@ -784,14 +784,14 @@ Combine `find`, `xargs`, and Kelora's `--parallel --unordered` for maximum throu
 find /archives -name "*.jsonl.gz" -print0 | \
   xargs -0 -P 4 kelora -j --parallel --unordered \
     -l error \
-    -e 'track_count(e.service)' \
+    -e 'track_count("service", e.service)' \
     -m
 
 # With time-based filtering instead of file modification time
 find /archives -name "*.jsonl.gz" -print0 | \
   xargs -0 kelora -j --parallel --since '24 hours ago' \
     --filter 'e.status >= 500' \
-    -e 'track_count(e.path); track_max("slowest", e.response_time)' -m
+    -e 'track_count("path", e.path); track_max("slowest", e.response_time)' -m
 ```
 
 ---
@@ -810,7 +810,7 @@ grep -i "checkout" /var/log/app.log | \
 # Often better: Do it all in Kelora
 kelora -f logfmt /var/log/app.log \
   --keep-lines checkout \
-  -e 'track_bucket("duration_ms", floor(e.duration / 100) * 100)' \
+  -e 'track_count("duration_ms", floor(e.duration / 100) * 100)' \
   -e 'track_unique("users", e.user_id)' -m
 
 # Complex extraction pipeline with parsing functions
@@ -819,7 +819,7 @@ kelora -f line /var/log/app.log \
   -e 'e.params = e.url_parts.query.parse_query_params()' \
   -e 'e.checkout_id = e.params["id"]' \
   --filter 'e.has("checkout_id")' \
-  -e 'track_count(e.url_parts.path)' -m
+  -e 'track_count("path", e.url_parts.path)' -m
 ```
 
 ---
@@ -843,7 +843,7 @@ tail -F /var/log/app.log | \
 # Rate-based alerting with span aggregation
 tail -F /var/log/app.log | \
   kelora -j --span 1m \
-    -e 'if e.level == "ERROR" { track_count("errors") }' \
+    -e 'if e.level == "ERROR" { track_sum("errors", 1) }' \
     --span-close 'if span.metrics["errors"].or_empty() > 10 { eprint("⚠️  High error rate: " + span.metrics["errors"].to_string() + " errors/min") }' \
     -q
 
@@ -868,7 +868,7 @@ Before reaching for external tools, check if Kelora can handle it natively:
 - Structured field filtering (`--filter 'e.status >= 500'`)
 - Pattern extraction (`extract_regex()`, `extract_regex_maps()`)
 - Parsing structured formats (`parse_url()`, `parse_kv()`, `parse_json()`, etc.)
-- Aggregation and counting (`track_count()`, `track_sum()`, `track_percentiles()`, `track_bucket()`)
+- Aggregation and counting (`track_count()`, `track_sum()`, `track_percentiles()`, `track_count()`)
 - Array operations (`sorted()`, `filter()`, `map()`, `percentile()`)
 - Window-based analysis (`--window` with `window.pluck()`)
 - Time-windowed aggregation (`--span` with `--span-close`)

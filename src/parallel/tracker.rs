@@ -269,6 +269,17 @@ impl GlobalTracker {
         }
 
         {
+            // Workers attach `__op_{key}` metadata to their user-state deltas.
+            // Keep it in the global internal map (inserts are idempotent) so the
+            // final snapshot can finalize metrics by operation; batch results
+            // often carry no other internal state.
+            let mut global_internal = self.lock_internal_tracked();
+            for (key, value) in user_state.iter().filter(|(k, _)| k.starts_with("__op_")) {
+                global_internal.insert(key.clone(), value.clone());
+            }
+        }
+
+        {
             let mut global_internal = self.lock_internal_tracked();
             Self::merge_state_with_lookup(
                 &mut global_internal,
@@ -627,7 +638,7 @@ impl GlobalTracker {
                             continue;
                         }
                     }
-                    "top" => {
+                    "top" | "top_by" => {
                         if let (Ok(existing_arr), Ok(new_arr)) =
                             (existing.clone().into_array(), value.clone().into_array())
                         {
@@ -637,7 +648,7 @@ impl GlobalTracker {
                             continue;
                         }
                     }
-                    "bottom" => {
+                    "bottom" | "bottom_by" => {
                         if let (Ok(existing_arr), Ok(new_arr)) =
                             (existing.clone().into_array(), value.clone().into_array())
                         {

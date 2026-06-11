@@ -17,7 +17,7 @@ Count events by service and severity to frame the rest of the investigation.
 
 ```bash
 kelora -j examples/simple_json.jsonl \
-  -e 'track_count(e.service); track_count("level_" + e.level)' \
+  -e 'track_count("service", e.service); track_count("level_" + e.level)' \
   --metrics \
   --stats
 ```
@@ -68,7 +68,7 @@ Create a compact report for status updates or documentation.
 
 ```bash
 kelora -j examples/simple_json.jsonl \
-  -e 'track_count(e.service);
+  -e 'track_count("service", e.service);
       let latency = e.get_path("duration_ms");
       if latency != () {
         track_avg("latency_avg|" + e.service, latency);
@@ -146,7 +146,7 @@ kelora -j examples/simple_json.jsonl \
   ```bash
   kelora -j app.log \
     --filter 'e.service == "payments"' \
-    -e 'track_count(e.level);
+    -e 'track_count("level", e.level);
         let latency = e.get_path("duration_ms");
         track_sum("latency_total_ms|" + e.service, latency);
         if latency != () {
@@ -160,7 +160,7 @@ kelora -j examples/simple_json.jsonl \
   kelora -j app.log \
     --since "2 hours ago" \
     -e 'e.window = e.timestamp.format("%Y-%m-%d %H:00");
-        track_count(e.window)' \
+        track_count("window", e.window)' \
     --metrics
   ```
 
@@ -168,7 +168,7 @@ kelora -j examples/simple_json.jsonl \
   ```bash
   tail -f /var/log/app.log | kelora -j -q \
     -l error \
-    -e 'track_count(e.service); eprint("ALERT: error in " + e.service)'
+    -e 'track_count("service", e.service); eprint("ALERT: error in " + e.service)'
   ```
   Add `--no-emoji` when piping into systems that cannot render emoji.
 

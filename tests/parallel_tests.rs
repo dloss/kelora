@@ -166,7 +166,7 @@ fn test_parallel_stats_output_counts_lines_and_events() {
             "--parallel",
             "--with-stats",
             "--exec",
-            "if e.status >= 400 { track_count(\"errors\"); }",
+            "if e.status >= 400 { track_sum(\"errors\", 1); }",
         ],
         input,
     );
@@ -286,7 +286,7 @@ fn test_track_unique_parallel_mode() {
 }
 
 #[test]
-fn test_track_bucket_parallel_mode() {
+fn test_track_count_parallel_mode() {
     let input = r#"{"status": "200"}
 {"status": "404"}
 {"status": "200"}
@@ -298,7 +298,7 @@ fn test_track_bucket_parallel_mode() {
         "-f", "json",
         "--parallel",
         "--batch-size", "2",
-        "--exec", "track_bucket(\"status_counts\", e.status);",
+        "--exec", "track_count(\"status_counts\", e.status);",
         "--end", "let counts = metrics[\"status_counts\"]; print(`200: ${counts.get(\"200\") ?? 0}, 404: ${counts.get(\"404\") ?? 0}, 500: ${counts.get(\"500\") ?? 0}`);"
     ], input);
     assert_eq!(
@@ -783,7 +783,7 @@ fn test_parallel_with_filtering_and_metrics() {
             "--filter",
             "e.value % 10 == 0",
             "--exec",
-            "track_count(\"divisible_by_10\");",
+            "track_sum(\"divisible_by_10\", 1);",
             "--with-stats",
             "--with-metrics",
         ],
@@ -1649,7 +1649,7 @@ fn test_parallel_unordered_with_complex_operations() {
             "--filter",
             "e.value % 3 == 0",
             "--exec",
-            "track_bucket(\"categories\", e.category); e.doubled = e.value * 2;",
+            "track_count(\"categories\", e.category); e.doubled = e.value * 2;",
             "--with-stats",
             "--with-metrics",
         ],
@@ -1874,7 +1874,7 @@ fn test_parallel_metrics_aggregation_stress() {
             "--batch-size",
             "25",
             "--exec",
-            "track_bucket(\"status\", e.status); track_unique(\"users\", e.user); track_bucket(\"regions\", e.region); track_count(\"total\");",
+            "track_count(\"status\", e.status); track_unique(\"users\", e.user); track_count(\"regions\", e.region); track_sum(\"total\", 1);",
             "--with-stats",
             "--with-metrics",
         ],

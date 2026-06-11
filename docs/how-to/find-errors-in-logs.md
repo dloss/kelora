@@ -62,8 +62,8 @@ Track counts while you inspect events so you can state who is affected and how o
 ```bash
 kelora -j examples/simple_json.jsonl \
   -l error,critical \
-  -e 'track_count(e.service)' \
-  -e 'track_count(e.get_path("error.code", "unknown"))' \
+  -e 'track_count("service", e.service)' \
+  -e 'track_count("error_code", e.get_path("error.code", "unknown"))' \
   --metrics \
   --stats
 ```
@@ -108,7 +108,7 @@ Alternatives:
   ```bash
   kelora -j examples/simple_json.jsonl \
     -l error,critical \
-    -e 'track_count(e.account_id)' \
+    -e 'track_count("account_id", e.account_id)' \
     --metrics
   ```
 

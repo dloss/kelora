@@ -347,7 +347,7 @@ kubectl logs -f deployment/api | kelora -f json -l error
 
 # Multiple files - track which files have errors
 kelora -f json logs/*.log --metrics \
-  --exec 'if e.level == "ERROR" { track_count(meta.filename) }'
+  --exec 'if e.level == "ERROR" { track_count("file", meta.filename) }'
 
 # Time-based filtering
 kelora -f combined access.log --since "1 hour ago" --until "10 minutes ago"

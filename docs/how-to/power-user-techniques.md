@@ -46,7 +46,7 @@ Group errors by pattern rather than exact message to see that many different err
     kelora -j examples/production-errors.jsonl \
       --exec 'e.error_pattern = e.message.normalized()' \
       --metrics \
-      --exec 'track_count(e.error_pattern)'
+      --exec 'track_count("error_pattern", e.error_pattern)'
     ```
 
 ### Template Mining with --drain {#template-mining-with-drain}
@@ -478,7 +478,7 @@ kelora logs.log \
   --exec 'e.absorb_kv("line", #{keep_source: true})'
 ```
 
-## Histogram Bucketing with `track_bucket()`
+## Histogram Bucketing with `track_count()`
 
 ### The Problem
 You want to see the distribution of response times, not just average/max.
@@ -492,7 +492,7 @@ You want to see the distribution of response times, not just average/max.
       --filter 'e.has("response_time")' \
       --metrics \
       --exec 'let bucket = (e.response_time / 0.5).floor() * 0.5;
-              track_bucket("response_ms", bucket)'
+              track_count("response_ms", bucket)'
     ```
 
 === "Log Data"
@@ -508,7 +508,7 @@ You want to see the distribution of response times, not just average/max.
     ```bash exec="on" source="above" result="ansi"
     kelora -f combined examples/web_access.log \
       --metrics \
-      --exec 'track_bucket("status", e.status / 100 * 100)'
+      --exec 'track_count("status", e.status / 100 * 100)'
     ```
 
 === "Log Data"
@@ -679,7 +679,7 @@ kelora -j logs.jsonl \
   -k seq,timestamp,message -F csv
 ```
 
-**Note**: For simple counting by category, use `track_count(e.category)` instead.
+**Note**: For simple counting by category, use `track_count("category", e.category)` instead.
 
 ### Converting State to Regular Map
 
@@ -840,7 +840,7 @@ kelora -j api-responses.jsonl \
           e.user_id = ()' \
   --filter 'e.sample_group < 3' \
   --metrics \
-  --exec 'track_count(e.error_pattern);
+  --exec 'track_count("error_pattern", e.error_pattern);
           track_sum("revenue", e.price * e.quantity)' \
   -k order_id,sku,quantity,price,error_pattern -F csv \
   > processed_orders.csv

@@ -17,14 +17,15 @@ pub use errors::{
 };
 pub use format::{format_metrics_json, format_metrics_output};
 use merge::{
-    deserialize_hll, deserialize_tdigest, is_hll_blob, merge_numeric, record_operation_metadata,
+    deserialize_hll, deserialize_tdigest, ensure_operation_metadata, is_hll_blob, merge_numeric,
+    record_skipped_unit,
 };
 use metrics::{
     track_avg_impl, track_cardinality_impl, track_cardinality_with_error_impl, track_max_impl,
     track_min_impl, track_percentiles_impl, track_stats_impl,
 };
 use rank::{
-    track_bottom_count_impl, track_bottom_weighted_impl, track_bucket_impl, track_top_count_impl,
+    track_bottom_count_impl, track_bottom_weighted_impl, track_count_impl, track_top_count_impl,
     track_top_weighted_impl, track_unique_f64_impl, track_unique_i64_impl,
     track_unique_string_impl,
 };
@@ -34,641 +35,519 @@ pub use state::{
     with_user_tracking, TrackingSnapshot,
 };
 
+/// Default N for track_top / track_bottom / track_top_by / track_bottom_by.
+const DEFAULT_RANK_N: i64 = 10;
+
+/// Convert a categorical argument (track_count category, track_top/track_bottom
+/// item, track_unique bool value) to the string form used as a map key.
+/// Unit `()` means "missing field" and yields `None` so callers can skip the
+/// event (recording the skip for diagnostics).
+fn categorical_to_string(
+    fn_name: &str,
+    arg_name: &str,
+    value: &Dynamic,
+) -> Result<Option<String>, Box<rhai::EvalAltResult>> {
+    if value.is_unit() {
+        return Ok(None);
+    }
+    if let Ok(s) = value.clone().into_string() {
+        return Ok(Some(s));
+    }
+    if value.is_int()
+        || value.is_float()
+        || value.is::<bool>()
+        || value.is::<char>()
+        || value.is::<i32>()
+        || value.is::<f32>()
+    {
+        return Ok(Some(value.to_string()));
+    }
+    Err(format!(
+        "{} {} must be a string, number, or bool; got {}",
+        fn_name,
+        arg_name,
+        value.type_name()
+    )
+    .into())
+}
+
+#[derive(Clone, Copy)]
+enum NumericArg {
+    Int(i64),
+    Float(f64),
+}
+
+impl NumericArg {
+    fn as_f64(self) -> f64 {
+        match self {
+            NumericArg::Int(i) => i as f64,
+            NumericArg::Float(f) => f,
+        }
+    }
+
+    fn into_dynamic(self) -> Dynamic {
+        match self {
+            NumericArg::Int(i) => Dynamic::from(i),
+            NumericArg::Float(f) => Dynamic::from(f),
+        }
+    }
+}
+
+/// Convert a numeric argument, preserving int vs float. Unit `()` yields
+/// `None` (missing value → skip); non-numeric types are an error.
+fn numeric_arg(
+    fn_name: &str,
+    arg_name: &str,
+    value: &Dynamic,
+) -> Result<Option<NumericArg>, Box<rhai::EvalAltResult>> {
+    if value.is_unit() {
+        return Ok(None);
+    }
+    if let Ok(i) = value.as_int() {
+        return Ok(Some(NumericArg::Int(i)));
+    }
+    if let Ok(f) = value.as_float() {
+        return Ok(Some(NumericArg::Float(f)));
+    }
+    if let Some(i) = value.clone().try_cast::<i32>() {
+        return Ok(Some(NumericArg::Int(i as i64)));
+    }
+    if let Some(f) = value.clone().try_cast::<f32>() {
+        return Ok(Some(NumericArg::Float(f as f64)));
+    }
+    Err(format!(
+        "{} {} must be a number; got {}",
+        fn_name,
+        arg_name,
+        value.type_name()
+    )
+    .into())
+}
+
+fn default_percentiles() -> rhai::Array {
+    vec![
+        Dynamic::from(0.50_f64),
+        Dynamic::from(0.95_f64),
+        Dynamic::from(0.99_f64),
+    ]
+}
+
+fn track_rank_count(
+    fn_name: &str,
+    key: &str,
+    item: &Dynamic,
+    n: i64,
+    is_top: bool,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    if n < 1 {
+        return Err(format!("{} requires n >= 1, got {}", fn_name, n).into());
+    }
+    match categorical_to_string(fn_name, "item", item)? {
+        Some(item_key) => {
+            if is_top {
+                track_top_count_impl(key, &item_key, n)
+            } else {
+                track_bottom_count_impl(key, &item_key, n)
+            }
+        }
+        None => {
+            record_skipped_unit(key);
+            Ok(())
+        }
+    }
+}
+
+fn track_rank_by(
+    fn_name: &str,
+    key: &str,
+    item: &Dynamic,
+    score: &Dynamic,
+    n: i64,
+    is_top: bool,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    if n < 1 {
+        return Err(format!("{} requires n >= 1, got {}", fn_name, n).into());
+    }
+    let Some(item_key) = categorical_to_string(fn_name, "item", item)? else {
+        record_skipped_unit(key);
+        return Ok(());
+    };
+    let Some(score) = numeric_arg(fn_name, "score", score)? else {
+        record_skipped_unit(key);
+        return Ok(());
+    };
+    if is_top {
+        track_top_weighted_impl(key, &item_key, n, score.as_f64())
+    } else {
+        track_bottom_weighted_impl(key, &item_key, n, score.as_f64())
+    }
+}
+
+fn track_cardinality_dispatch(
+    key: &str,
+    value: &Dynamic,
+    error_rate: Option<f64>,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    fn insert<V: std::hash::Hash>(
+        key: &str,
+        v: &V,
+        error_rate: Option<f64>,
+    ) -> Result<(), Box<rhai::EvalAltResult>> {
+        match error_rate {
+            Some(rate) => track_cardinality_with_error_impl(key, v, rate),
+            None => track_cardinality_impl(key, v),
+        }
+    }
+
+    if value.is_unit() {
+        record_skipped_unit(key);
+        return Ok(());
+    }
+    if let Ok(i) = value.as_int() {
+        return insert(key, &i, error_rate);
+    }
+    if let Ok(f) = value.as_float() {
+        // Hash float bit patterns for consistent hashing
+        return insert(key, &f.to_bits(), error_rate);
+    }
+    if let Some(i) = value.clone().try_cast::<i32>() {
+        return insert(key, &(i as i64), error_rate);
+    }
+    if let Some(f) = value.clone().try_cast::<f32>() {
+        return insert(key, &((f as f64).to_bits()), error_rate);
+    }
+    if let Ok(s) = value.clone().into_string() {
+        return insert(key, &s, error_rate);
+    }
+    if let Some(b) = value.clone().try_cast::<bool>() {
+        let s = if b { "true" } else { "false" }.to_string();
+        return insert(key, &s, error_rate);
+    }
+    Err(format!(
+        "track_cardinality value must be a string, number, or bool; got {}",
+        value.type_name()
+    )
+    .into())
+}
+
 pub fn register_functions(engine: &mut Engine) {
-    // Track functions using thread-local storage - clean user API
-    // Store operation metadata for proper parallel merging
+    // Track functions using thread-local storage - clean user API.
+    // Operation metadata (`__op_*`) is recorded per metric key; it drives the
+    // parallel merge strategy and doubles as a conflict check so that one
+    // metric name cannot be shared by different track functions.
+    //
+    // Common conventions across the family:
+    // - Categorical arguments (category, item) accept strings, numbers, and
+    //   bools; they are stringified into map keys.
+    // - Unit `()` values (missing fields) are skipped, and the skip is counted
+    //   for `--diagnostics`.
+
+    // track_count(name, category): count occurrences of each category value
+    // under the metric `name`. Result shape: {name → {category → count}}.
     engine.register_fn(
         "track_count",
-        |key: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
-            let type_name = key.type_name().to_string();
-            let key = key.into_string().map_err(|_| -> Box<rhai::EvalAltResult> {
-                format!(
-                    "track_count requires a string key; got {}. Hint: use to_string() for numbers (e.g. track_count(e.status.to_string()))",
-                    type_name
-                )
-                .into()
-            })?;
-
-            with_user_tracking(|state| {
-                let updated =
-                    merge_numeric(state.get(key.as_str()).cloned(), Dynamic::from(1_i64));
-                state.insert(key.to_string(), updated);
-            });
-            record_operation_metadata(&key, "count");
-            Ok(())
+        |name: &str, category: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match categorical_to_string("track_count", "category", &category)? {
+                Some(cat) => track_count_impl(name, &cat),
+                None => {
+                    record_skipped_unit(name);
+                    Ok(())
+                }
+            }
+        },
+    );
+    engine.register_fn(
+        "track_count",
+        |name: Dynamic, _category: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(format!(
+                "track_count name must be a string; got {}. Example: track_count(\"status\", e.status)",
+                name.type_name()
+            )
+            .into())
+        },
+    );
+    // kelora 2.0 tombstone: the 1.x single-argument form counted the value itself.
+    engine.register_fn(
+        "track_count",
+        |_value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(
+                "track_count takes a metric name and a category since kelora 2.0: \
+                 track_count(\"status\", e.status) counts each status value. \
+                 For a single counter, use track_sum(\"errors\", 1)"
+                    .into(),
+            )
+        },
+    );
+    // kelora 2.0 tombstone: track_bucket was folded into track_count.
+    engine.register_fn(
+        "track_bucket",
+        |_key: Dynamic, _bucket: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(
+                "track_bucket was renamed in kelora 2.0: use track_count(name, category), \
+                 e.g. track_count(\"status_class\", e.status / 100 * 100)"
+                    .into(),
+            )
         },
     );
 
-    engine.register_fn("track_sum", |key: &str, value: i64| {
-        with_user_tracking(|state| {
-            let updated = merge_numeric(state.get(key).cloned(), Dynamic::from(value));
-            state.insert(key.to_string(), updated);
-        });
-        record_operation_metadata(key, "sum");
-    });
+    engine.register_fn(
+        "track_sum",
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match numeric_arg("track_sum", "value", &value)? {
+                Some(num) => {
+                    ensure_operation_metadata(key, "sum")?;
+                    with_user_tracking(|state| {
+                        let updated = merge_numeric(state.get(key).cloned(), num.into_dynamic());
+                        state.insert(key.to_string(), updated);
+                    });
+                    Ok(())
+                }
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
+        },
+    );
 
-    engine.register_fn("track_sum", |key: &str, value: i32| {
-        with_user_tracking(|state| {
-            let updated = merge_numeric(state.get(key).cloned(), Dynamic::from(value));
-            state.insert(key.to_string(), updated);
-        });
-        record_operation_metadata(key, "sum");
-    });
-
-    engine.register_fn("track_sum", |key: &str, value: f64| {
-        with_user_tracking(|state| {
-            let updated = merge_numeric(state.get(key).cloned(), Dynamic::from(value));
-            state.insert(key.to_string(), updated);
-        });
-        record_operation_metadata(key, "sum");
-    });
-
-    engine.register_fn("track_sum", |key: &str, value: f32| {
-        with_user_tracking(|state| {
-            let updated = merge_numeric(state.get(key).cloned(), Dynamic::from(value));
-            state.insert(key.to_string(), updated);
-        });
-        record_operation_metadata(key, "sum");
-    });
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn("track_sum", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    // track_avg overloads for different number types
     // Stores both sum and count as a map for proper averaging in parallel mode
-    engine.register_fn("track_avg", |key: &str, value: i64| {
-        track_avg_impl(key, value as f64);
-    });
-
-    engine.register_fn("track_avg", |key: &str, value: i32| {
-        track_avg_impl(key, value as f64);
-    });
-
-    engine.register_fn("track_avg", |key: &str, value: f64| {
-        track_avg_impl(key, value);
-    });
-
-    engine.register_fn("track_avg", |key: &str, value: f32| {
-        track_avg_impl(key, value as f64);
-    });
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn("track_avg", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    // track_min overloads for different number types
-    engine.register_fn("track_min", |key: &str, value: i64| {
-        track_min_impl(key, Dynamic::from(value), value as f64);
-    });
-
-    engine.register_fn("track_min", |key: &str, value: i32| {
-        track_min_impl(key, Dynamic::from(value), value as f64);
-    });
-
-    engine.register_fn("track_min", |key: &str, value: f64| {
-        track_min_impl(key, Dynamic::from(value), value);
-    });
-
-    engine.register_fn("track_min", |key: &str, value: f32| {
-        track_min_impl(key, Dynamic::from(value), value as f64);
-    });
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn("track_min", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    // track_max overloads for different number types
-    engine.register_fn("track_max", |key: &str, value: i64| {
-        track_max_impl(key, Dynamic::from(value), value as f64);
-    });
-
-    engine.register_fn("track_max", |key: &str, value: i32| {
-        track_max_impl(key, Dynamic::from(value), value as f64);
-    });
-
-    engine.register_fn("track_max", |key: &str, value: f64| {
-        track_max_impl(key, Dynamic::from(value), value);
-    });
-
-    engine.register_fn("track_max", |key: &str, value: f32| {
-        track_max_impl(key, Dynamic::from(value), value as f64);
-    });
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn("track_max", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    // track_percentiles - streaming percentile estimation using t-digest
-    // Auto-suffixes metric names with percentile (e.g., "latency_p95", "latency_p99")
-    // This is the ONLY track_* function that auto-suffixes because percentiles are always multi-valued
-
     engine.register_fn(
-        "track_percentiles",
-        |key: &str, value: i64, percentiles: rhai::Array| {
-            track_percentiles_impl(key, value as f64, percentiles)
+        "track_avg",
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match numeric_arg("track_avg", "value", &value)? {
+                Some(num) => track_avg_impl(key, num.as_f64()),
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
         },
     );
 
     engine.register_fn(
-        "track_percentiles",
-        |key: &str, value: i32, percentiles: rhai::Array| {
-            track_percentiles_impl(key, value as f64, percentiles)
+        "track_min",
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match numeric_arg("track_min", "value", &value)? {
+                Some(num) => track_min_impl(key, num.into_dynamic(), num.as_f64()),
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
         },
     );
 
     engine.register_fn(
-        "track_percentiles",
-        |key: &str, value: f64, percentiles: rhai::Array| {
-            track_percentiles_impl(key, value, percentiles)
+        "track_max",
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match numeric_arg("track_max", "value", &value)? {
+                Some(num) => track_max_impl(key, num.into_dynamic(), num.as_f64()),
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
         },
     );
 
+    // track_percentiles - streaming percentile estimation using t-digest.
+    // Auto-suffixes metric names with percentile (e.g., "latency_p95");
+    // default percentiles are [0.50, 0.95, 0.99].
     engine.register_fn(
         "track_percentiles",
-        |key: &str, value: f32, percentiles: rhai::Array| {
-            track_percentiles_impl(key, value as f64, percentiles)
-        },
-    );
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn(
-        "track_percentiles",
-        |_key: &str,
-         _value: (),
-         _percentiles: rhai::Array|
+        |key: &str,
+         value: Dynamic,
+         percentiles: rhai::Array|
          -> Result<(), Box<rhai::EvalAltResult>> {
-            // Silently ignore Unit values - no tracking occurs
-            Ok(())
+            match numeric_arg("track_percentiles", "value", &value)? {
+                Some(num) => track_percentiles_impl(key, num.as_f64(), percentiles),
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
+        },
+    );
+    engine.register_fn(
+        "track_percentiles",
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match numeric_arg("track_percentiles", "value", &value)? {
+                Some(num) => track_percentiles_impl(key, num.as_f64(), default_percentiles()),
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
         },
     );
 
-    // Default percentiles overloads (when no array provided, use [0.50, 0.95, 0.99])
-    engine.register_fn("track_percentiles", |key: &str, value: i64| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_percentiles_impl(key, value as f64, default_percentiles)
-    });
-
-    engine.register_fn("track_percentiles", |key: &str, value: i32| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_percentiles_impl(key, value as f64, default_percentiles)
-    });
-
-    engine.register_fn("track_percentiles", |key: &str, value: f64| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_percentiles_impl(key, value, default_percentiles)
-    });
-
-    engine.register_fn("track_percentiles", |key: &str, value: f32| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_percentiles_impl(key, value as f64, default_percentiles)
-    });
-
-    // Unit overload for default percentiles
-    engine.register_fn("track_percentiles", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    // track_stats - comprehensive statistics tracking (min, max, avg, count, sum, percentiles)
-    // Auto-suffixes metric names with _min, _max, _avg, _count, _sum, _pXX
-    // This is a convenience function that combines track_min, track_max, track_avg, and track_percentiles
-
+    // track_stats - comprehensive statistics tracking, auto-suffixing
+    // _min, _max, _avg, _count, _sum and _pXX metric names.
     engine.register_fn(
         "track_stats",
-        |key: &str, value: i64, percentiles: rhai::Array| {
-            track_stats_impl(key, value as f64, percentiles)
-        },
-    );
-
-    engine.register_fn(
-        "track_stats",
-        |key: &str, value: i32, percentiles: rhai::Array| {
-            track_stats_impl(key, value as f64, percentiles)
-        },
-    );
-
-    engine.register_fn(
-        "track_stats",
-        |key: &str, value: f64, percentiles: rhai::Array| track_stats_impl(key, value, percentiles),
-    );
-
-    engine.register_fn(
-        "track_stats",
-        |key: &str, value: f32, percentiles: rhai::Array| {
-            track_stats_impl(key, value as f64, percentiles)
-        },
-    );
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn(
-        "track_stats",
-        |_key: &str,
-         _value: (),
-         _percentiles: rhai::Array|
+        |key: &str,
+         value: Dynamic,
+         percentiles: rhai::Array|
          -> Result<(), Box<rhai::EvalAltResult>> {
-            // Silently ignore Unit values - no tracking occurs
-            Ok(())
+            match numeric_arg("track_stats", "value", &value)? {
+                Some(num) => track_stats_impl(key, num.as_f64(), percentiles),
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
+        },
+    );
+    engine.register_fn(
+        "track_stats",
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match numeric_arg("track_stats", "value", &value)? {
+                Some(num) => track_stats_impl(key, num.as_f64(), default_percentiles()),
+                None => {
+                    record_skipped_unit(key);
+                    Ok(())
+                }
+            }
         },
     );
 
-    // Default percentiles overloads (when no array provided, use [0.50, 0.95, 0.99])
-    engine.register_fn("track_stats", |key: &str, value: i64| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_stats_impl(key, value as f64, default_percentiles)
-    });
+    // track_unique - exact set of distinct values (kept in memory, unbounded;
+    // a one-time warning fires past a size threshold).
+    engine.register_fn(
+        "track_unique",
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            if value.is_unit() {
+                record_skipped_unit(key);
+                return Ok(());
+            }
+            if let Ok(i) = value.as_int() {
+                return track_unique_i64_impl(key, i);
+            }
+            if let Ok(f) = value.as_float() {
+                return track_unique_f64_impl(key, f);
+            }
+            if let Some(i) = value.clone().try_cast::<i32>() {
+                return track_unique_i64_impl(key, i as i64);
+            }
+            if let Some(f) = value.clone().try_cast::<f32>() {
+                return track_unique_f64_impl(key, f as f64);
+            }
+            if let Ok(s) = value.clone().into_string() {
+                return track_unique_string_impl(key, &s);
+            }
+            if let Some(b) = value.clone().try_cast::<bool>() {
+                return track_unique_string_impl(key, if b { "true" } else { "false" });
+            }
+            Err(format!(
+                "track_unique value must be a string, number, or bool; got {}",
+                value.type_name()
+            )
+            .into())
+        },
+    );
 
-    engine.register_fn("track_stats", |key: &str, value: i32| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_stats_impl(key, value as f64, default_percentiles)
-    });
-
-    engine.register_fn("track_stats", |key: &str, value: f64| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_stats_impl(key, value, default_percentiles)
-    });
-
-    engine.register_fn("track_stats", |key: &str, value: f32| {
-        let default_percentiles = vec![
-            Dynamic::from(0.50_f64),
-            Dynamic::from(0.95_f64),
-            Dynamic::from(0.99_f64),
-        ];
-        track_stats_impl(key, value as f64, default_percentiles)
-    });
-
-    // Unit overload for default percentiles
-    engine.register_fn("track_stats", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    engine.register_fn("track_unique", |key: &str, value: &str| {
-        track_unique_string_impl(key, value);
-    });
-
-    engine.register_fn("track_unique", |key: &str, value: i64| {
-        track_unique_i64_impl(key, value);
-    });
-
-    engine.register_fn("track_unique", |key: &str, value: i32| {
-        track_unique_i64_impl(key, value as i64);
-    });
-
-    engine.register_fn("track_unique", |key: &str, value: f64| {
-        track_unique_f64_impl(key, value);
-    });
-
-    engine.register_fn("track_unique", |key: &str, value: f32| {
-        track_unique_f64_impl(key, value as f64);
-    });
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn("track_unique", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    // track_cardinality - probabilistic cardinality estimation using HyperLogLog
-    // Uses ~12KB of memory regardless of cardinality, with ~1% standard error
-    // For exact counts of small sets, use track_unique instead
-
-    engine.register_fn("track_cardinality", |key: &str, value: &str| {
-        let s = value.to_string();
-        track_cardinality_impl(key, &s);
-    });
-
-    engine.register_fn("track_cardinality", |key: &str, value: i64| {
-        track_cardinality_impl(key, &value);
-    });
-
-    engine.register_fn("track_cardinality", |key: &str, value: i32| {
-        let v = value as i64;
-        track_cardinality_impl(key, &v);
-    });
-
-    engine.register_fn("track_cardinality", |key: &str, value: f64| {
-        // Convert to bits for consistent hashing of floats
-        let bits = value.to_bits();
-        track_cardinality_impl(key, &bits);
-    });
-
-    engine.register_fn("track_cardinality", |key: &str, value: f32| {
-        let bits = (value as f64).to_bits();
-        track_cardinality_impl(key, &bits);
-    });
-
-    // Overloads with custom error rate (third parameter)
+    // track_cardinality - probabilistic cardinality estimation using HyperLogLog.
+    // Uses ~12KB of memory regardless of cardinality, with ~1% standard error.
+    // For the exact values of small sets, use track_unique instead.
     engine.register_fn(
         "track_cardinality",
-        |key: &str, value: &str, error_rate: f64| {
-            let s = value.to_string();
-            track_cardinality_with_error_impl(key, &s, error_rate);
+        |key: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_cardinality_dispatch(key, &value, None)
         },
     );
-
     engine.register_fn(
         "track_cardinality",
-        |key: &str, value: i64, error_rate: f64| {
-            track_cardinality_with_error_impl(key, &value, error_rate);
+        |key: &str, value: Dynamic, error_rate: f64| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_cardinality_dispatch(key, &value, Some(error_rate))
         },
     );
 
-    engine.register_fn(
-        "track_cardinality",
-        |key: &str, value: i32, error_rate: f64| {
-            let v = value as i64;
-            track_cardinality_with_error_impl(key, &v, error_rate);
-        },
-    );
-
-    engine.register_fn(
-        "track_cardinality",
-        |key: &str, value: f64, error_rate: f64| {
-            let bits = value.to_bits();
-            track_cardinality_with_error_impl(key, &bits, error_rate);
-        },
-    );
-
-    engine.register_fn(
-        "track_cardinality",
-        |key: &str, value: f32, error_rate: f64| {
-            let bits = (value as f64).to_bits();
-            track_cardinality_with_error_impl(key, &bits, error_rate);
-        },
-    );
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn("track_cardinality", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    engine.register_fn(
-        "track_cardinality",
-        |_key: &str, _value: (), _error_rate: f64| {
-            // Silently ignore Unit values - no tracking occurs
-        },
-    );
-
-    engine.register_fn("track_bucket", |key: &str, bucket: &str| {
-        track_bucket_impl(key, bucket);
-    });
-
-    engine.register_fn("track_bucket", |key: &str, bucket: i64| {
-        track_bucket_impl(key, &bucket.to_string());
-    });
-
-    engine.register_fn("track_bucket", |key: &str, bucket: i32| {
-        track_bucket_impl(key, &bucket.to_string());
-    });
-
-    engine.register_fn("track_bucket", |key: &str, bucket: f64| {
-        track_bucket_impl(key, &bucket.to_string());
-    });
-
-    engine.register_fn("track_bucket", |key: &str, bucket: f32| {
-        track_bucket_impl(key, &bucket.to_string());
-    });
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn("track_bucket", |_key: &str, _value: ()| {
-        // Silently ignore Unit values - no tracking occurs
-    });
-
-    // track_top - Count mode: Most frequent items
+    // track_top / track_bottom - most/least frequent items (n defaults to 10)
     engine.register_fn(
         "track_top",
-        |key: &str, item_key: &str, n: i64| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_top requires n >= 1, got {}", n).into());
-            }
-            track_top_count_impl(key, item_key, n)
-        },
-    );
-
-    // Unit overload - no-op for missing/empty item keys
-    engine.register_fn(
-        "track_top",
-        |_key: &str, _item_key: (), _n: i64| -> Result<(), Box<rhai::EvalAltResult>> { Ok(()) },
-    );
-
-    // track_top - Weighted mode: Highest values
-    engine.register_fn(
-        "track_top",
-        |key: &str, item_key: &str, n: i64, value: i64| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_top requires n >= 1, got {}", n).into());
-            }
-
-            track_top_weighted_impl(key, item_key, n, value as f64)
-        },
-    );
-
-    engine.register_fn(
-        "track_top",
-        |key: &str, item_key: &str, n: i64, value: i32| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_top requires n >= 1, got {}", n).into());
-            }
-
-            track_top_weighted_impl(key, item_key, n, value as f64)
-        },
-    );
-
-    engine.register_fn(
-        "track_top",
-        |key: &str, item_key: &str, n: i64, value: f64| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_top requires n >= 1, got {}", n).into());
-            }
-
-            track_top_weighted_impl(key, item_key, n, value)
-        },
-    );
-
-    engine.register_fn(
-        "track_top",
-        |key: &str, item_key: &str, n: i64, value: f32| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_top requires n >= 1, got {}", n).into());
-            }
-
-            track_top_weighted_impl(key, item_key, n, value as f64)
-        },
-    );
-
-    // Unit overload - no-op for missing/empty item keys (weighted mode)
-    engine.register_fn(
-        "track_top",
-        |_key: &str, _item_key: (), _n: i64, _value: i64| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
+        |key: &str, item: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_count("track_top", key, &item, DEFAULT_RANK_N, true)
         },
     );
     engine.register_fn(
         "track_top",
-        |_key: &str, _item_key: (), _n: i64, _value: i32| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
+        |key: &str, item: Dynamic, n: i64| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_count("track_top", key, &item, n, true)
         },
     );
+    engine.register_fn(
+        "track_bottom",
+        |key: &str, item: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_count("track_bottom", key, &item, DEFAULT_RANK_N, false)
+        },
+    );
+    engine.register_fn(
+        "track_bottom",
+        |key: &str, item: Dynamic, n: i64| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_count("track_bottom", key, &item, n, false)
+        },
+    );
+    // kelora 2.0 tombstones: the 4-argument weighted forms moved to
+    // track_top_by / track_bottom_by.
     engine.register_fn(
         "track_top",
-        |_key: &str, _item_key: (), _n: i64, _value: f64| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
-        },
-    );
-    engine.register_fn(
-        "track_top",
-        |_key: &str, _item_key: (), _n: i64, _value: f32| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
-        },
-    );
-
-    // Unit overload - no-op for missing/empty values
-    engine.register_fn(
-        "track_top",
-        |_key: &str,
-         _item_key: &str,
-         _n: i64,
-         _value: ()|
-         -> Result<(), Box<rhai::EvalAltResult>> { Ok(()) },
-    );
-    engine.register_fn(
-        "track_top",
-        |_key: &str, _item_key: (), _n: i64, _value: ()| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
-        },
-    );
-
-    // track_bottom - Count mode: Least frequent items
-    engine.register_fn(
-        "track_bottom",
-        |key: &str, item_key: &str, n: i64| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_bottom requires n >= 1, got {}", n).into());
-            }
-            track_bottom_count_impl(key, item_key, n)
-        },
-    );
-
-    // Unit overload - no-op for missing/empty item keys
-    engine.register_fn(
-        "track_bottom",
-        |_key: &str, _item_key: (), _n: i64| -> Result<(), Box<rhai::EvalAltResult>> { Ok(()) },
-    );
-
-    // track_bottom - Weighted mode: Lowest values
-    engine.register_fn(
-        "track_bottom",
-        |key: &str, item_key: &str, n: i64, value: i64| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_bottom requires n >= 1, got {}", n).into());
-            }
-
-            track_bottom_weighted_impl(key, item_key, n, value as f64)
-        },
-    );
-
-    engine.register_fn(
-        "track_bottom",
-        |key: &str, item_key: &str, n: i64, value: i32| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_bottom requires n >= 1, got {}", n).into());
-            }
-
-            track_bottom_weighted_impl(key, item_key, n, value as f64)
-        },
-    );
-
-    engine.register_fn(
-        "track_bottom",
-        |key: &str, item_key: &str, n: i64, value: f64| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_bottom requires n >= 1, got {}", n).into());
-            }
-
-            track_bottom_weighted_impl(key, item_key, n, value)
-        },
-    );
-
-    engine.register_fn(
-        "track_bottom",
-        |key: &str, item_key: &str, n: i64, value: f32| -> Result<(), Box<rhai::EvalAltResult>> {
-            if n < 1 {
-                return Err(format!("track_bottom requires n >= 1, got {}", n).into());
-            }
-
-            track_bottom_weighted_impl(key, item_key, n, value as f64)
-        },
-    );
-
-    // Unit overload - no-op for missing/empty item keys (weighted mode)
-    engine.register_fn(
-        "track_bottom",
-        |_key: &str, _item_key: (), _n: i64, _value: i64| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
+        |_a: Dynamic,
+         _b: Dynamic,
+         _c: Dynamic,
+         _d: Dynamic|
+         -> Result<(), Box<rhai::EvalAltResult>> {
+            Err("ranking by a score moved to track_top_by in kelora 2.0: \
+                 track_top_by(\"slowest\", e.endpoint, e.latency_ms)"
+                .into())
         },
     );
     engine.register_fn(
         "track_bottom",
-        |_key: &str, _item_key: (), _n: i64, _value: i32| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
-        },
-    );
-    engine.register_fn(
-        "track_bottom",
-        |_key: &str, _item_key: (), _n: i64, _value: f64| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
-        },
-    );
-    engine.register_fn(
-        "track_bottom",
-        |_key: &str, _item_key: (), _n: i64, _value: f32| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
+        |_a: Dynamic,
+         _b: Dynamic,
+         _c: Dynamic,
+         _d: Dynamic|
+         -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(
+                "ranking by a score moved to track_bottom_by in kelora 2.0: \
+                 track_bottom_by(\"fastest\", e.endpoint, e.latency_ms)"
+                    .into(),
+            )
         },
     );
 
-    // Unit overload - no-op for missing/empty values
+    // track_top_by / track_bottom_by - items ranked by highest/lowest score
+    // (n defaults to 10)
     engine.register_fn(
-        "track_bottom",
-        |_key: &str,
-         _item_key: &str,
-         _n: i64,
-         _value: ()|
-         -> Result<(), Box<rhai::EvalAltResult>> { Ok(()) },
+        "track_top_by",
+        |key: &str, item: Dynamic, score: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_by("track_top_by", key, &item, &score, DEFAULT_RANK_N, true)
+        },
     );
     engine.register_fn(
-        "track_bottom",
-        |_key: &str, _item_key: (), _n: i64, _value: ()| -> Result<(), Box<rhai::EvalAltResult>> {
-            Ok(())
+        "track_top_by",
+        |key: &str,
+         item: Dynamic,
+         score: Dynamic,
+         n: i64|
+         -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_by("track_top_by", key, &item, &score, n, true)
+        },
+    );
+    engine.register_fn(
+        "track_bottom_by",
+        |key: &str, item: Dynamic, score: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_by("track_bottom_by", key, &item, &score, DEFAULT_RANK_N, false)
+        },
+    );
+    engine.register_fn(
+        "track_bottom_by",
+        |key: &str,
+         item: Dynamic,
+         score: Dynamic,
+         n: i64|
+         -> Result<(), Box<rhai::EvalAltResult>> {
+            track_rank_by("track_bottom_by", key, &item, &score, n, false)
         },
     );
 }
@@ -693,10 +572,12 @@ pub fn merge_thread_tracking_to_context(ctx: &mut crate::pipeline::PipelineConte
 /// user script it needs to contain plain numeric values so that scripts can
 /// render them with helpers like `format_decimals` and `bar`. This helper
 /// returns the finalized `Dynamic` for a metric key/value pair.
-fn finalize_metric_value(key: &str, value: &Dynamic) -> Dynamic {
-    // Average tracking: {sum, count} map → mean as f64
-    if let Some(map) = value.clone().try_cast::<rhai::Map>() {
-        if map.contains_key("sum") && map.contains_key("count") {
+fn finalize_metric_value(key: &str, value: &Dynamic, operation: Option<&str>) -> Dynamic {
+    // Average tracking: {sum, count} map → mean as f64. Gated on the recorded
+    // operation rather than the map's shape: a user's track_count categories
+    // may legitimately be named "sum" and "count".
+    if operation == Some("avg") {
+        if let Some(map) = value.clone().try_cast::<rhai::Map>() {
             let sum = map
                 .get("sum")
                 .and_then(|v| {
@@ -737,20 +618,36 @@ fn finalize_metric_value(key: &str, value: &Dynamic) -> Dynamic {
     value.clone()
 }
 
+/// Look up the recorded track operation for a metric key in an ops map
+/// (typically the internal tracking state, which holds `__op_{key}` entries).
+pub(crate) fn metric_operation(ops: &HashMap<String, Dynamic>, key: &str) -> Option<String> {
+    ops.get(&format!("__op_{}", key))
+        .and_then(|v| v.clone().into_string().ok())
+}
+
 /// Build a finalized `rhai::Map` suitable for exposing as the `metrics`
 /// global inside `--end` / `--span-close` / other post-processing stages.
-/// Internal bookkeeping keys (`__op_*`, `__kelora_stats_*`, `__kelora_error_*`)
-/// are filtered out, and sketch-backed metrics are finalized to plain numbers.
-pub fn finalize_metrics_for_script(metrics: &HashMap<String, Dynamic>) -> rhai::Map {
+/// Internal bookkeeping keys (`__op_*`, `__kelora_stats_*`, `__kelora_error_*`,
+/// `__kelora_track_*`) are filtered out, and sketch-backed metrics are
+/// finalized to plain numbers using the per-key operation metadata in `ops`.
+pub fn finalize_metrics_for_script(
+    metrics: &HashMap<String, Dynamic>,
+    ops: &HashMap<String, Dynamic>,
+) -> rhai::Map {
     let mut out = rhai::Map::new();
     for (key, value) in metrics.iter() {
         if key.starts_with("__op_")
             || key.starts_with("__kelora_stats_")
             || key.starts_with("__kelora_error_")
+            || key.starts_with("__kelora_track_")
         {
             continue;
         }
-        out.insert(key.clone().into(), finalize_metric_value(key, value));
+        let operation = metric_operation(ops, key);
+        out.insert(
+            key.clone().into(),
+            finalize_metric_value(key, value, operation.as_deref()),
+        );
     }
     out
 }
@@ -847,10 +744,10 @@ mod tests {
     }
 
     #[test]
-    fn test_record_operation_metadata() {
+    fn test_ensure_operation_metadata() {
         clear_tracking_state();
 
-        record_operation_metadata("test_key", "count");
+        merge::ensure_operation_metadata("test_key", "count").unwrap();
 
         let internal = get_thread_internal_state();
         assert!(internal.contains_key("__op_test_key"));
@@ -863,6 +760,13 @@ mod tests {
                 .unwrap(),
             "count"
         );
+
+        // Re-recording the same operation is fine
+        merge::ensure_operation_metadata("test_key", "count").unwrap();
+
+        // A different operation on the same key is a conflict
+        let err = merge::ensure_operation_metadata("test_key", "avg").unwrap_err();
+        assert!(err.to_string().contains("already tracked"));
 
         clear_tracking_state();
     }
@@ -1260,24 +1164,24 @@ mod tests {
     }
 
     #[test]
-    fn test_track_top_weighted_mode() {
+    fn test_track_top_by_weighted_mode() {
         clear_tracking_state();
 
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
-        // Track with custom values (latency)
+        // Track with custom scores (latency)
         engine
-            .eval::<()>(r#"track_top("slow", "/api/users", 2, 150)"#)
+            .eval::<()>(r#"track_top_by("slow", "/api/users", 150, 2)"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_top("slow", "/api/products", 2, 50)"#)
+            .eval::<()>(r#"track_top_by("slow", "/api/products", 50, 2)"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_top("slow", "/api/users", 2, 200)"#)
+            .eval::<()>(r#"track_top_by("slow", "/api/users", 200, 2)"#)
             .unwrap(); // Should update to max (200)
         engine
-            .eval::<()>(r#"track_top("slow", "/api/orders", 2, 75)"#)
+            .eval::<()>(r#"track_top_by("slow", "/api/orders", 75, 2)"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -1368,24 +1272,24 @@ mod tests {
     }
 
     #[test]
-    fn test_track_bottom_weighted_mode() {
+    fn test_track_bottom_by_weighted_mode() {
         clear_tracking_state();
 
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
-        // Track with custom values (latency - bottom = fastest)
+        // Track with custom scores (latency - bottom = fastest)
         engine
-            .eval::<()>(r#"track_bottom("fast", "/api/users", 2, 150.5)"#)
+            .eval::<()>(r#"track_bottom_by("fast", "/api/users", 150.5, 2)"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_bottom("fast", "/api/products", 2, 30.0)"#)
+            .eval::<()>(r#"track_bottom_by("fast", "/api/products", 30.0, 2)"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_bottom("fast", "/api/users", 2, 100.0)"#)
+            .eval::<()>(r#"track_bottom_by("fast", "/api/users", 100.0, 2)"#)
             .unwrap(); // Should update to min (100)
         engine
-            .eval::<()>(r#"track_bottom("fast", "/api/orders", 2, 75.0)"#)
+            .eval::<()>(r#"track_bottom_by("fast", "/api/orders", 75.0, 2)"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -1422,7 +1326,7 @@ mod tests {
         // Unit item keys should be silently ignored
         engine.eval::<()>(r#"track_bottom("test", (), 3)"#).unwrap();
         engine
-            .eval::<()>(r#"track_bottom("test", (), 3, 10)"#)
+            .eval::<()>(r#"track_bottom_by("test", (), 10, 3)"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -1461,9 +1365,9 @@ mod tests {
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
-        // Unit values should be silently ignored
+        // Unit scores should be silently ignored
         engine
-            .eval::<()>(r#"track_top("test", "apple", 3, ())"#)
+            .eval::<()>(r#"track_top_by("test", "apple", (), 3)"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -1492,7 +1396,7 @@ mod tests {
         // Unit item keys should be silently ignored
         engine.eval::<()>(r#"track_top("test", (), 3)"#).unwrap();
         engine
-            .eval::<()>(r#"track_top("test", (), 3, 10)"#)
+            .eval::<()>(r#"track_top_by("test", (), 10, 3)"#)
             .unwrap();
 
         let state = get_thread_tracking_state();
@@ -2075,7 +1979,7 @@ mod tests {
         assert!(state.get("latency_avg").unwrap().is::<rhai::Map>());
 
         // Finalized view exposes plain numbers.
-        let finalized = finalize_metrics_for_script(&state);
+        let finalized = finalize_metrics_for_script(&state, &get_thread_internal_state());
 
         let p50 = finalized
             .get("latency_p50")
@@ -2140,7 +2044,7 @@ mod tests {
         let state = get_thread_tracking_state();
         assert!(state.get("uniq").unwrap().is_blob());
 
-        let finalized = finalize_metrics_for_script(&state);
+        let finalized = finalize_metrics_for_script(&state, &get_thread_internal_state());
         let cardinality = finalized
             .get("uniq")
             .expect("uniq missing")
@@ -2168,12 +2072,321 @@ mod tests {
         });
 
         let state = get_thread_tracking_state();
-        let finalized = finalize_metrics_for_script(&state);
+        let finalized = finalize_metrics_for_script(&state, &get_thread_internal_state());
 
         assert!(finalized.contains_key("visible"));
         assert!(!finalized.contains_key("__op_hidden"));
         assert!(!finalized.contains_key("__kelora_stats_hidden"));
         assert!(!finalized.contains_key("__kelora_error_hidden"));
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_count_categories() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine
+            .eval::<()>(r#"track_count("level", "ERROR")"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_count("level", "ERROR")"#)
+            .unwrap();
+        engine
+            .eval::<()>(r#"track_count("level", "INFO")"#)
+            .unwrap();
+        // Numbers and bools are stringified into category keys
+        engine.eval::<()>(r#"track_count("status", 200)"#).unwrap();
+        engine.eval::<()>(r#"track_count("status", 200)"#).unwrap();
+        engine.eval::<()>(r#"track_count("status", 503)"#).unwrap();
+        engine.eval::<()>(r#"track_count("tls", true)"#).unwrap();
+
+        let state = get_thread_tracking_state();
+        let level = state
+            .get("level")
+            .unwrap()
+            .clone()
+            .try_cast::<rhai::Map>()
+            .unwrap();
+        assert_eq!(level.get("ERROR").unwrap().as_int().unwrap(), 2);
+        assert_eq!(level.get("INFO").unwrap().as_int().unwrap(), 1);
+
+        let status = state
+            .get("status")
+            .unwrap()
+            .clone()
+            .try_cast::<rhai::Map>()
+            .unwrap();
+        assert_eq!(status.get("200").unwrap().as_int().unwrap(), 2);
+        assert_eq!(status.get("503").unwrap().as_int().unwrap(), 1);
+
+        let tls = state
+            .get("tls")
+            .unwrap()
+            .clone()
+            .try_cast::<rhai::Map>()
+            .unwrap();
+        assert_eq!(tls.get("true").unwrap().as_int().unwrap(), 1);
+
+        // The op metadata drives the parallel merge strategy
+        let internal = get_thread_internal_state();
+        assert_eq!(
+            internal
+                .get("__op_level")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "bucket"
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_count_skips_unit_and_records_skip() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_count("level", ())"#).unwrap();
+        engine.eval::<()>(r#"track_count("level", ())"#).unwrap();
+
+        let state = get_thread_tracking_state();
+        assert!(!state.contains_key("level"));
+
+        let internal = get_thread_internal_state();
+        assert_eq!(
+            internal
+                .get("__kelora_track_skipped_level")
+                .unwrap()
+                .as_int()
+                .unwrap(),
+            2
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_count_rejects_invalid_arguments() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Non-string metric name
+        let err = engine
+            .eval::<()>(r#"track_count(42, "x")"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("name must be a string"), "got: {}", err);
+
+        // Map/array categories are not stringifiable
+        let err = engine
+            .eval::<()>(r#"track_count("x", #{a: 1})"#)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains("category must be a string, number, or bool"),
+            "got: {}",
+            err
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_count_one_arg_tombstone() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        let err = engine
+            .eval::<()>(r#"track_count("errors")"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("track_sum"), "got: {}", err);
+        assert!(err.contains("kelora 2.0"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_track_bucket_tombstone() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        let err = engine
+            .eval::<()>(r#"track_bucket("status", 200)"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("track_count"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_track_top_four_arg_tombstone() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        let err = engine
+            .eval::<()>(r#"track_top("slow", "/api", 10, 150)"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("track_top_by"), "got: {}", err);
+
+        let err = engine
+            .eval::<()>(r#"track_bottom("fast", "/api", 10, 150)"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("track_bottom_by"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_track_operation_conflict_errors() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_sum("x", 1)"#).unwrap();
+        let err = engine
+            .eval::<()>(r#"track_min("x", 5)"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("already tracked by track_sum"), "got: {}", err);
+
+        // Mixing the count and score ranking modes on one name is a conflict too
+        engine.eval::<()>(r#"track_top("ranked", "a")"#).unwrap();
+        let err = engine
+            .eval::<()>(r#"track_top_by("ranked", "a", 5)"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("already tracked by track_top"), "got: {}", err);
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_top_default_n() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        for i in 0..15 {
+            engine
+                .eval::<()>(&format!(r#"track_top("items", "item{:02}")"#, i))
+                .unwrap();
+        }
+
+        let state = get_thread_tracking_state();
+        let result = state.get("items").unwrap().clone().into_array().unwrap();
+        assert_eq!(result.len(), 10);
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_top_numeric_and_bool_items() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_top("status", 503, 5)"#).unwrap();
+        engine.eval::<()>(r#"track_top("status", 503, 5)"#).unwrap();
+        engine.eval::<()>(r#"track_top("flags", true, 5)"#).unwrap();
+
+        let state = get_thread_tracking_state();
+        let status = state.get("status").unwrap().clone().into_array().unwrap();
+        let first = status[0].clone().try_cast::<rhai::Map>().unwrap();
+        assert_eq!(
+            first.get("key").unwrap().clone().into_string().unwrap(),
+            "503"
+        );
+        assert_eq!(first.get("count").unwrap().as_int().unwrap(), 2);
+
+        let flags = state.get("flags").unwrap().clone().into_array().unwrap();
+        let first = flags[0].clone().try_cast::<rhai::Map>().unwrap();
+        assert_eq!(
+            first.get("key").unwrap().clone().into_string().unwrap(),
+            "true"
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_unique_bool_value() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_unique("tls", true)"#).unwrap();
+        engine.eval::<()>(r#"track_unique("tls", true)"#).unwrap();
+        engine.eval::<()>(r#"track_unique("tls", false)"#).unwrap();
+
+        let state = get_thread_tracking_state();
+        let arr = state.get("tls").unwrap().clone().into_array().unwrap();
+        assert_eq!(arr.len(), 2);
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_sum_skips_unit_and_records_skip() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_sum("bytes", ())"#).unwrap();
+        engine.eval::<()>(r#"track_sum("bytes", 10)"#).unwrap();
+        engine.eval::<()>(r#"track_sum("bytes", ())"#).unwrap();
+
+        let state = get_thread_tracking_state();
+        assert_eq!(state.get("bytes").unwrap().as_int().unwrap(), 10);
+
+        let internal = get_thread_internal_state();
+        assert_eq!(
+            internal
+                .get("__kelora_track_skipped_bytes")
+                .unwrap()
+                .as_int()
+                .unwrap(),
+            2
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
+    fn test_finalize_count_categories_named_sum_count() {
+        // A track_count metric with categories literally named "sum" and
+        // "count" must finalize as a category map, not as an average.
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_count("ops", "sum")"#).unwrap();
+        engine.eval::<()>(r#"track_count("ops", "count")"#).unwrap();
+        engine.eval::<()>(r#"track_count("ops", "count")"#).unwrap();
+
+        let state = get_thread_tracking_state();
+        let finalized = finalize_metrics_for_script(&state, &get_thread_internal_state());
+
+        let ops = finalized
+            .get("ops")
+            .expect("ops missing")
+            .clone()
+            .try_cast::<rhai::Map>()
+            .expect("ops should remain a category map");
+        assert_eq!(ops.get("sum").unwrap().as_int().unwrap(), 1);
+        assert_eq!(ops.get("count").unwrap().as_int().unwrap(), 2);
 
         clear_tracking_state();
     }

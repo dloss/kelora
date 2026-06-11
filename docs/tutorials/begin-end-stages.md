@@ -244,7 +244,7 @@ Use `--end` to run code **once** after all events are processed.
     ```bash
     kelora -j examples/simple_json.jsonl \
         --begin 'print("Starting analysis...")' \
-        --exec 'track_count(e.service)' \
+        --exec 'track_count("service", e.service)' \
         --end 'print("Processed " + metrics.keys().len() + " unique services")' \
       -q \
         --metrics
@@ -255,7 +255,7 @@ Use `--end` to run code **once** after all events are processed.
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
         --begin 'print("Starting analysis...")' \
-        --exec 'track_count(e.service)' \
+        --exec 'track_count("service", e.service)' \
         --end 'print("Processed " + metrics.keys().len() + " unique services")' \
       -q \
         --metrics
@@ -278,8 +278,8 @@ Build custom reports using tracked metrics.
 
     ```bash
     kelora -j examples/simple_json.jsonl \
-        --exec 'track_count(e.level)' \
-        --exec 'track_count(e.service)' \
+        --exec 'track_count("level", e.level)' \
+        --exec 'track_count("service", e.service)' \
         --end 'print("=== Log Summary ===");
                print("Total levels: " + metrics.keys().filter(|k| k != "service").len());
                print("Total services: " + metrics.keys().filter(|k| k == "api" || k == "database" || k == "auth" || k == "cache" || k == "scheduler").len())' \
@@ -290,8 +290,8 @@ Build custom reports using tracked metrics.
 
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
-        --exec 'track_count(e.level)' \
-        --exec 'track_count(e.service)' \
+        --exec 'track_count("level", e.level)' \
+        --exec 'track_count("service", e.service)' \
         --end 'print("=== Log Summary ==="); print("Levels tracked: " + metrics.keys().len()); for key in metrics.keys() { print("  " + key + ": " + metrics[key]) }' \
         -q
     ```
@@ -318,7 +318,7 @@ Combine all stages for a production-ready alert pipeline.
                     e.owner = conf.services[e.service].owner
                 }' \
         --filter 'e.criticality == "critical" && (e.level == "ERROR" || e.level == "CRITICAL")' \
-        --exec 'track_count(e.owner)' \
+        --exec 'track_count("owner", e.owner)' \
         --end 'print("=== Alert Summary ===");
                for owner in metrics.keys() {
                    let count = metrics[owner];
@@ -338,7 +338,7 @@ Combine all stages for a production-ready alert pipeline.
         --begin 'conf.services = #{database: #{criticality: "critical", owner: "bob@example.com"}, auth: #{criticality: "critical", owner: "charlie@example.com"}}; conf.alert_threshold = 1' \
         --exec 'if conf.services.contains(e.service) { e.criticality = conf.services[e.service].criticality; e.owner = conf.services[e.service].owner }' \
         --filter 'e.criticality == "critical" && (e.level == "ERROR" || e.level == "CRITICAL")' \
-        --exec 'track_count(e.owner)' \
+        --exec 'track_count("owner", e.owner)' \
         --end 'print("=== Alert Summary ==="); for owner in metrics.keys() { let count = metrics[owner]; if count >= conf.alert_threshold { print("ALERT: " + owner + " has " + count + " critical error(s)") } else { print(owner + ": " + count + " error(s)") } }' \
         -q
     ```
@@ -474,7 +474,7 @@ kelora -j app.log --resilient \
 kelora -j app.log --resilient \
     -e 'e.safe_field = "processed"' \      # Always succeeds
     -e 'e.risky = parse_json(e.raw_data)' \ # Might fail for some events
-    -e 'track_count(e.risky.status)' \     # Only runs if risky succeeded
+    -e 'track_count("status", e.risky.status)' \     # Only runs if risky succeeded
     -k safe_field,risky
 ```
 
@@ -504,14 +504,14 @@ kelora -j app.log \
     --filter 'e.service == "api"' \      # Narrow to API
     --exec 'e.slow = e.duration > 1000' \  # Compute flag
     --filter 'e.slow' \                    # Keep slow ones
-    --exec 'track_count(e.endpoint)'       # Track them
+    --exec 'track_count("endpoint", e.endpoint)'       # Track them
 ```
 
 ### Pattern 3: Summary Report
 
 ```bash
 kelora -j app.log \
-    --exec 'track_count(e.status)' \
+    --exec 'track_count("status", e.status)' \
     --end 'print("Total requests: " + metrics.values().sum())' \
     --metrics
 ```
@@ -547,7 +547,7 @@ kelora -j examples/simple_json.jsonl \
     --exec 'if conf.services.contains(e.service) {
                 e.team = conf.services[e.service].team
             }' \
-    --exec 'track_count(e.team)' \
+    --exec 'track_count("team", e.team)' \
     --metrics
 ```
 </details>
@@ -576,8 +576,8 @@ Calculate and report the error rate:
 
 ```bash
 kelora -j examples/simple_json.jsonl \
-    --exec 'track_count("total");
-            if e.level == "ERROR" { track_count("errors") }' \
+    --exec 'track_sum("total", 1);
+            if e.level == "ERROR" { track_sum("errors", 1) }' \
     --end 'let total = metrics.get("total", 0);
            let errors = metrics.get("errors", 0);
            let rate = if total > 0 { (errors.to_float() / total.to_float() * 100.0) } else { 0.0 };
@@ -603,7 +603,7 @@ kelora -j app.log \
 
 ```bash
 kelora -j app.log \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'print("metrics keys: " + metrics.keys()); print("metrics: " + metrics)' \
         -q
 ```

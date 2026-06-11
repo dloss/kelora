@@ -281,20 +281,23 @@ state.to_map()                       Convert state to regular map (for use with 
 state += map                         Merge map into state (operator form)
 
 TRACKING/METRICS FUNCTIONS (requires --metrics):
-track_avg(key, value)                Track average of numeric values for key (skips () values)
-track_bottom(key, item, n)           Track bottom N least frequent items (counts occurrences; skips () items)
-track_bottom(key, item, n, score)    Track bottom N items by lowest scores (ranks by numeric value; skips () items/values)
-track_bucket(key, bucket)            Track values in buckets for histograms (skips () values)
-track_cardinality(key, value [,err]) Estimate unique count using HyperLogLog (~1% error, ~12KB; err range: 0.001-0.26; skips () values)
-track_count(key)                     Increment counter for key by 1 (string key; use to_string() for numbers)
-track_max(key, value)                Track maximum value for key (skips () values)
-track_min(key, value)                Track minimum value for key (skips () values)
-track_percentiles(key, value [,[p]]) Track streaming percentiles using t-digest (default [0.50,0.95,0.99]; auto-suffixes)
-track_stats(key, value [,[p]])       Track comprehensive stats: min, max, avg, count, sum, percentiles (auto-suffixes)
-track_sum(key, value)                Accumulate numeric values for key (skips () values)
-track_top(key, item, n)              Track top N most frequent items (counts occurrences; skips () items)
-track_top(key, item, n, score)       Track top N items by highest scores (ranks by numeric value; skips () items/values)
-track_unique(key, value)             Track unique values for key (skips () values)
+All track_* functions skip Unit () values (missing fields); skips are counted
+and surfaced via --diagnostics. Categorical arguments (category, item) accept
+strings, numbers, and bools (stringified). One metric name = one track function
+(mixing functions on the same name is an error).
+track_avg(name, value)                Track average of numeric values
+track_bottom(name, item [,n])         Track bottom N least frequent items (default n=10)
+track_bottom_by(name, item, score [,n]) Track bottom N items by lowest score (default n=10)
+track_cardinality(name, value [,err]) Estimate unique count using HyperLogLog (~1% error, ~12KB; err range: 0.001-0.26)
+track_count(name, category)           Count occurrences per category: {name: {category: n}}; e.g. track_count("status", e.status)
+track_max(name, value)                Track maximum numeric value
+track_min(name, value)                Track minimum numeric value
+track_percentiles(name, value [,[p]]) Track streaming percentiles using t-digest (default [0.50,0.95,0.99]; auto-suffixes)
+track_stats(name, value [,[p]])       Track comprehensive stats: min, max, avg, count, sum, percentiles (auto-suffixes)
+track_sum(name, value)                Accumulate numeric values; track_sum(name, 1) is a plain counter
+track_top(name, item [,n])            Track top N most frequent items (default n=10)
+track_top_by(name, item, score [,n])  Track top N items by highest score (default n=10)
+track_unique(name, value)             Track exact set of distinct values (unbounded memory; warns past 100k values)
 
 FILE OUTPUT (requires --allow-fs-writes):
 append_file(path, text_or_array)     Append line(s) to file; arrays append one line per element
@@ -307,11 +310,12 @@ span.start                           Span start as DateTime (time spans) or () f
 span.end                             Span end as DateTime (time spans) or () for count spans
 span.size                            Number of events that survived the span
 span.events                          Array of event maps for the span in arrival order
-span.metrics                         Per-window metrics from additive track_* calls: count, sum,
-                                     avg, unique, bucket (read-only map). Non-additive aggregators
-                                     (min, max, percentiles, cardinality, top, bottom) have no
-                                     per-window value and are omitted with a warning; iterate
-                                     span.events to compute them per window.
+span.metrics                         Per-window metrics from additive track_* calls: track_count,
+                                     track_sum, track_avg, track_unique (read-only map).
+                                     Non-additive aggregators (min, max, percentiles, cardinality,
+                                     top/bottom, top_by/bottom_by) have no per-window value and are
+                                     omitted with a warning; iterate span.events to compute them
+                                     per window.
 
 EVENT MANIPULATION:
 emit_each(array [,base_map])         Fan out array elements as separate events (returns emitted count)
@@ -473,10 +477,10 @@ kelora -j api_logs.jsonl -s
 kelora -f combined web_access.log --filter 'e.status >= 500' --stats
 
 # Show only metrics (automatically suppresses events)
-kelora -j api_logs.jsonl --exec 'track_count(e.level)' -m
+kelora -j api_logs.jsonl --exec 'track_count("level", e.level)' -m
 
 # Silent mode: suppress all terminal output, but print() still works & files still write
-kelora -j api_logs.jsonl --exec 'track_count(e.error_type)' --silent --metrics-file errors.json
+kelora -j api_logs.jsonl --exec 'track_count("error_type", e.error_type)' --silent --metrics-file errors.json
 
 # Custom output format with print() (suppress default formatter with -q)
 kelora -j api_logs.jsonl --exec 'print(`${e.timestamp} | ${e.message}`)' -q
@@ -513,7 +517,7 @@ kelora -j duration_logs.jsonl --exec '
 kelora -j api_logs.jsonl --exec '
   let timestamp = to_datetime(e.timestamp);
   e.bucket = timestamp.round_to("5m").to_iso()
-' | kelora -j - -m --exec 'track_bucket("time_buckets", e.bucket)'
+' | kelora -j - -m --exec 'track_count("time_buckets", e.bucket)'
 
 # round_to / ceil_to for explicit bucket edges
 kelora -j api_logs.jsonl --exec '
@@ -528,7 +532,7 @@ kelora -j api_logs.jsonl -z --since yesterday
 METRICS & AGGREGATION:
 # Count errors by type with metrics
 kelora -j api_errors.jsonl -l error -m \
-  --exec 'track_count(e.error_type)'
+  --exec 'track_count("error_type", e.error_type)'
 
 # Track unique users (compact output)
 kelora -f combined web_access.log --metrics=short \
@@ -540,11 +544,11 @@ kelora -f combined web_access.log -m \
 
 # Histogram of status codes by bucket (JSON output)
 kelora web_access.log --metrics=json \
-  --exec 'track_bucket("status", e.status / 100 * 100)'
+  --exec 'track_count("status", e.status / 100 * 100)'
 
 # Save metrics to JSON file
 kelora -j api_logs.jsonl --metrics --metrics-file stats.json \
-  --exec 'track_count(e.level); track_sum("bytes", e.bytes)' --silent
+  --exec 'track_count("level", e.level); track_sum("bytes", e.bytes)' --silent
 
 # Track average response time
 kelora -j api_logs.jsonl -m \
@@ -581,10 +585,10 @@ kelora -j api_logs.jsonl -m \
 
 # 4 params = rank by score (HIGHEST/LOWEST values)
 kelora -f combined access.log --metrics \
-  --exec 'track_top("slowest", e.endpoint, 10, e.latency_ms)'
+  --exec 'track_top_by("slowest", e.endpoint, e.latency_ms)'
 
 kelora -j db.log --metrics \
-  --exec 'track_bottom("fastest", e.query_id, 5, e.cpu_time)'
+  --exec 'track_bottom_by("fastest", e.query_id, e.cpu_time, 5)'
 
 # Custom calculations with print() for complex output (requires --metrics)
 kelora -f combined web_access.log --metrics \
@@ -598,7 +602,7 @@ kelora -j logs/*.jsonl --exec 'e.source = meta.filename'
 # Count errors per file
 kelora -f auto logs/*.{log,jsonl} --metrics --exec '
   if e.level == "ERROR" {
-    track_count(meta.filename)
+    track_count("file", meta.filename)
   }
 ' --end 'for file in metrics.keys() { print(file + ": " + metrics[file]) }'
 

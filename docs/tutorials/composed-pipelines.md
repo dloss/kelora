@@ -122,7 +122,7 @@ Combine with metrics to get error statistics:
       --exec 'e.absorb_kv("line")' \
       --filter 'e.level == "ERROR"' \
       --exec '
-        track_count("total_errors");
+        track_sum("total_errors", 1);
         track_top("error_source", e.get_path("pod", "unknown"), 10);
       ' \
       --metrics
@@ -137,7 +137,7 @@ Combine with metrics to get error statistics:
       --exec 'e.absorb_kv("line")' \
       --filter 'e.level == "ERROR"' \
       --exec '
-        track_count("total_errors");
+        track_sum("total_errors", 1);
         track_top("error_source", e.get_path("pod", "unknown"), 10);
       ' \
       --metrics
@@ -287,7 +287,7 @@ Track error statistics:
     kelora -j examples/api_logs.jsonl \
       --filter 'e.service == "auth-service" && e.level == "ERROR"' \
       --exec '
-        track_count("errors");
+        track_sum("errors", 1);
         track_stats("response_time", e.get_path("response_time", 0.0));
         track_top("error_type", e.message, 5);
       ' \
@@ -300,7 +300,7 @@ Track error statistics:
     kelora -j examples/api_logs.jsonl \
       --filter 'e.service == "auth-service" && e.level == "ERROR"' \
       --exec '
-        track_count("errors");
+        track_sum("errors", 1);
         track_stats("response_time", e.get_path("response_time", 0.0));
         track_top("error_type", e.message, 5);
       ' \
@@ -317,7 +317,7 @@ Now add time-based spans for per-minute summaries:
     kelora -j examples/api_logs.jsonl \
       --filter 'e.service == "auth-service" && e.level == "ERROR"' \
       --exec '
-        track_count("errors");
+        track_sum("errors", 1);
         track_stats("response_time", e.get_path("response_time", 0.0));
       ' \
       --span 1m \
@@ -335,7 +335,7 @@ Now add time-based spans for per-minute summaries:
     kelora -j examples/api_logs.jsonl \
       --filter 'e.service == "auth-service" && e.level == "ERROR"' \
       --exec '
-        track_count("errors");
+        track_sum("errors", 1);
         track_stats("response_time", e.get_path("response_time", 0.0));
       ' \
       --span 1m \
@@ -439,7 +439,7 @@ Add another filter for critical cases and track:
       ' \
       --filter 'e.latency_class == "critical"' \
       --exec '
-        track_count("critical_requests");
+        track_sum("critical_requests", 1);
         track_top("service", e.service, 10);
         track_stats("latency", e.response_time);
       ' \
@@ -463,7 +463,7 @@ Add another filter for critical cases and track:
       ' \
       --filter 'e.latency_class == "critical"' \
       --exec '
-        track_count("critical_requests");
+        track_sum("critical_requests", 1);
         track_top("service", e.service, 10);
         track_stats("latency", e.response_time);
       ' \
@@ -596,7 +596,7 @@ Compute metrics and save to file:
 kelora -j examples/api_logs.jsonl \
   --filter 'e.level == "ERROR"' \
   --exec '
-    track_count("total");
+    track_sum("total", 1);
     track_top("service", e.service, 10);
     track_stats("response_time", e.get_path("response_time", 0.0));
   ' \
@@ -611,7 +611,7 @@ Export events to stdout, metrics to file:
 ```bash
 kelora -j examples/api_logs.jsonl \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_count(e.service)' \
+  --exec 'track_count("service", e.service)' \
   --metrics-file metrics.json \
   -F json > events.jsonl
 ```
@@ -704,11 +704,11 @@ sort -t'"' -k4 unsorted.log | kelora -j --since "2024-01-15T10:00:00Z"
 ```bash
 # Wide → narrow with metrics at each stage
 kelora app.log \
-  --exec 'track_count("total")' \
+  --exec 'track_sum("total", 1)' \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_count("errors")' \
+  --exec 'track_sum("errors", 1)' \
   --filter 'e.service == "api"' \
-  --exec 'track_count("api_errors")' \
+  --exec 'track_sum("api_errors", 1)' \
   --metrics
 ```
 
@@ -727,9 +727,9 @@ kelora api.log \
 # Track multiple dimensions in one pass
 kelora app.log \
   --exec '
-    track_count(e.level);
-    track_count(e.service);
-    track_count(e.level + ":" + e.service);
+    track_count("level", e.level);
+    track_count("service", e.service);
+    track_count("level_service", e.level + ":" + e.service);
     track_stats("latency", e.response_time);
   ' \
   --metrics
@@ -758,7 +758,7 @@ kelora app.log --since "2024-01-15T10:00:00Z" --filter 'e.level == "ERROR"' --st
 kelora app.log --since "2024-01-15T10:00:00Z" --filter 'e.level == "ERROR"' --exec 'e.absorb_kv("line")' -J
 
 # Stage 4: Add metrics
-kelora app.log --since "2024-01-15T10:00:00Z" --filter 'e.level == "ERROR"' --exec 'track_count("total")' -m
+kelora app.log --since "2024-01-15T10:00:00Z" --filter 'e.level == "ERROR"' --exec 'track_sum("total", 1)' -m
 ```
 
 **Use inspect format:**
@@ -774,7 +774,7 @@ Use Kelora's alias system for reusable pipelines:
 ```ini
 # In .kelora.ini
 [aliases]
-errors = --filter 'e.level == "ERROR"' --exec 'track_count("total"); track_top("service", e.service, 10)' --metrics
+errors = --filter 'e.level == "ERROR"' --exec 'track_sum("total", 1); track_top("service", e.service, 10)' --metrics
 ```
 
 Then run: `kelora -a errors app.log`

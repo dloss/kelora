@@ -2073,13 +2073,15 @@ impl RhaiEngine {
         &self,
         compiled: &CompiledExpression,
         metrics: &HashMap<String, Dynamic>,
+        internal: &HashMap<String, Dynamic>,
     ) -> Result<()> {
         let mut scope = self.scope_template.clone();
 
         // Finalize sketch-backed metrics (percentiles from t-digest, averages
         // from {sum,count} maps, cardinality from HLL) so `--end` scripts see
         // plain numbers instead of internal state.
-        let tracked_map = crate::rhai_functions::tracking::finalize_metrics_for_script(metrics);
+        let tracked_map =
+            crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal);
         scope.set_value("metrics", tracked_map);
 
         // Set the frozen conf map (read-only)
@@ -2124,7 +2126,8 @@ impl RhaiEngine {
 
         // Finalize sketch-backed metrics for script consumption; see the
         // equivalent call in `execute_compiled_end`.
-        let metrics_map = crate::rhai_functions::tracking::finalize_metrics_for_script(metrics);
+        let metrics_map =
+            crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal);
         scope.set_value("metrics", metrics_map);
         scope.push_constant("span", Dynamic::from(span));
 

@@ -1,9 +1,50 @@
-use super::merge::record_operation_metadata;
+use super::merge::ensure_operation_metadata;
 use super::with_user_tracking;
 use rhai::Dynamic;
+use std::cell::RefCell;
+use std::collections::HashSet;
 
-pub(super) fn track_unique_string_impl(key: &str, value: &str) {
-    let updated = with_user_tracking(|state| {
+/// Past this many distinct values, warn once that the set lives entirely in
+/// memory. track_unique stays unbounded by design (the operator knows their
+/// data and their RAM); the warning exists so an eventual OOM kill is
+/// attributable to the right metric.
+const TRACK_UNIQUE_WARN_THRESHOLD: usize = 100_000;
+
+thread_local! {
+    static UNIQUE_SIZE_WARNED: RefCell<HashSet<String>> = RefCell::new(HashSet::new());
+}
+
+fn warn_unique_size_once(key: &str, len: usize) {
+    if len < TRACK_UNIQUE_WARN_THRESHOLD {
+        return;
+    }
+    let first_time = UNIQUE_SIZE_WARNED.with(|warned| warned.borrow_mut().insert(key.to_string()));
+    if !first_time {
+        return;
+    }
+    let prefix = if crate::tty::should_use_emoji_for_stderr() {
+        "⚠️ "
+    } else {
+        "kelora: "
+    };
+    let message = format!(
+        "{}track_unique(\"{}\") now holds {}+ values, all kept in memory; for a unique count use track_cardinality() instead",
+        prefix, key, TRACK_UNIQUE_WARN_THRESHOLD
+    );
+    if crate::rhai_functions::strings::is_parallel_mode() {
+        crate::rhai_functions::strings::capture_stderr(message);
+    } else {
+        crate::rhai_functions::strings::capture_stderr(message.clone());
+        eprintln!("{}", message);
+    }
+}
+
+pub(super) fn track_unique_string_impl(
+    key: &str,
+    value: &str,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "unique")?;
+    let len = with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
@@ -17,19 +58,20 @@ pub(super) fn track_unique_string_impl(key: &str, value: &str) {
             {
                 arr.push(value_dynamic);
             }
+            let len = arr.len();
             state.insert(key.to_string(), Dynamic::from(arr));
-            true
+            len
         } else {
-            false
+            0
         }
     });
-    if updated {
-        record_operation_metadata(key, "unique");
-    }
+    warn_unique_size_once(key, len);
+    Ok(())
 }
 
-pub(super) fn track_unique_i64_impl(key: &str, value: i64) {
-    let updated = with_user_tracking(|state| {
+pub(super) fn track_unique_i64_impl(key: &str, value: i64) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "unique")?;
+    let len = with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
@@ -40,19 +82,20 @@ pub(super) fn track_unique_i64_impl(key: &str, value: i64) {
             if !arr.iter().any(|v| v.as_int().unwrap_or(i64::MIN) == value) {
                 arr.push(value_dynamic);
             }
+            let len = arr.len();
             state.insert(key.to_string(), Dynamic::from(arr));
-            true
+            len
         } else {
-            false
+            0
         }
     });
-    if updated {
-        record_operation_metadata(key, "unique");
-    }
+    warn_unique_size_once(key, len);
+    Ok(())
 }
 
-pub(super) fn track_unique_f64_impl(key: &str, value: f64) {
-    let updated = with_user_tracking(|state| {
+pub(super) fn track_unique_f64_impl(key: &str, value: f64) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "unique")?;
+    let len = with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
@@ -66,37 +109,37 @@ pub(super) fn track_unique_f64_impl(key: &str, value: f64) {
             {
                 arr.push(value_dynamic);
             }
+            let len = arr.len();
             state.insert(key.to_string(), Dynamic::from(arr));
-            true
+            len
         } else {
-            false
+            0
         }
     });
-    if updated {
-        record_operation_metadata(key, "unique");
-    }
+    warn_unique_size_once(key, len);
+    Ok(())
 }
 
-pub(super) fn track_bucket_impl(key: &str, bucket: &str) {
-    let updated = with_user_tracking(|state| {
+/// Count one occurrence of `category` under the metric `key`.
+/// Storage shape: `{key → {category → count}}`.
+/// (The internal op id is still "bucket"; the public function was renamed
+/// from track_bucket to track_count in kelora 2.0.)
+pub(super) fn track_count_impl(key: &str, category: &str) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "bucket")?;
+    with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
             .unwrap_or_else(|| Dynamic::from(rhai::Map::new()));
 
         if let Some(mut map) = current.try_cast::<rhai::Map>() {
-            let count = map.get(bucket).cloned().unwrap_or(Dynamic::from(0i64));
+            let count = map.get(category).cloned().unwrap_or(Dynamic::from(0i64));
             let new_count = count.as_int().unwrap_or(0) + 1;
-            map.insert(bucket.into(), Dynamic::from(new_count));
+            map.insert(category.into(), Dynamic::from(new_count));
             state.insert(key.to_string(), Dynamic::from(map));
-            true
-        } else {
-            false
         }
     });
-    if updated {
-        record_operation_metadata(key, "bucket");
-    }
+    Ok(())
 }
 
 pub(super) fn track_top_count_impl(
@@ -104,7 +147,8 @@ pub(super) fn track_top_count_impl(
     item_key: &str,
     n: i64,
 ) -> Result<(), Box<rhai::EvalAltResult>> {
-    let updated = with_user_tracking(|state| {
+    ensure_operation_metadata(key, "top")?;
+    with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
@@ -169,15 +213,9 @@ pub(super) fn track_top_count_impl(
             }
 
             state.insert(key.to_string(), Dynamic::from(arr));
-            true
-        } else {
-            false
         }
     });
 
-    if updated {
-        record_operation_metadata(key, "top");
-    }
     Ok(())
 }
 
@@ -186,7 +224,8 @@ pub(super) fn track_bottom_count_impl(
     item_key: &str,
     n: i64,
 ) -> Result<(), Box<rhai::EvalAltResult>> {
-    let updated = with_user_tracking(|state| {
+    ensure_operation_metadata(key, "bottom")?;
+    with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
@@ -251,15 +290,9 @@ pub(super) fn track_bottom_count_impl(
             }
 
             state.insert(key.to_string(), Dynamic::from(arr));
-            true
-        } else {
-            false
         }
     });
 
-    if updated {
-        record_operation_metadata(key, "bottom");
-    }
     Ok(())
 }
 
@@ -269,7 +302,8 @@ pub(super) fn track_top_weighted_impl(
     n: i64,
     value: f64,
 ) -> Result<(), Box<rhai::EvalAltResult>> {
-    let updated = with_user_tracking(|state| {
+    ensure_operation_metadata(key, "top_by")?;
+    with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
@@ -346,15 +380,9 @@ pub(super) fn track_top_weighted_impl(
             }
 
             state.insert(key.to_string(), Dynamic::from(arr));
-            true
-        } else {
-            false
         }
     });
 
-    if updated {
-        record_operation_metadata(key, "top");
-    }
     Ok(())
 }
 
@@ -364,7 +392,8 @@ pub(super) fn track_bottom_weighted_impl(
     n: i64,
     value: f64,
 ) -> Result<(), Box<rhai::EvalAltResult>> {
-    let updated = with_user_tracking(|state| {
+    ensure_operation_metadata(key, "bottom_by")?;
+    with_user_tracking(|state| {
         let current = state
             .get(key)
             .cloned()
@@ -441,14 +470,8 @@ pub(super) fn track_bottom_weighted_impl(
             }
 
             state.insert(key.to_string(), Dynamic::from(arr));
-            true
-        } else {
-            false
         }
     });
 
-    if updated {
-        record_operation_metadata(key, "bottom");
-    }
     Ok(())
 }

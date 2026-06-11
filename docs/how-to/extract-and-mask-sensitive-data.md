@@ -105,8 +105,8 @@ kelora -j sanitized.json \
 - **Metrics to confirm coverage**
   ```bash
   kelora -j app.log \
-    -e 'if e.contains("ip") { track_count("ip_fields") }' \
-    -e 'if e.contains("token") { track_count("token_fields") }' \
+    -e 'if e.contains("ip") { track_sum("ip_fields", 1) }' \
+    -e 'if e.contains("token") { track_sum("token_fields", 1) }' \
     --metrics
   ```
 

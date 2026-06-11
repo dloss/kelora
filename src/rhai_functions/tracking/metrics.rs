@@ -1,6 +1,6 @@
 use super::merge::{
-    deserialize_hll, deserialize_tdigest, merge_numeric, new_hll, new_hll_with_error,
-    record_operation_metadata, serialize_hll, serialize_tdigest,
+    deserialize_hll, deserialize_tdigest, ensure_operation_metadata, merge_numeric, new_hll,
+    new_hll_with_error, serialize_hll, serialize_tdigest,
 };
 use super::with_user_tracking;
 use rhai::Dynamic;
@@ -32,7 +32,8 @@ fn extract_avg_parts(existing: Option<Dynamic>) -> (f64, i64) {
     }
 }
 
-pub(super) fn track_avg_impl(key: &str, value: f64) {
+pub(super) fn track_avg_impl(key: &str, value: f64) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "avg")?;
     with_user_tracking(|state| {
         let (existing_sum, existing_count) = extract_avg_parts(state.get(key).cloned());
 
@@ -41,7 +42,7 @@ pub(super) fn track_avg_impl(key: &str, value: f64) {
         map.insert("count".into(), Dynamic::from(existing_count + 1));
         state.insert(key.to_string(), Dynamic::from(map));
     });
-    record_operation_metadata(key, "avg");
+    Ok(())
 }
 
 fn dynamic_to_cmp_f64(current: &Dynamic, default_int: i64, default_float: f64) -> f64 {
@@ -52,7 +53,13 @@ fn dynamic_to_cmp_f64(current: &Dynamic, default_int: i64, default_float: f64) -
     }
 }
 
-fn track_extreme_impl(key: &str, stored: Dynamic, value_f64: f64, is_min: bool) {
+fn track_extreme_impl(
+    key: &str,
+    stored: Dynamic,
+    value_f64: f64,
+    is_min: bool,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, if is_min { "min" } else { "max" })?;
     let default = if is_min {
         Dynamic::from(f64::INFINITY)
     } else {
@@ -65,7 +72,7 @@ fn track_extreme_impl(key: &str, stored: Dynamic, value_f64: f64, is_min: bool) 
         f64::NEG_INFINITY
     };
 
-    let updated = with_user_tracking(|state| {
+    with_user_tracking(|state| {
         let current = state.get(key).cloned().unwrap_or(default);
         let current_val = dynamic_to_cmp_f64(&current, default_int, default_float);
         let should_update = if is_min {
@@ -76,26 +83,33 @@ fn track_extreme_impl(key: &str, stored: Dynamic, value_f64: f64, is_min: bool) 
 
         if should_update {
             state.insert(key.to_string(), stored);
-            true
-        } else {
-            false
         }
     });
 
-    if updated {
-        record_operation_metadata(key, if is_min { "min" } else { "max" });
-    }
+    Ok(())
 }
 
-pub(super) fn track_min_impl(key: &str, stored: Dynamic, value_f64: f64) {
-    track_extreme_impl(key, stored, value_f64, true);
+pub(super) fn track_min_impl(
+    key: &str,
+    stored: Dynamic,
+    value_f64: f64,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    track_extreme_impl(key, stored, value_f64, true)
 }
 
-pub(super) fn track_max_impl(key: &str, stored: Dynamic, value_f64: f64) {
-    track_extreme_impl(key, stored, value_f64, false);
+pub(super) fn track_max_impl(
+    key: &str,
+    stored: Dynamic,
+    value_f64: f64,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    track_extreme_impl(key, stored, value_f64, false)
 }
 
-pub(super) fn track_cardinality_impl<V: std::hash::Hash>(key: &str, value: &V) {
+pub(super) fn track_cardinality_impl<V: std::hash::Hash>(
+    key: &str,
+    value: &V,
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "cardinality")?;
     with_user_tracking(|state| {
         let mut hll = if let Some(existing) = state.get(key) {
             if let Ok(bytes) = existing.clone().into_blob() {
@@ -113,14 +127,15 @@ pub(super) fn track_cardinality_impl<V: std::hash::Hash>(key: &str, value: &V) {
         state.insert(key.to_string(), Dynamic::from_blob(bytes));
     });
 
-    record_operation_metadata(key, "cardinality");
+    Ok(())
 }
 
 pub(super) fn track_cardinality_with_error_impl<V: std::hash::Hash>(
     key: &str,
     value: &V,
     error_rate: f64,
-) {
+) -> Result<(), Box<rhai::EvalAltResult>> {
+    ensure_operation_metadata(key, "cardinality")?;
     let error_rate = error_rate.clamp(0.001, 0.26);
 
     with_user_tracking(|state| {
@@ -140,7 +155,7 @@ pub(super) fn track_cardinality_with_error_impl<V: std::hash::Hash>(
         state.insert(key.to_string(), Dynamic::from_blob(bytes));
     });
 
-    record_operation_metadata(key, "cardinality");
+    Ok(())
 }
 
 pub(super) fn track_percentiles_impl(
@@ -197,6 +212,7 @@ pub(super) fn track_percentiles_impl(
         };
 
         let metric_key = format!("{}_{}", key, percentile_str);
+        ensure_operation_metadata(&metric_key, "percentiles")?;
 
         with_user_tracking(|state| {
             let new_digest = TDigest::from_values(vec![value]);
@@ -217,8 +233,6 @@ pub(super) fn track_percentiles_impl(
             let bytes = serialize_tdigest(&digest);
             state.insert(metric_key.clone(), Dynamic::from_blob(bytes));
         });
-
-        record_operation_metadata(&metric_key, "percentiles");
     }
 
     Ok(())
@@ -234,6 +248,7 @@ pub(super) fn track_stats_impl(
     }
 
     let min_key = format!("{}_min", key);
+    ensure_operation_metadata(&min_key, "min")?;
     with_user_tracking(|state| {
         let current = state
             .get(&min_key)
@@ -248,9 +263,9 @@ pub(super) fn track_stats_impl(
             state.insert(min_key.clone(), Dynamic::from(value));
         }
     });
-    record_operation_metadata(&min_key, "min");
 
     let max_key = format!("{}_max", key);
+    ensure_operation_metadata(&max_key, "max")?;
     with_user_tracking(|state| {
         let current = state
             .get(&max_key)
@@ -265,24 +280,23 @@ pub(super) fn track_stats_impl(
             state.insert(max_key.clone(), Dynamic::from(value));
         }
     });
-    record_operation_metadata(&max_key, "max");
 
     let avg_key = format!("{}_avg", key);
-    track_avg_impl(&avg_key, value);
+    track_avg_impl(&avg_key, value)?;
 
     let count_key = format!("{}_count", key);
+    ensure_operation_metadata(&count_key, "count")?;
     with_user_tracking(|state| {
         let updated = merge_numeric(state.get(&count_key).cloned(), Dynamic::from(1_i64));
         state.insert(count_key.clone(), updated);
     });
-    record_operation_metadata(&count_key, "count");
 
     let sum_key = format!("{}_sum", key);
+    ensure_operation_metadata(&sum_key, "sum")?;
     with_user_tracking(|state| {
         let updated = merge_numeric(state.get(&sum_key).cloned(), Dynamic::from(value));
         state.insert(sum_key.clone(), updated);
     });
-    record_operation_metadata(&sum_key, "sum");
 
     track_percentiles_impl(key, value, percentiles)?;
 

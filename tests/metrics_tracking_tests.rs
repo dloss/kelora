@@ -12,7 +12,7 @@ fn test_metrics_output_exposes_only_user_keys() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"events_total\");",
+            "track_sum(\"events_total\", 1);",
             "--with-metrics",
         ],
         input,
@@ -46,7 +46,7 @@ fn test_metrics_output_has_no_leading_newline_when_events_suppressed() {
             "-f",
             "json",
             "--exec",
-            "track_count(e.level)",
+            "track_count(\"level\", e.level)",
             "--with-metrics",
             "-q",
         ],
@@ -73,7 +73,7 @@ fn test_metrics_mode_surfaces_exec_errors_on_stderr() {
     // Regression: --metrics implies suppress_diagnostics, which used to hide the
     // per-event script-error summary entirely. Script errors go to stderr and
     // cannot pollute the (stdout) metrics, so they must still be surfaced.
-    // track_count rejects a non-string (int) key with a helpful hint.
+    // The removed 1.x single-argument track_count form errors with a migration hint.
     let input = r#"{"status": 500}
 {"status": 503}"#;
 
@@ -92,8 +92,8 @@ fn test_metrics_mode_surfaces_exec_errors_on_stderr() {
         stderr
     );
     assert!(
-        stderr.contains("to_string()"),
-        "the surfaced error should carry the actionable hint: {}",
+        stderr.contains("track_count(\"status\", e.status)"),
+        "the surfaced error should carry the migration hint: {}",
         stderr
     );
 }
@@ -196,7 +196,13 @@ fn test_metrics_mode_surfaces_parse_errors() {
     let input = "not json\nalso not json\n{\"action\": \"x\"}";
 
     let (_stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--exec", "track_count(e.action)", "--metrics"],
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"action\", e.action)",
+            "--metrics",
+        ],
         input,
     );
 
@@ -241,7 +247,7 @@ fn test_global_tracking() {
             "--filter",
             "e.status >= 400",
             "--exec",
-            "track_count(\"errors\")",
+            "track_sum(\"errors\", 1)",
             "--end",
             "print(`Errors: ${metrics[\"errors\"]}`)",
         ],
@@ -310,7 +316,7 @@ fn test_track_unique_function() {
 }
 
 #[test]
-fn test_track_bucket_function() {
+fn test_track_count_function() {
     let input = r#"{"status": "200", "method": "GET"}
 {"status": "404", "method": "POST"}
 {"status": "200", "method": "GET"}
@@ -319,7 +325,7 @@ fn test_track_bucket_function() {
 
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "json",
-        "--exec", "track_bucket(\"status_counts\", e.status); track_bucket(\"method_counts\", e.method);",
+        "--exec", "track_count(\"status_counts\", e.status); track_count(\"method_counts\", e.method);",
         "--end", "print(`Status 200: ${metrics[\"status_counts\"].get(\"200\") ?? 0}, GET requests: ${metrics[\"method_counts\"].get(\"GET\") ?? 0}`);"
     ], input);
     assert_eq!(exit_code, 0, "kelora should exit successfully");
@@ -391,7 +397,7 @@ fn test_mixed_tracking_functions() {
 
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "json",
-        "--exec", "track_count(\"total\"); track_unique(\"users\", e.user); track_bucket(\"status_dist\", e.status); track_min(\"min_time\", e.response_time); track_max(\"max_time\", e.response_time);",
+        "--exec", "track_sum(\"total\", 1); track_unique(\"users\", e.user); track_count(\"status_dist\", e.status); track_min(\"min_time\", e.response_time); track_max(\"max_time\", e.response_time);",
         "--end", "print(`Total: ${metrics[\"total\"]}, Users: ${metrics[\"users\"].len()}, Min: ${metrics[\"min_time\"]}, Max: ${metrics[\"max_time\"]}`);"
     ], input);
     assert_eq!(exit_code, 0, "kelora should exit successfully");
@@ -501,7 +507,7 @@ fn test_track_sum_min_max_with_unit() {
 }
 
 #[test]
-fn test_track_bucket_with_unit() {
+fn test_track_count_with_unit() {
     let input = r#"{"status": "200", "user": "alice"}
 {"status": "404"}
 {"status": "200", "user": "bob"}
@@ -513,7 +519,7 @@ fn test_track_bucket_with_unit() {
             "-f",
             "json",
             "--exec",
-            "track_bucket(\"status_dist\", e.status); track_bucket(\"user_dist\", e.user.or_empty());",
+            "track_count(\"status_dist\", e.status); track_count(\"user_dist\", e.user.or_empty());",
             "--end",
             "print(`Status_200: ${metrics[\"status_dist\"].get(\"200\") ?? 0}, Users: ${metrics[\"user_dist\"].len()}`);"
         ],
@@ -543,7 +549,7 @@ fn test_metrics_sequential_mode_basic() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\"); track_count(\"level_\" + e.level); track_sum(\"message_length\", e.message.len())",
+            "track_sum(\"total\", 1); track_sum(\"level_\" + e.level, 1); track_sum(\"message_length\", e.message.len())",
             "--with-metrics",
         ],
         input,
@@ -596,7 +602,7 @@ fn test_metrics_parallel_mode_basic() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\"); track_count(\"level_\" + e.level); track_sum(\"message_length\", e.message.len())",
+            "track_sum(\"total\", 1); track_sum(\"level_\" + e.level, 1); track_sum(\"message_length\", e.message.len())",
             "--with-metrics",
             "--parallel",
             "--batch-size",
@@ -662,7 +668,7 @@ fn test_metrics_file_output() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\"); track_count(\"level_\" + e.level)",
+            "track_sum(\"total\", 1); track_sum(\"level_\" + e.level, 1)",
             "--metrics-file",
             metrics_file_path,
         ],
@@ -904,7 +910,7 @@ fn test_metrics_parallel_consistency() {
 {"level":"warn","message":"test4"}
 {"level":"error","message":"test5"}"#;
 
-    let exec_script = "track_count(\"total\"); track_count(\"level_\" + e.level)";
+    let exec_script = "track_sum(\"total\", 1); track_sum(\"level_\" + e.level, 1)";
 
     // Run in parallel mode with batch-size 1
     let (_stdout1, stderr1, exit_code1) = run_kelora_with_input(
@@ -1056,7 +1062,7 @@ fn test_span_metrics_track_counts() {
             "--span",
             "2",
             "--exec",
-            "track_count(\"events\");",
+            "track_sum(\"events\", 1);",
             "--span-close",
             r#"let metrics = span.metrics; let count = metrics["events"]; print(span.id + ":" + count.to_string());"#,
         ],
@@ -1221,7 +1227,7 @@ fn test_metrics_json_flag() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\"); track_count(\"level_\" + e.level);",
+            "track_sum(\"total\", 1); track_sum(\"level_\" + e.level, 1);",
             "--metrics=json",
         ],
         input,
@@ -1271,7 +1277,7 @@ fn test_metrics_and_stats_together() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\");",
+            "track_sum(\"total\", 1);",
             "--with-metrics",
             "--with-stats",
         ],
@@ -1305,7 +1311,7 @@ fn test_metrics_file_and_metrics_flag_together() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\");",
+            "track_sum(\"total\", 1);",
             "--with-metrics",
             "--metrics-file",
             metrics_file_path,
@@ -1342,7 +1348,7 @@ fn test_metrics_json_with_file_output() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\");",
+            "track_sum(\"total\", 1);",
             "--metrics=json",
             "--metrics-file",
             metrics_file_path,
@@ -1489,7 +1495,7 @@ fn test_metrics_file_invalid_path() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\");",
+            "track_sum(\"total\", 1);",
             "--metrics-file",
             "/invalid/path/that/does/not/exist/metrics.json",
         ],
@@ -1540,7 +1546,7 @@ fn test_metrics_json_with_metrics_file_writes_json_to_file() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\");",
+            "track_sum(\"total\", 1);",
             "--metrics=json",
             "--metrics-file",
             metrics_file_path,
@@ -1575,7 +1581,7 @@ fn test_stats_only_with_metrics_json() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"total\");",
+            "track_sum(\"total\", 1);",
             "-s",
             "--metrics=json",
         ],

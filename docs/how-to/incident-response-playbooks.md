@@ -8,11 +8,11 @@ Real-world scenarios for using Kelora during production incidents. Each playbook
 |--------------|---------------|---------|
 | API latency spike | `kelora app.jsonl --filter 'e.response_time_ms > 500' --exec 'track_stats("latency", e.response_time_ms); track_top("endpoint", e.endpoint, 10)' -m` | [Playbook 1](#1-api-latency-spike) |
 | Error rate spike | `kelora app.jsonl --filter 'e.level == "ERROR"' --drain -k message` | [Playbook 2](#2-error-rate-spike) |
-| Auth failures | `kelora auth.log --filter 'e.line.contains("failed")' --exec 'track_top("ip", e.client_ip, 20); track_count(e.username)' -m` | [Playbook 3](#3-authentication-failures) |
+| Auth failures | `kelora auth.log --filter 'e.line.contains("failed")' --exec 'track_top("ip", e.client_ip, 20); track_count("username", e.username)' -m` | [Playbook 3](#3-authentication-failures) |
 | Database slow queries | `kelora db.jsonl --filter 'e.query_time_ms > 1000' --exec 'track_stats("query_time", e.query_time_ms); track_top("query_type", e.query, 10)' -m` | [Playbook 4](#4-database-performance-degradation) |
 | Resource exhaustion | `kelora app.log --filter 'e.line.contains("pool") || e.line.contains("exhausted")' -e 'e.absorb_kv("line")' -J` | [Playbook 5](#5-resource-exhaustion) |
 | Deployment correlation | `kelora app.jsonl --since "2025-01-20T14:00:00Z" --until "2025-01-20T15:00:00Z" -l error,warn --stats` | [Playbook 6](#6-deployment-correlation) |
-| Rate limit abuse | `kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso())' -m` | [Playbook 7](#7-rate-limit-investigation) |
+| Rate limit abuse | `kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_count("hour", to_datetime(e.timestamp).round_to("1h").to_iso())' -m` | [Playbook 7](#7-rate-limit-investigation) |
 | Trace request across services | `kelora *.jsonl --filter 'e.request_id == "abc123"' --normalize-ts -k timestamp,service,message,status` | [Playbook 8](#8-distributed-trace-analysis) |
 
 ---
@@ -69,7 +69,7 @@ When did the latency spike start?
 kelora api.jsonl \
   --filter 'e.response_time_ms > 500' \
   --exec 'e.bucket = to_datetime(e.timestamp).round_to("5m").to_iso()' \
-  --exec 'track_bucket("time", e.bucket)' \
+  --exec 'track_count("time", e.bucket)' \
   --metrics
 ```
 
@@ -101,7 +101,7 @@ Are slow requests failing?
 ```bash
 kelora api.jsonl \
   --filter 'e.response_time_ms > 500' \
-  --exec 'track_top("status", e.status.to_string(), 10); track_top("endpoint_status", e.endpoint + " [" + e.status + "]", 15)' \
+  --exec 'track_top("status", e.status, 10); track_top("endpoint_status", e.endpoint + " [" + e.status + "]", 15)' \
   --metrics
 ```
 
@@ -110,7 +110,7 @@ kelora api.jsonl \
 ```bash
 kelora examples/api_latency_incident.jsonl \
   --filter 'e.response_time_ms > 100' \
-  --exec 'track_stats("slow", e.response_time_ms); track_top("endpoint", e.endpoint, 5); track_bucket("5min", to_datetime(e.timestamp).round_to("5m").to_iso())' \
+  --exec 'track_stats("slow", e.response_time_ms); track_top("endpoint", e.endpoint, 5); track_count("5min", to_datetime(e.timestamp).round_to("5m").to_iso())' \
   --metrics
 ```
 
@@ -147,7 +147,7 @@ kelora app.jsonl --filter 'e.level == "ERROR"' --drain=full -k message
 ```bash
 kelora app.jsonl \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_count(e.error_type); track_top("service", e.service, 10); track_bucket("minute", to_datetime(e.timestamp).round_to("1m").to_iso())' \
+  --exec 'track_count("error_type", e.error_type); track_top("service", e.service, 10); track_count("minute", to_datetime(e.timestamp).round_to("1m").to_iso())' \
   --metrics
 ```
 
@@ -198,7 +198,7 @@ kelora examples/api_errors.jsonl \
 kelora auth.log \
   --filter 'e.line.contains("failed") || e.line.contains("invalid")' \
   --exec 'e.absorb_kv("line")' \
-  --exec 'track_top("ip", e.get_path("ip", "unknown"), 20); track_count(e.get_path("user", "unknown"))' \
+  --exec 'track_top("ip", e.get_path("ip", "unknown"), 20); track_count("user", e.get_path("user", "unknown"))' \
   --metrics=short
 ```
 
@@ -228,7 +228,7 @@ When did the attack start, and is it ongoing?
 ```bash
 kelora auth.log \
   --filter 'e.line.contains("failed")' \
-  --exec 'track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso()); track_count("total_failures")' \
+  --exec 'track_count("hour", to_datetime(e.timestamp).round_to("1h").to_iso()); track_sum("total_failures", 1)' \
   --metrics
 ```
 
@@ -270,7 +270,7 @@ kelora auth.log \
 ```bash
 kelora examples/auth_burst.jsonl \
   --filter 'e.status == 401' \
-  --exec 'track_top("ip", e.ip, 20); track_count(e.user)' \
+  --exec 'track_top("ip", e.ip, 20); track_count("user", e.user)' \
   --metrics
 ```
 
@@ -307,7 +307,7 @@ Find queries executed hundreds of times:
 
 ```bash
 kelora db.jsonl \
-  --exec 'track_count(e.query)' \
+  --exec 'track_count("query", e.query)' \
   --metrics | sort -k2 -n -r | head -20
 ```
 
@@ -365,7 +365,7 @@ When did resource exhaustion start?
 ```bash
 kelora app.log \
   --filter 'e.line.contains("pool") || e.line.contains("exhausted")' \
-  --exec 'track_bucket("minute", to_datetime(e.timestamp).round_to("1m").to_iso())' \
+  --exec 'track_count("minute", to_datetime(e.timestamp).round_to("1m").to_iso())' \
   --metrics
 ```
 
@@ -426,7 +426,7 @@ kelora app.jsonl \
   --since "2025-01-20T13:30:00Z" \
   --until "2025-01-20T14:30:00Z" \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_bucket("5min", to_datetime(e.timestamp).round_to("5m").to_iso())' \
+  --exec 'track_count("5min", to_datetime(e.timestamp).round_to("5m").to_iso())' \
   --metrics
 ```
 
@@ -478,7 +478,7 @@ Are rate limits being hit constantly or during specific times?
 ```bash
 kelora api.jsonl \
   --filter 'e.status == 429' \
-  --exec 'track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso()); track_count("total_429s")' \
+  --exec 'track_count("hour", to_datetime(e.timestamp).round_to("1h").to_iso()); track_sum("total_429s", 1)' \
   --metrics
 ```
 
@@ -543,7 +543,7 @@ Incident often requires multiple angles:
 # Latency + Error correlation
 kelora api.jsonl \
   --filter 'e.response_time_ms > 500 || e.status >= 500' \
-  --exec 'track_stats("latency", e.response_time_ms); track_top("status", e.status.to_string(), 10); track_top("endpoint", e.endpoint, 10)' \
+  --exec 'track_stats("latency", e.response_time_ms); track_top("status", e.status, 10); track_top("endpoint", e.endpoint, 10)' \
   --metrics
 ```
 
@@ -555,7 +555,7 @@ Monitor live logs as incident unfolds:
 # Real-time error tracking with periodic updates (every 10 events)
 tail -f /var/log/app.log | kelora -j \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_count("errors"); track_top("msg", e.message, 5)' \
+  --exec 'track_sum("errors", 1); track_top("msg", e.message, 5)' \
   --span 10 \
   --span-close 'eprint(span.metrics.to_json())' \
   -q
@@ -655,7 +655,7 @@ kelora app.jsonl -e 'track_top("key", e.field, 20)' -m
 
 # 4. TIME DISTRIBUTION (proper datetime bucketing)
 kelora app.jsonl -e 'e.bucket = to_datetime(e.timestamp).round_to("5m").to_iso()' \
-  -e 'track_bucket("time", e.bucket)' -m
+  -e 'track_count("time", e.bucket)' -m
 
 # 5. COMPREHENSIVE STATS
 kelora app.jsonl -e 'track_stats("metric", e.value)' -m
@@ -674,7 +674,7 @@ kelora app.jsonl --filter 'e.get_path("nested.field", 0) > 100'
 kelora auth.log -e 'e.ip_type = if e.ip.is_private_ip() { "internal" } else { "external" }'
 
 # 10. SAMPLING LARGE LOGS
-kelora huge.log --filter 'sample_every(100)' -e 'track_count("total")' -m
+kelora huge.log --filter 'sample_every(100)' -e 'track_sum("total", 1)' -m
 
 # 11. LIVE KUBERNETES MONITORING
 kubectl logs -f deploy/app | kelora -j -l error,warn -q \

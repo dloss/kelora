@@ -376,7 +376,7 @@ Use **semicolons within one `-e`** when you need:
 kelora -j \
     --exec 'e.duration_s = e.duration_ms / 1000' \    # Stage 1: Transform all events
     --filter 'e.duration_s > 1.0' \                    # Stage 2: Keep only slow events
-    --exec 'track_count("slow")' \                     # Stage 3: Track (slow only)
+    --exec 'track_sum("slow", 1)' \                     # Stage 3: Track (slow only)
     --exec 'e.alert = true' \                          # Stage 4: Add field (slow only)
     app.log
 ```
@@ -437,13 +437,13 @@ kelora -j --resilient \
 kelora -j --resilient \
     --exec 'e.safe = "always_set"' \        # Always succeeds
     --exec 'e.parsed = parse_json(e.raw)' \ # Might fail for some events
-    --exec 'track_count(e.parsed.type)' \   # Only runs if parsing succeeded
+    --exec 'track_count("type", e.parsed.type)' \   # Only runs if parsing succeeded
     -k safe,parsed
 # Events that fail parsing still have 'safe' field and appear in output
 
 # Single stage - All-or-nothing
 kelora -j --resilient \
-    --exec 'e.safe = "always_set"; e.parsed = parse_json(e.raw); track_count(e.parsed.type)' \
+    --exec 'e.safe = "always_set"; e.parsed = parse_json(e.raw); track_count("type", e.parsed.type)' \
     -k safe,parsed
 # If parsing fails, the ENTIRE exec fails - no 'safe' field, event unchanged
 ```
@@ -507,7 +507,7 @@ kelora -j \
 
 ```bash
 kelora -j \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --exec 'track_avg("response_time", e.duration_ms)' \
     --metrics \
     app.log
@@ -555,7 +555,7 @@ kelora -j \
 
 ```bash
 kelora -j logs/*.log --metrics \
-    --exec 'if e.level == "ERROR" { track_count(meta.filename) }' \
+    --exec 'if e.level == "ERROR" { track_count("file", meta.filename) }' \
     --end 'for file in metrics.keys() { print(file + ": " + metrics[file] + " errors") }'
 ```
 
@@ -669,7 +669,7 @@ The global `metrics` map contains all tracked data from `track_*()` functions:
 
 ```bash
 kelora -j \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'for key in metrics.keys() { print(key + ": " + metrics[key]) }' \
     app.log
 ```
@@ -688,7 +688,7 @@ In `--end`, you have access to:
 
 ```bash
 kelora -j \
-    --exec 'track_count("total"); if e.level == "ERROR" { track_count("errors") }' \
+    --exec 'track_sum("total", 1); if e.level == "ERROR" { track_sum("errors", 1) }' \
     --end 'let error_rate = metrics.errors / metrics.total * 100; print("Error rate: " + error_rate + "%")' \
     app.log
 ```
@@ -697,7 +697,7 @@ kelora -j \
 
 ```bash
 kelora -j \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'print("=== Service Report ==="); for svc in metrics.keys() { print(svc + ": " + metrics[svc] + " requests") }' \
     app.log
 ```
@@ -706,7 +706,7 @@ kelora -j \
 
 ```bash
 kelora -j --allow-fs-writes \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'append_file("report.txt", "Total services: " + metrics.len().to_string())' \
     app.log
 ```
@@ -715,7 +715,7 @@ kelora -j --allow-fs-writes \
 
 ```bash
 kelora -j \
-    --exec 'track_count("total"); track_count(e.level)' \
+    --exec 'track_sum("total", 1); track_count("level", e.level)' \
     --end 'for level in ["INFO", "WARN", "ERROR"] { let pct = metrics.get(level, 0) / metrics.total * 100; print(level + ": " + pct + "%") }' \
     app.log
 ```
@@ -741,8 +741,8 @@ kelora -j \
 ```bash
 kelora -j \
     --begin 'conf.threshold = 1000; conf.start = now()' \
-    --exec 'if e.duration_ms > conf.threshold { track_count("slow") }' \
-    --exec 'track_count("total")' \
+    --exec 'if e.duration_ms > conf.threshold { track_sum("slow", 1) }' \
+    --exec 'track_sum("total", 1)' \
     --end 'let elapsed = now() - conf.start; print("Processed " + metrics.total + " events in " + elapsed + "s"); print("Slow requests: " + metrics.get("slow", 0))' \
     app.log
 ```
@@ -774,7 +774,7 @@ if e.status >= 500 {
 }
 
 // Track metrics
-track_count(e.severity);
+track_count("severity", e.severity);
 track_avg("response_time", e.duration_s);
 ```
 
@@ -842,14 +842,14 @@ Break complex logic into multiple `--exec` scripts:
 kelora -j \
     --exec 'e.duration_s = e.duration_ms / 1000' \
     --exec 'e.is_slow = e.duration_s > 1.0' \
-    --exec 'if e.is_slow { track_count("slow_requests") }' \
+    --exec 'if e.is_slow { track_sum("slow_requests", 1) }' \
     app.log
 ```
 
 **Bad:**
 ```bash
 kelora -j \
-    --exec 'e.duration_s = e.duration_ms / 1000; e.is_slow = e.duration_s > 1.0; if e.is_slow { track_count("slow_requests") }' \
+    --exec 'e.duration_s = e.duration_ms / 1000; e.is_slow = e.duration_s > 1.0; if e.is_slow { track_sum("slow_requests", 1) }' \
     app.log
 ```
 
@@ -860,7 +860,7 @@ The good example is easier to read and debug.
 **Good:**
 ```bash
 kelora -j \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'print("Total services: " + metrics.len())' \
     app.log
 ```
@@ -868,7 +868,7 @@ kelora -j \
 **Bad:**
 ```bash
 kelora -j \
-    --exec 'track_count(e.service); print("Processing...")' \
+    --exec 'track_count("service", e.service); print("Processing...")' \
     app.log
 ```
 
@@ -922,7 +922,7 @@ The `--end` stage runs once, so complex calculations are fine:
 
 ```bash
 kelora -j \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'let sorted = metrics.keys().sort(); for key in sorted { print(key + ": " + metrics[key]) }' \
     app.log
 ```
@@ -938,7 +938,7 @@ When using `--parallel`, scripting stages behave differently:
 ```bash
 kelora -j --parallel \
     --begin 'conf.start = now()' \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'print("Duration: " + (now() - conf.start))' \
     app.log
 ```
@@ -954,7 +954,7 @@ kelora -j --parallel \
 ```bash
 kelora -j --parallel \
     --exec 'e.duration_s = e.duration_ms / 1000' \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     app.log
 ```
 
@@ -993,7 +993,7 @@ kelora -j --exec 'print(metrics["total"])' app.log
 
 **Solution:** Use `--end`:
 ```bash
-kelora -j --exec 'track_count("total")' --end 'print(metrics["total"])' app.log
+kelora -j --exec 'track_sum("total", 1)' --end 'print(metrics["total"])' app.log
 ```
 
 ### File Helpers Not Working

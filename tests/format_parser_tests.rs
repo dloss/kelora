@@ -87,7 +87,7 @@ Oct 11 22:14:19 server01 kernel: CPU0: Core temperature above threshold"#;
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "syslog",
         "--filter", "e.msg.matches(\"Failed|reject\")",
-        "--exec", "track_count(\"errors\"); track_unique(\"programs\", e.prog);",
+        "--exec", "track_sum(\"errors\", 1); track_unique(\"programs\", e.prog);",
         "--end", "print(`Total errors: ${metrics[\"errors\"]}, Programs: ${metrics[\"programs\"].len()}`);"
     ], input);
     assert_eq!(exit_code, 0, "syslog filtering should succeed");
@@ -111,7 +111,7 @@ fn test_syslog_severity_analysis() {
 
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "syslog",
-        "--exec", "e.sev_name = if e.severity == 5 { \"notice\" } else if e.severity == 6 { \"info\" } else if e.severity == 3 { \"error\" } else { \"other\" }; track_bucket(\"severities\", e.sev_name);",
+        "--exec", "e.sev_name = if e.severity == 5 { \"notice\" } else if e.severity == 6 { \"info\" } else if e.severity == 3 { \"error\" } else { \"other\" }; track_count(\"severities\", e.sev_name);",
         "--end", "let counts = metrics[\"severities\"]; print(`notice: ${counts.get(\"notice\") ?? 0}, info: ${counts.get(\"info\") ?? 0}, error: ${counts.get(\"error\") ?? 0}`);"
     ], input);
     assert_eq!(exit_code, 0, "syslog severity analysis should succeed");
@@ -240,7 +240,7 @@ fn test_apache_filtering_and_analysis() {
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "combined",
         "--filter", "e.status >= 400",
-        "--exec", "track_count(\"errors\"); track_bucket(\"methods\", e.method);",
+        "--exec", "track_sum(\"errors\", 1); track_count(\"methods\", e.method);",
         "--end", "let methods = metrics[\"methods\"]; print(`Total errors: ${metrics[\"errors\"]}, GET: ${methods.get(\"GET\") ?? 0}, POST: ${methods.get(\"POST\") ?? 0}`);"
     ], input);
     assert_eq!(exit_code, 0, "Apache filtering should succeed");
@@ -263,7 +263,7 @@ fn test_apache_status_code_analysis() {
 
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "combined",
-        "--exec", "e.class = if e.status < 300 { \"2xx\" } else if e.status < 400 { \"3xx\" } else if e.status < 500 { \"4xx\" } else { \"5xx\" }; track_bucket(\"status_classes\", e.class);",
+        "--exec", "e.class = if e.status < 300 { \"2xx\" } else if e.status < 400 { \"3xx\" } else if e.status < 500 { \"4xx\" } else { \"5xx\" }; track_count(\"status_classes\", e.class);",
         "--end", "let classes = metrics[\"status_classes\"]; print(`2xx: ${classes.get(\"2xx\") ?? 0}, 4xx: ${classes.get(\"4xx\") ?? 0}, 5xx: ${classes.get(\"5xx\") ?? 0}`);"
     ], input);
     assert_eq!(exit_code, 0, "Apache status code analysis should succeed");

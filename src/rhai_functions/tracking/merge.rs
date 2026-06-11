@@ -14,12 +14,67 @@ const HLL_SEED: u128 = 0x6b656c6f72615f686c6c5f73656564; // "kelora_hll_seed" in
 /// Magic bytes to identify HLL blobs (distinguishes from t-digest blobs)
 const HLL_MAGIC: &[u8; 4] = b"HLL\x01";
 
-pub(super) fn record_operation_metadata(key: &str, operation: &str) {
+/// Public function name(s) behind an internal operation id, for error messages.
+fn op_display_name(op: &str) -> &str {
+    match op {
+        "sum" => "track_sum",
+        "count" => "track_stats (count)",
+        "avg" => "track_avg",
+        "min" => "track_min",
+        "max" => "track_max",
+        "unique" => "track_unique",
+        // Internal op id predates the 2.0 rename of track_bucket to track_count.
+        "bucket" => "track_count",
+        "cardinality" => "track_cardinality",
+        "percentiles" => "track_percentiles",
+        "top" => "track_top",
+        "bottom" => "track_bottom",
+        "top_by" => "track_top_by",
+        "bottom_by" => "track_bottom_by",
+        other => other,
+    }
+}
+
+/// Record which track operation owns a metric key, erroring if a different
+/// operation already uses the same key. Without this check the per-key merge
+/// strategy (parallel workers, span windows) silently blends incompatible
+/// shapes into garbage.
+pub(super) fn ensure_operation_metadata(
+    key: &str,
+    operation: &str,
+) -> Result<(), Box<rhai::EvalAltResult>> {
     with_internal_tracking(|internal| {
-        internal.insert(
-            format!("__op_{}", key),
-            Dynamic::from(operation.to_string()),
-        );
+        let op_key = format!("__op_{}", key);
+        if let Some(existing) = internal.get(&op_key) {
+            let existing_op = existing.clone().into_string().unwrap_or_default();
+            if existing_op != operation {
+                return Err(format!(
+                    "metric '{}' is already tracked by {}; each metric name can be used by only one track function (use a different name for {})",
+                    key,
+                    op_display_name(&existing_op),
+                    op_display_name(operation)
+                )
+                .into());
+            }
+        } else {
+            internal.insert(op_key, Dynamic::from(operation.to_string()));
+        }
+        Ok(())
+    })
+}
+
+/// Count a skipped Unit `()` value for a metric so `--diagnostics` can surface
+/// it at the end of the run (a high skip count usually means a field-name typo).
+pub(super) fn record_skipped_unit(key: &str) {
+    with_internal_tracking(|internal| {
+        let skip_key = format!("__kelora_track_skipped_{}", key);
+        let current = internal
+            .get(&skip_key)
+            .and_then(|v| v.as_int().ok())
+            .unwrap_or(0);
+        internal.insert(skip_key.clone(), Dynamic::from(current + 1));
+        // Additive merge across parallel workers.
+        internal.insert(format!("__op_{}", skip_key), Dynamic::from("count"));
     });
 }
 

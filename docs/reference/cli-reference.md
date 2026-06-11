@@ -462,7 +462,7 @@ Transform/process script evaluated on each event. Multiple `--exec` scripts run 
 
 ```bash
 kelora -j --exec 'e.duration_s = e.duration_ms / 1000' app.log
-kelora -j --exec 'track_count(e.service)' app.log
+kelora -j --exec 'track_count("service", e.service)' app.log
 ```
 
 #### `-E, --exec-file <FILE>`
@@ -541,7 +541,7 @@ Run once after processing completes (post-processing stage). Access global `metr
 
 ```bash
 kelora -j \
-    --exec 'track_count(e.service)' \
+    --exec 'track_count("service", e.service)' \
     --end 'print("Total services: " + metrics.len())' \
     app.log
 ```
@@ -1086,9 +1086,9 @@ Show metrics only (implies `-q/--quiet`). Use `-m` for default full table format
 Formats: `short` (first 5 items), `full` (default), `json`
 
 ```bash
-kelora -j --exec 'track_count(e.service)' -m app.log               # Default full table
-kelora -j --exec 'track_count(e.service)' --metrics=short app.log  # Abbreviated (first 5)
-kelora -j --exec 'track_count(e.service)' --metrics=json app.log   # JSON format
+kelora -j --exec 'track_count("service", e.service)' -m app.log               # Default full table
+kelora -j --exec 'track_count("service", e.service)' --metrics=short app.log  # Abbreviated (first 5)
+kelora -j --exec 'track_count("service", e.service)' --metrics=json app.log   # JSON format
 ```
 
 #### `--with-metrics`
@@ -1096,7 +1096,7 @@ kelora -j --exec 'track_count(e.service)' --metrics=json app.log   # JSON format
 Show metrics alongside events (rare case).
 
 ```bash
-kelora -j --exec 'track_count(e.service)' --with-metrics app.log
+kelora -j --exec 'track_count("service", e.service)' --with-metrics app.log
 ```
 
 #### `--no-metrics`
@@ -1108,7 +1108,7 @@ Disable tracked metrics explicitly (default: off).
 Persist metrics map to disk as JSON.
 
 ```bash
-kelora -j --exec 'track_count(e.service)' --metrics-file metrics.json app.log
+kelora -j --exec 'track_count("service", e.service)' --metrics-file metrics.json app.log
 ```
 
 ### Template Discovery
@@ -1299,7 +1299,7 @@ kelora -j --exec 'e.build = get_env("BUILD_ID", "unknown")' app.log
 kelora -j --levels error --context 2 app.log
 
 # Count errors by service
-kelora -j --levels error --exec 'track_count(e.service)' --metrics app.log
+kelora -j --levels error --exec 'track_count("service", e.service)' --metrics app.log
 ```
 
 ### Performance Analysis
@@ -1310,7 +1310,7 @@ kelora -f combined --filter 'e.request_time.to_float() > 1.0' nginx.log
 
 # Track response time percentiles
 kelora -f combined \
-    --exec 'track_bucket("latency", e.request_time.to_float() * 1000)' \
+    --exec 'track_count("latency", e.request_time.to_float() * 1000)' \
     --metrics nginx.log
 ```
 

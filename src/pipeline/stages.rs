@@ -759,7 +759,8 @@ impl EndStage {
             columns::set_parse_cols_strict(ctx.config.strict);
             absorb::set_absorb_strict(ctx.config.strict);
             file_ops::clear_pending_ops();
-            ctx.rhai.execute_compiled_end(compiled, &ctx.tracker)?;
+            ctx.rhai
+                .execute_compiled_end(compiled, &ctx.tracker, &ctx.internal_tracker)?;
             let ops = file_ops::take_pending_ops();
             file_ops::execute_ops(&ops)
         } else {

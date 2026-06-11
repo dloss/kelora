@@ -1,9 +1,16 @@
 use super::merge::{deserialize_hll, deserialize_tdigest, is_hll_blob};
+use super::metric_operation;
 use rhai::Dynamic;
 use std::collections::{HashMap, HashSet};
 
-/// Format metrics for CLI output according to specification
-pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: u8) -> String {
+/// Format metrics for CLI output according to specification.
+/// `ops` holds the per-key `__op_{key}` operation metadata (the internal
+/// tracking state) used to decide how values are finalized for display.
+pub fn format_metrics_output(
+    metrics: &HashMap<String, Dynamic>,
+    ops: &HashMap<String, Dynamic>,
+    metrics_level: u8,
+) -> String {
     let mut output = String::new();
 
     let mut user_values: Vec<_> = metrics
@@ -80,9 +87,11 @@ pub fn format_metrics_output(metrics: &HashMap<String, Dynamic>, metrics_level: 
             }
         }
 
-        if let Some(avg) = average_value(value) {
-            output.push_str(&format!("{:<12} = {}\n", key, format_metric_float(avg)));
-            continue;
+        if metric_operation(ops, key).as_deref() == Some("avg") {
+            if let Some(avg) = average_value(value) {
+                output.push_str(&format!("{:<12} = {}\n", key, format_metric_float(avg)));
+                continue;
+            }
         }
 
         if let Ok(blob) = value.clone().into_blob() {
@@ -240,24 +249,29 @@ pub(crate) fn dynamic_to_json(value: Dynamic) -> serde_json::Value {
     serde_json::Value::String(value.to_string())
 }
 
-/// Format metrics for JSON output
+/// Format metrics for JSON output.
+/// `ops` holds the per-key `__op_{key}` operation metadata; see
+/// `format_metrics_output`.
 pub fn format_metrics_json(
     metrics: &HashMap<String, Dynamic>,
+    ops: &HashMap<String, Dynamic>,
 ) -> Result<String, serde_json::Error> {
     let mut json_obj = serde_json::Map::new();
 
     for (key, value) in metrics.iter() {
-        if key.starts_with("__op_") || key.starts_with("__kelora_error_") {
+        if key.starts_with("__op_") || key.starts_with("__kelora_") {
             continue;
         }
 
-        if let Some(avg) = average_value(value) {
-            if let Some(num) = serde_json::Number::from_f64(avg) {
-                json_obj.insert(key.clone(), serde_json::Value::Number(num));
-            } else {
-                json_obj.insert(key.clone(), serde_json::Value::Null);
+        if metric_operation(ops, key).as_deref() == Some("avg") {
+            if let Some(avg) = average_value(value) {
+                if let Some(num) = serde_json::Number::from_f64(avg) {
+                    json_obj.insert(key.clone(), serde_json::Value::Number(num));
+                } else {
+                    json_obj.insert(key.clone(), serde_json::Value::Null);
+                }
+                continue;
             }
-            continue;
         }
 
         if let Ok(blob) = value.clone().into_blob() {
@@ -380,6 +394,12 @@ mod tests {
         assert_eq!(format_metric_float(f64::INFINITY), "inf");
     }
 
+    fn avg_op(key: &str) -> HashMap<String, Dynamic> {
+        let mut ops = HashMap::new();
+        ops.insert(format!("__op_{}", key), Dynamic::from("avg".to_string()));
+        ops
+    }
+
     #[test]
     fn test_format_metrics_output_formats_average_maps() {
         let mut metrics = HashMap::new();
@@ -388,9 +408,26 @@ mod tests {
         map.insert("count".into(), Dynamic::from(3i64));
         metrics.insert("latency_avg".to_string(), Dynamic::from(map));
 
-        let output = format_metrics_output(&metrics, 1);
+        let output = format_metrics_output(&metrics, &avg_op("latency_avg"), 1);
         assert!(output.contains("latency_avg"));
         assert!(output.contains("4"));
+    }
+
+    #[test]
+    fn test_format_metrics_output_count_categories_named_sum_count() {
+        // A track_count metric whose categories happen to be called "sum" and
+        // "count" must render as a category map, not be mistaken for an average.
+        let mut metrics = HashMap::new();
+        let mut map = rhai::Map::new();
+        map.insert("sum".into(), Dynamic::from(12i64));
+        map.insert("count".into(), Dynamic::from(3i64));
+        metrics.insert("ops".to_string(), Dynamic::from(map));
+        let mut ops = HashMap::new();
+        ops.insert("__op_ops".to_string(), Dynamic::from("bucket".to_string()));
+
+        let output = format_metrics_output(&metrics, &ops, 1);
+        assert!(output.contains("sum"), "output: {}", output);
+        assert!(output.contains("count"), "output: {}", output);
     }
 
     #[test]
@@ -405,7 +442,7 @@ mod tests {
             Dynamic::from_blob(super::super::merge::serialize_hll(&hll)),
         );
 
-        let output = format_metrics_output(&metrics, 1);
+        let output = format_metrics_output(&metrics, &HashMap::new(), 1);
         assert!(output.contains("users"));
         assert!(output.contains("≈ 2"));
     }
@@ -418,7 +455,7 @@ mod tests {
         map.insert("count".into(), Dynamic::from(5i64));
         metrics.insert("latency_avg".to_string(), Dynamic::from(map));
 
-        let json = format_metrics_json(&metrics).unwrap();
+        let json = format_metrics_json(&metrics, &avg_op("latency_avg")).unwrap();
         assert!(json.contains("\"latency_avg\""));
         assert!(json.contains("3.0") || json.contains("3"));
     }
@@ -435,7 +472,7 @@ mod tests {
             Dynamic::from_blob(super::super::merge::serialize_hll(&hll)),
         );
 
-        let json = format_metrics_json(&metrics).unwrap();
+        let json = format_metrics_json(&metrics, &HashMap::new()).unwrap();
         assert!(json.contains("\"users\""));
         assert!(json.contains("3"));
     }

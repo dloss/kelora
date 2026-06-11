@@ -741,7 +741,7 @@ let avg = times.reduce(|sum, x| sum + x, 0) / times.len()
 // Find most common status codes
 let codes = events.pluck("status")
 for code in codes {
-    track_count(code)
+    track_count("code", code)
 }
 
 // With window for rolling analysis (requires --window)
@@ -1064,7 +1064,7 @@ Accepts duration strings like `"5m"`, `"1h"`, `"1d"`, etc.
 // Group events into 5-minute buckets
 let timestamp = to_datetime(e.timestamp);
 e.bucket = timestamp.round_to("5m").to_iso();
-track_bucket("requests_per_5min", e.bucket);
+track_count("requests_per_5min", e.bucket);
 
 // Hourly buckets
 e.hour_bucket = to_datetime(e.time).round_to("1h").format("%Y-%m-%d %H:00");
@@ -1220,7 +1220,7 @@ if !sample_prob(0.01) { skip() }
 
 // 10% sampling for metrics
 if sample_prob(0.10) {
-    track_count("sampled_errors")
+    track_sum("sampled_errors", 1)
 }
 ```
 
@@ -1479,7 +1479,7 @@ track_unique("names", e.extracted.or_empty())
 e.tags = e.tags.or_empty()  // [] becomes (), field removed
 
 // Track only events with items
-track_bucket("item_count", e.items.len())
+track_count("item_count", e.items.len())
 if e.items.len() == 0 {
     e.items = e.items.or_empty()  // Remove empty array
 }
@@ -1593,7 +1593,7 @@ e.status_category = status_class(e.status)            // 404 → "4xx", 200 → 
 e.is_error = status_class(e.code) == "5xx"
 
 // Track errors by class
-track_count(status_class(e.status))
+track_count("status_class", status_class(e.status))
 
 // Group status codes for analysis
 e.status_group = status_class(e.response_code)        // 503 → "5xx"
@@ -1833,8 +1833,11 @@ session["last_seen"] = e.timestamp
 
 All tracking functions require the `--metrics` flag.
 
-!!! tip "Unit Value Handling"
-    All `track_*()` functions that accept values silently skip Unit `()` values. This enables safe tracking of optional or extracted fields without needing conditional checks.
+Shared conventions across the `track_*()` family:
+
+- **Unit values are skipped.** Missing fields and failed conversions produce Unit `()`, which every `track_*()` function skips instead of erroring. Skips are counted per metric and surfaced via `--diagnostics`, so a field-name typo is detectable.
+- **Categorical arguments accept any scalar.** Category and item arguments take strings, numbers, and bools; non-string values are stringified (`track_count("status", e.status)` just works).
+- **One metric name, one function.** Using the same metric name with two different `track_*()` functions is an error — the aggregation strategies are incompatible.
 
 ### Tracking Functions {#tracking-functions}
 
@@ -1850,13 +1853,24 @@ let latency = e.latency_str.to_float()  // Returns () on error
 track_avg("avg_ms", latency)            // Skips () values
 ```
 
-#### `track_count(key)`
-Increment counter for key by 1.
+#### `track_count(name, category)`
+Count occurrences of each category value under the metric `name`. The result is a nested map `{name: {category: count}}`. Categories may be strings, numbers, or bools (stringified into the map key); Unit `()` values are skipped.
 
 ```rhai
-track_count(e.service)                                // Count by service
-track_count("total")                                  // Global counter
+track_count("service", e.service)       // Count events per service
+track_count("status", e.status)         // Integer categories just work
+track_count("level", e.level)           // {level: {ERROR: 12, INFO: 3041}}
+
+// A "bucket" is just a category you computed yourself:
+track_count("status_class", e.status / 100 * 100)        // 200/300/400/500
+track_count("latency_ms", floor(e.response_time / 100) * 100)
+
+// For a single plain counter, use track_sum:
+track_sum("total", 1)
 ```
+
+!!! note "Changed in kelora 2.0"
+    `track_count` took a single argument in 1.x (the counted value itself) and `track_bucket(key, bucket)` provided the categorized form. The two were merged: use `track_count(name, category)` for categorized counting and `track_sum(name, 1)` for plain counters. `track_bucket` was removed.
 
 #### `track_sum(key, value)`
 Accumulate numeric values for key. Skips Unit `()` values.
@@ -1887,17 +1901,6 @@ track_unique("ips", e.client_ip)
 
 // Combined with .or_empty() for conditional tracking
 track_unique("names", e.message.after("User:").or_empty())
-```
-
-#### `track_bucket(key, bucket)`
-Track values in buckets for histograms. Skips Unit `()` values.
-
-```rhai
-let bucket = floor(e.response_time / 100) * 100
-track_bucket("latency", bucket)
-
-// Safe with optional fields
-track_bucket("user_types", e.user_type.or_empty())  // Skips empty/missing
 ```
 
 #### `track_cardinality(key, value)` / `track_cardinality(key, value, error_rate)`
@@ -1932,67 +1935,46 @@ unique_ips   ≈ 1234567
     | Scale | Thousands | Billions |
     | Values stored | Yes (can list them) | No (count only) |
 
-#### `track_top(key, item, n)` / `track_top(key, item, n, value)`
-Track top N most frequent items (count mode) or highest-valued items (weighted mode). Skips Unit `()` values.
-
-**Count mode** tracks the N items that appear most frequently:
+#### `track_top(name, item [, n])` / `track_bottom(name, item [, n])`
+Track the N most (`track_top`) or least (`track_bottom`) **frequent** items. `n` defaults to 10. Items may be strings, numbers, or bools; Unit `()` items are skipped.
 
 ```rhai
-// Track top 10 most common errors
-track_top("common_errors", e.error_type, 10)
+// Top 10 most common errors (default n)
+track_top("common_errors", e.error_type)
 
-// Track top 5 most active users
+// Top 5 most active users
 track_top("active_users", e.user_id, 5)
+
+// Bottom 5 rarest errors
+track_bottom("rare_errors", e.error_type, 5)
 ```
 
-**Weighted mode** tracks the N items with the highest custom values:
+**Output format:** `[{key: "item", count: 42}, ...]`, sorted by count (descending for top, ascending for bottom), ties broken alphabetically by key.
+
+#### `track_top_by(name, item, score [, n])` / `track_bottom_by(name, item, score [, n])`
+Track the N items with the highest (`track_top_by`) or lowest (`track_bottom_by`) **score**. Each item keeps its best score (max for top, min for bottom). `n` defaults to 10. Unit `()` items or scores are skipped.
 
 ```rhai
-// Track top 10 slowest endpoints by latency
-track_top("slowest_endpoints", e.endpoint, 10, e.latency_ms)
+// Top 10 slowest endpoints by latency
+track_top_by("slowest_endpoints", e.endpoint, e.latency_ms)
 
-// Track top 5 biggest requests by bytes
-track_top("heavy_requests", e.request_id, 5, e.bytes)
+// Top 5 biggest requests by bytes
+track_top_by("heavy_requests", e.request_id, e.bytes, 5)
+
+// 10 fastest endpoints by latency
+track_bottom_by("fastest_endpoints", e.endpoint, e.latency_ms)
 
 // Handles missing values gracefully
-track_top("cpu_hogs", e.process, 10, e.cpu_time.or_empty())  // Skips ()
+track_top_by("cpu_hogs", e.process, e.cpu_time.or_empty())  // Skips ()
 ```
 
-**Output format:**
-- Count mode: `[{key: "item", count: 42}, ...]`
-- Weighted mode: `[{key: "item", value: 123.4}, ...]`
-- Results are sorted by value descending, then alphabetically by key
+**Output format:** `[{key: "item", value: 123.4}, ...]`, sorted by score (descending for top, ascending for bottom), ties broken alphabetically by key.
 
-#### `track_bottom(key, item, n)` / `track_bottom(key, item, n, value)`
-Track bottom N least frequent items (count mode) or lowest-valued items (weighted mode). Skips Unit `()` values.
-
-**Count mode** tracks the N items that appear least frequently:
-
-```rhai
-// Track bottom 5 rarest errors
-track_bottom("rare_errors", e.error_type, 5)
-
-// Track least active users
-track_bottom("inactive_users", e.user_id, 10)
-```
-
-**Weighted mode** tracks the N items with the lowest custom values:
-
-```rhai
-// Track 10 fastest endpoints by latency
-track_bottom("fastest_endpoints", e.endpoint, 10, e.latency_ms)
-
-// Track smallest requests
-track_bottom("tiny_requests", e.request_id, 5, e.bytes)
-```
-
-**Output format:**
-- Count mode: `[{key: "item", count: 1}, ...]`
-- Weighted mode: `[{key: "item", value: 0.5}, ...]`
-- Results are sorted by value ascending, then alphabetically by key
+!!! note "Changed in kelora 2.0"
+    In 1.x, score-based ranking was the 4-argument form `track_top(key, item, n, value)`. It is now its own function with the score in the natural position and `n` optional: `track_top_by(name, item, score [, n])`.
 
 !!! tip "Memory Efficiency"
-    `track_top()` and `track_bottom()` use bounded memory (O(N) per key) unlike `track_bucket()` which stores all unique values. For high-cardinality fields, prefer top/bottom tracking over bucketing.
+    `track_top()` and `track_bottom()` use bounded memory (O(N) per key) unlike `track_unique()` (which stores every distinct value) or `track_count()` (one map entry per distinct category). For high-cardinality fields, prefer top/bottom tracking.
 
 !!! note "Parallel Mode Behavior"
     In parallel mode, each worker maintains its own top/bottom N. During merge, the lists are combined, re-sorted, and trimmed to N. Final results are deterministic.
@@ -2283,15 +2265,15 @@ let included = span.events
 
 ### Metrics Snapshot
 
-`span.metrics` contains per-window values from `track_*` calls, computed automatically for each span so you can emit summaries without manual bookkeeping. This works for **additive** aggregators: `track_count`, `track_sum`, `track_avg`, `track_unique`, and `track_bucket`.
+`span.metrics` contains per-window values from `track_*` calls, computed automatically for each span so you can emit summaries without manual bookkeeping. This works for **additive** aggregators: `track_count`, `track_sum`, `track_avg`, and `track_unique`.
 
 !!! warning "Non-additive aggregators are omitted"
     `track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`, and `track_bottom` accumulate global state that cannot be reduced to a single window (a t-digest or HLL has no subtraction, and a global max is not a per-window max). These keys are **omitted from `span.metrics`** and Kelora prints a one-time warning. Compute them per window by iterating `span.events` instead — e.g. `span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b > a { b } else { a })` for a per-window max.
 
 ```rhai
 let metrics = span.metrics;
-let hits = metrics["events"];          // from track_count("events")
-let failures = metrics["failures"];    // from track_count("failures")
+let hits = metrics["events"];          // from track_sum("events", 1)
+let failures = metrics["failures"];    // from track_sum("failures", 1)
 let ratio = if hits > 0 { failures * 100 / hits } else { 0 };
 print(span.id + ": " + ratio.to_string() + "% failure rate");
 ```
@@ -2320,7 +2302,7 @@ if e.timestamp > to_datetime("2024-01-01") {
 
 **Metrics Tracking:**
 ```rhai
-track_count(e.service)
+track_count("service", e.service)
 track_sum("bytes", e.response_size)
 track_unique("users", e.user_id)
 ```

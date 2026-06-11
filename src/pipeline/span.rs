@@ -763,7 +763,8 @@ fn compute_span_metrics(
                         }
                     }
                 }
-                "min" | "max" | "percentiles" | "cardinality" | "top" | "bottom" => {
+                "min" | "max" | "percentiles" | "cardinality" | "top" | "bottom" | "top_by"
+                | "bottom_by" => {
                     non_additive.push((key.clone(), op.to_string()));
                 }
                 _ => {}

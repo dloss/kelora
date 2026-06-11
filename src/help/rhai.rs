@@ -143,7 +143,7 @@ EVENT METADATA:
   meta.parsed_ts                       Parsed UTC timestamp before scripts (or () if missing)
 
   # Example: Track errors by filename
-  --exec 'if e.level == "ERROR" { track_count(meta.filename) }'
+  --exec 'if e.level == "ERROR" { track_count("file", meta.filename) }'
 
   # Example: Debug with line numbers
   --filter 'e.status >= 500' --exec 'eprint("Error at line " + meta.line_num)'
@@ -215,7 +215,7 @@ EXEC SNAPSHOTTING & ROLLBACK SEMANTICS (-e):
   fails partway through, all mutations from that stage are rolled back and the
   pre-stage event is forwarded to the next stage. Rolled back on error:
     • Field assignments and deletions (e.field = ..., e.field = ())
-    • Tracking calls (track_count, track_stats, track_unique, track_bucket, ...)
+    • Tracking calls (track_count, track_stats, track_unique, track_sum, ...)
     • emit_each() calls and skip() requests
     • Pending file operations (append_file, write_file)
   State that intentionally survives the rollback:

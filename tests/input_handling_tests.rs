@@ -150,7 +150,7 @@ fn test_stdin_large_input_performance() {
             "--filter",
             "e.status >= 400",
             "--exec",
-            "track_count(\"errors\");",
+            "track_sum(\"errors\", 1);",
             "--end",
             "print(`Errors: ${metrics[\"errors\"]}`);",
         ],
@@ -398,7 +398,7 @@ fn test_no_input_with_metrics() {
     let (stdout, _stderr, exit_code) = run_kelora(&[
         "--no-input",
         "--begin",
-        "for i in 0..10 { track_count(\"iterations\"); }",
+        "for i in 0..10 { track_sum(\"iterations\", 1); }",
         "--end",
         "print(`Total iterations: ${metrics[\"iterations\"]}`)",
     ]);

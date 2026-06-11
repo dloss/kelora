@@ -285,9 +285,9 @@ Combine `track_*()` functions in `--exec` with `span.metrics` in `--span-close` 
     kelora -j examples/simple_json.jsonl \
       -q \
       --exec '
-        track_count("total");
-        if e.level == "ERROR" { track_count("errors"); }
-        if e.level == "WARN" { track_count("warnings"); }
+        track_sum("total", 1);
+        if e.level == "ERROR" { track_sum("errors", 1); }
+        if e.level == "WARN" { track_sum("warnings", 1); }
       ' \
       --span 5 \
       --span-close '
@@ -305,9 +305,9 @@ Combine `track_*()` functions in `--exec` with `span.metrics` in `--span-close` 
     kelora -j examples/simple_json.jsonl \
       -q \
       --exec '
-        track_count("total");
-        if e.level == "ERROR" { track_count("errors"); }
-        if e.level == "WARN" { track_count("warnings"); }
+        track_sum("total", 1);
+        if e.level == "ERROR" { track_sum("errors", 1); }
+        if e.level == "WARN" { track_sum("warnings", 1); }
       ' \
       --span 5 \
       --span-close '
@@ -339,8 +339,8 @@ Calculate error rates per 1-minute window:
     kelora -j examples/simple_json.jsonl \
       -q \
       --exec '
-        track_count("requests");
-        if e.level == "ERROR" { track_count("errors"); }
+        track_sum("requests", 1);
+        if e.level == "ERROR" { track_sum("errors", 1); }
       ' \
       --span 1m \
       --span-close '
@@ -358,8 +358,8 @@ Calculate error rates per 1-minute window:
     kelora -j examples/simple_json.jsonl \
       -q \
       --exec '
-        track_count("requests");
-        if e.level == "ERROR" { track_count("errors"); }
+        track_sum("requests", 1);
+        if e.level == "ERROR" { track_sum("errors", 1); }
       ' \
       --span 1m \
       --span-close '
@@ -387,7 +387,7 @@ This lets you compare per-window activity against overall trends:
     ```bash
     kelora -j examples/simple_json.jsonl \
       -q \
-      --exec 'track_count("total"); if e.level == "ERROR" { track_count("errors"); }' \
+      --exec 'track_sum("total", 1); if e.level == "ERROR" { track_sum("errors", 1); }' \
       --span 5 \
       --span-close '
         let span_err = span.metrics.get_path("errors", 0);
@@ -401,7 +401,7 @@ This lets you compare per-window activity against overall trends:
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
       -q \
-      --exec 'track_count("total"); if e.level == "ERROR" { track_count("errors"); }' \
+      --exec 'track_sum("total", 1); if e.level == "ERROR" { track_sum("errors", 1); }' \
       --span 5 \
       --span-close '
         let span_err = span.metrics.get_path("errors", 0);
@@ -427,7 +427,7 @@ Detect anomalies by comparing span activity to overall rates:
     ```bash
     kelora -j examples/simple_json.jsonl \
       -q \
-      --exec 'track_count("requests"); if e.level == "ERROR" { track_count("errors"); }' \
+      --exec 'track_sum("requests", 1); if e.level == "ERROR" { track_sum("errors", 1); }' \
       --span 3 \
       --span-close '
         let span_rate = span.metrics.get_path("errors", 0) * 100 / span.size;
@@ -444,7 +444,7 @@ Detect anomalies by comparing span activity to overall rates:
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
       -q \
-      --exec 'track_count("requests"); if e.level == "ERROR" { track_count("errors"); }' \
+      --exec 'track_sum("requests", 1); if e.level == "ERROR" { track_sum("errors", 1); }' \
       --span 3 \
       --span-close '
         let span_rate = span.metrics.get_path("errors", 0) * 100 / span.size;
@@ -609,7 +609,7 @@ Spans work seamlessly with multi-stage pipelines:
       -q \
       --exec 'e.is_error = (e.level == "ERROR")' \
       --filter 'e.is_error' \
-      --exec 'track_count(e.service)' \
+      --exec 'track_count("service", e.service)' \
       --span 2 \
       --span-close '
         print("Error batch " + span.id + ":");
@@ -627,7 +627,7 @@ Spans work seamlessly with multi-stage pipelines:
       -q \
       --exec 'e.is_error = (e.level == "ERROR")' \
       --filter 'e.is_error' \
-      --exec 'track_count(e.service)' \
+      --exec 'track_count("service", e.service)' \
       --span 2 \
       --span-close '
         print("Error batch " + span.id + ":");
