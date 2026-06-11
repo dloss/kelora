@@ -3046,6 +3046,46 @@ mod tests {
     }
 
     #[test]
+    fn bare_field_reference_suggests_e_accessor() {
+        let config = DebugConfig::new(0);
+        let enhancer = ErrorEnhancer::new(config);
+        let mut scope = Scope::new();
+        let mut e_map = Map::new();
+        e_map.insert("level".into(), Dynamic::from("ERROR"));
+        e_map.insert("status".into(), Dynamic::from(500_i64));
+        scope.push("e", e_map);
+
+        // Exact field name written without the `e.` prefix.
+        let err = EvalAltResult::ErrorVariableNotFound("level".into(), rhai::Position::NONE);
+        let ctx = debug::ExecutionContext::default();
+        let out = enhancer.enhance_error(&err, &scope, "level == \"ERROR\"", "filter", &ctx);
+        assert!(
+            out.contains("e.level"),
+            "bare field reference should be redirected to e.level; got: {out}"
+        );
+        assert!(
+            out.contains("accessed through `e`"),
+            "hint should teach the e. accessor model; got: {out}"
+        );
+
+        // A close partial match of a field name should still reach the field.
+        let err = EvalAltResult::ErrorVariableNotFound("stat".into(), rhai::Position::NONE);
+        let out = enhancer.enhance_error(&err, &scope, "stat > 0", "filter", &ctx);
+        assert!(
+            out.contains("e.status"),
+            "partial bare field should suggest e.status; got: {out}"
+        );
+
+        // A truly unknown identifier keeps the generic variable listing.
+        let err = EvalAltResult::ErrorVariableNotFound("zzzzz".into(), rhai::Position::NONE);
+        let out = enhancer.enhance_error(&err, &scope, "zzzzz == \"ERROR\"", "filter", &ctx);
+        assert!(
+            out.contains("Available variables"),
+            "unknown identifier should fall back to the variable listing; got: {out}"
+        );
+    }
+
+    #[test]
     fn native_filter_evaluates_simple_comparisons() {
         let mut engine = RhaiEngine::new();
         let compiled = engine
