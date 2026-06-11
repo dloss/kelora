@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Script-error scope restored in `--metrics`/`--drain`** - The "affecting every event" total-failure indicator in the script-error summary is derived from event counts, but data-only modes disabled stats collection to keep the hot path lean — silently dropping the most useful part of the summary exactly where a stuck user lands (e.g. `track_count(e.missing_field)` on a missing field reported a bare error count with no scope). The scope now surfaces in these modes; the advisory follow-up ("…Use `--strict`…") honors `--no-diagnostics` and the suppression implied by data-only modes, and is re-enabled with `--diagnostics`.
+- **Parse errors no longer swallowed in `--metrics`/`--drain`** - These modes disabled stats collection, so parse failures produced no summary and exited `0` — contradicting the documented contract that parse errors exit `1` and that exit codes are preserved across quiet/data-only modes. Parse errors are now reported on stderr and exit `1`, matching normal mode. (Plain `--no-diagnostics` on event output keeps its existing fast path.)
 - **`track_stats` metrics now usable in `--end` and `span_close`** - Percentile, average, and cardinality sketches were exposed as raw blobs, making `metrics["foo_p95"]` unusable. They are now properly finalized to scalar values.
 - **Exec error counts no longer silently undercounted** - The exec stage's atomic-rollback path was discarding `track_error` writes; error counters now survive rollback.
 - **`--discover` HLL cardinality clamped to observation count** - The HyperLogLog estimate could exceed the number of times a field was seen; it is now clamped so "Uniq > Seen" rows no longer appear.
