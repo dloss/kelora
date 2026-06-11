@@ -34,7 +34,7 @@ kelora -j examples/simple_json.jsonl \
 ```
 
 - `span.id` is an incrementing identifier (`span-000001`, ...).
-- `span.metrics` exposes only the deltas collected within that window.
+- `span.metrics` exposes per-window values for additive aggregators (`track_count`, `track_sum`, `track_avg`, `track_unique`, `track_bucket`). Non-additive ones (`track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`, `track_bottom`) cannot be reduced to a single window, so they are omitted with a warning — iterate `span.events` to compute those per window.
 - Because the original events are still streamed, you can attach more `--exec` or `--filter` stages before or after the span logic.
 
 ## Step 3: Time-Based Example

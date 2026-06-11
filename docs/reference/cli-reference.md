@@ -583,7 +583,7 @@ Run a Rhai snippet once whenever a span closes. Use it to emit per-span summarie
 - `span.start` / `span.end` – Half-open window bounds for time-based spans (count spans return `()`)
 - `span.size` – Number of events that survived filters and were included in this span
 - `span.events` – Array of events in arrival order (each map includes `span_status`, `span_start`, etc.)
-- `span.metrics` – Map of per-span deltas from `track_*` calls (automatically reset after each span)
+- `span.metrics` – Map of per-window values from additive `track_*` calls (`count`, `sum`, `avg`, `unique`, `bucket`); non-additive aggregators (`min`, `max`, `percentiles`, `cardinality`, `top`, `bottom`) are omitted with a warning — use `span.events` for those
 
 **Metadata added to `meta` during per-event stages:**
 

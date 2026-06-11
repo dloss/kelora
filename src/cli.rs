@@ -360,7 +360,7 @@ pub struct Cli {
         long = "span-close",
         value_name = "EXPR",
         help_heading = "Processing Options",
-        help = "Run a Rhai snippet when each span closes. Within the hook, read span.start, span.end, span.id, span.events, span.size, and span.metrics for span context."
+        help = "Run a Rhai snippet when each span closes. Within the hook, read span.start, span.end, span.id, span.events, span.size, and span.metrics for span context. span.metrics carries per-window values only for additive aggregators (count, sum, avg, unique, bucket); non-additive ones (min, max, percentiles, cardinality, top, bottom) are omitted with a warning, so use span.events for those."
     )]
     pub span_close: Option<String>,
 

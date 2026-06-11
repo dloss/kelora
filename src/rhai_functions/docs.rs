@@ -307,7 +307,11 @@ span.start                           Span start as DateTime (time spans) or () f
 span.end                             Span end as DateTime (time spans) or () for count spans
 span.size                            Number of events that survived the span
 span.events                          Array of event maps for the span in arrival order
-span.metrics                         Per-span metric deltas from track_* calls (read-only map)
+span.metrics                         Per-window metrics from additive track_* calls: count, sum,
+                                     avg, unique, bucket (read-only map). Non-additive aggregators
+                                     (min, max, percentiles, cardinality, top, bottom) have no
+                                     per-window value and are omitted with a warning; iterate
+                                     span.events to compute them per window.
 
 EVENT MANIPULATION:
 emit_each(array [,base_map])         Fan out array elements as separate events (returns emitted count)

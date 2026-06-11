@@ -250,9 +250,11 @@ See `examples/state_examples.rhai` for more patterns.
 | `span.start` / `span.end` | `DateTime` or `()` | Span boundary timestamps (time spans only). |
 | `span.size` | `Int` | Number of events that survived filters and entered the span. |
 | `span.events` | `Array<Map>` | Copy of each included event, with helper fields (`line`, `line_num`, `filename`, `span_status`, `span_id`, `span_start`, `span_end`). Read-only. |
-| `span.metrics` | `Map` | Per-span deltas computed from `track_*()` calls since the span opened; zero-delta keys are omitted. Read-only.
+| `span.metrics` | `Map` | Per-window values computed from `track_*()` calls since the span opened, for **additive** aggregators only: `track_count`, `track_sum`, `track_avg`, `track_unique`, `track_bucket`. Zero-delta keys are omitted. Read-only.
 
 > `--span-close` runs without a "current event", so `e` and `meta` are empty. Inspect `span.events` when you need per-event details from inside the close hook.
+
+> **Non-additive aggregators are not available per window.** `track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`, and `track_bottom` accumulate global state (a t-digest or HLL cannot be "subtracted" back to a single window, and a global max is not a per-window max). These keys are **omitted from `span.metrics`** and Kelora prints a one-time warning. To get per-window min/max/percentiles, iterate `span.events` inside the close hook — e.g. `let mx = span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b > a { b } else { a });`.
 
 ### `metrics` vs `span.metrics`
 - `span.metrics`: Only the delta accumulated while the span was open. After the hook runs, Kelora resets the baseline for the next span; mutations are discarded. Read-only.

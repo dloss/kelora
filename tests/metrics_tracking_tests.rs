@@ -1069,6 +1069,133 @@ fn test_span_metrics_track_counts() {
 }
 
 #[test]
+fn test_span_metrics_track_avg_per_window() {
+    // track_avg stores cumulative {sum, count}, so span.metrics can report the
+    // true per-window average as (Δsum / Δcount).
+    let input = r#"{"t":"2025-01-01T00:00:00Z","rt":1.0}
+{"t":"2025-01-01T00:00:30Z","rt":9.0}
+{"t":"2025-01-01T00:01:10Z","rt":2.0}
+{"t":"2025-01-01T00:01:40Z","rt":3.0}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-q",
+            "--span",
+            "1m",
+            "--exec",
+            "track_avg(\"rt_avg\", e.rt);",
+            "--span-close",
+            r#"print(span.id + ":" + span.metrics["rt_avg"].to_string());"#,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "span avg should exit successfully");
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(
+        lines,
+        vec![
+            "2025-01-01T00:00:00Z/1m:5.0", // (1 + 9) / 2
+            "2025-01-01T00:01:00Z/1m:2.5", // (2 + 3) / 2
+        ]
+    );
+}
+
+#[test]
+fn test_span_metrics_non_additive_warns_and_omits() {
+    // Non-additive aggregators (max, percentiles) cannot be reduced to a single
+    // window. They must be omitted from span.metrics *and* trigger a warning,
+    // rather than being silently dropped or reporting a global extreme.
+    let input = r#"{"t":"2025-01-01T00:00:00Z","rt":1.0}
+{"t":"2025-01-01T00:00:30Z","rt":9.0}
+{"t":"2025-01-01T00:01:10Z","rt":2.0}
+{"t":"2025-01-01T00:01:40Z","rt":3.0}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-q",
+            "--span",
+            "1m",
+            "--exec",
+            "track_max(\"rt_max\", e.rt); track_percentiles(\"rt\", e.rt);",
+            "--span-close",
+            r#"print(span.id + " -> " + span.metrics.to_string());"#,
+        ],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "non-additive span metrics should not be fatal"
+    );
+
+    // The misleading global max must not leak into span.metrics for any window.
+    assert!(
+        !stdout.contains("rt_max") && !stdout.contains("rt_p"),
+        "non-additive metrics must be omitted from span.metrics, got: {}",
+        stdout
+    );
+
+    // A loud, once-per-key warning must explain the omission and point to the
+    // span.events workaround.
+    assert!(
+        stderr.contains("span.metrics omits 'rt_max'") && stderr.contains("track_max"),
+        "expected a warning naming the omitted max metric, got: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("track_percentiles"),
+        "expected a warning for omitted percentiles, got: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("span.events"),
+        "warning should point to the span.events workaround, got: {}",
+        stderr
+    );
+
+    // The warning fires once per key, not once per span window.
+    assert_eq!(
+        stderr.matches("span.metrics omits 'rt_max'").count(),
+        1,
+        "max warning should be emitted only once across spans, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_span_metrics_non_additive_suppressed_by_no_diagnostics() {
+    // --no-diagnostics is the standard way to silence diagnostics; the
+    // non-additive warning must honor it.
+    let input = r#"{"t":"2025-01-01T00:00:00Z","rt":1.0}
+{"t":"2025-01-01T00:01:10Z","rt":2.0}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-q",
+            "--no-diagnostics",
+            "--span",
+            "1m",
+            "--exec",
+            "track_max(\"rt_max\", e.rt);",
+            "--span-close",
+            "print(span.id);",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stderr.contains("span.metrics omits"),
+        "--no-diagnostics should suppress the non-additive warning, got: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_span_close_requires_span() {
     let (_stdout, stderr, exit_code) = run_kelora_with_input(&["--span-close", "print(1);"], "");
     assert_eq!(exit_code, 2, "missing --span should return invalid usage");

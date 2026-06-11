@@ -2283,7 +2283,10 @@ let included = span.events
 
 ### Metrics Snapshot
 
-`span.metrics` contains per-span deltas from `track_*` calls. Values reset automatically after each span closes, so you can emit per-span summaries without manual bookkeeping.
+`span.metrics` contains per-window values from `track_*` calls, computed automatically for each span so you can emit summaries without manual bookkeeping. This works for **additive** aggregators: `track_count`, `track_sum`, `track_avg`, `track_unique`, and `track_bucket`.
+
+!!! warning "Non-additive aggregators are omitted"
+    `track_min`, `track_max`, `track_percentiles`, `track_cardinality`, `track_top`, and `track_bottom` accumulate global state that cannot be reduced to a single window (a t-digest or HLL has no subtraction, and a global max is not a per-window max). These keys are **omitted from `span.metrics`** and Kelora prints a one-time warning. Compute them per window by iterating `span.events` instead — e.g. `span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b > a { b } else { a })` for a per-window max.
 
 ```rhai
 let metrics = span.metrics;

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, TimeZone, Utc};
@@ -233,6 +233,9 @@ pub struct SpanProcessor {
     next_span_sequence: u64,
     pending: Option<PendingEvent>,
     signal_notice_shown: bool,
+    /// Metric keys for which a "no per-window value" warning has already been
+    /// emitted, so non-additive aggregators warn once rather than per span.
+    warned_non_additive: HashSet<String>,
 }
 
 impl SpanProcessor {
@@ -249,6 +252,7 @@ impl SpanProcessor {
             next_span_sequence: 0,
             pending: None,
             signal_notice_shown: false,
+            warned_non_additive: HashSet::new(),
         }
     }
 
@@ -607,12 +611,18 @@ impl SpanProcessor {
     }
 
     fn run_close_hook(&mut self, span: ActiveSpan, ctx: &mut PipelineContext) -> Result<()> {
-        let compiled = match self.compiled_close.as_ref() {
-            Some(c) => c,
-            None => return Ok(()),
-        };
+        if self.compiled_close.is_none() {
+            return Ok(());
+        }
 
-        let metrics_delta = compute_span_metrics(&span, &ctx.tracker, &ctx.internal_tracker);
+        let (metrics_delta, non_additive) =
+            compute_span_metrics(&span, &ctx.tracker, &ctx.internal_tracker);
+        self.warn_non_additive(&non_additive, ctx);
+
+        let compiled = self
+            .compiled_close
+            .as_ref()
+            .expect("compiled_close presence checked above");
         let span_binding = span_functions::SpanBinding::new(
             span.span_id.clone(),
             span.span_start,
@@ -642,6 +652,37 @@ impl SpanProcessor {
 
         Ok(())
     }
+
+    /// Emit a one-time diagnostic for each non-additive metric that cannot be
+    /// expressed as a per-window value in `span.metrics`. Without this, such
+    /// metrics were silently dropped (avg/percentiles) or reported misleading
+    /// global extremes (min/max), giving wrong-or-missing per-window stats with
+    /// no indication anything was lost.
+    fn warn_non_additive(&mut self, dropped: &[(String, String)], ctx: &PipelineContext) {
+        if ctx.config.suppress_diagnostics || ctx.config.silent {
+            return;
+        }
+        for (key, op) in dropped {
+            if !self.warned_non_additive.insert(key.clone()) {
+                continue;
+            }
+            let func = match op.as_str() {
+                "min" => "track_min",
+                "max" => "track_max",
+                "percentiles" => "track_percentiles",
+                "cardinality" => "track_cardinality",
+                "top" => "track_top",
+                "bottom" => "track_bottom",
+                other => other,
+            };
+            let message = crate::config::format_warning_message_auto(&format!(
+                "span.metrics omits '{}' ({}): non-additive aggregators have no per-window \
+                 value; iterate span.events to compute per-window min/max/percentiles/etc.",
+                key, func
+            ));
+            let _ = SafeStderr::new().writeln(&message);
+        }
+    }
 }
 
 fn align_to_duration(event_ms: i64, duration_ms: i64) -> i64 {
@@ -664,12 +705,29 @@ fn format_duration(duration_ms: i64) -> String {
     }
 }
 
+/// Compute `span.metrics` for a closing span.
+///
+/// Metrics are derived by diffing the global tracker against the baseline
+/// captured when the span opened. Only aggregators that compose as a valid
+/// per-window value are reported:
+///   - `count`/`sum`  -> numeric delta
+///   - `avg`          -> (Δsum / Δcount), the true per-window average
+///   - `unique`       -> set of values first seen in this window
+///   - `bucket`       -> per-bucket count delta
+///
+/// Non-additive aggregators (`min`, `max`, `percentiles`, `cardinality`,
+/// `top`, `bottom`) cannot be recovered from cumulative global state: a global
+/// max can't be "un-merged" back to a window max, and a t-digest/HLL has no
+/// subtraction. These are collected into the returned list so the caller can
+/// emit a diagnostic instead of silently dropping them (or, for min/max,
+/// reporting a misleading global extreme).
 fn compute_span_metrics(
     span: &ActiveSpan,
     current_user: &HashMap<String, Dynamic>,
     current_internal: &HashMap<String, Dynamic>,
-) -> rhai::Map {
+) -> (rhai::Map, Vec<(String, String)>) {
     let mut result = rhai::Map::new();
+    let mut non_additive: Vec<(String, String)> = Vec::new();
 
     for (key, value) in current_user {
         let op_key = format!("__op_{}", key);
@@ -686,9 +744,9 @@ fn compute_span_metrics(
                         }
                     }
                 }
-                "min" | "max" => {
-                    if !dynamic_equal(value, span.baseline_user.get(key)) {
-                        result.insert(key.clone().into(), value.clone());
+                "avg" => {
+                    if let Some(avg) = avg_delta(value, span.baseline_user.get(key)) {
+                        result.insert(key.clone().into(), avg);
                     }
                 }
                 "unique" => {
@@ -705,12 +763,46 @@ fn compute_span_metrics(
                         }
                     }
                 }
+                "min" | "max" | "percentiles" | "cardinality" | "top" | "bottom" => {
+                    non_additive.push((key.clone(), op.to_string()));
+                }
                 _ => {}
             }
         }
     }
 
-    result
+    (result, non_additive)
+}
+
+/// Extract the cumulative `(sum, count)` stored by `track_avg`.
+fn extract_avg_parts(value: &Dynamic) -> Option<(f64, i64)> {
+    let map = value.clone().try_cast::<rhai::Map>()?;
+    let sum = map.get("sum").and_then(|v| {
+        if v.is_float() {
+            v.as_float().ok()
+        } else if v.is_int() {
+            v.as_int().ok().map(|i| i as f64)
+        } else {
+            None
+        }
+    })?;
+    let count = map.get("count").and_then(|v| v.as_int().ok())?;
+    Some((sum, count))
+}
+
+/// Compute the per-window average from cumulative `{sum, count}` snapshots.
+/// Because `track_avg` stores running totals, the windowed average is exactly
+/// `(sum_now - sum_base) / (count_now - count_base)`. Returns `None` when no
+/// values were tracked in this window.
+fn avg_delta(current: &Dynamic, base: Option<&Dynamic>) -> Option<Dynamic> {
+    let (cur_sum, cur_count) = extract_avg_parts(current)?;
+    let (base_sum, base_count) = base.and_then(extract_avg_parts).unwrap_or((0.0, 0));
+    let delta_count = cur_count - base_count;
+    if delta_count <= 0 {
+        return None;
+    }
+    let delta_sum = cur_sum - base_sum;
+    Some(Dynamic::from(delta_sum / delta_count as f64))
 }
 
 fn numeric_delta(current: &Dynamic, base: Option<&Dynamic>) -> Option<Dynamic> {
@@ -791,30 +883,6 @@ fn is_zero_dynamic(value: &Dynamic) -> bool {
         value.as_float().unwrap_or(0.0).abs() < f64::EPSILON
     } else if value.is_int() {
         value.as_int().unwrap_or(0) == 0
-    } else {
-        false
-    }
-}
-
-fn dynamic_equal(current: &Dynamic, base: Option<&Dynamic>) -> bool {
-    if let Some(base) = base {
-        if current.is_float() || base.is_float() {
-            let c = if current.is_float() {
-                current.as_float().unwrap_or(0.0)
-            } else {
-                current.as_int().unwrap_or(0) as f64
-            };
-            let b = if base.is_float() {
-                base.as_float().unwrap_or(0.0)
-            } else {
-                base.as_int().unwrap_or(0) as f64
-            };
-            (c - b).abs() < f64::EPSILON
-        } else if current.is_int() && base.is_int() {
-            current.as_int().unwrap_or(0) == base.as_int().unwrap_or(0)
-        } else {
-            current.to_string() == base.to_string()
-        }
     } else {
         false
     }
