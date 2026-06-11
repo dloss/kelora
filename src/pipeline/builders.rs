@@ -172,8 +172,20 @@ pub struct PipelineBuilder {
 
 impl PipelineBuilder {
     fn build_parser_internal(&self) -> Result<Box<dyn EventParser>> {
-        let custom_ts_config =
-            self.ts_field.is_some() || self.ts_format.is_some() || self.default_timezone.is_some();
+        // A named format may carry a default timestamp format for layouts the
+        // adaptive parser can't resolve on its own (e.g. glog). The user's
+        // explicit --ts-format always wins.
+        let effective_ts_format = self.ts_format.clone().or_else(|| {
+            if let crate::config::InputFormat::Named(fmt) = &self.input_format {
+                fmt.ts_format.map(|s| s.to_string())
+            } else {
+                None
+            }
+        });
+
+        let custom_ts_config = self.ts_field.is_some()
+            || effective_ts_format.is_some()
+            || self.default_timezone.is_some();
 
         let base_parser: Box<dyn EventParser> = match self.input_format {
             crate::config::InputFormat::Auto => {
@@ -355,7 +367,7 @@ impl PipelineBuilder {
             Box::new(TimestampConfiguredParser::new(
                 parser_with_prefix,
                 self.ts_field.clone(),
-                self.ts_format.clone(),
+                effective_ts_format,
                 self.default_timezone.clone(),
             ))
         } else {

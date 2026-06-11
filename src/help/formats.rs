@@ -80,8 +80,9 @@ Named application-log formats
   Select explicitly with -f <name> (e.g. -f log4j), or in a cascade list
   (e.g. -f log4j,line). They are also tried during auto-detection, just before
   the 'line' fallback, so they never override a format detected earlier; when
-  one matches, the field names it produces are timestamp, level, msg, and
-  format-specific extras (thread, logger, pid, ...).
+  one matches, it emits 'ts' (timestamp), 'level', 'msg', and format-specific
+  extras (thread, logger, pid, ...). glog omits the year and timezone, so its
+  'ts' is resolved assuming the current year (like syslog).
   Adapted from lnav (BSD-3-Clause; see THIRD_PARTY_LICENSES.md).
 
 auto (default)

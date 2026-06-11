@@ -7,7 +7,7 @@
 //! BSD-3-Clause license. The regular expressions below were re-expressed in
 //! Kelora's [`RegexParser`] syntax (`(?P<name>...)` named captures with optional
 //! `:type` annotations) and adapted to Kelora's field-naming conventions
-//! (`timestamp`, `level`, `msg`). See `THIRD_PARTY_LICENSES.md` for the full
+//! (`ts`, `level`, `msg`). See `THIRD_PARTY_LICENSES.md` for the full
 //! license text and attribution.
 //!
 //! ## Why this exists
@@ -29,8 +29,9 @@
 //!   `line` fallback (see [`crate::parsers::auto_detect`]). It can therefore only
 //!   reclassify input that would otherwise have become `line`, so it never
 //!   changes a format Kelora already detected.
-//! - The matched pattern is returned as an ordinary `InputFormat::Regex`, so the
-//!   whole parser-build/timestamp/strict pipeline is reused unchanged.
+//! - A match is returned as `InputFormat::Named`, carrying the format's name and
+//!   regex, so it can be displayed, selected via `-f <name>`, and reused across
+//!   the parser-build/timestamp/strict pipeline unchanged.
 //! - Every definition carries sample lines that are verified at test time, the
 //!   same self-validation idea lnav uses for its format files.
 
@@ -50,8 +51,15 @@ pub struct LnavFormat {
     /// Stable, user-facing identifier (also usable with `-f`).
     pub name: &'static str,
     /// Pattern in `RegexParser` syntax. Outer `^...$` anchors are added by
-    /// `RegexParser`, so they are omitted here.
+    /// `RegexParser`, so they are omitted here. The timestamp is captured into a
+    /// group named `ts` to match the field name kelora's other parsers emit.
     pub pattern: &'static str,
+    /// Optional strftime format for the captured `ts` field, applied only when
+    /// the user has not passed an explicit `--ts-format`. Set this only for
+    /// layouts kelora's adaptive timestamp parser does *not* already recognise
+    /// (currently just glog's year-less `MMDD HH:MM:SS.ffffff`); leave it `None`
+    /// when the default adaptive parser resolves the timestamp on its own.
+    pub ts_format: Option<&'static str>,
     /// Lines this format must parse. Used by the self-validation test and as
     /// living documentation of what each format looks like.
     #[allow(dead_code)] // consumed only by the self-validation tests
@@ -63,9 +71,13 @@ pub struct LnavFormat {
 /// so the structured layouts (Java/log4j, etc.) claim their lines first.
 pub static LNAV_FORMATS: &[LnavFormat] = &[
     // glog / klog (Go, Kubernetes): `I0102 15:04:05.123456 1234 server.go:42] msg`
+    // glog omits the year and timezone; its `MMDD HH:MM:SS.ffffff` layout is not
+    // in the adaptive parser's list, so we pin the format here (the year-less
+    // path in timestamp.rs then assumes the current year, like syslog does).
     LnavFormat {
         name: "glog",
-        pattern: r"(?P<level>[IWEF])(?P<timestamp>\d{4} \d{2}:\d{2}:\d{2}\.\d{1,6})\s+(?P<pid:int>\d+)\s+(?P<source>[^:\s]+:\d+)\]\s+(?P<msg>.*)",
+        pattern: r"(?P<level>[IWEF])(?P<ts>\d{4} \d{2}:\d{2}:\d{2}\.\d{1,6})\s+(?P<pid:int>\d+)\s+(?P<source>[^:\s]+:\d+)\]\s+(?P<msg>.*)",
+        ts_format: Some("%m%d %H:%M:%S%.f"),
         samples: &[
             "I0102 15:04:05.123456 1234 server.go:42] Starting controller",
             "E0612 09:10:11.000001 7 reflector.go:138] Failed to watch",
@@ -74,7 +86,8 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // nginx error log: `2024/01/02 15:04:05 [error] 29#29: *1 open() failed`
     LnavFormat {
         name: "nginx-error",
-        pattern: r"(?P<timestamp>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})\s+\[(?P<level>\w+)\]\s+(?P<pid:int>\d+)#(?P<tid:int>\d+):\s*(?P<msg>.*)",
+        pattern: r"(?P<ts>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})\s+\[(?P<level>\w+)\]\s+(?P<pid:int>\d+)#(?P<tid:int>\d+):\s*(?P<msg>.*)",
+        ts_format: None,
         samples: &[
             "2024/01/02 15:04:05 [error] 29#29: *1 open() failed (2: No such file or directory)",
             "2024/06/12 08:00:00 [warn] 12#0: using uninitialized variable",
@@ -83,7 +96,8 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // log4j / Java: `2024-01-02 15:04:05,123 INFO [main] com.example.Foo - msg`
     LnavFormat {
         name: "log4j",
-        pattern: r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL)\s+\[(?P<thread>[^\]]+)\]\s+(?P<logger>\S+)\s+-\s+(?P<msg>.*)",
+        pattern: r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR|FATAL)\s+\[(?P<thread>[^\]]+)\]\s+(?P<logger>\S+)\s+-\s+(?P<msg>.*)",
+        ts_format: None,
         samples: &[
             "2024-01-02 15:04:05,123 INFO [main] com.example.Service - Service started",
             "2024-06-12 08:00:00,001 ERROR [pool-1-thread-2] com.acme.Db - Connection refused",
@@ -92,7 +106,8 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // Python logging default: `2024-01-02 15:04:05,123 - myapp - INFO - msg`
     LnavFormat {
         name: "python-logging",
-        pattern: r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+-\s+(?P<logger>\S+)\s+-\s+(?P<level>DEBUG|INFO|WARNING|ERROR|CRITICAL)\s+-\s+(?P<msg>.*)",
+        pattern: r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+-\s+(?P<logger>\S+)\s+-\s+(?P<level>DEBUG|INFO|WARNING|ERROR|CRITICAL)\s+-\s+(?P<msg>.*)",
+        ts_format: None,
         samples: &[
             "2024-01-02 15:04:05,123 - myapp.module - INFO - Service started",
             "2024-06-12 08:00:00,500 - root - ERROR - Unhandled exception",
@@ -102,7 +117,8 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // `2024-01-02T15:04:05.123Z INFO message` or `2024-01-02 15:04:05 ERROR message`
     LnavFormat {
         name: "iso8601-level",
-        pattern: r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?)\s+(?P<level>TRACE|DEBUG|INFO|NOTICE|WARN|WARNING|ERROR|ERR|FATAL|CRIT|CRITICAL)\s+(?P<msg>.*)",
+        pattern: r"(?P<ts>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?)\s+(?P<level>TRACE|DEBUG|INFO|NOTICE|WARN|WARNING|ERROR|ERR|FATAL|CRIT|CRITICAL)\s+(?P<msg>.*)",
+        ts_format: None,
         samples: &[
             "2024-01-02T15:04:05.123Z INFO Starting service on port 8080",
             "2024-06-12 08:00:00 ERROR database connection lost",
@@ -240,5 +256,39 @@ mod tests {
             .parse("I0102 15:04:05.123456 1234 server.go:42] hi")
             .unwrap();
         assert_eq!(event.fields.get("pid").unwrap().as_int().unwrap(), 1234);
+    }
+
+    #[test]
+    fn every_format_captures_a_ts_field() {
+        // The timestamp group is named `ts` to match kelora's other parsers, so
+        // the standard timestamp field-name detection picks it up.
+        for fmt in LNAV_FORMATS {
+            let sample = fmt.samples[0];
+            let event = RegexParser::new(fmt.pattern)
+                .unwrap()
+                .parse(sample)
+                .unwrap();
+            assert!(
+                event.fields.contains_key("ts"),
+                "format '{}' should capture a 'ts' field from {sample:?}",
+                fmt.name
+            );
+        }
+    }
+
+    #[test]
+    fn only_glog_pins_a_ts_format() {
+        // glog's year-less MMDD layout is not in the adaptive parser's list, so
+        // it carries an explicit format; the rest resolve adaptively.
+        for fmt in LNAV_FORMATS {
+            match fmt.name {
+                "glog" => assert_eq!(fmt.ts_format, Some("%m%d %H:%M:%S%.f")),
+                _ => assert_eq!(
+                    fmt.ts_format, None,
+                    "{} should not pin a ts_format",
+                    fmt.name
+                ),
+            }
+        }
     }
 }
