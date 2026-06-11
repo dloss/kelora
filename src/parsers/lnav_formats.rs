@@ -69,6 +69,25 @@ pub struct LnavFormat {
 /// Curated set of application log formats, ordered from most specific to most
 /// general. Order matters: the generic ISO-8601 catch-all is intentionally last
 /// so the structured layouts (Java/log4j, etc.) claim their lines first.
+///
+/// ## Naming convention (these names are user-facing API — see the guard test)
+///
+/// A format name is the `-f <name>` value, the `_format` field value in
+/// cascades, and what `--stats` displays, so renaming one later is a breaking
+/// change. New names must follow:
+///
+/// - lowercase ASCII, digits, and `-` only; start with a letter. No `:` (taken
+///   by `cols:`/`regex:`/`csv:` field specs) and no `,` (cascade separator).
+/// - must not collide with a built-in format keyword (`json`, `line`, `syslog`,
+///   `cef`, `csv`, `cols`, `regex`, `auto`, …).
+/// - bare token only when the name is itself a specific, canonical identifier
+///   (`glog`, `log4j`). Otherwise use `source-subtype` (`nginx-error`,
+///   `python-logging`) and leave the bare family word (`nginx`, `python`, `java`)
+///   free for future siblings. Reserve purely structural names (`iso8601-level`)
+///   for true generics with no single canonical source.
+///
+/// No built-in aliases: each format has exactly one name. Users wanting a
+/// shorthand can alias at the shell or `.kelora.ini` level.
 pub static LNAV_FORMATS: &[LnavFormat] = &[
     // glog / klog (Go, Kubernetes): `I0102 15:04:05.123456 1234 server.go:42] msg`
     // glog omits the year and timezone; its `MMDD HH:MM:SS.ffffff` layout is not
@@ -289,6 +308,62 @@ mod tests {
                     fmt.name
                 ),
             }
+        }
+    }
+
+    /// Guards the naming convention documented on `LNAV_FORMATS`. These names are
+    /// user-facing API, so a new format must not silently break the rules.
+    #[test]
+    fn names_follow_convention_and_dont_collide() {
+        // Built-in `-f` keywords a named format must never shadow (see
+        // config::parse_input_format_spec / cli::parse_format_value).
+        const RESERVED: &[&str] = &[
+            "auto",
+            "auto-per-file",
+            "json",
+            "line",
+            "raw",
+            "logfmt",
+            "syslog",
+            "cef",
+            "csv",
+            "tsv",
+            "csvnh",
+            "tsvnh",
+            "combined",
+            "cols",
+            "regex",
+            "cascade",
+        ];
+
+        let mut seen = std::collections::HashSet::new();
+        for fmt in LNAV_FORMATS {
+            let name = fmt.name;
+
+            // Unique across the catalogue.
+            assert!(seen.insert(name), "duplicate format name '{name}'");
+
+            // Never collide with a reserved keyword.
+            assert!(
+                !RESERVED.contains(&name),
+                "format name '{name}' collides with a built-in format keyword"
+            );
+
+            // Charset: start with a letter, then lowercase ASCII / digits / '-'.
+            // This also enforces "no ':' and no ','" implicitly.
+            assert!(
+                name.starts_with(|c: char| c.is_ascii_lowercase()),
+                "format name '{name}' must start with a lowercase letter"
+            );
+            assert!(
+                name.chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'),
+                "format name '{name}' must be lowercase ASCII letters, digits, or '-'"
+            );
+            assert!(
+                !name.ends_with('-') && !name.contains("--"),
+                "format name '{name}' has a stray or doubled '-'"
+            );
         }
     }
 }
