@@ -338,6 +338,19 @@ fn extract_field_accesses(ast: &AST) -> Vec<FieldAccess> {
         .collect()
 }
 
+/// Functions that take the event map by `&mut` and mutate it in place (rather than
+/// returning a new map that must be assigned back). A call to one of these on `e`
+/// changes the event without a visible assignment, so `expression_mutates_event` must
+/// flag it or the mutation is silently dropped when the event is read back from scope.
+const EVENT_MUTATING_FUNCTIONS: &[&str] = &[
+    "absorb_kv",
+    "absorb_json",
+    "absorb_regex",
+    "merge",
+    "enrich",
+    "rename_field",
+];
+
 fn expression_mutates_event(ast: &AST, field_accesses: &[FieldAccess]) -> bool {
     if field_accesses
         .iter()
@@ -349,7 +362,31 @@ fn expression_mutates_event(ast: &AST, field_accesses: &[FieldAccess]) -> bool {
     // Whole-map assignments like `e = ()` do not produce field-level writes but still
     // replace the event payload.
     let ast_text = format!("{:?}", ast.statements());
-    ast_text.contains("Assignment(") && ast_text.contains("lhs: Variable(e)")
+    if ast_text.contains("Assignment(") && ast_text.contains("lhs: Variable(e)") {
+        return true;
+    }
+
+    // In-place mutating calls on `e` (e.g. `e.absorb_kv("msg")`, `e.merge(other)`) have
+    // no assignment and no field-level write, but still change the event. Detect them so
+    // the writeback in `update_event_from_scope` is not skipped. Walking node-by-node
+    // (like `extract_field_accesses`) keeps the match scoped to expressions that actually
+    // touch `e`, avoiding false positives from unrelated statements.
+    let mut mutates = false;
+    ast.walk(&mut |path| {
+        if let Some(node) = path.first() {
+            let node_str = format!("{:?}", node);
+            if node_str.contains("Variable(e)")
+                && EVENT_MUTATING_FUNCTIONS
+                    .iter()
+                    .any(|name| node_str.contains(&format!("name: {name:?}")))
+            {
+                mutates = true;
+                return false; // stop walking, decision made
+            }
+        }
+        true
+    });
+    mutates
 }
 
 /// Flags indicating which scope variables are used by an expression
@@ -2511,6 +2548,96 @@ mod tests {
         let mut event = Event::with_capacity(line.to_string(), 1);
         event.set_field("line".to_string(), Dynamic::from(line.to_string()));
         event
+    }
+
+    /// Compile and run an exec script end-to-end (through the Rhai engine and the
+    /// scope writeback) against an event, returning the mutated event.
+    fn run_exec(script: &str, mut event: Event) -> Event {
+        let mut engine = RhaiEngine::new();
+        let compiled = engine.compile_exec(script).expect("compile exec");
+        let mut metrics = std::collections::HashMap::new();
+        let mut internal = std::collections::HashMap::new();
+        engine
+            .execute_compiled_exec(&compiled, &mut event, &mut metrics, &mut internal)
+            .expect("run exec");
+        event
+    }
+
+    fn field_str(event: &Event, key: &str) -> Option<String> {
+        event
+            .fields
+            .get(key)
+            .and_then(|v| v.clone().try_cast::<String>())
+    }
+
+    // Regression: in-place mutating calls on `e` (no assignment, no field-level write)
+    // must still be written back to the event. Previously `mutates_event` only saw
+    // assignments/field writes, so these merges were silently dropped from output.
+
+    #[test]
+    fn absorb_kv_persists_to_event() {
+        let event = run_exec(r#"e.absorb_kv("line")"#, build_event_with_line("a=1 b=2"));
+        assert_eq!(field_str(&event, "a").as_deref(), Some("1"));
+        assert_eq!(field_str(&event, "b").as_deref(), Some("2"));
+    }
+
+    #[test]
+    fn absorb_regex_persists_to_event() {
+        let event = run_exec(
+            r##"e.absorb_regex("line", #"User (?P<user>\w+)"#)"##,
+            build_event_with_line("User alice logged in"),
+        );
+        assert_eq!(field_str(&event, "user").as_deref(), Some("alice"));
+    }
+
+    #[test]
+    fn merge_persists_to_event() {
+        let event = run_exec(r#"e.merge(#{ z: "9" })"#, build_event_with_line("x"));
+        assert_eq!(field_str(&event, "z").as_deref(), Some("9"));
+    }
+
+    #[test]
+    fn rename_field_persists_to_event() {
+        let mut event = build_event_with_line("x");
+        event.set_field("old".to_string(), Dynamic::from("v".to_string()));
+        let event = run_exec(r#"e.rename_field("old", "new")"#, event);
+        assert_eq!(field_str(&event, "new").as_deref(), Some("v"));
+        assert!(event.fields.get("old").is_none());
+    }
+
+    #[test]
+    fn mutating_calls_set_mutates_event_flag() {
+        let mut engine = RhaiEngine::new();
+        for script in [
+            r#"e.absorb_kv("line")"#,
+            r#"e.absorb_json("payload")"#,
+            r##"e.absorb_regex("line", #"(?P<u>\w+)"#)"##,
+            r#"e.merge(#{ z: 1 })"#,
+            r#"e.enrich(#{ z: 1 })"#,
+            r#"e.rename_field("a", "b")"#,
+            r#"absorb_kv(e, "line")"#,
+        ] {
+            assert!(
+                engine.compile_exec(script).unwrap().mutates_event,
+                "expected mutates_event=true for: {script}"
+            );
+        }
+    }
+
+    #[test]
+    fn read_only_calls_do_not_set_mutates_event_flag() {
+        let mut engine = RhaiEngine::new();
+        for script in [
+            r#"e.has("x")"#,
+            r#"e.get_path("a.b")"#,
+            r#"print(e.msg)"#,
+            r#"track_count(e.level)"#,
+        ] {
+            assert!(
+                !engine.compile_exec(script).unwrap().mutates_event,
+                "expected mutates_event=false for: {script}"
+            );
+        }
     }
 
     #[test]

@@ -2207,13 +2207,13 @@ The pattern must use **named capture groups** (`(?P<name>...)`) to define which 
 
 ```rhai
 // Extract user and IP from log message
-let res = e.absorb_regex("msg", r"User (?P<user>\w+) logged in from (?P<ip>[\d.]+)");
+let res = e.absorb_regex("msg", #"User (?P<user>\w+) logged in from (?P<ip>[\d.]+)"#);
 if res.status == "applied" {
     print(`${e.user} from ${e.ip}`);  // Extracted fields now on event
 }
 
 // Parse structured log line with multiple fields
-let pattern = r"(?P<date>[\d-]+) (?P<level>\w+) (?P<file>[\w.]+):(?P<line>\d+) (?P<message>.+)";
+let pattern = #"(?P<date>[\d-]+) (?P<level>\w+) (?P<file>[\w.]+):(?P<line>\d+) (?P<message>.+)"#;
 e.absorb_regex("line", pattern);
 // Now e.date, e.level, e.file, e.line, e.message are all populated
 ```
