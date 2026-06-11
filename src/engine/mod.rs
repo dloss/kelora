@@ -338,6 +338,42 @@ fn extract_field_accesses(ast: &AST) -> Vec<FieldAccess> {
         .collect()
 }
 
+/// Method/function names that mutate their target in place rather than returning a new
+/// value to assign back. Invoked on `e` (or a field reached from `e`), they change the
+/// event without any assignment or field-level write, so `expression_mutates_event` must
+/// flag them or the mutation is silently dropped when the event is read back from scope.
+///
+/// Two groups: Kelora's whole-event mutators (operate on the `e` map directly), and
+/// Rhai's in-place array/map mutators (operate on a nested field, e.g. `e.tags.push(x)`).
+/// Read-only methods (`has`, `get_path`, `len`, `contains`, …) are deliberately absent so
+/// read-only execs keep skipping the writeback. Extend if a new in-place mutator is added.
+const MUTATING_CALL_NAMES: &[&str] = &[
+    // Kelora whole-event mutators
+    "absorb_kv",
+    "absorb_json",
+    "absorb_regex",
+    "merge",
+    "enrich",
+    "rename_field",
+    // Rhai in-place array/map mutators
+    "push",
+    "pop",
+    "insert",
+    "remove",
+    "clear",
+    "truncate",
+    "reverse",
+    "sort",
+    "dedup",
+    "retain",
+    "append",
+    "pad",
+    "shift",
+    "splice",
+    "set",
+    "mixin",
+];
+
 fn expression_mutates_event(ast: &AST, field_accesses: &[FieldAccess]) -> bool {
     if field_accesses
         .iter()
@@ -349,7 +385,37 @@ fn expression_mutates_event(ast: &AST, field_accesses: &[FieldAccess]) -> bool {
     // Whole-map assignments like `e = ()` do not produce field-level writes but still
     // replace the event payload.
     let ast_text = format!("{:?}", ast.statements());
-    ast_text.contains("Assignment(") && ast_text.contains("lhs: Variable(e)")
+    if ast_text.contains("Assignment(") && ast_text.contains("lhs: Variable(e)") {
+        return true;
+    }
+
+    // In-place mutating calls (e.g. `e.absorb_kv("msg")`, `e.tags.push(x)`) have no
+    // assignment and no field-level write, but still change the event. Detect them so
+    // the writeback in `update_event_from_scope` is not skipped. `path.last()` is the
+    // node currently being visited; we only match nodes whose receiver chain is rooted at
+    // `e` (method form `e.…(…)`) or whose first argument is `e` (function form
+    // `f(e, …)`). Anchoring to the `e` root avoids false positives such as
+    // `if e.x { other.push(y) }`, where an unrelated value is the one being mutated.
+    let mut mutates = false;
+    ast.walk(&mut |path| {
+        if let Some(node) = path.last() {
+            let node_str = format!("{node:?}");
+            // Method form `e.…(…)` / `e.field.…(…)`: the granular node is the dot chain
+            // rooted at `e`. Function form `f(e, …)`: `e` is the literal first argument.
+            let rooted_at_e = node_str.starts_with("Expr(Dot { lhs: Variable(e)")
+                || node_str.contains("args: [Variable(e)");
+            if rooted_at_e
+                && MUTATING_CALL_NAMES
+                    .iter()
+                    .any(|name| node_str.contains(&format!("name: {name:?}")))
+            {
+                mutates = true;
+                return false; // stop walking, decision made
+            }
+        }
+        true
+    });
+    mutates
 }
 
 /// Flags indicating which scope variables are used by an expression
@@ -2511,6 +2577,149 @@ mod tests {
         let mut event = Event::with_capacity(line.to_string(), 1);
         event.set_field("line".to_string(), Dynamic::from(line.to_string()));
         event
+    }
+
+    /// Compile and run an exec script end-to-end (through the Rhai engine and the
+    /// scope writeback) against an event, returning the mutated event.
+    fn run_exec(script: &str, mut event: Event) -> Event {
+        let mut engine = RhaiEngine::new();
+        let compiled = engine.compile_exec(script).expect("compile exec");
+        let mut metrics = std::collections::HashMap::new();
+        let mut internal = std::collections::HashMap::new();
+        engine
+            .execute_compiled_exec(&compiled, &mut event, &mut metrics, &mut internal)
+            .expect("run exec");
+        event
+    }
+
+    fn field_str(event: &Event, key: &str) -> Option<String> {
+        event
+            .fields
+            .get(key)
+            .and_then(|v| v.clone().try_cast::<String>())
+    }
+
+    // Regression: in-place mutating calls on `e` (no assignment, no field-level write)
+    // must still be written back to the event. Previously `mutates_event` only saw
+    // assignments/field writes, so these merges were silently dropped from output.
+
+    #[test]
+    fn absorb_kv_persists_to_event() {
+        let event = run_exec(r#"e.absorb_kv("line")"#, build_event_with_line("a=1 b=2"));
+        assert_eq!(field_str(&event, "a").as_deref(), Some("1"));
+        assert_eq!(field_str(&event, "b").as_deref(), Some("2"));
+    }
+
+    #[test]
+    fn absorb_regex_persists_to_event() {
+        let event = run_exec(
+            r##"e.absorb_regex("line", #"User (?P<user>\w+)"#)"##,
+            build_event_with_line("User alice logged in"),
+        );
+        assert_eq!(field_str(&event, "user").as_deref(), Some("alice"));
+    }
+
+    #[test]
+    fn merge_persists_to_event() {
+        let event = run_exec(r#"e.merge(#{ z: "9" })"#, build_event_with_line("x"));
+        assert_eq!(field_str(&event, "z").as_deref(), Some("9"));
+    }
+
+    #[test]
+    fn rename_field_persists_to_event() {
+        let mut event = build_event_with_line("x");
+        event.set_field("old".to_string(), Dynamic::from("v".to_string()));
+        let event = run_exec(r#"e.rename_field("old", "new")"#, event);
+        assert_eq!(field_str(&event, "new").as_deref(), Some("v"));
+        assert!(event.fields.get("old").is_none());
+    }
+
+    #[test]
+    fn nested_array_mutation_persists_to_event() {
+        let mut event = build_event_with_line("x");
+        event.set_field(
+            "tags".to_string(),
+            Dynamic::from(vec![Dynamic::from("a".to_string())]),
+        );
+        // Push without any accompanying assignment must still be written back.
+        let event = run_exec(r#"e.tags.push("b")"#, event);
+        let tags = event
+            .fields
+            .get("tags")
+            .and_then(|v| v.clone().try_cast::<rhai::Array>())
+            .expect("tags array");
+        let tags: Vec<String> = tags.into_iter().filter_map(|v| v.try_cast()).collect();
+        assert_eq!(tags, vec!["a".to_string(), "b".to_string()]);
+    }
+
+    #[test]
+    fn nested_mutation_inside_block_persists_to_event() {
+        let mut event = build_event_with_line("x");
+        event.set_field("level".to_string(), Dynamic::from("ERROR".to_string()));
+        event.set_field("tags".to_string(), Dynamic::from(rhai::Array::new()));
+        // Mutation buried in a conditional block (not a top-level statement).
+        let event = run_exec(r#"if e.level == "ERROR" { e.tags.push("flagged") }"#, event);
+        let tags = event
+            .fields
+            .get("tags")
+            .and_then(|v| v.clone().try_cast::<rhai::Array>())
+            .expect("tags array");
+        assert_eq!(tags.len(), 1);
+    }
+
+    #[test]
+    fn mutating_calls_set_mutates_event_flag() {
+        let mut engine = RhaiEngine::new();
+        for script in [
+            r#"e.absorb_kv("line")"#,
+            r#"e.absorb_json("payload")"#,
+            r##"e.absorb_regex("line", #"(?P<u>\w+)"#)"##,
+            r#"e.merge(#{ z: 1 })"#,
+            r#"e.enrich(#{ z: 1 })"#,
+            r#"e.rename_field("a", "b")"#,
+            r#"absorb_kv(e, "line")"#,
+            r#"e.tags.push("c")"#,
+            r#"e.tags.clear()"#,
+            r#"e.meta.merge(#{ y: 1 })"#,
+            r#"if e.lvl == "X" { e.tags.push(1) }"#,
+        ] {
+            assert!(
+                engine.compile_exec(script).unwrap().mutates_event,
+                "expected mutates_event=true for: {script}"
+            );
+        }
+    }
+
+    #[test]
+    fn mutator_on_unrelated_value_does_not_flag_event() {
+        // A mutating call on a non-`e` value, even inside an `e`-referencing branch,
+        // must not trigger the writeback for `e`.
+        let mut engine = RhaiEngine::new();
+        for script in [
+            r#"if e.lvl == "X" { let a = [1]; a.push(2) }"#,
+            r#"let tmp = #{}; tmp.set("k", e.lvl)"#,
+        ] {
+            assert!(
+                !engine.compile_exec(script).unwrap().mutates_event,
+                "expected mutates_event=false for: {script}"
+            );
+        }
+    }
+
+    #[test]
+    fn read_only_calls_do_not_set_mutates_event_flag() {
+        let mut engine = RhaiEngine::new();
+        for script in [
+            r#"e.has("x")"#,
+            r#"e.get_path("a.b")"#,
+            r#"print(e.msg)"#,
+            r#"track_count(e.level)"#,
+        ] {
+            assert!(
+                !engine.compile_exec(script).unwrap().mutates_event,
+                "expected mutates_event=false for: {script}"
+            );
+        }
     }
 
     #[test]

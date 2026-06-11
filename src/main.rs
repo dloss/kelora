@@ -471,27 +471,88 @@ fn maybe_print_zero_results_hint(
         return;
     }
 
+    // When every event is filtered out, the most actionable explanation is the
+    // built-in filter whose keying field never appeared in the input. Check the
+    // structural causes in pipeline order (level -> time -> --filter) and emit
+    // the first that applies, so the hint stays focused on a single culprit.
+    let hint = level_filter_zero_hint(config, stats)
+        .or_else(|| timestamp_filter_zero_hint(config, stats))
+        .or_else(|| filter_field_zero_hint(config, stats));
+
+    if let Some(message) = hint {
+        let formatted = config
+            .format_hint_message(&message)
+            .trim_start_matches('\n')
+            .to_string();
+        stderr.writeln(&formatted).unwrap_or(());
+    }
+}
+
+/// Hint when `-l/--levels` dropped every event because the input carries no
+/// level field at all (e.g. unstructured `line` input). `--exclude-levels`
+/// alone keeps level-less events, so only an active include list can zero the
+/// stream this way. When a level field *is* present the empty result is a
+/// legitimate value mismatch, so no structural hint is emitted.
+fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -> Option<String> {
+    if config.processing.levels.is_empty() {
+        return None;
+    }
+
+    let has_level_field = crate::event::LEVEL_FIELD_NAMES
+        .iter()
+        .any(|name| stats.discovered_keys.contains(*name));
+    if has_level_field {
+        return None;
+    }
+
+    let format_note = stats
+        .detected_format
+        .as_deref()
+        .map(|format| format!(" (format: {format})"))
+        .unwrap_or_default();
+    Some(format!(
+        "0 events matched. -l/--levels is set, but no level field was found in the input{format_note} — it looks unstructured. Parse levels first (e.g. -f cols/regex), or match text with --filter 'e.line.contains(\"ERROR\")'."
+    ))
+}
+
+/// Hint when `--since/--until` dropped every event because no timestamp could
+/// be parsed anywhere in the input. If at least one timestamp parsed, the empty
+/// result is a legitimate out-of-range miss and gets no structural hint.
+fn timestamp_filter_zero_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+) -> Option<String> {
+    config.processing.timestamp_filter.as_ref()?;
+    if stats.timestamp_parsed_events > 0 {
+        return None;
+    }
+    Some(format!(
+        "0 events matched. --since/--until is set, but no timestamps were parsed ({}/{} events). Set --ts-field/--ts-format; see --help-time.",
+        stats.timestamp_parsed_events, stats.events_created
+    ))
+}
+
+/// Hint when a `--filter` expression references a field name that never
+/// appeared in any event — the original zero-results behavior.
+fn filter_field_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -> Option<String> {
     let referenced_fields = collect_filter_field_references(config);
     if referenced_fields.is_empty() {
-        return;
+        return None;
     }
 
     let unseen_fields: Vec<String> = referenced_fields
         .into_iter()
         .filter(|field| !stats.discovered_keys.contains(field))
         .collect();
-
     if unseen_fields.is_empty() {
-        return;
+        return None;
     }
 
-    let mut hint = config.format_hint_message(&format!(
+    Some(format!(
         "0 events matched. Filter referenced unseen field{}: {}. This may be a typo; rerun with -s to inspect discovered keys.",
         if unseen_fields.len() == 1 { "" } else { "s" },
         unseen_fields.join(", ")
-    ));
-    hint = hint.trim_start_matches('\n').to_string();
-    stderr.writeln(&hint).unwrap_or(());
+    ))
 }
 
 /// Build the discover footer's format summary from the requested input format
