@@ -125,6 +125,93 @@ fn test_silent_suppresses_metrics_exec_errors() {
 }
 
 #[test]
+fn test_metrics_mode_reports_every_event_failure_scope() {
+    // Regression: data-only modes disabled stats collection, which zeroed
+    // events_created and silently dropped the "affecting every event" scope
+    // signal -- the exact silent failure a stuck user hits. The scope fact is
+    // part of the error summary, so it must surface in plain --metrics.
+    let input = r#"{"status": 500}
+{"status": 503}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--exec", "track_count(e.status)", "--metrics"],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "resilient runtime errors keep exit 0");
+    assert!(
+        stdout.contains("No metrics tracked"),
+        "stdout still reports the empty data channel: {}",
+        stdout
+    );
+    assert!(
+        stderr.contains("affecting every event"),
+        "the error summary should report total-failure scope: {}",
+        stderr
+    );
+    assert!(
+        !stderr.contains("Use --strict"),
+        "the advisory coaching is suppressed by default in data-only modes: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_metrics_diagnostics_shows_every_event_coaching() {
+    // An explicit --diagnostics opts back into the advisory coaching even in
+    // data-only modes, pointing the user at --strict / --verbose.
+    let input = r#"{"status": 500}
+{"status": 503}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--diagnostics",
+            "--exec",
+            "track_count(e.status)",
+            "--metrics",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "resilient runtime errors keep exit 0");
+    assert!(
+        stderr.contains("affecting every event"),
+        "scope fact should still be present: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("Use --strict"),
+        "--diagnostics should re-enable the coaching sentence: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_metrics_mode_surfaces_parse_errors() {
+    // Regression: data-only modes used to swallow parse errors entirely
+    // (exit 0, no summary), unlike normal mode which reports them at exit 1.
+    // Enabling stats collection in --metrics makes the two consistent.
+    let input = "not json\nalso not json\n{\"action\": \"x\"}";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--exec", "track_count(e.action)", "--metrics"],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 1,
+        "parse errors are failures and must surface a non-zero exit even in --metrics"
+    );
+    assert!(
+        stderr.contains("parse error"),
+        "parse errors should be reported on stderr in --metrics: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_metrics_command_reports_when_nothing_was_tracked() {
     let input = r#"{"level": "INFO"}"#;
 

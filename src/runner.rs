@@ -56,10 +56,18 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         crate::field_discovery::enable(config.output.discover_final, config.output.discover_depth);
     }
 
-    // Enable/disable stats collection up front to avoid per-event overhead when diagnostics are off
+    // Enable/disable stats collection up front to avoid per-event overhead when diagnostics are off.
+    // Data-only modes (--metrics/--drain) set suppress_diagnostics to keep stdout clean, but they
+    // still surface error summaries on stderr (everything except --silent). Those summaries report
+    // error scope ("affecting every event") from stats.events_created, so keep collecting in those
+    // modes — otherwise the scope signal is silently dropped exactly where a stuck user needs it.
+    // Plain --no-diagnostics on event output keeps the fast path (no collection).
     let collect_stats = config.output.stats.is_some()
         || config.output.discover_fields.is_some()
-        || (!config.processing.silent && !config.processing.suppress_diagnostics);
+        || (!config.processing.silent
+            && (config.output.metrics.is_some()
+                || config.output.drain.is_some()
+                || !config.processing.suppress_diagnostics));
     set_collect_stats(collect_stats);
 
     // Start statistics collection if enabled

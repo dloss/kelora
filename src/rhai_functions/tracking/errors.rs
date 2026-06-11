@@ -372,10 +372,17 @@ pub fn extract_error_summary_from_tracking(
             if stats.events_created > 0 {
                 let pct = (total_errors as f64 / stats.events_created as f64) * 100.0;
                 if total_errors as usize >= stats.events_created {
+                    // The scope ("every event") is a factual correctness signal and
+                    // is part of the error summary, which surfaces unless --silent.
                     summary.push_str(", affecting every event");
-                    summary.push_str(
-                        "\n  This usually means a script bug or field-name typo. Use --strict to fail immediately, or --verbose to inspect each error.",
-                    );
+                    // The follow-up coaching is advisory (a typo/script-bug tip), so
+                    // it honors --no-diagnostics and the suppression implied by
+                    // data-only modes. Re-enable with --diagnostics.
+                    if config.is_some_and(|c| !c.processing.suppress_diagnostics) {
+                        summary.push_str(
+                            "\n  This usually means a script bug or field-name typo. Use --strict to fail immediately, or --verbose to inspect each error.",
+                        );
+                    }
                 } else if pct >= 90.0 {
                     summary.push_str(&format!(", affecting {:.1}% of events", pct));
                 }
