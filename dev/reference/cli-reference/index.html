@@ -6660,7 +6660,7 @@ definitions; top-level statements are rejected.</p>
 <li><code>span.start</code> / <code>span.end</code> – Half-open window bounds for time-based spans (count spans return <code>()</code>)</li>
 <li><code>span.size</code> – Number of events that survived filters and were included in this span</li>
 <li><code>span.events</code> – Array of events in arrival order (each map includes <code>span_status</code>, <code>span_start</code>, etc.)</li>
-<li><code>span.metrics</code> – Map of per-span deltas from <code>track_*</code> calls (automatically reset after each span)</li>
+<li><code>span.metrics</code> – Map of per-window values from additive <code>track_*</code> calls (<code>count</code>, <code>sum</code>, <code>avg</code>, <code>unique</code>, <code>bucket</code>); non-additive aggregators (<code>min</code>, <code>max</code>, <code>percentiles</code>, <code>cardinality</code>, <code>top</code>, <code>bottom</code>) are omitted with a warning — use <code>span.events</code> for those</li>
 </ul>
 <p><strong>Metadata added to <code>meta</code> during per-event stages:</strong></p>
 <ul>

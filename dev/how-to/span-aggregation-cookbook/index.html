@@ -2435,7 +2435,7 @@
 </code></pre></div>
 <ul>
 <li><code>span.id</code> is an incrementing identifier (<code>span-000001</code>, ...).</li>
-<li><code>span.metrics</code> exposes only the deltas collected within that window.</li>
+<li><code>span.metrics</code> exposes per-window values for additive aggregators (<code>track_count</code>, <code>track_sum</code>, <code>track_avg</code>, <code>track_unique</code>, <code>track_bucket</code>). Non-additive ones (<code>track_min</code>, <code>track_max</code>, <code>track_percentiles</code>, <code>track_cardinality</code>, <code>track_top</code>, <code>track_bottom</code>) cannot be reduced to a single window, so they are omitted with a warning — iterate <code>span.events</code> to compute those per window.</li>
 <li>Because the original events are still streamed, you can attach more <code>--exec</code> or <code>--filter</code> stages before or after the span logic.</li>
 </ul>
 <h2 id="step-3-time-based-example">Step 3: Time-Based Example<a class="headerlink" href="#step-3-time-based-example" title="Permanent link">&para;</a></h2>

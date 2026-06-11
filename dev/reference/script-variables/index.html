@@ -3001,12 +3001,13 @@
 <tr>
 <td><code>span.metrics</code></td>
 <td><code>Map</code></td>
-<td>Per-span deltas computed from <code>track_*()</code> calls since the span opened; zero-delta keys are omitted. Read-only.</td>
+<td>Per-window values computed from <code>track_*()</code> calls since the span opened, for <strong>additive</strong> aggregators only: <code>track_count</code>, <code>track_sum</code>, <code>track_avg</code>, <code>track_unique</code>, <code>track_bucket</code>. Zero-delta keys are omitted. Read-only.</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
 <p><code>--span-close</code> runs without a "current event", so <code>e</code> and <code>meta</code> are empty. Inspect <code>span.events</code> when you need per-event details from inside the close hook.</p>
+<p><strong>Non-additive aggregators are not available per window.</strong> <code>track_min</code>, <code>track_max</code>, <code>track_percentiles</code>, <code>track_cardinality</code>, <code>track_top</code>, and <code>track_bottom</code> accumulate global state (a t-digest or HLL cannot be "subtracted" back to a single window, and a global max is not a per-window max). These keys are <strong>omitted from <code>span.metrics</code></strong> and Kelora prints a one-time warning. To get per-window min/max/percentiles, iterate <code>span.events</code> inside the close hook — e.g. <code>let mx = span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b &gt; a { b } else { a });</code>.</p>
 </blockquote>
 <h3 id="metrics-vs-spanmetrics"><code>metrics</code> vs <code>span.metrics</code><a class="headerlink" href="#metrics-vs-spanmetrics" title="Permanent link">&para;</a></h3>
 <ul>

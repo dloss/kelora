@@ -9532,7 +9532,11 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <a id="__codelineno-196-3" name="__codelineno-196-3" href="#__codelineno-196-3"></a>    .len();
 </code></pre></div>
 <h3 id="metrics-snapshot">Metrics Snapshot<a class="headerlink" href="#metrics-snapshot" title="Permanent link">&para;</a></h3>
-<p><code>span.metrics</code> contains per-span deltas from <code>track_*</code> calls. Values reset automatically after each span closes, so you can emit per-span summaries without manual bookkeeping.</p>
+<p><code>span.metrics</code> contains per-window values from <code>track_*</code> calls, computed automatically for each span so you can emit summaries without manual bookkeeping. This works for <strong>additive</strong> aggregators: <code>track_count</code>, <code>track_sum</code>, <code>track_avg</code>, <code>track_unique</code>, and <code>track_bucket</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Non-additive aggregators are omitted</p>
+<p><code>track_min</code>, <code>track_max</code>, <code>track_percentiles</code>, <code>track_cardinality</code>, <code>track_top</code>, and <code>track_bottom</code> accumulate global state that cannot be reduced to a single window (a t-digest or HLL has no subtraction, and a global max is not a per-window max). These keys are <strong>omitted from <code>span.metrics</code></strong> and Kelora prints a one-time warning. Compute them per window by iterating <code>span.events</code> instead — e.g. <code>span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b &gt; a { b } else { a })</code> for a per-window max.</p>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-197-1" name="__codelineno-197-1" href="#__codelineno-197-1"></a>let metrics = span.metrics;
 <a id="__codelineno-197-2" name="__codelineno-197-2" href="#__codelineno-197-2"></a>let hits = metrics[&quot;events&quot;];          // from track_count(&quot;events&quot;)
 <a id="__codelineno-197-3" name="__codelineno-197-3" href="#__codelineno-197-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_count(&quot;failures&quot;)
