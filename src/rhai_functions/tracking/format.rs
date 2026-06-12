@@ -116,6 +116,13 @@ pub fn format_metrics_output(
             }
         }
 
+        if value.is::<rhai::Map>() {
+            if let Some(map) = value.clone().try_cast::<rhai::Map>() {
+                push_count_map(&mut output, key, &map, metrics_level);
+                continue;
+            }
+        }
+
         if value.is_int() {
             output.push_str(&format!("{:<12} = {}\n", key, value.as_int().unwrap_or(0)));
         } else if value.is_float() {
@@ -130,6 +137,90 @@ pub fn format_metrics_output(
     }
 
     output.trim_end().to_string()
+}
+
+/// Render a map-valued metric (e.g. from `track_count`) as an aligned,
+/// sorted list rather than dumping raw Rhai map syntax (`#{"500": 67, ...}`).
+///
+/// When every value is numeric the entries are sorted by value descending
+/// (most frequent first), matching `track_top_count`; otherwise they fall back
+/// to sorting by key so the order is at least stable. Like the array
+/// formatters, the list is truncated to 5 entries unless `metrics_level >= 2`
+/// (`--metrics=full`) or the map has 10 or fewer entries.
+fn push_count_map(output: &mut String, key: &str, map: &rhai::Map, metrics_level: u8) {
+    let len = map.len();
+
+    if len == 0 {
+        output.push_str(&format!("{:<12} (0 categories)\n", key));
+        return;
+    }
+
+    let mut entries: Vec<(String, &Dynamic)> =
+        map.iter().map(|(k, v)| (k.to_string(), v)).collect();
+
+    let all_numeric = entries.iter().all(|(_, v)| v.is_int() || v.is_float());
+
+    if all_numeric {
+        entries.sort_by(|(ak, a), (bk, b)| {
+            numeric_value(b)
+                .partial_cmp(&numeric_value(a))
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| ak.cmp(bk))
+        });
+    } else {
+        entries.sort_by(|(ak, _), (bk, _)| ak.cmp(bk));
+    }
+
+    let truncate = metrics_level < 2 && len > 10;
+    let shown = if truncate { 5 } else { len };
+
+    output.push_str(&format!("{:<12} ({} categories):\n", key, len));
+
+    let label_width = entries
+        .iter()
+        .take(shown)
+        .map(|(k, _)| k.chars().count())
+        .max()
+        .unwrap_or(0)
+        .min(40);
+
+    for (cat, value) in entries.iter().take(shown) {
+        output.push_str(&format!(
+            "  {:<width$} {}\n",
+            cat,
+            format_metric_value(value),
+            width = label_width
+        ));
+    }
+
+    if truncate {
+        output.push_str(&format!(
+            "  [+{} more. Use --metrics=full or --metrics-file for full list]\n",
+            len - shown
+        ));
+    }
+}
+
+/// Numeric value of a `Dynamic` for sorting, treating non-numbers as 0.
+fn numeric_value(value: &Dynamic) -> f64 {
+    if value.is_int() {
+        value.as_int().unwrap_or(0) as f64
+    } else if value.is_float() {
+        value.as_float().unwrap_or(0.0)
+    } else {
+        0.0
+    }
+}
+
+/// Format a single map value for the text view, reusing float trimming.
+fn format_metric_value(value: &Dynamic) -> String {
+    if value.is_int() {
+        value.as_int().unwrap_or(0).to_string()
+    } else if value.is_float() {
+        format_metric_float(value.as_float().unwrap_or(0.0))
+    } else {
+        value.to_string()
+    }
 }
 
 fn push_ranked_item(output: &mut String, idx: usize, item: &Dynamic, field_name: &str) {
@@ -430,6 +521,58 @@ mod tests {
         let output = format_metrics_output(&metrics, &ops, 1);
         assert!(output.contains("sum"), "output: {}", output);
         assert!(output.contains("count"), "output: {}", output);
+    }
+
+    #[test]
+    fn test_format_metrics_output_count_map_sorted_by_count_desc() {
+        // A track_count map renders as an aligned list sorted by count desc,
+        // not as raw Rhai map syntax.
+        let mut metrics = HashMap::new();
+        let mut map = rhai::Map::new();
+        map.insert("404".into(), Dynamic::from(12i64));
+        map.insert("500".into(), Dynamic::from(67i64));
+        map.insert("200".into(), Dynamic::from(40i64));
+        metrics.insert("status".to_string(), Dynamic::from(map));
+        let mut ops = HashMap::new();
+        ops.insert(
+            "__op_status".to_string(),
+            Dynamic::from("bucket".to_string()),
+        );
+
+        let output = format_metrics_output(&metrics, &ops, 1);
+
+        // No raw Rhai map syntax.
+        assert!(!output.contains("#{"), "output: {}", output);
+        assert!(
+            output.contains("status       (3 categories):"),
+            "output: {}",
+            output
+        );
+        // Highest count first.
+        let p500 = output.find("500").unwrap();
+        let p200 = output.find("200").unwrap();
+        let p404 = output.find("404").unwrap();
+        assert!(p500 < p200 && p200 < p404, "output: {}", output);
+    }
+
+    #[test]
+    fn test_format_metrics_output_count_map_truncates_above_ten() {
+        let mut metrics = HashMap::new();
+        let mut map = rhai::Map::new();
+        for i in 0..15 {
+            map.insert(format!("cat{:02}", i).into(), Dynamic::from(i as i64));
+        }
+        metrics.insert("things".to_string(), Dynamic::from(map));
+
+        // Default level truncates to 5 with a "more" line.
+        let output = format_metrics_output(&metrics, &HashMap::new(), 1);
+        assert!(output.contains("(15 categories):"), "output: {}", output);
+        assert!(output.contains("[+10 more"), "output: {}", output);
+
+        // Full level shows everything.
+        let full = format_metrics_output(&metrics, &HashMap::new(), 2);
+        assert!(!full.contains("more"), "output: {}", full);
+        assert!(full.contains("cat00"), "output: {}", full);
     }
 
     #[test]
