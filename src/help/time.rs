@@ -73,13 +73,14 @@ Timestamp filtering with --since and --until:
   kelora --since 1735566123 app.log               # Events after Unix timestamp
   kelora --since 1735566123.456 app.log           # Float Unix timestamps work too
 
-  Anchored timestamps (relative to the other boundary):
-  kelora --since 10:00 --until start+30m app.log  # 30 minutes starting at 10:00
-  kelora --since end-1h --until 11:00 app.log     # 1 hour ending at 11:00
-  kelora --since -2h --until start+1h app.log     # 1 hour starting 2 hours ago
+  Anchored timestamps (relative to the other boundary or to now):
+  kelora --since 10:00 --until since+30m app.log  # 30 minutes starting at 10:00
+  kelora --since until-1h --until 11:00 app.log   # 1 hour ending at 11:00
+  kelora --since -2h --until since+1h app.log     # 1 hour starting 2 hours ago
+  kelora --since now-15m app.log                  # last 15 minutes (relative to now)
 
-  'start' anchors to --since, 'end' anchors to --until
-  Cannot use both anchors in the same command (e.g., --since end-1h --until start+1h)
+  'since' anchors to --since, 'until' anchors to --until, 'now' anchors to the current time
+  Cannot use both --since and --until anchors at once (e.g., --since until-1h --until since+1h)
 
   Common timestamp field names are auto-detected:
     ts, _ts, timestamp, at, time, @timestamp, log_timestamp, event_time,
