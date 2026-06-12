@@ -8026,9 +8026,9 @@
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>e.os = ua[&quot;os&quot;]
 </code></pre></div>
 <h4 id="textparse_jwt"><code>text.parse_jwt()</code><a class="headerlink" href="#textparse_jwt" title="Permanent link">&para;</a></h4>
-<p>Parse JWT header/payload without verification.</p>
+<p>Parse a JWT into <code>header</code> and <code>claims</code> (the decoded payload) without verification. Also returns <code>signature_b64u</code> plus <code>alg</code>/<code>kid</code>/<code>typ</code> when present in the header.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>let jwt = e.token.parse_jwt()
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>e.user_id = jwt[&quot;payload&quot;][&quot;sub&quot;]
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>e.user_id = jwt[&quot;claims&quot;][&quot;sub&quot;]
 </code></pre></div>
 <h4 id="textparse_path"><code>text.parse_path()</code><a class="headerlink" href="#textparse_path" title="Permanent link">&para;</a></h4>
 <p>Parse filesystem path into components.</p>
