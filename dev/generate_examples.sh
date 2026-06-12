@@ -4,6 +4,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXAMPLES_DIR="examples"
 
 # Colors for output
@@ -588,9 +589,14 @@ success "Created multiline_indent.log (indented YAML-style)"
 log "Generating complex real-world data files..."
 
 # 20. web_access_large.log.gz - 1000+ combined format entries for parallel testing (gzipped)
-if command -v flog &> /dev/null; then
-    flog -f apache_combined -n 1200 -t stdout | gzip > "$EXAMPLES_DIR/web_access_large.log.gz"
-    success "Created web_access_large.log.gz (1200 lines, flog generated, gzipped)"
+# Note: flog -n stamps every line with the single invocation time, so the raw
+# output shares one timestamp. We respace timestamps across a realistic ~2h
+# window so --discover shows a time spread and --since/--until are testable.
+if command -v flog &> /dev/null && command -v python3 &> /dev/null; then
+    flog -f apache_combined -n 1200 -t stdout \
+        | python3 "$SCRIPT_DIR/respace_apache_timestamps.py" \
+        | gzip > "$EXAMPLES_DIR/web_access_large.log.gz"
+    success "Created web_access_large.log.gz (1200 lines, flog generated, timestamps respaced, gzipped)"
 else
     log "flog not available, generating smaller synthetic file..."
     {
