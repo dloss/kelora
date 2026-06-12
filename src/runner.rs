@@ -70,6 +70,10 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
                 || !config.processing.suppress_diagnostics));
     set_collect_stats(collect_stats);
 
+    // Choose strict vs. lossy UTF-8 decoding at the byte->String boundary before
+    // any reader thread is spawned, so sequential and parallel paths agree.
+    readers::set_strict_utf8(config.processing.strict_utf8);
+
     // Start statistics collection if enabled
     if collect_stats {
         stats_start_timer();
@@ -592,7 +596,7 @@ fn spawn_stdin_reader(
             }
 
             buffer.clear();
-            match reader.read_line(&mut buffer) {
+            match readers::read_line_lossy(&mut reader, &mut buffer) {
                 Ok(0) => {
                     let _ = sender.send(ReaderMessage::Eof);
                     break;
@@ -731,7 +735,7 @@ fn spawn_file_reader_auto_per_file(
                 }
 
                 buffer.clear();
-                match peekable_reader.read_line(&mut buffer) {
+                match readers::read_line_lossy(&mut peekable_reader, &mut buffer) {
                     Ok(0) => break,
                     Ok(_) => {
                         let line = buffer.trim_end_matches(&['\n', '\r'][..]).to_string();
@@ -946,7 +950,7 @@ fn spawn_merged_file_reader(
         for (file_index, (file_reader, parser, line_number)) in readers.iter_mut().enumerate() {
             loop {
                 let mut line = String::new();
-                let read = file_reader.read_line(&mut line)?;
+                let read = readers::read_line_lossy(file_reader, &mut line)?;
                 if read == 0 {
                     if previous_timestamps[file_index].is_none()
                         && !emit_merge_fatal_error(
@@ -1033,7 +1037,7 @@ fn spawn_merged_file_reader(
             let (file_reader, parser, line_number) = &mut readers[state.file_index];
             loop {
                 let mut next_line = String::new();
-                let read = file_reader.read_line(&mut next_line)?;
+                let read = readers::read_line_lossy(file_reader, &mut next_line)?;
                 if read == 0 {
                     break;
                 }

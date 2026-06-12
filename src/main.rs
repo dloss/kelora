@@ -1185,6 +1185,18 @@ fn handle_pipeline_success(
                 }
             }
 
+            // Lossy UTF-8 recoveries are surfaced even when no error summary
+            // fires: it's a warning, not a failure (exit code stays 0), but the
+            // user should see that invalid bytes were replaced rather than the
+            // stream silently truncated (#239). With --stats it's already in the
+            // stats block.
+            if errors_allowed && config.output.stats.is_none() {
+                if let Some(message) = s.format_decode_warning() {
+                    let formatted = config.format_warning_message(&message);
+                    stderr.writeln(&formatted).unwrap_or(());
+                }
+            }
+
             if diagnostics_allowed_runtime && terminal_allowed {
                 // Fires before the zero-results hint, which returns early when
                 // nothing was created — the empty-input case it can't explain.

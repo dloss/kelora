@@ -377,6 +377,14 @@ pub struct Cli {
     )]
     pub no_strict: bool,
 
+    /// Abort on invalid UTF-8 instead of decoding losslessly
+    #[arg(
+        long = "strict-utf8",
+        help_heading = "Error Handling",
+        help = "Abort on the first non-UTF-8 byte instead of the default lossy decoding.\n\nBy default, kelora tolerates non-UTF-8 input the way grep does: invalid byte sequences are replaced with U+FFFD (\u{fffd}) and a diagnostic reports how many lines were affected, so a single bad byte no longer truncates the rest of the stream. Pass --strict-utf8 to restore hard failure (exit 1) on invalid UTF-8."
+    )]
+    pub strict_utf8: bool,
+
     /// Show detailed error information (use multiple times for more verbosity: -v, -vv, -vvv)
     #[arg(short = 'v', long = "verbose", action = clap::ArgAction::Count, help_heading = "Error Handling")]
     pub verbose: u8,

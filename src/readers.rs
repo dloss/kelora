@@ -1,17 +1,100 @@
 use anyhow::Result;
 use crossbeam_channel::Receiver;
-use std::collections::VecDeque;
+use std::borrow::Cow;
+use std::cell::RefCell;
 use std::fs;
 use std::io::{self, BufRead, BufReader, Read};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 use crate::decompression::DecompressionReader;
 
+// When set, the byte->String boundary aborts on invalid UTF-8 (the historical
+// behavior, restored via `--strict-utf8`). When unset (the default), input is
+// decoded losslessly with `U+FFFD` substitution so a single bad byte no longer
+// truncates the rest of the stream. See issue #239.
+static STRICT_UTF8: AtomicBool = AtomicBool::new(false);
+
+/// Select strict (abort-on-invalid) vs. lossy UTF-8 decoding for all line reads.
+/// Set once during pipeline setup; read on every reader thread.
+pub fn set_strict_utf8(enabled: bool) {
+    STRICT_UTF8.store(enabled, Ordering::Relaxed);
+}
+
+fn strict_utf8() -> bool {
+    STRICT_UTF8.load(Ordering::Relaxed)
+}
+
+/// Read a single line (through the next `\n`, inclusive) from `reader`, decoding
+/// bytes as UTF-8 *lossily*: invalid sequences become `U+FFFD` (�) instead of
+/// erroring out and tearing down the pipeline. Returns the number of bytes
+/// consumed from the stream (0 at EOF), matching `BufRead::read_line` so callers
+/// can keep using the count solely as an EOF signal. The decoded text is appended
+/// to `buf`.
+///
+/// This is the shared, encoding-tolerant replacement for `BufRead::read_line`
+/// (see issue #239). Splitting on `\n` (0x0A) before decoding is safe because
+/// 0x0A never appears inside a multibyte UTF-8 sequence, so per-line lossy
+/// decoding is equivalent to decoding the whole stream. A reused thread-local
+/// scratch buffer keeps the clean-log path allocation-free, like `read_line`.
+///
+/// With `--strict-utf8` this restores the historical behavior: invalid UTF-8
+/// yields `io::ErrorKind::InvalidData`.
+pub(crate) fn read_line_lossy<R: BufRead + ?Sized>(
+    reader: &mut R,
+    buf: &mut String,
+) -> io::Result<usize> {
+    thread_local! {
+        static SCRATCH: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+    }
+
+    SCRATCH.with(|cell| {
+        let mut bytes = cell.borrow_mut();
+        bytes.clear();
+        let n = reader.read_until(b'\n', &mut bytes)?;
+        if n == 0 {
+            return Ok(0);
+        }
+
+        if strict_utf8() {
+            match std::str::from_utf8(&bytes) {
+                Ok(s) => buf.push_str(s),
+                Err(_) => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "stream did not contain valid UTF-8",
+                    ));
+                }
+            }
+        } else {
+            match String::from_utf8_lossy(&bytes) {
+                Cow::Borrowed(s) => buf.push_str(s),
+                Cow::Owned(s) => {
+                    // Only allocates when bytes were actually replaced (rare path).
+                    crate::stats::stats_record_decode_warning(&s);
+                    buf.push_str(&s);
+                }
+            }
+        }
+
+        Ok(n)
+    })
+}
+
 /// A reader that can peek at the first line without consuming it
 /// Used for format auto-detection on streams
+///
+/// Peeked bytes are buffered *raw* and replayed through `fill_buf`/`consume`/
+/// `read`, so the wrapper is transparent to byte-level readers like
+/// `read_until` (which `read_line_lossy` uses). Buffering the raw bytes — rather
+/// than a decoded `String` only reachable via a custom `read_line` — is what
+/// keeps the peeked first line from being skipped by the downstream lossy read.
 pub struct PeekableLineReader<R: BufRead> {
     inner: R,
-    buffered_prefix: VecDeque<String>,
+    /// Raw bytes read during peeking, awaiting replay to the consumer.
+    buffered_prefix: Vec<u8>,
+    /// Read cursor into `buffered_prefix`.
+    prefix_pos: usize,
     detected_line: Option<Option<String>>,
     saw_any_input: bool,
 }
@@ -20,35 +103,49 @@ impl<R: BufRead> PeekableLineReader<R> {
     pub fn new(reader: R) -> Self {
         Self {
             inner: reader,
-            buffered_prefix: VecDeque::new(),
+            buffered_prefix: Vec::new(),
+            prefix_pos: 0,
             detected_line: None,
             saw_any_input: false,
         }
     }
 
+    /// Bytes still buffered from peeking that haven't been replayed yet.
+    fn prefix_remaining(&self) -> &[u8] {
+        &self.buffered_prefix[self.prefix_pos..]
+    }
+
+    /// Advance the prefix cursor, freeing the buffer once it's drained.
+    fn advance_prefix(&mut self, amt: usize) {
+        self.prefix_pos = (self.prefix_pos + amt).min(self.buffered_prefix.len());
+        if self.prefix_pos >= self.buffered_prefix.len() {
+            self.buffered_prefix.clear();
+            self.prefix_pos = 0;
+        }
+    }
+
     /// Peek at the first non-empty line without consuming already-read lines.
-    /// Blank lines encountered before detection are replayed later by `read_line`.
+    /// Blank lines encountered before detection are replayed later from the
+    /// buffered prefix. The peeked bytes are decoded losslessly here purely for
+    /// format detection; decode warnings are counted when the bytes are actually
+    /// consumed downstream (via `read_line_lossy`), to avoid double counting.
     pub fn peek_first_non_empty_line(&mut self) -> io::Result<Option<String>> {
         if let Some(cached) = &self.detected_line {
             return Ok(cached.clone());
         }
 
         loop {
-            let mut line = String::new();
-            match self.inner.read_line(&mut line) {
-                Ok(0) => {
-                    self.detected_line = Some(None);
-                    return Ok(None);
-                }
-                Ok(_) => {
-                    self.saw_any_input = true;
-                    self.buffered_prefix.push_back(line.clone());
-                    if !line.trim().is_empty() {
-                        self.detected_line = Some(Some(line.clone()));
-                        return Ok(Some(line));
-                    }
-                }
-                Err(e) => return Err(e),
+            let start = self.buffered_prefix.len();
+            let n = self.inner.read_until(b'\n', &mut self.buffered_prefix)?;
+            if n == 0 {
+                self.detected_line = Some(None);
+                return Ok(None);
+            }
+            self.saw_any_input = true;
+            let line = String::from_utf8_lossy(&self.buffered_prefix[start..]).into_owned();
+            if !line.trim().is_empty() {
+                self.detected_line = Some(Some(line.clone()));
+                return Ok(Some(line));
             }
         }
     }
@@ -60,25 +157,32 @@ impl<R: BufRead> PeekableLineReader<R> {
 
 impl<R: BufRead> BufRead for PeekableLineReader<R> {
     fn fill_buf(&mut self) -> io::Result<&[u8]> {
+        if self.prefix_pos < self.buffered_prefix.len() {
+            // `consume` clears the buffer once drained, so a non-empty remainder
+            // here means there are still buffered bytes to replay first.
+            return Ok(&self.buffered_prefix[self.prefix_pos..]);
+        }
         self.inner.fill_buf()
     }
 
     fn consume(&mut self, amt: usize) {
-        self.inner.consume(amt)
-    }
-
-    fn read_line(&mut self, buf: &mut String) -> io::Result<usize> {
-        if let Some(line) = self.buffered_prefix.pop_front() {
-            buf.push_str(&line);
-            return Ok(line.len());
+        if self.prefix_pos < self.buffered_prefix.len() {
+            self.advance_prefix(amt);
+        } else {
+            self.inner.consume(amt);
         }
-
-        self.inner.read_line(buf)
     }
 }
 
 impl<R: BufRead> std::io::Read for PeekableLineReader<R> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let remaining = self.prefix_remaining();
+        if !remaining.is_empty() {
+            let n = remaining.len().min(buf.len());
+            buf[..n].copy_from_slice(&remaining[..n]);
+            self.advance_prefix(n);
+            return Ok(n);
+        }
         self.inner.read(buf)
     }
 }
@@ -432,7 +536,7 @@ impl io::BufRead for MultiFileReader {
             }
 
             if let Some(ref mut reader) = self.current_reader {
-                match reader.read_line(buf) {
+                match read_line_lossy(reader, buf) {
                     Ok(0) => {
                         // EOF on current file, advance to next
                         self.advance_to_next_file();

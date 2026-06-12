@@ -63,6 +63,12 @@ pub struct ProcessingStats {
     /// re-detect a likely secondary format when auto-detection locked onto one
     /// format but the input turned out to be mixed (see detection.rs).
     pub first_parse_error_sample: Option<String>,
+    /// Number of input lines that contained invalid UTF-8 and were decoded
+    /// losslessly (`U+FFFD` substitution). Surfaced as a diagnostic so recovery
+    /// is visible rather than silent; does not count as an error (see #239).
+    pub decode_warnings: usize,
+    /// First line where a UTF-8 replacement occurred, captured for diagnostics.
+    pub first_decode_warning_sample: Option<String>,
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -81,6 +87,10 @@ static FIRST_PARSE_ERROR_SAMPLE: OnceLock<Mutex<Option<String>>> = OnceLock::new
 // Cap the stored sample so a pathological long line can't bloat memory or the
 // emitted warning.
 const MAX_PARSE_ERROR_SAMPLE_LEN: usize = 1024;
+// Lines decoded with U+FFFD substitution (invalid UTF-8). Atomic + OnceLock
+// because lossy decoding happens on reader/worker threads, like file failures.
+static DECODE_WARNINGS: AtomicUsize = AtomicUsize::new(0);
+static FIRST_DECODE_WARNING_SAMPLE: OnceLock<Mutex<Option<String>>> = OnceLock::new();
 
 pub fn set_collect_stats(enabled: bool) {
     COLLECT_STATS.store(enabled, Ordering::Relaxed);
@@ -144,6 +154,44 @@ pub fn first_parse_error_sample() -> Option<String> {
     FIRST_PARSE_ERROR_SAMPLE
         .get()
         .and_then(|slot| slot.lock().ok().and_then(|v| v.clone()))
+}
+
+/// Record that an input line contained invalid UTF-8 and was decoded losslessly.
+/// Counts on any thread (reader/worker) and keeps the first line as a sample.
+/// Unlike parse errors, this is a warning, not a failure: it must not affect the
+/// exit code, so it is deliberately excluded from `has_errors()`.
+pub fn stats_record_decode_warning(decoded_line: &str) {
+    if !stats_enabled() {
+        return;
+    }
+    DECODE_WARNINGS.fetch_add(1, Ordering::Relaxed);
+    let slot = FIRST_DECODE_WARNING_SAMPLE.get_or_init(|| Mutex::new(None));
+    if let Ok(mut current) = slot.lock() {
+        if current.is_none() {
+            let trimmed = decoded_line.trim_end_matches(['\r', '\n']);
+            let sample: String = trimmed.chars().take(MAX_PARSE_ERROR_SAMPLE_LEN).collect();
+            *current = Some(sample);
+        }
+    }
+}
+
+/// Returns the first captured decode-warning sample line, if any.
+fn first_decode_warning_sample() -> Option<String> {
+    FIRST_DECODE_WARNING_SAMPLE
+        .get()
+        .and_then(|slot| slot.lock().ok().and_then(|v| v.clone()))
+}
+
+/// Number of lines decoded with U+FFFD substitution (process-wide). Exposed so
+/// the parallel tracker can merge it into its final stats, like parse-error
+/// samples.
+pub fn decode_warning_count() -> usize {
+    DECODE_WARNINGS.load(Ordering::Relaxed)
+}
+
+/// First decode-warning sample line (process-wide), for the parallel path.
+pub fn decode_warning_sample() -> Option<String> {
+    first_decode_warning_sample()
 }
 
 // Thread-local storage for statistics (following track_count pattern)
@@ -373,6 +421,8 @@ pub fn get_thread_stats() -> ProcessingStats {
         s.failed_file_samples = failed_file_samples();
         s.recoverable_error_samples = recoverable_error_samples();
         s.first_parse_error_sample = first_parse_error_sample();
+        s.decode_warnings = DECODE_WARNINGS.load(Ordering::Relaxed);
+        s.first_decode_warning_sample = first_decode_warning_sample();
         s
     })
 }
@@ -789,6 +839,11 @@ impl ProcessingStats {
             output.push('\n');
         }
 
+        if let Some(message) = self.format_decode_warning() {
+            output.push_str(&crate::config::format_warning_message_auto(&message));
+            output.push('\n');
+        }
+
         if self.yearless_timestamps > 0 {
             let warning_msg = format!(
                 "Year-less timestamp format detected ({} parse{})\n\
@@ -945,6 +1000,24 @@ impl ProcessingStats {
     /// Check if any errors occurred during processing
     pub fn has_errors(&self) -> bool {
         self.lines_errors > 0 || self.files_failed_to_open > 0 || self.assertion_failures > 0
+    }
+
+    /// Format the lossy-UTF-8 decode warning, if any lines were affected.
+    /// Returned separately from `format_error_summary` because decode warnings
+    /// are recoveries, not failures, and must not influence the exit code (#239).
+    pub fn format_decode_warning(&self) -> Option<String> {
+        if self.decode_warnings == 0 {
+            return None;
+        }
+        let mut message = format!(
+            "{} line{} contained invalid UTF-8, decoded with U+FFFD substitution",
+            self.decode_warnings,
+            if self.decode_warnings == 1 { "" } else { "s" }
+        );
+        if let Some(sample) = &self.first_decode_warning_sample {
+            message.push_str(&format!(" (first: {})", sample));
+        }
+        Some(message)
     }
 
     /// Format a concise error summary for default output (when errors occur)

@@ -159,6 +159,9 @@ pub struct ProcessingConfig {
     pub take_limit: Option<usize>,
     /// Exit on first error (fail-fast behavior) - new resiliency model
     pub strict: bool,
+    /// Abort on invalid UTF-8 instead of lossy decoding (--strict-utf8). Default
+    /// (false) decodes non-UTF-8 input with U+FFFD substitution; see issue #239.
+    pub strict_utf8: bool,
     /// Span aggregation configuration (--span / --span-close)
     pub span: Option<SpanConfig>,
     /// Show detailed error information (levels: 0-3) - new resiliency model
@@ -1121,6 +1124,7 @@ impl KeloraConfig {
                 normalize_timestamps: cli.normalize_ts,
                 take_limit: cli.take,
                 strict: cli.strict,
+                strict_utf8: cli.strict_utf8,
                 verbose: verbose_level,
                 quiet_events,
                 suppress_diagnostics,
@@ -1225,6 +1229,7 @@ impl Default for KeloraConfig {
                 normalize_timestamps: false,
                 take_limit: None,
                 strict: false,
+                strict_utf8: false,
                 verbose: 0,
                 quiet_events: false,
                 suppress_diagnostics: false,

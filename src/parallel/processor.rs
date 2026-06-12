@@ -511,7 +511,7 @@ impl ParallelProcessor {
         config: &crate::config::KeloraConfig,
     ) -> Result<(Box<dyn std::io::BufRead + Send>, PipelineBuilder, usize)> {
         let mut first_line = String::new();
-        reader.read_line(&mut first_line)?;
+        crate::readers::read_line_lossy(&mut reader, &mut first_line)?;
 
         if first_line.trim().is_empty() {
             return Ok((Box::new(reader), pipeline_builder, 0)); // Empty line will be processed normally

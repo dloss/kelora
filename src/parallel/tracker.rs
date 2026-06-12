@@ -240,6 +240,10 @@ impl GlobalTracker {
         }
         // Parse-error sample is captured in a process-wide slot by worker threads.
         stats.first_parse_error_sample = crate::stats::first_parse_error_sample();
+        // Lossy-UTF-8 decode warnings are counted in process-wide atomics by the
+        // reader thread, so merge them here the same way (see #239).
+        stats.decode_warnings = crate::stats::decode_warning_count();
+        stats.first_decode_warning_sample = crate::stats::decode_warning_sample();
         stats
     }
 

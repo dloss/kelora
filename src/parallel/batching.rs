@@ -31,7 +31,7 @@ pub(crate) fn plain_io_reader_thread<R: std::io::BufRead>(
         }
 
         buffer.clear();
-        match reader.read_line(&mut buffer) {
+        match crate::readers::read_line_lossy(&mut reader, &mut buffer) {
             Ok(0) => {
                 let _ = line_sender.send(LineMessage::Eof);
                 break;
