@@ -451,9 +451,22 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
         std::process::exit(0);
     }
 
-    // Check for --help-functions
-    if raw_args.iter().any(|arg| arg == "--help-functions") {
-        help::print_functions_help();
+    // Check for --help-functions [KEYWORD] (optional case-insensitive search)
+    if let Some(pos) = raw_args
+        .iter()
+        .position(|arg| arg == "--help-functions" || arg.starts_with("--help-functions="))
+    {
+        let arg = &raw_args[pos];
+        let keyword = if let Some(kw) = arg.strip_prefix("--help-functions=") {
+            (!kw.is_empty()).then(|| kw.to_string())
+        } else {
+            // Treat a following non-flag token as the search keyword.
+            raw_args
+                .get(pos + 1)
+                .filter(|next| !next.starts_with('-'))
+                .map(|next| next.to_string())
+        };
+        help::print_functions_help(keyword.as_deref());
         std::process::exit(0);
     }
 

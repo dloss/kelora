@@ -61,6 +61,55 @@ fn test_help_functions_topic() {
 }
 
 #[test]
+fn test_help_functions_keyword_filter() {
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions", "mask_ip"]);
+    assert_eq!(
+        exit_code, 0,
+        "--help-functions with a keyword should exit successfully"
+    );
+    assert!(stdout.contains("Functions matching \"mask_ip\":"));
+    assert!(stdout.contains("text.mask_ip([octets])"));
+    // The section header for a matched entry is preserved for context.
+    assert!(stdout.contains("STRING FUNCTIONS:"));
+    // Unrelated functions are filtered out.
+    assert!(!stdout.contains("array.join(separator)"));
+}
+
+#[test]
+fn test_help_functions_keyword_equals_form() {
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions=parse_json"]);
+    assert_eq!(
+        exit_code, 0,
+        "--help-functions=KEYWORD should exit successfully"
+    );
+    assert!(stdout.contains("Functions matching \"parse_json\":"));
+    assert!(stdout.contains("text.parse_json()"));
+}
+
+#[test]
+fn test_help_functions_keyword_matches_multiline_entry() {
+    // `text.normalized` spans several indented continuation lines; a keyword
+    // that only appears in a continuation line must still surface the entry.
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions", "credit_card"]);
+    assert_eq!(
+        exit_code, 0,
+        "--help-functions with a keyword should exit successfully"
+    );
+    assert!(stdout.contains("text.normalized([patterns])"));
+    assert!(stdout.contains("credit_card"));
+}
+
+#[test]
+fn test_help_functions_keyword_no_match() {
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions", "nonexistentxyz"]);
+    assert_eq!(
+        exit_code, 0,
+        "--help-functions with no match should still exit successfully"
+    );
+    assert!(stdout.contains("No functions matching \"nonexistentxyz\""));
+}
+
+#[test]
 fn test_help_examples_topic() {
     let (stdout, _stderr, exit_code) = run_kelora(&["--help-examples"]);
     assert_eq!(exit_code, 0, "--help-examples should exit successfully");

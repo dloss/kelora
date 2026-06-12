@@ -19,10 +19,27 @@ pub use time::print_time_format_help;
 
 use crate::rhai_functions;
 
-/// Print available Rhai functions help
-pub fn print_functions_help() {
-    let help_text = rhai_functions::docs::generate_help_text();
-    println!("{}", help_text);
+/// Print available Rhai functions help.
+///
+/// With `filter` set, only matching sections/functions are shown (a
+/// case-insensitive keyword search); otherwise the full catalogue is printed.
+pub fn print_functions_help(filter: Option<&str>) {
+    match filter {
+        None => {
+            let help_text = rhai_functions::docs::generate_help_text();
+            println!("{}", help_text);
+        }
+        Some(keyword) => {
+            let filtered = rhai_functions::docs::filter_help_text(keyword);
+            if filtered.trim().is_empty() {
+                println!(
+                    "No functions matching \"{keyword}\". Run --help-functions for the full catalogue."
+                );
+            } else {
+                println!("Functions matching \"{keyword}\":\n{filtered}");
+            }
+        }
+    }
 }
 
 /// Print practical Rhai examples

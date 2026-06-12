@@ -334,6 +334,82 @@ For other help topics: kelora -h
 "#
 }
 
+/// Filter the function catalogue by a case-insensitive keyword.
+///
+/// Returns only the sections and function entries that match `keyword`.
+/// A function entry is matched when the keyword appears anywhere in its
+/// signature, description, or any indented continuation lines, or when the
+/// keyword appears in the section header (so e.g. "string" lists the whole
+/// STRING FUNCTIONS section). Section headers are preserved above their
+/// matching entries so the output keeps its context.
+pub fn filter_help_text(keyword: &str) -> String {
+    let full = generate_help_text();
+    let needle = keyword.to_lowercase();
+    let lines: Vec<&str> = full.lines().collect();
+
+    // A section header sits at column 0 and ends with ':'. Function entries
+    // also start at column 0; their continuation lines are indented.
+    let is_header = |line: &str| {
+        !line.is_empty() && !line.starts_with(char::is_whitespace) && line.trim_end().ends_with(':')
+    };
+
+    let mut out = String::new();
+    let mut current_section: Option<&str> = None;
+    let mut section_printed = false;
+
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
+
+        if is_header(line) {
+            // The leading title is not a real section; skip it.
+            if line.trim() == "Available Rhai Functions:" {
+                i += 1;
+                continue;
+            }
+            current_section = Some(line);
+            section_printed = false;
+            i += 1;
+            continue;
+        }
+
+        if line.is_empty() {
+            i += 1;
+            continue;
+        }
+
+        // Start of a function entry: this line plus any indented continuations.
+        let entry_start = i;
+        i += 1;
+        while i < lines.len() && lines[i].starts_with(char::is_whitespace) && !lines[i].is_empty() {
+            i += 1;
+        }
+        let entry = &lines[entry_start..i];
+
+        let header_matches = current_section
+            .map(|h| h.to_lowercase().contains(&needle))
+            .unwrap_or(false);
+        let entry_matches = entry.iter().any(|l| l.to_lowercase().contains(&needle));
+
+        if header_matches || entry_matches {
+            if !section_printed {
+                if let Some(sec) = current_section {
+                    out.push('\n');
+                    out.push_str(sec);
+                    out.push('\n');
+                }
+                section_printed = true;
+            }
+            for l in entry {
+                out.push_str(l);
+                out.push('\n');
+            }
+        }
+    }
+
+    out
+}
+
 /// Generate practical examples for common log analysis patterns
 pub fn generate_examples_text() -> &'static str {
     r###"

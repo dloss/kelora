@@ -814,9 +814,9 @@ pub struct Cli {
     #[arg(long = "help-rhai", help_heading = "Help Options")]
     pub help_rhai: bool,
 
-    /// Show available Rhai functions and exit
-    #[arg(long = "help-functions", help_heading = "Help Options")]
-    pub help_functions: bool,
+    /// Show available Rhai functions and exit (optional KEYWORD filters by name/description)
+    #[arg(long = "help-functions", value_name = "KEYWORD", num_args = 0..=1, default_missing_value = "", help_heading = "Help Options")]
+    pub help_functions: Option<String>,
 
     /// Show practical Rhai examples and exit
     #[arg(long = "help-examples", help_heading = "Help Options")]

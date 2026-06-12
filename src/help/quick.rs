@@ -43,7 +43,7 @@ Common Options:
 More Help:
   kelora --help              Full CLI reference (all 100+ options grouped by category)
   kelora --help-rhai         Rhai language guide + stage semantics
-  kelora --help-functions    Complete built-in function catalogue (150+ functions)
+  kelora --help-functions    Built-in function catalogue (150+); add a KEYWORD to search
   kelora --help-examples     Common patterns and example walkthroughs
   kelora --help-formats      Format reference with extracted fields
   kelora --help-time         Timestamp format reference
