@@ -471,7 +471,19 @@ fn maybe_print_csv_shape_hint(
     stderr: &mut SafeStderr,
 ) {
     if let Some(summary) = stats.format_ragged_rows_summary() {
-        let message = format!("{}. Use --strict to reject ragged rows.", summary);
+        let mut message = format!("{}.", summary);
+        // Over-wide rows usually mean an unescaped delimiter somewhere in the
+        // row, so the *named* fields after it may hold the wrong values — the
+        // extras are preserved, but don't take those rows at face value.
+        if stats.csv_rows_extra_columns > 0 {
+            if let Some(col) = stats.csv_overflow_start_column {
+                message.push_str(&format!(
+                    " Named fields on over-wide rows may be misaligned; inspect them with --filter '\"c{}\" in e'.",
+                    col
+                ));
+            }
+        }
+        message.push_str(" Use --strict to reject ragged rows.");
         let formatted = config
             .format_hint_message(&message)
             .trim_start_matches('\n')

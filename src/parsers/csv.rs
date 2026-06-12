@@ -277,31 +277,40 @@ impl CsvParser {
     /// columns as cN fields; narrower rows simply leave the trailing fields
     /// absent (absent, not empty — `field in e` stays meaningful downstream).
     fn check_row_shape(&self, field_count: usize) -> Result<()> {
-        match field_count.cmp(&self.headers.len()) {
+        let expected = self.headers.len();
+        match field_count.cmp(&expected) {
             std::cmp::Ordering::Equal => Ok(()),
             std::cmp::Ordering::Greater => {
                 if self.strict {
-                    return Err(anyhow::anyhow!(
-                        "Row has {} columns, expected {}",
-                        field_count,
-                        self.headers.len()
-                    ));
+                    return Err(self.ragged_row_error(field_count));
                 }
-                crate::stats::stats_add_csv_row_extra_columns();
+                crate::stats::stats_add_csv_row_extra_columns(expected + 1);
                 Ok(())
             }
             std::cmp::Ordering::Less => {
                 if self.strict {
-                    return Err(anyhow::anyhow!(
-                        "Row has {} columns, expected {}",
-                        field_count,
-                        self.headers.len()
-                    ));
+                    return Err(self.ragged_row_error(field_count));
                 }
                 crate::stats::stats_add_csv_row_missing_columns();
                 Ok(())
             }
         }
+    }
+
+    /// Strict-mode shape error, naming where the expected width came from so
+    /// headerless runs don't leave users guessing about the count's origin.
+    fn ragged_row_error(&self, field_count: usize) -> anyhow::Error {
+        let origin = if self.has_headers {
+            "from header"
+        } else {
+            "from first line"
+        };
+        anyhow::anyhow!(
+            "Row has {} columns, expected {} ({})",
+            field_count,
+            self.headers.len(),
+            origin
+        )
     }
 
     /// Parse a data line using the initialized headers
@@ -656,12 +665,34 @@ mod tests {
 
         // Too many columns: hard error (fast path and quoted slow path)
         let err = parser.parse("Bob,30,Boston,extra").unwrap_err();
-        assert!(err.to_string().contains("expected 3"), "{}", err);
+        assert!(
+            err.to_string().contains("expected 3 (from header)"),
+            "{}",
+            err
+        );
         assert!(parser.parse("\"Bob\",30,Boston,extra").is_err());
 
         // Too few columns: hard error
         let err = parser.parse("Carol,41").unwrap_err();
-        assert!(err.to_string().contains("expected 3"), "{}", err);
+        assert!(
+            err.to_string().contains("expected 3 (from header)"),
+            "{}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_csv_strict_headerless_error_names_first_line_origin() {
+        let mut parser = CsvParser::new_csv_no_headers();
+        let _ = parser.initialize_headers_from_line("a,b").unwrap();
+        let parser = parser.with_strict(true);
+
+        let err = parser.parse("1,2,3").unwrap_err();
+        assert!(
+            err.to_string().contains("expected 2 (from first line)"),
+            "{}",
+            err
+        );
     }
 
     #[test]

@@ -58,6 +58,7 @@ pub struct ProcessingStats {
     pub assertion_failures_by_expr: HashMap<String, usize>, // Per-assertion tracking
     pub csv_rows_extra_columns: usize, // CSV/TSV rows wider than the header (extras kept as cN)
     pub csv_rows_missing_columns: usize, // CSV/TSV rows narrower than the header (fields absent)
+    pub csv_overflow_start_column: Option<usize>, // Lowest 1-based column where overflow began
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -268,12 +269,18 @@ pub fn stats_add_recoverable_error_sample(message: &str) {
     push_recoverable_error_sample(message);
 }
 
-pub fn stats_add_csv_row_extra_columns() {
+pub fn stats_add_csv_row_extra_columns(start_column: usize) {
     if !stats_enabled() {
         return;
     }
     THREAD_STATS.with(|stats| {
-        stats.borrow_mut().csv_rows_extra_columns += 1;
+        let mut stats = stats.borrow_mut();
+        stats.csv_rows_extra_columns += 1;
+        stats.csv_overflow_start_column = Some(
+            stats
+                .csv_overflow_start_column
+                .map_or(start_column, |c| c.min(start_column)),
+        );
     });
 }
 
@@ -872,14 +879,19 @@ impl ProcessingStats {
         }
         let mut parts = Vec::new();
         if self.csv_rows_extra_columns > 0 {
+            let kept_as = match self.csv_overflow_start_column {
+                Some(col) => format!("c{}+", col),
+                None => "cN fields".to_string(),
+            };
             parts.push(format!(
-                "{} row{} with more columns than expected (extras kept as cN fields)",
+                "{} row{} with more columns than expected (extras kept as {})",
                 self.csv_rows_extra_columns,
                 if self.csv_rows_extra_columns == 1 {
                     ""
                 } else {
                     "s"
-                }
+                },
+                kept_as
             ));
         }
         if self.csv_rows_missing_columns > 0 {

@@ -48,6 +48,7 @@ fn processing_stats_delta(
         csv_rows_missing_columns: after
             .csv_rows_missing_columns
             .saturating_sub(before.csv_rows_missing_columns),
+        csv_overflow_start_column: after.csv_overflow_start_column,
         timestamp_override_failed: after.timestamp_override_failed,
         timestamp_override_field: after.timestamp_override_field.clone(),
         timestamp_override_format: after.timestamp_override_format.clone(),

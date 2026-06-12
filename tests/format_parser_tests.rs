@@ -402,12 +402,17 @@ fn test_csv_ragged_rows_preserved_with_hint() {
     assert_eq!(carol["name"].as_str().unwrap(), "carol");
     assert!(carol.get("age").is_none(), "missing field must stay absent");
 
-    // Counted diagnostic on stderr
+    // Counted diagnostic on stderr, with a concrete way to find the rows
     assert!(
         stderr.contains("Ragged rows")
             && stderr.contains("1 row with more columns")
             && stderr.contains("1 row with fewer columns"),
         "expected ragged-row hint, got: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("may be misaligned") && stderr.contains("\"c3\" in e"),
+        "hint should warn about misalignment and suggest an inspection filter: {}",
         stderr
     );
 }
