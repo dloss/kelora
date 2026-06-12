@@ -2,14 +2,30 @@
 
 Complete reference for Kelora's exit codes and their meanings.
 
+## The model in one line
+
+> **Kelora exits non-zero when it couldn't do the job you asked — not because the data was messy.**
+
+Per-record problems (a line that won't parse, a `--filter`/`--exec` that errors
+on an event) are **recovered**: skipped or rolled back, reported as diagnostics,
+exit `0`. The run fails (exit `1`) only when a whole per-record stage **never
+once succeeded** — a filter/exec that errors on *every* event, or an input where
+*no* line parses — or on a structural failure (a named input that won't open) or
+an explicit `--assert` violation. `--strict` escalates: any single
+parse/filter/exec error fails immediately.
+
+This is independent of output flags: the signal is computed in the always-on
+tracker, so `--metrics`, `--drain`, `-q`, and `--no-diagnostics` all preserve
+the exit code.
+
 ## Standard Exit Codes
 
 Kelora uses standard Unix exit codes to indicate success or failure:
 
 | Code | Name | Meaning | Cause |
 |------|------|---------|-------|
-| `0` | Success | Processing completed successfully | Clean processing, or recovered filter/exec errors in resilient mode |
-| `1` | General Error | Processing errors occurred | Parse errors, assertion failures, file I/O failures, strict-mode runtime errors |
+| `0` | Success | The run did its job | Clean processing, or *recovered* per-record errors (some lines/events skipped or rolled back) |
+| `1` | General Error | The run couldn't do the job | A per-record stage that never succeeded (every line fails to parse, or a filter/exec errors on every event), an `--assert` violation, a file that couldn't be opened, or any strict-mode error |
 | `2` | Usage Error | Invalid command-line usage | Invalid flags, incompatible options, configuration errors |
 
 ## Signal Exit Codes
@@ -32,9 +48,15 @@ occurrence.
 
 ## Exit Code 0: Success
 
-Indicates **successful processing**. All required input was processed, and no unrecovered processing failure occurred.
+Indicates **the run did its job**. The work you asked for happened, even if some
+individual records were skipped or rolled back along the way.
 
-**Important:** Filtering events is **not** an error. If all events are filtered out, exit code is still `0`. In resilient mode, recovered filter and exec runtime errors are reported as diagnostics but also exit `0`; use `--strict` when runtime errors should fail the process.
+**Important:** Exit `0` is not "zero errors" — it's "the job got done". Filtering
+events is not an error (filtering everything still exits `0`). *Recovered*
+per-record errors — a few unparseable lines among good ones, a `--filter`/`--exec`
+that errors on *some* events — are reported as diagnostics but keep exit `0`,
+because the stage still succeeded on other records. To fail on *any* such error,
+use `--strict`; to fail on explicit data-quality rules, use `--assert`.
 
 ```bash
 # Returns 0 - filtering is not an error
@@ -42,35 +64,54 @@ kelora -j app.log --levels critical
 echo $?
 0
 
-# Returns 1 - parse error occurred
-kelora -j malformed.log
+# Returns 0 - some lines failed to parse, but others succeeded (recovered)
+printf '{"ok":1}\nNOT JSON\n{"ok":2}\n' | kelora -j
+echo $?
+0
+
+# Returns 1 - NO line parsed: the format is wrong, so the run couldn't do its job
+printf 'plain one\nplain two\n' | kelora -j
 echo $?
 1
 ```
 
-## Exit Code 1: Processing Errors
+## Exit Code 1: The run couldn't do the job
 
-Indicates unrecovered errors occurred during processing. Four common types:
+Indicates the run failed to do what was asked. Common causes:
 
-| Error Type | Cause | Example |
-|------------|-------|---------|
-| **Parse errors** | Lines couldn't be parsed in specified format | Invalid JSON/logfmt syntax |
-| **Assertion failures** | `--assert` expressions evaluated to false | Data quality violations, missing required fields |
-| **File I/O failures** | Individual files failed to open or decompress | Permission denied, file not readable, decompression failed |
-| **Strict-mode runtime errors** | Filter/exec expressions failed while `--strict` was enabled | Missing field access, type errors |
+| Cause | Meaning | Example |
+|-------|---------|---------|
+| **Whole parse stage failed** | *Every* line failed to parse — the format is wrong or the input is unusable | `kelora -j` on plain-text logs |
+| **Whole filter/exec stage failed** | A `--filter` or `--exec` errored on *every* event it saw — a typo, a type bug, the wrong field | `--filter 'status >= 500'` (missing `e.`) |
+| **Assertion failures** | `--assert` expressions evaluated to false (an explicit data-quality gate) | Missing required fields |
+| **File I/O failures** | A named input file failed to open or decompress | Permission denied, file not found |
+| **Strict-mode errors** | *Any* parse/filter/exec error while `--strict` was enabled | Missing field access, type errors |
+
+The first two are the per-record axis: a stage that errored on **some** records
+is recovered (exit `0`); the same stage erroring on **every** record means it
+never once worked, which is a broken command (exit `1`). This is per-stage, so a
+broken `--exec` behind a selective `--filter` is caught even if most events were
+filtered out first.
 
 ### Resilient Mode (Default)
 
-Errors are recorded but processing continues. Recovered filter and exec runtime errors are warnings and do not change the exit code:
+Per-record errors are recorded but processing continues. They affect the exit
+code only when a whole stage never succeeds:
 
 ```bash
+# Recovered: e.value is a valid int on most events -> exit 0
 kelora -j app.log --exec 'e.result = e.value.to_int()'
-# ... processing continues despite errors ...
 echo $?
-0  # Recovered runtime errors were reported, but processing completed
+0  # Some events may have errored and rolled back; the stage still succeeded
+
+# Broken: a field-name typo errors on EVERY event -> the filter never matched
+kelora -q -j app.log --filter 'status >= 500'   # should be e.status
+echo $?
+1  # The filter never once succeeded -> exit 1, even without --strict
 ```
 
-For automation, use `--strict` to fail on script/runtime errors, and use `--assert` to fail on explicit data-quality requirements.
+For automation, use `--strict` to fail on the *first* runtime error, and
+`--assert` to fail on explicit data-quality requirements.
 
 ### Strict Mode
 

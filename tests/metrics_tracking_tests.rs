@@ -82,9 +82,10 @@ fn test_metrics_mode_surfaces_exec_errors_on_stderr() {
         input,
     );
 
+    // The 1.x form errors on every event, so the exec never succeeds -> exit 1.
     assert_eq!(
-        exit_code, 0,
-        "resilient runtime errors should not change the exit code"
+        exit_code, 1,
+        "an exec that errors on every event fails the run, even in --metrics"
     );
     assert!(
         stderr.contains("Exec errors"),
@@ -138,7 +139,11 @@ fn test_metrics_mode_reports_every_event_failure_scope() {
         input,
     );
 
-    assert_eq!(exit_code, 0, "resilient runtime errors keep exit 0");
+    // Errors on every event -> the exec never succeeded -> exit 1.
+    assert_eq!(
+        exit_code, 1,
+        "a stage that errors on every event fails the run"
+    );
     assert!(
         stdout.contains("No metrics tracked"),
         "stdout still reports the empty data channel: {}",
@@ -150,7 +155,7 @@ fn test_metrics_mode_reports_every_event_failure_scope() {
         stderr
     );
     assert!(
-        !stderr.contains("Use --strict"),
+        !stderr.contains("Use --verbose"),
         "the advisory coaching is suppressed by default in data-only modes: {}",
         stderr
     );
@@ -175,14 +180,17 @@ fn test_metrics_diagnostics_shows_every_event_coaching() {
         input,
     );
 
-    assert_eq!(exit_code, 0, "resilient runtime errors keep exit 0");
+    assert_eq!(
+        exit_code, 1,
+        "errors on every event fail the run; --diagnostics only controls coaching"
+    );
     assert!(
         stderr.contains("affecting every event"),
         "scope fact should still be present: {}",
         stderr
     );
     assert!(
-        stderr.contains("Use --strict"),
+        stderr.contains("Use --verbose"),
         "--diagnostics should re-enable the coaching sentence: {}",
         stderr
     );
@@ -201,10 +209,10 @@ fn test_filter_errors_count_every_failure_not_just_one() {
     let (_stdout, stderr, exit_code) =
         run_kelora_with_input(&["-f", "logfmt", "--filter", "nonexistent_fn(e.x)"], input);
 
-    // Resilient mode: filter errors evaluate to false, exit stays 0.
+    // The filter errors on every line, so it never matched anything -> exit 1.
     assert_eq!(
-        exit_code, 0,
-        "recovered filter errors keep exit 0: {}",
+        exit_code, 1,
+        "a filter that errors on every event fails the run: {}",
         stderr
     );
     assert!(
@@ -221,9 +229,11 @@ fn test_filter_errors_count_every_failure_not_just_one() {
 
 #[test]
 fn test_metrics_mode_surfaces_parse_errors() {
-    // Regression: data-only modes used to swallow parse errors entirely
-    // (exit 0, no summary), unlike normal mode which reports them at exit 1.
-    // Enabling stats collection in --metrics makes the two consistent.
+    // Regression: data-only modes used to swallow parse errors entirely (no
+    // summary at all). They must still be *reported* on stderr in --metrics.
+    // The exit code is recovered here (1 of 3 lines parsed -> partial failure),
+    // matching normal mode; see test_metrics_mode_all_lines_fail_to_parse for the
+    // wrong-format case that does fail.
     let input = "not json\nalso not json\n{\"action\": \"x\"}";
 
     let (_stdout, stderr, exit_code) = run_kelora_with_input(
@@ -238,8 +248,36 @@ fn test_metrics_mode_surfaces_parse_errors() {
     );
 
     assert_eq!(
+        exit_code, 0,
+        "partial parse failures are recovered (1 of 3 parsed), even in --metrics"
+    );
+    assert!(
+        stderr.contains("parse error"),
+        "parse errors should still be reported on stderr in --metrics: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_metrics_mode_all_lines_fail_to_parse() {
+    // The wrong-format case: no line parses, so the parse stage never succeeded.
+    // That is an unusable-input failure and must exit 1 even in --metrics.
+    let input = "not json\nalso not json\n";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"action\", e.action)",
+            "--metrics",
+        ],
+        input,
+    );
+
+    assert_eq!(
         exit_code, 1,
-        "parse errors are failures and must surface a non-zero exit even in --metrics"
+        "input where no line parses is a failure and must exit non-zero even in --metrics"
     );
     assert!(
         stderr.contains("parse error"),

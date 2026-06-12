@@ -21,7 +21,11 @@ In resilient mode (default), Kelora continues processing even when errors occur:
 - **Filter errors**: Treat as `false`, skip event
 - **Transform errors**: Return original event unchanged (atomic rollback)
 - **Summary**: Show recovered runtime errors as warnings at end
-- **Exit code**: `0` for recovered filter/exec errors; `1` for parse errors, assertion failures, and file I/O failures
+- **Exit code**: `0` while the run still did its job — even with *some* skipped or
+  rolled-back records. It becomes `1` only when a whole stage never once
+  succeeded (a `--filter`/`--exec` that errors on every event, or an input where
+  no line parses), or on a structural / `--assert` failure. See
+  [Exit codes: the model](#exit-codes-the-model).
 
 ### When to Use
 
@@ -69,7 +73,11 @@ If `e.timestamp` is missing or invalid:
 - Event is skipped
 - Error is recorded
 - Processing continues
-- Exit code remains `0` unless an unrecovered error also occurs
+- Exit code stays `0` **as long as the filter succeeded on at least one event**.
+  If the filter errors on *every* event (e.g. a field-name typo like `status`
+  instead of `e.status`), it never matched anything — that is a broken command,
+  not data noise, so the run exits `1`. See
+  [Exit codes: the model](#exit-codes-the-model).
 
 ## Strict Mode
 
@@ -272,29 +280,71 @@ kelora -m --metrics-file metrics.json app.log        # Metrics only
 kelora --metrics=json app.log                        # Metrics in JSON format
 ```
 
-## Exit Codes
+## Exit codes: the model
 
-Kelora uses standard Unix exit codes:
+One rule captures Kelora's exit-code behavior:
+
+> **Kelora exits non-zero when it couldn't do the job you asked — not because the data was messy.**
+
+That splits cleanly into three tiers:
+
+| Tier | Exit | What it means | Examples |
+|------|------|---------------|----------|
+| **Recovered** | `0` | The run did its job. Some individual records may have been skipped or rolled back, and they're reported as diagnostics. | A few unparseable lines among good ones; a `--filter`/`--exec` that errors on *some* events |
+| **Couldn't do the job** | `1` | A whole stage never once succeeded, or a structural / explicit-gate failure. | A `--filter`/`--exec` that errors on **every** event; an input where **no** line parses; a named input that can't be opened; an `--assert` violation |
+| **Invalid usage** | `2` | Bad command line — caught before processing. | Unknown flag, incompatible options, invalid config |
+
+The key distinction is **per-record vs. whole-stage**. A parse, filter, or exec
+error on *some* records is data noise and is recovered. The *same* error on
+**every** record means the stage never worked — a typo, a type bug, the wrong
+format — which is a broken command and fails the run. `--strict` escalates:
+*any* single parse/filter/exec error fails immediately.
+
+This holds regardless of output flags — the signal is computed independently of
+`--stats`/`--no-diagnostics` collection — so `--metrics`, `--drain`, `-q`, and
+`--no-diagnostics` all preserve the exit code.
+
+### Scenario reference
+
+| Scenario | Default | `--strict` |
+|----------|:-------:|:----------:|
+| Clean run | `0` | `0` |
+| Filter legitimately matches nothing | `0` | `0` |
+| Some lines fail to parse, others succeed | `0` | `1` (aborts on first) |
+| **Every** line fails to parse (wrong format) | `1` | `1` |
+| `--exec` errors on some events (heterogeneous logs) | `0` | `1` (aborts on first) |
+| `--filter`/`--exec` errors on **every** event (typo, type bug) | `1` | `1` |
+| Broken `--exec` behind a selective `--filter` | `1` | `1` |
+| Named input file can't be opened | `1` | `1` |
+| `--assert` violation | `1` | `1` |
+
+### Full code table
 
 | Code | Meaning |
 |------|---------|
-| `0` | Success (no unrecovered processing failure) |
-| `1` | Processing errors (parse/assertion/file errors, strict-mode filter/exec errors) |
+| `0` | The run did its job (possibly with recovered, reported per-record errors) |
+| `1` | A per-record stage never succeeded, a structural failure, or an `--assert`/strict failure |
 | `2` | Invalid usage (CLI errors, incompatible flags) |
 | `130` | Interrupted (Ctrl+C) |
+| `134` | Internal thread panic (a bug — please report) |
 | `141` | Broken pipe (normal in Unix pipelines) |
+| `143` | Terminated (SIGTERM) |
 
 ### Using Exit Codes
 
 **In shell scripts:**
 ```bash
 if kelora -q -j app.log; then
-    echo "✓ No errors found"
+    echo "✓ Ran successfully (messy records, if any, were recovered)"
 else
-    echo "✗ Errors detected"
+    echo "✗ Could not complete: a stage failed, or input was unusable"
     exit 1
 fi
 ```
+
+Note that exit `0` means "the job got done", not "zero errors": a run with a
+few recovered parse errors still succeeds. To fail on *any* imperfection, add
+`--strict`; to fail on explicit data-quality rules, use `--assert`.
 
 **In CI/CD:**
 ```bash

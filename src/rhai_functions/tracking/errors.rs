@@ -5,6 +5,60 @@ use std::path::Path;
 
 use super::{with_internal_tracking, TrackingSnapshot};
 
+/// Per-record script kinds that the resilient exit-code model treats as
+/// recoverable-until-zero-success: `parse`, `filter`, and `exec`. A stage of
+/// one of these kinds that logged at least one error but never once succeeded
+/// is a deterministic operator error (wrong format, field typo, type bug), not
+/// data noise, so it fails the run even without `--strict`.
+const PER_RECORD_KINDS: [&str; 3] = ["parse", "filter", "exec"];
+
+/// Record that a per-record stage (`kind` in [`PER_RECORD_KINDS`]) processed one
+/// event without error. Paired with `__kelora_error_count_{kind}`, this lets the
+/// exit-code model distinguish "errored on some events" (recovered) from "never
+/// once succeeded" (a broken stage → exit 1).
+///
+/// Stored in the always-on internal tracker, so the signal is independent of
+/// `--stats` / `--no-diagnostics` collection, and summed across parallel workers
+/// via the `count` merge op — exactly like the matching error counter.
+pub fn record_stage_success(kind: &str) {
+    with_internal_tracking(|state| {
+        let key = format!("__kelora_success_count_{}", kind);
+        if let Some(existing) = state.get_mut(&key) {
+            // Steady-state path (every event): cheap in-place increment.
+            let current = existing.as_int().unwrap_or(0);
+            *existing = Dynamic::from(current + 1);
+        } else {
+            // Register the merge op so parallel workers' counts are summed.
+            state.insert(format!("__op_{}", key), Dynamic::from("count"));
+            state.insert(key, Dynamic::from(1_i64));
+        }
+    });
+}
+
+fn internal_count(snapshot: &TrackingSnapshot, key: &str) -> i64 {
+    snapshot
+        .internal
+        .get(key)
+        .and_then(|v| v.as_int().ok())
+        .unwrap_or(0)
+}
+
+/// The per-record half of the v2 exit-code model: true when any `parse`,
+/// `filter`, or `exec` stage logged at least one error but never once succeeded.
+///
+/// This is checked in resilient (non-`--strict`) mode. Unlike a global
+/// `errors >= events` ratio it is correct for multi-stage pipelines — a broken
+/// `--exec` behind a selective `--filter` is caught, because each kind tracks
+/// its own successes — and it reads only the always-on tracker, so it holds
+/// under `--no-diagnostics` and in `--metrics`/`--drain`.
+pub fn stage_failed_completely(snapshot: &TrackingSnapshot) -> bool {
+    PER_RECORD_KINDS.iter().any(|kind| {
+        let errors = internal_count(snapshot, &format!("__kelora_error_count_{}", kind));
+        let successes = internal_count(snapshot, &format!("__kelora_success_count_{}", kind));
+        errors > 0 && successes == 0
+    })
+}
+
 /// Format filename for error display based on input context.
 /// Returns line number only for single file/stdin, basename for multiple files
 /// without conflicts, and full path when basenames conflict.
@@ -374,13 +428,17 @@ pub fn extract_error_summary_from_tracking(
                 if total_errors as usize >= stats.events_created {
                     // The scope ("every event") is a factual correctness signal and
                     // is part of the error summary, which surfaces unless --silent.
-                    summary.push_str(", affecting every event");
+                    // A stage that erred on every event never once succeeded, so the
+                    // run already exits non-zero (see stage_failed_completely) — the
+                    // coaching reflects that rather than telling the user to add
+                    // --strict to get a failure they already have.
+                    summary.push_str(", affecting every event (non-zero exit)");
                     // The follow-up coaching is advisory (a typo/script-bug tip), so
                     // it honors --no-diagnostics and the suppression implied by
                     // data-only modes. Re-enable with --diagnostics.
                     if config.is_some_and(|c| !c.processing.suppress_diagnostics) {
                         summary.push_str(
-                            "\n  This usually means a script bug or field-name typo. Use --strict to fail immediately, or --verbose to inspect each error.",
+                            "\n  This usually means a script bug or field-name typo. Use --verbose to inspect each error.",
                         );
                     }
                 } else if pct >= 90.0 {
@@ -454,4 +512,93 @@ pub fn extract_error_summary_from_tracking(
     }
 
     Some(summary)
+}
+
+#[cfg(test)]
+mod stage_outcome_tests {
+    use super::*;
+    use rhai::Dynamic;
+
+    /// Build a snapshot from `(error_count, success_count)` pairs keyed by kind.
+    fn snapshot(kinds: &[(&str, i64, i64)]) -> TrackingSnapshot {
+        let mut internal = std::collections::HashMap::new();
+        for (kind, errors, successes) in kinds {
+            if *errors != 0 {
+                internal.insert(
+                    format!("__kelora_error_count_{}", kind),
+                    Dynamic::from(*errors),
+                );
+            }
+            if *successes != 0 {
+                internal.insert(
+                    format!("__kelora_success_count_{}", kind),
+                    Dynamic::from(*successes),
+                );
+            }
+        }
+        TrackingSnapshot::from_parts(std::collections::HashMap::new(), internal)
+    }
+
+    #[test]
+    fn clean_run_is_not_a_failure() {
+        assert!(!stage_failed_completely(&snapshot(&[("filter", 0, 10)])));
+    }
+
+    #[test]
+    fn partial_errors_are_recovered() {
+        // Errors on some events, but the stage also succeeded on others.
+        assert!(!stage_failed_completely(&snapshot(&[("exec", 3, 7)])));
+        assert!(!stage_failed_completely(&snapshot(&[("parse", 2, 1)])));
+    }
+
+    #[test]
+    fn zero_success_with_errors_fails() {
+        assert!(stage_failed_completely(&snapshot(&[("filter", 5, 0)])));
+        assert!(stage_failed_completely(&snapshot(&[("exec", 1, 0)])));
+        // Every line failed to parse (wrong format / unusable input).
+        assert!(stage_failed_completely(&snapshot(&[("parse", 4, 0)])));
+    }
+
+    #[test]
+    fn broken_exec_behind_selective_filter_is_per_stage() {
+        // The filter succeeded on every event it saw; the exec errored on every
+        // event it saw. A global error/event ratio would miss this — per-kind
+        // success tracking catches it.
+        assert!(stage_failed_completely(&snapshot(&[
+            ("filter", 0, 4),
+            ("exec", 2, 0),
+        ])));
+    }
+
+    #[test]
+    fn no_errors_no_successes_is_not_a_failure() {
+        // Empty input / no events reached the stage: nothing errored, so nothing
+        // failed.
+        assert!(!stage_failed_completely(&snapshot(&[])));
+    }
+
+    #[test]
+    fn record_stage_success_increments_and_registers_merge_op() {
+        // Reset the thread-local internal tracker so the test is deterministic
+        // regardless of what ran before on this worker thread.
+        with_internal_tracking(|state| state.clear());
+        record_stage_success("filter");
+        record_stage_success("filter");
+        with_internal_tracking(|state| {
+            assert_eq!(
+                state
+                    .get("__kelora_success_count_filter")
+                    .and_then(|v| v.as_int().ok()),
+                Some(2)
+            );
+            // The merge op must be registered so parallel workers' counts sum.
+            assert_eq!(
+                state
+                    .get("__op___kelora_success_count_filter")
+                    .and_then(|v| v.clone().into_string().ok())
+                    .as_deref(),
+                Some("count")
+            );
+        });
+    }
 }

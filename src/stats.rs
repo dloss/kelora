@@ -997,9 +997,35 @@ impl ProcessingStats {
         Some(format!("Ragged rows: {}", parts.join(", ")))
     }
 
-    /// Check if any errors occurred during processing
+    /// Check if any errors occurred during processing.
+    ///
+    /// Used for *reporting* (whether to print an error summary), not for the exit
+    /// code — a partial parse failure has errors worth reporting but is recovered.
+    /// For the exit-code decision use [`has_fatal_errors`](Self::has_fatal_errors).
     pub fn has_errors(&self) -> bool {
         self.lines_errors > 0 || self.files_failed_to_open > 0 || self.assertion_failures > 0
+    }
+
+    /// Stats-side inputs to the exit-code decision (the structural and
+    /// explicit-gate axes of the v2 error model). The per-record axis (parse /
+    /// filter / exec "never once succeeded") lives in the always-on tracker via
+    /// [`stage_failed_completely`](crate::rhai_functions::tracking::stage_failed_completely);
+    /// this covers only what the tracker doesn't:
+    ///
+    /// - **Structural** — a named input file that could not be opened is an
+    ///   invocation/environment error, never data noise, so it fails the run in
+    ///   any mode.
+    /// - **Explicit gate** — an `--assert` violation fails the run in any mode.
+    /// - **Strict** — under `--strict`, *any* parse error is fatal (strict also
+    ///   aborts on the first such line before reaching here; this is the
+    ///   belt-and-suspenders end-of-run check). In resilient mode parse errors
+    ///   are recovered unless the parser never once succeeded, which the tracker
+    ///   detects.
+    pub fn has_fatal_errors(&self, strict: bool) -> bool {
+        if self.files_failed_to_open > 0 || self.assertion_failures > 0 {
+            return true;
+        }
+        strict && self.lines_errors > 0
     }
 
     /// Format the lossy-UTF-8 decode warning, if any lines were affected.

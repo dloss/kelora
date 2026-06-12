@@ -111,9 +111,12 @@ fn test_rand_int_invalid_range() {
         input,
     );
 
+    // An invalid constant range errors on every event, so the exec never once
+    // succeeds: a deterministic script error that fails the run (exit 1) even in
+    // resilient mode, while still recovering cleanly rather than aborting.
     assert_eq!(
-        exit_code, 0,
-        "default resilient exec errors should not fail the process"
+        exit_code, 1,
+        "an exec that errors on every event fails the run"
     );
     assert!(
         stderr.contains("Exec errors") || stderr.contains("Rhai error"),

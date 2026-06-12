@@ -13,7 +13,7 @@ use errors::format_error_location;
 pub use errors::has_errors_in_tracking;
 pub use errors::{
     extract_error_summary_from_tracking, format_fatal_error_line,
-    has_errors_in_tracking_with_policy, track_error,
+    has_errors_in_tracking_with_policy, record_stage_success, stage_failed_completely, track_error,
 };
 pub use format::{format_metrics_json, format_metrics_output};
 pub(crate) use merge::op_display_name;

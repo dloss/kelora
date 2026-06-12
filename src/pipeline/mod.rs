@@ -524,6 +524,11 @@ impl Pipeline {
                 // Event was successfully created from chunk
                 crate::stats::stats_add_event_created();
                 ctx.internal_stats.events_created += 1;
+                // Always-on parse-success counter (mirrors track_error("parse")):
+                // a run where the parser never once succeeded but logged errors is
+                // a wrong-format/unusable-input failure, surfaced via the exit code
+                // independently of --stats collection. See stage_failed_completely.
+                crate::rhai_functions::tracking::record_stage_success("parse");
 
                 // Track timestamp for time span statistics
                 if let Some(ts) = e.parsed_ts {

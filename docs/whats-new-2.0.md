@@ -154,16 +154,44 @@ results. Other notes:
 | `track_bottom(key, item, n, value)` | `track_bottom_by(key, item, value, n)` |
 | plain counter via `track_count` | `track_sum("name", 1)` |
 
-### Breaking: resilient-mode runtime errors no longer fail the process
+### Breaking: a simpler, record-aware exit-code model
 
-In default (resilient) mode, recovered `--filter` and `--exec` runtime errors
-are now reported as diagnostics but exit `0`. If you relied on a nonzero exit
-for script errors, opt back in explicitly:
+The exit code now follows one rule:
+
+> **Kelora exits non-zero when it couldn't do the job you asked — not because the data was messy.**
+
+Concretely, *per-record* problems (a line that won't parse, a `--filter`/`--exec`
+that errors on an event) are **recovered**: skipped or rolled back, reported as
+diagnostics, exit `0`. The run fails (exit `1`) only when a whole per-record
+stage **never once succeeded** — a filter/exec that errors on *every* event, or
+an input where *no* line parses — plus the unchanged structural failures (a named
+input that can't be opened) and `--assert` violations. `--strict` still escalates
+any single parse/filter/exec error to an immediate failure.
+
+Two behaviors change from 1.x:
+
+- **A `--filter`/`--exec` that errors on *every* event now exits `1`** (it was
+  `0`). A totally broken filter — e.g. the `status >= 500` typo for
+  `e.status >= 500` — used to return success with empty output, which silently
+  passed monitoring checks. It is now treated as the operator error it is. A
+  filter/exec that errors on only *some* events is still recovered (exit `0`).
+- **A *partial* parse failure now exits `0`** (it was `1`). A few unparseable
+  lines among good ones are data noise for a log tool, so the run succeeds with a
+  diagnostic. Only an input where **no** line parses (wrong format) still exits
+  `1`. Add `--strict` to fail on the first bad line as before.
+
+The signal is computed independently of output collection, so the exit code is
+now consistent across `--metrics`, `--drain`, `-q`, and `--no-diagnostics`.
 
 ```bash
-kelora app.log --strict --exec '…'   # fail the process on runtime errors
+kelora app.log --strict --exec '…'   # fail on the first runtime/parse error
 kelora app.log --assert '…'          # fail on explicit data-quality rules
 ```
+
+**Action:** if a script relied on a nonzero exit for *any* recovered runtime
+error, add `--strict`. If a pipeline relied on exit `1` for *any* parse error,
+add `--strict`. The full model — with a scenario table — is in
+[Error Handling](concepts/error-handling.md#exit-codes-the-model).
 
 ### Breaking: config files are validated strictly
 
@@ -222,8 +250,12 @@ defaults = --wrap
    `track_count("name", value)`, `track_bucket` → `track_count`, and
    `track_top`/`track_bottom` → `track_top_by`/`track_bottom_by` (score before
    `n`). The old forms error with a hint, so a dry run surfaces every site.
-2. **Re-check exit-code expectations.** Scripts that depended on a nonzero exit
-   for `--filter`/`--exec` runtime errors now need `--strict` (or `--assert`).
+2. **Re-check exit-code expectations.** The exit code now tracks "did the job
+   get done", not "were there any errors". A `--filter`/`--exec` that errors on
+   *every* event now exits `1` (was `0`); one that errors on *some* events still
+   exits `0`. A *partial* parse failure now exits `0` (was `1`); only an
+   all-lines-fail (wrong format) still exits `1`. Add `--strict` to fail on the
+   first parse/filter/exec error, or `--assert` for explicit data-quality gates.
 3. **Validate your config.** Run any command with your `.kelora.ini` present;
    a typo'd key or section now errors instead of being ignored.
 4. **Verify `--input-tz` values** are `local`, `UTC`, or valid IANA names.

@@ -387,21 +387,38 @@ fn main() -> Result<()> {
         .as_ref()
         .and_then(|stats| stats.timestamp_override_warning.clone());
 
-    // Determine exit code based on unrecovered processing failures. In default
-    // resilient mode, filter/exec runtime errors are diagnostics, not failures.
+    // Determine the exit code from the two-axis v2 error model:
+    //
+    //   * Structural failures (can't open a named input, begin/end stage error)
+    //     and explicit --assert violations fail the run in any mode. begin/end
+    //     errors already abort as a fatal pipeline error above; the rest come
+    //     from has_fatal_errors.
+    //   * Per-record stages (parse / filter / exec) are recovered by default and
+    //     fail the run only when one of them never once succeeded — a broken
+    //     filter, a transform that errors on everything, or a whole input that
+    //     won't parse. That signal lives in the always-on tracker, so it holds
+    //     even under --no-diagnostics and in --metrics/--drain.
+    //   * --strict escalates: any single parse/filter/exec error is fatal.
+    //
+    // has_errors() (any error worth *reporting*) is deliberately not used here:
+    // a partial parse failure is reported but recovered.
+    let strict = config.processing.strict;
     let mut had_errors = {
         let tracking_errors = tracking_data
             .as_ref()
             .map(|tracking| {
-                crate::rhai_functions::tracking::has_errors_in_tracking_with_policy(
-                    tracking,
-                    config.processing.strict,
-                )
+                if strict {
+                    crate::rhai_functions::tracking::has_errors_in_tracking_with_policy(
+                        tracking, true,
+                    )
+                } else {
+                    crate::rhai_functions::tracking::stage_failed_completely(tracking)
+                }
             })
             .unwrap_or(false);
         let stats_errors = final_stats
             .as_ref()
-            .map(|s| s.has_errors())
+            .map(|s| s.has_fatal_errors(strict))
             .unwrap_or(false);
         tracking_errors || stats_errors
     };
