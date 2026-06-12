@@ -613,7 +613,7 @@ fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
     let levels_present: Vec<&str> = stats.discovered_levels.iter().map(String::as_str).collect();
     let example = levels_present.first().copied().unwrap_or("");
     Some(format!(
-        "0 events matched. -l/--levels {} matched none of the levels present: {}. If those are the same level under a different name (e.g. glog 'E' vs 'ERROR'), match the value directly, e.g. --filter 'e.level == \"{}\"'.",
+        "0 events matched. -l/--levels {} matched none of the levels present: {}. If those are the same level under a different name (e.g. 'E' vs 'ERROR'), match the value directly, e.g. --filter 'e.level == \"{}\"'.",
         config.processing.levels.join(","),
         levels_present.join(","),
         example
