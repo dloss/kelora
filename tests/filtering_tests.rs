@@ -462,6 +462,39 @@ fn test_keys_present_in_some_rows_does_not_hint() {
 }
 
 #[test]
+fn test_keys_naming_exec_created_field_does_not_hint() {
+    // `-k` may legitimately name a field that does not exist in the input but is
+    // synthesized downstream in `--exec`. Checking input keys alone wrongly warns
+    // "never present in the input" on the very field it just printed. The key is
+    // known because it appears in the output.
+    let input = r#"{"ts": "x", "level": "INFO"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e.derived = e.level + \"!\"",
+            "-k",
+            "ts,derived",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "naming an exec-created key should succeed");
+    assert!(
+        stdout.contains("derived="),
+        "the exec-created key should be emitted: {}",
+        stdout
+    );
+    assert!(
+        !stderr.contains("never present"),
+        "stderr must not flag a field produced in --exec: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_keys_typo_hint_suppressed_by_silent() {
     // The hint is a diagnostic; --silent must suppress it like the others.
     let input = r#"{"ts": "x"}"#;
