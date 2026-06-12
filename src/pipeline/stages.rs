@@ -6,6 +6,23 @@ use crate::rhai_functions::file_ops;
 use crate::rhai_functions::{absorb, columns, emit};
 use anyhow::Result;
 
+/// Preserve error-tracking state across the script error boundary.
+///
+/// `track_error` writes counts and samples to the thread-local tracking state,
+/// but the filter/exec error paths skip the thread-local→ctx sync that the
+/// success path performs. Without copying the error keys back, the next event's
+/// `set_thread_tracking_state` reinstalls the stale `ctx.internal_tracker` and
+/// discards the increment — so a filter that fails on every line would report
+/// only the last event's contribution (e.g. "1 total" instead of "1200 total").
+fn persist_error_tracking(ctx: &mut PipelineContext) {
+    let thread_internal = RhaiEngine::get_thread_internal_state();
+    for (key, value) in thread_internal {
+        if key.starts_with("__kelora_error_") || key.starts_with("__op___kelora_error_") {
+            ctx.internal_tracker.insert(key, value);
+        }
+    }
+}
+
 /// Cached event along with whether it satisfied the stage filter.
 struct ContextBufferEntry {
     event: Event,
@@ -131,6 +148,8 @@ impl FilterStage {
                     Some(&ctx.config),
                     None,
                 );
+
+                persist_error_tracking(ctx);
 
                 if e.downcast_ref::<crate::engine::ConfMutationError>()
                     .is_some()
@@ -283,6 +302,8 @@ impl ScriptStage for FilterStage {
                     Some(&ctx.config),
                     None,
                 );
+
+                persist_error_tracking(ctx);
 
                 // New resiliency model: filter errors evaluate to false (Skip)
                 // unless in strict mode, where they still propagate as errors
@@ -487,19 +508,10 @@ impl ScriptStage for ExecStage {
                     None,
                 );
 
-                // Preserve error tracking state across the rollback boundary.
-                // execute_compiled_exec's error path skips the thread-local→ctx
-                // sync, so any track_error writes (which go to thread-local) would
-                // be overwritten on the next event when set_thread_tracking_state
-                // reinstalls ctx.internal_tracker. Manually copy just the
-                // error-tracking keys back so counts and samples accumulate.
-                let thread_internal = crate::engine::RhaiEngine::get_thread_internal_state();
-                for (key, value) in thread_internal {
-                    if key.starts_with("__kelora_error_") || key.starts_with("__op___kelora_error_")
-                    {
-                        ctx.internal_tracker.insert(key, value);
-                    }
-                }
+                // Preserve error tracking state across the rollback boundary
+                // (execute_compiled_exec's error path skips the thread-local→ctx
+                // sync, so counts and samples would otherwise be overwritten).
+                persist_error_tracking(ctx);
 
                 // New resiliency model: atomic rollback - return original event unchanged
                 // unless in strict mode, where errors still propagate

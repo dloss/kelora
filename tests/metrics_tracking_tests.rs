@@ -189,6 +189,37 @@ fn test_metrics_diagnostics_shows_every_event_coaching() {
 }
 
 #[test]
+fn test_filter_errors_count_every_failure_not_just_one() {
+    // Regression: a filter that errored on every line reported "Filter errors:
+    // 1 total" because the filter error path never synced track_error's
+    // thread-local writes back into ctx.internal_tracker -- the next event's
+    // set_thread_tracking_state reinstalled the stale map and clobbered the
+    // increment, so only the final event's contribution survived. The exec path
+    // already synced; the filter path did not.
+    let input = "x=1\nx=2\nx=3\nx=4\nx=5\n";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "logfmt", "--filter", "nonexistent_fn(e.x)"], input);
+
+    // Resilient mode: filter errors evaluate to false, exit stays 0.
+    assert_eq!(
+        exit_code, 0,
+        "recovered filter errors keep exit 0: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("Filter errors: 5 total"),
+        "every failing line should be counted, not deduped to 1: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("affecting every event"),
+        "total-failure scope should be reported: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_metrics_mode_surfaces_parse_errors() {
     // Regression: data-only modes used to swallow parse errors entirely
     // (exit 0, no summary), unlike normal mode which reports them at exit 1.
