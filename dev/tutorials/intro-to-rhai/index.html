@@ -3113,39 +3113,57 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>message   | string | &quot;Application started&quot;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>service   | string | &quot;api&quot;
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>version   | string | &quot;1.2.3&quot;
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>---
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp       | string | &quot;2024-01-15T10:00:10Z&quot;
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>level           | string | &quot;DEBUG&quot;
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>message         | string | &quot;Connection pool initialized&quot;
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>service         | string | &quot;database&quot;
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>max_connections | int    | 50
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>---
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>timestamp      | string | &quot;2024-01-15T10:01:00Z&quot;
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>level          | string | &quot;WARN&quot;
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>message        | string | &quot;High memory usage detected&quot;
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>service        | string | &quot;api&quot;
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>memory_percent | int    | 85
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>meta.parsed_ts | datetime | 2024-01-15T10:00:00Z
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>meta.line_num  | int      | 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>meta.filename  | string   | &quot;examples/basics.jsonl&quot;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>---
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>timestamp       | string | &quot;2024-01-15T10:00:10Z&quot;
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>level           | string | &quot;DEBUG&quot;
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>message         | string | &quot;Connection pool initialized&quot;
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>service         | string | &quot;database&quot;
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>max_connections | int    | 50
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>meta.parsed_ts | datetime | 2024-01-15T10:00:10Z
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>meta.line_num  | int      | 2
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>meta.filename  | string   | &quot;examples/basics.jsonl&quot;
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>---
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp   | string | &quot;2024-01-15T10:01:30Z&quot;
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>level       | string | &quot;ERROR&quot;
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>message     | string | &quot;Query timeout&quot;
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>service     | string | &quot;database&quot;
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>query       | string | &quot;SELECT * FROM users&quot;
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>duration_ms | int    | 5000
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>---
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>timestamp | string | &quot;2024-01-15T10:02:00Z&quot;
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>level     | string | &quot;INFO&quot;
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>message   | string | &quot;Request received&quot;
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>service   | string | &quot;api&quot;
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>method    | string | &quot;GET&quot;
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>path      | string | &quot;/api/users&quot;
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>---
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>timestamp | string | &quot;2024-01-15T10:03:00Z&quot;
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>level     | string | &quot;ERROR&quot;
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>message   | string | &quot;Account locked&quot;
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>service   | string | &quot;auth&quot;
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>username  | string | &quot;admin&quot;
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>attempts  | int    | 5
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp      | string | &quot;2024-01-15T10:01:00Z&quot;
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>level          | string | &quot;WARN&quot;
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>message        | string | &quot;High memory usage detected&quot;
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>service        | string | &quot;api&quot;
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>memory_percent | int    | 85
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>meta.parsed_ts | datetime | 2024-01-15T10:01:00Z
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>meta.line_num  | int      | 3
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>meta.filename  | string   | &quot;examples/basics.jsonl&quot;
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>---
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>timestamp   | string | &quot;2024-01-15T10:01:30Z&quot;
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>level       | string | &quot;ERROR&quot;
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>message     | string | &quot;Query timeout&quot;
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>service     | string | &quot;database&quot;
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>query       | string | &quot;SELECT * FROM users&quot;
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>duration_ms | int    | 5000
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>meta.parsed_ts | datetime | 2024-01-15T10:01:30Z
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>meta.line_num  | int      | 4
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>meta.filename  | string   | &quot;examples/basics.jsonl&quot;
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>---
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>timestamp | string | &quot;2024-01-15T10:02:00Z&quot;
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>level     | string | &quot;INFO&quot;
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>message   | string | &quot;Request received&quot;
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>service   | string | &quot;api&quot;
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>method    | string | &quot;GET&quot;
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>path      | string | &quot;/api/users&quot;
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>meta.parsed_ts | datetime | 2024-01-15T10:02:00Z
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>meta.line_num  | int      | 5
+<a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>meta.filename  | string   | &quot;examples/basics.jsonl&quot;
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>---
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>timestamp | string | &quot;2024-01-15T10:03:00Z&quot;
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>level     | string | &quot;ERROR&quot;
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>message   | string | &quot;Account locked&quot;
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>service   | string | &quot;auth&quot;
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>username  | string | &quot;admin&quot;
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>attempts  | int    | 5
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>meta.parsed_ts | datetime | 2024-01-15T10:03:00Z
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>meta.line_num  | int      | 6
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>meta.filename  | string   | &quot;examples/basics.jsonl&quot;
 </code></pre></div>
 <p><strong>Key insight:</strong> Field names become properties you can access in scripts.</p>
 <hr />
@@ -3353,9 +3371,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>---
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id    | string | &quot;42&quot;
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>count | string | &quot;100&quot;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>---
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>id    | int | 99
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>count | int | 200
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>meta.line_num | int | 1
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>---
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>id    | int | 99
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>count | int | 200
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>meta.line_num | int | 2
 </code></pre></div>
 <p><strong>Output shows:</strong> Field name, type (string/int/etc.), and value. Notice how <code>id</code> and <code>count</code> are strings in the first event but integers in the second - this explains why <code>count &gt; 50</code> would fail on the first event!</p>
 <h3 id="use-verbose-to-see-errors">Use --verbose to See Errors<a class="headerlink" href="#use-verbose-to-see-errors" title="Permanent link">&para;</a></h3>
