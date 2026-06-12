@@ -244,6 +244,12 @@ impl GlobalTracker {
         // reader thread, so merge them here the same way (see #239).
         stats.decode_warnings = crate::stats::decode_warning_count();
         stats.first_decode_warning_sample = crate::stats::decode_warning_sample();
+        // File-open failures happen on reader/decompression threads and land in a
+        // process-wide atomic, not in per-worker stats — so read them here (same
+        // pattern as decode warnings) to keep the structural-failure exit code
+        // correct in parallel mode.
+        stats.files_failed_to_open = crate::stats::files_failed_to_open_count();
+        stats.failed_file_samples = crate::stats::failed_file_samples_snapshot();
         stats
     }
 

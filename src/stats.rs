@@ -375,9 +375,10 @@ pub fn stats_add_csv_row_missing_columns() {
 }
 
 pub fn stats_add_assertion_failure(expression: &str) {
-    if !stats_enabled() {
-        return;
-    }
+    // Not gated by stats collection: an --assert violation is an explicit
+    // data-quality gate that must fail the run (exit 1) in every mode, including
+    // --no-diagnostics and data-only modes. Assertion failures are rare events
+    // (only failures increment), so always counting them costs nothing.
     THREAD_STATS.with(|stats| {
         let mut stats = stats.borrow_mut();
         stats.assertion_failures += 1;
@@ -428,12 +429,26 @@ pub fn get_thread_stats() -> ProcessingStats {
 }
 
 pub fn stats_file_open_failed(path: &str) {
-    if !stats_enabled() {
-        return;
-    }
-    // Use atomic counter since file opening can happen on any thread (e.g., decompression threads)
+    // Not gated by stats collection: a named input that can't be opened is a
+    // structural failure that must fail the run (exit 1) in every mode, including
+    // --no-diagnostics. File opens are rare events, so always counting is free.
+    // Uses an atomic counter since file opening can happen on any thread (e.g.,
+    // decompression threads).
     FILES_FAILED_TO_OPEN.fetch_add(1, Ordering::Relaxed);
     push_failed_file_sample(path);
+}
+
+/// Process-wide count of files that failed to open. Exposed so the parallel
+/// tracker can merge it into final stats: file opens happen on reader/
+/// decompression threads and are recorded in this global atomic, not in the
+/// per-worker stats that `merge_worker_stats` accumulates.
+pub fn files_failed_to_open_count() -> usize {
+    FILES_FAILED_TO_OPEN.load(Ordering::Relaxed)
+}
+
+/// Process-wide samples of files that failed to open (for the parallel path).
+pub fn failed_file_samples_snapshot() -> Vec<String> {
+    failed_file_samples()
 }
 
 pub fn stats_record_timestamp_detection(field_name: &str, _raw_value: &str, parsed: bool) {

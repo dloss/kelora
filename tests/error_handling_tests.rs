@@ -523,3 +523,63 @@ fn test_error_stats_multiline_mode() {
         "Events created: 2 total, 2 output, 0 filtered (0.0%)"
     );
 }
+
+#[test]
+fn test_assert_failure_fails_under_no_diagnostics() {
+    // An --assert violation is a structural/explicit gate: it must fail the run
+    // in every mode. --no-diagnostics turns off stats collection, so the failure
+    // count must be tracked independently of it.
+    let input = r#"{"status": 200}"#;
+
+    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--assert",
+            "e.status >= 500",
+            "-q",
+            "--no-diagnostics",
+        ],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 1,
+        "an --assert violation must fail the run even under --no-diagnostics"
+    );
+}
+
+#[test]
+fn test_missing_input_file_fails_under_no_diagnostics() {
+    // A named input that can't be opened is a structural failure, not data noise.
+    let (_stdout, _stderr, exit_code) = run_kelora(&[
+        "-f",
+        "json",
+        "/nonexistent/kelora_missing_input.json",
+        "-q",
+        "--no-diagnostics",
+    ]);
+
+    assert_eq!(
+        exit_code, 1,
+        "a file that cannot be opened must fail the run even under --no-diagnostics"
+    );
+}
+
+#[test]
+fn test_missing_input_file_fails_in_parallel() {
+    // Regression: parallel get_final_stats did not read the process-wide
+    // file-failure atomic, so a missing input silently exited 0 in --parallel.
+    let (_stdout, _stderr, exit_code) = run_kelora(&[
+        "-f",
+        "json",
+        "--parallel",
+        "/nonexistent/kelora_missing_input.json",
+        "-q",
+    ]);
+
+    assert_eq!(
+        exit_code, 1,
+        "a file that cannot be opened must fail the run in parallel mode too"
+    );
+}
