@@ -666,15 +666,7 @@ impl SpanProcessor {
             if !self.warned_non_additive.insert(key.clone()) {
                 continue;
             }
-            let func = match op.as_str() {
-                "min" => "track_min",
-                "max" => "track_max",
-                "percentiles" => "track_percentiles",
-                "cardinality" => "track_cardinality",
-                "top" => "track_top",
-                "bottom" => "track_bottom",
-                other => other,
-            };
+            let func = crate::rhai_functions::tracking::op_display_name(op);
             let message = crate::config::format_warning_message_auto(&format!(
                 "span.metrics omits '{}' ({}): non-additive aggregators have no per-window \
                  value; iterate span.events to compute per-window min/max/percentiles/etc.",

@@ -628,6 +628,20 @@ impl GlobalTracker {
                     }
                     "unique" => {
                         if let Some(merged) = Self::merge_unique(existing, value) {
+                            // The full set only exists here after merging worker
+                            // partitions, so the size warning must fire at this
+                            // level — per-worker arrays never reach the threshold.
+                            let merged_len = merged
+                                .read_lock::<rhai::Array>()
+                                .map(|arr| arr.len())
+                                .unwrap_or(0);
+                            if let Some(message) =
+                                crate::rhai_functions::tracking::unique_size_warning(
+                                    key, merged_len,
+                                )
+                            {
+                                eprintln!("{}", message);
+                            }
                             target.insert(key.clone(), merged);
                             continue;
                         }

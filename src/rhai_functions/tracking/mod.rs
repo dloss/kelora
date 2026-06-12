@@ -16,6 +16,7 @@ pub use errors::{
     has_errors_in_tracking_with_policy, track_error,
 };
 pub use format::{format_metrics_json, format_metrics_output};
+pub(crate) use merge::op_display_name;
 use merge::{
     deserialize_hll, deserialize_tdigest, ensure_operation_metadata, is_hll_blob, merge_numeric,
     record_skipped_unit,
@@ -24,6 +25,8 @@ use metrics::{
     track_avg_impl, track_cardinality_impl, track_cardinality_with_error_impl, track_max_impl,
     track_min_impl, track_percentiles_impl, track_stats_impl,
 };
+pub use rank::set_tracking_warnings_enabled;
+pub(crate) use rank::unique_size_warning;
 use rank::{
     track_bottom_count_impl, track_bottom_weighted_impl, track_count_impl, track_top_count_impl,
     track_top_weighted_impl, track_unique_f64_impl, track_unique_i64_impl,
@@ -53,13 +56,16 @@ fn categorical_to_string(
     if let Ok(s) = value.clone().into_string() {
         return Ok(Some(s));
     }
-    if value.is_int()
-        || value.is_float()
-        || value.is::<bool>()
-        || value.is::<char>()
-        || value.is::<i32>()
-        || value.is::<f32>()
-    {
+    // Floats use Rust's Display (200.0 → "200"), matching the labels 1.x
+    // track_bucket produced; Rhai's Dynamic Display would render "200.0",
+    // silently changing every float category key across the 2.0 migration.
+    if value.is_float() {
+        return Ok(Some(value.as_float().unwrap_or_default().to_string()));
+    }
+    if let Some(f) = value.clone().try_cast::<f32>() {
+        return Ok(Some(f.to_string()));
+    }
+    if value.is_int() || value.is::<bool>() || value.is::<char>() || value.is::<i32>() {
         return Ok(Some(value.to_string()));
     }
     Err(format!(

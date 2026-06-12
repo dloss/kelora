@@ -13,9 +13,11 @@ pub fn format_metrics_output(
 ) -> String {
     let mut output = String::new();
 
+    // `__op_*` and `__kelora_*` are reserved bookkeeping prefixes; filter both
+    // here to stay symmetric with the JSON formatter below.
     let mut user_values: Vec<_> = metrics
         .iter()
-        .filter(|(k, _)| !k.starts_with("__op_"))
+        .filter(|(k, _)| !k.starts_with("__op_") && !k.starts_with("__kelora_"))
         .collect();
 
     if user_values.is_empty() {

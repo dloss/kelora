@@ -1754,3 +1754,162 @@ fn test_stats_only_with_no_input() {
         stdout
     );
 }
+
+#[test]
+fn test_track_avg_finalized_in_parallel_end() {
+    // Regression: in --parallel, the workers' __op_ metadata must reach the
+    // end stage so `metrics["avg"]` is a number, not a raw {sum, count} map.
+    let input = r#"{"ms":10}
+{"ms":20}
+{"ms":30}
+{"ms":40}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--parallel",
+            "--batch-size",
+            "2",
+            "--exec",
+            "track_avg(\"lat\", e.ms)",
+            "--end",
+            "print(`avg=${metrics[\"lat\"]}`)",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+    assert!(
+        stdout.contains("avg=25"),
+        "parallel --end should see the finalized average, got: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_skip_diagnostics_surface_in_parallel_mode() {
+    // Regression: skipped-unit counters must survive the worker -> global
+    // tracker channel so field-name typos stay detectable under --parallel.
+    let input = r#"{"ms":10}
+{"ms":20}
+{"ms":30}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--parallel",
+            "--batch-size",
+            "1",
+            "--exec",
+            "track_sum(\"bytes\", e.nosuch)",
+            "--metrics",
+            "--diagnostics",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+    assert!(
+        stderr.contains("skipped events with missing values") && stderr.contains("bytes (3)"),
+        "parallel runs should report skipped-unit counts: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_track_count_float_category_labels_match_1x() {
+    // Regression: float categories must stringify like 1.x track_bucket did
+    // (Rust f64 Display: 200.0 -> "200"), not Rhai's Display ("200.0").
+    let input = r#"{"v": 200.0}
+{"v": 0.5}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(\"b\", e.v)",
+            "--metrics=json",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+    assert!(
+        stdout.contains("\"200\"") && !stdout.contains("\"200.0\""),
+        "float category 200.0 should keep the 1.x label \"200\": {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("\"0.5\""),
+        "fractional categories keep their value: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_cross_stage_op_conflict_warns_in_parallel() {
+    // The per-call conflict check cannot see across threads; the merge
+    // boundary must surface a begin-vs-exec metric-name conflict instead of
+    // silently blending the values.
+    let input = r#"{"ms":10}
+{"ms":20}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--parallel",
+            "--batch-size",
+            "1",
+            "--begin",
+            "track_sum(\"x\", 100)",
+            "--exec",
+            "track_min(\"x\", e.ms)",
+            "--metrics",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+    assert!(
+        stderr.contains("different track functions across stages")
+            && stderr.contains("track_sum")
+            && stderr.contains("track_min"),
+        "cross-stage conflicts should be warned about: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_multiline_parallel_avg_finalized() {
+    // Regression: the multiline (event-batch) worker path must ship __op_
+    // metadata too, or avg metrics render as raw maps and merge as "replace".
+    let input = "start one\n  detail a\nstart two\n  detail b\nstart three\n  detail c\n";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "-M",
+            "indent",
+            "--parallel",
+            "--batch-size",
+            "1",
+            "-q",
+            "--exec",
+            "track_avg(\"len\", e.line.len()); track_count(\"kind\", \"joined\")",
+            "--metrics",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        !stdout.contains("sum") && !stdout.contains("count\":"),
+        "avg must be finalized to a number, not a raw map: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("\"joined\": 3") || stdout.contains("joined"),
+        "count categories should merge across event batches: {}",
+        stdout
+    );
+}

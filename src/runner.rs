@@ -250,6 +250,54 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
         }
     }
 
+    // Bring the workers' `__op_{key}` metadata into the end stage's view:
+    // metric finalization (e.g. track_avg's {sum,count} → mean) is keyed on it,
+    // and track_* calls inside --end need it for the one-name-one-function
+    // check. The per-call conflict check cannot see across threads, so a
+    // metric tracked with one function in --begin and another in the parallel
+    // stages is detected here, at the merge boundary, as a warning.
+    let mut op_conflicts: Vec<String> = Vec::new();
+    for (key, value) in parallel_snapshot
+        .internal
+        .iter()
+        .filter(|(k, _)| k.starts_with("__op_"))
+    {
+        if let Some(existing) = ctx.internal_tracker.get(key) {
+            let begin_op = existing.clone().into_string().unwrap_or_default();
+            let worker_op = value.clone().into_string().unwrap_or_default();
+            if begin_op != worker_op {
+                let metric = key.trim_start_matches("__op_");
+                op_conflicts.push(format!(
+                    "'{}' ({} in --begin, {} in the event stages)",
+                    metric,
+                    crate::rhai_functions::tracking::op_display_name(&begin_op),
+                    crate::rhai_functions::tracking::op_display_name(&worker_op),
+                ));
+            }
+        }
+        ctx.internal_tracker.insert(key.clone(), value.clone());
+    }
+    // A cross-stage conflict means the merged value is unreliable - that is a
+    // correctness signal, not an advisory diagnostic, so like the error
+    // summaries it survives data-only modes and only --silent hides it.
+    if !op_conflicts.is_empty() && !config.processing.silent {
+        op_conflicts.sort();
+        let message = crate::config::format_warning_message_auto(&format!(
+            "metric name used by different track functions across stages: {}; the merged value is unreliable — use a distinct name per track function",
+            op_conflicts.join(", ")
+        ));
+        eprintln!("{}", message);
+    }
+    tracking::with_internal_tracking(|internal| {
+        for (key, value) in parallel_snapshot
+            .internal
+            .iter()
+            .filter(|(k, _)| k.starts_with("__op_"))
+        {
+            internal.insert(key.clone(), value.clone());
+        }
+    });
+
     // Execute end stage sequentially with merged state
     file_ops::set_mode(FileOpMode::Sequential);
     if let Err(e) = end_stage.execute(&ctx) {

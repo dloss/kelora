@@ -118,6 +118,9 @@ fn main() -> Result<()> {
     // Set the ordered stages directly
     config.processing.stages = ordered_stages;
     let diagnostics_allowed = !config.processing.silent && !config.processing.suppress_diagnostics;
+    // Runtime warnings emitted from inside tracking functions (e.g. the
+    // track_unique size warning) honor the same gate as other diagnostics.
+    crate::rhai_functions::tracking::set_tracking_warnings_enabled(diagnostics_allowed);
 
     if config.processing.span.is_some()
         && diagnostics_allowed
