@@ -13,6 +13,8 @@ Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com
 
 ## A quick tour
 
+*Want to follow along? These commands use sample logs from the repo — `git clone https://github.com/dloss/kelora` or grab the [`examples/`](https://github.com/dloss/kelora/tree/main/examples) directory.*
+
 **You don't even know what's in the file yet. Start there:**
 
 ```bash
