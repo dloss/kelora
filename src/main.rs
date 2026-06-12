@@ -678,20 +678,27 @@ fn maybe_print_key_typo_hint(
         return;
     }
 
+    // A field is "known" if it appeared in the input OR was produced downstream
+    // (e.g. created in `--exec`). Checking input keys alone wrongly flags a
+    // `-k jwt` that names a field synthesized in the pipeline — Kelora would warn
+    // "never present in the input" on the very line it just printed. The union of
+    // input and output keys never hides a genuine typo: a misspelled field lands
+    // in neither set.
+    let known_keys: BTreeSet<String> = stats
+        .discovered_keys
+        .iter()
+        .chain(stats.discovered_keys_output.iter())
+        .cloned()
+        .collect();
+
     let messages = [
-        key_typo_message(
-            "-k/--keys",
-            "field",
-            "",
-            &config.output.keys,
-            &stats.discovered_keys,
-        ),
+        key_typo_message("-k/--keys", "field", "", &config.output.keys, &known_keys),
         key_typo_message(
             "--exclude-keys",
             "field",
             ", so it was not removed",
             &config.output.exclude_keys,
-            &stats.discovered_keys,
+            &known_keys,
         ),
     ];
 
