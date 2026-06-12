@@ -289,7 +289,7 @@ strings, numbers, and bools (stringified). One metric name = one track function
 (mixing functions on the same name is an error).
 track_avg(name, value)                Track average of numeric values
 track_bottom(name, item [,n])         Track bottom N least frequent items (default n=10)
-track_bottom_by(name, item, score [,n]) Track bottom N items by lowest score (default n=10)
+track_bottom_by(name, item, score [,n]) Track bottom N distinct items by their lowest score (default n=10)
 track_cardinality(name, value [,err]) Estimate unique count using HyperLogLog (~1% error, ~12KB; err range: 0.001-0.26)
 track_count(name, category)           Count occurrences per category: {name: {category: n}}; e.g. track_count("status", e.status)
 track_max(name, value)                Track maximum numeric value
@@ -298,7 +298,7 @@ track_percentiles(name, value [,[p]]) Track streaming percentiles using t-digest
 track_stats(name, value [,[p]])       Track comprehensive stats: min, max, avg, count, sum, percentiles (auto-suffixes)
 track_sum(name, value)                Accumulate numeric values; track_sum(name, 1) is a plain counter
 track_top(name, item [,n])            Track top N most frequent items (default n=10)
-track_top_by(name, item, score [,n])  Track top N items by highest score (default n=10)
+track_top_by(name, item, score [,n])  Track top N distinct items by their highest score (default n=10)
 track_unique(name, value)             Track exact set of distinct values (unbounded memory; warns past 100k values)
 
 FILE OUTPUT (requires --allow-fs-writes):
