@@ -3137,7 +3137,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: line
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 6 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 6 total, 0 output, 6 filtered (100.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 483 lines/s in 12ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 704 lines/s in 8ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: (none found, 6 events) - 0/0 parsed (0.0%); 6 missing. Hint: Try --ts-field or --ts-format.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Keys seen: line
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora hint: 0 events matched. --since/--until is set, but no timestamps were parsed (0/6 events). Set --ts-field/--ts-format; see --help-time.
@@ -3173,6 +3173,7 @@
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,pod,detail
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora hint: 0 events matched. --since/--until is set, but no timestamps were parsed (0/6 events). Set --ts-field/--ts-format; see --help-time.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora hint: -k/--keys names fields never present in the input: timestamp, level, pod, detail. Present fields: line.
 </code></pre></div>
 </div>
 </div>
@@ -3318,6 +3319,7 @@
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span>Hint:<span class="w"> </span>Field<span class="w"> </span>is<span class="w"> </span>missing.<span class="w"> </span>Use<span class="w"> </span>e.has<span class="o">(</span><span class="s2">&quot;field&quot;</span><span class="o">)</span><span class="w"> </span>to<span class="w"> </span>check,<span class="w"> </span>or<span class="w"> </span>e.get_path<span class="o">(</span><span class="s2">&quot;field&quot;</span>,<span class="w"> </span>default<span class="o">)</span><span class="w"> </span>to<span class="w"> </span>provide<span class="w"> </span>a<span class="w"> </span>default
 <a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
 <a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">  </span><span class="o">[</span>+2<span class="w"> </span>more.<span class="w"> </span>Use<span class="w"> </span>-v<span class="w"> </span>to<span class="w"> </span>see<span class="w"> </span>each<span class="w"> </span>error<span class="w"> </span>or<span class="w"> </span>--no-diagnostics<span class="w"> </span>to<span class="w"> </span>suppress<span class="w"> </span>this<span class="w"> </span>summary.<span class="o">]</span><span class="p">;</span><span class="w"> </span>Processing<span class="w"> </span>completed<span class="w"> </span>with<span class="w"> </span><span class="m">3</span><span class="w"> </span>parse<span class="w"> </span>errors,<span class="w"> </span><span class="m">5</span><span class="w"> </span>events<span class="w"> </span>filtered
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>kelora<span class="w"> </span>hint:<span class="w"> </span>-k/--keys<span class="w"> </span>names<span class="w"> </span>fields<span class="w"> </span>never<span class="w"> </span>present<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>input:<span class="w"> </span>timestamp,<span class="w"> </span>error_summary.<span class="w"> </span>Present<span class="w"> </span>fields:<span class="w"> </span>level,<span class="w"> </span>msg,<span class="w"> </span>ts.
 </code></pre></div>
 </div>
 </div>
@@ -3386,10 +3388,8 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth-service&quot; &amp;&amp; e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,message,status
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; service=&#39;auth-service&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  message=&#39;Connection timeout while validating user credentials&#39; status=500
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; service=&#39;auth-service&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  message=&#39;Unauthorized access attempt detected&#39; status=403
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; service=&#39;auth-service&#39; message=&#39;Connection timeout while validating user credentials&#39; status=500
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; service=&#39;auth-service&#39; message=&#39;Unauthorized access attempt detected&#39; status=403
 </code></pre></div>
 </div>
 </div>
@@ -3471,29 +3471,23 @@
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">  &#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2025-01-15T10:23:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; level=&#39;ERROR&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  message=&#39;Connection timeout while validating user credentials&#39; service=&#39;auth-service&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  request_id=&#39;req-e5f6g7h8&#39; user_id=103 response_time=5.123 status=500 client_ip=&#39;10.0.5.23&#39;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  path=&#39;/api/auth/login&#39; method=&#39;POST&#39; error=&#39;ConnectionError: timeout after 5000ms&#39;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  stack_trace=&#39;at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)&#39;
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora warning: span.metrics omits &#39;response_time_min&#39; (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora warning: span.metrics omits &#39;response_time_max&#39; (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>kelora warning: span.metrics omits &#39;response_time_p50&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>kelora warning: span.metrics omits &#39;response_time_p95&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora warning: span.metrics omits &#39;response_time_p99&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>2025-01-15T10:24:00+00:00: 1 errors, avg 5.123s response time
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>2025-01-15T10:25:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; level=&#39;ERROR&#39; message=&#39;Unauthorized access attempt detected&#39;
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  service=&#39;auth-service&#39; request_id=&#39;req-g3h4i5j6&#39; user_id=999 status=403 client_ip=&#39;172.16.88.6&#39;
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  path=&#39;/api/admin/users&#39; method=&#39;DELETE&#39; source_ip=&#39;172.16.88.6&#39;
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>2025-01-15T10:26:00+00:00: 1 errors, avg 0.0s response time
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>2025-01-15T10:27:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>2025-01-15T10:28:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>2025-01-15T10:29:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>2025-01-15T10:30:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>2025-01-15T10:31:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>2025-01-15T10:32:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>kelora hint: Metrics recorded; rerun with -m or --metrics=json to view them.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; level=&#39;ERROR&#39; message=&#39;Connection timeout while validating user credentials&#39; service=&#39;auth-service&#39; request_id=&#39;req-e5f6g7h8&#39; user_id=103 response_time=5.123 status=500 client_ip=&#39;10.0.5.23&#39; path=&#39;/api/auth/login&#39; method=&#39;POST&#39; error=&#39;ConnectionError: timeout after 5000ms&#39; stack_trace=&#39;at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)&#39;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora warning: span.metrics omits &#39;response_time_p50&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora warning: span.metrics omits &#39;response_time_p99&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora warning: span.metrics omits &#39;response_time_min&#39; (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora warning: span.metrics omits &#39;response_time_max&#39; (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora warning: span.metrics omits &#39;response_time_p95&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>2025-01-15T10:24:00+00:00: 1 errors, avg 5.123s response time
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>2025-01-15T10:25:00+00:00: 0 errors, avg 0s response time
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; level=&#39;ERROR&#39; message=&#39;Unauthorized access attempt detected&#39; service=&#39;auth-service&#39; request_id=&#39;req-g3h4i5j6&#39; user_id=999 status=403 client_ip=&#39;172.16.88.6&#39; path=&#39;/api/admin/users&#39; method=&#39;DELETE&#39; source_ip=&#39;172.16.88.6&#39;
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>2025-01-15T10:26:00+00:00: 1 errors, avg 0.0s response time
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>2025-01-15T10:27:00+00:00: 0 errors, avg 0s response time
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>2025-01-15T10:28:00+00:00: 0 errors, avg 0s response time
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>2025-01-15T10:29:00+00:00: 0 errors, avg 0s response time
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>2025-01-15T10:30:00+00:00: 0 errors, avg 0s response time
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>2025-01-15T10:31:00+00:00: 0 errors, avg 0s response time
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>2025-01-15T10:32:00+00:00: 0 errors, avg 0s response time
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>kelora hint: Metrics recorded; rerun with -m or --metrics=json to view them.
 </code></pre></div>
 </div>
 </div>
@@ -3568,8 +3562,8 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; service=&#39;auth-service&#39; response_time=5.123 latency_class=&#39;critical&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:25:01Z&#39; service=&#39;payment-service&#39; response_time=2.567 latency_class=&#39;high&#39;
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2025-01-15T10:29:11Z&#39; service=&#39;analytics&#39; response_time=1.789 latency_class=&#39;moderate&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2025-01-15T10:30:35Z&#39; service=&#39;order-service&#39; response_time=1.123
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  latency_class=&#39;moderate&#39;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2025-01-15T10:30:35Z&#39; service=&#39;order-service&#39; response_time=1.123 latency_class=&#39;moderate&#39;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora hint: -k/--keys names field &#39;latency_class&#39;, which was never present in the input. Run --discover to list fields.
 </code></pre></div>
 </div>
 </div>
@@ -3714,71 +3708,50 @@ alone cannot express.</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  Latency: 0
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  Avg response: 0s
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  P95 response: 0s
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; level=&#39;ERROR&#39;
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  message=&#39;Connection timeout while validating user credentials&#39; service=&#39;auth-service&#39;
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  request_id=&#39;req-e5f6g7h8&#39; user_id=103 response_time=5.123 status=500 client_ip=&#39;10.0.5.23&#39;
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  path=&#39;/api/auth/login&#39; method=&#39;POST&#39; error=&#39;ConnectionError: timeout after 5000ms&#39;
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  stack_trace=&#39;at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)&#39;
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>  issue_type=&#39;error&#39;
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>timestamp=&#39;2025-01-15T10:25:01Z&#39; level=&#39;WARN&#39; message=&#39;Payment processing timeout - retrying&#39;
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  service=&#39;payment-service&#39; request_id=&#39;req-m3n4o5p6&#39; user_id=42 response_time=2.567 status=200
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  client_ip=&#39;192.168.1.100&#39; path=&#39;/api/payments&#39; method=&#39;POST&#39;
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  referer=&#39;https://checkout.example.com&#39; issue_type=&#39;latency&#39;
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>timestamp=&#39;2025-01-15T10:25:18Z&#39; level=&#39;ERROR&#39; severity=&#39;critical&#39;
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  message=&#39;Database connection pool exhausted&#39; service=&#39;database&#39; request_id=&#39;req-q7r8s9t0&#39;
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  response_time=0.001 error=&#39;PoolExhausted: no available connections&#39; issue_type=&#39;error&#39;
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>timestamp=&#39;2025-01-15T10:25:45Z&#39; level=&#39;ERROR&#39; message=&#39;Invalid JWT token provided&#39;
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>  service=&#39;api-gateway&#39; request_id=&#39;req-u1v2w3x4&#39; status=401 client_ip=&#39;198.51.100.77&#39;
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  path=&#39;/api/admin&#39; method=&#39;GET&#39;
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>  token=&#39;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzA1MzE3NjAwfQ.dGVzdC1zaWduYXR1cmU&#39;
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>  issue_type=&#39;error&#39;
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>kelora warning: span.metrics omits &#39;service_issue&#39; (track_top): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>kelora warning: span.metrics omits &#39;response_time_max&#39; (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>kelora warning: span.metrics omits &#39;response_time_p99&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>kelora warning: span.metrics omits &#39;response_time_min&#39; (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>kelora warning: span.metrics omits &#39;response_time_p50&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>kelora warning: span.metrics omits &#39;response_time_p95&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>\n=== Window: 2025-01-15T10:24:00+00:00 ===$()
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>  Total issues: 4
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>  Errors: 0
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>  Latency: 0
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>  Avg response: 1.9227500000000002s
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>  P95 response: 0s
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; level=&#39;ERROR&#39; message=&#39;Unauthorized access attempt detected&#39;
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>  service=&#39;auth-service&#39; request_id=&#39;req-g3h4i5j6&#39; user_id=999 status=403 client_ip=&#39;172.16.88.6&#39;
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>  path=&#39;/api/admin/users&#39; method=&#39;DELETE&#39; source_ip=&#39;172.16.88.6&#39; issue_type=&#39;error&#39;
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>timestamp=&#39;2025-01-15T10:27:26Z&#39; level=&#39;ERROR&#39; message=&#39;File upload failed - size limit exceeded&#39;
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>  service=&#39;storage&#39; request_id=&#39;req-o1p2q3r4&#39; user_id=156 status=413 client_ip=&#39;198.51.100.88&#39;
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>  path=&#39;/api/upload&#39; method=&#39;POST&#39; error=&#39;FileSizeError: maximum size 10MB exceeded&#39;
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>  issue_type=&#39;error&#39;
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>\n=== Window: 2025-01-15T10:26:00+00:00 ===$()
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>  Total issues: 2
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; level=&#39;ERROR&#39; message=&#39;Connection timeout while validating user credentials&#39; service=&#39;auth-service&#39; request_id=&#39;req-e5f6g7h8&#39; user_id=103 response_time=5.123 status=500 client_ip=&#39;10.0.5.23&#39; path=&#39;/api/auth/login&#39; method=&#39;POST&#39; error=&#39;ConnectionError: timeout after 5000ms&#39; stack_trace=&#39;at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2025-01-15T10:25:01Z&#39; level=&#39;WARN&#39; message=&#39;Payment processing timeout - retrying&#39; service=&#39;payment-service&#39; request_id=&#39;req-m3n4o5p6&#39; user_id=42 response_time=2.567 status=200 client_ip=&#39;192.168.1.100&#39; path=&#39;/api/payments&#39; method=&#39;POST&#39; referer=&#39;https://checkout.example.com&#39; issue_type=&#39;latency&#39;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2025-01-15T10:25:18Z&#39; level=&#39;ERROR&#39; severity=&#39;critical&#39; message=&#39;Database connection pool exhausted&#39; service=&#39;database&#39; request_id=&#39;req-q7r8s9t0&#39; response_time=0.001 error=&#39;PoolExhausted: no available connections&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2025-01-15T10:25:45Z&#39; level=&#39;ERROR&#39; message=&#39;Invalid JWT token provided&#39; service=&#39;api-gateway&#39; request_id=&#39;req-u1v2w3x4&#39; status=401 client_ip=&#39;198.51.100.77&#39; path=&#39;/api/admin&#39; method=&#39;GET&#39; token=&#39;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzA1MzE3NjAwfQ.dGVzdC1zaWduYXR1cmU&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora warning: span.metrics omits &#39;response_time_p50&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>kelora warning: span.metrics omits &#39;service_issue&#39; (track_top): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>kelora warning: span.metrics omits &#39;response_time_max&#39; (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>kelora warning: span.metrics omits &#39;response_time_p95&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>kelora warning: span.metrics omits &#39;response_time_min&#39; (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>kelora warning: span.metrics omits &#39;response_time_p99&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>\n=== Window: 2025-01-15T10:24:00+00:00 ===$()
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  Total issues: 4
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  Errors: 0
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  Latency: 0
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>  Avg response: 1.9227500000000002s
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  P95 response: 0s
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; level=&#39;ERROR&#39; message=&#39;Unauthorized access attempt detected&#39; service=&#39;auth-service&#39; request_id=&#39;req-g3h4i5j6&#39; user_id=999 status=403 client_ip=&#39;172.16.88.6&#39; path=&#39;/api/admin/users&#39; method=&#39;DELETE&#39; source_ip=&#39;172.16.88.6&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>timestamp=&#39;2025-01-15T10:27:26Z&#39; level=&#39;ERROR&#39; message=&#39;File upload failed - size limit exceeded&#39; service=&#39;storage&#39; request_id=&#39;req-o1p2q3r4&#39; user_id=156 status=413 client_ip=&#39;198.51.100.88&#39; path=&#39;/api/upload&#39; method=&#39;POST&#39; error=&#39;FileSizeError: maximum size 10MB exceeded&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>\n=== Window: 2025-01-15T10:26:00+00:00 ===$()
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>  Total issues: 2
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>  Errors: 0
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>  Latency: 0
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>  Avg response: 0.0s
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>  P95 response: 0s
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>timestamp=&#39;2025-01-15T10:28:50Z&#39; level=&#39;ERROR&#39; message=&#39;Endpoint not found&#39; service=&#39;api-gateway&#39; request_id=&#39;req-e7f8g9h0&#39; status=404 client_ip=&#39;172.16.88.7&#39; path=&#39;/wp-admin&#39; method=&#39;GET&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>\n=== Window: 2025-01-15T10:28:00+00:00 ===$()
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>  Total issues: 1
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>  Errors: 0
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>  Latency: 0
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>  Avg response: 0.0s
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>  P95 response: 0s
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>\n=== Window: 2025-01-15T10:30:00+00:00 ===$()
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>  Total issues: 0
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>  Errors: 0
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>  Latency: 0
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>  Avg response: 0.0s
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>  P95 response: 0s
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>\n=== Window: 2025-01-15T10:32:00+00:00 ===$()
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>  Total issues: 0
 <a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>  Errors: 0
 <a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>  Latency: 0
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>  Avg response: 0.0s
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>  Avg response: 0s
 <a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>  P95 response: 0s
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>timestamp=&#39;2025-01-15T10:28:50Z&#39; level=&#39;ERROR&#39; message=&#39;Endpoint not found&#39; service=&#39;api-gateway&#39;
-<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>  request_id=&#39;req-e7f8g9h0&#39; status=404 client_ip=&#39;172.16.88.7&#39; path=&#39;/wp-admin&#39; method=&#39;GET&#39;
-<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>  issue_type=&#39;error&#39;
-<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>\n=== Window: 2025-01-15T10:28:00+00:00 ===$()
-<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a>  Total issues: 1
-<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a>  Errors: 0
-<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a>  Latency: 0
-<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>  Avg response: 0.0s
-<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a>  P95 response: 0s
-<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a>\n=== Window: 2025-01-15T10:30:00+00:00 ===$()
-<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a>  Total issues: 0
-<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>  Errors: 0
-<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a>  Latency: 0
-<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a>  Avg response: 0.0s
-<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a>  P95 response: 0s
-<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>\n=== Window: 2025-01-15T10:32:00+00:00 ===$()
-<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a>  Total issues: 0
-<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a>  Errors: 0
-<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>  Latency: 0
-<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>  Avg response: 0s
-<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>  P95 response: 0s
-<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a>kelora hint: Metrics recorded; rerun with -m or --metrics=json to view them.
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>kelora hint: Metrics recorded; rerun with -m or --metrics=json to view them.
 </code></pre></div>
 </div>
 </div>

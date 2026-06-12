@@ -1966,6 +1966,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#i-fed-kelora-json-why-isnt-the-output-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I fed Kelora JSON — why isn't the output JSON?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-do-i-control-output-stats-and-diagnostics" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2469,6 +2480,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#i-fed-kelora-json-why-isnt-the-output-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I fed Kelora JSON — why isn't the output JSON?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-do-i-control-output-stats-and-diagnostics" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2618,6 +2640,9 @@
 <p>Enable multiline with <code>-M</code> and pick a strategy. See <a href="../concepts/multiline-strategies/">Multiline Strategies</a> and run <code>kelora --help-multiline</code> for detailed options.</p>
 <h2 id="can-kelora-read-compressed-files-or-archives">Can Kelora read compressed files or archives?<a class="headerlink" href="#can-kelora-read-compressed-files-or-archives" title="Permanent link">&para;</a></h2>
 <p>Gzip files (<code>.gz</code>) are handled automatically. For archives and batch processing patterns, see <a href="../how-to/batch-process-archives/">Process Archives at Scale</a>.</p>
+<h2 id="i-fed-kelora-json-why-isnt-the-output-json">I fed Kelora JSON — why isn't the output JSON?<a class="headerlink" href="#i-fed-kelora-json-why-isnt-the-output-json" title="Permanent link">&para;</a></h2>
+<p>By default Kelora reformats every event into a readable, colored <code>key=value</code> view, regardless of the input format. To keep JSON, use <code>-J</code> (or <code>-F json</code>); for other formats use <code>-F logfmt</code>, <code>-F csv</code>, <code>-F tsv</code>, etc. See <a href="../reference/formats/">Output Formats</a> and the <a href="../reference/cli-reference/">CLI Reference</a>.</p>
+<p>In a terminal, wide events wrap onto indented continuation lines. When the output is piped or redirected, wrapping is off by default, so each event stays on one line and <code>wc -l</code> counts events correctly. Use <code>--wrap</code> to force wrapping through a pipe, or <code>--no-wrap</code> to disable it everywhere.</p>
 <h2 id="how-do-i-control-output-stats-and-diagnostics">How do I control output, stats, and diagnostics?<a class="headerlink" href="#how-do-i-control-output-stats-and-diagnostics" title="Permanent link">&para;</a></h2>
 <p>Use <code>-F</code> to pick an output format, <code>-q/--quiet</code> to suppress events, and <code>-s/--stats</code> or <code>-m/--metrics</code> for summaries. For zero terminal output with metrics files still written, use <code>--silent</code>. See the <a href="../reference/cli-reference/">CLI Reference</a>.</p>
 <h2 id="how-do-i-make-kelora-faster-on-large-files">How do I make Kelora faster on large files?<a class="headerlink" href="#how-do-i-make-kelora-faster-on-large-files" title="Permanent link">&para;</a></h2>

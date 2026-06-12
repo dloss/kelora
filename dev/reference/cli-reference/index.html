@@ -6899,12 +6899,20 @@ piped/redirected output stays clean.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--expand-nested<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="word-wrapping">Word Wrapping<a class="headerlink" href="#word-wrapping" title="Permanent link">&para;</a></h3>
+<p>Word-wrapping applies only to the default output format. By default it is
+<strong>auto</strong>: wide events wrap onto indented continuation lines when stdout is a
+terminal, but piped or redirected output stays one line per event (so <code>wc -l</code>
+and other line-oriented tools count events correctly).</p>
 <h4 id="-wrap"><code>--wrap</code><a class="headerlink" href="#-wrap" title="Permanent link">&para;</a></h4>
-<p>Enable word-wrapping (default: on).</p>
+<p>Always wrap, even when piped or redirected.</p>
 <h4 id="-no-wrap"><code>--no-wrap</code><a class="headerlink" href="#-no-wrap" title="Permanent link">&para;</a></h4>
-<p>Disable word-wrapping (overrides <code>--wrap</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--no-wrap<span class="w"> </span>app.log
+<p>Never wrap; keep each event on a single line.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>less<span class="w">        </span><span class="c1"># wraps in the terminal? no — piped, so single-line</span>
+<a id="__codelineno-64-2" name="__codelineno-64-2" href="#__codelineno-64-2"></a>kelora<span class="w"> </span>--wrap<span class="w"> </span>app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>less<span class="w"> </span><span class="c1"># force wrapping into the pager</span>
+<a id="__codelineno-64-3" name="__codelineno-64-3" href="#__codelineno-64-3"></a>kelora<span class="w"> </span>--no-wrap<span class="w"> </span>app.log<span class="w">     </span><span class="c1"># never wrap, even in a terminal</span>
 </code></pre></div>
+<p>To make wrapping-through-pipes your default, add <code>--wrap</code> to the <code>defaults</code>
+line in your <code>.kelora.ini</code>.</p>
 <h3 id="timestamp-display">Timestamp Display<a class="headerlink" href="#timestamp-display" title="Permanent link">&para;</a></h3>
 <h4 id="-z-show-ts-local"><code>-z, --show-ts-local</code><a class="headerlink" href="#-z-show-ts-local" title="Permanent link">&para;</a></h4>
 <p>Display timestamps as local RFC3339 (ISO 8601 compatible). Display-only - only affects default formatter output.</p>
