@@ -631,6 +631,22 @@ pub(crate) fn metric_operation(ops: &HashMap<String, Dynamic>, key: &str) -> Opt
         .and_then(|v| v.clone().into_string().ok())
 }
 
+/// Reserved user-state key prefix recording the requested N for a ranked
+/// metric (track_top / track_bottom / track_top_by / track_bottom_by). Stored
+/// in user tracking so it survives parallel worker merges (which propagate the
+/// full user map plus `__op_` metadata, but not arbitrary internal keys), and
+/// filtered from all metric output by its `__kelora_` prefix.
+pub(crate) const TOPN_PREFIX: &str = "__kelora_topn_";
+
+/// Requested N for a ranked metric, read from the user tracking map.
+pub(crate) fn metric_top_n(metrics: &HashMap<String, Dynamic>, key: &str) -> Option<usize> {
+    metrics
+        .get(&format!("{}{}", TOPN_PREFIX, key))
+        .and_then(|v| v.as_int().ok())
+        .filter(|n| *n >= 1)
+        .map(|n| n as usize)
+}
+
 /// Build a finalized `rhai::Map` suitable for exposing as the `metrics`
 /// global inside `--end` / `--span-close` / other post-processing stages.
 /// Internal bookkeeping keys (`__op_*`, `__kelora_stats_*`, `__kelora_error_*`,
@@ -646,14 +662,24 @@ pub fn finalize_metrics_for_script(
             || key.starts_with("__kelora_stats_")
             || key.starts_with("__kelora_error_")
             || key.starts_with("__kelora_track_")
+            || key.starts_with(TOPN_PREFIX)
         {
             continue;
         }
         let operation = metric_operation(ops, key);
-        out.insert(
-            key.clone().into(),
-            finalize_metric_value(key, value, operation.as_deref()),
-        );
+        // Ranked metrics retain every distinct item; sort and truncate to N
+        // here so scripts see the same top/bottom list the CLI prints.
+        let finalized = match operation.as_deref().and_then(format::ranked_op_params) {
+            Some((is_top, field)) => match value.clone().into_array() {
+                Ok(arr) => {
+                    let n = metric_top_n(metrics, key).unwrap_or(arr.len());
+                    Dynamic::from(format::rank_array(&arr, is_top, field, n))
+                }
+                Err(_) => value.clone(),
+            },
+            None => finalize_metric_value(key, value, operation.as_deref()),
+        };
+        out.insert(key.clone().into(), finalized);
     }
     out
 }
@@ -680,6 +706,16 @@ mod tests {
             snapshot.user.clear();
             snapshot.internal.clear();
         });
+    }
+
+    // Ranked metrics keep every distinct item in raw state and only sort /
+    // truncate to N at finalize time, so tests assert against the finalized
+    // (user-visible) array rather than the raw tally.
+    fn finalized_ranked_array(key: &str) -> rhai::Array {
+        let metrics = get_thread_tracking_state();
+        let ops = get_thread_internal_state();
+        let finalized = finalize_metrics_for_script(&metrics, &ops);
+        finalized.get(key).unwrap().clone().into_array().unwrap()
     }
 
     #[test]
@@ -1082,6 +1118,39 @@ mod tests {
     }
 
     #[test]
+    fn test_track_top_late_heavy_hitter() {
+        // Regression: a heavy hitter first seen after the N slots are already
+        // filled must still win. The old code truncated to N every event, so
+        // "zzz" (alphabetically last, re-entering at count 1 between fresh
+        // singletons) was evicted before it could accumulate.
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_top("m", "aaa", 3)"#).unwrap();
+        engine.eval::<()>(r#"track_top("m", "bbb", 3)"#).unwrap();
+        engine.eval::<()>(r#"track_top("m", "ccc", 3)"#).unwrap();
+        for i in 0..100 {
+            engine.eval::<()>(r#"track_top("m", "zzz", 3)"#).unwrap();
+            engine
+                .eval::<()>(&format!(r#"track_top("m", "filler{}", 3)"#, i))
+                .unwrap();
+        }
+
+        let result = finalized_ranked_array("m");
+        assert_eq!(result.len(), 3);
+        let first = result[0].clone().try_cast::<rhai::Map>().unwrap();
+        assert_eq!(
+            first.get("key").unwrap().clone().into_string().unwrap(),
+            "zzz"
+        );
+        assert_eq!(first.get("count").unwrap().as_int().unwrap(), 100);
+
+        clear_tracking_state();
+    }
+
+    #[test]
     fn test_track_top_count_mode() {
         clear_tracking_state();
 
@@ -1105,8 +1174,7 @@ mod tests {
             .eval::<()>(r#"track_top("test", "apple", 3)"#)
             .unwrap();
 
-        let state = get_thread_tracking_state();
-        let result = state.get("test").unwrap().clone().into_array().unwrap();
+        let result = finalized_ranked_array("test");
 
         assert_eq!(result.len(), 3);
 
@@ -1152,8 +1220,7 @@ mod tests {
             .eval::<()>(r#"track_top("test", "item5", 2)"#)
             .unwrap();
 
-        let state = get_thread_tracking_state();
-        let result = state.get("test").unwrap().clone().into_array().unwrap();
+        let result = finalized_ranked_array("test");
 
         // Should only have top 2
         assert_eq!(result.len(), 2);
@@ -1190,8 +1257,7 @@ mod tests {
             .eval::<()>(r#"track_top_by("slow", "/api/orders", 75, 2)"#)
             .unwrap();
 
-        let state = get_thread_tracking_state();
-        let result = state.get("slow").unwrap().clone().into_array().unwrap();
+        let result = finalized_ranked_array("slow");
 
         assert_eq!(result.len(), 2);
 
@@ -1245,8 +1311,7 @@ mod tests {
             .eval::<()>(r#"track_bottom("test", "date", 3)"#)
             .unwrap();
 
-        let state = get_thread_tracking_state();
-        let result = state.get("test").unwrap().clone().into_array().unwrap();
+        let result = finalized_ranked_array("test");
 
         // Should have bottom 3 (by count ascending, then alphabetically)
         assert_eq!(result.len(), 3);
@@ -1298,8 +1363,7 @@ mod tests {
             .eval::<()>(r#"track_bottom_by("fast", "/api/orders", 75.0, 2)"#)
             .unwrap();
 
-        let state = get_thread_tracking_state();
-        let result = state.get("fast").unwrap().clone().into_array().unwrap();
+        let result = finalized_ranked_array("fast");
 
         assert_eq!(result.len(), 2);
 
@@ -1439,8 +1503,7 @@ mod tests {
             .eval::<()>(r#"track_top("test", "mango", 5)"#)
             .unwrap();
 
-        let state = get_thread_tracking_state();
-        let result = state.get("test").unwrap().clone().into_array().unwrap();
+        let result = finalized_ranked_array("test");
 
         // All have same count, so should be sorted alphabetically
         let first = result[0].clone().try_cast::<rhai::Map>().unwrap();
@@ -2287,8 +2350,7 @@ mod tests {
                 .unwrap();
         }
 
-        let state = get_thread_tracking_state();
-        let result = state.get("items").unwrap().clone().into_array().unwrap();
+        let result = finalized_ranked_array("items");
         assert_eq!(result.len(), 10);
 
         clear_tracking_state();
@@ -2305,8 +2367,7 @@ mod tests {
         engine.eval::<()>(r#"track_top("status", 503, 5)"#).unwrap();
         engine.eval::<()>(r#"track_top("flags", true, 5)"#).unwrap();
 
-        let state = get_thread_tracking_state();
-        let status = state.get("status").unwrap().clone().into_array().unwrap();
+        let status = finalized_ranked_array("status");
         let first = status[0].clone().try_cast::<rhai::Map>().unwrap();
         assert_eq!(
             first.get("key").unwrap().clone().into_string().unwrap(),
@@ -2314,7 +2375,7 @@ mod tests {
         );
         assert_eq!(first.get("count").unwrap().as_int().unwrap(), 2);
 
-        let flags = state.get("flags").unwrap().clone().into_array().unwrap();
+        let flags = finalized_ranked_array("flags");
         let first = flags[0].clone().try_cast::<rhai::Map>().unwrap();
         assert_eq!(
             first.get("key").unwrap().clone().into_string().unwrap(),

@@ -306,9 +306,6 @@ impl GlobalTracker {
         new_arr: rhai::Array,
         is_top: bool,
     ) -> rhai::Array {
-        // Capture N from original array sizes before consuming arrays
-        let n = existing_arr.len().max(new_arr.len());
-
         // Merge arrays from both workers
         let mut merged_map: std::collections::HashMap<String, f64> =
             std::collections::HashMap::new();
@@ -397,10 +394,9 @@ impl GlobalTracker {
             });
         }
 
-        // Trim to top/bottom N
-        if items.len() > n {
-            items.truncate(n);
-        }
+        // Retain every distinct item: ranking and truncation to N happen at
+        // format time. Truncating here would drop a heavy hitter that one
+        // worker only saw a few times but which is frequent across the corpus.
 
         // Convert back to rhai array of maps
         items

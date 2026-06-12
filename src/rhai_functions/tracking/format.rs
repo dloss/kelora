@@ -1,7 +1,83 @@
 use super::merge::{deserialize_hll, deserialize_tdigest, is_hll_blob};
-use super::metric_operation;
+use super::{metric_operation, metric_top_n};
 use rhai::Dynamic;
 use std::collections::{HashMap, HashSet};
+
+/// Map an internal ranked operation id to `(is_top, field)`, where `field` is
+/// the per-entry map key holding the rank value. Returns `None` for non-ranked
+/// operations.
+pub(crate) fn ranked_op_params(op: &str) -> Option<(bool, &'static str)> {
+    match op {
+        "top" => Some((true, "count")),
+        "bottom" => Some((false, "count")),
+        "top_by" => Some((true, "value")),
+        "bottom_by" => Some((false, "value")),
+        _ => None,
+    }
+}
+
+/// Sort a retained ranked array (one `{key, count|value}` map per distinct
+/// item) into rank order and truncate to `n`. `is_top` selects descending
+/// (top) vs ascending (bottom); ties break by key ascending, matching the
+/// legacy per-event ordering. This is where track_top/track_bottom and their
+/// `_by` variants pick the actual top/bottom N — the per-event path keeps every
+/// item so late-arriving heavy hitters are no longer dropped.
+pub(crate) fn rank_array(arr: &[Dynamic], is_top: bool, field: &str, n: usize) -> rhai::Array {
+    let mut items: Vec<(String, f64)> = Vec::with_capacity(arr.len());
+    for elem in arr {
+        if let Some(map) = elem.clone().try_cast::<rhai::Map>() {
+            if let (Some(k), Some(v)) = (map.get("key"), map.get(field)) {
+                let key = k.clone().into_string().unwrap_or_default();
+                let num = if field == "count" {
+                    v.as_int().unwrap_or(0) as f64
+                } else {
+                    v.as_float().unwrap_or(0.0)
+                };
+                items.push((key, num));
+            }
+        }
+    }
+
+    items.sort_by(|a, b| {
+        let primary = if is_top {
+            b.1.partial_cmp(&a.1)
+        } else {
+            a.1.partial_cmp(&b.1)
+        }
+        .unwrap_or(std::cmp::Ordering::Equal);
+        primary.then_with(|| a.0.cmp(&b.0))
+    });
+    if items.len() > n {
+        items.truncate(n);
+    }
+
+    items
+        .into_iter()
+        .map(|(k, num)| {
+            let mut map = rhai::Map::new();
+            map.insert("key".into(), Dynamic::from(k));
+            if field == "count" {
+                map.insert("count".into(), Dynamic::from(num as i64));
+            } else {
+                map.insert("value".into(), Dynamic::from(num));
+            }
+            Dynamic::from(map)
+        })
+        .collect()
+}
+
+/// Shape-based detection of a ranked array, used as a fallback when the
+/// operation metadata is unavailable (the array is then shown as stored).
+fn detect_ranked_field(arr: &[Dynamic]) -> Option<&'static str> {
+    let first = arr.first()?.clone().try_cast::<rhai::Map>()?;
+    if first.contains_key("key") && first.contains_key("count") {
+        Some("count")
+    } else if first.contains_key("key") && first.contains_key("value") {
+        Some("value")
+    } else {
+        None
+    }
+}
 
 /// Format metrics for CLI output according to specification.
 /// `ops` holds the per-key `__op_{key}` operation metadata (the internal
@@ -29,29 +105,25 @@ pub fn format_metrics_output(
     for (key, value) in user_values {
         if value.is::<rhai::Array>() {
             if let Ok(arr) = value.clone().into_array() {
-                let len = arr.len();
-                let is_top_bottom = if !arr.is_empty() {
-                    if let Some(first_map) = arr[0].clone().try_cast::<rhai::Map>() {
-                        first_map.contains_key("key")
-                            && (first_map.contains_key("count") || first_map.contains_key("value"))
-                    } else {
-                        false
+                // Ranked metrics keep every distinct item; rank and truncate to
+                // the requested N here at format time.
+                let (arr, is_top_bottom, ranked_field) = match metric_operation(ops, key)
+                    .as_deref()
+                    .and_then(ranked_op_params)
+                {
+                    Some((is_top, field)) => {
+                        let n = metric_top_n(metrics, key).unwrap_or(arr.len());
+                        (rank_array(&arr, is_top, field, n), true, Some(field))
                     }
-                } else {
-                    false
+                    None => {
+                        let field = detect_ranked_field(&arr);
+                        (arr, field.is_some(), field)
+                    }
                 };
+                let len = arr.len();
 
                 if is_top_bottom {
-                    let field_name = if let Some(first_map) = arr[0].clone().try_cast::<rhai::Map>()
-                    {
-                        if first_map.contains_key("count") {
-                            "count"
-                        } else {
-                            "value"
-                        }
-                    } else {
-                        "count"
-                    };
+                    let field_name = ranked_field.unwrap_or("count");
 
                     if metrics_level >= 2 || len <= 10 {
                         output.push_str(&format!("{:<12} ({} items):\n", key, len));
@@ -392,6 +464,19 @@ pub fn format_metrics_json(
                         continue;
                     }
                 }
+            }
+        }
+
+        // Ranked metrics retain every distinct item; rank and truncate to N.
+        if let Some((is_top, field)) = metric_operation(ops, key)
+            .as_deref()
+            .and_then(ranked_op_params)
+        {
+            if let Ok(arr) = value.clone().into_array() {
+                let n = metric_top_n(metrics, key).unwrap_or(arr.len());
+                let ranked = rank_array(&arr, is_top, field, n);
+                json_obj.insert(key.clone(), dynamic_to_json(Dynamic::from(ranked)));
+                continue;
             }
         }
 
