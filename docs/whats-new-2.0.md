@@ -162,9 +162,11 @@ The exit code now follows one rule:
 
 The model turns on **gates vs. transforms**:
 
-- **Gates — parse and filter — must work.** If a gate never once succeeds (no
-  line parses, or a filter errors on *every* event and so selects nothing), the
-  output is empty or meaningless, so the run exits `1`.
+- **Gates — parse and each `--filter` stage — must work.** If a gate never once
+  succeeds (no line parses, or a filter errors on *every* event it sees and so
+  selects nothing), the output is empty or meaningless, so the run exits `1`.
+  Each filter is gated individually, so a working first filter cannot mask a
+  completely broken second one.
 - **Transforms — exec — are best-effort.** A failing `--exec` rolls back to the
   original event and emits it, so exec errors are reported but never fail the run
   on their own. Use `--strict`/`--assert` to enforce.
@@ -175,7 +177,7 @@ parse/filter/exec error.
 
 Two behaviors change from 1.x:
 
-- **A `--filter` that errors on *every* event now exits `1`** (it was `0`). A
+- **A `--filter` that errors on *every* event it sees now exits `1`** (it was `0`). A
   totally broken filter — e.g. the `status >= 500` typo for `e.status >= 500` —
   used to return success with empty output, which silently passed monitoring
   checks ([#241](https://github.com/dloss/kelora/issues/241)). It's now treated

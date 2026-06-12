@@ -1865,7 +1865,6 @@ impl RhaiEngine {
         if let Some(native) = &compiled.native_predicate {
             Self::set_thread_tracking_state(metrics, internal);
             if let Some(result) = native.evaluate(event) {
-                rhai_functions::tracking::record_stage_success("filter");
                 *metrics = Self::get_thread_tracking_state();
                 *internal = Self::get_thread_internal_state();
                 return Ok(result);
@@ -1941,7 +1940,6 @@ impl RhaiEngine {
             }
         }
 
-        rhai_functions::tracking::record_stage_success("filter");
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(result)
@@ -2024,8 +2022,8 @@ impl RhaiEngine {
         if compiled.mutates_event {
             self.update_event_from_scope(event, &scope);
         }
-        // No exec success counter: exec is best-effort, so it never fails the run
-        // on its own (only --strict does). See PER_RECORD_KINDS.
+        // No exec gate counter: exec is best-effort, so it never fails the run
+        // on its own (only --strict does). See the gate notes in tracking::errors.
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(())
@@ -2263,7 +2261,6 @@ impl RhaiEngine {
             }
         }
 
-        rhai_functions::tracking::record_stage_success("filter");
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(result)
@@ -2353,7 +2350,7 @@ impl RhaiEngine {
         if compiled.mutates_event {
             self.update_event_from_scope(event, &scope);
         }
-        // No exec success counter: exec is best-effort (see PER_RECORD_KINDS).
+        // No exec gate counter: exec is best-effort (see tracking::errors gate notes).
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(())

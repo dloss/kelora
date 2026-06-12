@@ -301,12 +301,13 @@ That splits cleanly into three tiers:
 
 The key distinction is **gates vs. transforms**:
 
-- **Gates — parse and filter — must work.** If a gate never once succeeds, the
-  output is empty or meaningless: no line parsed, or a filter that errored on
-  every event never actually selected anything (the dangerous case where "show
-  me the errors" returns nothing and looks like success). That's a broken
-  command, so it exits `1`. A gate that errors on only *some* records is data
-  noise and is recovered.
+- **Gates — parse and each `--filter` stage — must work.** If a gate never once
+  succeeds, the output is empty or meaningless: no line parsed, or a filter that
+  errored on every event it saw never actually selected anything (the dangerous
+  case where "show me the errors" returns nothing and looks like success).
+  That's a broken command, so it exits `1`. Each filter is gated individually,
+  so a working first filter cannot mask a completely broken second one. A gate
+  that errors on only *some* records is data noise and is recovered.
 - **Transforms — exec — are best-effort.** A failing `--exec` rolls back to the
   event as it was before that stage and emits it anyway, so the output stays
   valid even when the transform errors on every event. Exec errors are reported
@@ -326,6 +327,8 @@ This holds regardless of output flags — the signal is computed independently o
 | Some lines fail to parse, others succeed | `0` | `1` (aborts on first) |
 | **Every** line fails to parse (wrong format) | `1` | `1` |
 | `--filter` errors on **every** event (typo, type bug) | `1` | `1` |
+| Broken `--filter` behind a working `--filter` (each filter is its own gate) | `1` | `1` |
+| `--filter` errors on some events, evaluates on others | `0` | `1` (aborts on first) |
 | `--exec` errors on some events (heterogeneous logs) | `0` | `1` (aborts on first) |
 | `--exec` errors on **every** event (best-effort transform) | `0` | `1` |
 | Broken `--exec` behind a selective `--filter` | `0` | `1` |

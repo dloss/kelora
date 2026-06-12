@@ -14,10 +14,18 @@ use anyhow::Result;
 /// `set_thread_tracking_state` reinstalls the stale `ctx.internal_tracker` and
 /// discards the increment — so a filter that fails on every line would report
 /// only the last event's contribution (e.g. "1 total" instead of "1200 total").
-fn persist_error_tracking(ctx: &mut PipelineContext) {
+///
+/// Also covers the `__kelora_gate_*` per-stage filter counters, which feed the
+/// exit-code model the same way (`pub(crate)` so the pipeline's parse and
+/// script-error sites, which have the same wipe problem, can persist too).
+pub(crate) fn persist_error_tracking(ctx: &mut PipelineContext) {
     let thread_internal = RhaiEngine::get_thread_internal_state();
     for (key, value) in thread_internal {
-        if key.starts_with("__kelora_error_") || key.starts_with("__op___kelora_error_") {
+        if key.starts_with("__kelora_error_")
+            || key.starts_with("__op___kelora_error_")
+            || key.starts_with("__kelora_gate_")
+            || key.starts_with("__op___kelora_gate_")
+        {
             ctx.internal_tracker.insert(key, value);
         }
     }
@@ -101,6 +109,14 @@ impl FilterStage {
 
         match eval_result {
             Ok(value) => {
+                // Per-stage gate counter for the exit-code model: this filter
+                // stage evaluated one event without error (match or not). Keyed
+                // by stage number so a working earlier filter cannot mask a
+                // later one that errors on every event it sees.
+                crate::rhai_functions::tracking::record_filter_stage_success(
+                    self.stage_number,
+                    &mut ctx.internal_tracker,
+                );
                 let ops = file_ops::take_pending_ops();
                 if !ops.is_empty() {
                     ctx.pending_file_ops.extend(ops);
@@ -108,6 +124,10 @@ impl FilterStage {
                 Ok(value)
             }
             Err(err) => {
+                // Matching per-stage error counter (cold path). Persisted into
+                // ctx by the callers' persist_error_tracking, alongside the
+                // kind-level "filter" counter from track_error.
+                crate::rhai_functions::tracking::record_filter_stage_error(self.stage_number);
                 file_ops::clear_pending_ops();
                 Err(err)
             }
@@ -704,6 +724,12 @@ impl ScriptStage for AssertStage {
                     Some(&ctx.config),
                     None,
                 );
+
+                // Without this, the next event's engine call reinstalls the
+                // stale ctx.internal_tracker and the count vanishes from the
+                // error summary (the exit code is safe: assert failures are
+                // counted flag-independently in stats).
+                persist_error_tracking(ctx);
 
                 // In strict mode, propagate error
                 if ctx.config.strict {

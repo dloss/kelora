@@ -1,75 +1,118 @@
 use crate::stats::ProcessingStats;
 use rhai::Dynamic;
 use std::cell::Cell;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::Path;
 
 use super::{with_internal_tracking, TrackingSnapshot};
 
 thread_local! {
-    // "Has this gate kind already recorded a success this run, on this thread?"
+    // "Has this gate already recorded a success this run, on this thread?"
     // The exit-code model only needs success > 0 vs == 0, so after the first
     // success we skip the (per-event) tracker write entirely — the steady-state
-    // cost on the parse/filter hot path is just this Cell read. Reset per run via
-    // `reset_stage_success_flags` (the flag is not part of the tracking snapshot,
-    // so it would otherwise leak across interactive REPL runs on a reused thread).
+    // cost on the parse/filter hot path is just this Cell read. Filters are
+    // tracked per stage (bit N = filter stage number N), so a broken second
+    // filter is not masked by a working first one. Reset per run via
+    // `reset_stage_success_flags` (the flags are not part of the tracking
+    // snapshot, so they would otherwise leak across interactive REPL runs on a
+    // reused thread).
     static PARSE_SUCCESS_SEEN: Cell<bool> = const { Cell::new(false) };
-    static FILTER_SUCCESS_SEEN: Cell<bool> = const { Cell::new(false) };
+    static FILTER_STAGE_SUCCESS_BITS: Cell<u64> = const { Cell::new(0) };
 }
 
 /// Clear the per-run "success seen" flags. Called once at the start of each run
 /// (and each parallel worker) so a fresh run records its own first success.
 pub fn reset_stage_success_flags() {
     PARSE_SUCCESS_SEEN.with(|c| c.set(false));
-    FILTER_SUCCESS_SEEN.with(|c| c.set(false));
+    FILTER_STAGE_SUCCESS_BITS.with(|c| c.set(0));
 }
 
-/// Per-record stage kinds whose total failure fails the run in resilient mode:
-/// `parse` and `filter`. These are *gates* — if a gate never once succeeds, the
-/// output is empty or meaningless (no line parsed, or a filter that errored on
-/// every event never actually selected anything), which is a broken command,
-/// not data noise.
-///
-/// `exec` is deliberately excluded: a transform is *best-effort*. A failing exec
-/// rolls back to the event as it was before that stage and emits it anyway
-/// (see `dev/v2-behavior-notes.md`), so the output stays valid even when the
-/// transform errors on every event. Use `--strict` to fail on the first exec
-/// error, or `--assert` for an explicit data-quality gate.
-const PER_RECORD_KINDS: [&str; 2] = ["parse", "filter"];
+// Gate counters live in the always-on internal tracker, so the exit-code signal
+// is independent of `--stats` / `--no-diagnostics` collection, and parallel
+// workers' values sum via the `count` merge op. The *gates* are:
+//
+//   * parse — kind-level: `__kelora_error_count_parse` (also feeds the error
+//     summary) vs `__kelora_success_count_parse`.
+//   * filter — per *stage*: `__kelora_gate_error_filter_<n>` vs
+//     `__kelora_gate_success_filter_<n>`, keyed by the pipeline stage number.
+//     Per-stage (not per-kind) so that a working first filter cannot mask a
+//     second one that errors on every event it sees. The `gate` prefix keeps
+//     these out of `extract_error_summary_from_tracking`, which treats every
+//     `__kelora_error_count_*` key as a reportable error type.
+//
+// `exec` is deliberately not a gate: a transform is *best-effort*. A failing
+// exec rolls back to the event as it was before that stage and emits it anyway
+// (see `dev/v2-behavior-notes.md`), so the output stays valid even when the
+// transform errors on every event. Use `--strict` to fail on the first exec
+// error, or `--assert` for an explicit data-quality gate.
 
-/// Record that a per-record gate stage (`kind` = "parse" or "filter") processed
-/// one event without error. Paired with `__kelora_error_count_{kind}`, this lets
-/// the exit-code model distinguish "errored on some events" (recovered) from
-/// "never once succeeded" (a broken gate → exit 1).
+const FILTER_GATE_ERROR_PREFIX: &str = "__kelora_gate_error_filter_";
+const FILTER_GATE_SUCCESS_PREFIX: &str = "__kelora_gate_success_filter_";
+
+/// Insert `key = 1` with a `count` merge op into a tracking map.
+fn insert_gate_count(state: &mut HashMap<String, Dynamic>, key: &str) {
+    state.insert(format!("__op_{}", key), Dynamic::from("count"));
+    state.insert(key.to_string(), Dynamic::from(1_i64));
+}
+
+/// Record that the parse gate produced one event without error. Paired with
+/// `__kelora_error_count_parse`, this lets the exit-code model distinguish
+/// "errored on some lines" (recovered) from "never once parsed" (wrong format /
+/// unusable input → exit 1).
 ///
-/// Stored in the always-on internal tracker, so the signal is independent of
-/// `--stats` / `--no-diagnostics` collection, and summed across parallel workers
-/// via the `count` merge op — exactly like the matching error counter.
-pub fn record_stage_success(kind: &str) {
-    // Fast path on the per-event hot path: if this gate kind already recorded a
-    // success this run, do nothing but a thread-local Cell read. We only need
-    // "succeeded at least once" (success > 0 vs == 0), so one record per kind per
-    // thread is enough; parallel workers' single records sum via the merge op.
-    let (already, key, op_key): (bool, &'static str, &'static str) = match kind {
-        "parse" => (
-            PARSE_SUCCESS_SEEN.with(|c| c.replace(true)),
-            "__kelora_success_count_parse",
-            "__op___kelora_success_count_parse",
-        ),
-        "filter" => (
-            FILTER_SUCCESS_SEEN.with(|c| c.replace(true)),
-            "__kelora_success_count_filter",
-            "__op___kelora_success_count_filter",
-        ),
-        _ => return,
-    };
-    if already {
+/// Writes both the thread-local tracker *and* `ctx_internal` (the pipeline's
+/// durable per-run map): per-event engine calls reinstall `ctx.internal_tracker`
+/// over the thread-local state, so a write that lands only in the thread state
+/// is wiped by the next `--filter`/`--exec` evaluation.
+pub fn record_parse_success(ctx_internal: &mut HashMap<String, Dynamic>) {
+    // Fast path on the per-event hot path: after the first success this run, a
+    // single Cell read. We only need "succeeded at least once"; parallel
+    // workers' single records sum via the merge op.
+    if PARSE_SUCCESS_SEEN.with(|c| c.replace(true)) {
         return;
     }
-    // First success this run on this thread: record it once.
+    with_internal_tracking(|state| insert_gate_count(state, "__kelora_success_count_parse"));
+    insert_gate_count(ctx_internal, "__kelora_success_count_parse");
+}
+
+/// Record that filter stage `stage` evaluated one event without error (whether
+/// or not it matched). Paired with [`record_filter_stage_error`], this lets the
+/// exit-code model distinguish a filter that errored on *some* events
+/// (recovered) from one that *never once* evaluated (a broken gate → exit 1).
+///
+/// Like [`record_parse_success`], writes both the thread-local tracker and
+/// `ctx_internal` so the counter survives the per-event thread-state reinstall.
+pub fn record_filter_stage_success(stage: usize, ctx_internal: &mut HashMap<String, Dynamic>) {
+    // Fast path: one bit per filter stage, a Cell read + bit test per event.
+    // Stages >= 64 (implausible, but cheap to keep correct) skip the once-flag
+    // and re-insert the same `count = 1` every event instead.
+    if stage < 64 {
+        let bit = 1u64 << stage;
+        let seen = FILTER_STAGE_SUCCESS_BITS.with(|c| {
+            let bits = c.get();
+            c.set(bits | bit);
+            bits & bit != 0
+        });
+        if seen {
+            return;
+        }
+    }
+    let key = format!("{}{}", FILTER_GATE_SUCCESS_PREFIX, stage);
+    with_internal_tracking(|state| insert_gate_count(state, &key));
+    insert_gate_count(ctx_internal, &key);
+}
+
+/// Record that filter stage `stage` errored on one event. Cold path (errors
+/// only). Writes the thread-local tracker; the filter error sites then persist
+/// `__kelora_gate_*` keys into `ctx.internal_tracker` together with the
+/// kind-level error counters (see `persist_error_tracking`).
+pub fn record_filter_stage_error(stage: usize) {
+    let key = format!("{}{}", FILTER_GATE_ERROR_PREFIX, stage);
     with_internal_tracking(|state| {
-        state.insert(op_key.to_string(), Dynamic::from("count"));
-        state.insert(key.to_string(), Dynamic::from(1_i64));
+        let count = state.get(&key).and_then(|v| v.as_int().ok()).unwrap_or(0) + 1;
+        state.insert(format!("__op_{}", key), Dynamic::from("count"));
+        state.insert(key, Dynamic::from(count));
     });
 }
 
@@ -81,18 +124,31 @@ fn internal_count(snapshot: &TrackingSnapshot, key: &str) -> i64 {
         .unwrap_or(0)
 }
 
-/// The per-record half of the v2 exit-code model: true when a *gate* stage
-/// (`parse` or `filter`) logged at least one error but never once succeeded.
-/// Transforms (`exec`) are best-effort and excluded — see [`PER_RECORD_KINDS`].
+/// The per-record half of the v2 exit-code model: true when a *gate* — parse,
+/// or an individual `--filter` stage — logged at least one error but never once
+/// succeeded. Transforms (`exec`) are best-effort and excluded — see the gate
+/// notes above.
 ///
 /// This is checked in resilient (non-`--strict`) mode. It reads only the
 /// always-on tracker, so it holds under `--no-diagnostics` and in
 /// `--metrics`/`--drain`.
 pub fn stage_failed_completely(snapshot: &TrackingSnapshot) -> bool {
-    PER_RECORD_KINDS.iter().any(|kind| {
-        let errors = internal_count(snapshot, &format!("__kelora_error_count_{}", kind));
-        let successes = internal_count(snapshot, &format!("__kelora_success_count_{}", kind));
-        errors > 0 && successes == 0
+    let parse_errors = internal_count(snapshot, "__kelora_error_count_parse");
+    if parse_errors > 0 && internal_count(snapshot, "__kelora_success_count_parse") == 0 {
+        return true;
+    }
+    // Each filter stage is its own gate: scan the per-stage error counters and
+    // require a matching per-stage success. End-of-run only, so the scan cost
+    // is irrelevant.
+    snapshot.internal.iter().any(|(key, value)| {
+        key.strip_prefix(FILTER_GATE_ERROR_PREFIX)
+            .is_some_and(|stage| {
+                value.as_int().unwrap_or(0) > 0
+                    && internal_count(
+                        snapshot,
+                        &format!("{}{}", FILTER_GATE_SUCCESS_PREFIX, stage),
+                    ) == 0
+            })
     })
 }
 
@@ -566,21 +622,12 @@ mod stage_outcome_tests {
     use super::*;
     use rhai::Dynamic;
 
-    /// Build a snapshot from `(error_count, success_count)` pairs keyed by kind.
-    fn snapshot(kinds: &[(&str, i64, i64)]) -> TrackingSnapshot {
+    /// Build a snapshot from raw internal keys.
+    fn snapshot(entries: &[(&str, i64)]) -> TrackingSnapshot {
         let mut internal = std::collections::HashMap::new();
-        for (kind, errors, successes) in kinds {
-            if *errors != 0 {
-                internal.insert(
-                    format!("__kelora_error_count_{}", kind),
-                    Dynamic::from(*errors),
-                );
-            }
-            if *successes != 0 {
-                internal.insert(
-                    format!("__kelora_success_count_{}", kind),
-                    Dynamic::from(*successes),
-                );
+        for (key, value) in entries {
+            if *value != 0 {
+                internal.insert(key.to_string(), Dynamic::from(*value));
             }
         }
         TrackingSnapshot::from_parts(std::collections::HashMap::new(), internal)
@@ -588,21 +635,52 @@ mod stage_outcome_tests {
 
     #[test]
     fn clean_run_is_not_a_failure() {
-        assert!(!stage_failed_completely(&snapshot(&[("filter", 0, 10)])));
+        assert!(!stage_failed_completely(&snapshot(&[
+            ("__kelora_success_count_parse", 1),
+            ("__kelora_gate_success_filter_0", 1),
+        ])));
     }
 
     #[test]
     fn partial_gate_errors_are_recovered() {
         // A gate that errored on some events but succeeded on others is recovered.
-        assert!(!stage_failed_completely(&snapshot(&[("filter", 3, 7)])));
-        assert!(!stage_failed_completely(&snapshot(&[("parse", 2, 1)])));
+        assert!(!stage_failed_completely(&snapshot(&[
+            ("__kelora_gate_error_filter_0", 3),
+            ("__kelora_gate_success_filter_0", 1),
+        ])));
+        assert!(!stage_failed_completely(&snapshot(&[
+            ("__kelora_error_count_parse", 2),
+            ("__kelora_success_count_parse", 1),
+        ])));
     }
 
     #[test]
     fn gate_with_zero_success_and_errors_fails() {
-        assert!(stage_failed_completely(&snapshot(&[("filter", 5, 0)])));
+        assert!(stage_failed_completely(&snapshot(&[(
+            "__kelora_gate_error_filter_0",
+            5
+        )])));
         // Every line failed to parse (wrong format / unusable input).
-        assert!(stage_failed_completely(&snapshot(&[("parse", 4, 0)])));
+        assert!(stage_failed_completely(&snapshot(&[(
+            "__kelora_error_count_parse",
+            4
+        )])));
+    }
+
+    #[test]
+    fn each_filter_stage_is_its_own_gate() {
+        // A working first filter must not mask a second filter that errors on
+        // every event it sees (the multi-filter form of #241).
+        assert!(stage_failed_completely(&snapshot(&[
+            ("__kelora_gate_success_filter_0", 1),
+            ("__kelora_gate_error_filter_1", 4),
+        ])));
+        // ...but a second filter with partial errors is recovered.
+        assert!(!stage_failed_completely(&snapshot(&[
+            ("__kelora_gate_success_filter_0", 1),
+            ("__kelora_gate_error_filter_1", 4),
+            ("__kelora_gate_success_filter_1", 1),
+        ])));
     }
 
     #[test]
@@ -610,11 +688,11 @@ mod stage_outcome_tests {
         // exec is a transform, not a gate: even erroring on every event it saw
         // (zero successes) it rolls back and emits, so it must not fail the run.
         // --strict (handled elsewhere) is the way to fail on exec errors.
-        assert!(!stage_failed_completely(&snapshot(&[("exec", 9, 0)])));
-        assert!(!stage_failed_completely(&snapshot(&[
-            ("filter", 0, 4),
-            ("exec", 2, 0),
-        ])));
+        // Exec errors only ever appear as the kind-level summary counter.
+        assert!(!stage_failed_completely(&snapshot(&[(
+            "__kelora_error_count_exec",
+            9
+        )])));
     }
 
     #[test]
@@ -622,13 +700,14 @@ mod stage_outcome_tests {
         // A "script" error (a ScriptResult::Error, e.g. mutating conf outside
         // --begin) is a forbidden operation, not best-effort: it fails the run
         // even though it's not a gate.
-        let snap = snapshot(&[("script", 1, 0)]);
+        let snap = snapshot(&[("__kelora_error_count_script", 1)]);
         assert!(has_unrecoverable_script_error(&snap));
         // ...and it isn't a "gate failed completely" case.
         assert!(!stage_failed_completely(&snap));
         // No script error -> not flagged.
         assert!(!has_unrecoverable_script_error(&snapshot(&[(
-            "exec", 3, 0
+            "__kelora_error_count_exec",
+            3
         )])));
     }
 
@@ -640,51 +719,90 @@ mod stage_outcome_tests {
     }
 
     #[test]
-    fn record_stage_success_is_once_per_run_and_registers_merge_op() {
+    fn filter_stage_success_is_once_per_run_and_registers_merge_op() {
         // Reset the thread-local internal tracker and the per-run flags so the
         // test is deterministic regardless of what ran before on this thread.
         with_internal_tracking(|state| state.clear());
         reset_stage_success_flags();
+        let mut ctx_internal = HashMap::new();
         // Many successes, but we only need "succeeded at least once": the count is
         // recorded exactly once (cheap fast path on every later event).
-        record_stage_success("filter");
-        record_stage_success("filter");
-        record_stage_success("filter");
-        with_internal_tracking(|state| {
+        record_filter_stage_success(2, &mut ctx_internal);
+        record_filter_stage_success(2, &mut ctx_internal);
+        record_filter_stage_success(2, &mut ctx_internal);
+        for state in [
+            &with_internal_tracking(|state| state.clone()),
+            &ctx_internal,
+        ] {
             assert_eq!(
                 state
-                    .get("__kelora_success_count_filter")
+                    .get("__kelora_gate_success_filter_2")
                     .and_then(|v| v.as_int().ok()),
                 Some(1)
             );
             // The merge op must be registered so parallel workers' counts sum.
             assert_eq!(
                 state
-                    .get("__op___kelora_success_count_filter")
+                    .get("__op___kelora_gate_success_filter_2")
                     .and_then(|v| v.clone().into_string().ok())
                     .as_deref(),
                 Some("count")
             );
-        });
+        }
+        // Distinct stages record under distinct keys.
+        record_filter_stage_success(5, &mut ctx_internal);
+        assert!(ctx_internal.contains_key("__kelora_gate_success_filter_5"));
     }
 
     #[test]
-    fn reset_clears_the_once_flag_for_a_new_run() {
+    fn reset_clears_the_once_flags_for_a_new_run() {
         // Run 1 records a success; without a reset, run 2 (fresh tracker) would
         // never record its own, so a run-2 partial gate failure could look total.
         with_internal_tracking(|state| state.clear());
         reset_stage_success_flags();
-        record_stage_success("parse");
+        let mut ctx_internal = HashMap::new();
+        record_parse_success(&mut ctx_internal);
+        record_filter_stage_success(0, &mut ctx_internal);
         // New run: clear tracker, reset flags -> next success records again.
         with_internal_tracking(|state| state.clear());
         reset_stage_success_flags();
-        record_stage_success("parse");
+        let mut ctx_internal = HashMap::new();
+        record_parse_success(&mut ctx_internal);
+        record_filter_stage_success(0, &mut ctx_internal);
         with_internal_tracking(|state| {
             assert_eq!(
                 state
                     .get("__kelora_success_count_parse")
                     .and_then(|v| v.as_int().ok()),
                 Some(1)
+            );
+            assert_eq!(
+                state
+                    .get("__kelora_gate_success_filter_0")
+                    .and_then(|v| v.as_int().ok()),
+                Some(1)
+            );
+        });
+    }
+
+    #[test]
+    fn filter_stage_error_increments_per_stage() {
+        with_internal_tracking(|state| state.clear());
+        record_filter_stage_error(1);
+        record_filter_stage_error(1);
+        with_internal_tracking(|state| {
+            assert_eq!(
+                state
+                    .get("__kelora_gate_error_filter_1")
+                    .and_then(|v| v.as_int().ok()),
+                Some(2)
+            );
+            assert_eq!(
+                state
+                    .get("__op___kelora_gate_error_filter_1")
+                    .and_then(|v| v.clone().into_string().ok())
+                    .as_deref(),
+                Some("count")
             );
         });
     }

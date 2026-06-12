@@ -348,6 +348,110 @@ fn test_broken_filter_fails_under_no_diagnostics() {
 }
 
 #[test]
+fn test_broken_second_filter_fails_behind_working_first() {
+    // Each --filter stage is its own gate: a first filter that works on every
+    // event must not mask a second filter that errors on every event it sees
+    // (the multi-filter form of #241 — the run selected nothing).
+    let input = "{\"status\": 200}\n{\"status\": 500}";
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.status >= 0",
+            "--filter",
+            "status >= 500", // typo: missing `e.` — errors on every event
+            "-q",
+        ],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 1,
+        "a second filter that errors on every event is a broken gate, even behind a working first filter"
+    );
+    assert_eq!(
+        stdout.trim(),
+        "",
+        "the broken filter never matched, so nothing should be emitted"
+    );
+
+    // Same pipeline in parallel mode: per-stage gate counters merge across
+    // workers, so the verdict must be identical.
+    let (_stdout_par, _stderr_par, exit_code_par) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.status >= 0",
+            "--filter",
+            "status >= 500",
+            "-q",
+            "--parallel",
+        ],
+        input,
+    );
+    assert_eq!(
+        exit_code_par, 1,
+        "parallel mode must reach the same per-stage gate verdict as sequential"
+    );
+}
+
+#[test]
+fn test_second_filter_with_partial_errors_is_recovered() {
+    // The second filter errors on one event (missing field) but evaluates fine
+    // on the other: a partially-working gate is recovered, exit 0.
+    let input = "{\"status\": 200}\n{\"status\": 500, \"extra\": 1}";
+
+    let (_stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.status >= 0",
+            "--filter",
+            "e.extra == 1", // errors on the event without `extra`, passes the other
+            "-q",
+        ],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "a filter stage that errored on some events but succeeded on others is recovered"
+    );
+}
+
+#[test]
+fn test_parse_gate_is_order_independent_under_filters() {
+    // Regression: parse gate counters live in the thread-local tracker, which
+    // per-event --filter/--exec engine calls used to reinstall from
+    // ctx.internal_tracker — wiping whichever parse counter was written last.
+    // That made the exit code depend on whether the last line parsed:
+    // `invalid\nvalid` exited 0 but `valid\ninvalid` exited 1, and the
+    // "Parse errors" summary vanished in the former.
+    let valid_then_invalid = "{\"a\": 1}\nnot json\n";
+    let invalid_then_valid = "not json\n{\"a\": 1}\n";
+
+    for input in [valid_then_invalid, invalid_then_valid] {
+        let (_stdout, stderr, exit_code) =
+            run_kelora_with_input(&["-f", "json", "--filter", "e.a == 1"], input);
+        assert_eq!(
+            exit_code, 0,
+            "a partial parse failure is recovered regardless of line order (input: {:?}, stderr: {})",
+            input, stderr
+        );
+        assert!(
+            stderr.contains("Parse errors: 1 total"),
+            "the parse error summary must survive later engine calls (input: {:?}, stderr: {})",
+            input,
+            stderr
+        );
+    }
+}
+
+#[test]
 fn test_exec_type_errors_fail_in_strict_mode() {
     let input = r#"{"level": "INFO"}"#;
 
@@ -449,13 +553,18 @@ invalid json again"#;
         input,
     );
 
+    // Partial parse failures are recovered (3 of 6 lines parsed): exit 0. This
+    // used to assert 1, but only because the per-event engine calls wiped the
+    // parse-success counter whenever a parse error followed the last valid
+    // line — the order-dependent bug that made `valid\ninvalid` exit 1 while
+    // `invalid\nvalid` exited 0 under a --filter.
     assert_eq!(
-        exit_code_seq, 1,
-        "Sequential mode should propagate parse errors via exit status"
+        exit_code_seq, 0,
+        "Sequential mode recovers partial parse errors regardless of line order"
     );
     assert_eq!(
-        exit_code_par, 1,
-        "Parallel mode should report errors in resilient mode"
+        exit_code_par, 0,
+        "Parallel mode recovers partial parse errors, like sequential mode"
     );
 
     let seq_lines: Vec<&str> = stdout_seq.trim().lines().collect();

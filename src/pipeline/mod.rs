@@ -424,6 +424,10 @@ impl Pipeline {
                     None,
                 );
 
+                // Persist so the "script" count survives later engine calls
+                // (see the parse error path).
+                stages::persist_error_tracking(ctx);
+
                 return Err(anyhow!(msg));
             }
         }
@@ -528,7 +532,7 @@ impl Pipeline {
                 // a run where the parser never once succeeded but logged errors is
                 // a wrong-format/unusable-input failure, surfaced via the exit code
                 // independently of --stats collection. See stage_failed_completely.
-                crate::rhai_functions::tracking::record_stage_success("parse");
+                crate::rhai_functions::tracking::record_parse_success(&mut ctx.internal_tracker);
 
                 // Track timestamp for time span statistics
                 if let Some(ts) = e.parsed_ts {
@@ -569,6 +573,12 @@ impl Pipeline {
                     Some(&ctx.config),
                     ctx.config.format_name.as_deref(),
                 );
+
+                // track_error writes only the thread-local tracker; persist into
+                // ctx so a later --filter/--exec engine call (which reinstalls
+                // ctx.internal_tracker over the thread state) cannot wipe the
+                // parse error count out of the summary and the exit-code gate.
+                stages::persist_error_tracking(ctx);
 
                 // New resiliency model: skip unparseable lines by default,
                 // only propagate errors in strict mode
@@ -626,6 +636,12 @@ impl Pipeline {
                                     Some(&ctx.config),
                                     None,
                                 );
+
+                                // This path keeps processing in resilient mode, so
+                                // without persisting, a later engine call would wipe
+                                // the "script" count — and the unrecoverable-script
+                                // exit-code check would miss it.
+                                stages::persist_error_tracking(ctx);
 
                                 // New resiliency model: use strict flag
                                 if ctx.config.strict {

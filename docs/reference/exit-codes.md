@@ -8,10 +8,12 @@ Complete reference for Kelora's exit codes and their meanings.
 
 The model turns on **gates vs. transforms**:
 
-- **Gates — parse and filter — must work.** If a gate never once succeeds (no
-  line parses, or a filter errors on *every* event and so never selects
-  anything), the output is empty or meaningless — a broken command — so the run
-  exits `1`. A gate erroring on only *some* records is recovered (exit `0`).
+- **Gates — parse and each `--filter` stage — must work.** If a gate never once
+  succeeds (no line parses, or a filter errors on *every* event it sees and so
+  never selects anything), the output is empty or meaningless — a broken
+  command — so the run exits `1`. A gate erroring on only *some* records is
+  recovered (exit `0`). Each filter is gated *individually*: a working first
+  filter does not mask a completely broken second one.
 - **Transforms — exec — are best-effort.** A failing `--exec` rolls back to the
   original event and emits it, so exec errors are reported but **never fail the
   run on their own**, even when they hit every event.
@@ -88,14 +90,14 @@ Indicates the run failed to do what was asked. Common causes:
 | Cause | Meaning | Example |
 |-------|---------|---------|
 | **Parse gate failed** | *Every* line failed to parse — the format is wrong or the input is unusable | `kelora -j` on plain-text logs |
-| **Filter gate failed** | A `--filter` errored on *every* event, so it never selected anything | `--filter 'status >= 500'` (missing `e.`) |
+| **Filter gate failed** | A `--filter` stage errored on *every* event it saw, so it never selected anything (each filter is its own gate, even behind other filters) | `--filter 'status >= 500'` (missing `e.`) |
 | **Assertion failures** | `--assert` expressions evaluated to false (an explicit data-quality gate) | Missing required fields |
 | **File I/O failures** | A named input file failed to open or decompress | Permission denied, file not found |
 | **Strict-mode errors** | *Any* parse/filter/exec error while `--strict` was enabled | Missing field access, type errors |
 
-Parse and filter are *gates*: a gate that errored on **some** records is
-recovered (exit `0`); the same gate erroring on **every** record means it never
-once worked, which is a broken command (exit `1`). `--exec` is **not** a gate —
+Parse and each `--filter` stage are *gates*: a gate that errored on **some**
+records is recovered (exit `0`); the same gate erroring on **every** record it
+saw means it never once worked, which is a broken command (exit `1`). `--exec` is **not** a gate —
 it's a best-effort transform that rolls back on error and never fails the run on
 its own (use `--strict`/`--assert`).
 
