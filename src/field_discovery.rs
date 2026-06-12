@@ -527,25 +527,12 @@ impl FieldDiscovery {
 
         let mut entries: Vec<_> = self.fields.iter().collect();
         entries.sort_by(|a, b| b.1.seen_count.cmp(&a.1.seen_count));
-        let ts_field = self.timestamp_summary.as_ref().map(|t| t.field.as_str());
-        let mut rows: Vec<_> = entries
+        let rows: Vec<_> = entries
             .iter()
             .map(|(name, profile)| {
                 DiscoveryRow::from_profile(self.total_events, name, profile, &glyphs)
             })
             .collect();
-        // Mark the primary timestamp field's row so the orientation view shows
-        // which field is the clock. The footer also names it, so on the rare
-        // long-name-in-narrow-terminal case where truncation eats the marker the
-        // signal is not lost.
-        if let Some(ts_field) = ts_field {
-            for row in rows.iter_mut() {
-                if row.name == ts_field {
-                    row.name.push_str(glyphs.ts_marker);
-                    break;
-                }
-            }
-        }
 
         if let Some(widths) = TableWidths::for_full_table(terminal_width, &rows) {
             output.push_str(&pad_right_display("Field", widths.name));
@@ -793,8 +780,6 @@ struct Glyphs {
     ellipsis: &'static str,
     /// Placeholder for fields with no scalar cardinality: `—` or `-`.
     em_dash: &'static str,
-    /// Suffix marking the primary timestamp field's row: ` ⏱` or ` (ts)`.
-    ts_marker: &'static str,
 }
 
 impl Glyphs {
@@ -803,17 +788,11 @@ impl Glyphs {
             Self {
                 ellipsis: "\u{2026}",
                 em_dash: "\u{2014}",
-                // U+FE0F forces emoji presentation so the width unicode-width
-                // measures (2) matches how terminals render it, keeping the
-                // Field column aligned. Bare U+23F1 measures as 1 but draws as
-                // 2 in emoji terminals, which would skew the marked row.
-                ts_marker: " \u{23F1}\u{FE0F}",
             }
         } else {
             Self {
                 ellipsis: "...",
                 em_dash: "-",
-                ts_marker: " (ts)",
             }
         }
     }
@@ -1567,7 +1546,7 @@ mod tests {
     }
 
     #[test]
-    fn test_timestamp_marker_on_field_row() {
+    fn test_timestamp_footer_names_field_without_marking_rows() {
         let mut discovery = discovery_with_ts_field();
         discovery.timestamp_summary = Some(TimestampSummary {
             field: "ts".to_string(),
@@ -1575,17 +1554,14 @@ mod tests {
             detected: 1,
             parsed: 1,
         });
-        // ASCII marker on the ts row, not on other fields.
         let ascii = discovery.format_table_for_width(120, false);
-        assert!(ascii.contains("ts (ts)"), "{ascii}");
-        assert!(
-            ascii
-                .lines()
-                .any(|l| l.starts_with("level ") && !l.contains("(ts)")),
-            "level row must not be marked: {ascii}"
-        );
-        // Footer names the field.
+        // The footer names the field; the table rows carry no marker, so
+        // column-based parsing (e.g. awk) of the rows is unaffected.
         assert!(ascii.contains("| timestamp: ts"), "{ascii}");
+        assert!(
+            ascii.lines().all(|l| !l.contains("(ts)")),
+            "rows must not carry a marker: {ascii}"
+        );
     }
 
     #[test]
@@ -1637,21 +1613,6 @@ mod tests {
         let table = discovery.format_table_for_width(120, false);
         assert!(!table.contains("timestamp:"), "{table}");
         assert!(!table.contains("(ts)"), "{table}");
-    }
-
-    #[test]
-    fn test_timestamp_emoji_marker_alignment() {
-        // In unicode/emoji mode the marker carries U+FE0F so unicode-width
-        // measures it the way terminals render it; the marked name's display
-        // width must equal the base name plus the marker width.
-        let glyphs = Glyphs::new(true);
-        let marked = format!("ts{}", glyphs.ts_marker);
-        assert_eq!(
-            display_width(&marked),
-            display_width("ts") + display_width(glyphs.ts_marker)
-        );
-        // The emoji marker (space + clock + VS16) is width 3.
-        assert_eq!(display_width(glyphs.ts_marker), 3);
     }
 
     #[test]
