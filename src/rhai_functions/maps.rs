@@ -99,6 +99,24 @@ pub fn register_functions(engine: &mut Engine) {
         map.get(key.as_str()).is_some_and(|value| !value.is_unit())
     });
 
+    // map.get(key) - read a top-level field, returning () when missing.
+    // Mirrors direct access (e.field) but is safe to chain with a default below.
+    engine.register_fn("get", |map: Map, key: rhai::ImmutableString| -> Dynamic {
+        map.get(key.as_str()).cloned().unwrap_or(Dynamic::UNIT)
+    });
+
+    // map.get(key, default) - read a top-level field with a fallback.
+    // Treats a missing key or a unit () value as absent, matching has().
+    engine.register_fn(
+        "get",
+        |map: Map, key: rhai::ImmutableString, default: Dynamic| -> Dynamic {
+            match map.get(key.as_str()) {
+                Some(value) if !value.is_unit() => value.clone(),
+                _ => default,
+            }
+        },
+    );
+
     // map.keep(fields) - return a new map with only the selected top-level keys
     engine.register_fn(
         "keep",
@@ -482,6 +500,51 @@ mod tests {
         } else {
             panic!("Root object is not a proper Rhai map");
         }
+    }
+
+    #[test]
+    fn test_map_get_top_level_access() {
+        use rhai::{Dynamic, Engine};
+
+        let mut engine = Engine::new();
+        super::register_functions(&mut engine);
+
+        let mut map = Map::new();
+        map.insert("level".into(), Dynamic::from("INFO"));
+        map.insert("blank".into(), Dynamic::UNIT);
+
+        // get(key) returns the value or () when missing.
+        let got: String = engine
+            .eval_with_scope(&mut scope_with_event(&map), r#"e.get("level")"#)
+            .unwrap();
+        assert_eq!(got, "INFO");
+
+        let missing: Dynamic = engine
+            .eval_with_scope(&mut scope_with_event(&map), r#"e.get("nope")"#)
+            .unwrap();
+        assert!(missing.is_unit());
+
+        // get(key, default) falls back when missing OR when the value is ().
+        let defaulted: i64 = engine
+            .eval_with_scope(&mut scope_with_event(&map), r#"e.get("nope", 7)"#)
+            .unwrap();
+        assert_eq!(defaulted, 7);
+
+        let unit_defaulted: i64 = engine
+            .eval_with_scope(&mut scope_with_event(&map), r#"e.get("blank", 9)"#)
+            .unwrap();
+        assert_eq!(unit_defaulted, 9);
+
+        let kept: String = engine
+            .eval_with_scope(&mut scope_with_event(&map), r#"e.get("level", "X")"#)
+            .unwrap();
+        assert_eq!(kept, "INFO");
+    }
+
+    fn scope_with_event(map: &Map) -> rhai::Scope<'static> {
+        let mut scope = rhai::Scope::new();
+        scope.push("e", map.clone());
+        scope
     }
 
     #[test]

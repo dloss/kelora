@@ -129,11 +129,28 @@ KELORA EVENT ACCESS:
   e.headers["user-agent"]              Bracket notation for special chars in keys
 
   "field" in e                         Check top-level field exists
+  e.has("field")                       Same check, method style
+  e.get("field", "default")            Get top-level with default fallback
   e.has_path("user.role")              Check nested path exists (safe)
   e.get_path("user.role", "guest")     Get nested with default fallback
 
   e.field = ()                         Remove field (unit assignment)
   e = ()                               Remove entire event (becomes empty, filtered out)
+
+MISSING FIELDS (the one rule to remember):
+  A missing field is () (unit/null) — access never throws by itself.
+  What () does next depends on the operation, which is why it can feel
+  surprising:
+    e.missing == "x"                   ok    -> false (comparisons tolerate ())
+    e.missing + "ms"                   ok    -> "ms" (string concat tolerates ())
+    e.missing + 1                      ERROR (no arithmetic on ())
+    e.missing.to_upper()               ERROR (no methods on ())
+    e.user.role  (user absent)         ERROR (can't traverse into ())
+
+  Two safe idioms cover every case:
+    - Guard first:  if e.has("dur") { e.dur + 1 }   /  e.has_path("user.role")
+    - Read a default:  e.get("dur", 0) + 1   /  e.get_path("user.role", "guest")
+  has/get work on top-level keys; has_path/get_path also walk dotted paths.
 
 EVENT METADATA:
   meta                                 Event metadata (global variable in --filter/--exec)

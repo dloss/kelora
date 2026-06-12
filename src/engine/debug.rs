@@ -260,6 +260,16 @@ impl ErrorEnhancer {
                     None
                 }
             }
+            // Traversing into a missing intermediate (e.g. `e.user.role` when
+            // `user` is absent) leaves a () in the chain, so the next property
+            // access fails with a getter-not-registered error on type '()'.
+            // Surface the same missing-field guidance the other paths give.
+            EvalAltResult::ErrorDotExpr(msg, _) if msg.contains("type '()'") => Some(
+                "A field in the path is missing, so the value is (). \
+                 Use e.get_path('a.b', default) to read nested fields safely, \
+                 or e.has_path('a.b') to check the path exists first."
+                    .to_string(),
+            ),
             _ => None,
         };
 

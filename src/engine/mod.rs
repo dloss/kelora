@@ -3049,6 +3049,32 @@ mod tests {
     }
 
     #[test]
+    fn dot_expr_on_unit_suggests_get_path() {
+        // `e.user.role` when `user` is absent leaves a () in the chain, so the
+        // `.role` getter fails on type '()'. The hint should steer toward the
+        // safe path accessors instead of leaking the raw Rhai message.
+        let config = DebugConfig::new(0);
+        let enhancer = ErrorEnhancer::new(config);
+        let scope = Scope::new();
+
+        let err = EvalAltResult::ErrorDotExpr(
+            "Unknown property 'role' - a getter is not registered for type '()'".into(),
+            rhai::Position::NONE,
+        );
+        let ctx = debug::ExecutionContext::default();
+        let out = enhancer.enhance_error(&err, &scope, "e.user.role == \"admin\"", "filter", &ctx);
+
+        assert!(
+            out.contains("get_path"),
+            "output should suggest get_path for missing nested fields; got: {out}"
+        );
+        assert!(
+            out.contains("has_path"),
+            "output should suggest has_path for checking nested paths; got: {out}"
+        );
+    }
+
+    #[test]
     fn bare_field_reference_suggests_e_accessor() {
         let config = DebugConfig::new(0);
         let enhancer = ErrorEnhancer::new(config);

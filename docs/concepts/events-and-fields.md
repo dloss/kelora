@@ -65,6 +65,35 @@ In Rhai, `null` from JSON becomes the unit type `()`, representing "no value" or
 - `track_*()` functions silently skip `()` values
 - Use `.or_empty()` to convert empty values (strings, arrays, maps) to `()` for conditional field assignment
 
+### Missing fields: the one rule
+
+A missing field is `()` — **accessing it never throws by itself.** What feels
+inconsistent is what happens *next*, because `()` is tolerated by some
+operations and rejected by others:
+
+| Expression on a missing `dur` | Result |
+| --- | --- |
+| `e.dur == "x"` | OK → `false` (comparisons tolerate `()`) |
+| `e.dur + "ms"` | OK → `"ms"` (string concat tolerates `()`) |
+| `e.dur + 1` | **Error** — no arithmetic on `()` |
+| `e.dur.to_upper()` | **Error** — no methods on `()` |
+| `e.user.role` when `user` is absent | **Error** — can't traverse into `()` |
+
+You never have to memorize that table. Two idioms cover every case:
+
+```rhai
+// Guard first
+if e.has("dur") { e.dur + 1 }
+if e.has_path("user.role") { e.user.role }
+
+// Or read with a default
+e.get("dur", 0) + 1
+e.get_path("user.role", "guest")
+```
+
+`has` / `get` work on top-level keys; `has_path` / `get_path` also walk dotted
+paths (`"user.role"`, `"items[0].name"`).
+
 ## Field Access Patterns
 
 ### Direct Access

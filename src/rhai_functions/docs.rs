@@ -134,6 +134,7 @@ map.contains("key")                  Check if map contains key (ignores value) (
 map.enrich(other_map)                Merge another map, inserting only missing keys
 map.flattened([style [,max_depth]])  Return new flattened map from nested object
 map.flatten_field("field_name")      Flatten just one field from the map
+map.get("key" [,default])            Safe top-level field access with fallback
 map.get_path("field.path" [,default]) Safe nested field access with fallback
 map.has("key")                       Check if map contains key with non-unit value
 map.has_path("field.path")           Check if nested field path exists
