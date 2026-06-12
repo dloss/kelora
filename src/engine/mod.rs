@@ -1147,6 +1147,7 @@ impl RhaiEngine {
             enhancer.generate_suggestions(&err, scope, Some(script_text))
         } else {
             ErrorEnhancer::raw_string_hint(&err, script_text)
+                .or_else(|| ErrorEnhancer::char_literal_hint(&err, script_text))
         };
         if let Some(suggestion) = suggestion {
             if use_emoji {
@@ -2967,6 +2968,32 @@ mod tests {
         assert!(
             msg.contains("Rhai raw strings use #\"...\"#"),
             "raw string hint should mention Rhai syntax; got: {msg}"
+        );
+    }
+
+    #[test]
+    fn parse_error_suggests_double_quotes_for_multichar_char_literal() {
+        let mut engine = RhaiEngine::new();
+        let err = engine
+            .compile_filter("e.level == 'ERROR'")
+            .err()
+            .expect("'ERROR' should be an invalid char literal in Rhai");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("use double quotes") && msg.contains("\"ERROR\""),
+            "multi-char char literal hint should suggest double quotes; got: {msg}"
+        );
+    }
+
+    #[test]
+    fn valid_single_char_literal_does_not_trigger_double_quote_hint() {
+        // Apostrophes inside double-quoted strings must not be mistaken for a
+        // broken char literal.
+        let mut engine = RhaiEngine::new();
+        let compiled = engine.compile_filter(r#"e.msg.contains("don't")"#);
+        assert!(
+            compiled.is_ok(),
+            "double-quoted string with apostrophe should compile cleanly"
         );
     }
 

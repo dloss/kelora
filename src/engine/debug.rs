@@ -293,6 +293,43 @@ impl ErrorEnhancer {
         }
     }
 
+    /// Detect a single-quoted multi-character literal (e.g. `'ERROR'`) and
+    /// suggest double quotes. This is the most common faceplant for users
+    /// arriving from Python/JS/shell, where Rhai's "Invalid character" parse
+    /// error is opaque.
+    ///
+    /// Rhai uses single quotes for single-character literals (`'E'`), so we
+    /// key off the parse error's position to confirm Rhai actually choked on
+    /// a `'` token. That avoids false positives on apostrophes living inside
+    /// double-quoted strings (e.g. `e.msg.contains("don't")`).
+    pub(crate) fn char_literal_hint(error: &EvalAltResult, script: &str) -> Option<String> {
+        let EvalAltResult::ErrorParsing(_, pos) = error else {
+            return None;
+        };
+        // Rhai positions are 1-based and count characters (not bytes).
+        let line = pos.line()?;
+        let col = pos.position()?;
+        let line_text = script.lines().nth(line - 1)?;
+        let chars: Vec<char> = line_text.chars().collect();
+        let start = col.checked_sub(1)?;
+        if chars.get(start) != Some(&'\'') {
+            return None;
+        }
+        // Find the closing quote on the same line.
+        let close = chars[start + 1..].iter().position(|&c| c == '\'')? + start + 1;
+        let content: String = chars[start + 1..close].iter().collect();
+        // A valid char literal holds exactly one character. Skip escapes
+        // (`'\n'`, `'\t'`, …) — those are legitimate single chars and the
+        // suggestion would be nonsensical.
+        if content.chars().count() <= 1 || content.contains('\\') {
+            return None;
+        }
+        Some(format!(
+            "Rhai uses single quotes for single characters ('E'). For text, use double quotes — try \"{}\".",
+            content
+        ))
+    }
+
     fn contains_rust_raw_string(script: &str) -> bool {
         let bytes = script.as_bytes();
         let mut i = 0;
