@@ -38,6 +38,10 @@ Enable multiline with `-M` and pick a strategy. See [Multiline Strategies](conce
 
 Gzip files (`.gz`) are handled automatically. For archives and batch processing patterns, see [Process Archives at Scale](how-to/batch-process-archives.md).
 
+## I fed Kelora JSON — why isn't the output JSON?
+
+By default Kelora reformats every event into a readable, colored `key=value` view, regardless of the input format. To keep JSON, use `-J` (or `-F json`); for other formats use `-F logfmt`, `-F csv`, `-F tsv`, etc. See [Output Formats](reference/formats.md) and the [CLI Reference](reference/cli-reference.md).
+
 ## How do I control output, stats, and diagnostics?
 
 Use `-F` to pick an output format, `-q/--quiet` to suppress events, and `-s/--stats` or `-m/--metrics` for summaries. For zero terminal output with metrics files still written, use `--silent`. See the [CLI Reference](reference/cli-reference.md).

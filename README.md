@@ -73,6 +73,8 @@ Kelora also handles live streams: `tail -f app.log | kelora -j -l error,warn`.
 
 Run `kelora` without arguments for an interactive REPL with readline, glob expansion, and history — handy on Windows where shell quoting is awkward.
 
+By default Kelora reformats every event into a readable, colored `key=value` view — regardless of whether the input was JSON, logfmt, or plain text. Pass `-J` to keep JSON output, or `-F logfmt`/`csv`/`tsv` for other formats.
+
 ## When Kelora helps
 
 Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."
