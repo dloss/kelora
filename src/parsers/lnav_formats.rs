@@ -223,16 +223,19 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
         ],
     },
     // Generic ISO-8601 prefixed application log (catch-all, kept last):
-    // `2024-01-02T15:04:05.123Z INFO message` or `2024-01-02 15:04:05 ERROR message`
+    // `2024-01-02T15:04:05.123Z INFO message` or `2024-01-02 15:04:05 ERROR message`,
+    // with the timestamp optionally wrapped in brackets: `[2024-01-02 15:04:05] WARN message`.
+    // The `\[?`/`\]?` sit outside the `ts` capture so the emitted field stays clean.
     LnavFormat {
         name: "iso8601-level",
         patterns: &[
-            r"(?P<ts>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?)\s+(?P<level>TRACE|DEBUG|INFO|NOTICE|WARN|WARNING|ERROR|ERR|FATAL|CRIT|CRITICAL)\s+(?P<msg>.*)",
+            r"\[?(?P<ts>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?)\]?\s+(?P<level>TRACE|DEBUG|INFO|NOTICE|WARN|WARNING|ERROR|ERR|FATAL|CRIT|CRITICAL)\s+(?P<msg>.*)",
         ],
         ts_format: None,
         samples: &[
             "2024-01-02T15:04:05.123Z INFO Starting service on port 8080",
             "2024-06-12 08:00:00 ERROR database connection lost",
+            "[2025-01-15 10:00:00] INFO Application started on :8080",
         ],
     },
 ];
@@ -377,6 +380,31 @@ mod tests {
                 .unwrap(),
             "up"
         );
+    }
+
+    #[test]
+    fn bracketed_timestamp_app_log_extracts_clean_fields() {
+        // The common `[timestamp] LEVEL message` app-log shape (e.g. examples/app.log)
+        // must detect as iso8601-level, and the brackets must stay out of `ts`.
+        let line = "[2025-01-15 10:00:00] INFO Application started on :8080";
+        let fmt = detect(line).expect("bracketed app log should detect");
+        assert_eq!(fmt.name, "iso8601-level");
+
+        let parser = crate::parsers::MultiRegexParser::new(fmt.patterns, false).unwrap();
+        let event = parser.parse(line).unwrap();
+
+        let field = |name: &str| {
+            event
+                .fields
+                .get(name)
+                .unwrap_or_else(|| panic!("missing field {name}"))
+                .clone()
+                .into_string()
+                .unwrap()
+        };
+        assert_eq!(field("ts"), "2025-01-15 10:00:00");
+        assert_eq!(field("level"), "INFO");
+        assert_eq!(field("msg"), "Application started on :8080");
     }
 
     #[test]

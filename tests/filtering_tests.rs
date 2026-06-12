@@ -298,10 +298,11 @@ fn test_zero_results_with_existing_filter_field_does_not_emit_typo_hint() {
 
 #[test]
 fn test_level_filter_on_unstructured_input_hints_missing_level_field() {
-    // The newcomer's most natural first command on a plain app log:
-    // `kelora app.log -l error`. Plain `line` input has no level field, so the
-    // level filter drops everything. Instead of a silent empty result, point at
-    // the structural cause and offer a workaround.
+    // With `-f line` forced, the whole record stays in `line` and there is no
+    // level field, so the level filter drops everything. Instead of a silent
+    // empty result, point at the structural cause and offer a workaround.
+    // (Under auto-detect this same shape now matches `iso8601-level` and gains a
+    // real level field — see lnav_formats; this test pins the explicit-line path.)
     let input = "[2025-01-15 10:00:00] INFO started\n[2025-01-15 10:00:05] ERROR boom";
 
     let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "line", "-l", "error"], input);
