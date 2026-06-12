@@ -4,6 +4,12 @@
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
 
+!!! info "New: Kelora 2.0"
+    A feature release with breaking changes — redesigned tracking functions,
+    named application-log formats, composable parser cascades, and a richer
+    `--discover`. See [**What's New in 2.0**](whats-new-2.0.md) for the
+    highlights and a migration guide.
+
 [Install Kelora](#installation){ .md-button }
 
 ## A quick tour
