@@ -424,11 +424,11 @@ Strict mode for catching malformed rows:
 
 === "Output"
 
-    ```bash exec="on" source="above" result="ansi"
+    ```bash exec="on" source="above" result="ansi" returncode="1"
     kelora -f "csv status:int" --strict examples/errors_csv_ragged.csv
     ```
 
-Inline type annotations and strict mode are perfect for catching malformed rows during ingestion before they reach downstream systems.
+With `--strict`, a ragged row (more or fewer columns than the header) aborts the run. In default resilient mode nothing is lost instead: extra columns are kept under positional names (`c5`, `c6`, ...), rows with missing columns leave those fields absent, and kelora prints a hint with the counts. Inline type annotations and strict mode are perfect for catching malformed rows during ingestion before they reach downstream systems.
 
 ## Troubleshooting
 

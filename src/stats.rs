@@ -56,6 +56,8 @@ pub struct ProcessingStats {
     pub cascade_format_counts: IndexMap<String, usize>,
     pub assertion_failures: usize, // Total assertion failures
     pub assertion_failures_by_expr: HashMap<String, usize>, // Per-assertion tracking
+    pub csv_rows_extra_columns: usize, // CSV/TSV rows wider than the header (extras kept as cN)
+    pub csv_rows_missing_columns: usize, // CSV/TSV rows narrower than the header (fields absent)
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -264,6 +266,24 @@ pub fn stats_add_recoverable_error_sample(message: &str) {
         return;
     }
     push_recoverable_error_sample(message);
+}
+
+pub fn stats_add_csv_row_extra_columns() {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().csv_rows_extra_columns += 1;
+    });
+}
+
+pub fn stats_add_csv_row_missing_columns() {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().csv_rows_missing_columns += 1;
+    });
 }
 
 pub fn stats_add_assertion_failure(expression: &str) {
@@ -667,6 +687,11 @@ impl ProcessingStats {
             ));
         }
 
+        // Ragged CSV/TSV rows (only present for csv/tsv inputs)
+        if let Some(ragged) = self.format_ragged_rows_summary() {
+            output.push_str(&format!("{}\n", ragged));
+        }
+
         // Events created: N total, N output, N filtered (X%)
         let events_filtered_pct = if self.events_created > 0 {
             format!(
@@ -837,6 +862,38 @@ impl ProcessingStats {
         }
 
         output.trim_end().to_string()
+    }
+
+    /// One-line summary of ragged CSV/TSV rows, or None when none occurred.
+    /// Factual only — callers that want to suggest --strict append their own advice.
+    pub fn format_ragged_rows_summary(&self) -> Option<String> {
+        if self.csv_rows_extra_columns == 0 && self.csv_rows_missing_columns == 0 {
+            return None;
+        }
+        let mut parts = Vec::new();
+        if self.csv_rows_extra_columns > 0 {
+            parts.push(format!(
+                "{} row{} with more columns than expected (extras kept as cN fields)",
+                self.csv_rows_extra_columns,
+                if self.csv_rows_extra_columns == 1 {
+                    ""
+                } else {
+                    "s"
+                }
+            ));
+        }
+        if self.csv_rows_missing_columns > 0 {
+            parts.push(format!(
+                "{} row{} with fewer columns than expected (missing fields left absent)",
+                self.csv_rows_missing_columns,
+                if self.csv_rows_missing_columns == 1 {
+                    ""
+                } else {
+                    "s"
+                }
+            ));
+        }
+        Some(format!("Ragged rows: {}", parts.join(", ")))
     }
 
     /// Check if any errors occurred during processing

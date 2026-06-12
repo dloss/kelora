@@ -163,6 +163,8 @@ impl GlobalTracker {
         global_stats.timestamp_parsed_events += worker_stats.timestamp_parsed_events;
         global_stats.timestamp_absent_events += worker_stats.timestamp_absent_events;
         global_stats.yearless_timestamps += worker_stats.yearless_timestamps;
+        global_stats.csv_rows_extra_columns += worker_stats.csv_rows_extra_columns;
+        global_stats.csv_rows_missing_columns += worker_stats.csv_rows_missing_columns;
         global_stats.timestamp_override_failed |= worker_stats.timestamp_override_failed;
         if global_stats.timestamp_override_field.is_none() {
             if let Some(field) = &worker_stats.timestamp_override_field {

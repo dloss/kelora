@@ -41,6 +41,9 @@ csv / tsv / csvnh / tsvnh
   Fields: Header names or c1, c2, c3...
   Type annotations: 'csv status:int bytes:int response_time:float'
   Supported types: int, float, bool
+  Ragged rows: extra columns are kept under positional names (cN, counted
+  from 1); rows with fewer columns leave the trailing fields absent. Both
+  are counted and reported as a hint; --strict rejects ragged rows instead.
 
 cols:<spec>
   Custom column-based parsing with whitespace or custom separator

@@ -89,7 +89,7 @@ timestamp=2024-01-15T10:30:00Z level=ERROR service=api message="Connection faile
 **Output Fields:**
 
 - **With header:** Field names from header row
-- **Without header:** `col_0`, `col_1`, `col_2`, etc.
+- **Without header:** `c1`, `c2`, `c3`, etc.
 
 **Type Annotations:**
 
@@ -104,6 +104,11 @@ Supported types: `int`, `float`, `bool`
 
 - Quoted fields supported: `"value, with, commas"`
 - Escaped quotes: `"value with ""quotes"""`
+- Ragged rows are preserved, not dropped: columns beyond the header (or beyond
+  the first row in header-less mode) are kept under positional names (`c5`,
+  `c6`, ... counted from 1), and rows with fewer columns leave the trailing
+  fields absent. Both cases are counted and reported as a hint on stderr.
+- `--strict` rejects ragged rows as parse errors instead.
 
 ### Syslog Format
 

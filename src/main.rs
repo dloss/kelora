@@ -462,6 +462,24 @@ fn collect_filter_field_references(config: &KeloraConfig) -> BTreeSet<String> {
     fields
 }
 
+/// Advisory diagnostic for ragged CSV/TSV rows. Resilient mode preserves the
+/// data (overflow columns as cN fields, short rows with absent fields), so
+/// this is a hint rather than an error; --strict rejects such rows instead.
+fn maybe_print_csv_shape_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+    stderr: &mut SafeStderr,
+) {
+    if let Some(summary) = stats.format_ragged_rows_summary() {
+        let message = format!("{}. Use --strict to reject ragged rows.", summary);
+        let formatted = config
+            .format_hint_message(&message)
+            .trim_start_matches('\n')
+            .to_string();
+        stderr.writeln(&formatted).unwrap_or(());
+    }
+}
+
 fn maybe_print_zero_results_hint(
     config: &KeloraConfig,
     stats: &stats::ProcessingStats,
@@ -832,6 +850,10 @@ fn handle_pipeline_success(
 
             if diagnostics_allowed_runtime && terminal_allowed {
                 maybe_print_zero_results_hint(config, s, stderr);
+                // With --stats the ragged-row count is already in the stats block.
+                if config.output.stats.is_none() {
+                    maybe_print_csv_shape_hint(config, s, stderr);
+                }
             }
         } else if errors_allowed {
             if let Some(tracking_summary) = tracking_summary {

@@ -250,10 +250,12 @@ impl PipelineBuilder {
                     parser = parser.with_type_map(type_map.clone());
                 }
 
+                // Strict applies even without a field spec: it governs row
+                // shape (ragged rows) and header-annotation type conversion.
+                let parser = parser.with_strict(self.strict);
                 let parser = if let Some(ref spec) = field_spec {
                     parser
                         .with_field_spec(spec)?
-                        .with_strict(self.strict)
                         .with_auto_timestamp(!custom_ts_config)
                 } else if custom_ts_config {
                     parser.with_auto_timestamp(false)
@@ -274,10 +276,12 @@ impl PipelineBuilder {
                     parser = parser.with_type_map(type_map.clone());
                 }
 
+                // Strict applies even without a field spec: it governs row
+                // shape (ragged rows) and header-annotation type conversion.
+                let parser = parser.with_strict(self.strict);
                 let parser = if let Some(ref spec) = field_spec {
                     parser
                         .with_field_spec(spec)?
-                        .with_strict(self.strict)
                         .with_auto_timestamp(!custom_ts_config)
                 } else if custom_ts_config {
                     parser.with_auto_timestamp(false)

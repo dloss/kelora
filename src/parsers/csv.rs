@@ -14,6 +14,11 @@ use rhai::Dynamic;
 /// - TSV: Tab-separated values with headers
 /// - CSVNH: Comma-separated values without headers (generates c1, c2, c3...)
 /// - TSVNH: Tab-separated values without headers (generates c1, c2, c3...)
+///
+/// Ragged rows are preserved, not dropped: columns beyond the known headers are
+/// kept under positional names (cN), rows with fewer columns leave the trailing
+/// fields absent, and both cases are counted as diagnostics. With --strict, a
+/// ragged row is a parse error instead.
 pub struct CsvParser {
     delimiter: u8,
     has_headers: bool,
@@ -247,6 +252,58 @@ impl CsvParser {
         }
     }
 
+    /// Set the field at 0-based position `i`. Columns beyond the known headers
+    /// get positional names (c5, c6, ...) — the same convention headerless mode
+    /// uses — so ragged rows lose no data. A real header with that exact name
+    /// keeps its value; the overflow column is not allowed to clobber it.
+    fn set_positional_field(&self, event: &mut Event, i: usize, field: &str) -> Result<()> {
+        match self.headers.get(i) {
+            Some(header) => {
+                let value = self.build_value(header, field)?;
+                event.set_field(header.clone(), value);
+            }
+            None => {
+                let name = format!("c{}", i + 1);
+                if !self.headers.iter().any(|h| *h == name) {
+                    event.set_field(name, Dynamic::from(field.to_string()));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Account for ragged rows: count them as diagnostics in resilient mode,
+    /// reject them under --strict. Rows wider than the header keep their extra
+    /// columns as cN fields; narrower rows simply leave the trailing fields
+    /// absent (absent, not empty — `field in e` stays meaningful downstream).
+    fn check_row_shape(&self, field_count: usize) -> Result<()> {
+        match field_count.cmp(&self.headers.len()) {
+            std::cmp::Ordering::Equal => Ok(()),
+            std::cmp::Ordering::Greater => {
+                if self.strict {
+                    return Err(anyhow::anyhow!(
+                        "Row has {} columns, expected {}",
+                        field_count,
+                        self.headers.len()
+                    ));
+                }
+                crate::stats::stats_add_csv_row_extra_columns();
+                Ok(())
+            }
+            std::cmp::Ordering::Less => {
+                if self.strict {
+                    return Err(anyhow::anyhow!(
+                        "Row has {} columns, expected {}",
+                        field_count,
+                        self.headers.len()
+                    ));
+                }
+                crate::stats::stats_add_csv_row_missing_columns();
+                Ok(())
+            }
+        }
+    }
+
     /// Parse a data line using the initialized headers
     fn parse_data_line(&self, line: &str) -> Result<Event> {
         // Fast path: when the line contains no quote characters, the csv crate's
@@ -255,16 +312,12 @@ impl CsvParser {
         // csv::Reader — with its 8 KB internal buffer — for every single line.
         if !line.as_bytes().contains(&b'"') {
             let mut event = Event::with_capacity(line.to_string(), self.headers.len());
+            let mut field_count = 0;
             for (i, field) in line.split(self.delimiter as char).enumerate() {
-                match self.headers.get(i) {
-                    Some(header) => {
-                        let value = self.build_value(header, field)?;
-                        event.set_field(header.clone(), value);
-                    }
-                    // No matching header: extra columns are ignored (matches csv path).
-                    None => break,
-                }
+                field_count = i + 1;
+                self.set_positional_field(&mut event, i, field)?;
             }
+            self.check_row_shape(field_count)?;
             if self.auto_timestamp {
                 event.extract_timestamp();
             }
@@ -284,11 +337,9 @@ impl CsvParser {
 
             // Map CSV fields to event using local headers
             for (i, field) in record.iter().enumerate() {
-                if let Some(header) = self.headers.get(i) {
-                    let value = self.build_value(header, field)?;
-                    event.set_field(header.clone(), value);
-                }
+                self.set_positional_field(&mut event, i, field)?;
             }
+            self.check_row_shape(record.len())?;
 
             if self.auto_timestamp {
                 event.extract_timestamp();
@@ -540,12 +591,77 @@ mod tests {
         assert_eq!(data_result1.fields.get("c2").unwrap().to_string(), "25");
         assert!(data_result1.fields.get("c3").is_none());
 
-        // Second line with more columns (extra columns ignored)
+        // Second line with more columns: overflow keeps positional names
         let data_result2 = parser.parse("Bob,30,Engineer").unwrap();
         assert_eq!(data_result2.fields.get("c1").unwrap().to_string(), "Bob");
         assert_eq!(data_result2.fields.get("c2").unwrap().to_string(), "30");
-        // c3 won't exist because headers were set by first line
-        assert!(data_result2.fields.get("c3").is_none());
+        assert_eq!(
+            data_result2.fields.get("c3").unwrap().to_string(),
+            "Engineer"
+        );
+
+        // Shorter line: trailing fields are absent, not empty
+        let data_result3 = parser.parse("Carol").unwrap();
+        assert_eq!(data_result3.fields.get("c1").unwrap().to_string(), "Carol");
+        assert!(data_result3.fields.get("c2").is_none());
+    }
+
+    #[test]
+    fn test_csv_headered_overflow_gets_positional_names() {
+        let mut parser = CsvParser::new_csv();
+        let _ = parser
+            .initialize_headers_from_line("name,age,city")
+            .unwrap();
+
+        let event = parser.parse("Alice,25,Boston,extra1,extra2").unwrap();
+        assert_eq!(event.fields.get("name").unwrap().to_string(), "Alice");
+        assert_eq!(event.fields.get("city").unwrap().to_string(), "Boston");
+        assert_eq!(event.fields.get("c4").unwrap().to_string(), "extra1");
+        assert_eq!(event.fields.get("c5").unwrap().to_string(), "extra2");
+    }
+
+    #[test]
+    fn test_csv_overflow_quoted_slow_path() {
+        let mut parser = CsvParser::new_csv();
+        let _ = parser.initialize_headers_from_line("name,msg").unwrap();
+
+        let event = parser.parse("\"Alice\",\"hello, world\",overflow").unwrap();
+        assert_eq!(event.fields.get("name").unwrap().to_string(), "Alice");
+        assert_eq!(event.fields.get("msg").unwrap().to_string(), "hello, world");
+        assert_eq!(event.fields.get("c3").unwrap().to_string(), "overflow");
+    }
+
+    #[test]
+    fn test_csv_overflow_does_not_clobber_real_header() {
+        // A header literally named "c3" wins over an overflow column at
+        // position 3; the colliding overflow value is dropped.
+        let mut parser = CsvParser::new_csv();
+        let _ = parser.initialize_headers_from_line("a,c3").unwrap();
+
+        let event = parser.parse("x,y,z").unwrap();
+        assert_eq!(event.fields.get("a").unwrap().to_string(), "x");
+        assert_eq!(event.fields.get("c3").unwrap().to_string(), "y");
+    }
+
+    #[test]
+    fn test_csv_strict_rejects_ragged_rows() {
+        let mut parser = CsvParser::new_csv();
+        let _ = parser
+            .initialize_headers_from_line("name,age,city")
+            .unwrap();
+        let parser = parser.with_strict(true);
+
+        // Matching width still parses
+        assert!(parser.parse("Alice,25,Boston").is_ok());
+
+        // Too many columns: hard error (fast path and quoted slow path)
+        let err = parser.parse("Bob,30,Boston,extra").unwrap_err();
+        assert!(err.to_string().contains("expected 3"), "{}", err);
+        assert!(parser.parse("\"Bob\",30,Boston,extra").is_err());
+
+        // Too few columns: hard error
+        let err = parser.parse("Carol,41").unwrap_err();
+        assert!(err.to_string().contains("expected 3"), "{}", err);
     }
 
     #[test]

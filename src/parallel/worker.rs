@@ -42,6 +42,12 @@ fn processing_stats_delta(
         yearless_timestamps: after
             .yearless_timestamps
             .saturating_sub(before.yearless_timestamps),
+        csv_rows_extra_columns: after
+            .csv_rows_extra_columns
+            .saturating_sub(before.csv_rows_extra_columns),
+        csv_rows_missing_columns: after
+            .csv_rows_missing_columns
+            .saturating_sub(before.csv_rows_missing_columns),
         timestamp_override_failed: after.timestamp_override_failed,
         timestamp_override_field: after.timestamp_override_field.clone(),
         timestamp_override_format: after.timestamp_override_format.clone(),

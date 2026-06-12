@@ -382,6 +382,51 @@ fn test_csv_with_different_column_counts() {
 }
 
 #[test]
+fn test_csv_ragged_rows_preserved_with_hint() {
+    let input = "name,age\nalice,30\nbob,25,engineer,boston\ncarol\n";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "csv", "-F", "json"], input);
+    assert_eq!(exit_code, 0, "ragged rows are not errors in resilient mode");
+
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(lines.len(), 3, "no row may be dropped: {}", stdout);
+
+    // Overflow columns keep positional names
+    let bob: serde_json::Value = serde_json::from_str(lines[1]).expect("valid JSON");
+    assert_eq!(bob["name"].as_str().unwrap(), "bob");
+    assert_eq!(bob["c3"].as_str().unwrap(), "engineer");
+    assert_eq!(bob["c4"].as_str().unwrap(), "boston");
+
+    // Short rows leave fields absent, not empty
+    let carol: serde_json::Value = serde_json::from_str(lines[2]).expect("valid JSON");
+    assert_eq!(carol["name"].as_str().unwrap(), "carol");
+    assert!(carol.get("age").is_none(), "missing field must stay absent");
+
+    // Counted diagnostic on stderr
+    assert!(
+        stderr.contains("Ragged rows")
+            && stderr.contains("1 row with more columns")
+            && stderr.contains("1 row with fewer columns"),
+        "expected ragged-row hint, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_csv_ragged_rows_rejected_under_strict() {
+    let input = "name,age\nalice,30\nbob,25,engineer\n";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "csv", "--strict", "-F", "json"], input);
+    assert_ne!(exit_code, 0, "--strict must reject ragged rows");
+    assert!(
+        stderr.contains("expected 2"),
+        "error should report expected column count: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_csv_no_headers_with_filename_tracking() {
     // Test CSV without headers but with filename tracking
     let mut temp_file1 = NamedTempFile::new().expect("Failed to create temp file");
