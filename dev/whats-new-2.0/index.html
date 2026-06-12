@@ -2752,9 +2752,11 @@ results. Other notes:</p>
 </blockquote>
 <p>The model turns on <strong>gates vs. transforms</strong>:</p>
 <ul>
-<li><strong>Gates — parse and filter — must work.</strong> If a gate never once succeeds (no
-  line parses, or a filter errors on <em>every</em> event and so selects nothing), the
-  output is empty or meaningless, so the run exits <code>1</code>.</li>
+<li><strong>Gates — parse and each <code>--filter</code> stage — must work.</strong> If a gate never once
+  succeeds (no line parses, or a filter errors on <em>every</em> event it sees and so
+  selects nothing), the output is empty or meaningless, so the run exits <code>1</code>.
+  Each filter is gated individually, so a working first filter cannot mask a
+  completely broken second one.</li>
 <li><strong>Transforms — exec — are best-effort.</strong> A failing <code>--exec</code> rolls back to the
   original event and emits it, so exec errors are reported but never fail the run
   on their own. Use <code>--strict</code>/<code>--assert</code> to enforce.</li>
@@ -2764,7 +2766,7 @@ violations still fail in any mode; <code>--strict</code> still escalates any sin
 parse/filter/exec error.</p>
 <p>Two behaviors change from 1.x:</p>
 <ul>
-<li><strong>A <code>--filter</code> that errors on <em>every</em> event now exits <code>1</code></strong> (it was <code>0</code>). A
+<li><strong>A <code>--filter</code> that errors on <em>every</em> event it sees now exits <code>1</code></strong> (it was <code>0</code>). A
   totally broken filter — e.g. the <code>status &gt;= 500</code> typo for <code>e.status &gt;= 500</code> —
   used to return success with empty output, which silently passed monitoring
   checks (<a href="https://github.com/dloss/kelora/issues/241">#241</a>). It's now treated

@@ -3950,12 +3950,13 @@
 </table>
 <p>The key distinction is <strong>gates vs. transforms</strong>:</p>
 <ul>
-<li><strong>Gates — parse and filter — must work.</strong> If a gate never once succeeds, the
-  output is empty or meaningless: no line parsed, or a filter that errored on
-  every event never actually selected anything (the dangerous case where "show
-  me the errors" returns nothing and looks like success). That's a broken
-  command, so it exits <code>1</code>. A gate that errors on only <em>some</em> records is data
-  noise and is recovered.</li>
+<li><strong>Gates — parse and each <code>--filter</code> stage — must work.</strong> If a gate never once
+  succeeds, the output is empty or meaningless: no line parsed, or a filter that
+  errored on every event it saw never actually selected anything (the dangerous
+  case where "show me the errors" returns nothing and looks like success).
+  That's a broken command, so it exits <code>1</code>. Each filter is gated individually,
+  so a working first filter cannot mask a completely broken second one. A gate
+  that errors on only <em>some</em> records is data noise and is recovered.</li>
 <li><strong>Transforms — exec — are best-effort.</strong> A failing <code>--exec</code> rolls back to the
   event as it was before that stage and emits it anyway, so the output stays
   valid even when the transform errors on every event. Exec errors are reported
@@ -3999,6 +4000,16 @@
 <td><code>--filter</code> errors on <strong>every</strong> event (typo, type bug)</td>
 <td style="text-align: center;"><code>1</code></td>
 <td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td>Broken <code>--filter</code> behind a working <code>--filter</code> (each filter is its own gate)</td>
+<td style="text-align: center;"><code>1</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td><code>--filter</code> errors on some events, evaluates on others</td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>1</code> (aborts on first)</td>
 </tr>
 <tr>
 <td><code>--exec</code> errors on some events (heterogeneous logs)</td>

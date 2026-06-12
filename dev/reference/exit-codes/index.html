@@ -2764,10 +2764,12 @@
 </blockquote>
 <p>The model turns on <strong>gates vs. transforms</strong>:</p>
 <ul>
-<li><strong>Gates — parse and filter — must work.</strong> If a gate never once succeeds (no
-  line parses, or a filter errors on <em>every</em> event and so never selects
-  anything), the output is empty or meaningless — a broken command — so the run
-  exits <code>1</code>. A gate erroring on only <em>some</em> records is recovered (exit <code>0</code>).</li>
+<li><strong>Gates — parse and each <code>--filter</code> stage — must work.</strong> If a gate never once
+  succeeds (no line parses, or a filter errors on <em>every</em> event it sees and so
+  never selects anything), the output is empty or meaningless — a broken
+  command — so the run exits <code>1</code>. A gate erroring on only <em>some</em> records is
+  recovered (exit <code>0</code>). Each filter is gated <em>individually</em>: a working first
+  filter does not mask a completely broken second one.</li>
 <li><strong>Transforms — exec — are best-effort.</strong> A failing <code>--exec</code> rolls back to the
   original event and emits it, so exec errors are reported but <strong>never fail the
   run on their own</strong>, even when they hit every event.</li>
@@ -2891,7 +2893,7 @@ use <code>--strict</code>; to fail on explicit data-quality rules, use <code>--a
 </tr>
 <tr>
 <td><strong>Filter gate failed</strong></td>
-<td>A <code>--filter</code> errored on <em>every</em> event, so it never selected anything</td>
+<td>A <code>--filter</code> stage errored on <em>every</em> event it saw, so it never selected anything (each filter is its own gate, even behind other filters)</td>
 <td><code>--filter 'status &gt;= 500'</code> (missing <code>e.</code>)</td>
 </tr>
 <tr>
@@ -2911,9 +2913,9 @@ use <code>--strict</code>; to fail on explicit data-quality rules, use <code>--a
 </tr>
 </tbody>
 </table>
-<p>Parse and filter are <em>gates</em>: a gate that errored on <strong>some</strong> records is
-recovered (exit <code>0</code>); the same gate erroring on <strong>every</strong> record means it never
-once worked, which is a broken command (exit <code>1</code>). <code>--exec</code> is <strong>not</strong> a gate —
+<p>Parse and each <code>--filter</code> stage are <em>gates</em>: a gate that errored on <strong>some</strong>
+records is recovered (exit <code>0</code>); the same gate erroring on <strong>every</strong> record it
+saw means it never once worked, which is a broken command (exit <code>1</code>). <code>--exec</code> is <strong>not</strong> a gate —
 it's a best-effort transform that rolls back on error and never fails the run on
 its own (use <code>--strict</code>/<code>--assert</code>).</p>
 <h3 id="resilient-mode-default">Resilient Mode (Default)<a class="headerlink" href="#resilient-mode-default" title="Permanent link">&para;</a></h3>
