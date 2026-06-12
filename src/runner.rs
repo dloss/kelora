@@ -50,6 +50,10 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
     ctrl_rx: &Receiver<Ctrl>,
 ) -> Result<PipelineResult> {
     crate::drain::reset();
+    // Clear per-run gate-success flags on this thread (sequential processing runs
+    // here; parallel workers reset their own). Without this, an interactive REPL
+    // reusing the thread would skip recording a new run's first success.
+    crate::rhai_functions::tracking::reset_stage_success_flags();
 
     // Enable field discovery if requested
     if config.output.discover_fields.is_some() {

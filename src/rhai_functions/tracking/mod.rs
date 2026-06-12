@@ -14,7 +14,7 @@ pub use errors::has_errors_in_tracking;
 pub use errors::{
     extract_error_summary_from_tracking, format_fatal_error_line,
     has_errors_in_tracking_with_policy, has_unrecoverable_script_error, record_stage_success,
-    stage_failed_completely, track_error,
+    reset_stage_success_flags, stage_failed_completely, track_error,
 };
 pub use format::{format_metrics_json, format_metrics_output};
 pub(crate) use merge::op_display_name;

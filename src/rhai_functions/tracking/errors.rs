@@ -1,9 +1,28 @@
 use crate::stats::ProcessingStats;
 use rhai::Dynamic;
+use std::cell::Cell;
 use std::collections::HashSet;
 use std::path::Path;
 
 use super::{with_internal_tracking, TrackingSnapshot};
+
+thread_local! {
+    // "Has this gate kind already recorded a success this run, on this thread?"
+    // The exit-code model only needs success > 0 vs == 0, so after the first
+    // success we skip the (per-event) tracker write entirely — the steady-state
+    // cost on the parse/filter hot path is just this Cell read. Reset per run via
+    // `reset_stage_success_flags` (the flag is not part of the tracking snapshot,
+    // so it would otherwise leak across interactive REPL runs on a reused thread).
+    static PARSE_SUCCESS_SEEN: Cell<bool> = const { Cell::new(false) };
+    static FILTER_SUCCESS_SEEN: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Clear the per-run "success seen" flags. Called once at the start of each run
+/// (and each parallel worker) so a fresh run records its own first success.
+pub fn reset_stage_success_flags() {
+    PARSE_SUCCESS_SEEN.with(|c| c.set(false));
+    FILTER_SUCCESS_SEEN.with(|c| c.set(false));
+}
 
 /// Per-record stage kinds whose total failure fails the run in resilient mode:
 /// `parse` and `filter`. These are *gates* — if a gate never once succeeds, the
@@ -27,17 +46,30 @@ const PER_RECORD_KINDS: [&str; 2] = ["parse", "filter"];
 /// `--stats` / `--no-diagnostics` collection, and summed across parallel workers
 /// via the `count` merge op — exactly like the matching error counter.
 pub fn record_stage_success(kind: &str) {
+    // Fast path on the per-event hot path: if this gate kind already recorded a
+    // success this run, do nothing but a thread-local Cell read. We only need
+    // "succeeded at least once" (success > 0 vs == 0), so one record per kind per
+    // thread is enough; parallel workers' single records sum via the merge op.
+    let (already, key, op_key): (bool, &'static str, &'static str) = match kind {
+        "parse" => (
+            PARSE_SUCCESS_SEEN.with(|c| c.replace(true)),
+            "__kelora_success_count_parse",
+            "__op___kelora_success_count_parse",
+        ),
+        "filter" => (
+            FILTER_SUCCESS_SEEN.with(|c| c.replace(true)),
+            "__kelora_success_count_filter",
+            "__op___kelora_success_count_filter",
+        ),
+        _ => return,
+    };
+    if already {
+        return;
+    }
+    // First success this run on this thread: record it once.
     with_internal_tracking(|state| {
-        let key = format!("__kelora_success_count_{}", kind);
-        if let Some(existing) = state.get_mut(&key) {
-            // Steady-state path (every event): cheap in-place increment.
-            let current = existing.as_int().unwrap_or(0);
-            *existing = Dynamic::from(current + 1);
-        } else {
-            // Register the merge op so parallel workers' counts are summed.
-            state.insert(format!("__op_{}", key), Dynamic::from("count"));
-            state.insert(key, Dynamic::from(1_i64));
-        }
+        state.insert(op_key.to_string(), Dynamic::from("count"));
+        state.insert(key.to_string(), Dynamic::from(1_i64));
     });
 }
 
@@ -608,10 +640,14 @@ mod stage_outcome_tests {
     }
 
     #[test]
-    fn record_stage_success_increments_and_registers_merge_op() {
-        // Reset the thread-local internal tracker so the test is deterministic
-        // regardless of what ran before on this worker thread.
+    fn record_stage_success_is_once_per_run_and_registers_merge_op() {
+        // Reset the thread-local internal tracker and the per-run flags so the
+        // test is deterministic regardless of what ran before on this thread.
         with_internal_tracking(|state| state.clear());
+        reset_stage_success_flags();
+        // Many successes, but we only need "succeeded at least once": the count is
+        // recorded exactly once (cheap fast path on every later event).
+        record_stage_success("filter");
         record_stage_success("filter");
         record_stage_success("filter");
         with_internal_tracking(|state| {
@@ -619,7 +655,7 @@ mod stage_outcome_tests {
                 state
                     .get("__kelora_success_count_filter")
                     .and_then(|v| v.as_int().ok()),
-                Some(2)
+                Some(1)
             );
             // The merge op must be registered so parallel workers' counts sum.
             assert_eq!(
@@ -628,6 +664,27 @@ mod stage_outcome_tests {
                     .and_then(|v| v.clone().into_string().ok())
                     .as_deref(),
                 Some("count")
+            );
+        });
+    }
+
+    #[test]
+    fn reset_clears_the_once_flag_for_a_new_run() {
+        // Run 1 records a success; without a reset, run 2 (fresh tracker) would
+        // never record its own, so a run-2 partial gate failure could look total.
+        with_internal_tracking(|state| state.clear());
+        reset_stage_success_flags();
+        record_stage_success("parse");
+        // New run: clear tracker, reset flags -> next success records again.
+        with_internal_tracking(|state| state.clear());
+        reset_stage_success_flags();
+        record_stage_success("parse");
+        with_internal_tracking(|state| {
+            assert_eq!(
+                state
+                    .get("__kelora_success_count_parse")
+                    .and_then(|v| v.as_int().ok()),
+                Some(1)
             );
         });
     }

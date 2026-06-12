@@ -141,6 +141,9 @@ pub(crate) fn worker_thread(
     ctrl_rx: Receiver<Ctrl>,
 ) -> Result<()> {
     crate::rhai_functions::strings::set_parallel_mode(true);
+    // Fresh per-run gate-success flags for this worker thread (defensive: workers
+    // are spawned per run, but a reused thread must not carry a stale flag).
+    crate::rhai_functions::tracking::reset_stage_success_flags();
 
     stats_start_timer();
 
