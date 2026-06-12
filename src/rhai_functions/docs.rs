@@ -591,10 +591,11 @@ kelora -j duration_logs.jsonl --exec '
 ' --filter 'e.sla_breach'
 
 # Group events by time buckets for histogram
-kelora -j api_logs.jsonl --exec '
-  let timestamp = to_datetime(e.timestamp);
-  e.bucket = timestamp.round_to("5m").to_iso()
-' | kelora -j - -m --exec 'track_count("time_buckets", e.bucket)'
+# The auto-detected timestamp is already parsed for you as meta.parsed_ts
+# (UTC, or () if missing) — no need to re-parse the string field yourself.
+kelora -j api_logs.jsonl -m \
+  --exec 'track_count("time_buckets", meta.parsed_ts.round_to("5m").to_iso())'
+# Use to_datetime() when you need to parse a *different* string field instead.
 
 # round_to / ceil_to for explicit bucket edges
 kelora -j api_logs.jsonl --exec '

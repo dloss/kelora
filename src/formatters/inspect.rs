@@ -267,6 +267,60 @@ impl InspectFormatter {
         (type_label, repr)
     }
 
+    /// Append the per-event `meta.*` values (the global `meta` object visible
+    /// in --filter/--exec) so `-F inspect` advertises them alongside the event
+    /// fields. Only emits rows that actually carry a value, so timestamp-less or
+    /// stdin inputs stay quiet. The `meta.` prefix signals these are reached via
+    /// `meta`, not `e`.
+    fn append_meta(&self, lines: &mut Vec<String>, event: &Event) {
+        let mut entries: Vec<(&'static str, &'static str, String)> = Vec::new();
+        if let Some(ts) = event.parsed_ts {
+            entries.push((
+                "meta.parsed_ts",
+                "datetime",
+                ts.to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+            ));
+        }
+        if let Some(line_num) = event.line_num {
+            entries.push(("meta.line_num", "int", line_num.to_string()));
+        }
+        if let Some(filename) = &event.filename {
+            entries.push((
+                "meta.filename",
+                "string",
+                format!("\"{}\"", escape_for_display(filename)),
+            ));
+        }
+        if entries.is_empty() {
+            return;
+        }
+
+        let name_width = entries
+            .iter()
+            .map(|(name, _, _)| name.len())
+            .max()
+            .unwrap_or(0)
+            .min(Self::KEY_WIDTH_CAP);
+        let type_width = entries
+            .iter()
+            .map(|(_, type_label, _)| type_label.len())
+            .max()
+            .unwrap_or(0);
+        for (name, type_label, value_repr) in &entries {
+            self.push_line(
+                lines,
+                LineSpec {
+                    indent: 0,
+                    name,
+                    name_width,
+                    type_width,
+                    type_label,
+                    value_repr,
+                },
+            );
+        }
+    }
+
     fn truncate_value(&self, value: &str) -> (String, bool) {
         if self.max_inline_chars == usize::MAX || value.chars().count() <= self.max_inline_chars {
             return (value.to_string(), false);
@@ -292,6 +346,7 @@ impl pipeline::Formatter for InspectFormatter {
                 .map(|(k, v)| (k.as_str(), v)),
             0,
         );
+        self.append_meta(&mut lines, event);
         lines.insert(0, "---".to_string());
         lines.join("\n")
     }

@@ -165,6 +165,10 @@ EVENT METADATA:
   # Example: Debug with line numbers
   --filter 'e.status >= 500' --exec 'eprint("Error at line " + meta.line_num)'
 
+  # Example: Bucket by the already-parsed timestamp — no to_datetime() needed.
+  # meta.parsed_ts is a datetime, so round_to/format/etc. work directly.
+  --exec 'track_count("hour", meta.parsed_ts.round_to("1h").to_iso())'
+
 ARRAY & MAP OPERATIONS:
   JSON arrays → native Rhai arrays (full functionality)
   sorted(e.scores)                     Sort numerically/lexicographically

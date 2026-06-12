@@ -683,6 +683,14 @@ impl FieldDiscovery {
         if let Some(ts) = &self.timestamp_summary {
             output.push_str(sep);
             output.push_str(&ts.footer_fragment());
+            // Point at the parsed timestamp scripts can use directly, so users
+            // don't re-parse the string field with to_datetime(). Only shown
+            // when at least one event actually parsed into meta.parsed_ts.
+            if ts.parsed > 0 {
+                let arrow = if use_unicode { " → " } else { " -> " };
+                output.push_str(arrow);
+                output.push_str("meta.parsed_ts");
+            }
         }
 
         output
@@ -1562,6 +1570,41 @@ mod tests {
             ascii.lines().all(|l| !l.contains("(ts)")),
             "rows must not carry a marker: {ascii}"
         );
+    }
+
+    #[test]
+    fn test_timestamp_footer_points_at_meta_parsed_ts() {
+        let mut discovery = discovery_with_ts_field();
+        discovery.timestamp_summary = Some(TimestampSummary {
+            field: "ts".to_string(),
+            overridden: false,
+            detected: 1,
+            parsed: 1,
+        });
+        // ASCII footer uses a plain arrow so it survives non-unicode terminals.
+        let ascii = discovery.format_table_for_width(120, false);
+        assert!(ascii.contains("timestamp: ts -> meta.parsed_ts"), "{ascii}");
+        // Unicode footer uses the arrow glyph.
+        let unicode = discovery.format_table_for_width(120, true);
+        assert!(
+            unicode.contains("timestamp: ts → meta.parsed_ts"),
+            "{unicode}"
+        );
+    }
+
+    #[test]
+    fn test_timestamp_footer_omits_pointer_when_nothing_parsed() {
+        let mut discovery = discovery_with_ts_field();
+        // Override naming a field no event carried: nothing parsed, so there is
+        // no meta.parsed_ts to point at.
+        discovery.timestamp_summary = Some(TimestampSummary {
+            field: "nonexistent".to_string(),
+            overridden: true,
+            detected: 0,
+            parsed: 0,
+        });
+        let table = discovery.format_table_for_width(120, false);
+        assert!(!table.contains("meta.parsed_ts"), "{table}");
     }
 
     #[test]

@@ -66,6 +66,43 @@ fn test_inspect_formatter_basic() {
 }
 
 #[test]
+fn test_inspect_formatter_surfaces_meta() {
+    let mut event = Event::default();
+    event.set_field("message".to_string(), Dynamic::from("hello"));
+    event.parsed_ts = Some(Utc.with_ymd_and_hms(2025, 10, 4, 8, 0, 0).unwrap());
+    event.line_num = Some(7);
+    event.filename = Some("app.log".to_string());
+
+    let formatter = InspectFormatter::new(0);
+    let output = formatter.format(&event);
+
+    // meta.* values are advertised so users discover the global `meta` object
+    // instead of re-parsing the string timestamp with to_datetime().
+    assert!(
+        output.contains("meta.parsed_ts"),
+        "should surface parsed_ts: {output}"
+    );
+    assert!(
+        output.contains("2025-10-04T08:00:00Z"),
+        "parsed_ts rendered as UTC ISO: {output}"
+    );
+    assert!(output.contains("meta.line_num"), "{output}");
+    assert!(output.contains("meta.filename"), "{output}");
+}
+
+#[test]
+fn test_inspect_formatter_omits_absent_meta() {
+    // Default event has no parsed_ts/line_num/filename (e.g. stdin, no
+    // timestamp): the meta block stays quiet rather than printing empty rows.
+    let mut event = Event::default();
+    event.set_field("message".to_string(), Dynamic::from("hello"));
+
+    let formatter = InspectFormatter::new(0);
+    let output = formatter.format(&event);
+    assert!(!output.contains("meta."), "{output}");
+}
+
+#[test]
 fn test_inspect_formatter_nested_structure() {
     let mut inner = Map::new();
     inner.insert("id".into(), Dynamic::from(7_i64));
