@@ -8074,7 +8074,8 @@
 <a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>e.text = e.html_entity.unescape_html()
 </code></pre></div>
 <h4 id="texthashalgo"><code>text.hash([algo])</code><a class="headerlink" href="#texthashalgo" title="Permanent link">&para;</a></h4>
-<p>Hash with algorithm (default: sha256, also: xxh3).</p>
+<p>Hash with algorithm (default: sha256, also: xxh3). One-way digest to redact or anonymize
+a value; for stable, correlatable aliases use <a href="#pseudonymvalue-domain"><code>pseudonym(value, domain)</code></a> instead.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>e.checksum = e.content.hash()                         // SHA-256
 <a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>e.fast = e.data.hash(&quot;xxh3&quot;)                          // Fast non-crypto hash
 </code></pre></div>
@@ -8897,10 +8898,20 @@ as <code>1</code> (e.g. <code>bar(0.42, 1, 10)</code>).</p>
 <a id="__codelineno-145-2" name="__codelineno-145-2" href="#__codelineno-145-2"></a>e.build_id = get_env(&quot;BUILD_ID&quot;)
 </code></pre></div>
 <h4 id="pseudonymvalue-domain"><code>pseudonym(value, domain)</code><a class="headerlink" href="#pseudonymvalue-domain" title="Permanent link">&para;</a></h4>
-<p>Generate domain-separated pseudonym (requires <code>KELORA_SECRET</code>).</p>
+<p>Generate a domain-separated pseudonym — use this to redact, anonymize, or mask a value
+with a stable, reproducible alias.</p>
+<p>Set the <code>KELORA_SECRET</code> environment variable to produce stable pseudonyms that match
+across separate runs (e.g. correlating the same IP between two batches processed on
+different days). Without <code>KELORA_SECRET</code>, kelora falls back to an <strong>ephemeral per-run
+key</strong>: pseudonymization still works, but the values change on every run and will not
+correlate across runs. In ephemeral mode kelora prints a one-time warning to stderr
+(suppressed by <code>--silent</code>/<code>--no-diagnostics</code>).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-146-1" name="__codelineno-146-1" href="#__codelineno-146-1"></a>e.user_alias = pseudonym(e.username, &quot;users&quot;)
 <a id="__codelineno-146-2" name="__codelineno-146-2" href="#__codelineno-146-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
 </code></pre></div>
+<p>See also (redaction / anonymization / masking): <code>text.hash([algo])</code> for one-way hashing,
+<code>text.mask_ip([octets])</code> for masking IP octets, and <code>text.normalized([patterns])</code> for
+replacing sensitive patterns with placeholders.</p>
 <h4 id="read_filepath-read_linespath"><code>read_file(path)</code> / <code>read_lines(path)</code><a class="headerlink" href="#read_filepath-read_linespath" title="Permanent link">&para;</a></h4>
 <p>Read file contents.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-147-1" name="__codelineno-147-1" href="#__codelineno-147-1"></a>e.config = read_file(&quot;config.json&quot;)
