@@ -1,4 +1,4 @@
-use crate::config::{ColorMode, EmojiMode, LegendMode};
+use crate::config::{ColorMode, EmojiMode, LegendMode, WrapMode};
 use std::io::IsTerminal;
 
 /// Check if stdout is connected to a TTY
@@ -117,6 +117,17 @@ pub fn should_show_legend(legend_mode: &LegendMode) -> bool {
         LegendMode::Never => false,
         LegendMode::Always => true,
         LegendMode::Auto => is_stdout_tty(),
+    }
+}
+
+/// Determine whether the default output format should word-wrap wide events.
+/// Auto wraps only on an interactive terminal so piped/redirected output stays
+/// one line per event.
+pub fn should_wrap(wrap_mode: &WrapMode) -> bool {
+    match wrap_mode {
+        WrapMode::Never => false,
+        WrapMode::Always => true,
+        WrapMode::Auto => is_stdout_tty(),
     }
 }
 

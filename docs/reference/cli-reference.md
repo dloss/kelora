@@ -941,17 +941,27 @@ kelora -j --expand-nested app.log
 
 ### Word Wrapping
 
+Word-wrapping applies only to the default output format. By default it is
+**auto**: wide events wrap onto indented continuation lines when stdout is a
+terminal, but piped or redirected output stays one line per event (so `wc -l`
+and other line-oriented tools count events correctly).
+
 #### `--wrap`
 
-Enable word-wrapping (default: on).
+Always wrap, even when piped or redirected.
 
 #### `--no-wrap`
 
-Disable word-wrapping (overrides `--wrap`).
+Never wrap; keep each event on a single line.
 
 ```bash
-kelora -j --no-wrap app.log
+kelora app.log | less        # wraps in the terminal? no — piped, so single-line
+kelora --wrap app.log | less # force wrapping into the pager
+kelora --no-wrap app.log     # never wrap, even in a terminal
 ```
+
+To make wrapping-through-pipes your default, add `--wrap` to the `defaults`
+line in your `.kelora.ini`.
 
 ### Timestamp Display
 

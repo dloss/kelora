@@ -402,7 +402,7 @@ impl PipelineBuilder {
         Self {
             config: PipelineConfig {
                 brief: false,
-                wrap: true, // Default to enabled
+                wrap: crate::config::WrapMode::Auto,
                 pretty: false,
                 color_mode: crate::config::ColorMode::Auto,
                 timestamp_formatting: crate::config::TimestampFormatConfig::default(),
@@ -509,7 +509,7 @@ impl PipelineBuilder {
                         use_emoji,
                         self.config.brief,
                         self.config.timestamp_formatting.clone(),
-                        self.config.wrap,
+                        crate::tty::should_wrap(&self.config.wrap),
                         self.config.pretty,
                         self.config.quiet_level,
                     ))
@@ -852,7 +852,7 @@ impl PipelineBuilder {
                         use_emoji,
                         self.config.brief,
                         self.config.timestamp_formatting.clone(),
-                        self.config.wrap,
+                        crate::tty::should_wrap(&self.config.wrap),
                         self.config.pretty,
                         self.config.quiet_level,
                     ))
@@ -1142,7 +1142,7 @@ pub fn create_pipeline_builder_from_config(
 ) -> PipelineBuilder {
     let pipeline_config = PipelineConfig {
         brief: config.output.brief,
-        wrap: config.output.wrap,
+        wrap: config.output.wrap.clone(),
         pretty: config.output.pretty,
         color_mode: config.output.color.clone(),
         timestamp_formatting: config.output.timestamp_formatting.clone(),

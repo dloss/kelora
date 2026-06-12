@@ -128,7 +128,7 @@ kelora -j examples/basics.jsonl
 **The default output format shows:**
 
 - **Field names and values** in `key='value'` format
-- **Automatic wrapping** - long events wrap with indentation
+- **Automatic wrapping** - in a terminal, long events wrap with indentation (piped output stays one line per event)
 - **Colors** (when terminal supports it)
 - **Smart ordering** - timestamp, level, message first, then others alphabetically
 
@@ -136,7 +136,7 @@ kelora -j examples/basics.jsonl
 
 1. Strings are quoted (`'Application started'`)
 2. Numbers are not quoted (`max_connections=50`)
-3. **Intelligent wrapping** - When output is too wide for your terminal, Kelora wraps **between fields** (never in the middle of a field) and indents continuation lines for readability
+3. **Intelligent wrapping** - When output is too wide for your terminal, Kelora wraps **between fields** (never in the middle of a field) and indents continuation lines for readability. Wrapping is automatic only in a terminal; piped or redirected output stays one line per event (use `--wrap` to force it, `--no-wrap` to disable it)
 4. Each event is separated by a blank line
 5. Field names are highlighted in color for better readability
 

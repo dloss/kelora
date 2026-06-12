@@ -48,7 +48,7 @@ pub struct OutputConfig {
     pub exclude_keys: Vec<String>,
     pub core: bool,
     pub brief: bool,
-    pub wrap: bool,
+    pub wrap: WrapMode,
     pub pretty: bool,
     pub color: ColorMode,
     pub emoji: EmojiMode,
@@ -364,6 +364,19 @@ pub enum LegendMode {
     /// Always append the legend
     Always,
     /// Never append the legend
+    Never,
+}
+
+/// Word-wrap mode for the default output format.
+#[derive(Clone, Debug)]
+pub enum WrapMode {
+    /// Wrap only when stdout is a TTY. Piped or redirected output stays one
+    /// line per event, so `wc -l`, `head`, and other line-oriented tools see
+    /// one record per line.
+    Auto,
+    /// Always wrap wide events onto indented continuation lines.
+    Always,
+    /// Never wrap; keep each event on a single line.
     Never,
 }
 
@@ -1068,7 +1081,15 @@ impl KeloraConfig {
                 exclude_keys: cli.exclude_keys.clone(),
                 core: cli.core,
                 brief: cli.brief,
-                wrap: !cli.no_wrap, // Default true, disabled by --no-wrap
+                // Default is Auto: wrap on a TTY, stay single-line when piped
+                // or redirected. --wrap / --no-wrap force the mode explicitly.
+                wrap: if cli.no_wrap {
+                    WrapMode::Never
+                } else if cli.wrap {
+                    WrapMode::Always
+                } else {
+                    WrapMode::Auto
+                },
                 pretty: cli.expand_nested,
                 color: color_mode,
                 emoji: emoji_mode,
@@ -1172,7 +1193,7 @@ impl Default for KeloraConfig {
                 exclude_keys: Vec::new(),
                 core: false,
                 brief: false,
-                wrap: true, // Default to enabled
+                wrap: WrapMode::Auto,
                 pretty: false,
                 color: ColorMode::Auto,
                 emoji: EmojiMode::Auto,

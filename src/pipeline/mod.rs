@@ -180,7 +180,7 @@ pub struct PipelineContext {
 #[derive(Debug, Clone)]
 pub struct PipelineConfig {
     pub brief: bool,
-    pub wrap: bool,
+    pub wrap: crate::config::WrapMode,
     pub pretty: bool,
     pub color_mode: crate::config::ColorMode,
     /// Timestamp formatting configuration (display-only)

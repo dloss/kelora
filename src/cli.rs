@@ -555,15 +555,21 @@ pub struct Cli {
     #[arg(long = "expand-nested", help_heading = "Default Format Options")]
     pub expand_nested: bool,
 
-    /// Enable word-wrapping (on by default; use to re-enable if disabled in config).
-    #[arg(long = "wrap", help_heading = "Default Format Options")]
+    /// Always word-wrap wide events onto indented continuation lines, even when
+    /// piped or redirected. By default wrapping is enabled only when stdout is a
+    /// terminal, so piped output stays one line per event.
+    #[arg(
+        long = "wrap",
+        help_heading = "Default Format Options",
+        overrides_with_all = ["no_wrap", "wrap"]
+    )]
     pub wrap: bool,
 
-    /// Disable word-wrapping (overrides --wrap).
+    /// Never word-wrap; keep each event on a single line.
     #[arg(
         long = "no-wrap",
         help_heading = "Default Format Options",
-        overrides_with = "wrap"
+        overrides_with_all = ["wrap", "no_wrap"]
     )]
     pub no_wrap: bool,
 

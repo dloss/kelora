@@ -1210,7 +1210,7 @@ mod tests {
     fn default_pipeline_config() -> PipelineConfig {
         PipelineConfig {
             brief: false,
-            wrap: true,
+            wrap: crate::config::WrapMode::Always,
             pretty: false,
             color_mode: crate::config::ColorMode::Auto,
             timestamp_formatting: crate::config::TimestampFormatConfig::default(),
@@ -1282,7 +1282,7 @@ mod tests {
         let mut ctx = PipelineContext {
             config: PipelineConfig {
                 brief: false,
-                wrap: true,
+                wrap: crate::config::WrapMode::Always,
                 pretty: false,
                 color_mode: crate::config::ColorMode::Auto,
                 timestamp_formatting: crate::config::TimestampFormatConfig::default(),
@@ -1396,7 +1396,7 @@ mod tests {
         let mut ctx = PipelineContext {
             config: PipelineConfig {
                 brief: false,
-                wrap: true,
+                wrap: crate::config::WrapMode::Always,
                 pretty: false,
                 color_mode: crate::config::ColorMode::Auto,
                 timestamp_formatting: crate::config::TimestampFormatConfig::default(),
@@ -1478,7 +1478,7 @@ mod tests {
         let mut ctx = PipelineContext {
             config: PipelineConfig {
                 brief: false,
-                wrap: true,
+                wrap: crate::config::WrapMode::Always,
                 pretty: false,
                 color_mode: crate::config::ColorMode::Auto,
                 timestamp_formatting: crate::config::TimestampFormatConfig::default(),
@@ -1563,7 +1563,7 @@ mod tests {
         let mut ctx = PipelineContext {
             config: PipelineConfig {
                 brief: false,
-                wrap: true, // Default to enabled
+                wrap: crate::config::WrapMode::Always,
                 pretty: false,
                 color_mode: crate::config::ColorMode::Auto,
                 timestamp_formatting: crate::config::TimestampFormatConfig::default(),
@@ -1625,7 +1625,7 @@ mod tests {
         let mut ctx = PipelineContext {
             config: PipelineConfig {
                 brief: false,
-                wrap: true, // Default to enabled
+                wrap: crate::config::WrapMode::Always,
                 pretty: false,
                 color_mode: crate::config::ColorMode::Auto,
                 timestamp_formatting: crate::config::TimestampFormatConfig::default(),
@@ -1686,7 +1686,7 @@ mod tests {
         let mut ctx = PipelineContext {
             config: PipelineConfig {
                 brief: false,
-                wrap: true, // Default to enabled
+                wrap: crate::config::WrapMode::Always,
                 pretty: false,
                 color_mode: crate::config::ColorMode::Auto,
                 timestamp_formatting: crate::config::TimestampFormatConfig::default(),
