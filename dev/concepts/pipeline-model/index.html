@@ -3280,7 +3280,7 @@ Buffers entire input as single event (use for structured files).</p>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 400&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">    </span><span class="c1"># Stage 2: Filter</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.alert = true&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">       </span><span class="c1"># Stage 3: Exec (only 4xx/5xx errors)</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--exclude-levels<span class="w"> </span>debug<span class="w"> </span><span class="se">\ </span><span class="w">        </span><span class="c1"># Stage 4: Remove any downgraded events</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.path)&#39;</span><span class="w">     </span><span class="c1"># Stage 5: Exec (track surviving paths)</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;path&quot;, e.path)&#39;</span><span class="w">     </span><span class="c1"># Stage 5: Exec (track surviving paths)</span>
 </code></pre></div></p>
 <p>Each stage processes the output of the previous stage sequentially.</p>
 <h3 id="complete-stage-ordering">Complete Stage Ordering<a class="headerlink" href="#complete-stage-ordering" title="Permanent link">&para;</a></h3>
@@ -3330,7 +3330,7 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <strong><code>--end</code>:</strong> Execute once after all events processed</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;print(&quot;Starting analysis&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Services seen: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
@@ -3440,24 +3440,24 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <h3 id="user-metrics-metrics">User Metrics (<code>--metrics</code>)<a class="headerlink" href="#user-metrics-metrics" title="Permanent link">&para;</a></h3>
 <p>Populated by Rhai functions in --exec scripts:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_bytes&quot;, e.bytes)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user_id)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <p><strong>Available Functions:</strong></p>
 <ul>
-<li><code>track_count(key)</code> - Increment counter</li>
+<li><code>track_count(name, category)</code> - Count occurrences per category</li>
 <li><code>track_sum(key, value)</code> - Sum values</li>
 <li><code>track_min(key, value)</code> - Track minimum value</li>
 <li><code>track_max(key, value)</code> - Track maximum value</li>
 <li><code>track_unique(key, value)</code> - Collect unique values (exact, stores all)</li>
 <li><code>track_cardinality(key, value)</code> - Estimate unique count (HyperLogLog, ~1% error)</li>
-<li><code>track_bucket(key, bucket)</code> - Track values in buckets</li>
+<li><code>track_top(name, item [, n])</code> - Track most frequent items</li>
 </ul>
 <p><strong>Access in --end stage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>

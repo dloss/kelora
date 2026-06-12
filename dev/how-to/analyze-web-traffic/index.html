@@ -2452,12 +2452,12 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/simple_combined.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;status_&quot; + e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;method_&quot; + e.method)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;ip&quot;, e.ip)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <ul>
-<li><code>track_count(e.ip)</code> highlights noisy consumers or suspicious sources.</li>
-<li>Use <code>track_bucket()</code> with <code>request_time</code> to build latency histograms.</li>
+<li><code>track_count("ip", e.ip)</code> highlights noisy consumers or suspicious sources.</li>
+<li>Use <code>track_count()</code> with <code>request_time</code> to build latency histograms.</li>
 <li>Run with <code>--stats</code> for throughput metrics and parse error counts.</li>
 </ul>
 <h2 id="step-5-export-a-shareable-slice">Step 5: Export a Shareable Slice<a class="headerlink" href="#step-5-export-a-shareable-slice" title="Permanent link">&para;</a></h2>
@@ -2478,7 +2478,7 @@
 <p><strong>Focus on a specific endpoint</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.path.starts_with(&quot;/api/orders&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;status&quot;, e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 </li>
@@ -2501,7 +2501,7 @@
 <p><strong>Process rotated archives</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>/var/log/nginx/access.log*.gz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;status&quot;, e.status)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 </li>

@@ -3848,7 +3848,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>// Group events into 5-minute buckets
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>let timestamp = to_datetime(e.timestamp);
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>e.bucket = timestamp.round_to(&quot;5m&quot;).to_iso();
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>track_bucket(&quot;requests_per_5min&quot;, e.bucket);
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>track_count(&quot;requests_per_5min&quot;, e.bucket);
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>// Hourly aggregation
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>let hourly = timestamp.round_to(&quot;1h&quot;);

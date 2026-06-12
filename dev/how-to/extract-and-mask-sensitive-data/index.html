@@ -2493,8 +2493,8 @@
 <li>
 <p><strong>Metrics to confirm coverage</strong>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;ip&quot;) { track_count(&quot;ip_fields&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;token&quot;) { track_count(&quot;token_fields&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;ip&quot;) { track_sum(&quot;ip_fields&quot;, 1) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;if e.contains(&quot;token&quot;) { track_sum(&quot;token_fields&quot;, 1) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 </li>

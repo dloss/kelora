@@ -3434,7 +3434,7 @@
 </tr>
 <tr>
 <td>Auth failures</td>
-<td><code>kelora auth.log --filter 'e.line.contains("failed")' --exec 'track_top("ip", e.client_ip, 20); track_count(e.username)' -m</code></td>
+<td><code>kelora auth.log --filter 'e.line.contains("failed")' --exec 'track_top("ip", e.client_ip, 20); track_count("username", e.username)' -m</code></td>
 <td><a href="#3-authentication-failures">Playbook 3</a></td>
 </tr>
 <tr>
@@ -3454,7 +3454,7 @@
 </tr>
 <tr>
 <td>Rate limit abuse</td>
-<td><code>kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_bucket("hour", to_datetime(e.timestamp).round_to("1h").to_iso())' -m</code></td>
+<td><code>kelora api.jsonl --filter 'e.status == 429' --exec 'track_top("user", e.user_id, 50); track_count("hour", to_datetime(e.timestamp).round_to("1h").to_iso())' -m</code></td>
 <td><a href="#7-rate-limit-investigation">Playbook 7</a></td>
 </tr>
 <tr>
@@ -3498,7 +3498,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 500&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.bucket = to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;time&quot;, e.bucket)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;time&quot;, e.bucket)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <p><strong>What to look for:</strong>
@@ -3519,13 +3519,13 @@
 <p>Are slow requests failing?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;status&quot;, e.status.to_string(), 10); track_top(&quot;endpoint_status&quot;, e.endpoint + &quot; [&quot; + e.status + &quot;]&quot;, 15)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;status&quot;, e.status, 10); track_top(&quot;endpoint_status&quot;, e.endpoint + &quot; [&quot; + e.status + &quot;]&quot;, 15)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <p><strong>Example using sample data:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>examples/api_latency_incident.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 100&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;slow&quot;, e.response_time_ms); track_top(&quot;endpoint&quot;, e.endpoint, 5); track_bucket(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;slow&quot;, e.response_time_ms); track_top(&quot;endpoint&quot;, e.endpoint, 5); track_count(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <hr />
@@ -3550,7 +3550,7 @@
 <h3 id="find-error-hotspots-1-minute">Find Error Hotspots (1 minute)<a class="headerlink" href="#find-error-hotspots-1-minute" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_type); track_top(&quot;service&quot;, e.service, 10); track_bucket(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;error_type&quot;, e.error_type); track_top(&quot;service&quot;, e.service, 10); track_count(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="extract-stack-traces-2-minutes">Extract Stack Traces (2 minutes)<a class="headerlink" href="#extract-stack-traces-2-minutes" title="Permanent link">&para;</a></h3>
@@ -3583,7 +3583,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;) || e.line.contains(&quot;invalid&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ip&quot;, e.get_path(&quot;ip&quot;, &quot;unknown&quot;), 20); track_count(e.get_path(&quot;user&quot;, &quot;unknown&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ip&quot;, e.get_path(&quot;ip&quot;, &quot;unknown&quot;), 20); track_count(&quot;user&quot;, e.get_path(&quot;user&quot;, &quot;unknown&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span>--metrics<span class="o">=</span>short
 </code></pre></div>
 <p><strong>Note:</strong> Using <code>--metrics=short</code> for compact output during time-sensitive incidents.</p>
@@ -3603,7 +3603,7 @@
 <p>When did the attack start, and is it ongoing?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;failed&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_count(&quot;total_failures&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_sum(&quot;total_failures&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="extract-attacker-ips-for-blocking-1-minute">Extract Attacker IPs for Blocking (1 minute)<a class="headerlink" href="#extract-attacker-ips-for-blocking-1-minute" title="Permanent link">&para;</a></h3>
@@ -3633,7 +3633,7 @@
 <p><strong>Example using sample data:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>examples/auth_burst.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 401&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ip&quot;, e.ip, 20); track_count(e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;ip&quot;, e.ip, 20); track_count(&quot;user&quot;, e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <hr />
@@ -3656,7 +3656,7 @@
 <h3 id="detect-n1-query-problems-2-minutes">Detect N+1 Query Problems (2 minutes)<a class="headerlink" href="#detect-n1-query-problems-2-minutes" title="Permanent link">&para;</a></h3>
 <p>Find queries executed hundreds of times:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>db.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.query)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;query&quot;, e.query)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-k2<span class="w"> </span>-n<span class="w"> </span>-r<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
 </code></pre></div>
 <h3 id="correlate-with-application-endpoints-3-minutes">Correlate with Application Endpoints (3 minutes)<a class="headerlink" href="#correlate-with-application-endpoints-3-minutes" title="Permanent link">&para;</a></h3>
@@ -3693,7 +3693,7 @@
 <p>When did resource exhaustion start?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;pool&quot;) || e.line.contains(&quot;exhausted&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;minute&quot;, to_datetime(e.timestamp).round_to(&quot;1m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <p><strong>Example using sample data:</strong></p>
@@ -3732,7 +3732,7 @@
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-20T13:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-20T14:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;5min&quot;, to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <hr />
@@ -3765,7 +3765,7 @@
 <p>Are rate limits being hit constantly or during specific times?</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status == 429&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_count(&quot;total_429s&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;hour&quot;, to_datetime(e.timestamp).round_to(&quot;1h&quot;).to_iso()); track_sum(&quot;total_429s&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <hr />
@@ -3806,7 +3806,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># Latency + Error correlation</span>
 <a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>kelora<span class="w"> </span>api.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time_ms &gt; 500 || e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.response_time_ms); track_top(&quot;status&quot;, e.status.to_string(), 10); track_top(&quot;endpoint&quot;, e.endpoint, 10)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency&quot;, e.response_time_ms); track_top(&quot;status&quot;, e.status, 10); track_top(&quot;endpoint&quot;, e.endpoint, 10)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <h3 id="streaming-analysis-during-active-incident">Streaming Analysis During Active Incident<a class="headerlink" href="#streaming-analysis-during-active-incident" title="Permanent link">&para;</a></h3>
@@ -3814,7 +3814,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Real-time error tracking with periodic updates (every 10 events)</span>
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/app.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;errors&quot;); track_top(&quot;msg&quot;, e.message, 5)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;errors&quot;, 1); track_top(&quot;msg&quot;, e.message, 5)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="w">  </span>--span<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;eprint(span.metrics.to_json())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="w">  </span>-q
@@ -3891,7 +3891,7 @@
 <a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>
 <a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a><span class="c1"># 4. TIME DISTRIBUTION (proper datetime bucketing)</span>
 <a id="__codelineno-46-11" name="__codelineno-46-11" href="#__codelineno-46-11"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.bucket = to_datetime(e.timestamp).round_to(&quot;5m&quot;).to_iso()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-46-12" name="__codelineno-46-12" href="#__codelineno-46-12"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;time&quot;, e.bucket)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-46-12" name="__codelineno-46-12" href="#__codelineno-46-12"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;time&quot;, e.bucket)&#39;</span><span class="w"> </span>-m
 <a id="__codelineno-46-13" name="__codelineno-46-13" href="#__codelineno-46-13"></a>
 <a id="__codelineno-46-14" name="__codelineno-46-14" href="#__codelineno-46-14"></a><span class="c1"># 5. COMPREHENSIVE STATS</span>
 <a id="__codelineno-46-15" name="__codelineno-46-15" href="#__codelineno-46-15"></a>kelora<span class="w"> </span>app.jsonl<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_stats(&quot;metric&quot;, e.value)&#39;</span><span class="w"> </span>-m
@@ -3910,7 +3910,7 @@
 <a id="__codelineno-46-28" name="__codelineno-46-28" href="#__codelineno-46-28"></a>kelora<span class="w"> </span>auth.log<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;e.ip_type = if e.ip.is_private_ip() { &quot;internal&quot; } else { &quot;external&quot; }&#39;</span>
 <a id="__codelineno-46-29" name="__codelineno-46-29" href="#__codelineno-46-29"></a>
 <a id="__codelineno-46-30" name="__codelineno-46-30" href="#__codelineno-46-30"></a><span class="c1"># 10. SAMPLING LARGE LOGS</span>
-<a id="__codelineno-46-31" name="__codelineno-46-31" href="#__codelineno-46-31"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;sample_every(100)&#39;</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_count(&quot;total&quot;)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-46-31" name="__codelineno-46-31" href="#__codelineno-46-31"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;sample_every(100)&#39;</span><span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total&quot;, 1)&#39;</span><span class="w"> </span>-m
 <a id="__codelineno-46-32" name="__codelineno-46-32" href="#__codelineno-46-32"></a>
 <a id="__codelineno-46-33" name="__codelineno-46-33" href="#__codelineno-46-33"></a><span class="c1"># 11. LIVE KUBERNETES MONITORING</span>
 <a id="__codelineno-46-34" name="__codelineno-46-34" href="#__codelineno-46-34"></a>kubectl<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>deploy/app<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>-l<span class="w"> </span>error,warn<span class="w"> </span>-q<span class="w"> </span><span class="se">\</span>

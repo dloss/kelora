@@ -6566,7 +6566,7 @@ contain only function definitions; top-level statements are rejected.</p>
 <h4 id="-e-exec-script"><code>-e, --exec &lt;SCRIPT&gt;</code><a class="headerlink" href="#-e-exec-script" title="Permanent link">&para;</a></h4>
 <p>Transform/process script evaluated on each event. Multiple <code>--exec</code> scripts run in order.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-e-exec-file-file"><code>-E, --exec-file &lt;FILE&gt;</code><a class="headerlink" href="#-e-exec-file-file" title="Permanent link">&para;</a></h4>
 <p>Execute Rhai script from file (runs in exec stage).</p>
@@ -6624,7 +6624,7 @@ definitions; top-level statements are rejected.</p>
 <h4 id="-end-script"><code>--end &lt;SCRIPT&gt;</code><a class="headerlink" href="#-end-script" title="Permanent link">&para;</a></h4>
 <p>Run once after processing completes (post-processing stage). Access global <code>metrics</code> map from <code>track_*()</code> calls here.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">    </span>app.log
 </code></pre></div>
@@ -6947,19 +6947,19 @@ definitions; top-level statements are rejected.</p>
 <h4 id="-m-metricsformat"><code>-m, --metrics[=FORMAT]</code><a class="headerlink" href="#-m-metricsformat" title="Permanent link">&para;</a></h4>
 <p>Show metrics only (implies <code>-q/--quiet</code>). Use <code>-m</code> for default full table format, or <code>--metrics=FORMAT</code> for explicit format.</p>
 <p>Formats: <code>short</code> (first 5 items), <code>full</code> (default), <code>json</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>-m<span class="w"> </span>app.log<span class="w">               </span><span class="c1"># Default full table</span>
-<a id="__codelineno-76-2" name="__codelineno-76-2" href="#__codelineno-76-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="o">=</span>short<span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Abbreviated (first 5)</span>
-<a id="__codelineno-76-3" name="__codelineno-76-3" href="#__codelineno-76-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="o">=</span>json<span class="w"> </span>app.log<span class="w">   </span><span class="c1"># JSON format</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span>-m<span class="w"> </span>app.log<span class="w">               </span><span class="c1"># Default full table</span>
+<a id="__codelineno-76-2" name="__codelineno-76-2" href="#__codelineno-76-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span>--metrics<span class="o">=</span>short<span class="w"> </span>app.log<span class="w">  </span><span class="c1"># Abbreviated (first 5)</span>
+<a id="__codelineno-76-3" name="__codelineno-76-3" href="#__codelineno-76-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span>--metrics<span class="o">=</span>json<span class="w"> </span>app.log<span class="w">   </span><span class="c1"># JSON format</span>
 </code></pre></div>
 <h4 id="-with-metrics"><code>--with-metrics</code><a class="headerlink" href="#-with-metrics" title="Permanent link">&para;</a></h4>
 <p>Show metrics alongside events (rare case).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--with-metrics<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span>--with-metrics<span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="-no-metrics"><code>--no-metrics</code><a class="headerlink" href="#-no-metrics" title="Permanent link">&para;</a></h4>
 <p>Disable tracked metrics explicitly (default: off).</p>
 <h4 id="-metrics-file-file"><code>--metrics-file &lt;FILE&gt;</code><a class="headerlink" href="#-metrics-file-file" title="Permanent link">&para;</a></h4>
 <p>Persist metrics map to disk as JSON.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="template-discovery">Template Discovery<a class="headerlink" href="#template-discovery" title="Permanent link">&para;</a></h3>
 <h4 id="-drainformat"><code>--drain[=FORMAT]</code><a class="headerlink" href="#-drainformat" title="Permanent link">&para;</a></h4>
@@ -7117,7 +7117,7 @@ top-level fields, or <code>0</code> for unlimited depth.</p>
 <a id="__codelineno-90-2" name="__codelineno-90-2" href="#__codelineno-90-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--context<span class="w"> </span><span class="m">2</span><span class="w"> </span>app.log
 <a id="__codelineno-90-3" name="__codelineno-90-3" href="#__codelineno-90-3"></a>
 <a id="__codelineno-90-4" name="__codelineno-90-4" href="#__codelineno-90-4"></a><span class="c1"># Count errors by service</span>
-<a id="__codelineno-90-5" name="__codelineno-90-5" href="#__codelineno-90-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
+<a id="__codelineno-90-5" name="__codelineno-90-5" href="#__codelineno-90-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span>--metrics<span class="w"> </span>app.log
 </code></pre></div>
 <h3 id="performance-analysis">Performance Analysis<a class="headerlink" href="#performance-analysis" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a><span class="c1"># Find slow requests</span>
@@ -7125,7 +7125,7 @@ top-level fields, or <code>0</code> for unlimited depth.</p>
 <a id="__codelineno-91-3" name="__codelineno-91-3" href="#__codelineno-91-3"></a>
 <a id="__codelineno-91-4" name="__codelineno-91-4" href="#__codelineno-91-4"></a><span class="c1"># Track response time percentiles</span>
 <a id="__codelineno-91-5" name="__codelineno-91-5" href="#__codelineno-91-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-91-6" name="__codelineno-91-6" href="#__codelineno-91-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;latency&quot;, e.request_time.to_float() * 1000)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-91-6" name="__codelineno-91-6" href="#__codelineno-91-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;latency&quot;, e.request_time.to_float() * 1000)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-91-7" name="__codelineno-91-7" href="#__codelineno-91-7"></a><span class="w">    </span>--metrics<span class="w"> </span>nginx.log
 </code></pre></div>
 <h3 id="data-export">Data Export<a class="headerlink" href="#data-export" title="Permanent link">&para;</a></h3>

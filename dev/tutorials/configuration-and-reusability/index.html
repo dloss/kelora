@@ -3767,7 +3767,7 @@
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">[aliases]</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="na">api-errors = --levels error --filter &#39;e.service =</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;api&quot;</span><span class="na">&#39;</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="na">slow-db = --filter &#39;e.service =</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;database&quot;</span><span class="w"> </span><span class="na">&amp;&amp; e.duration_ms &gt; 100&#39;</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="na">alerts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--levels critical,error --exec &#39;track_count(e.service)&#39;</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="na">alerts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--levels critical,error --exec &#39;track_count(&quot;service&quot;, e.service)&#39;</span>
 </code></pre></div></p>
 <p><strong>Pro tip:</strong> Commit <code>.kelora.ini</code> to your repository so the whole team uses the same patterns!</p>
 <hr />
@@ -3816,7 +3816,7 @@
 <p>You can put full pipelines in aliases:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[aliases]</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">analyze-api = -j --filter &#39;e.service =</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;api&quot;</span><span class="na">&#39; \</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">              </span><span class="na">--exec &#39;track_count(e.level)&#39; \</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">              </span><span class="na">--exec &#39;track_count(&quot;level&quot;, e.level)&#39; \</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">              </span><span class="na">--exec &#39;track_sum(&quot;total_duration&quot;, e.duration_ms)&#39; \</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">              </span><span class="na">--metrics</span>
 </code></pre></div>
@@ -4000,7 +4000,7 @@
 <a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>
 <a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a>// Track by service and level
 <a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>if e.has(&quot;service&quot;) &amp;&amp; e.has(&quot;level&quot;) {
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>    track_count(e.service + &quot;:&quot; + e.level);
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a>    track_count(&quot;service_level&quot;, e.service + &quot;:&quot; + e.level);
 <a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>}
 <a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>
 <a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a>// Return enriched event
@@ -4096,7 +4096,7 @@
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="o">[</span>aliases<span class="o">]</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>production-errors<span class="w"> </span><span class="o">=</span><span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>error,critical<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">                    </span>--filter<span class="w"> </span><span class="s1">&#39;e.environment == &quot;production&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">                    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.service)&#39;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">                    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># Anyone on team can run</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>kelora<span class="w"> </span>-a<span class="w"> </span>production-errors<span class="w"> </span>logs/*.jsonl<span class="w"> </span>--metrics
@@ -4122,7 +4122,7 @@
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">    </span>e.duration_s<span class="w"> </span><span class="o">=</span><span class="w"> </span>e.duration_ms<span class="w"> </span>/<span class="w"> </span><span class="m">1000</span><span class="p">;</span>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="o">}</span>
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>track_count<span class="o">(</span>e.service<span class="w"> </span>+<span class="w"> </span><span class="s2">&quot;:&quot;</span><span class="w"> </span>+<span class="w"> </span>e.level<span class="o">)</span><span class="p">;</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>track_count<span class="o">(</span><span class="s2">&quot;service_level&quot;</span>,<span class="w"> </span>e.service<span class="w"> </span>+<span class="w"> </span><span class="s2">&quot;:&quot;</span><span class="w"> </span>+<span class="w"> </span>e.level<span class="o">)</span><span class="p">;</span>
 <a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>
 <a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="c1"># Use in pipeline</span>
 <a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-E<span class="w"> </span>transforms/normalize.rhai<span class="w"> </span>--metrics
@@ -4178,7 +4178,7 @@
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="na">errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--levels error,critical -I scripts/helpers.rhai</span>
 <a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="na">enrich</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-I scripts/helpers.rhai -E scripts/enrich.rhai</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="na">alerts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-a errors --exec &#39;add_alert_tag(e)&#39; --filter &#39;e.alert&#39;</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="na">analyze</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-a enrich --exec &#39;track_count(e.severity)&#39; --metrics</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="na">analyze</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-a enrich --exec &#39;track_count(&quot;severity&quot;, e.severity)&#39; --metrics</span>
 </code></pre></div></p>
 <h3 id="step-4-use-the-workflow">Step 4: Use the Workflow<a class="headerlink" href="#step-4-use-the-workflow" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Quick error check</span>
@@ -4337,7 +4337,7 @@
 <a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="k">[aliases]</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="na">api-errors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--filter &#39;e.status &gt;= 400&#39; --keys ip,status,method,path</span>
 <a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="na">slow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--filter &#39;e.request_time.to_float() &gt; 1.0&#39; --keys ip,request_time,path</span>
-<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="na">traffic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--exec &#39;track_count(e.method)</span><span class="c1">; track_count(e.status.to_string())&#39; --metrics</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="na">traffic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">--exec &#39;track_count(&quot;method&quot;, e.method)</span><span class="c1">; track_count(&quot;status&quot;, e.status)&#39; --metrics</span>
 </code></pre></div>
 </details>
 

@@ -1852,15 +1852,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#histogram-bucketing-with-track_bucket" class="md-nav__link">
+  <a href="#histogram-bucketing-with-track_count" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Histogram Bucketing with track_bucket()
+        Histogram Bucketing with track_count()
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Histogram Bucketing with track_bucket()">
+    <nav class="md-nav" aria-label="Histogram Bucketing with track_count()">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3321,15 +3321,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#histogram-bucketing-with-track_bucket" class="md-nav__link">
+  <a href="#histogram-bucketing-with-track_count" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Histogram Bucketing with track_bucket()
+        Histogram Bucketing with track_count()
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Histogram Bucketing with track_bucket()">
+    <nav class="md-nav" aria-label="Histogram Bucketing with track_count()">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3663,11 +3663,9 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/production-errors.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.error_pattern = e.message.normalized()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_pattern)&#39;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;error_pattern&quot;, e.error_pattern)&#39;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Failed to connect to &lt;ipv4&gt; = 4
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Timeout on request &lt;uuid&gt; = 3
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>User &lt;email&gt; sent invalid request = 3
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>error_pattern = #{&quot;Failed to connect to &lt;ipv4&gt;&quot;: 4, &quot;Timeout on request &lt;uuid&gt;&quot;: 3, &quot;User &lt;email&gt; sent invalid request&quot;: 3}
 </code></pre></div>
 </div>
 </div>
@@ -4186,7 +4184,7 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>kelora<span class="w"> </span>logs.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;, #{keep_source: true})&#39;</span>
 </code></pre></div>
-<h2 id="histogram-bucketing-with-track_bucket">Histogram Bucketing with <code>track_bucket()</code><a class="headerlink" href="#histogram-bucketing-with-track_bucket" title="Permanent link">&para;</a></h2>
+<h2 id="histogram-bucketing-with-track_count">Histogram Bucketing with <code>track_count()</code><a class="headerlink" href="#histogram-bucketing-with-track_count" title="Permanent link">&para;</a></h2>
 <h3 id="the-problem_6">The Problem<a class="headerlink" href="#the-problem_6" title="Permanent link">&para;</a></h3>
 <p>You want to see the distribution of response times, not just average/max.</p>
 <h3 id="the-solution-bucket-tracking">The Solution: Bucket Tracking<a class="headerlink" href="#the-solution-bucket-tracking" title="Permanent link">&para;</a></h3>
@@ -4197,7 +4195,7 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;response_time&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let bucket = (e.response_time / 0.5).floor() * 0.5;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_bucket(&quot;response_ms&quot;, bucket)&#39;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_count(&quot;response_ms&quot;, bucket)&#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>response_ms  = #{&quot;0&quot;: 11, &quot;0.5&quot;: 1, &quot;1&quot;: 1, &quot;1.5&quot;: 1, &quot;2.5&quot;: 1, &quot;5&quot;: 1}
 </code></pre></div>
@@ -4238,7 +4236,7 @@ timestamp, date, time, num.</p>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>combined<span class="w"> </span>examples/web_access.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status&quot;, e.status / 100 * 100)&#39;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;status&quot;, e.status / 100 * 100)&#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>status       = #{&quot;200&quot;: 15, &quot;300&quot;: 1, &quot;400&quot;: 3, &quot;500&quot;: 1}
 </code></pre></div>
@@ -4474,7 +4472,7 @@ you can still fall back to manual extraction per event:</p>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[&quot;count&quot;] += 1; e.seq = state[&quot;count&quot;]&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span>-k<span class="w"> </span>seq,timestamp,message<span class="w"> </span>-F<span class="w"> </span>csv
 </code></pre></div>
-<p><strong>Note</strong>: For simple counting by category, use <code>track_count(e.category)</code> instead.</p>
+<p><strong>Note</strong>: For simple counting by category, use <code>track_count("category", e.category)</code> instead.</p>
 <h3 id="converting-state-to-regular-map">Converting State to Regular Map<a class="headerlink" href="#converting-state-to-regular-map" title="Permanent link">&para;</a></h3>
 <p><code>state</code> is a special <code>StateMap</code> type with limited operations. To use map functions like <code>.to_logfmt()</code> or <code>.to_kv()</code>, convert it first:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Command/Output</label><label for="__tabbed_26_2">Log Data</label></div>
@@ -4610,7 +4608,7 @@ you can still fall back to manual extraction per event:</p>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="s1">          e.user_id = ()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.sample_group &lt; 3&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.error_pattern);</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;error_pattern&quot;, e.error_pattern);</span>
 <a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="s1">          track_sum(&quot;revenue&quot;, e.price * e.quantity)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="w">  </span>-k<span class="w"> </span>order_id,sku,quantity,price,error_pattern<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="w">  </span>&gt;<span class="w"> </span>processed_orders.csv
