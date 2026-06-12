@@ -663,6 +663,50 @@ fn build_discover_format_summary(
     }
 }
 
+/// Build the timestamp summary for the discover footer/row marker from
+/// processing stats. Chooses the primary timestamp field the same way the
+/// pipeline does: an explicit `--ts-field` wins; otherwise the
+/// highest-priority candidate (per `TIMESTAMP_FIELD_NAMES`) that was actually
+/// seen. Returns `None` when no timestamp field was identified, so the footer
+/// stays quiet for timestamp-less inputs (the `--since`/`--until` hint covers
+/// the failure case if a user tries to time-filter anyway).
+fn build_discover_timestamp_summary(
+    stats: Option<&stats::ProcessingStats>,
+) -> Option<field_discovery::TimestampSummary> {
+    use field_discovery::TimestampSummary;
+    let stats = stats?;
+
+    let (field, overridden) = if let Some(field) = &stats.timestamp_override_field {
+        (field.clone(), true)
+    } else {
+        // Match identify_timestamp_field: first candidate (by priority) seen.
+        let chosen = crate::event::TIMESTAMP_FIELD_NAMES
+            .iter()
+            .find(|name| stats.timestamp_fields.contains_key(**name))
+            .map(|name| name.to_string())
+            // Fall back to whichever field was recorded first (e.g. a named
+            // format's `ts` that isn't in the generic candidate list).
+            .or_else(|| stats.timestamp_fields.keys().next().cloned())?;
+        (chosen, false)
+    };
+
+    let (detected, parsed) = stats
+        .timestamp_fields
+        .get(&field)
+        .map(|s| (s.detected, s.parsed))
+        .unwrap_or((
+            stats.timestamp_detected_events,
+            stats.timestamp_parsed_events,
+        ));
+
+    Some(TimestampSummary {
+        field,
+        overridden,
+        detected,
+        parsed,
+    })
+}
+
 /// Handle successful pipeline execution - process metrics, stats, and warnings
 fn handle_pipeline_success(
     config: &KeloraConfig,
@@ -814,8 +858,10 @@ fn handle_pipeline_success(
     if !SHOULD_TERMINATE.load(Ordering::Relaxed) {
         let format_summary =
             build_discover_format_summary(&config.input.format, pipeline_result.stats.as_ref());
+        let timestamp_summary = build_discover_timestamp_summary(pipeline_result.stats.as_ref());
         if let Some(discovery) = pipeline_result.field_discovery.as_mut() {
             discovery.format_summary = format_summary;
+            discovery.timestamp_summary = timestamp_summary;
             let formatted = match config.output.discover_fields {
                 Some(cli::DiscoverFieldsFormat::Json) => discovery.format_json(),
                 _ => {

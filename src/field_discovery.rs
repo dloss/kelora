@@ -330,6 +330,48 @@ impl FormatSummary {
     }
 }
 
+/// Which field kelora identified as the primary timestamp, and how reliably it
+/// parsed. Surfaced in the discover footer (and JSON) and used to mark the
+/// field's row, so the orientation view answers "which field is the clock?" —
+/// the question that precedes any `--since`/`--until` filtering. Built at the
+/// render site from processing stats (see `main.rs`).
+#[derive(Debug, Clone)]
+pub struct TimestampSummary {
+    /// The primary timestamp field name.
+    pub field: std::string::String,
+    /// True when chosen via `--ts-field` rather than auto-detection.
+    pub overridden: bool,
+    /// How many events carried this field.
+    pub detected: usize,
+    /// How many of those parsed into a valid timestamp.
+    pub parsed: usize,
+}
+
+impl TimestampSummary {
+    /// Render the fragment shown in the table footer, e.g.
+    /// `timestamp: ts`, `timestamp: ts (80% parsed)`, or
+    /// `timestamp: when (--ts-field)`.
+    fn footer_fragment(&self) -> std::string::String {
+        let mut notes: Vec<std::string::String> = Vec::new();
+        if self.overridden {
+            notes.push("--ts-field".to_string());
+        }
+        if self.detected == 0 {
+            // Only reachable for an override naming a field no event carried;
+            // auto-detected summaries always have detected > 0.
+            notes.push("not found".to_string());
+        } else if self.parsed < self.detected {
+            let pct = (self.parsed as f64 / self.detected as f64) * 100.0;
+            notes.push(format!("{:.0}% parsed", pct));
+        }
+        if notes.is_empty() {
+            format!("timestamp: {}", self.field)
+        } else {
+            format!("timestamp: {} ({})", self.field, notes.join(", "))
+        }
+    }
+}
+
 pub struct FieldDiscovery {
     /// Per-field profiles, insertion-ordered.
     pub fields: IndexMap<std::string::String, FieldProfile>,
@@ -344,6 +386,9 @@ pub struct FieldDiscovery {
     /// Which parser(s) produced these fields; set at the render site. `None`
     /// suppresses the format line in the footer/JSON.
     pub format_summary: Option<FormatSummary>,
+    /// The identified primary timestamp field; set at the render site. `None`
+    /// suppresses the timestamp footer fragment and row marker.
+    pub timestamp_summary: Option<TimestampSummary>,
 }
 
 impl Default for FieldDiscovery {
@@ -370,6 +415,7 @@ impl FieldDiscovery {
             flatten_depth_capped: false,
             flatten_depth,
             format_summary: None,
+            timestamp_summary: None,
         }
     }
 
@@ -481,12 +527,25 @@ impl FieldDiscovery {
 
         let mut entries: Vec<_> = self.fields.iter().collect();
         entries.sort_by(|a, b| b.1.seen_count.cmp(&a.1.seen_count));
-        let rows: Vec<_> = entries
+        let ts_field = self.timestamp_summary.as_ref().map(|t| t.field.as_str());
+        let mut rows: Vec<_> = entries
             .iter()
             .map(|(name, profile)| {
                 DiscoveryRow::from_profile(self.total_events, name, profile, &glyphs)
             })
             .collect();
+        // Mark the primary timestamp field's row so the orientation view shows
+        // which field is the clock. The footer also names it, so on the rare
+        // long-name-in-narrow-terminal case where truncation eats the marker the
+        // signal is not lost.
+        if let Some(ts_field) = ts_field {
+            for row in rows.iter_mut() {
+                if row.name == ts_field {
+                    row.name.push_str(glyphs.ts_marker);
+                    break;
+                }
+            }
+        }
 
         if let Some(widths) = TableWidths::for_full_table(terminal_width, &rows) {
             output.push_str(&pad_right_display("Field", widths.name));
@@ -629,10 +688,14 @@ impl FieldDiscovery {
         // No trailing newline: the caller's `writeln` terminates the last line,
         // matching the JSON path and avoiding a stray blank line.
         output.push_str(&format!("\n{} events scanned", self.total_events));
+        let sep = if use_unicode { " · " } else { " | " };
         if let Some(summary) = &self.format_summary {
-            let sep = if use_unicode { " · " } else { " | " };
             output.push_str(sep);
             output.push_str(&summary.footer_fragment());
+        }
+        if let Some(ts) = &self.timestamp_summary {
+            output.push_str(sep);
+            output.push_str(&ts.footer_fragment());
         }
 
         output
@@ -668,6 +731,14 @@ impl FieldDiscovery {
                 "samples": profile.samples,
             });
 
+            if self
+                .timestamp_summary
+                .as_ref()
+                .is_some_and(|t| t.field == *name)
+            {
+                field_obj["timestamp"] = serde_json::json!(true);
+            }
+
             if let Some((lo, hi)) = profile.array_size_range {
                 field_obj["array_size"] = serde_json::json!({"min": lo, "max": hi});
             }
@@ -700,6 +771,15 @@ impl FieldDiscovery {
             }
         }
 
+        if let Some(ts) = &self.timestamp_summary {
+            result["timestamp"] = serde_json::json!({
+                "field": ts.field,
+                "source": if ts.overridden { "ts-field" } else { "auto" },
+                "detected": ts.detected,
+                "parsed": ts.parsed,
+            });
+        }
+
         serde_json::to_string_pretty(&result).unwrap_or_else(|_| "{}".to_string())
     }
 }
@@ -713,6 +793,8 @@ struct Glyphs {
     ellipsis: &'static str,
     /// Placeholder for fields with no scalar cardinality: `—` or `-`.
     em_dash: &'static str,
+    /// Suffix marking the primary timestamp field's row: ` ⏱` or ` (ts)`.
+    ts_marker: &'static str,
 }
 
 impl Glyphs {
@@ -721,11 +803,17 @@ impl Glyphs {
             Self {
                 ellipsis: "\u{2026}",
                 em_dash: "\u{2014}",
+                // U+FE0F forces emoji presentation so the width unicode-width
+                // measures (2) matches how terminals render it, keeping the
+                // Field column aligned. Bare U+23F1 measures as 1 but draws as
+                // 2 in emoji terminals, which would skew the marked row.
+                ts_marker: " \u{23F1}\u{FE0F}",
             }
         } else {
             Self {
                 ellipsis: "...",
                 em_dash: "-",
+                ts_marker: " (ts)",
             }
         }
     }
@@ -1467,6 +1555,134 @@ mod tests {
         assert!(table.contains("1 events scanned"));
         assert!(!table.contains("format:"));
         assert!(!table.contains("formats:"));
+    }
+
+    fn discovery_with_ts_field() -> FieldDiscovery {
+        let mut discovery = FieldDiscovery::new();
+        let mut fields = IndexMap::new();
+        fields.insert("ts".to_string(), make_string("2024-01-01T00:00:00Z"));
+        fields.insert("level".to_string(), make_string("INFO"));
+        discovery.observe_event(&fields);
+        discovery
+    }
+
+    #[test]
+    fn test_timestamp_marker_on_field_row() {
+        let mut discovery = discovery_with_ts_field();
+        discovery.timestamp_summary = Some(TimestampSummary {
+            field: "ts".to_string(),
+            overridden: false,
+            detected: 1,
+            parsed: 1,
+        });
+        // ASCII marker on the ts row, not on other fields.
+        let ascii = discovery.format_table_for_width(120, false);
+        assert!(ascii.contains("ts (ts)"), "{ascii}");
+        assert!(
+            ascii
+                .lines()
+                .any(|l| l.starts_with("level ") && !l.contains("(ts)")),
+            "level row must not be marked: {ascii}"
+        );
+        // Footer names the field.
+        assert!(ascii.contains("| timestamp: ts"), "{ascii}");
+    }
+
+    #[test]
+    fn test_timestamp_footer_flags_low_parse_rate() {
+        let mut discovery = discovery_with_ts_field();
+        discovery.timestamp_summary = Some(TimestampSummary {
+            field: "ts".to_string(),
+            overridden: false,
+            detected: 10,
+            parsed: 6,
+        });
+        let table = discovery.format_table_for_width(120, false);
+        assert!(table.contains("timestamp: ts (60% parsed)"), "{table}");
+    }
+
+    #[test]
+    fn test_timestamp_footer_marks_override() {
+        let mut discovery = discovery_with_ts_field();
+        discovery.timestamp_summary = Some(TimestampSummary {
+            field: "ts".to_string(),
+            overridden: true,
+            detected: 1,
+            parsed: 1,
+        });
+        let table = discovery.format_table_for_width(120, false);
+        assert!(table.contains("timestamp: ts (--ts-field)"), "{table}");
+    }
+
+    #[test]
+    fn test_timestamp_footer_flags_missing_override() {
+        let mut discovery = discovery_with_ts_field();
+        discovery.timestamp_summary = Some(TimestampSummary {
+            field: "nonexistent".to_string(),
+            overridden: true,
+            detected: 0,
+            parsed: 0,
+        });
+        let table = discovery.format_table_for_width(120, false);
+        assert!(
+            table.contains("timestamp: nonexistent (--ts-field, not found)"),
+            "{table}"
+        );
+    }
+
+    #[test]
+    fn test_timestamp_absent_keeps_footer_quiet() {
+        let discovery = discovery_with_ts_field();
+        // No timestamp_summary set.
+        let table = discovery.format_table_for_width(120, false);
+        assert!(!table.contains("timestamp:"), "{table}");
+        assert!(!table.contains("(ts)"), "{table}");
+    }
+
+    #[test]
+    fn test_timestamp_emoji_marker_alignment() {
+        // In unicode/emoji mode the marker carries U+FE0F so unicode-width
+        // measures it the way terminals render it; the marked name's display
+        // width must equal the base name plus the marker width.
+        let glyphs = Glyphs::new(true);
+        let marked = format!("ts{}", glyphs.ts_marker);
+        assert_eq!(
+            display_width(&marked),
+            display_width("ts") + display_width(glyphs.ts_marker)
+        );
+        // The emoji marker (space + clock + VS16) is width 3.
+        assert_eq!(display_width(glyphs.ts_marker), 3);
+    }
+
+    #[test]
+    fn test_timestamp_json_keys() {
+        let mut discovery = discovery_with_ts_field();
+        discovery.timestamp_summary = Some(TimestampSummary {
+            field: "ts".to_string(),
+            overridden: false,
+            detected: 1,
+            parsed: 1,
+        });
+        let json: serde_json::Value =
+            serde_json::from_str(&discovery.format_json()).expect("valid json");
+        assert_eq!(json["timestamp"]["field"], "ts");
+        assert_eq!(json["timestamp"]["source"], "auto");
+        assert_eq!(json["timestamp"]["parsed"], 1);
+        // The ts field row carries the flag; others don't.
+        let ts_field = json["fields"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|f| f["name"] == "ts")
+            .unwrap();
+        assert_eq!(ts_field["timestamp"], true);
+        let level_field = json["fields"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|f| f["name"] == "level")
+            .unwrap();
+        assert!(level_field.get("timestamp").is_none());
     }
 
     #[test]
