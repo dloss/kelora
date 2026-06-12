@@ -22,6 +22,22 @@ Typical causes are filtering everything out, quiet/silent output flags, or time 
 
 Stages run in the **exact CLI order** you specify. Create fields before filtering on them, and place `--levels` where you want level filtering to occur. See [Scripting Stages](concepts/scripting-stages.md) for examples.
 
+## How do I filter by severity, like "WARN and above"?
+
+`-l/--levels` matches an explicit **set** of level names — it has no built-in notion of severity ranking, so it cannot express an ordering like "WARN or worse." List every level you want explicitly:
+
+```bash
+kelora -j --levels warn,error,critical,fatal app.log
+```
+
+If you prefer a real threshold, map levels to numbers in a Rhai filter:
+
+```bash
+kelora -j --filter '#{"trace":0, "debug":1, "info":2, "warn":3, "error":4, "fatal":5}.get(e.level.to_lower(), -1) >= 3' app.log
+```
+
+`--levels` stays the faster choice when the explicit set is short; reach for the Rhai filter when you want one threshold to cover many level names. See the [CLI Reference](reference/cli-reference.md) for level-filtering details.
+
 ## How do I debug filters or Rhai scripts?
 
 Use `-F inspect` to see fields and types, `--verbose` to surface errors, and `--strict` to fail fast. The [Common Errors Reference](reference/common-errors.md) and [Functions Reference](reference/functions.md) cover patterns for safe access and type conversion.
