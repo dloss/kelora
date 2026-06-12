@@ -4,6 +4,7 @@
 //! including config file handling, aliases, and help text display.
 
 use anyhow::Result;
+use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{ArgMatches, CommandFactory, FromArgMatches};
 
 use crate::cli::{Cli, OutputFormat, ShellCompletion};
@@ -356,6 +357,56 @@ pub fn handle_save_alias(raw_args: &[String], alias_name: &str, use_emoji: bool)
 }
 
 /// Process command line arguments with config file support
+/// Extract the offending flag from a clap `UnknownArgument` error, e.g. `--sort`.
+fn invalid_arg(e: &clap::Error) -> Option<String> {
+    match e.get(ContextKind::InvalidArg)? {
+        ContextValue::String(s) => Some(s.clone()),
+        ContextValue::Strings(ss) => ss.first().cloned(),
+        _ => None,
+    }
+}
+
+/// Map a small, curated set of unknown flags borrowed from other tools onto the
+/// kelora idiom that actually does the job, and render a full replacement error
+/// message (including usage) for clap to print. Returns `None` for anything not
+/// in the curated set so clap's default handling takes over.
+///
+/// Keep this list tiny and high-signal: it is a teaching nudge, not a thesaurus,
+/// and every entry is a maintenance liability that can drift from reality.
+fn unknown_arg_hint(arg: &str) -> Option<String> {
+    // Normalize: drop leading dashes and any `=value` suffix, lowercase.
+    let name = arg
+        .trim_start_matches('-')
+        .split('=')
+        .next()
+        .unwrap_or("")
+        .to_ascii_lowercase();
+
+    let hint = match name.as_str() {
+        "where" | "grep" | "match" => {
+            "kelora has no --where/--grep flag. Filter events with --filter:\n    \
+             kelora --filter 'e.level == \"ERROR\"' app.log\n  \
+             See --help-rhai for expression syntax."
+        }
+        "sort" | "top" | "top-n" | "topn" | "rank" | "nlargest" => {
+            "kelora has no --sort/--top flag. Ranking happens in a script stage via track_top_by:\n    \
+             kelora -m --exec 'track_top_by(\"slowest\", e.endpoint, e.latency_ms, 10)' app.log\n  \
+             See --help-functions for track_top_by and related helpers."
+        }
+        "count" | "uniq" | "uniq-c" | "group-by" | "groupby" => {
+            "kelora has no --count/--group-by flag. Aggregate in a script stage via track_count:\n    \
+             kelora -m --exec 'track_count(\"level\", e.level)' app.log\n  \
+             See --help-functions for track_count and related helpers."
+        }
+        _ => return None,
+    };
+
+    Some(format!(
+        "error: unexpected argument '{arg}'\n\nhint: {hint}\n\n{}\n\nFor a quick reference, try '-h'.",
+        Cli::command().render_usage()
+    ))
+}
+
 pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, ConfigExpansionInfo) {
     // Get raw command line arguments
     let raw_args: Vec<String> = std::env::args().collect();
@@ -513,8 +564,27 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
         }
     };
 
-    // Parse with potentially modified arguments
-    let matches = Cli::command().get_matches_from(processed_args);
+    // Parse with potentially modified arguments. Use the fallible variant so we can
+    // replace clap's edit-distance "did you mean" suggestion with curated, intent-based
+    // hints for vocabulary borrowed from other tools (e.g. --sort, --grep). The default
+    // suggestion matches on string distance, not intent, and is frequently misleading
+    // here (--sort -> --assert, --where -> --help-regex). These are NOT aliases: the
+    // flags stay unknown and still exit 2, so we reserve no namespace and could later
+    // add a real --sort/--top flag without a breaking collision.
+    let matches = match Cli::command().try_get_matches_from(processed_args) {
+        Ok(matches) => matches,
+        Err(e) => {
+            if e.kind() == ErrorKind::UnknownArgument {
+                if let Some(hint) = invalid_arg(&e).and_then(|arg| unknown_arg_hint(&arg)) {
+                    stderr.writeln(&hint).unwrap_or(());
+                    ExitCode::InvalidUsage.exit();
+                }
+            }
+            // No curated hint: preserve clap's default behavior exactly (help/version
+            // to stdout exiting 0, other errors to stderr with their own exit code).
+            e.exit();
+        }
+    };
     let mut cli = Cli::from_arg_matches(&matches).unwrap_or_else(|e| {
         stderr
             .writeln(&format!("kelora: Error: {}", e))
