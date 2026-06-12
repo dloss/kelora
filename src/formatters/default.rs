@@ -189,21 +189,7 @@ impl DefaultFormatter {
 
     /// Get appropriate color for log level values
     fn level_color(&self, level: &str) -> &str {
-        match level.to_lowercase().as_str() {
-            // Bright red for error levels
-            "error" | "err" | "fatal" | "panic" | "alert" | "crit" | "critical" | "emerg"
-            | "emergency" | "severe" => self.colors.level_error,
-            // Bright yellow for warning levels
-            "warn" | "warning" => self.colors.level_warn,
-            // Bright green for info levels
-            "info" | "informational" | "notice" => self.colors.level_info,
-            // Bright cyan for debug levels
-            "debug" | "finer" | "config" => self.colors.level_debug,
-            // Cyan for trace levels
-            "trace" | "finest" => self.colors.level_trace,
-            // Default to no color for unknown levels
-            _ => "",
-        }
+        self.colors.level_color(level)
     }
 
     /// Check if key is likely a log level field

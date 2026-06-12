@@ -306,15 +306,7 @@ impl LevelmapFormatter {
     }
 
     fn level_color(&self, level: &str) -> &'static str {
-        match level.to_lowercase().as_str() {
-            "error" | "err" | "fatal" | "panic" | "alert" | "crit" | "critical" | "emerg"
-            | "emergency" | "severe" => self.colors.level_error,
-            "warn" | "warning" => self.colors.level_warn,
-            "info" | "informational" | "notice" => self.colors.level_info,
-            "debug" | "finer" | "config" => self.colors.level_debug,
-            "trace" | "finest" => self.colors.level_trace,
-            _ => "",
-        }
+        self.colors.level_color(level)
     }
 }
 
