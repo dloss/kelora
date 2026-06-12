@@ -588,6 +588,175 @@ fn filter_field_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
     ))
 }
 
+/// Hint when `-k/--keys` or `--exclude-keys` names a field that never appeared
+/// in any event across the whole stream. A field present in only some rows is
+/// legitimate in heterogeneous logs; "never present anywhere" is the typo
+/// signal. Unlike `maybe_print_zero_results_hint`, this fires regardless of how
+/// many events were output: an include typo empties every event (loud, empty
+/// output), but an exclude typo silently fails to drop the field (quiet) — the
+/// redaction case we most want to surface.
+fn maybe_print_key_typo_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+    stderr: &mut SafeStderr,
+) {
+    // We can only tell a typo from a legitimately-absent field once we know what
+    // fields the input actually carries; an empty run is "no data", not a typo.
+    if stats.events_created == 0 {
+        return;
+    }
+
+    let messages = [
+        key_typo_message(
+            "-k/--keys",
+            "field",
+            "",
+            &config.output.keys,
+            &stats.discovered_keys,
+        ),
+        key_typo_message(
+            "--exclude-keys",
+            "field",
+            ", so it was not removed",
+            &config.output.exclude_keys,
+            &stats.discovered_keys,
+        ),
+    ];
+
+    for message in messages.into_iter().flatten() {
+        let formatted = config
+            .format_hint_message(&message)
+            .trim_start_matches('\n')
+            .to_string();
+        stderr.writeln(&formatted).unwrap_or(());
+    }
+}
+
+/// Build the typo hint for one key flag, or `None` when every requested key was
+/// seen at least once. `consequence` is appended after the field name to explain
+/// the effect (empty for `-k`, where empty output already speaks for itself).
+fn key_typo_message(
+    flag: &str,
+    label: &str,
+    consequence: &str,
+    requested: &[String],
+    discovered: &BTreeSet<String>,
+) -> Option<String> {
+    if requested.is_empty() {
+        return None;
+    }
+
+    let unseen: Vec<&String> = requested
+        .iter()
+        .filter(|key| !discovered.contains(*key))
+        .collect();
+
+    match unseen.as_slice() {
+        [] => None,
+        [key] => Some(format!(
+            "{flag} names {label} '{key}', which was never present in the input{consequence}. {}",
+            unseen_key_suggestion(key, discovered)
+        )),
+        keys => {
+            let names: Vec<&str> = keys.iter().map(|k| k.as_str()).collect();
+            Some(format!(
+                "{flag} names {label}s never present in the input{consequence}: {}. {}",
+                names.join(", "),
+                present_fields_hint(discovered)
+            ))
+        }
+    }
+}
+
+/// Inline "did you mean" for a single unseen key. Prefers the nearest discovered
+/// field; otherwise surfaces the field names the run actually saw (the hint
+/// already holds them), falling back to `--discover` only when that list is too
+/// long to inline. Renamed fields (e.g. `timestamp` vs `ts`) are too lexically
+/// distant for the nearest-field heuristic, so the present-fields list is what
+/// surfaces the real name in that case.
+fn unseen_key_suggestion(key: &str, discovered: &BTreeSet<String>) -> String {
+    if let Some(candidate) = nearest_field(key, discovered) {
+        return format!("Did you mean '{candidate}'?");
+    }
+    present_fields_hint(discovered)
+}
+
+/// List the fields the run actually saw when the set is small enough to read at
+/// a glance; otherwise point at `--discover`, which is purpose-built for naming
+/// fields (`-s` buries them in general stats).
+fn present_fields_hint(discovered: &BTreeSet<String>) -> String {
+    const MAX_INLINE: usize = 12;
+    if !discovered.is_empty() && discovered.len() <= MAX_INLINE {
+        let names: Vec<&str> = discovered.iter().map(String::as_str).collect();
+        format!("Present fields: {}.", names.join(", "))
+    } else {
+        "Run --discover to list fields.".to_string()
+    }
+}
+
+/// Closest discovered field to `key`, using the same similarity heuristic the
+/// Rhai diagnostics use: >0.6 normalized similarity, substring containment, or a
+/// shared 2-char prefix. Returns `None` when nothing is close enough so the
+/// caller can fall back to listing present fields.
+fn nearest_field(key: &str, discovered: &BTreeSet<String>) -> Option<String> {
+    let key_lower = key.to_lowercase();
+    let mut best: Option<(f64, &String)> = None;
+
+    for field in discovered {
+        let field_lower = field.to_lowercase();
+        let similarity = normalized_similarity(&key_lower, &field_lower);
+        let close = similarity > 0.6
+            || field_lower.contains(&key_lower)
+            || key_lower.contains(&field_lower)
+            || shared_prefix(&key_lower, &field_lower);
+        if close && best.is_none_or(|(best_sim, _)| similarity > best_sim) {
+            best = Some((similarity, field));
+        }
+    }
+
+    best.map(|(_, field)| field.clone())
+}
+
+/// Levenshtein similarity normalized to 0.0..=1.0 (1.0 == identical).
+fn normalized_similarity(a: &str, b: &str) -> f64 {
+    if a == b {
+        return 1.0;
+    }
+    let max_len = a.chars().count().max(b.chars().count());
+    if max_len == 0 {
+        return 0.0;
+    }
+    1.0 - (levenshtein(a, b) as f64 / max_len as f64)
+}
+
+fn levenshtein(a: &str, b: &str) -> usize {
+    let a: Vec<char> = a.chars().collect();
+    let b: Vec<char> = b.chars().collect();
+    if a.is_empty() {
+        return b.len();
+    }
+    if b.is_empty() {
+        return a.len();
+    }
+
+    let mut prev: Vec<usize> = (0..=b.len()).collect();
+    for (i, &ac) in a.iter().enumerate() {
+        let mut curr = vec![i + 1];
+        for (j, &bc) in b.iter().enumerate() {
+            let cost = usize::from(ac != bc);
+            curr.push((curr[j] + 1).min(prev[j + 1] + 1).min(prev[j] + cost));
+        }
+        prev = curr;
+    }
+    prev[b.len()]
+}
+
+/// Whether two strings share their first two bytes (a cheap "looks related"
+/// check for short renamings the similarity score would otherwise miss).
+fn shared_prefix(a: &str, b: &str) -> bool {
+    a.len() >= 2 && b.len() >= 2 && a.as_bytes()[..2] == b.as_bytes()[..2]
+}
+
 /// Build the discover footer's format summary from the requested input format
 /// and the run's processing stats. Returns `None` when no format is known
 /// (e.g. stats disabled, or an empty/auto run that detected nothing).
@@ -946,6 +1115,9 @@ fn handle_pipeline_success(
 
             if diagnostics_allowed_runtime && terminal_allowed {
                 maybe_print_zero_results_hint(config, s, stderr);
+                // Fires independently of the zero-results hint: an exclude-key
+                // typo leaves output intact but silently fails to drop the field.
+                maybe_print_key_typo_hint(config, s, stderr);
                 // With --stats the ragged-row count is already in the stats block.
                 if config.output.stats.is_none() {
                     maybe_print_csv_shape_hint(config, s, stderr);

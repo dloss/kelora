@@ -297,6 +297,136 @@ fn test_zero_results_with_existing_filter_field_does_not_emit_typo_hint() {
 }
 
 #[test]
+fn test_keys_typo_hints_with_nearest_field_suggestion() {
+    // `-k levle` is a typo for the `level` field. Every event is emptied and
+    // dropped, producing silent empty output + exit 0. The hint should name the
+    // unseen key and suggest the closest real field.
+    let input = r#"{"ts": "x", "level": "INFO", "msg": "hi"}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json", "-k", "levle"], input);
+
+    assert_eq!(exit_code, 0, "a key typo should remain non-fatal");
+    assert!(
+        stdout.trim().is_empty(),
+        "no events should be output: {}",
+        stdout
+    );
+    assert!(
+        stderr.contains("levle") && stderr.contains("never present"),
+        "stderr should name the unseen key: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("Did you mean 'level'?"),
+        "stderr should suggest the closest field: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_keys_rename_lists_present_fields_when_no_near_match() {
+    // `-k timestamp` against a `ts`-keyed log is a rename, not a typo: the names
+    // are too lexically distant for a nearest-match suggestion, so the hint lists
+    // the fields actually present (which surfaces the real `ts` name).
+    let input = r#"{"ts": "x", "level": "INFO", "msg": "hi"}"#;
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-k", "timestamp"], input);
+
+    assert_eq!(exit_code, 0, "a key rename miss should remain non-fatal");
+    assert!(
+        stderr.contains("timestamp") && stderr.contains("never present"),
+        "stderr should name the unseen key: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("Present fields:") && stderr.contains("ts"),
+        "stderr should list the fields actually present: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_keys_typo_among_valid_keys_hints_even_with_output() {
+    // `-k ts,levle`: `ts` exists so output is non-empty (exit looks fine), but
+    // `levle` was silently dropped. The hint must still fire on the unseen key.
+    let input = r#"{"ts": "x", "level": "INFO", "msg": "hi"}"#;
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-k", "ts,levle"], input);
+
+    assert_eq!(exit_code, 0, "a partial key typo should remain non-fatal");
+    assert!(
+        stdout.contains("ts="),
+        "the valid key should still be emitted: {}",
+        stdout
+    );
+    assert!(
+        stderr.contains("levle") && stderr.contains("Did you mean 'level'?"),
+        "stderr should flag the unseen key even when output is non-empty: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_exclude_keys_typo_hints_silent_redaction_failure() {
+    // The quiet failure: `--exclude-keys passwrd` (typo for `passwd`) drops
+    // nothing, so the field meant to be scrubbed stays in the output. Output is
+    // non-empty and exit is 0, so only a hint reveals the mistake.
+    let input = r#"{"ts": "x", "passwd": "secret", "msg": "hi"}"#;
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--exclude-keys", "passwrd"], input);
+
+    assert_eq!(exit_code, 0, "an exclude-key typo should remain non-fatal");
+    assert!(
+        stdout.contains("passwd="),
+        "the field stays in output because the exclude did not match: {}",
+        stdout
+    );
+    assert!(
+        stderr.contains("passwrd")
+            && stderr.contains("not removed")
+            && stderr.contains("Did you mean 'passwd'?"),
+        "stderr should explain the silent exclude failure: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_keys_present_in_some_rows_does_not_hint() {
+    // Heterogeneous logs legitimately have fields missing from some rows. As long
+    // as a key appears somewhere in the stream, it is not a typo — no hint.
+    let input = "{\"ts\": \"x\", \"level\": \"INFO\"}\n{\"ts\": \"y\", \"detail\": \"d\"}";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-k", "ts,detail"], input);
+
+    assert_eq!(exit_code, 0, "selecting present keys should succeed");
+    assert!(
+        !stderr.contains("never present"),
+        "stderr should not flag a key that appears in at least one row: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_keys_typo_hint_suppressed_by_silent() {
+    // The hint is a diagnostic; --silent must suppress it like the others.
+    let input = r#"{"ts": "x"}"#;
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-k", "bogus", "--silent"], input);
+
+    assert_eq!(exit_code, 0, "a key typo should remain non-fatal");
+    assert!(
+        stderr.trim().is_empty(),
+        "--silent should suppress the key typo hint: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_level_filter_on_unstructured_input_hints_missing_level_field() {
     // The newcomer's most natural first command on a plain app log:
     // `kelora app.log -l error`. Plain `line` input has no level field, so the
