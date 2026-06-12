@@ -29,6 +29,21 @@ fn test_main_help_describes_non_obvious_output_formats() {
 }
 
 #[test]
+fn test_main_help_documents_exit_codes() {
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help"]);
+    assert_eq!(exit_code, 0, "--help should exit successfully");
+    assert!(
+        stdout.contains("Exit Codes:"),
+        "--help should document the exit-code model: {}",
+        stdout
+    );
+    // The resilient-vs-strict distinction is the non-obvious part users hit.
+    assert!(stdout.contains("never once succeeded"));
+    assert!(stdout.contains("--strict"));
+    assert!(stdout.contains("134"));
+}
+
+#[test]
 fn test_help_regex_topic() {
     let (stdout, _stderr, exit_code) = run_kelora(&["--help-regex"]);
     assert_eq!(exit_code, 0, "--help-regex should exit successfully");
