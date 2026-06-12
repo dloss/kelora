@@ -2665,7 +2665,7 @@
 <p><strong>Output Fields:</strong></p>
 <ul>
 <li><strong>With header:</strong> Field names from header row</li>
-<li><strong>Without header:</strong> <code>col_0</code>, <code>col_1</code>, <code>col_2</code>, etc.</li>
+<li><strong>Without header:</strong> <code>c1</code>, <code>c2</code>, <code>c3</code>, etc.</li>
 </ul>
 <p><strong>Type Annotations:</strong></p>
 <p>Specify field types for automatic conversion:
@@ -2676,6 +2676,11 @@
 <ul>
 <li>Quoted fields supported: <code>"value, with, commas"</code></li>
 <li>Escaped quotes: <code>"value with ""quotes"""</code></li>
+<li>Ragged rows are preserved, not dropped: columns beyond the header (or beyond
+  the first row in header-less mode) are kept under positional names (<code>c5</code>,
+  <code>c6</code>, ... counted from 1), and rows with fewer columns leave the trailing
+  fields absent. Both cases are counted and reported as a hint on stderr.</li>
+<li><code>--strict</code> rejects ragged rows as parse errors instead.</li>
 </ul>
 <h3 id="syslog-format">Syslog Format<a class="headerlink" href="#syslog-format" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong> <code>-f syslog</code></p>
