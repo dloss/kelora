@@ -1586,6 +1586,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Field Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#missing-fields-the-one-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing fields: the one rule
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2856,6 +2873,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Field Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#missing-fields-the-one-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing fields: the one rule
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3602,172 +3636,217 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <li><code>track_*()</code> functions silently skip <code>()</code> values</li>
 <li>Use <code>.or_empty()</code> to convert empty values (strings, arrays, maps) to <code>()</code> for conditional field assignment</li>
 </ul>
+<h3 id="missing-fields-the-one-rule">Missing fields: the one rule<a class="headerlink" href="#missing-fields-the-one-rule" title="Permanent link">&para;</a></h3>
+<p>A missing field is <code>()</code> — <strong>accessing it never throws by itself.</strong> What feels
+inconsistent is what happens <em>next</em>, because <code>()</code> is tolerated by some
+operations and rejected by others:</p>
+<table>
+<thead>
+<tr>
+<th>Expression on a missing <code>dur</code></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>e.dur == "x"</code></td>
+<td>OK → <code>false</code> (comparisons tolerate <code>()</code>)</td>
+</tr>
+<tr>
+<td><code>e.dur + "ms"</code></td>
+<td>OK → <code>"ms"</code> (string concat tolerates <code>()</code>)</td>
+</tr>
+<tr>
+<td><code>e.dur + 1</code></td>
+<td><strong>Error</strong> — no arithmetic on <code>()</code></td>
+</tr>
+<tr>
+<td><code>e.dur.to_upper()</code></td>
+<td><strong>Error</strong> — no methods on <code>()</code></td>
+</tr>
+<tr>
+<td><code>e.user.role</code> when <code>user</code> is absent</td>
+<td><strong>Error</strong> — can't traverse into <code>()</code></td>
+</tr>
+</tbody>
+</table>
+<p>You never have to memorize that table. Two idioms cover every case:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>// Guard first
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>if e.has(&quot;dur&quot;) { e.dur + 1 }
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>if e.has_path(&quot;user.role&quot;) { e.user.role }
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>// Or read with a default
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>e.get(&quot;dur&quot;, 0) + 1
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>e.get_path(&quot;user.role&quot;, &quot;guest&quot;)
+</code></pre></div>
+<p><code>has</code> / <code>get</code> work on top-level keys; <code>has_path</code> / <code>get_path</code> also walk dotted
+paths (<code>"user.role"</code>, <code>"items[0].name"</code>).</p>
 <h2 id="field-access-patterns">Field Access Patterns<a class="headerlink" href="#field-access-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="direct-access">Direct Access<a class="headerlink" href="#direct-access" title="Permanent link">&para;</a></h3>
 <p>For simple field names (alphanumeric, no special characters):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>e.timestamp
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>e.level
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>e.service
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>e.user_id
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>e.timestamp
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>e.level
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>e.service
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>e.user_id
 </code></pre></div>
 <h3 id="nested-access">Nested Access<a class="headerlink" href="#nested-access" title="Permanent link">&para;</a></h3>
 <p>Access nested fields using dot notation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>e.user.name          // Object field
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>e.user.id            // Another nested field
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>e.metadata.region    // Deeper nesting
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>e.user.name          // Object field
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>e.user.id            // Another nested field
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>e.metadata.region    // Deeper nesting
 </code></pre></div>
 <p><strong>Important:</strong> Direct nested access requires the field to exist. If the field might be missing, check first or use <code>get_path()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>// Safe: Check before access
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>if &quot;user&quot; in e &amp;&amp; &quot;name&quot; in e.user {
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    e.user.name
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>}
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>// Safer: Use get_path with default
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)      // Returns &quot;unknown&quot; if missing
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>e.get_path(&quot;metadata.region&quot;, &quot;us-west&quot;)  // Fallback value
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>// Safe: Check before access
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>if &quot;user&quot; in e &amp;&amp; &quot;name&quot; in e.user {
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    e.user.name
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>}
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>// Safer: Use get_path with default
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)      // Returns &quot;unknown&quot; if missing
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>e.get_path(&quot;metadata.region&quot;, &quot;us-west&quot;)  // Fallback value
 </code></pre></div>
 <h3 id="array-access">Array Access<a class="headerlink" href="#array-access" title="Permanent link">&para;</a></h3>
 <p>Access array elements by index:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>e.tags[0]            // First element
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>e.tags[1]            // Second element
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>e.tags[-1]           // Last element (negative indexing)
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>e.tags[-2]           // Second-to-last element
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>e.tags[0]            // First element
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>e.tags[1]            // Second element
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>e.tags[-1]           // Last element (negative indexing)
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>e.tags[-2]           // Second-to-last element
 </code></pre></div>
 <h3 id="bracket-notation">Bracket Notation<a class="headerlink" href="#bracket-notation" title="Permanent link">&para;</a></h3>
 <p>For field names with special characters or dynamic access:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>e[&quot;content-type&quot;]           // Hyphens in field name
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>e[&quot;@timestamp&quot;]             // @ symbol in name
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>e[&quot;user-agent&quot;]             // Multiple special chars
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>e.headers[&quot;authorization&quot;]  // Nested with special chars
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>e[&quot;content-type&quot;]           // Hyphens in field name
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>e[&quot;@timestamp&quot;]             // @ symbol in name
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>e[&quot;user-agent&quot;]             // Multiple special chars
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>e.headers[&quot;authorization&quot;]  // Nested with special chars
 </code></pre></div>
 <h3 id="deep-nested-access">Deep Nested Access<a class="headerlink" href="#deep-nested-access" title="Permanent link">&para;</a></h3>
 <p>Combine patterns for complex structures:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>e.user.addresses[0].city                    // Object → array → object
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>e.data.items[-1].metadata.tags[0]          // Multiple levels
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>e.response.headers[&quot;content-type&quot;]          // Object → bracket notation
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>e.user.addresses[0].city                    // Object → array → object
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>e.data.items[-1].metadata.tags[0]          // Multiple levels
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>e.response.headers[&quot;content-type&quot;]          // Object → bracket notation
 </code></pre></div>
 <h2 id="safe-field-access">Safe Field Access<a class="headerlink" href="#safe-field-access" title="Permanent link">&para;</a></h2>
 <h3 id="check-field-existence">Check Field Existence<a class="headerlink" href="#check-field-existence" title="Permanent link">&para;</a></h3>
 <p>Before accessing fields, check if they exist:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>// Top-level field
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>if &quot;field&quot; in e {
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    e.field
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>} else {
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    &quot;default&quot;
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>}
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>// Nested field
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>if e.has_path(&quot;user.role&quot;) {
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    e.user.role
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>} else {
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    &quot;guest&quot;
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>}
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>// Check against Unit (missing fields return ())
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>if e.optional_field != () {
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    // Field exists and has a value
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    e.optional_field
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>// Top-level field
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>if &quot;field&quot; in e {
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    e.field
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>} else {
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    &quot;default&quot;
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>}
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>// Nested field
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>if e.has_path(&quot;user.role&quot;) {
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    e.user.role
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>} else {
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    &quot;guest&quot;
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>}
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>// Check against Unit (missing fields return ())
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>if e.optional_field != () {
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    // Field exists and has a value
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    e.optional_field
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>}
 </code></pre></div>
 <h3 id="array-bounds-checking">Array Bounds Checking<a class="headerlink" href="#array-bounds-checking" title="Permanent link">&para;</a></h3>
 <p>Check array length before accessing elements:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>if e.scores.len() &gt; 0 {
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    e.scores[0]
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>} else {
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    0
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>}
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>// Last element safely
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>if e.items.len() &gt; 0 {
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    e.items[-1]
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>} else {
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    #{}
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>if e.scores.len() &gt; 0 {
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    e.scores[0]
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>} else {
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    0
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>}
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>// Last element safely
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>if e.items.len() &gt; 0 {
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    e.items[-1]
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>} else {
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    #{}
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>}
 </code></pre></div>
 <h3 id="safe-path-access">Safe Path Access<a class="headerlink" href="#safe-path-access" title="Permanent link">&para;</a></h3>
 <p>Use <code>get_path()</code> for safe nested access with defaults:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>// Returns default if path doesn&#39;t exist
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>e.user_role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;)
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>e.first_tag = e.get_path(&quot;tags[0]&quot;, &quot;untagged&quot;)
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>e.response_code = e.get_path(&quot;response.status&quot;, 0)
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>// Complex nested paths
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>e.city = e.get_path(&quot;user.address.city&quot;, &quot;unknown&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>// Returns default if path doesn&#39;t exist
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>e.user_role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>e.first_tag = e.get_path(&quot;tags[0]&quot;, &quot;untagged&quot;)
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>e.response_code = e.get_path(&quot;response.status&quot;, 0)
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>// Complex nested paths
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>e.city = e.get_path(&quot;user.address.city&quot;, &quot;unknown&quot;)
 </code></pre></div>
 <h3 id="type-checking">Type Checking<a class="headerlink" href="#type-checking" title="Permanent link">&para;</a></h3>
 <p>Check if field has a value (not unit type):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>if type_of(e.field) != &quot;()&quot; {
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    // Field exists and has a value
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    e.field
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>if type_of(e.field) != &quot;()&quot; {
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    // Field exists and has a value
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    e.field
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>}
 </code></pre></div>
 <h2 id="modifying-events">Modifying Events<a class="headerlink" href="#modifying-events" title="Permanent link">&para;</a></h2>
 <h3 id="add-fields">Add Fields<a class="headerlink" href="#add-fields" title="Permanent link">&para;</a></h3>
 <p>Assign values to new or existing fields:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>e.processed = true
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>e.category = &quot;error&quot;
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>e.duration_s = e.duration_ms / 1000
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>e.processed = true
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>e.category = &quot;error&quot;
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>e.duration_s = e.duration_ms / 1000
 </code></pre></div>
 <h3 id="modify-existing-fields">Modify Existing Fields<a class="headerlink" href="#modify-existing-fields" title="Permanent link">&para;</a></h3>
 <p>Transform field values in place:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>e.level = e.level.to_upper()
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>e.message = e.message.trim()
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>e.tags = sorted(e.tags)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>e.level = e.level.to_upper()
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>e.message = e.message.trim()
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>e.tags = sorted(e.tags)
 </code></pre></div>
 <h3 id="remove-fields">Remove Fields<a class="headerlink" href="#remove-fields" title="Permanent link">&para;</a></h3>
 <p>Assign unit <code>()</code> to remove fields:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>e.password = ()          // Remove sensitive field
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>e.internal_id = ()       // Remove another field
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>e.password = ()          // Remove sensitive field
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.internal_id = ()       // Remove another field
 </code></pre></div>
 <p>Removed fields won't appear in output.</p>
 <h3 id="conditional-field-assignment">Conditional Field Assignment<a class="headerlink" href="#conditional-field-assignment" title="Permanent link">&para;</a></h3>
 <p>Use <code>.or_empty()</code> to conditionally assign fields based on empty values. It works with strings, arrays, and maps:</p>
 <p><strong>String extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>// Only assign field if extraction succeeds
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.user = e.message.after(&quot;User:&quot;).or_empty()
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>// If &quot;User:&quot; not found → empty string → Unit → field removed
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.code = e.error.extract_regex(r&quot;ERR-(\d+)&quot;, 1).or_empty()
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>// If regex doesn&#39;t match → empty string → Unit → field removed
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Only assign field if extraction succeeds
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>e.user = e.message.after(&quot;User:&quot;).or_empty()
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>// If &quot;User:&quot; not found → empty string → Unit → field removed
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>e.code = e.error.extract_regex(r&quot;ERR-(\d+)&quot;, 1).or_empty()
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>// If regex doesn&#39;t match → empty string → Unit → field removed
 </code></pre></div></p>
 <p><strong>Array filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>// Remove field if array is empty
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>e.tags = e.tags.or_empty()
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>// If tags is [] → Unit → field removed
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>// Only track events with items
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>track_unique(&quot;has_items&quot;, e.items.or_empty())
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>// Skips events where items is [] or ()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Remove field if array is empty
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>e.tags = e.tags.or_empty()
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>// If tags is [] → Unit → field removed
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>// Only track events with items
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>track_unique(&quot;has_items&quot;, e.items.or_empty())
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>// Skips events where items is [] or ()
 </code></pre></div></p>
 <p><strong>Map/object filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>// Remove field if map is empty
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>e.metadata = e.parse_json().or_empty()
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>// If parsed JSON is {} → Unit → field removed
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>// Only assign config if it has values
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>e.config = e.settings.or_empty()
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>// If settings is #{} → Unit → field removed
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>// Remove field if map is empty
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>e.metadata = e.parse_json().or_empty()
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>// If parsed JSON is {} → Unit → field removed
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>// Only assign config if it has values
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>e.config = e.settings.or_empty()
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>// If settings is #{} → Unit → field removed
 </code></pre></div></p>
 <p><strong>Combined with tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>e.extracted = e.text.after(&quot;prefix:&quot;).or_empty()
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>track_unique(&quot;values&quot;, e.extracted)  // Only tracks non-empty values
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>e.extracted = e.text.after(&quot;prefix:&quot;).or_empty()
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>track_unique(&quot;values&quot;, e.extracted)  // Only tracks non-empty values
 </code></pre></div></p>
 <p>The <code>.or_empty()</code> method converts empty values (<code>""</code>, <code>[]</code>, <code>#{}</code>) to <code>()</code>, enabling clean conditional field creation without explicit <code>if</code> statements.</p>
 <p><strong>Pattern comparison:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>// Without .or_empty() - verbose
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>let extracted = e.message.after(&quot;User:&quot;)
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>if extracted != &quot;&quot; {
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    e.user = extracted
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>}
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>// With .or_empty() - concise
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>e.user = e.message.after(&quot;User:&quot;).or_empty()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>// Without .or_empty() - verbose
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>let extracted = e.message.after(&quot;User:&quot;)
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>if extracted != &quot;&quot; {
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    e.user = extracted
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>}
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>// With .or_empty() - concise
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>e.user = e.message.after(&quot;User:&quot;).or_empty()
 </code></pre></div>
 <h3 id="remove-entire-event">Remove Entire Event<a class="headerlink" href="#remove-entire-event" title="Permanent link">&para;</a></h3>
 <p>Clear all fields to filter out the event:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>if e.level == &quot;DEBUG&quot; {
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    e = ()  // Event becomes empty and is filtered out
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>if e.level == &quot;DEBUG&quot; {
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    e = ()  // Event becomes empty and is filtered out
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>}
 </code></pre></div>
 <p>Empty events are counted as "filtered" in statistics.</p>
 <h2 id="field-name-patterns">Field Name Patterns<a class="headerlink" href="#field-name-patterns" title="Permanent link">&para;</a></h2>
@@ -3834,11 +3913,11 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.req_method = e.get_path(&quot;request.method&quot;, &quot;UNKNOWN&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,service,req_method<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.req_method = e.get_path(&quot;request.method&quot;, &quot;UNKNOWN&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,service,req_method<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -3857,164 +3936,164 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 </div>
 <h3 id="arrays">Arrays<a class="headerlink" href="#arrays" title="Permanent link">&para;</a></h3>
 <p>Process arrays with Rhai array functions:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.tag_count = e.tags.len()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.first_tag = e.get_path(&quot;tags[0]&quot;, &quot;none&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.unique_tags = unique(e.tags)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,tag_count,first_tag,unique_tags
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.tag_count = e.tags.len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.first_tag = e.get_path(&quot;tags[0]&quot;, &quot;none&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.unique_tags = unique(e.tags)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,tag_count,first_tag,unique_tags
 </code></pre></div>
 <h3 id="fan-out-arrays">Fan-Out Arrays<a class="headerlink" href="#fan-out-arrays" title="Permanent link">&para;</a></h3>
 <p>Convert array elements to individual events:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>batch.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--keys<span class="w"> </span>item_id,status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>batch.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--keys<span class="w"> </span>item_id,status
 </code></pre></div>
 <p>Each element in <code>e.items</code> becomes a separate event.</p>
 <h3 id="mixed-structures">Mixed Structures<a class="headerlink" href="#mixed-structures" title="Permanent link">&para;</a></h3>
 <p>Handle complex nested structures:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span><span class="nt">&quot;user&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12345</span><span class="p">,</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span><span class="nt">&quot;scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">85</span><span class="p">,</span><span class="w"> </span><span class="mi">92</span><span class="p">,</span><span class="w"> </span><span class="mi">78</span><span class="p">],</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">    </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">      </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;premium&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;verified&quot;</span><span class="p">]</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span><span class="nt">&quot;user&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12345</span><span class="p">,</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span><span class="nt">&quot;scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">85</span><span class="p">,</span><span class="w"> </span><span class="mi">92</span><span class="p">,</span><span class="w"> </span><span class="mi">78</span><span class="p">],</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">    </span><span class="nt">&quot;metadata&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">      </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;premium&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;verified&quot;</span><span class="p">]</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="p">}</span>
 </code></pre></div>
 <p>Access patterns:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>e.user_id = e.user.id                           // Nested object
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>e.first_score = e.user.scores[0]                // Object → array
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>e.last_score = e.user.scores[-1]                // Negative index
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>e.avg_score = e.user.scores.sum() / e.user.scores.len()
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>e.first_tag = e.user.metadata.tags[0]           // Deep nesting
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>e.is_premium = &quot;premium&quot; in e.user.metadata.tags // Array membership
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>e.user_id = e.user.id                           // Nested object
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>e.first_score = e.user.scores[0]                // Object → array
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>e.last_score = e.user.scores[-1]                // Negative index
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>e.avg_score = e.user.scores.sum() / e.user.scores.len()
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>e.first_tag = e.user.metadata.tags[0]           // Deep nesting
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>e.is_premium = &quot;premium&quot; in e.user.metadata.tags // Array membership
 </code></pre></div>
 <h2 id="field-naming-conventions">Field Naming Conventions<a class="headerlink" href="#field-naming-conventions" title="Permanent link">&para;</a></h2>
 <h3 id="output-format-bracket-notation">Output Format: Bracket Notation<a class="headerlink" href="#output-format-bracket-notation" title="Permanent link">&para;</a></h3>
 <p>The default formatter uses bracket notation for arrays:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>scores[0]=85 scores[1]=92 scores[2]=78
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>user.name=alice user.scores[0]=85
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>items[0].id=1 items[0].status=active
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>scores[0]=85 scores[1]=92 scores[2]=78
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>user.name=alice user.scores[0]=85
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>items[0].id=1 items[0].status=active
 </code></pre></div>
 <p>This matches the path syntax used in <code>get_path()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>// Access and path syntax are consistent
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>e.get_path(&quot;scores[0]&quot;, 0)           // Access first score
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>e.get_path(&quot;items[1].status&quot;, &quot;&quot;)    // Access nested array element
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>// Access and path syntax are consistent
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>e.get_path(&quot;scores[0]&quot;, 0)           // Access first score
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>e.get_path(&quot;items[1].status&quot;, &quot;&quot;)    // Access nested array element
 </code></pre></div>
 <h3 id="field-selection-top-level-only">Field Selection: Top-Level Only<a class="headerlink" href="#field-selection-top-level-only" title="Permanent link">&para;</a></h3>
 <p>The <code>--keys</code> parameter operates on <strong>top-level fields only</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># ✅ Supported: Select top-level fields</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span>--keys<span class="w"> </span>user,timestamp,message
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># ❌ Not supported: Nested paths in --keys</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span>--keys<span class="w"> </span>user.name,scores<span class="o">[</span><span class="m">0</span><span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># ✅ Supported: Select top-level fields</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span>--keys<span class="w"> </span>user,timestamp,message
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1"># ❌ Not supported: Nested paths in --keys</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span>--keys<span class="w"> </span>user.name,scores<span class="o">[</span><span class="m">0</span><span class="o">]</span>
 </code></pre></div>
 <p>To extract nested fields, use <code>--exec</code> to promote them to top-level:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_name = e.get_path(&quot;user.name&quot;, &quot;&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.first_score = e.get_path(&quot;scores[0]&quot;, 0)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span>--keys<span class="w"> </span>user_name,first_score
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>input.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_name = e.get_path(&quot;user.name&quot;, &quot;&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.first_score = e.get_path(&quot;scores[0]&quot;, 0)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>--keys<span class="w"> </span>user_name,first_score
 </code></pre></div>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="extract-nested-fields">Extract Nested Fields<a class="headerlink" href="#extract-nested-fields" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_name = e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,user_name,user_role
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_name = e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user_role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,user_name,user_role
 </code></pre></div>
 <h3 id="flatten-structures">Flatten Structures<a class="headerlink" href="#flatten-structures" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.request_method = e.request.method&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.request_path = e.request.path&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.request = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,request_method,request_path
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.request_method = e.request.method&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.request_path = e.request.path&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.request = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,request_method,request_path
 </code></pre></div>
 <h3 id="conditional-extraction-and-tracking">Conditional Extraction and Tracking<a class="headerlink" href="#conditional-extraction-and-tracking" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># Extract and track only when pattern exists</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user = e.message.after(&quot;User:&quot;).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;error_codes&quot;, e.code)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="w">    </span>--metrics
-<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>
-<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="c1"># Safe conversion with automatic Unit skipping</span>
-<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let score = e.score_str.to_int()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_score&quot;, score)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_min(&quot;min_score&quot;, score)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_max(&quot;max_score&quot;, score)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a><span class="w">    </span>--metrics
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Extract and track only when pattern exists</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.user = e.message.after(&quot;User:&quot;).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1).or_empty()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;users&quot;, e.user)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_unique(&quot;error_codes&quot;, e.code)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="w">    </span>--metrics
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="c1"># Safe conversion with automatic Unit skipping</span>
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;let score = e.score_str.to_int()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total_score&quot;, score)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_min(&quot;min_score&quot;, score)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_max(&quot;max_score&quot;, score)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-15" name="__codelineno-33-15" href="#__codelineno-33-15"></a><span class="w">    </span>--metrics
 </code></pre></div>
 <h3 id="combine-fields">Combine Fields<a class="headerlink" href="#combine-fields" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.full_name = e.first_name + &quot; &quot; + e.last_name&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.endpoint = e.method + &quot; &quot; + e.path&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,full_name,endpoint
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.full_name = e.first_name + &quot; &quot; + e.last_name&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.endpoint = e.method + &quot; &quot; + e.path&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,full_name,endpoint
 </code></pre></div>
 <h3 id="conditional-field-creation">Conditional Field Creation<a class="headerlink" href="#conditional-field-creation" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.status &gt;= 500 { e.severity = &quot;critical&quot; } else if e.status &gt;= 400 { e.severity = &quot;warning&quot; } else { e.severity = &quot;normal&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,status,severity
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.status &gt;= 500 { e.severity = &quot;critical&quot; } else if e.status &gt;= 400 { e.severity = &quot;warning&quot; } else { e.severity = &quot;normal&quot; }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,status,severity
 </code></pre></div>
 <h3 id="array-transformations">Array Transformations<a class="headerlink" href="#array-transformations" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.tag_count = e.tags.len()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.sorted_tags = sorted(e.tags)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.unique_tags = unique(e.tags)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,tag_count,sorted_tags
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.tag_count = e.tags.len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.sorted_tags = sorted(e.tags)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.unique_tags = unique(e.tags)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="w">    </span>--keys<span class="w"> </span>timestamp,tag_count,sorted_tags
 </code></pre></div>
 <h3 id="safe-deep-access">Safe Deep Access<a class="headerlink" href="#safe-deep-access" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.city = e.get_path(&quot;user.address.city&quot;, &quot;N/A&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.zip = e.get_path(&quot;user.address.zip&quot;, &quot;00000&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.country = e.get_path(&quot;user.address.country&quot;, &quot;Unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="w">    </span>--keys<span class="w"> </span>city,zip,country
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.city = e.get_path(&quot;user.address.city&quot;, &quot;N/A&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.zip = e.get_path(&quot;user.address.zip&quot;, &quot;00000&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.country = e.get_path(&quot;user.address.country&quot;, &quot;Unknown&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a><span class="w">    </span>--keys<span class="w"> </span>city,zip,country
 </code></pre></div>
 <h2 id="type-conversions">Type Conversions<a class="headerlink" href="#type-conversions" title="Permanent link">&para;</a></h2>
 <h3 id="string-to-number">String to Number<a class="headerlink" href="#string-to-number" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>e.status_code = e.status.to_int()           // String to integer
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>e.duration = e.duration_str.to_float()      // String to float
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>e.status_code = e.status.to_int()           // String to integer
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>e.duration = e.duration_str.to_float()      // String to float
 </code></pre></div>
 <p><strong>Note:</strong> Conversion functions return <code>()</code> on failure:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>&quot;123&quot;.to_int()      // → 123
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>&quot;abc&quot;.to_int()      // → ()  (conversion failed)
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>&quot;&quot;.to_int()         // → ()  (empty string)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>&quot;123&quot;.to_int()      // → 123
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>&quot;abc&quot;.to_int()      // → ()  (conversion failed)
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>&quot;&quot;.to_int()         // → ()  (empty string)
 </code></pre></div>
 <p>This works seamlessly with <code>track_*()</code> functions that skip <code>()</code> values:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>// Safe: track_sum() skips Unit values from failed conversions
-<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>let score = e.score_str.to_int()
-<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>track_sum(&quot;total&quot;, score)      // Only tracks valid integers
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>// Safe: track_sum() skips Unit values from failed conversions
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>let score = e.score_str.to_int()
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>track_sum(&quot;total&quot;, score)      // Only tracks valid integers
 </code></pre></div>
 <p>With defaults if conversion fails:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>e.status_code = e.status.to_int_or(0)
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>e.duration = to_float_or(e.duration_str, 0.0)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>e.status_code = e.status.to_int_or(0)
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>e.duration = to_float_or(e.duration_str, 0.0)
 </code></pre></div>
 <h3 id="number-to-string">Number to String<a class="headerlink" href="#number-to-string" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>e.status_str = e.status.to_string()
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>e.duration_str = e.duration.to_string()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>e.status_str = e.status.to_string()
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>e.duration_str = e.duration.to_string()
 </code></pre></div>
 <h3 id="boolean-conversions">Boolean Conversions<a class="headerlink" href="#boolean-conversions" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>e.is_error = to_bool(e.error_flag)          // &quot;true&quot;/&quot;false&quot; to boolean
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>e.success = to_bool_or(e.status_ok, false)  // With default
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>e.is_error = to_bool(e.error_flag)          // &quot;true&quot;/&quot;false&quot; to boolean
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>e.success = to_bool_or(e.status_ok, false)  // With default
 </code></pre></div>
 <h3 id="type-checking_1">Type Checking<a class="headerlink" href="#type-checking_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>e.field_type = type_of(e.field)
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>// Common checks
-<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a>if type_of(e.field) == &quot;i64&quot; { /* integer */ }
-<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>if type_of(e.field) == &quot;f64&quot; { /* float */ }
-<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>if type_of(e.field) == &quot;string&quot; { /* string */ }
-<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a>if type_of(e.field) == &quot;array&quot; { /* array */ }
-<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>if type_of(e.field) == &quot;map&quot; { /* object/map */ }
-<a id="__codelineno-43-9" name="__codelineno-43-9" href="#__codelineno-43-9"></a>if type_of(e.field) == &quot;()&quot; { /* null/empty */ }
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>e.field_type = type_of(e.field)
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>
+<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>// Common checks
+<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a>if type_of(e.field) == &quot;i64&quot; { /* integer */ }
+<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>if type_of(e.field) == &quot;f64&quot; { /* float */ }
+<a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a>if type_of(e.field) == &quot;string&quot; { /* string */ }
+<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a>if type_of(e.field) == &quot;array&quot; { /* array */ }
+<a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a>if type_of(e.field) == &quot;map&quot; { /* object/map */ }
+<a id="__codelineno-44-9" name="__codelineno-44-9" href="#__codelineno-44-9"></a>if type_of(e.field) == &quot;()&quot; { /* null/empty */ }
 </code></pre></div>
 <h2 id="field-access-performance">Field Access Performance<a class="headerlink" href="#field-access-performance" title="Permanent link">&para;</a></h2>
 <h3 id="direct-vs-path-access">Direct vs Path Access<a class="headerlink" href="#direct-vs-path-access" title="Permanent link">&para;</a></h3>
 <p><strong>Direct access</strong> is fastest for known fields:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>e.level           // Fast: direct map lookup
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>e.user.name       // Fast: two map lookups
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>e.level           // Fast: direct map lookup
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>e.user.name       // Fast: two map lookups
 </code></pre></div></p>
 <p><strong>Use direct access when:</strong></p>
 <ul>
@@ -4023,8 +4102,8 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <li>Performance is critical</li>
 </ul>
 <p><strong>Path access</strong> provides safety and flexibility:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>e.get_path(&quot;level&quot;, &quot;INFO&quot;)              // Safe with default
-<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)       // Handles missing fields
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>e.get_path(&quot;level&quot;, &quot;INFO&quot;)              // Safe with default
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)       // Handles missing fields
 </code></pre></div></p>
 <p><strong>Use <code>get_path()</code> when:</strong></p>
 <ul>
@@ -4034,82 +4113,82 @@ In Rhai, <code>null</code> from JSON becomes the unit type <code>()</code>, repr
 <li>Path is dynamic or comes from configuration</li>
 </ul>
 <p><strong>Hybrid approach for best results:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>// Check existence, then use direct access for speed
-<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>if &quot;user&quot; in e {
-<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>    e.user_name = e.user.name              // Fast once verified
-<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>} else {
-<a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>    e.user_name = &quot;unknown&quot;
-<a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>}
-<a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a>
-<a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>// Or use get_path for one-liners
-<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>e.user_name = e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)  // Simpler but slower
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>// Check existence, then use direct access for speed
+<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a>if &quot;user&quot; in e {
+<a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a>    e.user_name = e.user.name              // Fast once verified
+<a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a>} else {
+<a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a>    e.user_name = &quot;unknown&quot;
+<a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a>}
+<a id="__codelineno-47-7" name="__codelineno-47-7" href="#__codelineno-47-7"></a>
+<a id="__codelineno-47-8" name="__codelineno-47-8" href="#__codelineno-47-8"></a>// Or use get_path for one-liners
+<a id="__codelineno-47-9" name="__codelineno-47-9" href="#__codelineno-47-9"></a>e.user_name = e.get_path(&quot;user.name&quot;, &quot;unknown&quot;)  // Simpler but slower
 </code></pre></div></p>
 <h3 id="field-existence-checks">Field Existence Checks<a class="headerlink" href="#field-existence-checks" title="Permanent link">&para;</a></h3>
 <p><strong>Fastest</strong> - direct membership:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>&quot;field&quot; in e
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>&quot;field&quot; in e
 </code></pre></div></p>
 <p><strong>Flexible</strong> - path checking:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>e.has_path(&quot;user.role&quot;)
-<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>e.has_path(&quot;items[0].status&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>e.has_path(&quot;user.role&quot;)
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>e.has_path(&quot;items[0].status&quot;)
 </code></pre></div></p>
 <h3 id="array-operations">Array Operations<a class="headerlink" href="#array-operations" title="Permanent link">&para;</a></h3>
 <p>Array functions create new arrays (not in-place):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>// Creates new sorted array
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>e.sorted_scores = sorted(e.scores)
-<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a>
-<a id="__codelineno-49-4" name="__codelineno-49-4" href="#__codelineno-49-4"></a>// Original array unchanged
-<a id="__codelineno-49-5" name="__codelineno-49-5" href="#__codelineno-49-5"></a>e.scores  // Still unsorted
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>// Creates new sorted array
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>e.sorted_scores = sorted(e.scores)
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>// Original array unchanged
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>e.scores  // Still unsorted
 </code></pre></div>
 <p>For large arrays, avoid unnecessary transformations.</p>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="field-not-found">Field Not Found<a class="headerlink" href="#field-not-found" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Accessing non-existent field causes error.</p>
 <p><strong>Solution:</strong> Use safe access patterns:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>// Check before access
-<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>if &quot;field&quot; in e {
-<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>    e.field
-<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>}
-<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>
-<a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a>// Use get_path with default
-<a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a>e.get_path(&quot;field&quot;, &quot;default&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>// Check before access
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>if &quot;field&quot; in e {
+<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>    e.field
+<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>}
+<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>
+<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a>// Use get_path with default
+<a id="__codelineno-51-7" name="__codelineno-51-7" href="#__codelineno-51-7"></a>e.get_path(&quot;field&quot;, &quot;default&quot;)
 </code></pre></div></p>
 <h3 id="array-index-out-of-bounds">Array Index Out of Bounds<a class="headerlink" href="#array-index-out-of-bounds" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Accessing array element beyond length.</p>
 <p><strong>Solution:</strong> Check array length first:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>if e.items.len() &gt; 5 {
-<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>    e.items[5]
-<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>}
-<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>
-<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>// Or use safe path access
-<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a>e.get_path(&quot;items[5]&quot;, #{})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>if e.items.len() &gt; 5 {
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>    e.items[5]
+<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>}
+<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a>
+<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>// Or use safe path access
+<a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a>e.get_path(&quot;items[5]&quot;, #{})
 </code></pre></div></p>
 <h3 id="type-mismatch">Type Mismatch<a class="headerlink" href="#type-mismatch" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Field has unexpected type.</p>
 <p><strong>Solution:</strong> Use type conversion with defaults:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>e.status_code = e.status.to_int_or(0)
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>e.duration = e.duration_ms.to_float_or(0.0)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>e.status_code = e.status.to_int_or(0)
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>e.duration = e.duration_ms.to_float_or(0.0)
 </code></pre></div></p>
 <h3 id="nested-field-access-errors">Nested Field Access Errors<a class="headerlink" href="#nested-field-access-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Accessing non-existent nested fields causes errors.</p>
 <p><strong>Solution:</strong> Check field existence before access or use <code>get_path()</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>// Error if user or name doesn&#39;t exist
-<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>e.user.name = &quot;alice&quot;
-<a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>
-<a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a>// Safe: Check first
-<a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a>if &quot;user&quot; in e {
-<a id="__codelineno-53-6" name="__codelineno-53-6" href="#__codelineno-53-6"></a>    e.user.name = &quot;alice&quot;
-<a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a>}
-<a id="__codelineno-53-8" name="__codelineno-53-8" href="#__codelineno-53-8"></a>
-<a id="__codelineno-53-9" name="__codelineno-53-9" href="#__codelineno-53-9"></a>// Safest: Use get_path for reading
-<a id="__codelineno-53-10" name="__codelineno-53-10" href="#__codelineno-53-10"></a>let current = e.get_path(&quot;user.name&quot;, &quot;default&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>// Error if user or name doesn&#39;t exist
+<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>e.user.name = &quot;alice&quot;
+<a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a>
+<a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a>// Safe: Check first
+<a id="__codelineno-54-5" name="__codelineno-54-5" href="#__codelineno-54-5"></a>if &quot;user&quot; in e {
+<a id="__codelineno-54-6" name="__codelineno-54-6" href="#__codelineno-54-6"></a>    e.user.name = &quot;alice&quot;
+<a id="__codelineno-54-7" name="__codelineno-54-7" href="#__codelineno-54-7"></a>}
+<a id="__codelineno-54-8" name="__codelineno-54-8" href="#__codelineno-54-8"></a>
+<a id="__codelineno-54-9" name="__codelineno-54-9" href="#__codelineno-54-9"></a>// Safest: Use get_path for reading
+<a id="__codelineno-54-10" name="__codelineno-54-10" href="#__codelineno-54-10"></a>let current = e.get_path(&quot;user.name&quot;, &quot;default&quot;)
 </code></pre></div></p>
 <p><strong>Note:</strong> Direct nested assignment (<code>e.user.name = "alice"</code>) works fine when the parent object exists.</p>
 <h3 id="field-name-with-special-characters">Field Name with Special Characters<a class="headerlink" href="#field-name-with-special-characters" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Field names contain hyphens, dots, or other special chars.</p>
 <p><strong>Solution:</strong> Use bracket notation:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>e[&quot;content-type&quot;]
-<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>e[&quot;user-agent&quot;]
-<a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a>e[&quot;@timestamp&quot;]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>e[&quot;content-type&quot;]
+<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>e[&quot;user-agent&quot;]
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a>e[&quot;@timestamp&quot;]
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

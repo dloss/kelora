@@ -3264,6 +3264,19 @@ reclassification is intentionally not supported.</p>
 <p><strong>Levelmap Visual Example:</strong></p>
 <p><img alt="Levelmap output format showing compact log visualization" src="../../screenshots/levelmap.gif" /></p>
 <p>The <code>levelmap</code> format provides a compact visual representation of logs, showing timestamps and level indicators in a condensed format ideal for quick scanning.</p>
+<p><strong>Map legends:</strong></p>
+<p>All three map formats (<code>levelmap</code>, <code>keymap</code>, <code>tailmap</code>) append a one-line legend
+that decodes their glyphs. The legend is <strong>data-driven</strong>: it lists only the
+glyphs that actually appeared, mapped back to the source values that produced
+them. For example a <code>keymap</code> over HTTP status codes might end with
+<code>2 = 200,204 | 4 = 404 | 5 = 500,503</code>, and a <code>levelmap</code> with
+<code>E = ERROR | I = INFO | W = WARN</code>.</p>
+<p>By default the legend is shown only when output goes to an interactive terminal,
+so piped or redirected output stays clean. Override with:</p>
+<ul>
+<li><code>--legend</code> — always append the legend (even when piped)</li>
+<li><code>--no-legend</code> — never append the legend</li>
+</ul>
 <p><strong>Keymap Format:</strong></p>
 <p>The <code>keymap</code> format works similarly to <code>levelmap</code> but displays the first character of any specified field instead of being limited to log levels. This is useful for visualizing patterns in custom fields like HTTP methods, status codes, user types, etc.</p>
 <ul>
@@ -3271,6 +3284,7 @@ reclassification is intentionally not supported.</p>
 <li>Shows the first character of the field value (converted to string for non-string fields)</li>
 <li>Displays <code>.</code> for empty or missing field values</li>
 <li>Groups events by timestamp like <code>levelmap</code></li>
+<li>Legend groups full values under each glyph (e.g. <code>2 = 200,204</code>)</li>
 <li>Not compatible with <code>--parallel</code> mode</li>
 </ul>
 <p><strong>Tailmap Format:</strong></p>
