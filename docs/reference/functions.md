@@ -343,7 +343,8 @@ e.text = e.html_entity.unescape_html()
 ```
 
 #### `text.hash([algo])`
-Hash with algorithm (default: sha256, also: xxh3).
+Hash with algorithm (default: sha256, also: xxh3). One-way digest to redact or anonymize
+a value; for stable, correlatable aliases use [`pseudonym(value, domain)`](#pseudonymvalue-domain) instead.
 
 ```rhai
 e.checksum = e.content.hash()                         // SHA-256
@@ -1517,12 +1518,24 @@ e.build_id = get_env("BUILD_ID")
 ```
 
 #### `pseudonym(value, domain)`
-Generate domain-separated pseudonym (requires `KELORA_SECRET`).
+Generate a domain-separated pseudonym — use this to redact, anonymize, or mask a value
+with a stable, reproducible alias.
+
+Set the `KELORA_SECRET` environment variable to produce stable pseudonyms that match
+across separate runs (e.g. correlating the same IP between two batches processed on
+different days). Without `KELORA_SECRET`, kelora falls back to an **ephemeral per-run
+key**: pseudonymization still works, but the values change on every run and will not
+correlate across runs. In ephemeral mode kelora prints a one-time warning to stderr
+(suppressed by `--silent`/`--no-diagnostics`).
 
 ```rhai
 e.user_alias = pseudonym(e.username, "users")
 e.ip_alias = pseudonym(e.client_ip, "ips")
 ```
+
+See also (redaction / anonymization / masking): `text.hash([algo])` for one-way hashing,
+`text.mask_ip([octets])` for masking IP octets, and `text.normalized([patterns])` for
+replacing sensitive patterns with placeholders.
 
 #### `read_file(path)` / `read_lines(path)`
 Read file contents.

@@ -486,6 +486,7 @@ impl PipelineBuilder {
         hashing::set_runtime_config(hashing::HashingRuntimeConfig {
             verbose: self.config.verbose,
             use_emoji,
+            quiet_level: self.config.quiet_level,
         });
 
         stats_set_timestamp_override(self.ts_field.clone(), self.ts_format.clone());
@@ -829,6 +830,7 @@ impl PipelineBuilder {
         hashing::set_runtime_config(hashing::HashingRuntimeConfig {
             verbose: self.config.verbose,
             use_emoji,
+            quiet_level: self.config.quiet_level,
         });
 
         stats_set_timestamp_override(self.ts_field.clone(), self.ts_format.clone());

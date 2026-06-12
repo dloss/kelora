@@ -39,7 +39,7 @@ text.extract_re_maps(pattern, field)    Deprecated alias for extract_regex_maps
 text.extract_regex(pattern [,group])    Extract regex match or capture group
 text.extract_url([nth])              Extract URL from text (nth: 1=first, -1=last)
 text.matches(pattern)                Regex search (cached; invalid pattern raises error)
-text.hash([algo])                    Hash with algorithm (default: sha256, also: xxh3)
+text.hash([algo])                    Hash with algorithm (default: sha256, also: xxh3); redact/anonymize a value
 text.index_of(substring [,start])    Find position of literal substring (-1 if not found) (builtin)
 text.is_digit()                      Check if text contains only digits
 text.is_in_cidr(cidr)                Check if IP address is in CIDR network (e.g., "10.0.0.0/8")
@@ -247,7 +247,8 @@ exit(code)                           Exit kelora with given exit code
 skip()                               Skip the current event and continue with the next one
 get_env(var [,default])              Get environment variable with optional default
 print(message)                       Print to stdout (suppressed with --no-script-output or data-only modes)
-pseudonym(value, domain)             Generate domain-separated pseudonym (requires KELORA_SECRET)
+pseudonym(value, domain)             Domain-separated pseudonym to redact/anonymize/mask a value
+                                     (set KELORA_SECRET for stable output; else ephemeral per-run key)
 read_file(path)                      Read file contents as string
 read_lines(path)                     Read file as array of lines
 status_class(status_code)            Convert HTTP status code to class string ("2xx", "4xx", etc.)
@@ -689,6 +690,9 @@ kelora -j api_logs.jsonl --filter 'e.status >= 500' --exec '
 '
 
 SECURITY & DATA PRIVACY:
+# To redact / anonymize / mask values, use pseudonym() (stable hashing), hash(),
+# mask_ip() (IP octets), or normalized() (replace patterns with placeholders).
+
 # Mask IP addresses (keep first 3 octets)
 kelora -f combined web_access.log --exec 'e.client_ip = e.client_ip.mask_ip(1)'
 
@@ -698,7 +702,7 @@ kelora -j security_audit.jsonl --filter 'e.has("src_ip") && !e.src_ip.is_private
 # Parse JWT tokens (no verification)
 kelora -j auth_burst.jsonl --exec 'let jwt = e.token.parse_jwt(); e.user = jwt.claims.sub'
 
-# Hash sensitive fields with domain separation (requires KELORA_SECRET env var)
+# Hash sensitive fields with domain separation (set KELORA_SECRET for stable, reproducible output)
 kelora -j audit_findings.jsonl --exec 'e.email_hash = pseudonym(e.email, "users"); e.email = ()'
 
 PERFORMANCE PATTERNS:

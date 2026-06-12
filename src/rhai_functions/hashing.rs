@@ -21,6 +21,7 @@ type HmacSha256 = Hmac<Sha256>;
 pub struct HashingRuntimeConfig {
     pub verbose: u8,
     pub use_emoji: bool,
+    pub quiet_level: u8,
 }
 
 static RUNTIME_CONFIG: LazyLock<RwLock<HashingRuntimeConfig>> =
@@ -42,6 +43,28 @@ fn log_pseudonym_init(message: &str) {
     if config.verbose >= 2 {
         let prefix = if config.use_emoji { "🔹" } else { "kelora:" };
         eprintln!("{} {}", prefix, message);
+    }
+}
+
+/// Warn that pseudonyms are using an ephemeral key (shown at default verbosity).
+///
+/// Unlike `log_pseudonym_init`, this safety warning is shown without `-vv` because
+/// the failure mode is silent: pseudonyms won't correlate across separate runs.
+/// Suppressed when diagnostics are off (`--silent`/`--no-diagnostics`, quiet_level >= 1).
+fn warn_pseudonym_ephemeral() {
+    let config = RUNTIME_CONFIG
+        .read()
+        .expect("hashing runtime config poisoned");
+    if config.quiet_level == 0 {
+        let prefix = if config.use_emoji {
+            "⚠️"
+        } else {
+            "kelora:"
+        };
+        eprintln!(
+            "{} KELORA_SECRET not set; using ephemeral key, pseudonyms won't be stable across runs",
+            prefix
+        );
     }
 }
 
@@ -72,6 +95,7 @@ static MASTER_KEY: LazyLock<MasterKeyState> = LazyLock::new(|| {
             for byte in &mut key {
                 *byte = fastrand::u8(..);
             }
+            warn_pseudonym_ephemeral();
             log_pseudonym_init("pseudonym: ON (ephemeral; not stable)");
             MasterKeyState::Ephemeral(key)
         }

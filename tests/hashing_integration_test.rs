@@ -166,6 +166,82 @@ fn test_pseudonym_ephemeral_mode() {
 }
 
 #[test]
+fn test_pseudonym_ephemeral_warning_at_default_verbosity() {
+    // Without KELORA_SECRET and without -vv, the safety warning must still appear
+    // on stderr so users aren't silently surprised by non-correlating pseudonyms.
+    let output = Command::new(kelora_binary())
+        .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
+        .env_remove("KELORA_SECRET")
+        .args([
+            "-f",
+            "line",
+            "--exec",
+            r#"e.pseudo = pseudonym(e.line, "kelora:v1:user")"#,
+        ])
+        .arg("-")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            if let Some(stdin) = child.stdin.as_mut() {
+                stdin.write_all(b"user123\n").ok();
+            }
+            child.wait_with_output()
+        })
+        .expect("Failed to execute kelora");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Warning shown without -vv
+    assert!(
+        stderr.contains("KELORA_SECRET not set"),
+        "expected ephemeral-key warning on stderr, got: {}",
+        stderr
+    );
+    // Pseudonymization still works
+    assert!(stdout.contains("pseudo="));
+}
+
+#[test]
+fn test_pseudonym_ephemeral_warning_suppressed_when_silent() {
+    // --silent (and --no-diagnostics) should suppress the ephemeral-key warning.
+    let output = Command::new(kelora_binary())
+        .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
+        .env_remove("KELORA_SECRET")
+        .args([
+            "--no-diagnostics",
+            "-f",
+            "line",
+            "--exec",
+            r#"e.pseudo = pseudonym(e.line, "kelora:v1:user")"#,
+        ])
+        .arg("-")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            if let Some(stdin) = child.stdin.as_mut() {
+                stdin.write_all(b"user123\n").ok();
+            }
+            child.wait_with_output()
+        })
+        .expect("Failed to execute kelora");
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(
+        !stderr.contains("KELORA_SECRET not set"),
+        "ephemeral-key warning should be suppressed with --no-diagnostics, got: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_pseudonym_domain_separation() {
     let output = Command::new(kelora_binary())
         .env("LLVM_PROFILE_FILE", "/dev/null") // Disable profraw generation for subprocesses
