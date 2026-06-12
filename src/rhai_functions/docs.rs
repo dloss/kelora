@@ -61,7 +61,7 @@ text.parse_combined()                Parse Apache/Nginx combined log line
 text.parse_content_disposition()     Parse Content-Disposition header parameters
 text.parse_email()                   Parse email address into parts
 text.parse_json()                    Parse JSON string into map/array
-text.parse_jwt()                     Parse JWT header/payload without verification
+text.parse_jwt()                     Parse JWT into header/claims without verification
 text.parse_kv([sep [,kv_sep]])       Parse key-value pairs from text (skips tokens without separator)
 text.parse_logfmt()                  Parse logfmt line into structured fields
 text.parse_media_type()              Parse media type tokens and parameters

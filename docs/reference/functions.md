@@ -267,11 +267,11 @@ e.os = ua["os"]
 ```
 
 #### `text.parse_jwt()`
-Parse JWT header/payload without verification.
+Parse a JWT into `header` and `claims` (the decoded payload) without verification. Also returns `signature_b64u` plus `alg`/`kid`/`typ` when present in the header.
 
 ```rhai
 let jwt = e.token.parse_jwt()
-e.user_id = jwt["payload"]["sub"]
+e.user_id = jwt["claims"]["sub"]
 ```
 
 #### `text.parse_path()`
