@@ -877,6 +877,28 @@ fn test_stdin_with_data_does_not_emit_no_input_hint() {
 }
 
 #[test]
+fn test_unparseable_stdin_does_not_emit_no_input_hint() {
+    // Regression: lines that are read but fail to parse (e.g. plain text fed
+    // with -j) produce zero events. The hint used to fire here because
+    // `lines_read` is only tracked under --stats, so it claimed "stdin is
+    // empty" while simultaneously reporting parse errors. `lines_errors` is the
+    // signal that input did arrive.
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-j"], "garbage\nmore garbage\n");
+
+    assert_eq!(exit_code, 1, "all-unparseable input is an error");
+    assert!(
+        stderr.contains("Parse errors"),
+        "parse failures should be reported: {}",
+        stderr
+    );
+    assert!(
+        !stderr.contains("No input"),
+        "input that failed to parse is not empty input: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_no_input_flag_suppresses_no_input_hint() {
     // --no-input is an explicit begin/end-only opt-out, not an accident.
     let (_stdout, stderr, exit_code) =

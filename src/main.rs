@@ -551,8 +551,14 @@ fn maybe_print_zero_results_hint(
 ///
 /// Fires only when truly nothing flowed: this lives behind the
 /// `diagnostics_allowed_runtime` gate at the call site, which guarantees stats
-/// were collected, so a zero `lines_read` reliably means an empty input rather
-/// than the no-collection fast path. A legitimate empty pipe
+/// were collected. Note that `lines_read` is only incremented under `-s/--stats`
+/// (see `process_single_line` in runner.rs), so on the normal diagnostics path
+/// it stays zero even when lines *were* read — the reliable "input arrived"
+/// signals here are `events_created` (lines that parsed into events) and
+/// `lines_errors` (lines that were read but failed to parse). Both are tracked
+/// whenever diagnostics are on. Without the `lines_errors` check, unparseable
+/// input (e.g. plain text fed with `-j`) produced both a "Parse errors" report
+/// *and* a contradictory "stdin is empty" nudge. A legitimate empty pipe
 /// (`grep nomatch f | kelora`) is no different from `kelora < /dev/null` here;
 /// the nudge goes to stderr, so it never pollutes a downstream pipeline.
 fn maybe_print_no_input_hint(
@@ -566,6 +572,7 @@ fn maybe_print_no_input_hint(
         || crate::tty::is_stdin_tty()
         || stats.lines_read != 0
         || stats.events_created != 0
+        || stats.lines_errors != 0
     {
         return;
     }
