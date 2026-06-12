@@ -63,7 +63,7 @@ kelora -                          # Explicitly read stdin
 | Flag | Description |
 |------|-------------|
 | `--help-rhai` | Rhai scripting guide and stage semantics |
-| `--help-functions` | All 150+ built-in Rhai functions |
+| `--help-functions [KEYWORD]` | All 150+ built-in Rhai functions; add a KEYWORD to filter by name/description (e.g. `--help-functions ip`) |
 | `--help-examples` | Practical log analysis patterns |
 | `--help-time` | Timestamp format reference (chrono format strings) |
 | `--help-multiline` | Multi-line event detection strategies |

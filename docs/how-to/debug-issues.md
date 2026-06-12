@@ -206,7 +206,7 @@ kelora -j app.log --ignore-lines 'DEBUG|TRACE'
 kelora --help              # Complete CLI reference
 kelora --help-examples     # Common usage patterns
 kelora --help-rhai         # Rhai scripting guide
-kelora --help-functions    # All built-in functions
+kelora --help-functions    # All built-in functions (add a KEYWORD to search, e.g. --help-functions ip)
 kelora --help-time         # Timestamp format reference
 kelora --help-multiline    # Multiline strategies
 ```

@@ -87,4 +87,4 @@ e.has("field")       // Check exists
 1. Use `-f auto` (default) - Kelora detects JSON, logfmt, syslog, combined, CSV
 2. Preview with `-n 10` or `--head 100` before processing large files
 3. Use `-q` with `--metrics` when you only need aggregates
-4. Run `kelora --help-functions` to find the right function for your task
+4. Run `kelora --help-functions [KEYWORD]` to find the right function for your task (e.g. `kelora --help-functions ip`)

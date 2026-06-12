@@ -474,7 +474,7 @@ meta.line                             // Original raw line
 ## See Also
 
 - [Advanced Scripting Tutorial](../tutorials/advanced-scripting.md) - Detailed walkthrough with examples
-- `kelora --help-functions` - Complete function catalogue
+- `kelora --help-functions` - Complete function catalogue (add a KEYWORD to search, e.g. `kelora --help-functions ip`)
 - `kelora --help-examples` - Practical log analysis patterns
 - `kelora --help-rhai` - Language guide (this cheatsheet's source)
 - [Rhai Documentation](https://rhai.rs) - Full Rhai language reference

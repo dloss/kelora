@@ -88,7 +88,7 @@ kelora your.log --take 5
 kelora --help              # Complete CLI reference
 kelora --help-examples     # More usage patterns
 kelora --help-rhai         # Rhai scripting guide
-kelora --help-functions    # All built-in Rhai functions
+kelora --help-functions    # All built-in Rhai functions (add a KEYWORD to search, e.g. --help-functions ip)
 kelora --help-time         # Timestamp format reference
 ```
 

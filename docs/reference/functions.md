@@ -2332,7 +2332,8 @@ if e.has_path("error.details.code") {
 
 For more details, run:
 ```bash
-kelora --help-functions    # This reference in CLI form
-kelora --help-rhai         # Rhai language guide
-kelora --help-examples     # Common usage patterns
+kelora --help-functions       # This reference in CLI form
+kelora --help-functions ip    # Search the catalogue by keyword (name/description)
+kelora --help-rhai            # Rhai language guide
+kelora --help-examples        # Common usage patterns
 ```
