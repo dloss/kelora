@@ -24,19 +24,27 @@ Stages run in the **exact CLI order** you specify. Create fields before filterin
 
 ## How do I filter by severity, like "WARN and above"?
 
-`-l/--levels` matches an explicit **set** of level names — it has no built-in notion of severity ranking, so it cannot express an ordering like "WARN or worse." List every level you want explicitly:
+`-l/--levels` matches an explicit **set** of level names — it has no built-in notion of severity ranking, so it cannot express an ordering like "WARN or worse." There are three ways to get the effect you want:
+
+**List the levels you want to keep** with `-l/--levels`:
 
 ```bash
 kelora -j --levels warn,error,critical,fatal app.log
 ```
 
-If you prefer a real threshold, map levels to numbers in a Rhai filter:
+**Exclude the levels below your cutoff** with `-L/--exclude-levels` — often simpler, since the lower levels are usually fewer:
+
+```bash
+kelora -j --exclude-levels trace,debug,info app.log
+```
+
+**Use a real threshold** by mapping levels to numbers in a Rhai filter, when you want one cutoff to cover many level names:
 
 ```bash
 kelora -j --filter '#{"trace":0, "debug":1, "info":2, "warn":3, "error":4, "fatal":5}.get(e.level.to_lower(), -1) >= 3' app.log
 ```
 
-`--levels` stays the faster choice when the explicit set is short; reach for the Rhai filter when you want one threshold to cover many level names. See the [CLI Reference](reference/cli-reference.md) for level-filtering details.
+The `-l`/`-L` flags are the faster choice; reach for the Rhai filter only when you need a numeric threshold. See the [CLI Reference](reference/cli-reference.md) for level-filtering details.
 
 ## How do I debug filters or Rhai scripts?
 
