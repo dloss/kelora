@@ -238,6 +238,8 @@ impl GlobalTracker {
         if let Some(start_time) = self.start_time {
             stats.processing_time = start_time.elapsed();
         }
+        // Parse-error sample is captured in a process-wide slot by worker threads.
+        stats.first_parse_error_sample = crate::stats::first_parse_error_sample();
         stats
     }
 

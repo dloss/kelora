@@ -547,6 +547,7 @@ impl Pipeline {
             }
             Err(err) => {
                 crate::stats::stats_add_line_error();
+                crate::stats::stats_record_parse_error_sample(&chunk);
                 ctx.internal_stats.lines_errors += 1;
 
                 // Use unified error tracking system

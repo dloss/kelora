@@ -59,6 +59,10 @@ pub struct ProcessingStats {
     pub csv_rows_extra_columns: usize, // CSV/TSV rows wider than the header (extras kept as cN)
     pub csv_rows_missing_columns: usize, // CSV/TSV rows narrower than the header (fields absent)
     pub csv_overflow_start_column: Option<usize>, // Lowest 1-based column where overflow began
+    /// First raw line that failed to parse, captured for diagnostics. Used to
+    /// re-detect a likely secondary format when auto-detection locked onto one
+    /// format but the input turned out to be mixed (see detection.rs).
+    pub first_parse_error_sample: Option<String>,
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -71,6 +75,12 @@ const MAX_FAILED_FILE_SAMPLES: usize = 3;
 static RECOVERABLE_ERROR_SAMPLES: OnceLock<Mutex<Vec<String>>> = OnceLock::new();
 #[cfg(test)]
 const MAX_RECOVERABLE_ERROR_SAMPLES: usize = 3;
+// First raw line that failed to parse (process-wide, set once). Captured on any
+// thread so it survives both sequential and parallel processing.
+static FIRST_PARSE_ERROR_SAMPLE: OnceLock<Mutex<Option<String>>> = OnceLock::new();
+// Cap the stored sample so a pathological long line can't bloat memory or the
+// emitted warning.
+const MAX_PARSE_ERROR_SAMPLE_LEN: usize = 1024;
 
 pub fn set_collect_stats(enabled: bool) {
     COLLECT_STATS.store(enabled, Ordering::Relaxed);
@@ -111,6 +121,29 @@ fn recoverable_error_samples() -> Vec<String> {
         .get()
         .and_then(|samples| samples.lock().ok().map(|v| v.clone()))
         .unwrap_or_default()
+}
+
+/// Record the first raw line that failed to parse. Only the first one is kept;
+/// later failures are ignored. The sample is truncated to a bounded length.
+pub fn stats_record_parse_error_sample(line: &str) {
+    if !stats_enabled() {
+        return;
+    }
+    let slot = FIRST_PARSE_ERROR_SAMPLE.get_or_init(|| Mutex::new(None));
+    if let Ok(mut current) = slot.lock() {
+        if current.is_none() {
+            let trimmed = line.trim_end_matches(['\r', '\n']);
+            let sample: String = trimmed.chars().take(MAX_PARSE_ERROR_SAMPLE_LEN).collect();
+            *current = Some(sample);
+        }
+    }
+}
+
+/// Returns the first captured parse-error sample line, if any.
+pub fn first_parse_error_sample() -> Option<String> {
+    FIRST_PARSE_ERROR_SAMPLE
+        .get()
+        .and_then(|slot| slot.lock().ok().and_then(|v| v.clone()))
 }
 
 // Thread-local storage for statistics (following track_count pattern)
@@ -339,6 +372,7 @@ pub fn get_thread_stats() -> ProcessingStats {
         s.files_failed_to_open = FILES_FAILED_TO_OPEN.load(Ordering::Relaxed);
         s.failed_file_samples = failed_file_samples();
         s.recoverable_error_samples = recoverable_error_samples();
+        s.first_parse_error_sample = first_parse_error_sample();
         s
     })
 }

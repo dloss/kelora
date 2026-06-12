@@ -230,15 +230,58 @@ pub fn parse_failure_warning_message(
         || (events_created == 0 && parse_errors >= 3);
 
     if should_warn {
-        let mut message = config.format_error_message(
-            "Parsing mostly failed. The input may use the wrong format, contain mixed formats, or require multiline parsing. Try -f line, specify -f <fmt>, or see --help-formats / --help-multiline.",
-        );
+        let text = mixed_format_suggestion(stats).unwrap_or_else(|| {
+            "Parsing mostly failed. The input may use the wrong format, contain mixed formats, or require multiline parsing. Try -f line, specify -f <fmt>, or see --help-formats / --help-multiline.".to_string()
+        });
+        let mut message = config.format_error_message(&text);
         if !events_were_output {
             message = message.trim_start_matches('\n').to_string();
         }
         Some(message)
     } else {
         None
+    }
+}
+
+/// Build a format-specific "mixed formats" warning when auto-detection locked
+/// onto one format but a sampled failing line looks like a *different* format.
+///
+/// This turns the otherwise generic "parsing mostly failed" notice into the
+/// actionable hint the user actually needs, e.g.
+/// `Detected mixed formats (json + line). Try: -f json,line`.
+///
+/// Returns `None` (so the caller falls back to the generic message) when we
+/// can't confidently name a distinct secondary format.
+fn mixed_format_suggestion(stats: &ProcessingStats) -> Option<String> {
+    let primary = stats.detected_format.as_deref()?;
+    let sample = stats.first_parse_error_sample.as_deref()?;
+
+    // Re-detect the format of a line that the primary parser rejected.
+    let secondary_fmt = parsers::detect_format(sample).ok()?;
+    let secondary = secondary_fmt.cascade_name();
+
+    // If the failing line re-detects as the same format, naming it adds nothing
+    // (the line is just malformed) — let the generic message handle it.
+    if secondary == primary {
+        return None;
+    }
+
+    // The primary is an auto-detected non-line format; it's cascade-eligible
+    // unless it is a schema-based format (csv/tsv variants).
+    let primary_eligible = !matches!(primary, "csv" | "tsv" | "csvnh" | "tsvnh");
+
+    if primary_eligible && secondary_fmt.is_cascade_eligible() {
+        // Both fit in a comma cascade. A catch-all (line/raw) must come last;
+        // the primary is never a catch-all here, so `primary,secondary` is
+        // always validly ordered.
+        Some(format!(
+            "Detected mixed formats ({primary} + {secondary}). Try: -f {primary},{secondary} (see --help-formats)."
+        ))
+    } else {
+        // One side can't go in a comma list (e.g. csv/tsv): suggest repeated -f.
+        Some(format!(
+            "Detected mixed formats ({primary} + {secondary}). These can't share a comma list; use repeated flags: -f {primary} -f {secondary} (see --help-formats)."
+        ))
     }
 }
 
@@ -312,6 +355,92 @@ mod tests {
         assert!(
             message.contains("--help-multiline"),
             "message should point to multiline help: {message}"
+        );
+    }
+
+    #[test]
+    fn parse_failure_warning_names_mixed_cascade_formats() {
+        let cfg = base_config();
+        let stats = ProcessingStats {
+            lines_errors: 10,
+            events_created: 5,
+            detected_format: Some("json".to_string()),
+            first_parse_error_sample: Some("just a plain text line".to_string()),
+            ..Default::default()
+        };
+
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
+            .expect("expected warning");
+
+        assert!(
+            message.contains("Detected mixed formats (json + line)"),
+            "message was {message}"
+        );
+        assert!(
+            message.contains("-f json,line"),
+            "should suggest the comma cascade: {message}"
+        );
+    }
+
+    #[test]
+    fn parse_failure_warning_suggests_repeated_flags_for_schema_formats() {
+        let cfg = base_config();
+        let stats = ProcessingStats {
+            lines_errors: 10,
+            events_created: 5,
+            detected_format: Some("json".to_string()),
+            // A CSV-looking line can't participate in a comma cascade.
+            first_parse_error_sample: Some("name,age,city".to_string()),
+            ..Default::default()
+        };
+
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
+            .expect("expected warning");
+
+        assert!(
+            message.contains("Detected mixed formats (json + csv)"),
+            "message was {message}"
+        );
+        assert!(
+            message.contains("-f json -f csv"),
+            "should suggest repeated flags: {message}"
+        );
+    }
+
+    #[test]
+    fn parse_failure_warning_uses_generic_message_without_a_sample() {
+        let cfg = base_config();
+        // No sample line captured (e.g. stats collection produced none): the
+        // warning must still fire, falling back to the generic guidance.
+        let stats = ProcessingStats {
+            lines_errors: 10,
+            events_created: 0,
+            detected_format: Some("json".to_string()),
+            first_parse_error_sample: None,
+            ..Default::default()
+        };
+
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
+            .expect("expected warning");
+
+        assert!(
+            message.contains("Parsing mostly failed"),
+            "should fall back to generic message: {message}"
+        );
+    }
+
+    #[test]
+    fn mixed_format_suggestion_skips_same_format_secondary() {
+        // Defensive: if a failing line re-detects as the already-active format,
+        // we must not suggest a useless `json,json` cascade.
+        let stats = ProcessingStats {
+            detected_format: Some("line".to_string()),
+            first_parse_error_sample: Some("just a plain text line".to_string()),
+            ..Default::default()
+        };
+        assert!(
+            mixed_format_suggestion(&stats).is_none(),
+            "same primary/secondary format should yield no specific suggestion"
         );
     }
 

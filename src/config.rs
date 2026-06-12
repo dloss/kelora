@@ -262,6 +262,32 @@ impl InputFormat {
         matches!(self, InputFormat::Cascade(_))
     }
 
+    /// Returns true if this format may appear in a comma-separated cascade list
+    /// (e.g. `-f json,line`). Mirrors the allow-list in `parse_cascade_spec`:
+    /// schema-based formats (csv/tsv) and spec formats (cols/regex) are excluded.
+    pub fn is_cascade_eligible(&self) -> bool {
+        matches!(
+            self,
+            InputFormat::Json
+                | InputFormat::Line
+                | InputFormat::Raw
+                | InputFormat::Logfmt
+                | InputFormat::Syslog
+                | InputFormat::Cef
+                | InputFormat::Combined
+                | InputFormat::Named(_)
+        )
+    }
+
+    /// Returns true if this format matches every line and so must be placed last
+    /// in a cascade. Mirrors `validate_cascade_order`.
+    pub fn is_cascade_catch_all(&self) -> bool {
+        matches!(
+            self,
+            InputFormat::Line | InputFormat::Raw | InputFormat::Cols(_)
+        )
+    }
+
     /// Returns the short name of a format suitable for use inside a cascade list
     /// (without any spec/args). Used for validation error messages.
     pub fn cascade_name(&self) -> &'static str {
