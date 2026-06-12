@@ -600,10 +600,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#breaking-resilient-mode-runtime-errors-no-longer-fail-the-process" class="md-nav__link">
+  <a href="#breaking-a-simpler-record-aware-exit-code-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking: resilient-mode runtime errors no longer fail the process
+        Breaking: a simpler, record-aware exit-code model
       
     </span>
   </a>
@@ -2485,10 +2485,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#breaking-resilient-mode-runtime-errors-no-longer-fail-the-process" class="md-nav__link">
+  <a href="#breaking-a-simpler-record-aware-exit-code-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking: resilient-mode runtime errors no longer fail the process
+        Breaking: a simpler, record-aware exit-code model
       
     </span>
   </a>
@@ -2745,13 +2745,45 @@ results. Other notes:</p>
 </tr>
 </tbody>
 </table>
-<h3 id="breaking-resilient-mode-runtime-errors-no-longer-fail-the-process">Breaking: resilient-mode runtime errors no longer fail the process<a class="headerlink" href="#breaking-resilient-mode-runtime-errors-no-longer-fail-the-process" title="Permanent link">&para;</a></h3>
-<p>In default (resilient) mode, recovered <code>--filter</code> and <code>--exec</code> runtime errors
-are now reported as diagnostics but exit <code>0</code>. If you relied on a nonzero exit
-for script errors, opt back in explicitly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--strict<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;…&#39;</span><span class="w">   </span><span class="c1"># fail the process on runtime errors</span>
+<h3 id="breaking-a-simpler-record-aware-exit-code-model">Breaking: a simpler, record-aware exit-code model<a class="headerlink" href="#breaking-a-simpler-record-aware-exit-code-model" title="Permanent link">&para;</a></h3>
+<p>The exit code now follows one rule:</p>
+<blockquote>
+<p><strong>Kelora exits non-zero when it couldn't do the job you asked — not because the data was messy.</strong></p>
+</blockquote>
+<p>The model turns on <strong>gates vs. transforms</strong>:</p>
+<ul>
+<li><strong>Gates — parse and filter — must work.</strong> If a gate never once succeeds (no
+  line parses, or a filter errors on <em>every</em> event and so selects nothing), the
+  output is empty or meaningless, so the run exits <code>1</code>.</li>
+<li><strong>Transforms — exec — are best-effort.</strong> A failing <code>--exec</code> rolls back to the
+  original event and emits it, so exec errors are reported but never fail the run
+  on their own. Use <code>--strict</code>/<code>--assert</code> to enforce.</li>
+</ul>
+<p>Structural failures (a named input that can't be opened) and <code>--assert</code>
+violations still fail in any mode; <code>--strict</code> still escalates any single
+parse/filter/exec error.</p>
+<p>Two behaviors change from 1.x:</p>
+<ul>
+<li><strong>A <code>--filter</code> that errors on <em>every</em> event now exits <code>1</code></strong> (it was <code>0</code>). A
+  totally broken filter — e.g. the <code>status &gt;= 500</code> typo for <code>e.status &gt;= 500</code> —
+  used to return success with empty output, which silently passed monitoring
+  checks (<a href="https://github.com/dloss/kelora/issues/241">#241</a>). It's now treated
+  as the operator error it is. A filter erroring on only <em>some</em> events, and any
+  <code>--exec</code> error (best-effort), are still recovered (exit <code>0</code>).</li>
+<li><strong>A <em>partial</em> parse failure now exits <code>0</code></strong> (it was <code>1</code>). A few unparseable
+  lines among good ones are data noise for a log tool, so the run succeeds with a
+  diagnostic. Only an input where <strong>no</strong> line parses (wrong format) still exits
+  <code>1</code>. Add <code>--strict</code> to fail on the first bad line as before.</li>
+</ul>
+<p>The signal is computed independently of output collection, so the exit code is
+now consistent across <code>--metrics</code>, <code>--drain</code>, <code>-q</code>, and <code>--no-diagnostics</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--strict<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;…&#39;</span><span class="w">   </span><span class="c1"># fail on the first runtime/parse error</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--assert<span class="w"> </span><span class="s1">&#39;…&#39;</span><span class="w">          </span><span class="c1"># fail on explicit data-quality rules</span>
 </code></pre></div>
+<p><strong>Action:</strong> if a script relied on a nonzero exit for a broken <code>--exec</code>, add
+<code>--strict</code> (exec is now best-effort). If a pipeline relied on exit <code>1</code> for <em>any</em>
+parse error, add <code>--strict</code>. The full model — with a scenario table — is in
+<a href="../concepts/error-handling/#exit-codes-the-model">Error Handling</a>.</p>
 <h3 id="breaking-config-files-are-validated-strictly">Breaking: config files are validated strictly<a class="headerlink" href="#breaking-config-files-are-validated-strictly" title="Permanent link">&para;</a></h3>
 <p><code>.kelora.ini</code> (and <code>--config-file</code>) now reject unknown root keys, unknown
 sections, and malformed lines, naming the file and line. Previously a typo such
@@ -2794,8 +2826,13 @@ paging to <code>less</code>:</p>
    <code>track_count("name", value)</code>, <code>track_bucket</code> → <code>track_count</code>, and
    <code>track_top</code>/<code>track_bottom</code> → <code>track_top_by</code>/<code>track_bottom_by</code> (score before
    <code>n</code>). The old forms error with a hint, so a dry run surfaces every site.</li>
-<li><strong>Re-check exit-code expectations.</strong> Scripts that depended on a nonzero exit
-   for <code>--filter</code>/<code>--exec</code> runtime errors now need <code>--strict</code> (or <code>--assert</code>).</li>
+<li><strong>Re-check exit-code expectations.</strong> The exit code now tracks "did the job
+   get done", not "were there any errors". Gates must work: a <code>--filter</code> that
+   errors on <em>every</em> event now exits <code>1</code> (was <code>0</code>), and a <em>partial</em> parse failure
+   now exits <code>0</code> (was <code>1</code>; only all-lines-fail still exits <code>1</code>). Transforms are
+   best-effort: any <code>--exec</code> error — even on every event — is recovered (exit
+   <code>0</code>). Add <code>--strict</code> to fail on the first parse/filter/exec error, or
+   <code>--assert</code> for explicit data-quality gates.</li>
 <li><strong>Validate your config.</strong> Run any command with your <code>.kelora.ini</code> present;
    a typo'd key or section now errors instead of being ignored.</li>
 <li><strong>Verify <code>--input-tz</code> values</strong> are <code>local</code>, <code>UTC</code>, or valid IANA names.</li>

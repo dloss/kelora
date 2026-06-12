@@ -1913,16 +1913,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
+  <a href="#exit-codes-the-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exit Codes
+        Exit codes: the model
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Exit Codes">
+    <nav class="md-nav" aria-label="Exit codes: the model">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scenario-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-code-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full code table
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#using-exit-codes" class="md-nav__link">
@@ -3155,16 +3177,38 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
+  <a href="#exit-codes-the-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exit Codes
+        Exit codes: the model
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Exit Codes">
+    <nav class="md-nav" aria-label="Exit codes: the model">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scenario-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-code-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Full code table
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#using-exit-codes" class="md-nav__link">
@@ -3645,7 +3689,12 @@
 <li><strong>Filter errors</strong>: Treat as <code>false</code>, skip event</li>
 <li><strong>Transform errors</strong>: Return original event unchanged (atomic rollback)</li>
 <li><strong>Summary</strong>: Show recovered runtime errors as warnings at end</li>
-<li><strong>Exit code</strong>: <code>0</code> for recovered filter/exec errors; <code>1</code> for parse errors, assertion failures, and file I/O failures</li>
+<li><strong>Exit code</strong>: <code>0</code> while the run still did its job — even with skipped lines or
+  rolled-back transforms. It becomes <code>1</code> only when a <em>gate</em> never once succeeded
+  (a <code>--filter</code> that errors on every event, or an input where no line parses), or
+  on a structural / <code>--assert</code> failure. Transform (<code>--exec</code>) errors are
+  best-effort and never fail the run on their own. See
+  <a href="#exit-codes-the-model">Exit codes: the model</a>.</li>
 </ul>
 <h3 id="when-to-use">When to Use<a class="headerlink" href="#when-to-use" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3680,7 +3729,11 @@
 <li>Event is skipped</li>
 <li>Error is recorded</li>
 <li>Processing continues</li>
-<li>Exit code remains <code>0</code> unless an unrecovered error also occurs</li>
+<li>Exit code stays <code>0</code> <strong>as long as the filter succeeded on at least one event</strong>.
+  If the filter errors on <em>every</em> event (e.g. a field-name typo like <code>status</code>
+  instead of <code>e.status</code>), it never matched anything — that is a broken command,
+  not data noise, so the run exits <code>1</code>. See
+  <a href="#exit-codes-the-model">Exit codes: the model</a>.</li>
 </ul>
 <h2 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h2>
 <h3 id="overview_1">Overview<a class="headerlink" href="#overview_1" title="Permanent link">&para;</a></h3>
@@ -3766,6 +3819,10 @@
 <li>Transformation rolled back (atomic)</li>
 <li>Original event returned unchanged</li>
 <li>Error recorded</li>
+<li><strong>Exit code stays <code>0</code></strong> — exec is best-effort enrichment. Even an <code>--exec</code>
+  that errors on <em>every</em> event is recovered (the original events still flow), so
+  it never fails the run on its own. Use <code>--strict</code> (fail on the first error) or
+  <code>--assert</code> (explicit gate) when a transform must succeed.</li>
 </ul>
 <p><strong>Strict behavior:</strong></p>
 <ul>
@@ -3855,8 +3912,127 @@
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>kelora<span class="w"> </span>-m<span class="w"> </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span>app.log<span class="w">        </span><span class="c1"># Metrics only</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>kelora<span class="w"> </span>--metrics<span class="o">=</span>json<span class="w"> </span>app.log<span class="w">                        </span><span class="c1"># Metrics in JSON format</span>
 </code></pre></div>
-<h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
-<p>Kelora uses standard Unix exit codes:</p>
+<h2 id="exit-codes-the-model">Exit codes: the model<a class="headerlink" href="#exit-codes-the-model" title="Permanent link">&para;</a></h2>
+<p>One rule captures Kelora's exit-code behavior:</p>
+<blockquote>
+<p><strong>Kelora exits non-zero when it couldn't do the job you asked — not because the data was messy.</strong></p>
+</blockquote>
+<p>That splits cleanly into three tiers:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Exit</th>
+<th>What it means</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Recovered</strong></td>
+<td><code>0</code></td>
+<td>The run did its job. Individual records may have been skipped, rolled back, or left un-enriched, and they're reported as diagnostics.</td>
+<td>A few unparseable lines among good ones; an <code>--exec</code> that errors on some (or even all) events</td>
+</tr>
+<tr>
+<td><strong>Couldn't do the job</strong></td>
+<td><code>1</code></td>
+<td>A <em>gate</em> never once succeeded, a forbidden operation, or a structural / explicit-gate failure.</td>
+<td>A <code>--filter</code> that errors on <strong>every</strong> event; an input where <strong>no</strong> line parses; mutating <code>conf</code> outside <code>--begin</code>; a named input that can't be opened; an <code>--assert</code> violation</td>
+</tr>
+<tr>
+<td><strong>Invalid usage</strong></td>
+<td><code>2</code></td>
+<td>Bad command line — caught before processing.</td>
+<td>Unknown flag, incompatible options, invalid config</td>
+</tr>
+</tbody>
+</table>
+<p>The key distinction is <strong>gates vs. transforms</strong>:</p>
+<ul>
+<li><strong>Gates — parse and filter — must work.</strong> If a gate never once succeeds, the
+  output is empty or meaningless: no line parsed, or a filter that errored on
+  every event never actually selected anything (the dangerous case where "show
+  me the errors" returns nothing and looks like success). That's a broken
+  command, so it exits <code>1</code>. A gate that errors on only <em>some</em> records is data
+  noise and is recovered.</li>
+<li><strong>Transforms — exec — are best-effort.</strong> A failing <code>--exec</code> rolls back to the
+  event as it was before that stage and emits it anyway, so the output stays
+  valid even when the transform errors on every event. Exec errors are reported
+  but <strong>never fail the run on their own</strong>. Use <code>--strict</code> to fail on the first
+  error, or <code>--assert</code> for an explicit data-quality gate.</li>
+</ul>
+<p>This holds regardless of output flags — the signal is computed independently of
+<code>--stats</code>/<code>--no-diagnostics</code> collection — so <code>--metrics</code>, <code>--drain</code>, <code>-q</code>, and
+<code>--no-diagnostics</code> all preserve the exit code.</p>
+<h3 id="scenario-reference">Scenario reference<a class="headerlink" href="#scenario-reference" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;"><code>--strict</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean run</td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>0</code></td>
+</tr>
+<tr>
+<td>Filter legitimately matches nothing</td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>0</code></td>
+</tr>
+<tr>
+<td>Some lines fail to parse, others succeed</td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>1</code> (aborts on first)</td>
+</tr>
+<tr>
+<td><strong>Every</strong> line fails to parse (wrong format)</td>
+<td style="text-align: center;"><code>1</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td><code>--filter</code> errors on <strong>every</strong> event (typo, type bug)</td>
+<td style="text-align: center;"><code>1</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td><code>--exec</code> errors on some events (heterogeneous logs)</td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>1</code> (aborts on first)</td>
+</tr>
+<tr>
+<td><code>--exec</code> errors on <strong>every</strong> event (best-effort transform)</td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td>Broken <code>--exec</code> behind a selective <code>--filter</code></td>
+<td style="text-align: center;"><code>0</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td>Mutating <code>conf</code> outside <code>--begin</code> (forbidden)</td>
+<td style="text-align: center;"><code>1</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td>Named input file can't be opened</td>
+<td style="text-align: center;"><code>1</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+<tr>
+<td><code>--assert</code> violation</td>
+<td style="text-align: center;"><code>1</code></td>
+<td style="text-align: center;"><code>1</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="full-code-table">Full code table<a class="headerlink" href="#full-code-table" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -3867,11 +4043,11 @@
 <tbody>
 <tr>
 <td><code>0</code></td>
-<td>Success (no unrecovered processing failure)</td>
+<td>The run did its job (possibly with recovered parse/exec errors)</td>
 </tr>
 <tr>
 <td><code>1</code></td>
-<td>Processing errors (parse/assertion/file errors, strict-mode filter/exec errors)</td>
+<td>A gate (parse/filter) never succeeded, a structural failure, or an <code>--assert</code>/strict failure</td>
 </tr>
 <tr>
 <td><code>2</code></td>
@@ -3882,20 +4058,31 @@
 <td>Interrupted (Ctrl+C)</td>
 </tr>
 <tr>
+<td><code>134</code></td>
+<td>Internal thread panic (a bug — please report)</td>
+</tr>
+<tr>
 <td><code>141</code></td>
 <td>Broken pipe (normal in Unix pipelines)</td>
+</tr>
+<tr>
+<td><code>143</code></td>
+<td>Terminated (SIGTERM)</td>
 </tr>
 </tbody>
 </table>
 <h3 id="using-exit-codes">Using Exit Codes<a class="headerlink" href="#using-exit-codes" title="Permanent link">&para;</a></h3>
 <p><strong>In shell scripts:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="k">if</span><span class="w"> </span>kelora<span class="w"> </span>-q<span class="w"> </span>-j<span class="w"> </span>app.log<span class="p">;</span><span class="w"> </span><span class="k">then</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ No errors found&quot;</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Ran successfully (messy records, if any, were recovered)&quot;</span>
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="k">else</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Errors detected&quot;</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Could not complete: a stage failed, or input was unusable&quot;</span>
 <a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 <a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="k">fi</span>
 </code></pre></div></p>
+<p>Note that exit <code>0</code> means "the job got done", not "zero errors": a run with a
+few recovered parse errors still succeeds. To fail on <em>any</em> imperfection, add
+<code>--strict</code>; to fail on explicit data-quality rules, use <code>--assert</code>.</p>
 <p><strong>In CI/CD:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>--silent<span class="w"> </span>--strict<span class="w"> </span>app.log<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 </code></pre></div></p>
