@@ -1922,6 +1922,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-do-i-filter-by-severity-like-warn-and-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I filter by severity, like "WARN and above"?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-do-i-debug-filters-or-rhai-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2436,6 +2447,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-do-i-filter-by-severity-like-warn-and-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I filter by severity, like "WARN and above"?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-do-i-debug-filters-or-rhai-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2632,6 +2654,18 @@
 <p>Typical causes are filtering everything out, quiet/silent output flags, or time filters that exclude your data. The <a href="../reference/common-errors/">Common Errors Reference</a> has a quick checklist.</p>
 <h2 id="why-does-my-filter-not-see-fields-i-just-created">Why does my filter not see fields I just created?<a class="headerlink" href="#why-does-my-filter-not-see-fields-i-just-created" title="Permanent link">&para;</a></h2>
 <p>Stages run in the <strong>exact CLI order</strong> you specify. Create fields before filtering on them, and place <code>--levels</code> where you want level filtering to occur. See <a href="../concepts/scripting-stages/">Scripting Stages</a> for examples.</p>
+<h2 id="how-do-i-filter-by-severity-like-warn-and-above">How do I filter by severity, like "WARN and above"?<a class="headerlink" href="#how-do-i-filter-by-severity-like-warn-and-above" title="Permanent link">&para;</a></h2>
+<p><code>-l/--levels</code> matches an explicit <strong>set</strong> of level names — it has no built-in notion of severity ranking, so it cannot express an ordering like "WARN or worse." There are three ways to get the effect you want:</p>
+<p><strong>List the levels you want to keep</strong> with <code>-l/--levels</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--levels<span class="w"> </span>warn,error,critical,fatal<span class="w"> </span>app.log
+</code></pre></div>
+<p><strong>Exclude the levels below your cutoff</strong> with <code>-L/--exclude-levels</code> — often simpler, since the lower levels are usually fewer:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exclude-levels<span class="w"> </span>trace,debug,info<span class="w"> </span>app.log
+</code></pre></div>
+<p><strong>Use a real threshold</strong> by mapping levels to numbers in a Rhai filter, when you want one cutoff to cover many level names:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;#{&quot;trace&quot;:0, &quot;debug&quot;:1, &quot;info&quot;:2, &quot;warn&quot;:3, &quot;error&quot;:4, &quot;fatal&quot;:5}.get(e.level.to_lower(), -1) &gt;= 3&#39;</span><span class="w"> </span>app.log
+</code></pre></div>
+<p>The <code>-l</code>/<code>-L</code> flags are the faster choice; reach for the Rhai filter only when you need a numeric threshold. See the <a href="../reference/cli-reference/">CLI Reference</a> for level-filtering details.</p>
 <h2 id="how-do-i-debug-filters-or-rhai-scripts">How do I debug filters or Rhai scripts?<a class="headerlink" href="#how-do-i-debug-filters-or-rhai-scripts" title="Permanent link">&para;</a></h2>
 <p>Use <code>-F inspect</code> to see fields and types, <code>--verbose</code> to surface errors, and <code>--strict</code> to fail fast. The <a href="../reference/common-errors/">Common Errors Reference</a> and <a href="../reference/functions/">Functions Reference</a> cover patterns for safe access and type conversion.</p>
 <h2 id="how-do-i-filter-by-time-or-control-timezones">How do I filter by time or control timezones?<a class="headerlink" href="#how-do-i-filter-by-time-or-control-timezones" title="Permanent link">&para;</a></h2>
