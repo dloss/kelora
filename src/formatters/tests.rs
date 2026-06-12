@@ -883,6 +883,99 @@ fn test_keymap_formatter_non_string_fields() {
 }
 
 #[test]
+fn test_levelmap_legend_lists_observed_levels() {
+    // Wide buffer so nothing flushes mid-stream; legend comes from finish().
+    let formatter = LevelmapFormatter::with_width_and_legend(80, false, true);
+    let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+    for level in ["info", "error", "warn", "info", "error"] {
+        let mut event = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event.set_field("level".to_string(), Dynamic::from(level));
+        formatter.format(&event);
+    }
+    // Event with no level field -> '?' glyph, "(none)" label.
+    formatter.format(&Event {
+        parsed_ts: Some(ts),
+        ..Event::default()
+    });
+
+    let output = formatter.finish().expect("legend output");
+    // Data line, blank separator, then a data-driven legend.
+    assert!(output.contains("iewie?"));
+    assert!(output.contains("\n\n"));
+    assert!(output.contains("e = error"));
+    assert!(output.contains("i = info"));
+    assert!(output.contains("w = warn"));
+    assert!(output.contains("? = (none)"));
+}
+
+#[test]
+fn test_levelmap_legend_suppressed_by_default() {
+    let formatter = LevelmapFormatter::with_width_and_legend(80, false, false);
+    let ts = Utc.timestamp_millis_opt(0).unwrap();
+    let mut event = Event {
+        parsed_ts: Some(ts),
+        ..Event::default()
+    };
+    event.set_field("level".to_string(), Dynamic::from("info"));
+    formatter.format(&event);
+
+    let output = formatter.finish().expect("trailing line");
+    assert!(!output.contains('='));
+    assert!(!output.contains("\n\n"));
+}
+
+#[test]
+fn test_keymap_legend_groups_colliding_values() {
+    let formatter = KeymapFormatter::with_width_and_legend(80, Some("status".to_string()), true);
+    let ts = Utc.timestamp_millis_opt(0).unwrap();
+
+    for status in ["200", "204", "200", "404", "500"] {
+        let mut event = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event.set_field("status".to_string(), Dynamic::from(status));
+        formatter.format(&event);
+    }
+    // Missing field -> '.' glyph, "(missing)" label.
+    formatter.format(&Event {
+        parsed_ts: Some(ts),
+        ..Event::default()
+    });
+
+    let output = formatter.finish().expect("legend output");
+    // First chars collide: 200 and 204 both render as '2'.
+    assert!(output.contains("2 = 200,204"));
+    assert!(output.contains("4 = 404"));
+    assert!(output.contains("5 = 500"));
+    assert!(output.contains(". = (missing)"));
+}
+
+#[test]
+fn test_tailmap_legend_can_be_suppressed() {
+    let formatter = TailmapFormatter::with_width_and_legend(20, Some("value".to_string()), false);
+    let ts = Utc.timestamp_millis_opt(0).unwrap();
+    for i in 1..=50 {
+        let mut event = Event {
+            parsed_ts: Some(ts),
+            ..Event::default()
+        };
+        event.set_field("value".to_string(), Dynamic::from(i as f64));
+        formatter.format(&event);
+    }
+
+    let output = formatter.finish().expect("data output");
+    assert!(output.contains("1970-01-01"));
+    // No legend/threshold lines when suppressed.
+    assert!(!output.contains("below p90"));
+    assert!(!output.contains("events, range"));
+}
+
+#[test]
 fn test_hide_formatter() {
     let mut event = Event::default();
     event.set_field("level".to_string(), Dynamic::from("INFO".to_string()));

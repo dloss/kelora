@@ -138,6 +138,11 @@ inspect   - Debug format with type information
 levelmap  - Compact visual with timestamps and level indicators
 keymap    - Compact visual showing first character of specified field (-k/--keys required, exactly one field)
 tailmap   - Visualizes numeric field distribution with percentile thresholds (-k/--keys required, exactly one numeric field)
+
+Map legends (levelmap/keymap/tailmap)
+  Map formats append a one-line, data-driven legend decoding their glyphs
+  (e.g. 'E = ERROR | I = INFO' or '2 = 200,204 | 4 = 404'). Shown only on a
+  terminal by default; use --legend to force it when piping, --no-legend to hide.
 csv       - Comma-separated with header row
 tsv       - Tab-separated with header row
 csvnh     - CSV without header

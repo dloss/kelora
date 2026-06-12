@@ -20,6 +20,7 @@ pub struct TailmapFormatter {
     field_name: String,
     emoji_mode: crate::config::EmojiMode,
     color_mode: crate::config::ColorMode,
+    show_legend: bool,
 }
 
 struct TailmapState {
@@ -43,6 +44,7 @@ impl TailmapFormatter {
         field_name: Option<String>,
         emoji_mode: crate::config::EmojiMode,
         color_mode: crate::config::ColorMode,
+        show_legend: bool,
     ) -> Self {
         let detected_width = crate::tty::get_terminal_width();
         let terminal_width = if detected_width == 0 {
@@ -58,6 +60,7 @@ impl TailmapFormatter {
             field_name: field_name.unwrap_or_else(|| "value".to_string()),
             emoji_mode,
             color_mode,
+            show_legend,
         }
     }
 
@@ -70,6 +73,24 @@ impl TailmapFormatter {
             field_name: field_name.unwrap_or_else(|| "value".to_string()),
             emoji_mode: crate::config::EmojiMode::Never,
             color_mode: crate::config::ColorMode::Never,
+            show_legend: true,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn with_width_and_legend(
+        width: usize,
+        field_name: Option<String>,
+        show_legend: bool,
+    ) -> Self {
+        Self {
+            state: Mutex::new(TailmapState::new()),
+            terminal_width: 80,
+            buffer_width_override: Some(width),
+            field_name: field_name.unwrap_or_else(|| "value".to_string()),
+            emoji_mode: crate::config::EmojiMode::Never,
+            color_mode: crate::config::ColorMode::Never,
+            show_legend,
         }
     }
 
@@ -204,6 +225,10 @@ impl pipeline::Formatter for TailmapFormatter {
 
         if output.is_empty() {
             return None;
+        }
+
+        if !self.show_legend {
+            return Some(output);
         }
 
         // Add legend with percentile thresholds

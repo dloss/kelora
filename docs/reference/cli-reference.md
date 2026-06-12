@@ -868,6 +868,24 @@ kelora -F tailmap -k response_time api.log
 kelora -j --stats app.log
 ```
 
+#### `--legend` / `--no-legend`
+
+Control the data-driven legend appended to map outputs (`levelmap`, `keymap`,
+`tailmap`). The legend decodes each glyph back to the source values that produced
+it, e.g. `E = ERROR | I = INFO | W = WARN` or `2 = 200,204 | 4 = 404`.
+
+By default the legend appears only when output is an interactive terminal, so
+piped/redirected output stays clean.
+
+- `--legend` - always append the legend (even when piped)
+- `--no-legend` - never append the legend
+
+```bash
+kelora -F levelmap app.log              # legend shown on a terminal, omitted when piped
+kelora -F levelmap --legend app.log | less   # force the legend through a pipe
+kelora -F tailmap -k latency --no-legend app.log > map.txt  # suppress it
+```
+
 #### `-J`
 
 Shortcut for `-F json`.

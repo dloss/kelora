@@ -52,6 +52,8 @@ pub struct OutputConfig {
     pub pretty: bool,
     pub color: ColorMode,
     pub emoji: EmojiMode,
+    /// Whether map formatters append a trailing legend
+    pub legend: LegendMode,
     pub stats: Option<crate::cli::StatsFormat>,
     pub stats_with_events: bool,
     pub metrics: Option<crate::cli::MetricsFormat>,
@@ -325,6 +327,17 @@ pub enum ColorMode {
 pub enum EmojiMode {
     Auto,
     Always,
+    Never,
+}
+
+/// Legend output mode for map formatters (levelmap/keymap/tailmap)
+#[derive(Clone, Debug)]
+pub enum LegendMode {
+    /// Show the legend only when stdout is a TTY (keeps pipes clean)
+    Auto,
+    /// Always append the legend
+    Always,
+    /// Never append the legend
     Never,
 }
 
@@ -861,6 +874,15 @@ impl KeloraConfig {
             EmojiMode::Auto
         };
 
+        // Determine legend mode from flags (last one wins via overrides_with)
+        let legend_mode = if cli.no_legend {
+            LegendMode::Never
+        } else if cli.legend {
+            LegendMode::Always
+        } else {
+            LegendMode::Auto
+        };
+
         let default_timezone = determine_default_timezone(cli)?;
         let mut quiet_events = cli.quiet;
         // Diagnostics: positive flag enables, negative flag disables (last one wins via overrides_with)
@@ -1024,6 +1046,7 @@ impl KeloraConfig {
                 pretty: cli.expand_nested,
                 color: color_mode,
                 emoji: emoji_mode,
+                legend: legend_mode,
                 stats: stats_format,
                 stats_with_events,
                 metrics: metrics_format,
@@ -1127,6 +1150,7 @@ impl Default for KeloraConfig {
                 pretty: false,
                 color: ColorMode::Auto,
                 emoji: EmojiMode::Auto,
+                legend: LegendMode::Auto,
                 stats: None,
                 stats_with_events: false,
                 metrics: None,

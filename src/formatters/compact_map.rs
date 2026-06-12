@@ -4,13 +4,107 @@ use crate::pipeline;
 
 use chrono::{DateTime, FixedOffset, SecondsFormat, Utc};
 use rhai::Dynamic;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Mutex;
+
+/// Maximum number of distinct labels listed per legend glyph before truncating.
+const MAX_LEGEND_LABELS: usize = 6;
+/// Maximum displayed length of a single legend label.
+const MAX_LEGEND_LABEL_LEN: usize = 32;
+
+/// Accumulates the mapping from a displayed glyph to the source values that
+/// produced it, so a data-driven legend can be rendered when the stream ends.
+#[derive(Default)]
+struct LegendAccumulator {
+    entries: BTreeMap<char, LegendBucket>,
+}
+
+#[derive(Default)]
+struct LegendBucket {
+    labels: BTreeSet<String>,
+    truncated: bool,
+}
+
+impl LegendAccumulator {
+    fn record(&mut self, glyph: char, label: &str) {
+        let bucket = self.entries.entry(glyph).or_default();
+        if bucket.labels.len() < MAX_LEGEND_LABELS || bucket.labels.contains(label) {
+            bucket.labels.insert(truncate_label(label));
+        } else {
+            bucket.truncated = true;
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// Render a single-line legend, e.g. `🔹 E = error | I = info | W = warn`.
+    /// `color_for_label` returns the ANSI color for a label ("" = no color);
+    /// `reset` is the ANSI reset sequence (ignored when no color is applied).
+    fn render(
+        &self,
+        use_emoji: bool,
+        reset: &str,
+        color_for_label: impl Fn(&str) -> &'static str,
+    ) -> Option<String> {
+        if self.is_empty() {
+            return None;
+        }
+
+        let wrap = |s: &str, color: &str| {
+            if color.is_empty() {
+                s.to_string()
+            } else {
+                format!("{color}{s}{reset}")
+            }
+        };
+
+        let mut parts = Vec::with_capacity(self.entries.len());
+        for (glyph, bucket) in &self.entries {
+            let glyph_color = bucket
+                .labels
+                .iter()
+                .next()
+                .map(|label| color_for_label(label))
+                .unwrap_or("");
+            let labels: Vec<String> = bucket
+                .labels
+                .iter()
+                .map(|label| wrap(label, color_for_label(label)))
+                .collect();
+            let mut joined = labels.join(",");
+            if bucket.truncated {
+                joined.push_str(",…");
+            }
+            parts.push(format!(
+                "{} = {}",
+                wrap(&glyph.to_string(), glyph_color),
+                joined
+            ));
+        }
+
+        let prefix = if use_emoji { "🔹 " } else { "" };
+        Some(format!("{prefix}{}", parts.join(" | ")))
+    }
+}
+
+/// Truncate an over-long legend label so a single noisy value can't blow up the line.
+fn truncate_label(label: &str) -> String {
+    if label.chars().count() > MAX_LEGEND_LABEL_LEN {
+        let head: String = label.chars().take(MAX_LEGEND_LABEL_LEN - 1).collect();
+        format!("{head}…")
+    } else {
+        label.to_string()
+    }
+}
 
 // Shared state and utilities for compact map formatters (levelmap, keymap)
 struct CompactMapState {
     current_timestamp: Option<String>,
     buffer: String,
     visible_len: usize,
+    legend: LegendAccumulator,
 }
 
 impl CompactMapState {
@@ -20,9 +114,11 @@ impl CompactMapState {
             current_timestamp: None,
             buffer: String::with_capacity(base_capacity),
             visible_len: 0,
+            legend: LegendAccumulator::default(),
         }
     }
 
+    // Reset only the per-line state; the legend accumulates across the whole run.
     fn reset(&mut self) {
         self.current_timestamp = None;
         self.buffer.clear();
@@ -32,6 +128,20 @@ impl CompactMapState {
     fn push_rendered(&mut self, rendered: &str) {
         self.buffer.push_str(rendered);
         self.visible_len += 1;
+    }
+
+    /// Combine the trailing partial line with the optional legend block.
+    fn finish_with_legend(
+        &mut self,
+        trailing: Option<String>,
+        legend: Option<String>,
+    ) -> Option<String> {
+        match (trailing, legend) {
+            (Some(t), Some(l)) => Some(format!("{t}\n\n{l}")),
+            (Some(t), None) => Some(t),
+            (None, Some(l)) => Some(format!("\n{l}")),
+            (None, None) => None,
+        }
     }
 }
 
@@ -112,12 +222,14 @@ pub struct LevelmapFormatter {
     terminal_width: usize,
     buffer_width_override: Option<usize>,
     colors: ColorScheme,
+    use_emoji: bool,
+    show_legend: bool,
 }
 
 impl LevelmapFormatter {
     const FALLBACK_TERMINAL_WIDTH: usize = 80;
 
-    pub fn new(use_colors: bool) -> Self {
+    pub fn new(use_colors: bool, use_emoji: bool, show_legend: bool) -> Self {
         let detected_width = crate::tty::get_terminal_width();
         let terminal_width = if detected_width == 0 {
             Self::FALLBACK_TERMINAL_WIDTH
@@ -130,17 +242,26 @@ impl LevelmapFormatter {
             terminal_width,
             buffer_width_override: None,
             colors: ColorScheme::new(use_colors),
+            use_emoji,
+            show_legend,
         }
     }
 
     #[cfg(test)]
     pub fn with_width(width: usize) -> Self {
+        Self::with_width_and_legend(width, false, false)
+    }
+
+    #[cfg(test)]
+    pub fn with_width_and_legend(width: usize, use_colors: bool, show_legend: bool) -> Self {
         let effective_width = width.max(1);
         Self {
             state: Mutex::new(CompactMapState::new(effective_width)),
             terminal_width: effective_width,
             buffer_width_override: Some(effective_width),
-            colors: ColorScheme::new(false),
+            colors: ColorScheme::new(use_colors),
+            use_emoji: false,
+            show_legend,
         }
     }
 
@@ -184,7 +305,7 @@ impl LevelmapFormatter {
         ch.to_string()
     }
 
-    fn level_color<'a>(&'a self, level: &str) -> &'a str {
+    fn level_color(&self, level: &str) -> &'static str {
         match level.to_lowercase().as_str() {
             "error" | "err" | "fatal" | "panic" | "alert" | "crit" | "critical" | "emerg"
             | "emergency" | "severe" => self.colors.level_error,
@@ -215,6 +336,10 @@ impl pipeline::Formatter for LevelmapFormatter {
             .as_deref()
             .and_then(|s| s.chars().next())
             .unwrap_or('?');
+        if self.show_legend {
+            let label = level_string.as_deref().unwrap_or("(none)");
+            state.legend.record(display_char, label);
+        }
         let rendered = self.render_level_char(level_string.as_deref(), display_char);
         state.push_rendered(&rendered);
 
@@ -233,18 +358,27 @@ impl pipeline::Formatter for LevelmapFormatter {
             .state
             .lock()
             .expect("levelmap formatter mutex poisoned");
-        if state.visible_len == 0 {
-            return None;
-        }
 
-        let line = compact_map_utils::format_line(state.current_timestamp.as_ref(), &state.buffer);
+        let trailing = if state.visible_len > 0 {
+            let line =
+                compact_map_utils::format_line(state.current_timestamp.as_ref(), &state.buffer);
+            (!line.is_empty()).then_some(line)
+        } else {
+            None
+        };
         state.reset();
 
-        if line.is_empty() {
-            None
+        let legend = if self.show_legend {
+            state
+                .legend
+                .render(self.use_emoji, self.colors.reset, |label| {
+                    self.level_color(label)
+                })
         } else {
-            Some(line)
-        }
+            None
+        };
+
+        state.finish_with_legend(trailing, legend)
     }
 }
 
@@ -253,12 +387,14 @@ pub struct KeymapFormatter {
     terminal_width: usize,
     buffer_width_override: Option<usize>,
     field_name: String,
+    use_emoji: bool,
+    show_legend: bool,
 }
 
 impl KeymapFormatter {
     const FALLBACK_TERMINAL_WIDTH: usize = 80;
 
-    pub fn new(field_name: Option<String>) -> Self {
+    pub fn new(field_name: Option<String>, use_emoji: bool, show_legend: bool) -> Self {
         let detected_width = crate::tty::get_terminal_width();
         let terminal_width = if detected_width == 0 {
             Self::FALLBACK_TERMINAL_WIDTH
@@ -271,17 +407,30 @@ impl KeymapFormatter {
             terminal_width,
             buffer_width_override: None,
             field_name: field_name.unwrap_or_else(|| "level".to_string()),
+            use_emoji,
+            show_legend,
         }
     }
 
     #[cfg(test)]
     pub fn with_width(width: usize, field_name: Option<String>) -> Self {
+        Self::with_width_and_legend(width, field_name, false)
+    }
+
+    #[cfg(test)]
+    pub fn with_width_and_legend(
+        width: usize,
+        field_name: Option<String>,
+        show_legend: bool,
+    ) -> Self {
         let effective_width = width.max(1);
         Self {
             state: Mutex::new(CompactMapState::new(effective_width)),
             terminal_width: effective_width,
             buffer_width_override: Some(effective_width),
             field_name: field_name.unwrap_or_else(|| "level".to_string()),
+            use_emoji: false,
+            show_legend,
         }
     }
 
@@ -323,6 +472,10 @@ impl pipeline::Formatter for KeymapFormatter {
             .as_deref()
             .and_then(|s| s.chars().next())
             .unwrap_or('.');
+        if self.show_legend {
+            let label = field_string.as_deref().unwrap_or("(missing)");
+            state.legend.record(display_char, label);
+        }
         state.push_rendered(&display_char.to_string());
 
         if state.visible_len >= available_width {
@@ -337,18 +490,24 @@ impl pipeline::Formatter for KeymapFormatter {
 
     fn finish(&self) -> Option<String> {
         let mut state = self.state.lock().expect("keymap formatter mutex poisoned");
-        if state.visible_len == 0 {
-            return None;
-        }
 
-        let line = compact_map_utils::format_line(state.current_timestamp.as_ref(), &state.buffer);
+        let trailing = if state.visible_len > 0 {
+            let line =
+                compact_map_utils::format_line(state.current_timestamp.as_ref(), &state.buffer);
+            (!line.is_empty()).then_some(line)
+        } else {
+            None
+        };
         state.reset();
 
-        if line.is_empty() {
-            None
+        // keymap glyphs are uncolored, so the legend stays plain too.
+        let legend = if self.show_legend {
+            state.legend.render(self.use_emoji, "", |_| "")
         } else {
-            Some(line)
-        }
+            None
+        };
+
+        state.finish_with_legend(trailing, legend)
     }
 }
 

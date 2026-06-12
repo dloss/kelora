@@ -201,6 +201,8 @@ pub struct PipelineConfig {
     pub quiet_level: u8,
     /// Emoji mode for error output
     pub emoji_mode: crate::config::EmojiMode,
+    /// Legend mode for map output formatters (levelmap/keymap/tailmap)
+    pub legend_mode: crate::config::LegendMode,
     /// Input files for smart error message formatting
     pub input_files: Vec<String>,
     /// Allow Rhai scripts to create directories and write files on disk

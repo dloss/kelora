@@ -538,6 +538,15 @@ pub struct Cli {
     #[arg(long = "no-script-output", hide = true, help_heading = "Output Options", overrides_with_all = ["script_output", "no_script_output"])]
     pub no_script_output: bool,
 
+    /// Append a legend to map outputs (levelmap/keymap/tailmap) even when piped.
+    /// By default the legend shows only when stdout is a terminal.
+    #[arg(long = "legend", help_heading = "Output Options", overrides_with_all = ["no_legend", "legend"])]
+    pub legend: bool,
+
+    /// Suppress the legend on map outputs (levelmap/keymap/tailmap).
+    #[arg(long = "no-legend", help_heading = "Output Options", overrides_with_all = ["legend", "no_legend"])]
+    pub no_legend: bool,
+
     /// Output only field values (omit keys).
     #[arg(short = 'b', long = "brief", help_heading = "Default Format Options")]
     pub brief: bool,

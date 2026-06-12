@@ -415,6 +415,7 @@ impl PipelineBuilder {
                 suppress_script_output: false,
                 quiet_level: 0,
                 emoji_mode: crate::config::EmojiMode::Auto,
+                legend_mode: crate::config::LegendMode::Auto,
                 input_files: Vec::new(),
                 allow_fs_writes: false,
             },
@@ -496,6 +497,7 @@ impl PipelineBuilder {
             &self.config.emoji_mode,
             &self.config.color_mode,
         );
+        let show_legend = crate::tty::should_show_legend(&self.config.legend_mode);
         let formatter: Box<dyn Formatter> = if self.config.quiet_events {
             Box::new(crate::formatters::HideFormatter::new())
         } else {
@@ -516,18 +518,20 @@ impl PipelineBuilder {
                     self.config.verbose,
                 )),
                 crate::OutputFormat::Logfmt => Box::new(crate::formatters::LogfmtFormatter::new()),
-                crate::OutputFormat::Levelmap => {
-                    Box::new(crate::formatters::LevelmapFormatter::new(use_colors))
-                }
+                crate::OutputFormat::Levelmap => Box::new(
+                    crate::formatters::LevelmapFormatter::new(use_colors, use_emoji, show_legend),
+                ),
                 crate::OutputFormat::Keymap => {
                     if self.keys.len() != 1 {
                         return Err(anyhow::anyhow!(
                             "keymap output requires exactly one field via --keys, e.g. --keys level. Use -s to inspect available fields."
                         ));
                     }
-                    Box::new(crate::formatters::KeymapFormatter::new(Some(
-                        self.keys[0].clone(),
-                    )))
+                    Box::new(crate::formatters::KeymapFormatter::new(
+                        Some(self.keys[0].clone()),
+                        use_emoji,
+                        show_legend,
+                    ))
                 }
                 crate::OutputFormat::Tailmap => {
                     if self.keys.len() != 1 {
@@ -539,6 +543,7 @@ impl PipelineBuilder {
                         Some(self.keys[0].clone()),
                         self.config.emoji_mode.clone(),
                         self.config.color_mode.clone(),
+                        show_legend,
                     ))
                 }
                 crate::OutputFormat::Csv => {
@@ -835,6 +840,7 @@ impl PipelineBuilder {
             &self.config.emoji_mode,
             &self.config.color_mode,
         );
+        let show_legend = crate::tty::should_show_legend(&self.config.legend_mode);
         let formatter: Box<dyn Formatter> = if self.config.quiet_events {
             Box::new(crate::formatters::HideFormatter::new())
         } else {
@@ -855,18 +861,20 @@ impl PipelineBuilder {
                     self.config.verbose,
                 )),
                 crate::OutputFormat::Logfmt => Box::new(crate::formatters::LogfmtFormatter::new()),
-                crate::OutputFormat::Levelmap => {
-                    Box::new(crate::formatters::LevelmapFormatter::new(use_colors))
-                }
+                crate::OutputFormat::Levelmap => Box::new(
+                    crate::formatters::LevelmapFormatter::new(use_colors, use_emoji, show_legend),
+                ),
                 crate::OutputFormat::Keymap => {
                     if self.keys.len() != 1 {
                         return Err(anyhow::anyhow!(
                             "keymap output requires exactly one field via --keys, e.g. --keys level. Use -s to inspect available fields."
                         ));
                     }
-                    Box::new(crate::formatters::KeymapFormatter::new(Some(
-                        self.keys[0].clone(),
-                    )))
+                    Box::new(crate::formatters::KeymapFormatter::new(
+                        Some(self.keys[0].clone()),
+                        use_emoji,
+                        show_legend,
+                    ))
                 }
                 crate::OutputFormat::Tailmap => {
                     if self.keys.len() != 1 {
@@ -878,6 +886,7 @@ impl PipelineBuilder {
                         Some(self.keys[0].clone()),
                         self.config.emoji_mode.clone(),
                         self.config.color_mode.clone(),
+                        show_legend,
                     ))
                 }
                 crate::OutputFormat::Csv => {
@@ -1145,6 +1154,7 @@ pub fn create_pipeline_builder_from_config(
         suppress_script_output: config.processing.suppress_script_output,
         quiet_level: config.processing.quiet_level,
         emoji_mode: config.output.emoji.clone(),
+        legend_mode: config.output.legend.clone(),
         input_files: config.input.files.clone(),
         allow_fs_writes: config.processing.allow_fs_writes,
         format_name: Some(config.input.format.to_display_string()),

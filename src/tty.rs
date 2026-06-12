@@ -1,4 +1,4 @@
-use crate::config::{ColorMode, EmojiMode};
+use crate::config::{ColorMode, EmojiMode, LegendMode};
 use std::io::IsTerminal;
 
 /// Check if stdout is connected to a TTY
@@ -108,6 +108,16 @@ pub fn should_use_emoji_for_stderr() -> bool {
 
     // Default: use emoji when colors are enabled
     true
+}
+
+/// Determine whether map formatters should append a trailing legend.
+/// Auto shows the legend only on an interactive terminal so piped output stays clean.
+pub fn should_show_legend(legend_mode: &LegendMode) -> bool {
+    match legend_mode {
+        LegendMode::Never => false,
+        LegendMode::Always => true,
+        LegendMode::Auto => is_stdout_tty(),
+    }
 }
 
 /// Get terminal width for word-wrapping, with fallback to default width

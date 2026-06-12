@@ -507,6 +507,21 @@ Use `-q/--quiet` to suppress output (implied by `--stats` and `--metrics`).
 
 The `levelmap` format provides a compact visual representation of logs, showing timestamps and level indicators in a condensed format ideal for quick scanning.
 
+**Map legends:**
+
+All three map formats (`levelmap`, `keymap`, `tailmap`) append a one-line legend
+that decodes their glyphs. The legend is **data-driven**: it lists only the
+glyphs that actually appeared, mapped back to the source values that produced
+them. For example a `keymap` over HTTP status codes might end with
+`2 = 200,204 | 4 = 404 | 5 = 500,503`, and a `levelmap` with
+`E = ERROR | I = INFO | W = WARN`.
+
+By default the legend is shown only when output goes to an interactive terminal,
+so piped or redirected output stays clean. Override with:
+
+- `--legend` — always append the legend (even when piped)
+- `--no-legend` — never append the legend
+
 **Keymap Format:**
 
 The `keymap` format works similarly to `levelmap` but displays the first character of any specified field instead of being limited to log levels. This is useful for visualizing patterns in custom fields like HTTP methods, status codes, user types, etc.
@@ -515,6 +530,7 @@ The `keymap` format works similarly to `levelmap` but displays the first charact
 - Shows the first character of the field value (converted to string for non-string fields)
 - Displays `.` for empty or missing field values
 - Groups events by timestamp like `levelmap`
+- Legend groups full values under each glyph (e.g. `2 = 200,204`)
 - Not compatible with `--parallel` mode
 
 **Tailmap Format:**
