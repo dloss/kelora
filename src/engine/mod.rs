@@ -1407,6 +1407,13 @@ impl RhaiEngine {
             "track_avg".to_string(),
             "track_unique".to_string(),
             "track_bucket".to_string(),
+            "track_percentiles".to_string(),
+            "track_stats".to_string(),
+            "track_cardinality".to_string(),
+            "track_top".to_string(),
+            "track_top_by".to_string(),
+            "track_bottom".to_string(),
+            "track_bottom_by".to_string(),
             // Utility functions
             "print".to_string(),
             "debug".to_string(),
@@ -3358,6 +3365,33 @@ mod tests {
         assert!(
             (msg.contains("missing field") || msg.contains("e.has")) && msg.contains("Called with"),
             "unit arg hint should mention missing field guards and show called types; got: {msg}"
+        );
+    }
+
+    #[test]
+    fn typo_suggests_track_percentiles_first() {
+        // Regression: function_catalog() must list every track_* function so the
+        // similarity matcher can suggest them. A singular `track_percentile` typo
+        // should rank the real `track_percentiles` ahead of unrelated trackers.
+        let config = DebugConfig::new(0);
+        let enhancer = ErrorEnhancer::new(config);
+        let scope = Scope::new();
+        let err = EvalAltResult::ErrorFunctionNotFound(
+            "track_percentile (string, i64)".into(),
+            rhai::Position::NONE,
+        );
+        let hint = enhancer
+            .generate_suggestions(&err, &scope, None)
+            .expect("expected a suggestion for a track_* typo");
+        let first = hint
+            .trim_start_matches("Did you mean: ")
+            .split(',')
+            .next()
+            .unwrap_or("")
+            .trim();
+        assert_eq!(
+            first, "track_percentiles",
+            "track_percentiles should be the top suggestion; got: {hint}"
         );
     }
 
