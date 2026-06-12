@@ -40,7 +40,7 @@ Gzip files (`.gz`) are handled automatically. For archives and batch processing 
 
 ## I fed Kelora JSON — why isn't the output JSON?
 
-By default Kelora reformats every event into a readable, colored `key=value` view, regardless of the input format. To keep JSON, use `-J` (or `-F json`); for other formats use `-F logfmt`, `-F csv`, `-F tsv`, etc. See [Output Formats](reference/formats.md) and the [CLI Reference](reference/cli-reference.md).
+By default Kelora reformats every event into a readable, colored `key=value` view, regardless of the input format. Wide events also wrap onto indented continuation lines, so a single event can span multiple lines — which is why `wc -l` and similar tools overcount. To keep JSON, use `-J` (or `-F json`); for other one-line-per-event formats use `-F logfmt`, `-F csv`, `-F tsv`, etc.; or use `--no-wrap` to keep the default format on one line per event. See [Output Formats](reference/formats.md) and the [CLI Reference](reference/cli-reference.md).
 
 ## How do I control output, stats, and diagnostics?
 

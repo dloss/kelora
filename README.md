@@ -73,7 +73,7 @@ Kelora also handles live streams: `tail -f app.log | kelora -j -l error,warn`.
 
 Run `kelora` without arguments for an interactive REPL with readline, glob expansion, and history — handy on Windows where shell quoting is awkward.
 
-By default Kelora reformats every event into a readable, colored `key=value` view — regardless of whether the input was JSON, logfmt, or plain text. Pass `-J` to keep JSON output, or `-F logfmt`/`csv`/`tsv` for other formats.
+By default Kelora reformats every event into a readable, colored `key=value` view — regardless of whether the input was JSON, logfmt, or plain text. Wide events wrap onto indented continuation lines, so one event can span several lines (counting tools like `wc -l` will overcount). Pass `-J` to keep JSON output, `-F logfmt`/`csv`/`tsv` for other one-line-per-event formats, or `--no-wrap` to keep the default format on a single line each.
 
 ## When Kelora helps
 
