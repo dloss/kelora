@@ -91,7 +91,7 @@ pub enum ShellCompletion {
 #[command(name = "kelora")]
 #[command(about = "A command-line log analysis tool with embedded Rhai scripting")]
 #[command(
-    long_about = "A command-line log analysis tool with embedded Rhai scripting\n\nProcesses logs through a streaming pipeline: parse -> filter/transform (Rhai) -> format.\nRuns sequentially by default; add --parallel for high-throughput batch analysis.\n\nRun 'kelora' with no arguments for interactive mode - a readline-based REPL with command\nhistory, glob expansion, and proper quoting (especially helpful on Windows).\n\nFor a quick reference with worked examples, run:  kelora -h\n\nSee also: --help-rhai for scripting stages, --help-functions for the full built-in catalogue"
+    long_about = "A command-line log analysis tool with embedded Rhai scripting\n\nProcesses logs through a streaming pipeline: parse -> filter/transform (Rhai) -> format.\nRuns sequentially by default; add --parallel for high-throughput batch analysis.\n\nRun 'kelora' in a terminal with no arguments for interactive mode - a readline-based REPL with\ncommand history, glob expansion, and proper quoting (especially helpful on Windows). When stdin\nis not a terminal (piped or redirected), kelora reads that input instead of going interactive.\n\nFor a quick reference with worked examples, run:  kelora -h\n\nSee also: --help-rhai for scripting stages, --help-functions for the full built-in catalogue"
 )]
 #[command(author = "Dirk Loss <mail@dirk-loss.de>")]
 #[command(version)]

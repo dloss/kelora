@@ -5,7 +5,7 @@ pub fn print_quick_help() {
 Usage:
   kelora [OPTIONS] [FILES]...
   kelora [OPTIONS] < input.log
-  kelora            # Run without arguments to enter interactive mode
+  kelora            # Run in a terminal with no arguments to enter interactive mode
   kelora --help     # Full CLI reference (all options)
 
 Quick Examples:

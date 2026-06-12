@@ -521,6 +521,44 @@ fn maybe_print_zero_results_hint(
     }
 }
 
+/// Hint for the bare "no input" case. The quick help promises interactive mode
+/// "with no arguments", but interactive mode only triggers on a real TTY (see
+/// the gate in `args.rs`). When stdin is not a terminal (piped or redirected to
+/// empty) and no files were given, kelora reads stdin, hits immediate EOF, and
+/// otherwise exits 0 in silence — leaving the user wondering whether it
+/// crashed. A one-line nudge points them at the actual options instead.
+///
+/// Fires only when truly nothing flowed: this lives behind the
+/// `diagnostics_allowed_runtime` gate at the call site, which guarantees stats
+/// were collected, so a zero `lines_read` reliably means an empty input rather
+/// than the no-collection fast path. A legitimate empty pipe
+/// (`grep nomatch f | kelora`) is no different from `kelora < /dev/null` here;
+/// the nudge goes to stderr, so it never pollutes a downstream pipeline.
+fn maybe_print_no_input_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+    stderr: &mut SafeStderr,
+) {
+    // --no-input is an explicit opt-out (begin/end-only scripting); respect it.
+    if !config.input.files.is_empty()
+        || config.input.no_input
+        || crate::tty::is_stdin_tty()
+        || stats.lines_read != 0
+        || stats.events_created != 0
+    {
+        return;
+    }
+
+    let message = "No input: stdin is empty and no files were given. \
+         Pass a file, pipe data in, or run kelora in a terminal for interactive mode. \
+         See -h for a quick reference.";
+    let formatted = config
+        .format_hint_message(message)
+        .trim_start_matches('\n')
+        .to_string();
+    stderr.writeln(&formatted).unwrap_or(());
+}
+
 /// Hint when `-l/--levels` dropped every event because the input carries no
 /// level field at all (e.g. unstructured `line` input). `--exclude-levels`
 /// alone keeps level-less events, so only an active include list can zero the
@@ -1114,6 +1152,9 @@ fn handle_pipeline_success(
             }
 
             if diagnostics_allowed_runtime && terminal_allowed {
+                // Fires before the zero-results hint, which returns early when
+                // nothing was created — the empty-input case it can't explain.
+                maybe_print_no_input_hint(config, s, stderr);
                 maybe_print_zero_results_hint(config, s, stderr);
                 // Fires independently of the zero-results hint: an exclude-key
                 // typo leaves output intact but silently fails to drop the field.

@@ -840,3 +840,64 @@ fn test_merge_sorted_fails_before_output_when_file_has_no_initial_mergeable_even
         stderr
     );
 }
+
+// Interactive mode only triggers on a real TTY. When stdin is piped/redirected
+// and empty with no files given, kelora reads stdin, hits immediate EOF, and
+// would otherwise exit 0 in silence. These tests pin the one-line hint that
+// explains the empty-input case so it doesn't look like a crash.
+#[test]
+fn test_empty_stdin_emits_no_input_hint() {
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&[], "");
+
+    assert_eq!(exit_code, 0, "empty input is success, not an error");
+    assert!(stdout.is_empty(), "no events means no stdout: {}", stdout);
+    assert!(
+        stderr.contains("No input") && stderr.contains("-h"),
+        "empty stdin should nudge toward the options: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_stdin_with_data_does_not_emit_no_input_hint() {
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-j"], "{\"level\":\"info\",\"message\":\"hi\"}\n");
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stdout.contains("hi"),
+        "input should be processed: {}",
+        stdout
+    );
+    assert!(
+        !stderr.contains("No input"),
+        "real input must not trigger the no-input hint: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_no_input_flag_suppresses_no_input_hint() {
+    // --no-input is an explicit begin/end-only opt-out, not an accident.
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["--no-input", "--begin", "print(\"ran\")"], "");
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stderr.contains("No input"),
+        "--no-input is intentional; no hint expected: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_no_diagnostics_suppresses_no_input_hint() {
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["--no-diagnostics"], "");
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stderr.contains("No input"),
+        "--no-diagnostics should suppress the advisory hint: {}",
+        stderr
+    );
+}
