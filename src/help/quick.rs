@@ -20,6 +20,7 @@ Quick Examples:
   kelora app_monitoring.jsonl --drain -k message
   kelora -f json --merge-sorted app-*.jsonl
   kelora payments_latency.jsonl --parallel --filter 'e.duration_ms > 500' -k order_id,duration_ms,status
+  kelora levelmap-demo.jsonl -F levelmap          # one char per event (E/W/I/D…): a visual log timeline
   tail -f app.log | kelora -j -l error,warn
 
 Common Options:
