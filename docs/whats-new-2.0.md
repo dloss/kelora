@@ -83,6 +83,12 @@ legend shows only on an interactive terminal, so piped output stays clean.
   (exit 2), so no namespace is reserved.
 - **`-P` short flag for `--parallel`**, following the `xargs`/GNU `parallel`
   convention.
+- **`-l/--levels` vocabulary-mismatch warning** — when `-l` drops every event
+  because the stream uses a different level dialect than your filter (glog logs
+  `I/W/E/F`, syslog uses `CRIT` not `CRITICAL`), Kelora now lists the levels
+  actually present (`-l ERROR matched none of the levels present: E,I`) instead
+  of returning a silent empty result. Single-letter glog/klog levels are now
+  colored in the default and `levelmap` output too.
 - **"No input" hint** — a bare `kelora` reading from an empty non-TTY source
   now prints a one-line stderr hint instead of exiting silently.
 
@@ -134,6 +140,11 @@ results. Other notes:
   garbage under parallel merging; it now errors.
 - **Float category labels are preserved** (`200.0` → `"200"`), so JSON
   consumers keyed on the old `track_bucket` names keep working.
+- **Ranking is now exact.** `track_top_by`/`track_bottom_by` (and the legacy
+  `track_top`/`track_bottom`) retain every distinct item and rank only when
+  metrics are emitted, so a frequent item first seen after the top-N slots
+  filled is no longer evicted at count 1 — the 1.x behavior could silently
+  return the first N distinct items rather than the most frequent.
 
 | Old (1.x) | New (2.0) |
 | --- | --- |
