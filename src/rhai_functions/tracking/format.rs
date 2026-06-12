@@ -21,6 +21,20 @@ pub fn format_metrics_output(
         .collect();
 
     if user_values.is_empty() {
+        // The track_* family silently skips events whose value is a missing
+        // field (`()`). When that accounts for *every* call, the user asked
+        // for metrics and got nothing — almost always a field-name typo. Say
+        // so here instead of leaving them with a bare "No metrics tracked",
+        // and point them at --discover (this surfaces without --diagnostics,
+        // since -m/--metrics is exactly the moment the empty result confuses).
+        if let Some(detail) = skipped_unit_detail(ops) {
+            return format!(
+                "No metrics tracked: every value was missing for {}. \
+                 A track_* call likely references a field that doesn't exist — \
+                 run --discover to list the fields actually present.",
+                detail
+            );
+        }
         return "No metrics tracked".to_string();
     }
 
@@ -130,6 +144,32 @@ pub fn format_metrics_output(
     }
 
     output.trim_end().to_string()
+}
+
+/// Build a `name (count), ...` summary of per-metric skipped-unit counters
+/// (`__kelora_track_skipped_{name}`), or `None` if nothing was skipped. These
+/// counters live in the internal tracking map (`ops`); the same data also
+/// drives the broader `--diagnostics` skip line in `main.rs`.
+fn skipped_unit_detail(ops: &HashMap<String, Dynamic>) -> Option<String> {
+    let mut skips: Vec<(String, i64)> = ops
+        .iter()
+        .filter_map(|(k, v)| {
+            k.strip_prefix("__kelora_track_skipped_")
+                .map(|name| (name.to_string(), v.as_int().unwrap_or(0)))
+        })
+        .filter(|(_, count)| *count > 0)
+        .collect();
+    if skips.is_empty() {
+        return None;
+    }
+    skips.sort();
+    Some(
+        skips
+            .iter()
+            .map(|(name, count)| format!("{} ({})", name, count))
+            .collect::<Vec<_>>()
+            .join(", "),
+    )
 }
 
 fn push_ranked_item(output: &mut String, idx: usize, item: &Dynamic, field_name: &str) {
@@ -430,6 +470,43 @@ mod tests {
         let output = format_metrics_output(&metrics, &ops, 1);
         assert!(output.contains("sum"), "output: {}", output);
         assert!(output.contains("count"), "output: {}", output);
+    }
+
+    #[test]
+    fn test_format_metrics_output_empty_with_no_skips_is_plain() {
+        // Nothing tracked and nothing skipped: keep the original terse message.
+        let output = format_metrics_output(&HashMap::new(), &HashMap::new(), 1);
+        assert_eq!(output, "No metrics tracked");
+    }
+
+    #[test]
+    fn test_format_metrics_output_empty_with_skips_explains_and_points_to_discover() {
+        // track_count("endpoint", e.endpoint) where the field is really `path`:
+        // every value was missing, so the result is empty but a skip counter
+        // was recorded in the internal map.
+        let mut ops = HashMap::new();
+        ops.insert(
+            "__kelora_track_skipped_endpoint".to_string(),
+            Dynamic::from(4i64),
+        );
+
+        let output = format_metrics_output(&HashMap::new(), &ops, 1);
+        assert!(output.contains("endpoint (4)"), "output: {}", output);
+        assert!(output.contains("--discover"), "output: {}", output);
+        assert_ne!(output, "No metrics tracked");
+    }
+
+    #[test]
+    fn test_format_metrics_output_empty_ignores_zero_skip_counters() {
+        // A skip counter that never incremented must not trigger the hint.
+        let mut ops = HashMap::new();
+        ops.insert(
+            "__kelora_track_skipped_endpoint".to_string(),
+            Dynamic::from(0i64),
+        );
+
+        let output = format_metrics_output(&HashMap::new(), &ops, 1);
+        assert_eq!(output, "No metrics tracked");
     }
 
     #[test]
