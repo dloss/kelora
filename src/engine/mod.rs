@@ -2024,7 +2024,8 @@ impl RhaiEngine {
         if compiled.mutates_event {
             self.update_event_from_scope(event, &scope);
         }
-        rhai_functions::tracking::record_stage_success("exec");
+        // No exec success counter: exec is best-effort, so it never fails the run
+        // on its own (only --strict does). See PER_RECORD_KINDS.
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(())
@@ -2352,7 +2353,7 @@ impl RhaiEngine {
         if compiled.mutates_event {
             self.update_event_from_scope(event, &scope);
         }
-        rhai_functions::tracking::record_stage_success("exec");
+        // No exec success counter: exec is best-effort (see PER_RECORD_KINDS).
         *metrics = Self::get_thread_tracking_state();
         *internal = Self::get_thread_internal_state();
         Ok(())

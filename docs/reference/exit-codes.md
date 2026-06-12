@@ -6,13 +6,19 @@ Complete reference for Kelora's exit codes and their meanings.
 
 > **Kelora exits non-zero when it couldn't do the job you asked — not because the data was messy.**
 
-Per-record problems (a line that won't parse, a `--filter`/`--exec` that errors
-on an event) are **recovered**: skipped or rolled back, reported as diagnostics,
-exit `0`. The run fails (exit `1`) only when a whole per-record stage **never
-once succeeded** — a filter/exec that errors on *every* event, or an input where
-*no* line parses — or on a structural failure (a named input that won't open) or
-an explicit `--assert` violation. `--strict` escalates: any single
-parse/filter/exec error fails immediately.
+The model turns on **gates vs. transforms**:
+
+- **Gates — parse and filter — must work.** If a gate never once succeeds (no
+  line parses, or a filter errors on *every* event and so never selects
+  anything), the output is empty or meaningless — a broken command — so the run
+  exits `1`. A gate erroring on only *some* records is recovered (exit `0`).
+- **Transforms — exec — are best-effort.** A failing `--exec` rolls back to the
+  original event and emits it, so exec errors are reported but **never fail the
+  run on their own**, even when they hit every event.
+
+Structural failures (a named input that won't open) and `--assert` violations
+fail in any mode. `--strict` escalates: any single parse/filter/exec error fails
+immediately, and `--assert` adds explicit data-quality gates.
 
 This is independent of output flags: the signal is computed in the always-on
 tracker, so `--metrics`, `--drain`, `-q`, and `--no-diagnostics` all preserve
@@ -24,8 +30,8 @@ Kelora uses standard Unix exit codes to indicate success or failure:
 
 | Code | Name | Meaning | Cause |
 |------|------|---------|-------|
-| `0` | Success | The run did its job | Clean processing, or *recovered* per-record errors (some lines/events skipped or rolled back) |
-| `1` | General Error | The run couldn't do the job | A per-record stage that never succeeded (every line fails to parse, or a filter/exec errors on every event), an `--assert` violation, a file that couldn't be opened, or any strict-mode error |
+| `0` | Success | The run did its job | Clean processing, or *recovered* errors (some lines skipped, exec transforms rolled back) |
+| `1` | General Error | The run couldn't do the job | A gate that never succeeded (every line fails to parse, or a filter errors on every event), an `--assert` violation, a file that couldn't be opened, or any strict-mode error |
 | `2` | Usage Error | Invalid command-line usage | Invalid flags, incompatible options, configuration errors |
 
 ## Signal Exit Codes
@@ -81,37 +87,39 @@ Indicates the run failed to do what was asked. Common causes:
 
 | Cause | Meaning | Example |
 |-------|---------|---------|
-| **Whole parse stage failed** | *Every* line failed to parse — the format is wrong or the input is unusable | `kelora -j` on plain-text logs |
-| **Whole filter/exec stage failed** | A `--filter` or `--exec` errored on *every* event it saw — a typo, a type bug, the wrong field | `--filter 'status >= 500'` (missing `e.`) |
+| **Parse gate failed** | *Every* line failed to parse — the format is wrong or the input is unusable | `kelora -j` on plain-text logs |
+| **Filter gate failed** | A `--filter` errored on *every* event, so it never selected anything | `--filter 'status >= 500'` (missing `e.`) |
 | **Assertion failures** | `--assert` expressions evaluated to false (an explicit data-quality gate) | Missing required fields |
 | **File I/O failures** | A named input file failed to open or decompress | Permission denied, file not found |
 | **Strict-mode errors** | *Any* parse/filter/exec error while `--strict` was enabled | Missing field access, type errors |
 
-The first two are the per-record axis: a stage that errored on **some** records
-is recovered (exit `0`); the same stage erroring on **every** record means it
-never once worked, which is a broken command (exit `1`). This is per-stage, so a
-broken `--exec` behind a selective `--filter` is caught even if most events were
-filtered out first.
+Parse and filter are *gates*: a gate that errored on **some** records is
+recovered (exit `0`); the same gate erroring on **every** record means it never
+once worked, which is a broken command (exit `1`). `--exec` is **not** a gate —
+it's a best-effort transform that rolls back on error and never fails the run on
+its own (use `--strict`/`--assert`).
 
 ### Resilient Mode (Default)
 
-Per-record errors are recorded but processing continues. They affect the exit
-code only when a whole stage never succeeds:
+Gate errors are recorded but processing continues. They affect the exit code
+only when the gate never succeeds; exec errors never affect it:
 
 ```bash
-# Recovered: e.value is a valid int on most events -> exit 0
-kelora -j app.log --exec 'e.result = e.value.to_int()'
+# Recovered: a field-name typo in an EXEC errors on every event, but exec rolls
+# back and emits the original events -> exit 0 (use --strict to fail)
+kelora -q -j app.log --exec 'e.x = e.valeu.to_int()'   # typo, but best-effort
 echo $?
-0  # Some events may have errored and rolled back; the stage still succeeded
+0
 
-# Broken: a field-name typo errors on EVERY event -> the filter never matched
+# Broken gate: a field-name typo in a FILTER errors on every event, so it never
+# selected anything -> exit 1, even without --strict
 kelora -q -j app.log --filter 'status >= 500'   # should be e.status
 echo $?
-1  # The filter never once succeeded -> exit 1, even without --strict
+1
 ```
 
-For automation, use `--strict` to fail on the *first* runtime error, and
-`--assert` to fail on explicit data-quality requirements.
+For automation, use `--strict` to fail on the *first* parse/filter/exec error,
+and `--assert` to fail on explicit data-quality requirements.
 
 ### Strict Mode
 

@@ -412,7 +412,11 @@ fn main() -> Result<()> {
                         tracking, true,
                     )
                 } else {
+                    // Resilient: a gate (parse/filter) that never succeeded, or a
+                    // forbidden operation (conf mutation -> a "script" error result).
+                    // Exec errors are best-effort and excluded.
                     crate::rhai_functions::tracking::stage_failed_completely(tracking)
+                        || crate::rhai_functions::tracking::has_unrecoverable_script_error(tracking)
                 }
             })
             .unwrap_or(false);

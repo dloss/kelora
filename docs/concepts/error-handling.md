@@ -21,10 +21,11 @@ In resilient mode (default), Kelora continues processing even when errors occur:
 - **Filter errors**: Treat as `false`, skip event
 - **Transform errors**: Return original event unchanged (atomic rollback)
 - **Summary**: Show recovered runtime errors as warnings at end
-- **Exit code**: `0` while the run still did its job — even with *some* skipped or
-  rolled-back records. It becomes `1` only when a whole stage never once
-  succeeded (a `--filter`/`--exec` that errors on every event, or an input where
-  no line parses), or on a structural / `--assert` failure. See
+- **Exit code**: `0` while the run still did its job — even with skipped lines or
+  rolled-back transforms. It becomes `1` only when a *gate* never once succeeded
+  (a `--filter` that errors on every event, or an input where no line parses), or
+  on a structural / `--assert` failure. Transform (`--exec`) errors are
+  best-effort and never fail the run on their own. See
   [Exit codes: the model](#exit-codes-the-model).
 
 ### When to Use
@@ -194,6 +195,10 @@ If `e.value` is not a valid integer:
 - Transformation rolled back (atomic)
 - Original event returned unchanged
 - Error recorded
+- **Exit code stays `0`** — exec is best-effort enrichment. Even an `--exec`
+  that errors on *every* event is recovered (the original events still flow), so
+  it never fails the run on its own. Use `--strict` (fail on the first error) or
+  `--assert` (explicit gate) when a transform must succeed.
 
 **Strict behavior:**
 
@@ -290,15 +295,23 @@ That splits cleanly into three tiers:
 
 | Tier | Exit | What it means | Examples |
 |------|------|---------------|----------|
-| **Recovered** | `0` | The run did its job. Some individual records may have been skipped or rolled back, and they're reported as diagnostics. | A few unparseable lines among good ones; a `--filter`/`--exec` that errors on *some* events |
-| **Couldn't do the job** | `1` | A whole stage never once succeeded, or a structural / explicit-gate failure. | A `--filter`/`--exec` that errors on **every** event; an input where **no** line parses; a named input that can't be opened; an `--assert` violation |
+| **Recovered** | `0` | The run did its job. Individual records may have been skipped, rolled back, or left un-enriched, and they're reported as diagnostics. | A few unparseable lines among good ones; an `--exec` that errors on some (or even all) events |
+| **Couldn't do the job** | `1` | A *gate* never once succeeded, a forbidden operation, or a structural / explicit-gate failure. | A `--filter` that errors on **every** event; an input where **no** line parses; mutating `conf` outside `--begin`; a named input that can't be opened; an `--assert` violation |
 | **Invalid usage** | `2` | Bad command line — caught before processing. | Unknown flag, incompatible options, invalid config |
 
-The key distinction is **per-record vs. whole-stage**. A parse, filter, or exec
-error on *some* records is data noise and is recovered. The *same* error on
-**every** record means the stage never worked — a typo, a type bug, the wrong
-format — which is a broken command and fails the run. `--strict` escalates:
-*any* single parse/filter/exec error fails immediately.
+The key distinction is **gates vs. transforms**:
+
+- **Gates — parse and filter — must work.** If a gate never once succeeds, the
+  output is empty or meaningless: no line parsed, or a filter that errored on
+  every event never actually selected anything (the dangerous case where "show
+  me the errors" returns nothing and looks like success). That's a broken
+  command, so it exits `1`. A gate that errors on only *some* records is data
+  noise and is recovered.
+- **Transforms — exec — are best-effort.** A failing `--exec` rolls back to the
+  event as it was before that stage and emits it anyway, so the output stays
+  valid even when the transform errors on every event. Exec errors are reported
+  but **never fail the run on their own**. Use `--strict` to fail on the first
+  error, or `--assert` for an explicit data-quality gate.
 
 This holds regardless of output flags — the signal is computed independently of
 `--stats`/`--no-diagnostics` collection — so `--metrics`, `--drain`, `-q`, and
@@ -312,9 +325,11 @@ This holds regardless of output flags — the signal is computed independently o
 | Filter legitimately matches nothing | `0` | `0` |
 | Some lines fail to parse, others succeed | `0` | `1` (aborts on first) |
 | **Every** line fails to parse (wrong format) | `1` | `1` |
+| `--filter` errors on **every** event (typo, type bug) | `1` | `1` |
 | `--exec` errors on some events (heterogeneous logs) | `0` | `1` (aborts on first) |
-| `--filter`/`--exec` errors on **every** event (typo, type bug) | `1` | `1` |
-| Broken `--exec` behind a selective `--filter` | `1` | `1` |
+| `--exec` errors on **every** event (best-effort transform) | `0` | `1` |
+| Broken `--exec` behind a selective `--filter` | `0` | `1` |
+| Mutating `conf` outside `--begin` (forbidden) | `1` | `1` |
 | Named input file can't be opened | `1` | `1` |
 | `--assert` violation | `1` | `1` |
 
@@ -322,8 +337,8 @@ This holds regardless of output flags — the signal is computed independently o
 
 | Code | Meaning |
 |------|---------|
-| `0` | The run did its job (possibly with recovered, reported per-record errors) |
-| `1` | A per-record stage never succeeded, a structural failure, or an `--assert`/strict failure |
+| `0` | The run did its job (possibly with recovered parse/exec errors) |
+| `1` | A gate (parse/filter) never succeeded, a structural failure, or an `--assert`/strict failure |
 | `2` | Invalid usage (CLI errors, incompatible flags) |
 | `130` | Interrupted (Ctrl+C) |
 | `134` | Internal thread panic (a bug — please report) |

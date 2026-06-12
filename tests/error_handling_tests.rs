@@ -255,24 +255,29 @@ fn test_partial_exec_errors_are_reported_but_recovered() {
 }
 
 #[test]
-fn test_exec_errors_on_every_event_fail_the_run() {
-    // The exec errors on the only event, so the stage never once succeeded. That
-    // is a deterministic operator error (a broken transform), not data noise, so
-    // it fails the run with exit 1 even in default resilient mode (issue #241).
+fn test_exec_errors_on_every_event_are_recovered() {
+    // exec is a best-effort transform, not a gate: even erroring on every event
+    // it rolls back to the original event and emits it, so the run still did its
+    // job and exits 0. The error is reported; use --strict to fail on it.
     let input = r#"{"level": "INFO"}"#;
 
     let (_stdout, stderr, exit_code) =
         run_kelora_with_input(&["-f", "json", "--exec", "e.level / 5"], input);
 
     assert_eq!(
-        exit_code, 1,
-        "an exec that errors on every event never succeeded, so the run fails"
+        exit_code, 0,
+        "exec is best-effort: erroring on every event is recovered, not a failure"
     );
     assert!(
         stderr.contains("Exec errors:") || stderr.contains("Mixed errors:"),
-        "stderr should still include a runtime error summary: {}",
+        "the runtime error should still be reported: {}",
         stderr
     );
+
+    // --strict escalates: the same exec error then fails the run.
+    let (_s2, _e2, strict_exit) =
+        run_kelora_with_input(&["-f", "json", "--strict", "--exec", "e.level / 5"], input);
+    assert_ne!(strict_exit, 0, "--strict must fail on the exec error");
 }
 
 #[test]
@@ -292,11 +297,11 @@ fn test_filter_errors_on_every_event_fail_the_run() {
 }
 
 #[test]
-fn test_broken_exec_behind_selective_filter_fails() {
-    // The filter legitimately drops half the events; the exec then errors on every
-    // event it actually sees. A global error/event ratio would miss this (2 errors
-    // < 4 events), but per-kind success tracking catches that the exec never once
-    // succeeded.
+fn test_broken_exec_behind_selective_filter_is_recovered() {
+    // The filter legitimately drops half the events; the exec then errors on
+    // every event it sees. The exec is best-effort (rolls back and emits the
+    // filtered event unchanged), so the run still succeeds — exit 0. The filter
+    // itself worked, so it does not fail the run either.
     let input = "{\"level\": \"ERROR\"}\n{\"level\": \"INFO\"}\n{\"level\": \"ERROR\"}\n{\"level\": \"INFO\"}";
 
     let (_stdout, _stderr, exit_code) = run_kelora_with_input(
@@ -313,8 +318,8 @@ fn test_broken_exec_behind_selective_filter_fails() {
     );
 
     assert_eq!(
-        exit_code, 1,
-        "a broken exec behind a selective filter must fail even though most events were filtered out"
+        exit_code, 0,
+        "a best-effort exec behind a working filter is recovered, not a failure"
     );
 }
 

@@ -82,10 +82,11 @@ fn test_metrics_mode_surfaces_exec_errors_on_stderr() {
         input,
     );
 
-    // The 1.x form errors on every event, so the exec never succeeds -> exit 1.
+    // The 1.x form errors on every event, but exec is best-effort: it rolls back
+    // and emits, so the run is recovered (exit 0). The summary must still surface.
     assert_eq!(
-        exit_code, 1,
-        "an exec that errors on every event fails the run, even in --metrics"
+        exit_code, 0,
+        "exec errors are recovered (best-effort), even in --metrics"
     );
     assert!(
         stderr.contains("Exec errors"),
@@ -139,11 +140,9 @@ fn test_metrics_mode_reports_every_event_failure_scope() {
         input,
     );
 
-    // Errors on every event -> the exec never succeeded -> exit 1.
-    assert_eq!(
-        exit_code, 1,
-        "a stage that errors on every event fails the run"
-    );
+    // exec is best-effort, so erroring on every event is recovered (exit 0); the
+    // "affecting every event" scope fact is still reported.
+    assert_eq!(exit_code, 0, "exec errors are recovered (best-effort)");
     assert!(
         stdout.contains("No metrics tracked"),
         "stdout still reports the empty data channel: {}",
@@ -155,7 +154,7 @@ fn test_metrics_mode_reports_every_event_failure_scope() {
         stderr
     );
     assert!(
-        !stderr.contains("Use --verbose"),
+        !stderr.contains("Use --strict"),
         "the advisory coaching is suppressed by default in data-only modes: {}",
         stderr
     );
@@ -181,8 +180,8 @@ fn test_metrics_diagnostics_shows_every_event_coaching() {
     );
 
     assert_eq!(
-        exit_code, 1,
-        "errors on every event fail the run; --diagnostics only controls coaching"
+        exit_code, 0,
+        "exec errors are recovered; --diagnostics only controls coaching"
     );
     assert!(
         stderr.contains("affecting every event"),
@@ -190,7 +189,7 @@ fn test_metrics_diagnostics_shows_every_event_coaching() {
         stderr
     );
     assert!(
-        stderr.contains("Use --verbose"),
+        stderr.contains("Use --strict"),
         "--diagnostics should re-enable the coaching sentence: {}",
         stderr
     );

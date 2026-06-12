@@ -5,17 +5,23 @@ use std::path::Path;
 
 use super::{with_internal_tracking, TrackingSnapshot};
 
-/// Per-record script kinds that the resilient exit-code model treats as
-/// recoverable-until-zero-success: `parse`, `filter`, and `exec`. A stage of
-/// one of these kinds that logged at least one error but never once succeeded
-/// is a deterministic operator error (wrong format, field typo, type bug), not
-/// data noise, so it fails the run even without `--strict`.
-const PER_RECORD_KINDS: [&str; 3] = ["parse", "filter", "exec"];
+/// Per-record stage kinds whose total failure fails the run in resilient mode:
+/// `parse` and `filter`. These are *gates* — if a gate never once succeeds, the
+/// output is empty or meaningless (no line parsed, or a filter that errored on
+/// every event never actually selected anything), which is a broken command,
+/// not data noise.
+///
+/// `exec` is deliberately excluded: a transform is *best-effort*. A failing exec
+/// rolls back to the event as it was before that stage and emits it anyway
+/// (see `dev/v2-behavior-notes.md`), so the output stays valid even when the
+/// transform errors on every event. Use `--strict` to fail on the first exec
+/// error, or `--assert` for an explicit data-quality gate.
+const PER_RECORD_KINDS: [&str; 2] = ["parse", "filter"];
 
-/// Record that a per-record stage (`kind` in [`PER_RECORD_KINDS`]) processed one
-/// event without error. Paired with `__kelora_error_count_{kind}`, this lets the
-/// exit-code model distinguish "errored on some events" (recovered) from "never
-/// once succeeded" (a broken stage → exit 1).
+/// Record that a per-record gate stage (`kind` = "parse" or "filter") processed
+/// one event without error. Paired with `__kelora_error_count_{kind}`, this lets
+/// the exit-code model distinguish "errored on some events" (recovered) from
+/// "never once succeeded" (a broken gate → exit 1).
 ///
 /// Stored in the always-on internal tracker, so the signal is independent of
 /// `--stats` / `--no-diagnostics` collection, and summed across parallel workers
@@ -43,20 +49,30 @@ fn internal_count(snapshot: &TrackingSnapshot, key: &str) -> i64 {
         .unwrap_or(0)
 }
 
-/// The per-record half of the v2 exit-code model: true when any `parse`,
-/// `filter`, or `exec` stage logged at least one error but never once succeeded.
+/// The per-record half of the v2 exit-code model: true when a *gate* stage
+/// (`parse` or `filter`) logged at least one error but never once succeeded.
+/// Transforms (`exec`) are best-effort and excluded — see [`PER_RECORD_KINDS`].
 ///
-/// This is checked in resilient (non-`--strict`) mode. Unlike a global
-/// `errors >= events` ratio it is correct for multi-stage pipelines — a broken
-/// `--exec` behind a selective `--filter` is caught, because each kind tracks
-/// its own successes — and it reads only the always-on tracker, so it holds
-/// under `--no-diagnostics` and in `--metrics`/`--drain`.
+/// This is checked in resilient (non-`--strict`) mode. It reads only the
+/// always-on tracker, so it holds under `--no-diagnostics` and in
+/// `--metrics`/`--drain`.
 pub fn stage_failed_completely(snapshot: &TrackingSnapshot) -> bool {
     PER_RECORD_KINDS.iter().any(|kind| {
         let errors = internal_count(snapshot, &format!("__kelora_error_count_{}", kind));
         let successes = internal_count(snapshot, &format!("__kelora_success_count_{}", kind));
         errors > 0 && successes == 0
     })
+}
+
+/// True if any stage returned a hard error result (`ScriptResult::Error`),
+/// recorded under the `script` error type. In resilient mode this happens for
+/// *forbidden operations* — notably mutating `conf` outside `--begin` — which the
+/// pipeline deliberately surfaces as an error result rather than rolling back.
+/// These are not best-effort like ordinary `--exec` errors, so they fail the run
+/// in any mode (matching the pre-2.0 behavior, where the `script` type was always
+/// counted toward the exit code).
+pub fn has_unrecoverable_script_error(snapshot: &TrackingSnapshot) -> bool {
+    internal_count(snapshot, "__kelora_error_count_script") > 0
 }
 
 /// Format filename for error display based on input context.
@@ -428,17 +444,16 @@ pub fn extract_error_summary_from_tracking(
                 if total_errors as usize >= stats.events_created {
                     // The scope ("every event") is a factual correctness signal and
                     // is part of the error summary, which surfaces unless --silent.
-                    // A stage that erred on every event never once succeeded, so the
-                    // run already exits non-zero (see stage_failed_completely) — the
-                    // coaching reflects that rather than telling the user to add
-                    // --strict to get a failure they already have.
-                    summary.push_str(", affecting every event (non-zero exit)");
+                    // A filter that erred on every event fails the run; an exec that
+                    // did rolls back and is recovered (exit 0). The coaching points
+                    // at --strict either way (fail on the first error / immediately).
+                    summary.push_str(", affecting every event");
                     // The follow-up coaching is advisory (a typo/script-bug tip), so
                     // it honors --no-diagnostics and the suppression implied by
                     // data-only modes. Re-enable with --diagnostics.
                     if config.is_some_and(|c| !c.processing.suppress_diagnostics) {
                         summary.push_str(
-                            "\n  This usually means a script bug or field-name typo. Use --verbose to inspect each error.",
+                            "\n  This usually means a script bug or field-name typo. Use --strict to fail immediately, or --verbose to inspect each error.",
                         );
                     }
                 } else if pct >= 90.0 {
@@ -545,29 +560,44 @@ mod stage_outcome_tests {
     }
 
     #[test]
-    fn partial_errors_are_recovered() {
-        // Errors on some events, but the stage also succeeded on others.
-        assert!(!stage_failed_completely(&snapshot(&[("exec", 3, 7)])));
+    fn partial_gate_errors_are_recovered() {
+        // A gate that errored on some events but succeeded on others is recovered.
+        assert!(!stage_failed_completely(&snapshot(&[("filter", 3, 7)])));
         assert!(!stage_failed_completely(&snapshot(&[("parse", 2, 1)])));
     }
 
     #[test]
-    fn zero_success_with_errors_fails() {
+    fn gate_with_zero_success_and_errors_fails() {
         assert!(stage_failed_completely(&snapshot(&[("filter", 5, 0)])));
-        assert!(stage_failed_completely(&snapshot(&[("exec", 1, 0)])));
         // Every line failed to parse (wrong format / unusable input).
         assert!(stage_failed_completely(&snapshot(&[("parse", 4, 0)])));
     }
 
     #[test]
-    fn broken_exec_behind_selective_filter_is_per_stage() {
-        // The filter succeeded on every event it saw; the exec errored on every
-        // event it saw. A global error/event ratio would miss this — per-kind
-        // success tracking catches it.
-        assert!(stage_failed_completely(&snapshot(&[
+    fn exec_is_best_effort_and_never_fails_the_run() {
+        // exec is a transform, not a gate: even erroring on every event it saw
+        // (zero successes) it rolls back and emits, so it must not fail the run.
+        // --strict (handled elsewhere) is the way to fail on exec errors.
+        assert!(!stage_failed_completely(&snapshot(&[("exec", 9, 0)])));
+        assert!(!stage_failed_completely(&snapshot(&[
             ("filter", 0, 4),
             ("exec", 2, 0),
         ])));
+    }
+
+    #[test]
+    fn script_error_result_is_unrecoverable() {
+        // A "script" error (a ScriptResult::Error, e.g. mutating conf outside
+        // --begin) is a forbidden operation, not best-effort: it fails the run
+        // even though it's not a gate.
+        let snap = snapshot(&[("script", 1, 0)]);
+        assert!(has_unrecoverable_script_error(&snap));
+        // ...and it isn't a "gate failed completely" case.
+        assert!(!stage_failed_completely(&snap));
+        // No script error -> not flagged.
+        assert!(!has_unrecoverable_script_error(&snapshot(&[(
+            "exec", 3, 0
+        )])));
     }
 
     #[test]
