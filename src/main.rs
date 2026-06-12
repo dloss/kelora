@@ -559,11 +559,20 @@ fn maybe_print_no_input_hint(
     stderr.writeln(&formatted).unwrap_or(());
 }
 
-/// Hint when `-l/--levels` dropped every event because the input carries no
-/// level field at all (e.g. unstructured `line` input). `--exclude-levels`
-/// alone keeps level-less events, so only an active include list can zero the
-/// stream this way. When a level field *is* present the empty result is a
-/// legitimate value mismatch, so no structural hint is emitted.
+/// Hint when `-l/--levels` dropped every event. Two structural causes are
+/// distinguished, both far more actionable than a silent empty result:
+///
+/// 1. The input carries no level field at all (e.g. unstructured `line` input).
+/// 2. A level field *is* present, but none of the requested levels appear among
+///    the values actually seen — a vocabulary mismatch. This is the dangerous
+///    case for an operator: glog logs `I/W/E/F`, syslog uses `CRIT` not
+///    `CRITICAL`, so `-l ERROR` silently returns nothing even though errors
+///    exist, which reads as "all clear". We list the levels actually present so
+///    the empty result can't be misread. No semantics are applied — we just show
+///    the operator the dialect and let them recognise it.
+///
+/// `--exclude-levels` alone keeps level-less events, so only an active include
+/// list can zero the stream this way.
 fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -> Option<String> {
     if config.processing.levels.is_empty() {
         return None;
@@ -572,17 +581,42 @@ fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
     let has_level_field = crate::event::LEVEL_FIELD_NAMES
         .iter()
         .any(|name| stats.discovered_keys.contains(*name));
-    if has_level_field {
+    if !has_level_field {
+        let format_note = stats
+            .detected_format
+            .as_deref()
+            .map(|format| format!(" (format: {format})"))
+            .unwrap_or_default();
+        return Some(format!(
+            "0 events matched. -l/--levels is set, but no level field was found in the input{format_note} — it looks unstructured. Parse levels first (e.g. -f cols/regex), or match text with --filter 'e.line.contains(\"ERROR\")'."
+        ));
+    }
+
+    // A level field exists but nothing matched. If a requested level is among
+    // the observed values, the empty result is a genuine "none of those this
+    // time" and needs no hint. Only warn when the requested vocabulary is
+    // entirely absent from what was seen. (Both sides compare case-insensitively,
+    // exactly as the filter itself does in LevelFilterStage.)
+    if stats.discovered_levels.is_empty() {
+        return None;
+    }
+    let requested_present = config.processing.levels.iter().any(|requested| {
+        stats
+            .discovered_levels
+            .iter()
+            .any(|seen| seen.eq_ignore_ascii_case(requested))
+    });
+    if requested_present {
         return None;
     }
 
-    let format_note = stats
-        .detected_format
-        .as_deref()
-        .map(|format| format!(" (format: {format})"))
-        .unwrap_or_default();
+    let levels_present: Vec<&str> = stats.discovered_levels.iter().map(String::as_str).collect();
+    let example = levels_present.first().copied().unwrap_or("");
     Some(format!(
-        "0 events matched. -l/--levels is set, but no level field was found in the input{format_note} — it looks unstructured. Parse levels first (e.g. -f cols/regex), or match text with --filter 'e.line.contains(\"ERROR\")'."
+        "0 events matched. -l/--levels {} matched none of the levels present: {}. If those are the same level under a different name (e.g. glog 'E' vs 'ERROR'), match the value directly, e.g. --filter 'e.level == \"{}\"'.",
+        config.processing.levels.join(","),
+        levels_present.join(","),
+        example
     ))
 }
 

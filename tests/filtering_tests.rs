@@ -466,6 +466,54 @@ fn test_level_filter_with_present_level_field_does_not_hint_missing_field() {
 }
 
 #[test]
+fn test_level_filter_vocabulary_mismatch_lists_levels_present() {
+    // The dangerous operator case: glog logs use single-letter levels (I/W/E/F),
+    // so `-l ERROR` matches nothing even though errors exist. A silent empty
+    // result reads as "cluster healthy". Surface the levels actually present so
+    // the dialect mismatch is visible — without claiming a missing level field.
+    let input = "I0102 15:04:05.123456 1234 server.go:42] starting controller\n\
+                 E0612 09:10:11.000001 7 reflector.go:138] failed to watch";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "glog", "-l", "ERROR"], input);
+
+    assert_eq!(exit_code, 0, "a level miss should remain non-fatal");
+    assert!(stdout.is_empty(), "no events should be output: {}", stdout);
+    assert!(
+        stderr.contains("0 events matched") && stderr.contains("levels present:"),
+        "stderr should list the levels actually present: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains('E') && stderr.contains('I'),
+        "the hint should show the glog levels seen (E, I): {}",
+        stderr
+    );
+    assert!(
+        !stderr.contains("no level field"),
+        "a level field exists, so do not claim it is missing: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_level_filter_partial_match_does_not_hint_vocabulary() {
+    // When a requested level IS among those seen, an empty-ish result is a
+    // legitimate "none of those right now" and must stay quiet — the vocabulary
+    // hint only fires when the requested levels are entirely absent.
+    let input = r#"{"level": "INFO", "message": "ok"}"#;
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-l", "INFO,ERROR"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stderr.contains("matched none of the levels present"),
+        "INFO was present and matched, so no vocabulary hint should fire: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_time_filter_without_timestamps_hints_missing_timestamp() {
     // `--since` on input with no parseable timestamp silently drops everything;
     // surface the structural cause and point at --ts-field/--ts-format.
