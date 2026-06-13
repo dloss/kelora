@@ -23,11 +23,6 @@ pub struct ProcessingStats {
     pub events_created: usize,
     pub events_output: usize,
     pub events_filtered: usize,
-    /// Subset of `events_filtered`: events dropped solely because key selection
-    /// (`-k/--keys` or `--exclude-keys`) left them with no fields. Tracked
-    /// separately so a hint can explain a silent drop that was *not* caused by a
-    /// `--filter`/`--levels`/time gate.
-    pub events_dropped_empty_keys: usize,
     pub late_events: usize,
     pub files_processed: usize,
     pub files_failed_to_open: usize, // Files that failed to open (I/O errors)
@@ -257,15 +252,6 @@ pub fn stats_add_event_filtered() {
     }
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().events_filtered += 1;
-    });
-}
-
-pub fn stats_add_event_dropped_empty_keys() {
-    if !stats_enabled() {
-        return;
-    }
-    THREAD_STATS.with(|stats| {
-        stats.borrow_mut().events_dropped_empty_keys += 1;
     });
 }
 

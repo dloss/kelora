@@ -1047,7 +1047,7 @@ impl KeyFilterStage {
 }
 
 impl ScriptStage for KeyFilterStage {
-    fn apply(&mut self, mut event: Event, ctx: &mut PipelineContext) -> ScriptResult {
+    fn apply(&mut self, mut event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
         if !self.is_active() {
             return ScriptResult::Emit(event);
         }
@@ -1083,13 +1083,8 @@ impl ScriptStage for KeyFilterStage {
         // Preserve caller-specified ordering only when --keys was provided.
         event.key_filtered = !self.keys.is_empty();
 
-        // If any key filtering was applied and no fields remain, skip this event.
-        // Count it distinctly from --filter/--levels/time drops so a hint can
-        // explain why a row vanished even though no filter was given (the event
-        // still counts toward events_filtered at the central Skip handler).
+        // If any key filtering was applied and no fields remain, skip this event
         if self.is_active() && event.fields.is_empty() {
-            crate::stats::stats_add_event_dropped_empty_keys();
-            ctx.internal_stats.events_dropped_empty_keys += 1;
             ScriptResult::Skip
         } else {
             ScriptResult::Emit(event)

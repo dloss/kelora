@@ -61,8 +61,6 @@ pub struct InternalStats {
     pub events_created: u64,
     pub events_output: u64,
     pub events_filtered: u64,
-    /// Subset of `events_filtered` dropped because key selection emptied them.
-    pub events_dropped_empty_keys: u64,
     pub discovered_levels: HashSet<String>,
     pub discovered_keys: HashSet<String>,
     pub discovered_levels_output: HashSet<String>,
