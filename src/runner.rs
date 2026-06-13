@@ -125,6 +125,17 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         ));
     }
 
+    // --merge-sorted operates on named files: it opens each one, merges them by
+    // timestamp, and validates per-file ordering. On stdin there is nothing to
+    // merge and the stream was previously passed through unchanged, silently
+    // dropping the documented disorder / missing-timestamp checks. Reject the
+    // combination explicitly instead of pretending to honor the flag.
+    if config.input.merge_ts && config.input.files.is_empty() && !config.input.no_input {
+        return Err(anyhow::anyhow!(
+            "--merge-sorted requires one or more input files; it cannot merge or validate ordering on a stdin stream. Pass the files as arguments (e.g. kelora --merge-sorted app-*.log)."
+        ));
+    }
+
     if use_parallel && matches!(config.input.format, config::InputFormat::AutoPerFile) {
         return Err(anyhow::anyhow!(
             "-f auto-per-file is not supported with --parallel or thread overrides. Rerun without --parallel."

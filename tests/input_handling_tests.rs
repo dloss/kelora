@@ -558,6 +558,32 @@ fn test_merge_sorted_rejects_parallel_mode() {
 }
 
 #[test]
+fn test_merge_sorted_rejects_stdin() {
+    // Regression: `--merge-sorted` on stdin previously passed the stream
+    // through unchanged, silently dropping the documented disorder /
+    // missing-timestamp validation (disordered stdin exited 0). It now errors,
+    // since merge-sorted operates on named files.
+    let input = "{\"ts\":\"2024-01-01T10:00:00Z\"}\n{\"ts\":\"2024-01-01T09:00:00Z\"}\n";
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--merge-sorted"], input);
+    assert_ne!(
+        exit_code, 0,
+        "Expected validation error. stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("--merge-sorted requires one or more input files"),
+        "Unexpected error message: {}",
+        stderr
+    );
+    assert!(
+        stdout.is_empty(),
+        "No events should pass through. stdout: {}",
+        stdout
+    );
+}
+
+#[test]
 fn test_merge_sorted_supports_logfmt() {
     let mut temp_file1 = NamedTempFile::new().expect("Failed to create temp file");
     let mut temp_file2 = NamedTempFile::new().expect("Failed to create temp file");
