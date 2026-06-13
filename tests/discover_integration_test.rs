@@ -61,8 +61,12 @@ fn test_discover_json_profiles_nested_input_fields() {
         .find(|field| field["name"] == "user.roles[]")
         .expect("user.roles[] field should exist");
     assert_eq!(
-        roles["seen"], 3,
-        "array entries should be counted individually"
+        roles["seen"], 2,
+        "seen is per-event: the array is present in both events"
+    );
+    assert_eq!(
+        roles["observations"], 3,
+        "observations counts array entries individually (2 + 1)"
     );
     assert_eq!(roles["cardinality"]["count"], 2);
 

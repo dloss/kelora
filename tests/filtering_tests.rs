@@ -394,6 +394,57 @@ fn test_exclude_keys_typo_hints_silent_redaction_failure() {
 }
 
 #[test]
+fn test_keys_nested_map_path_points_to_get_path() {
+    // A dotted path copied from --discover (a value nested in a map) can't be
+    // selected by -k; the hint should point at get_path, not guess the parent.
+    let input = r#"{"user": {"name": "alice"}}"#;
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-k", "user.name"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("'user' is present")
+            && stderr.contains("get_path(\"user.name\")")
+            && !stderr.contains("Did you mean 'user'?"),
+        "nested map path should suggest get_path, not the bare parent: {stderr}"
+    );
+}
+
+#[test]
+fn test_keys_array_element_path_points_to_whole_field() {
+    // `field[]` is discover's notation for array elements; the array itself is a
+    // selectable top-level field, so the hint should suggest `-k tags`.
+    let input = r#"{"tags": ["a", "b"]}"#;
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-k", "tags[]"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("top-level field 'tags'") && stderr.contains("-k tags"),
+        "array-element path should point at selecting the whole field: {stderr}"
+    );
+}
+
+#[test]
+fn test_keys_literal_dotted_field_is_selectable_without_hint() {
+    // A top-level field whose literal name contains a dot must remain selectable;
+    // because it is present, the "never present" hint never fires for it.
+    let input = r#"{"user.name": "alice", "status": "ok"}"#;
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-F", "json", "-k", "user.name"], input);
+
+    assert_eq!(exit_code, 0);
+    assert_eq!(stdout.trim(), r#"{"user.name":"alice"}"#);
+    assert!(
+        !stderr.contains("never present"),
+        "a present literal-dotted field must not be flagged: {stderr}"
+    );
+}
+
+#[test]
 fn test_keys_present_in_some_rows_does_not_hint() {
     // Heterogeneous logs legitimately have fields missing from some rows. As long
     // as a key appears somewhere in the stream, it is not a typo — no hint.

@@ -788,10 +788,46 @@ fn key_typo_message(
 /// distant for the nearest-field heuristic, so the present-fields list is what
 /// surfaces the real name in that case.
 fn unseen_key_suggestion(key: &str, discovered: &BTreeSet<String>) -> String {
+    if let Some(nested) = nested_path_suggestion(key, discovered) {
+        return nested;
+    }
     if let Some(candidate) = nearest_field(key, discovered) {
         return format!("Did you mean '{candidate}'?");
     }
     present_fields_hint(discovered)
+}
+
+/// When an unseen key looks like a flattened nested path — it contains a `.` or
+/// ends with `[]`, the way `--discover` prints nested fields (`api.queries`,
+/// `tags[]`) — and its leading segment *is* a present top-level field, the user
+/// almost certainly copied a nested name from `--discover`. `-k`/`--exclude-keys`
+/// select or drop whole top-level fields and can't address nested values, so we
+/// point at the `get_path` idiom instead of `nearest_field` guessing the bare
+/// parent (which silently drops the nesting they asked for). This never blocks a
+/// top-level field whose name literally contains a dot: such a field would be
+/// present, so this "never present" hint wouldn't fire for it at all.
+fn nested_path_suggestion(key: &str, discovered: &BTreeSet<String>) -> Option<String> {
+    // Head of the path: text before the first `.` or `[`.
+    let head_end = key.find(['.', '['])?;
+    let head = &key[..head_end];
+    if head.is_empty() || !discovered.contains(head) {
+        return None;
+    }
+
+    // `field[]` is discover's notation for "elements of the array `field`", not
+    // an addressable path. The array itself is a selectable top-level field, so
+    // the fix there is simply `-k field`. Deeper paths (`a.b`, `a.b[]`) name a
+    // value nested inside a map, reachable only via get_path on the container.
+    let container = key.strip_suffix("[]").unwrap_or(key);
+    if container == head {
+        Some(format!(
+            "Did you mean the top-level field '{head}'? -k/--keys selects whole fields, so -k {head} keeps its entire value (array and all)."
+        ))
+    } else {
+        Some(format!(
+            "'{head}' is present, but -k/--keys and --exclude-keys act on whole top-level fields and can't reach nested values. Flatten it first, e.g. --exec 'e.val = e.get_path(\"{container}\")' then -k val."
+        ))
+    }
 }
 
 /// List the fields the run actually saw when the set is small enough to read at

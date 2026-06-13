@@ -143,8 +143,20 @@ impl CardinalityTracker {
 
 /// Per-field profile accumulated across all events.
 pub struct FieldProfile {
-    /// How many events contained this field.
+    /// Total observations of this path. For scalar/top-level fields this equals
+    /// the number of events that carried it, but for flattened array elements
+    /// (`field[]`) and repeated nested paths a single event contributes many
+    /// observations, so this is *not* an event count — use `events_seen` for the
+    /// Seen/Miss columns. Kept for type/cardinality context.
     pub seen_count: usize,
+    /// How many distinct events contained this path at least once. This is the
+    /// value the Seen column and Miss% are derived from, so an array present in
+    /// every event no longer reads as mostly-missing just because it has one
+    /// element per event.
+    pub events_seen: usize,
+    /// Index (1-based `total_events`) of the most recent event that touched this
+    /// path, so repeated observations within one event bump `events_seen` once.
+    last_event: usize,
     /// Type → occurrence count.
     pub type_counts: HashMap<FieldType, usize>,
     /// Cardinality tracker (skipped for map/array types).
@@ -166,6 +178,8 @@ impl FieldProfile {
     fn new() -> Self {
         Self {
             seen_count: 0,
+            events_seen: 0,
+            last_event: 0,
             type_counts: HashMap::new(),
             cardinality: CardinalityTracker::new(),
             samples: Vec::new(),
@@ -470,8 +484,16 @@ impl FieldDiscovery {
     /// Record a single observation of `value` at the given `path`, honoring
     /// the tracked-fields cap and emitting a one-shot diagnostic on overflow.
     fn record(&mut self, path: &str, value: &Dynamic) {
+        // The current event's 1-based index (total_events is bumped at the start
+        // of observe_event). Used to count each event once per path even when a
+        // flattened array contributes several observations within it.
+        let event_idx = self.total_events;
         if let Some(profile) = self.fields.get_mut(path) {
             profile.observe(value);
+            if profile.last_event != event_idx {
+                profile.last_event = event_idx;
+                profile.events_seen += 1;
+            }
         } else {
             if self.fields.len() >= MAX_TRACKED_FIELDS {
                 if !self.capped {
@@ -485,6 +507,8 @@ impl FieldDiscovery {
             }
             let mut profile = FieldProfile::new();
             profile.observe(value);
+            profile.last_event = event_idx;
+            profile.events_seen = 1;
             self.fields.insert(path.to_string(), profile);
         }
     }
@@ -526,7 +550,7 @@ impl FieldDiscovery {
         let terminal_width = terminal_width.max(36);
 
         let mut entries: Vec<_> = self.fields.iter().collect();
-        entries.sort_by(|a, b| b.1.seen_count.cmp(&a.1.seen_count));
+        entries.sort_by(|a, b| b.1.events_seen.cmp(&a.1.events_seen));
         let rows: Vec<_> = entries
             .iter()
             .map(|(name, profile)| {
@@ -716,8 +740,12 @@ impl FieldDiscovery {
 
             let mut field_obj = serde_json::json!({
                 "name": name,
-                "seen": profile.seen_count,
-                "missing": self.total_events.saturating_sub(profile.seen_count),
+                // Per-event counts (see DiscoveryRow::from_profile): `seen` is the
+                // number of events carrying this path, not raw observations, so
+                // `field[]` rows agree with their container row.
+                "seen": profile.events_seen,
+                "observations": profile.seen_count,
+                "missing": self.total_events.saturating_sub(profile.events_seen),
                 "types": types,
                 "cardinality": {
                     "count": card_count,
@@ -1166,7 +1194,10 @@ impl DiscoveryRow {
         profile: &FieldProfile,
         glyphs: &Glyphs,
     ) -> Self {
-        let missing = total_events.saturating_sub(profile.seen_count);
+        // Seen/Miss are per-event: a field flattened from array elements
+        // (`field[]`) observes many values per event, but it is still "present"
+        // in just that one event, so count events, not raw observations.
+        let missing = total_events.saturating_sub(profile.events_seen);
         let miss_pct = if total_events > 0 {
             (missing as f64 / total_events as f64) * 100.0
         } else {
@@ -1175,7 +1206,7 @@ impl DiscoveryRow {
 
         Self {
             name: name.to_string(),
-            seen_count: profile.seen_count,
+            seen_count: profile.events_seen,
             miss_pct,
             types: format_types(profile),
             unique: format_cardinality(profile, glyphs.em_dash),
@@ -2113,6 +2144,45 @@ mod tests {
         assert_eq!(discovery.fields["roles[]"].seen_count, 2);
         let (card, _) = discovery.fields["roles[]"].cardinality();
         assert_eq!(card, 2);
+    }
+
+    #[test]
+    fn test_array_seen_is_per_event_not_per_element() {
+        // Event 1 has a 3-element array; event 2 has no array at all.
+        let mut discovery = FieldDiscovery::new();
+
+        let mut e1 = IndexMap::new();
+        e1.insert(
+            "tags".to_string(),
+            make_array(vec![make_string("a"), make_string("b"), make_string("c")]),
+        );
+        e1.insert("level".to_string(), make_string("INFO"));
+        discovery.observe_event(&e1);
+
+        let mut e2 = IndexMap::new();
+        e2.insert("level".to_string(), make_string("WARN"));
+        discovery.observe_event(&e2);
+
+        // The element row records one observation per element...
+        assert_eq!(discovery.fields["tags[]"].seen_count, 3);
+        // ...but Seen/Miss are per-event: present in exactly one of two events,
+        // matching its container row rather than reading as mostly-missing.
+        assert_eq!(discovery.fields["tags[]"].events_seen, 1);
+        assert_eq!(discovery.fields["tags"].events_seen, 1);
+        // The always-present scalar is seen in both events.
+        assert_eq!(discovery.fields["level"].events_seen, 2);
+
+        // The rendered table reflects per-event Seen for both array rows (1),
+        // and 50% miss (1 of 2 events).
+        let table = discovery.format_table(false);
+        let tags_elem_row = table
+            .lines()
+            .find(|l| l.trim_start().starts_with("tags[]"))
+            .expect("tags[] row");
+        assert!(
+            tags_elem_row.contains(" 1 ") && tags_elem_row.contains("50%"),
+            "expected per-event Seen=1 and 50% miss: {tags_elem_row}"
+        );
     }
 
     #[test]

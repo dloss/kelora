@@ -430,7 +430,8 @@ pub struct Cli {
         long = "keys",
         value_delimiter = ',',
         help_heading = "Filtering Options",
-        help = "Output only these fields (comma-separated list)."
+        help = "Output only these fields (comma-separated list).",
+        long_help = "Output only these fields, in the order given (comma-separated list).\n\nActs on whole top-level fields. Nested values that --discover prints as dotted or bracketed paths (e.g. api.queries, tags[]) are NOT selectable here — flatten them first, e.g. --exec 'e.val = e.get_path(\"api.queries\")' then -k val. (A top-level field whose literal name contains a dot is matched as-is.)"
     )]
     pub keys: Vec<String>,
 
@@ -440,7 +441,8 @@ pub struct Cli {
         long = "exclude-keys",
         value_delimiter = ',',
         help_heading = "Filtering Options",
-        help = "Exclude these fields from output (comma-separated list)."
+        help = "Exclude these fields from output (comma-separated list).",
+        long_help = "Exclude these fields from output (comma-separated list).\n\nActs on whole top-level fields; nested values (the dotted/bracketed paths shown by --discover) cannot be dropped here — remove them in an --exec stage instead."
     )]
     pub exclude_keys: Vec<String>,
 
