@@ -517,6 +517,7 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
         let detected_format = match detected_format {
             Some(detected) => detected,
             None => {
+                let printed_detail = !failed_dirs.is_empty() || !failed_opens.is_empty();
                 for path in failed_dirs {
                     eprintln!(
                         "{}",
@@ -535,6 +536,11 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
                         ),)
                     );
                     stats::stats_file_open_failed(&path);
+                }
+                // The per-file reasons above already say which inputs failed and
+                // why, so don't repeat a generic line (see AllInputsUnopenable).
+                if printed_detail {
+                    return Err(anyhow::Error::new(detection::AllInputsUnopenable));
                 }
                 return Err(anyhow::anyhow!(
                     "Failed to open any input files for detection"

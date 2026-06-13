@@ -359,7 +359,14 @@ fn main() -> Result<()> {
             terminal_allowed,
         ),
         Err(e) => {
-            emit_fatal_line(&mut stderr, &config, &format!("Pipeline error: {}", e));
+            // When every input failed to open, auto-detection already printed the
+            // per-file reasons in detail; a generic "Pipeline error: …" line would
+            // just repeat them. Any other error still prints normally. downcast_ref
+            // walks the source chain, so this holds even if the error was wrapped
+            // with context on the way up.
+            if e.downcast_ref::<detection::AllInputsUnopenable>().is_none() {
+                emit_fatal_line(&mut stderr, &config, &format!("Pipeline error: {}", e));
+            }
             ExitCode::GeneralError.exit();
         }
     };

@@ -38,6 +38,38 @@ fn test_missing_file_reports_name() {
 }
 
 #[test]
+fn test_missing_file_auto_detect_reports_once() {
+    // Regression: the auto-detection path printed the per-file reason AND a
+    // generic "Pipeline error: Failed to open any input files for detection"
+    // line. The per-file reason already says which file failed and why, so the
+    // generic line is redundant. Uses no -f, so format auto-detection runs.
+    let missing = "tests/data/file_should_not_exist_24680.log";
+    assert!(
+        !Path::new(missing).exists(),
+        "Test assumes missing file does not exist"
+    );
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(&[], &[missing]);
+
+    assert_eq!(exit_code, 1, "a missing file must fail the run");
+    assert!(
+        stderr.contains(missing),
+        "stderr should still name the missing file: {}",
+        stderr
+    );
+    assert!(
+        !stderr.contains("Failed to open any input files"),
+        "the generic detection line is redundant with the per-file reason: {}",
+        stderr
+    );
+    assert!(
+        !stderr.contains("Pipeline error"),
+        "an already-reported open failure must not also print a generic pipeline error: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_quoted_glob_reports_shell_expansion_hint() {
     let (_stdout, stderr, exit_code) =
         run_kelora_with_files(&["-f", "json"], &["examples/*.jsonl"]);

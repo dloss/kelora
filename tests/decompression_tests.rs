@@ -149,13 +149,18 @@ fn test_unsupported_compression_format() {
     let (_stdout, stderr, exit_code) =
         run_kelora_with_files(&[], &[zip_file_path.to_str().unwrap()]);
 
-    // Should either fail or warn about unsupported format
+    // Should either fail or warn about unsupported format. The message names the
+    // file and explains that ZIP decompression isn't supported (with an `unzip`
+    // hint); accept any of those signals rather than coupling to one word.
     if exit_code != 0 {
+        let lower = stderr.to_lowercase();
         assert!(
-            stderr.to_lowercase().contains("error")
-                || stderr.to_lowercase().contains("unsupported")
-                || stderr.to_lowercase().contains("format"),
-            "Should show error about unsupported format"
+            lower.contains("error")
+                || lower.contains("supported")
+                || lower.contains("decompress")
+                || lower.contains("failed to open"),
+            "Should show error about unsupported format: {}",
+            stderr
         );
     }
 }

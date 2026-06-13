@@ -15,6 +15,25 @@ use crate::readers;
 use crate::stats;
 use crate::stats::ProcessingStats;
 
+/// Marker error returned by the auto-detection paths when *every* input path
+/// failed to open and the per-file reasons (`Failed to open file '…'` /
+/// `Input path '…' is a directory; skipping`) were already written to stderr in
+/// detail. The top-level error handler recognizes it and skips the otherwise
+/// redundant generic `Pipeline error: …` line, while still exiting non-zero.
+/// Only returned once detail has actually been printed, so suppressing it never
+/// leaves a silent failure; any other error still prints normally. Its `Display`
+/// is a sensible fallback for any consumer that does print it.
+#[derive(Debug)]
+pub struct AllInputsUnopenable;
+
+impl std::fmt::Display for AllInputsUnopenable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "no input files could be opened")
+    }
+}
+
+impl std::error::Error for AllInputsUnopenable {}
+
 /// Result of format detection
 #[derive(Debug, Clone)]
 pub struct DetectedFormat {
@@ -130,6 +149,7 @@ pub fn detect_format_for_parallel_mode(
         let detected = match detected {
             Some(detected) => detected,
             None => {
+                let printed_detail = !failed_dirs.is_empty() || !failed_opens.is_empty();
                 for path in failed_dirs {
                     eprintln!(
                         "{}",
@@ -148,6 +168,13 @@ pub fn detect_format_for_parallel_mode(
                         ))
                     );
                     stats::stats_file_open_failed(&path);
+                }
+                // The per-file reasons above already say which inputs failed and
+                // why, so don't repeat a generic line. Fall back to the explicit
+                // message only if nothing was printed (shouldn't happen — the
+                // loop routes every path to one of the lists above).
+                if printed_detail {
+                    return Err(anyhow::Error::new(AllInputsUnopenable));
                 }
                 return Err(anyhow::anyhow!(
                     "Failed to open any input files for detection"
