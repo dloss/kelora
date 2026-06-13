@@ -7,6 +7,20 @@ use anyhow::{Context, Result};
 use csv::ReaderBuilder;
 use rhai::Dynamic;
 
+/// Returns true when `record` holds a *complete* CSV/TSV record, i.e. it does not
+/// end in the middle of a quoted field.
+///
+/// Per RFC 4180 every double-quote — whether it opens/closes a field or is an
+/// escaped `""` inside one — is a single literal `"` character, so a complete
+/// record always contains an even number of them. An odd count means a quoted
+/// field was opened but not closed on this physical line: the field value
+/// contains an embedded newline (and the record continues on the next line) or
+/// the input is malformed. `CsvChunker` uses this to decide whether to keep
+/// buffering continuation lines before handing a whole record to the parser.
+pub fn csv_record_complete(record: &str) -> bool {
+    record.bytes().filter(|&b| b == b'"').count() % 2 == 0
+}
+
 /// CSV/TSV Parser that supports multiple dialects
 ///
 /// Supported formats:
@@ -315,6 +329,20 @@ impl CsvParser {
 
     /// Parse a data line using the initialized headers
     fn parse_data_line(&self, line: &str) -> Result<Event> {
+        // A record that ends inside an open quoted field is incomplete. In
+        // sequential mode CsvChunker reassembles such records before we ever get
+        // here, so reaching this guard means either genuinely malformed input or a
+        // multi-line quoted field that was split by parallel batching (which reads
+        // one physical line at a time). Erroring is far better than the csv crate's
+        // silent fallback, which would swallow the run-on field and emit corrupt,
+        // misaligned columns.
+        if !csv_record_complete(line) {
+            return Err(anyhow::anyhow!(
+                "Unterminated quoted field (the value likely contains an embedded newline). \
+                 Multi-line quoted fields are reassembled in sequential mode; rerun without --parallel."
+            ));
+        }
+
         // Fast path: when the line contains no quote characters, the csv crate's
         // default behavior is byte-for-byte identical to splitting on the delimiter
         // (no trimming, no escape handling). This avoids constructing a fresh
@@ -692,6 +720,50 @@ mod tests {
             err.to_string().contains("expected 2 (from first line)"),
             "{}",
             err
+        );
+    }
+
+    #[test]
+    fn csv_record_complete_counts_quote_parity() {
+        assert!(csv_record_complete("a,b,c"));
+        assert!(csv_record_complete("\"a\",\"b\""));
+        assert!(csv_record_complete("\"he said \"\"hi\"\"\"")); // escaped quotes
+        assert!(!csv_record_complete("\"a\",\"unclosed")); // open quoted field
+        assert!(!csv_record_complete("trailing\"")); // lone quote
+    }
+
+    #[test]
+    fn test_parse_data_line_rejects_unterminated_quoted_field() {
+        // A physical line that ends inside a quoted field (the embedded-newline
+        // case after parallel splitting) must error rather than silently parse to
+        // misaligned columns.
+        let mut parser = CsvParser::new_csv();
+        let _ = parser.initialize_headers_from_line("name,note").unwrap();
+
+        let err = parser.parse("\"alice\",\"hello").unwrap_err();
+        assert!(
+            err.to_string().contains("Unterminated quoted field"),
+            "{}",
+            err
+        );
+
+        // A complete quoted record on one physical line still parses fine.
+        let ok = parser.parse("\"alice\",\"hello world\"").unwrap();
+        assert_eq!(ok.fields.get("note").unwrap().to_string(), "hello world");
+    }
+
+    #[test]
+    fn test_parse_reassembled_multiline_record() {
+        // What CsvChunker hands the parser: one record string with the embedded
+        // newline preserved. It must parse as a single row.
+        let mut parser = CsvParser::new_csv();
+        let _ = parser.initialize_headers_from_line("name,note").unwrap();
+
+        let event = parser.parse("\"alice\",\"hello\nworld\"").unwrap();
+        assert_eq!(event.fields.get("name").unwrap().to_string(), "alice");
+        assert_eq!(
+            event.fields.get("note").unwrap().to_string(),
+            "hello\nworld"
         );
     }
 

@@ -104,6 +104,12 @@ Supported types: `int`, `float`, `bool`
 
 - Quoted fields supported: `"value, with, commas"`
 - Escaped quotes: `"value with ""quotes"""`
+- Embedded newlines inside quoted fields (RFC 4180) are supported: a record that
+  spans several physical lines, e.g. `"a","line1<newline>line2"`, is reassembled
+  into a single event before parsing. This reassembly is **sequential-only**;
+  under `-P`/`--parallel` (which reads line-by-line) such a record is reported as
+  an `Unterminated quoted field` parse error rather than silently corrupted, so
+  process embedded-newline CSV without `--parallel`.
 - Ragged rows are preserved, not dropped: columns beyond the header (or beyond
   the first row in header-less mode) are kept under positional names (`c5`,
   `c6`, ... counted from 1), and rows with fewer columns leave the trailing

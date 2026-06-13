@@ -41,11 +41,11 @@ impl EventParser for TimestampConfiguredParser {
 }
 
 use super::{
-    create_multiline_chunker, AssertStage, BeginStage, DrainStage, EndStage, EventLimiter,
-    EventParser, ExecStage, FilterStage, Formatter, KeyFilterStage, LevelFilterStage, MetaData,
-    Pipeline, PipelineConfig, PipelineContext, ScriptStage, SimpleChunker, SimpleWindowManager,
-    SlidingWindowManager, StdoutWriter, TakeNLimiter, TimestampConversionStage,
-    TimestampFilterStage,
+    create_multiline_chunker, AssertStage, BeginStage, CsvChunker, DrainStage, EndStage,
+    EventLimiter, EventParser, ExecStage, FilterStage, Formatter, KeyFilterStage, LevelFilterStage,
+    MetaData, Pipeline, PipelineConfig, PipelineContext, ScriptStage, SimpleChunker,
+    SimpleWindowManager, SlidingWindowManager, StdoutWriter, TakeNLimiter,
+    TimestampConversionStage, TimestampFilterStage,
 };
 use crate::engine::{DebugConfig, RhaiEngine};
 use crate::readers::MultiFileReader;
@@ -720,10 +720,15 @@ impl PipelineBuilder {
             discovered_keys_output: std::collections::HashSet::new(),
         };
 
-        // Create chunker based on multiline configuration
+        // Create chunker based on multiline configuration. An explicit --multiline
+        // strategy wins; otherwise CSV/TSV input gets the quote-aware chunker so
+        // embedded-newline records are reassembled before parsing, and everything
+        // else passes through one line at a time.
         let chunker = if let Some(ref multiline_config) = self.multiline {
             create_multiline_chunker(multiline_config, self.input_format.clone())
                 .map_err(|e| anyhow::anyhow!("Failed to create multiline chunker: {}", e))?
+        } else if self.input_format.is_csv_like() {
+            Box::new(CsvChunker::new()) as Box<dyn super::Chunker>
         } else {
             Box::new(SimpleChunker) as Box<dyn super::Chunker>
         };

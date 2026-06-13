@@ -72,7 +72,12 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
     if !crate::stats::stats_enabled() {
         return;
     }
-    // Collect discovered level
+    // Collect discovered level. The first level field that is present and
+    // stringifies is authoritative — exactly the precedence LevelFilterStage
+    // applies. We must stop at that field even when its value was already seen
+    // (or is empty): otherwise a repeated primary level (e.g. a second `WARN`)
+    // falls through to a lower-priority field like `severity` and records its
+    // value ("high") as a level the `-l` filter can never match.
     for level_field_name in crate::event::LEVEL_FIELD_NAMES {
         if let Some(value) = event.fields.get(*level_field_name) {
             if let Ok(level_str) = value.clone().into_string() {
@@ -81,9 +86,8 @@ fn collect_discovered_levels_and_keys(event: &Event, ctx: &mut PipelineContext) 
                         .discovered_levels
                         .insert(level_str.clone());
                     crate::stats::stats_add_discovered_level(level_str.clone());
-
-                    break; // Only take the first level field found
                 }
+                break; // Only the first present level field is authoritative
             }
         }
     }
@@ -103,7 +107,9 @@ fn collect_output_levels_and_keys(event: &Event, ctx: &mut PipelineContext) {
         return;
     }
 
-    // Collect output level
+    // Collect output level. Same first-field-wins precedence as the input-side
+    // collector and LevelFilterStage: stop at the first present level field so
+    // lower-priority fields (e.g. `severity`) are never mistaken for the level.
     for level_field_name in crate::event::LEVEL_FIELD_NAMES {
         if let Some(value) = event.fields.get(*level_field_name) {
             if let Ok(level_str) = value.clone().into_string() {
@@ -114,9 +120,8 @@ fn collect_output_levels_and_keys(event: &Event, ctx: &mut PipelineContext) {
 
                     // Add to thread-local stats (for sequential)
                     crate::stats::stats_add_output_level(level_str);
-
-                    break; // Only take the first level field found
                 }
+                break; // Only the first present level field is authoritative
             }
         }
     }

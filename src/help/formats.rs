@@ -44,6 +44,9 @@ csv / tsv / csvnh / tsvnh
   Ragged rows: extra columns are kept under positional names (cN, counted
   from 1); rows with fewer columns leave the trailing fields absent. Both
   are counted and reported as a hint; --strict rejects ragged rows instead.
+  Quoted fields may contain embedded newlines (RFC 4180); such records are
+  reassembled before parsing. Note: this reassembly is sequential-only — with
+  -P/--parallel a record split by a newline is reported as a parse error.
 
 cols:<spec>
   Custom column-based parsing with whitespace or custom separator

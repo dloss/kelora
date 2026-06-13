@@ -713,20 +713,26 @@ fn maybe_print_key_typo_hint(
         return;
     }
 
+    // A field "exists" if it was seen in the input (discovered_keys) OR produced
+    // by a script stage (discovered_keys_output) — e.g. `--exec 'e.total = ...'`
+    // followed by `-k total`. Checking only the input set falsely flags every
+    // exec-created field as "never present", which both misleads users and
+    // teaches them to ignore the genuinely useful typo hint.
+    let known_keys: BTreeSet<String> = stats
+        .discovered_keys
+        .iter()
+        .chain(stats.discovered_keys_output.iter())
+        .cloned()
+        .collect();
+
     let messages = [
-        key_typo_message(
-            "-k/--keys",
-            "field",
-            "",
-            &config.output.keys,
-            &stats.discovered_keys,
-        ),
+        key_typo_message("-k/--keys", "field", "", &config.output.keys, &known_keys),
         key_typo_message(
             "--exclude-keys",
             "field",
             ", so it was not removed",
             &config.output.exclude_keys,
-            &stats.discovered_keys,
+            &known_keys,
         ),
     ];
 

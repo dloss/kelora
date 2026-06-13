@@ -267,6 +267,17 @@ impl InputFormat {
         matches!(self, InputFormat::Cascade(_))
     }
 
+    /// Returns true for the CSV/TSV family (with or without headers). These are
+    /// the formats whose values may legitimately contain embedded newlines inside
+    /// quoted fields (RFC 4180), so they need quote-aware record reassembly rather
+    /// than naive one-line-per-record splitting.
+    pub fn is_csv_like(&self) -> bool {
+        matches!(
+            self,
+            InputFormat::Csv(_) | InputFormat::Tsv(_) | InputFormat::Csvnh | InputFormat::Tsvnh
+        )
+    }
+
     /// Returns true if this format may appear in a comma-separated cascade list
     /// (e.g. `-f json,line`). Mirrors the allow-list in `parse_cascade_spec`:
     /// schema-based formats (csv/tsv) and spec formats (cols/regex) are excluded.
