@@ -1,32 +1,19 @@
 # Power-User Techniques
 
-Kelora includes powerful features that solve complex log analysis problems with minimal code. These techniques often go undiscovered but can dramatically simplify workflows that would otherwise require custom scripts or multiple tools.
+Things Kelora does in one line that would otherwise need a custom script or a
+chain of tools. Skim the gallery, find the trick you didn't know existed, and
+follow the link when you want the full guide.
 
-## When to Use These Techniques
+!!! tip "How to read this page"
+    Each entry is a teaser: a problem, one command, and a link to the deep
+    dive. Nothing here is the complete reference — that lives in the
+    [Function Reference](../reference/functions.md).
 
-- You're dealing with deeply nested JSON from APIs or microservices
-- You need to group similar errors that differ only in variable data
-- You want deterministic sampling for consistent analysis across log rotations
-- You're extracting structured data from unstructured text logs
-- You need privacy-preserving analytics with consistent hashing
-- You're working with JWTs, URLs, or other complex embedded formats
+## Group similar errors — `normalized()` {#pattern-normalization}
 
-## Pattern Normalization
-
-### The Problem
-Error messages and log lines often contain variable data (IPs, emails, UUIDs, numbers) that make grouping difficult:
-
-```
-"Failed to connect to 192.168.1.10"
-"Failed to connect to 10.0.5.23"
-"Failed to connect to 172.16.88.5"
-```
-
-These are the same error pattern but appear as three different messages.
-
-### The Solution: `normalized()`
-
-The `normalized()` function automatically detects and replaces common patterns with placeholders:
+`"Failed to connect to 192.168.1.10"` and `"...10.0.5.23"` are the *same*
+error. `normalized()` swaps variable data (IPs, emails, UUIDs, numbers) for
+placeholders so they collapse into one pattern.
 
 === "Command/Output"
 
@@ -36,110 +23,26 @@ The `normalized()` function automatically detects and replaces common patterns w
       -k pattern
     ```
 
-### Real-World Use Case: Error Grouping
+→ Pair it with `track_count()` to rank error patterns, or let
+[`--drain` mine templates automatically](#template-mining). Full pattern list
+and options: [`normalized()` reference](../reference/functions.md).
 
-Group errors by pattern rather than exact message to see that many different error messages are actually the same pattern repeated with different IPs/UUIDs:
+## Discover log templates automatically — `--drain` {#template-mining}
 
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/production-errors.jsonl \
-      --exec 'e.error_pattern = e.message.normalized()' \
-      --metrics \
-      --exec 'track_count("error_pattern", e.error_pattern)'
-    ```
-
-### Template Mining with --drain {#template-mining-with-drain}
-
-When you want automatic template discovery without maintaining normalization patterns, use the Drain summary:
-If you only need lightweight grouping, `normalized()` plus `track_count()` can be enough.
+No normalization rules to maintain: Drain clusters raw lines into templates.
 
 ```bash
-# Clean pattern discovery (default)
 kelora -j examples/app_monitoring.jsonl --drain -k message
-
-# With line numbers and samples for each pattern
-kelora -j examples/app_monitoring.jsonl --drain=full -k message
-
-# Stable ID list for diffs
-kelora -j examples/app_monitoring.jsonl --drain=id -k message
-
-# Export as JSON for further analysis
-kelora -j examples/app_monitoring.jsonl --drain=json -k message
 ```
 
-If your data has org-specific IDs that fragment templates, pre-normalize the field before Drain:
+Formats: `--drain` (table), `=full` (line ranges + samples), `=id` (stable
+IDs for diffs), `=json` (programmatic). → [`--drain` reference](../reference/cli-reference.md).
 
-```bash
-kelora -j examples/app_monitoring.jsonl \
-  --exec 'e.message = e.message.replace_regex("Cache (hit|miss) for key [^ ]+", "Cache $1 for key <cache_key>")' \
-  --drain -k message
-```
+## Deterministic sampling — `bucket()` {#deterministic-sampling-with-bucket}
 
-`replace_regex` supports `$1`, `$2`, ... capture groups from the regex.
-
-**Output formats:**
-
-- `--drain` or `--drain=table` - Clean list: count + template
-- `--drain=full` - Adds line ranges, template IDs, and sample messages
-- `--drain=id` - Stable output: template_id + template (sorted by ID)
-- `--drain=json` - Complete metadata for programmatic use
-
-**Example output (table format):**
-```
-templates (18 items):
-  6: Connection timeout to database host <fqdn>
-  4: GET <path> completed in <duration> with status <num>
-  3: Cache hit for key <num>
-```
-
-**Full format adds context:**
-```
-  6: Connection timeout to database host <fqdn>
-     id: v1:5f3c7a9b1d2e4f6a
-     lines: 1-36
-     sample: "Connection timeout to database host db-primary-01.prod.internal:5432"
-```
-
-**Default Drain filters** normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
-timestamp, date, time, num.
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    cat examples/production-errors.jsonl
-    ```
-
-### Supported Patterns
-
-By default, `normalized()` replaces:
-
-- IPv4 addresses → `<ipv4>`
-- IPv6 addresses → `<ipv6>`
-- Email addresses → `<email>`
-- UUIDs → `<uuid>`
-- URLs → `<url>`
-- Numbers → `<num>`
-
-Specify specific patterns if you only want certain replacements:
-
-```bash
-# Only normalize IPs and emails
-kelora -j logs.jsonl \
-  --exec 'e.pattern = e.message.normalized(["ipv4", "email"])'
-```
-
-## Deterministic Sampling with `bucket()`
-
-### The Problem
-Approximate sampling (`--head N`, `sample_every(n)`, `sample_prob(0.1)`, or `rand() < 0.1`) gives different results each run, making it impossible to track specific requests across multiple log files or rotations.
-
-### The Solution: Hash-Based Sampling
-
-The `bucket()` function returns a consistent integer hash for any string, enabling deterministic sampling.
-
-The same `request_id` always hashes to the same number, so you'll get consistent sampling across multiple log files, log rotations, different days, and distributed systems.
+`--head`, `sample_prob()`, and `rand()` give different rows every run.
+`bucket()` hashes a key to a stable integer, so the *same* request shows up in
+every run, every rotation, every service.
 
 === "Command/Output"
 
@@ -149,56 +52,12 @@ The same `request_id` always hashes to the same number, so you'll get consistent
       -k user_id,action,timestamp
     ```
 
-=== "Log Data"
+Same key → same bucket, so you can also shard a huge file into N partitions
+(`bucket() % 4 == $i`) for parallel processing. → [Function Reference](../reference/functions.md).
 
-    ```bash exec="on" result="ansi"
-    cat examples/user-activity.jsonl
-    ```
+## Flatten deeply nested JSON — `flattened()` {#deep-structure-flattening}
 
-This always returns the same 5% of users - run it multiple times and you'll get identical results.
-
-**Partition logs for parallel processing:**
-```bash
-# Process logs in 4 partitions
-for i in {0..3}; do
-  kelora -j huge.jsonl \
-    --filter "e.request_id.bucket() % 4 == $i" \
-    > partition_$i.log &
-done
-wait
-```
-
-**Debug specific sessions across microservices:**
-```bash
-# All logs for session IDs ending in 0-2 (30% sample)
-kelora -j service-*.jsonl \
-  --filter 'e.session_id.bucket() % 10 < 3'
-```
-
-## Deep Structure Flattening
-
-### The Problem
-APIs return deeply nested JSON that's hard to query or export to flat formats (CSV, SQL):
-
-```json
-{
-  "api": {
-    "queries": [
-      {
-        "results": {
-          "users": [
-            {"id": 1, "permissions": {"read": true, "write": true}}
-          ]
-        }
-      }
-    ]
-  }
-}
-```
-
-### The Solution: `flattened()`
-
-The `flattened()` function creates a flat map with bracket-notation keys:
+Turn nested API payloads into flat, bracket-keyed fields ready for CSV or SQL.
 
 === "Command/Output"
 
@@ -208,40 +67,12 @@ The `flattened()` function creates a flat map with bracket-notation keys:
       --exec 'print(e.flat.to_json())' -q
     ```
 
-=== "Log Data"
+For arrays-within-arrays, chain `emit_each()` to fan out multiple levels into
+flat rows. → [Flatten Nested JSON for Analysis](fan-out-nested-structures.md).
 
-    ```bash exec="on" result="ansi"
-    cat examples/deeply-nested.jsonl
-    ```
+## Inspect JWT claims — `parse_jwt()` {#jwt-parsing-without-verification}
 
-### Advanced: Multi-Level Fan-Out
-
-For extremely nested data, combine `flattened()` with `emit_each()` to chain multiple levels of nesting into flat records:
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/nightmare_deeply_nested_transform.jsonl \
-      --filter 'e.request_id == "req_002"' \
-      --exec 'emit_each(e.get_path("api.queries[0].results.orders", []))' \
-      --exec 'emit_each(e.items)' \
-      -k sku,quantity,unit_price,final_price -F csv
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    head -3 examples/nightmare_deeply_nested_transform.jsonl
-    ```
-
-## JWT Parsing Without Verification
-
-### The Problem
-You need to inspect JWT claims for debugging but don't want to set up signature verification.
-
-### The Solution: `parse_jwt()`
-
-Extract header and claims without cryptographic validation:
+Read header and claims for debugging, no signature setup.
 
 === "Command/Output"
 
@@ -251,55 +82,18 @@ Extract header and claims without cryptographic validation:
       --exec 'let jwt = e.token.parse_jwt();
               e.user = jwt.claims.sub;
               e.role = jwt.claims.role;
-              e.expires = jwt.claims.exp;
               e.token = ()' \
-      -k timestamp,user,role,expires
+      -k timestamp,user,role
     ```
 
-=== "Log Data"
+!!! warning
+    Does **not** verify signatures — debugging / trusted tokens only.
 
-    ```bash exec="on" result="ansi"
-    cat examples/auth-logs.jsonl
-    ```
+→ [Function Reference](../reference/functions.md).
 
-**Security Warning:** This does NOT validate signatures. Use only for debugging or parsing tokens you already trust.
+## Surgical string extraction — `between` / `before` / `after`
 
-### Use Case: Track Token Expiration Issues
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/api_errors.jsonl \
-      --filter 'e.status == 401 && e.has("token")' \
-      --exec 'let jwt = e.token.parse_jwt();
-              let now = 1732000000;
-              e.expired = jwt.claims.exp < now;
-              e.expires_in = jwt.claims.exp - now' \
-      --filter 'e.expired == true' \
-      -k request_id,user,expires_in
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    cat examples/api_errors.jsonl
-    ```
-
-## Advanced String Extraction
-
-Kelora provides powerful string manipulation beyond basic regex:
-
-### Extract Text Between Delimiters
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    echo '{"log":"Response: <data>secret content</data>"}' | \
-      kelora -j --exec 'e.content = e.log.between("<data>", "</data>")' \
-      -k content
-    ```
-
-### Extract Before/After Markers
+Pull fields out of semi-structured lines without writing a regex.
 
 === "Command/Output"
 
@@ -311,27 +105,13 @@ Kelora provides powerful string manipulation beyond basic regex:
       -k timestamp,level,message
     ```
 
-**Nth occurrence support:**
+Nth-occurrence (`after(sep, 2)`), last (`-1`), `between()`, and
+`extract_regexes()` for multiple matches. → [Function Reference](../reference/functions.md).
 
-- `e.text.after(" | ", 1)` - after first occurrence (default)
-- `e.text.after(" | ", -1)` - after last occurrence
-- `e.text.after(" | ", 2)` - after second occurrence
+## Fuzzy matching — `edit_distance()`
 
-### Extract Multiple Items
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    echo '{"message":"Check https://example.com and http://test.org for more info"}' | \
-      kelora -j --exec 'e.urls = e.message.extract_regexes(#"https?://[^\s]+"#)' \
-      -F inspect
-    ```
-
-## Fuzzy Matching with Edit Distance
-
-### Use Case: Find Typos or Similar Errors
-
-The `edit_distance()` function calculates Levenshtein distance to find errors with typos or slight variations:
+Levenshtein distance finds typo'd errors or config drift (`prod-web` vs
+`prd-web`).
 
 === "Command/Output"
 
@@ -342,148 +122,43 @@ The `edit_distance()` function calculates Levenshtein distance to find errors wi
       -k error,similarity
     ```
 
-=== "Log Data"
+→ [Function Reference](../reference/functions.md).
 
-    ```bash exec="on" result="ansi"
-    cat examples/error-logs.jsonl
-    ```
+## Hashing & pseudonymization — `hash()` / `pseudonym()` {#multiple-hash-algorithms}
 
-### Use Case: Detect Configuration Drift
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    echo -e '{"host":"prod-web-01"}\n{"host":"prod-web-02"}\n{"host":"prd-web-01"}' | \
-      kelora -j --exec 'e.distance = e.host.edit_distance("prod-web-01")' \
-      --filter 'e.distance > 2' \
-      -k host,distance
-    ```
-
-## Hash Algorithms {#multiple-hash-algorithms}
-
-### The Problem
-You need to hash data for checksums, deduplication, or correlation with external systems.
-
-### The Solution: Cryptographic and Non-Cryptographic Hashing
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/user-data.jsonl \
-      --exec 'e.sha256 = e.email.hash("sha256");
-              e.xxh3 = e.email.hash("xxh3");
-              e.email = ()' \
-      -k user_id,sha256,xxh3 -F csv
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    cat examples/user-data.jsonl
-    ```
-
-**Available algorithms:**
-
-- `sha256` - SHA-256 (default, cryptographic)
-- `xxh3` - xxHash3 (non-cryptographic, extremely fast)
-
-**When to use which:**
-
-- Use `sha256` for checksums, integrity verification, or when you need cryptographic properties
-- Use `xxh3` for bucketing, sampling, or deduplication where speed matters and cryptographic security isn't needed
-
-### Use Case: Privacy-Preserving Analytics
-
-Create consistent anonymous IDs using HMAC-SHA256 with a secret key for domain-separated hashing:
+`sha256` for integrity, `xxh3` for fast bucketing, and `pseudonym()` for
+consistent anonymous IDs (HMAC with `KELORA_SECRET`).
 
 === "Command/Output"
 
     ```bash exec="on" source="above" result="ansi"
     KELORA_SECRET="your-secret-key" kelora -j examples/analytics.jsonl \
       --exec 'e.anon_user = pseudonym(e.email, "users");
-              e.anon_session = pseudonym(e.session_id, "sessions");
-              e.email = ();
-              e.session_id = ()' \
-      -k anon_user,anon_session,page,duration -F csv
+              e.email = ()' \
+      -k anon_user,page,duration -F csv
     ```
 
-=== "Log Data"
+→ [Sanitize Logs Before Sharing](extract-and-mask-sensitive-data.md) ·
+[Pseudonymize Identifiers](pseudonymize-identifiers-for-analytics.md).
 
-    ```bash exec="on" result="ansi"
-    cat examples/analytics.jsonl
-    ```
+## Extract JSON & key-values from text — `extract_json()` / `absorb_kv()` {#extract-json-from-unstructured-text}
 
-## Extract JSON from Unstructured Text
-
-### The Problem
-Logs contain JSON snippets embedded in plain text:
-
-```
-2024-01-15 ERROR: Failed with response: {"code":500,"message":"Internal error"}
-```
-
-### The Solution: `extract_json()` and `extract_jsons()`
-
-**Extract first JSON object:**
+Lift structured data out of plain-text log lines.
 
 === "Command/Output"
 
     ```bash exec="on" source="above" result="ansi"
     echo '2024-01-15 ERROR: Failed with response: {"code":500,"message":"Internal error"}' | \
-      kelora --exec 'e.json_str = e.line.extract_json()' \
-      --filter 'e.has("json_str")' \
-      --exec 'e.error_data = e.json_str' \
-      -k line,error_data
+      kelora --exec 'e.data = e.line.extract_json()' \
+      --filter 'e.has("data")' -k line,data
     ```
 
-**Extract all JSON objects:**
+`extract_jsons()` grabs every object; `absorb_kv("line")` promotes `key=value`
+pairs to fields. → [Function Reference](../reference/functions.md).
 
-=== "Command/Output"
+## Histogram buckets — `track_count()`
 
-    ```bash exec="on" source="above" result="ansi"
-    echo '{"log":"Found errors: {\"a\":1} and {\"b\":2} in output"}' | \
-      kelora -j --exec 'e.all_jsons = e.log.extract_jsons()' \
-      -F inspect
-    ```
-
-## Parse Key-Value Pairs from Text
-
-### The Solution: `absorb_kv()`
-
-Extract `key=value` pairs from unstructured log lines and convert them to structured fields:
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora examples/kv_pairs.log \
-      --exec 'e.absorb_kv("line")' \
-      -k timestamp,action,user,ip,success -F csv
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    cat examples/kv_pairs.log
-    ```
-
-### Options
-
-```bash
-# Custom separators
-kelora logs.log \
-  --exec 'e.absorb_kv("line", #{sep: ";", kv_sep: ":"})'
-
-# Keep original line
-kelora logs.log \
-  --exec 'e.absorb_kv("line", #{keep_source: true})'
-```
-
-## Histogram Bucketing with `track_count()`
-
-### The Problem
-You want to see the distribution of response times, not just average/max.
-
-### The Solution: Bucket Tracking
+See the *distribution*, not just the average.
 
 === "Command/Output"
 
@@ -495,195 +170,27 @@ You want to see the distribution of response times, not just average/max.
               track_count("response_ms", bucket)'
     ```
 
-=== "Log Data"
+→ [Metrics and Tracking](../tutorials/metrics-and-tracking.md).
 
-    ```bash exec="on" result="ansi"
-    cat examples/api_logs.jsonl
-    ```
+## Format conversion on the fly — `to_json()` / `to_logfmt()` / cascade
 
-### Use Case: HTTP Status Code Distribution
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -f combined examples/web_access.log \
-      --metrics \
-      --exec 'track_count("status", e.status / 100 * 100)'
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    head -5 examples/web_access.log
-    ```
-
-## Format Conversion in Pipelines
-
-### Convert Between Formats On-The-Fly
-
-**JSON to logfmt:**
+Convert between JSON, logfmt, CSV mid-pipeline, or let cascade mode
+(`-f json,logfmt,line`) auto-detect mixed streams line by line.
 
 === "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/simple_json.jsonl \
-      --exec 'print(e.to_logfmt())' -q | head -3
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    head -3 examples/simple_json.jsonl
-    ```
-
-**Logfmt to JSON:**
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -f logfmt examples/app.log \
-      --exec 'print(e.to_json())' -q | head -3
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    head -3 examples/app.log
-    ```
-
-### Use Case: Normalize Multi-Format Logs
-
-For streams that mix multiple structured formats line by line, **cascade
-mode** (`-f fmt1,fmt2,…`) tries each parser in order and tags each event
-with the winning format in `_format`:
-
-=== "Cascade mode"
 
     ```bash exec="on" source="above" result="ansi"
     kelora -f json,logfmt,line examples/nightmare_mixed_formats.log \
       -F json | head -5
     ```
 
-=== "Log Data"
+→ [Format Reference](../reference/formats.md).
 
-    ```bash exec="on" result="ansi"
-    head -5 examples/nightmare_mixed_formats.log
-    ```
+## Cross-event logic — `state`
 
-When the mixing is more irregular (e.g. JSON embedded *inside* line text),
-you can still fall back to manual extraction per event:
-
-=== "Manual extraction"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora examples/nightmare_mixed_formats.log \
-      --exec 'if e.line.contains("{") {
-        let json_str = e.line.extract_json();
-        e.data = json_str
-      } else if e.line.contains("=") {
-        e.data = e.line.parse_kv()
-      }' \
-      --filter 'e.has("data")' \
-      -F json | head -5
-    ```
-
-## Stateful Processing with `state`
-
-### When to Use `state`
-
-The `state` global map enables complex stateful processing that `track_*()` functions cannot handle:
-
-- **Deduplication**: Track which IDs have already been seen
-- **Cross-event dependencies**: Make decisions based on previous events
-- **Complex objects**: Store nested maps, arrays, or other structured data
-- **Conditional logic**: Remember arbitrary state across events
-- **State machines**: Track connection states, session lifecycles
-- **Event correlation**: Match request/response pairs, build sessions
-
-**Quick Decision Guide:**
-
-| Feature | `state` | `track_*()` |
-|---------|---------|-------------|
-| **Purpose** | Complex stateful logic | Simple metrics & aggregations |
-| **Read access** | ✅ Yes (during processing) | ❌ No (write-only, read in `--end`) |
-| **Parallel mode** | ❌ Sequential only | ✅ Works in parallel |
-| **Storage** | Any Rhai value | Any value (strings, numbers, etc.) |
-| **Performance** | Slower (RwLock) | Faster (atomic/optimized) |
-| **Use for** | Deduplication, FSMs, correlation | Counting, unique tracking, bucketing |
-
-**Important**: For simple counting and metrics, prefer `track_count()`, `track_sum()`, etc.—they work in both sequential and parallel modes. `state` only works in sequential mode.
-
-### The Problem: Deduplication
-
-You have logs with duplicate entries for the same request ID, but you only want to process each unique request once:
-
-```
-{"request_id": "req-001", "status": "start"}
-{"request_id": "req-002", "status": "start"}
-{"request_id": "req-001", "status": "duplicate"}  ← Skip this
-{"request_id": "req-003", "status": "start"}
-```
-
-### The Solution: Track Seen IDs with `state`
-
-```bash
-kelora -j logs.jsonl \
-  --exec 'if !state.contains(e.request_id) {
-    state[e.request_id] = true;
-    e.is_first = true;
-  } else {
-    e.is_first = false;
-  }' \
-  --filter 'e.is_first == true' \
-  -k request_id,status
-```
-
-Only first occurrences pass through; duplicates are filtered out.
-
-### Use Case: Track Complex Per-User State
-
-Store nested maps to track multiple attributes per user:
-
-=== "Command/Output"
-
-    ```bash exec="on" source="above" result="ansi"
-    kelora -j examples/user-events.jsonl \
-      --exec 'if !state.contains(e.user) {
-        state[e.user] = #{login_count: 0, last_seen: (), errors: []};
-      }
-      let user_state = state[e.user];
-      user_state.login_count += 1;
-      user_state.last_seen = e.timestamp;
-      if e.has("error") {
-        user_state.errors.push(e.error);
-      }
-      state[e.user] = user_state;
-      e.user_login_count = user_state.login_count' \
-      -k timestamp,user,user_login_count
-    ```
-
-=== "Log Data"
-
-    ```bash exec="on" result="ansi"
-    cat examples/user-events.jsonl
-    ```
-
-### Use Case: Sequential Event Numbering
-
-Assign a global sequence number across all events:
-
-```bash
-kelora -j logs.jsonl \
-  --begin 'state["count"] = 0' \
-  --exec 'state["count"] += 1; e.seq = state["count"]' \
-  -k seq,timestamp,message -F csv
-```
-
-**Note**: For simple counting by category, use `track_count("category", e.category)` instead.
-
-### Converting State to Regular Map
-
-`state` is a special `StateMap` type with limited operations. To use map functions like `.to_logfmt()` or `.to_kv()`, convert it first:
+When `track_*()` isn't enough — deduplication, request/response correlation,
+session reconstruction, state machines — the `state` map remembers anything
+across events.
 
 === "Command/Output"
 
@@ -693,143 +200,19 @@ kelora -j logs.jsonl \
       --end 'print(state.to_map().to_logfmt())' -q
     ```
 
-=== "Log Data"
+!!! note
+    `state` is sequential-only (not available under `--parallel`). For simple
+    counting prefer `track_*()`, which works in parallel.
 
-    ```bash exec="on" result="ansi"
-    head -5 examples/simple_json.jsonl
-    ```
+→ Full recipes (dedup, correlation, FSMs, session rebuild, memory management):
+[Cross-Event Logic with `state`](stateful-processing.md).
 
-### Use Case: Event Correlation (Request/Response Pairs)
+## Combine them
 
-Match request and response events, calculating latency and emitting complete transactions:
-
-```bash
-kelora -j api-events.jsonl \
-  --exec 'if e.event_type == "request" {
-    state[e.request_id] = #{sent_at: e.timestamp, method: e.method};
-    e = ();  # Don't emit until we see response
-  } else if e.event_type == "response" && state.contains(e.request_id) {
-    let req = state[e.request_id];
-    e.duration_ms = (e.timestamp - req.sent_at).as_millis();
-    e.method = req.method;
-    state.remove(e.request_id);  # Clean up
-  }' \
-  -k request_id,method,duration_ms,status
-```
-
-### Use Case: State Machines for Protocol Analysis
-
-Track connection states through their lifecycle:
+The payoff is composition — fan out nested orders, normalize errors, hash
+users, take a deterministic sample, and aggregate, in one command:
 
 ```bash
-kelora -j network-events.jsonl \
-  --exec 'if !state.contains(e.conn_id) {
-    state[e.conn_id] = "NEW";
-  }
-  let current_state = state[e.conn_id];
-
-  # State transitions
-  if current_state == "NEW" && e.event == "SYN" {
-    state[e.conn_id] = "SYN_SENT";
-  } else if current_state == "SYN_SENT" && e.event == "SYN_ACK" {
-    state[e.conn_id] = "ESTABLISHED";
-  } else if current_state == "ESTABLISHED" && e.event == "FIN" {
-    state[e.conn_id] = "CLOSING";
-  } else if e.event != "DATA" {
-    e.protocol_error = true;  # Invalid transition
-  }
-  e.connection_state = state[e.conn_id]' \
-  --filter 'e.has("protocol_error")' \
-  -k timestamp,conn_id,event,connection_state
-```
-
-### Use Case: Session Reconstruction
-
-Accumulate events into complete sessions, emitting only when session ends:
-
-```bash
-kelora -j user-events.jsonl \
-  --exec 'if e.event == "login" {
-    state[e.session_id] = #{
-      user: e.user,
-      events: [],
-      start: e.timestamp
-    };
-  }
-  if state.contains(e.session_id) {
-    state[e.session_id].events.push(#{event: e.event, ts: e.timestamp});
-  }
-  if e.event == "logout" {
-    let session = state[e.session_id];
-    session.end = e.timestamp;
-    session.event_count = session.events.len();
-    print(session.to_json());
-    state.remove(e.session_id);
-  }
-  e = ()' -q  # Suppress individual events, only emit complete sessions
-```
-
-### Use Case: Rate Limiting - Sample First N per Key
-
-Only emit the first 100 events per API key, then suppress the rest:
-
-```bash
-kelora -j api-logs.jsonl \
-  --exec 'if !state.contains(e.api_key) {
-    state[e.api_key] = 0;
-  }
-  state[e.api_key] += 1;
-  if state[e.api_key] > 100 {
-    e = ();  # Drop after first 100 per key
-  }' \
-  -k timestamp,api_key,endpoint
-```
-
-### Performance and Memory Management
-
-For large state maps (millions of keys), consider periodic cleanup:
-
-```bash
-kelora -j huge-logs.jsonl \
-  --exec 'if !state.contains("counter") { state["counter"] = 0; }
-  state["counter"] += 1;
-
-  # Periodic cleanup every 100k events
-  if state["counter"] % 100000 == 0 {
-    eprint("State size: " + state.len() + " keys");
-    if state.len() > 500000 {
-      state.clear();  # Reset if too large
-      eprint("State cleared");
-    }
-  }
-
-  # Your stateful logic here
-  if !state.contains(e.request_id) {
-    state[e.request_id] = true;
-  } else {
-    e = ();
-  }'
-```
-
-### Parallel Mode Restriction
-
-`state` requires sequential processing to maintain consistency. Using it with `--parallel` causes a runtime error:
-
-```bash
-# This will fail:
-kelora -j logs.jsonl --parallel \
-  --exec 'state["count"] += 1'
-# Error: 'state' is not available in --parallel mode
-```
-
-For parallel-safe tracking, use `track_*()` functions instead.
-
-## Combining Techniques
-
-The real power comes from combining these features. Here's a complex real-world example:
-
-```bash
-# Process deeply nested API logs with privacy controls
 kelora -j api-responses.jsonl \
   --filter 'e.api_version == "v2"' \
   --exec 'emit_each(e.get_path("data.orders", []))' \
@@ -840,59 +223,14 @@ kelora -j api-responses.jsonl \
           e.user_id = ()' \
   --filter 'e.sample_group < 3' \
   --metrics \
-  --exec 'track_count("error_pattern", e.error_pattern);
-          track_sum("revenue", e.price * e.quantity)' \
-  -k order_id,sku,quantity,price,error_pattern -F csv \
-  > processed_orders.csv
+  --exec 'track_count("error_pattern", e.error_pattern)' \
+  -k order_id,sku,quantity,error_pattern -F csv
 ```
-
-This pipeline:
-
-1. Filters to API v2 only
-2. Fans out nested orders → items (multi-level)
-3. Normalizes error patterns
-4. Hashes user IDs for privacy
-5. Creates deterministic 30% sample
-6. Tracks error patterns and revenue
-7. Exports flat CSV
-
-All in a single command without temporary files or custom scripts.
-
-## Performance Tips
-
-- **Use `bucket()` for sampling before heavy processing** - reduces work by 90% with 10% sample
-- **Apply filters early** - before fan-out or expensive transformations
-- **Chain operations in one `--exec`** when sharing variables (semicolon-separated)
-- **Use `xxh3` hash** for non-cryptographic use cases (much faster than `sha256`)
-- **Limit window size** (`--window N`) to minimum needed for sliding calculations
-
-## Troubleshooting
-
-**"Function not found" errors:**
-
-- Check spelling and capitalization (Rhai is case-sensitive)
-- Verify the function exists in `kelora --help-functions`
-
-**`()` (unit) value errors:**
-
-- Guard optional fields: `if e.has("field") { ... }`
-- Use safe conversions: `to_int_or(e.field, 0)`
-
-**Pattern normalization doesn't work:**
-
-- Check that patterns exist in input: `echo "test 192.168.1.1" | kelora --exec '...'`
-- Verify pattern names: `normalized(["ipv4", "email"])` not `["ip", "emails"]`
-
-**Hash consistency issues:**
-
-- Same input + same algorithm = same hash (deterministic)
-- Different Kelora versions may use different hash implementations
-- Use `KELORA_SECRET` env var for `pseudonym()` to ensure domain separation
 
 ## See Also
 
-- [Advanced Scripting Tutorial](../tutorials/advanced-scripting.md) - Multi-stage transformations
-- [Metrics and Tracking Tutorial](../tutorials/metrics-and-tracking.md) - Aggregation patterns
-- [Function Reference](../reference/functions.md) - Complete function catalog
-- [Flatten Nested JSON](fan-out-nested-structures.md) - Deep dive on `emit_each()`
-- [Extract and Mask Sensitive Data](extract-and-mask-sensitive-data.md) - Privacy techniques
+- [Cross-Event Logic with `state`](stateful-processing.md) — dedup, correlation, FSMs, sessions
+- [Advanced Scripting](../tutorials/advanced-scripting.md) — multi-stage transforms
+- [Metrics and Tracking](../tutorials/metrics-and-tracking.md) — aggregation patterns
+- [Function Reference](../reference/functions.md) — complete catalog
+- [Flatten Nested JSON](fan-out-nested-structures.md) · [Sanitize Logs](extract-and-mask-sensitive-data.md)
