@@ -608,6 +608,19 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
     // Resolve inverted boolean flags
     cli.resolve_boolean_flags();
 
+    // Trim whitespace around comma-separated --keys/--exclude-keys entries and
+    // drop empties, so `-k 'ts, level, msg'` selects the intended fields rather
+    // than ' level'/' msg'. Matches how --levels and field specs are normalized.
+    let trim_key_list = |keys: &[String]| -> Vec<String> {
+        keys.iter()
+            .map(|k| k.trim())
+            .filter(|k| !k.is_empty())
+            .map(|k| k.to_string())
+            .collect()
+    };
+    cli.keys = trim_key_list(&cli.keys);
+    cli.exclude_keys = trim_key_list(&cli.exclude_keys);
+
     // Config file defaults and aliases are already applied in process_args above
 
     // Check if we should enter interactive mode

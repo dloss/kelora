@@ -139,6 +139,52 @@ fn test_core_field_plus_additional_keys() {
 }
 
 #[test]
+fn test_keys_trims_whitespace_around_commas() {
+    // Regression: `-k 'ts, level, msg'` (spaces after commas, a natural way to
+    // type the list) previously selected only `ts` and silently dropped
+    // ` level`/` msg`, because clap's value_delimiter split on commas without
+    // trimming. --levels already trimmed; --keys now matches.
+    let input = r#"{"ts": 1, "level": "INFO", "msg": "hello"}"#;
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--keys", "ts, level, msg"], input);
+    assert_eq!(exit_code, 0, "should exit 0. stderr: {}", stderr);
+    assert!(stdout.contains("ts="), "Should keep ts");
+    assert!(
+        stdout.contains("level="),
+        "Should keep level despite leading space. stdout: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("msg="),
+        "Should keep msg despite leading space. stdout: {}",
+        stdout
+    );
+    // The trimmed names should not be reported as missing.
+    assert!(
+        !stderr.contains("never present"),
+        "Trimmed keys should not be flagged as missing. stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_exclude_keys_trims_whitespace() {
+    // Regression companion: `-K ' secret '` should still drop `secret`.
+    let input = r#"{"ts": 1, "level": "INFO", "secret": "x"}"#;
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--exclude-keys", " secret "], input);
+    assert_eq!(exit_code, 0, "should exit 0. stderr: {}", stderr);
+    assert!(
+        !stdout.contains("secret="),
+        "secret should be excluded despite surrounding spaces. stdout: {}",
+        stdout
+    );
+    assert!(stdout.contains("level="), "Other fields should remain");
+}
+
+#[test]
 fn test_core_field_with_syslog() {
     let input = r#"<34>Jan 1 12:00:00 myhost myapp[1234]: Test syslog message"#;
 
