@@ -8703,6 +8703,7 @@ Field names are matched exactly as strings (no path traversal or wildcards).</p>
 <a id="__codelineno-120-3" name="__codelineno-120-3" href="#__codelineno-120-3"></a>// For sampling, prefer sample_every() instead:
 <a id="__codelineno-120-4" name="__codelineno-120-4" href="#__codelineno-120-4"></a>// if sample_every(10) { e.sampled = true }           // Better: counter-based
 </code></pre></div>
+<p>Set the <code>KELORA_SEED</code> environment variable to a non-negative integer to make <code>rand()</code>, <code>rand_int()</code>, and <code>sample_prob()</code> reproducible (e.g. for tests or repeatable sampling). Reproducibility holds in sequential mode; under <code>--parallel</code>, thread scheduling still affects which worker consumes which value.</p>
 <h4 id="sample_everyn"><code>sample_every(n)</code><a class="headerlink" href="#sample_everyn" title="Permanent link">&para;</a></h4>
 <p>Sample every Nth event - returns <code>true</code> on calls N, 2N, 3N, etc.</p>
 <p>Fast counter-based sampling (thread-local, approximate in parallel mode). Each unique N value maintains its own counter. For deterministic sampling across parallel threads, use <code>bucket()</code> instead.</p>
