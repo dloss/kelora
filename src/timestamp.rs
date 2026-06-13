@@ -437,6 +437,10 @@ fn get_initial_timestamp_formats() -> Vec<String> {
         "%Y-%m-%dT%H:%M:%S%:z".to_string(),  // ISO 8601 with timezone
         "%Y-%m-%dT%H:%M:%S%.f".to_string(),  // ISO 8601 without timezone (with subseconds)
         "%Y-%m-%dT%H:%M:%S".to_string(),     // ISO 8601 without timezone
+        // ISO 8601 minute precision (journalctl-compatible, e.g. "2024-01-15T12:00")
+        "%Y-%m-%dT%H:%MZ".to_string(), // ISO 8601 minute precision with Z
+        "%Y-%m-%dT%H:%M%:z".to_string(), // ISO 8601 minute precision with timezone
+        "%Y-%m-%dT%H:%M".to_string(),  // ISO 8601 minute precision without timezone
         // Space-separated ISO variants (common in many log formats)
         "%Y-%m-%d %H:%M:%S%.f".to_string(), // Common log format with subseconds
         "%Y-%m-%d %H:%M:%S".to_string(),    // Common log format
@@ -444,6 +448,10 @@ fn get_initial_timestamp_formats() -> Vec<String> {
         "%Y-%m-%d %H:%M:%SZ".to_string(),   // Space-separated with Z
         "%Y-%m-%d %H:%M:%S%z".to_string(),  // Space-separated with timezone
         "%Y-%m-%d %H:%M:%S%.f%z".to_string(), // Space-separated with fractional + timezone
+        // Space-separated minute precision (journalctl-compatible, e.g. "2024-01-15 12:00")
+        "%Y-%m-%d %H:%MZ".to_string(), // Space-separated minute precision with Z
+        "%Y-%m-%d %H:%M%z".to_string(), // Space-separated minute precision with timezone
+        "%Y-%m-%d %H:%M".to_string(),  // Space-separated minute precision
         // Syslog and server log formats
         "%b %d %H:%M:%S".to_string(),       // Syslog format
         "%b %d %Y %H:%M:%S".to_string(),    // BSD syslog with year
@@ -869,6 +877,38 @@ mod tests {
         assert_eq!(dt.year(), 2023);
         assert_eq!(dt.month(), 7);
         assert_eq!(dt.day(), 4);
+    }
+
+    #[test]
+    fn test_minute_precision_formats() {
+        // Minute-precision timestamps are documented in --help / --help-time as
+        // journalctl-compatible (e.g. "2024-01-15 12:00") and must parse the same
+        // way regardless of T- vs space-separator or trailing zone marker.
+        for input in [
+            "2024-01-15 12:00",
+            "2024-01-15T12:00",
+            "2024-01-15T12:00Z",
+            "2024-01-15 12:00Z",
+            "2024-01-15T12:00+00:00",
+            "2024-01-15 12:00+0000",
+        ] {
+            let mut parser = AdaptiveTsParser::new();
+            let result = parser.parse_ts(input);
+            assert!(result.is_some(), "failed to parse {input:?}");
+            let dt = result.unwrap();
+            assert_eq!(dt.year(), 2024, "{input:?}");
+            assert_eq!(dt.month(), 1, "{input:?}");
+            assert_eq!(dt.day(), 15, "{input:?}");
+            assert_eq!(dt.hour(), 12, "{input:?}");
+            assert_eq!(dt.minute(), 0, "{input:?}");
+            assert_eq!(dt.second(), 0, "{input:?}");
+        }
+
+        // A trailing-seconds form must still parse as seconds, not be shadowed by
+        // the new minute-precision entries (parse_from_str is full-match).
+        let mut parser = AdaptiveTsParser::new();
+        let dt = parser.parse_ts("2024-01-15 12:00:45").unwrap();
+        assert_eq!(dt.second(), 45);
     }
 
     #[test]
