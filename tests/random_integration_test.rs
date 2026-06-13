@@ -215,3 +215,27 @@ fn test_random_sampling_workflow() {
         let _: serde_json::Value = serde_json::from_str(line).expect("Output should be valid JSON");
     }
 }
+
+#[test]
+fn test_invalid_seed_is_hard_error() {
+    // An invalid KELORA_SEED must fail fast with a usage error rather than
+    // silently falling back to a random seed (which would defeat reproducibility).
+    for bad in ["notanumber", "-5", ""] {
+        let (_stdout, stderr, exit_code) = run_kelora_with_file_env(
+            &["-f", "json", "--filter", "rand() < 1.0"],
+            r#"{"id": 1}"#,
+            &[("KELORA_SEED", bad)],
+        );
+
+        assert_eq!(
+            exit_code, 2,
+            "KELORA_SEED='{}' should exit 2 (invalid usage). stderr: {}",
+            bad, stderr
+        );
+        assert!(
+            stderr.contains("KELORA_SEED"),
+            "stderr should explain the invalid KELORA_SEED. stderr: {}",
+            stderr
+        );
+    }
+}

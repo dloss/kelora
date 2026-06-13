@@ -87,6 +87,18 @@ fn main() -> Result<()> {
         ExitCode::InvalidUsage.exit();
     }
 
+    // Reject an invalid KELORA_SEED up front so reproducible runs fail fast
+    // instead of silently falling back to a random seed.
+    if let Err(raw) = crate::rhai_functions::random::parse_seed_env() {
+        stderr
+            .writeln(&config::format_error_message_auto(&format!(
+                "Error: KELORA_SEED must be a non-negative integer, got '{}'",
+                raw
+            )))
+            .unwrap_or(());
+        ExitCode::InvalidUsage.exit();
+    }
+
     // Extract ordered script stages
     let ordered_stages = match cli.get_ordered_script_stages(&matches) {
         Ok(stages) => stages,

@@ -10,19 +10,28 @@ use std::sync::{LazyLock, Mutex};
 /// `KELORA_SECRET` convention used for stable pseudonym hashing. Reproducibility
 /// holds in sequential mode; under `--parallel`, thread scheduling still affects
 /// which worker consumes which value.
+///
+/// An invalid `KELORA_SEED` is rejected up front by the binary (see
+/// `parse_seed_env`), so the fallback below only applies when the value is unset.
 static RNG: LazyLock<Mutex<fastrand::Rng>> = LazyLock::new(|| {
-    let rng = match std::env::var("KELORA_SEED") {
-        Ok(s) => match s.trim().parse::<u64>() {
-            Ok(seed) => fastrand::Rng::with_seed(seed),
-            Err(_) => {
-                eprintln!("kelora: KELORA_SEED must be a non-negative integer; using random seed");
-                fastrand::Rng::new()
-            }
-        },
-        Err(_) => fastrand::Rng::new(),
+    let rng = match parse_seed_env() {
+        Ok(Some(seed)) => fastrand::Rng::with_seed(seed),
+        _ => fastrand::Rng::new(),
     };
     Mutex::new(rng)
 });
+
+/// Parse the `KELORA_SEED` environment variable.
+///
+/// Returns `Ok(Some(seed))` when set to a non-negative integer, `Ok(None)` when
+/// unset, and `Err(raw_value)` when set to anything else (including empty), so
+/// callers can fail fast rather than silently falling back to a random seed.
+pub fn parse_seed_env() -> Result<Option<u64>, String> {
+    match std::env::var("KELORA_SEED") {
+        Ok(raw) => raw.trim().parse::<u64>().map(Some).map_err(|_| raw),
+        Err(_) => Ok(None),
+    }
+}
 
 // Thread-local counters for sample_every() - each N value gets its own counter
 thread_local! {
