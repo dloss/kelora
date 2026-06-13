@@ -610,10 +610,12 @@ pub fn resolve_time_range(
     }
 
     if until_uses_since_anchor {
-        // Parse --since first, then use it as anchor for --until
+        // Parse --since first, then use it as anchor for --until. Route through
+        // parse_anchored_timestamp so self-relative `now+`/`now-` forms work
+        // (it falls back to normal parsing for everything else).
         let since = if let Some(since_str) = since_str {
             Some(
-                parse_timestamp_arg_with_timezone(since_str, default_timezone)
+                parse_anchored_timestamp(since_str, None, None, default_timezone)
                     .map_err(|e| format!("Invalid --since timestamp '{}': {}", since_str, e))?,
             )
         } else {
@@ -631,10 +633,11 @@ pub fn resolve_time_range(
 
         Ok((since, until))
     } else if since_uses_until_anchor {
-        // Parse --until first, then use it as anchor for --since
+        // Parse --until first, then use it as anchor for --since. Route through
+        // parse_anchored_timestamp so self-relative `now+`/`now-` forms work.
         let until = if let Some(until_str) = until_str {
             Some(
-                parse_timestamp_arg_with_timezone(until_str, default_timezone)
+                parse_anchored_timestamp(until_str, None, None, default_timezone)
                     .map_err(|e| format!("Invalid --until timestamp '{}': {}", until_str, e))?,
             )
         } else {
@@ -652,10 +655,12 @@ pub fn resolve_time_range(
 
         Ok((since, until))
     } else {
-        // No anchors, parse independently
+        // No cross-bound anchors. Route through parse_anchored_timestamp so
+        // self-relative `now+`/`now-` forms work; it falls back to normal
+        // parsing for plain timestamps and relative durations.
         let since = if let Some(since_str) = since_str {
             Some(
-                parse_timestamp_arg_with_timezone(since_str, default_timezone)
+                parse_anchored_timestamp(since_str, None, None, default_timezone)
                     .map_err(|e| format!("Invalid --since timestamp '{}': {}", since_str, e))?,
             )
         } else {
@@ -664,7 +669,7 @@ pub fn resolve_time_range(
 
         let until = if let Some(until_str) = until_str {
             Some(
-                parse_timestamp_arg_with_timezone(until_str, default_timezone)
+                parse_anchored_timestamp(until_str, None, None, default_timezone)
                     .map_err(|e| format!("Invalid --until timestamp '{}': {}", until_str, e))?,
             )
         } else {

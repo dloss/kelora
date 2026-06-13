@@ -449,6 +449,7 @@ pub struct Cli {
         long = "since",
         value_name = "TIME",
         help_heading = "Filtering Options",
+        allow_hyphen_values = true,
         help = "Keep only events at or after this time.\n\nAccepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '-30m', 'yesterday'). Can also use 'until+DURATION', 'until-DURATION', 'now+DURATION', or 'now-DURATION' anchors. See --help-time."
     )]
     pub since: Option<String>,
@@ -458,6 +459,7 @@ pub struct Cli {
         long = "until",
         value_name = "TIME",
         help_heading = "Filtering Options",
+        allow_hyphen_values = true,
         help = "Keep only events at or before this time.\n\nAccepts journalctl-style timestamps (e.g., 2024-01-15T12:00:00Z, '2024-01-15 12:00', '1h', '+30m', 'tomorrow'). Can also use 'since+DURATION', 'since-DURATION', 'now+DURATION', or 'now-DURATION' anchors. See --help-time."
     )]
     pub until: Option<String>,

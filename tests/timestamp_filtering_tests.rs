@@ -208,6 +208,100 @@ fn test_until_relative_time() {
 }
 
 #[test]
+fn test_since_now_anchor_relative() {
+    // Regression: `--since now-15m` is documented in --help-time but previously
+    // failed with "Could not parse timestamp: now-15m" because resolve_time_range
+    // bypassed parse_anchored_timestamp for self-relative `now+`/`now-` forms.
+    let old_ts = get_test_timestamp_iso(-120); // 2 hours ago
+    let new_ts = get_test_timestamp_iso(-5); // 5 minutes ago
+
+    let input = format!(
+        r#"{{"ts": "{}", "level": "info", "msg": "old event"}}
+{{"ts": "{}", "level": "info", "msg": "new event"}}"#,
+        old_ts, new_ts
+    );
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--since", "now-15m"], &input);
+
+    assert_eq!(
+        exit_code, 0,
+        "`--since now-15m` should be accepted. stderr: {}",
+        stderr
+    );
+    assert!(
+        !stdout.contains("old event"),
+        "Should exclude event older than 15 minutes"
+    );
+    assert!(
+        stdout.contains("new event"),
+        "Should include event within the last 15 minutes"
+    );
+}
+
+#[test]
+fn test_until_now_anchor_relative() {
+    // Regression companion to test_since_now_anchor_relative for `now+`.
+    let old_ts = get_test_timestamp_iso(-120); // 2 hours ago
+    let new_ts = get_test_timestamp_iso(-5); // 5 minutes ago
+
+    let input = format!(
+        r#"{{"ts": "{}", "level": "info", "msg": "old event"}}
+{{"ts": "{}", "level": "info", "msg": "new event"}}"#,
+        old_ts, new_ts
+    );
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--until", "now-15m"], &input);
+
+    assert_eq!(
+        exit_code, 0,
+        "`--until now-15m` should be accepted. stderr: {}",
+        stderr
+    );
+    assert!(
+        stdout.contains("old event"),
+        "Should include event older than 15 minutes"
+    );
+    assert!(
+        !stdout.contains("new event"),
+        "Should exclude event within the last 15 minutes"
+    );
+}
+
+#[test]
+fn test_since_space_separated_negative_relative() {
+    // Regression: `--since -30m` (space-separated, documented in --help-time and
+    // the --since help text) previously failed clap parsing with
+    // "unexpected argument '-3' found". allow_hyphen_values fixes this.
+    let old_ts = get_test_timestamp_iso(-120); // 2 hours ago
+    let new_ts = get_test_timestamp_iso(-5); // 5 minutes ago
+
+    let input = format!(
+        r#"{{"ts": "{}", "level": "info", "msg": "old event"}}
+{{"ts": "{}", "level": "info", "msg": "new event"}}"#,
+        old_ts, new_ts
+    );
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--since", "-30m"], &input);
+
+    assert_eq!(
+        exit_code, 0,
+        "`--since -30m` (space form) should be accepted. stderr: {}",
+        stderr
+    );
+    assert!(
+        !stdout.contains("old event"),
+        "Should exclude event older than 30 minutes"
+    );
+    assert!(
+        stdout.contains("new event"),
+        "Should include event within the last 30 minutes"
+    );
+}
+
+#[test]
 fn test_since_special_values() {
     let today = chrono::Local::now().date_naive();
     let yesterday = today - Duration::days(1);
