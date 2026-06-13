@@ -70,6 +70,19 @@ pub fn record_parse_success(ctx_internal: &mut HashMap<String, Dynamic>) {
     // single Cell read. We only need "succeeded at least once"; parallel
     // workers' single records sum via the merge op.
     if PARSE_SUCCESS_SEEN.with(|c| c.replace(true)) {
+        // Invariant tripwire (debug builds only; compiled out of release). If the
+        // once-flag claims a success was already recorded this run, the run's
+        // tracker must actually carry the counter. A fresh tracker paired with a
+        // stale `true` flag means `reset_stage_success_flags()` was not called at
+        // run start — which would misreport a partial parse failure as a total one
+        // (a false exit 1). Fires here, at the exact site the desync would corrupt
+        // the exit code, if a future entry point forgets the reset.
+        debug_assert!(
+            ctx_internal.contains_key("__kelora_success_count_parse"),
+            "parse-success once-flag is set but the counter is missing from this \
+             run's tracker: reset_stage_success_flags() must run at the start of \
+             every run/worker (see runner.rs / parallel/worker.rs)"
+        );
         return;
     }
     with_internal_tracking(|state| insert_gate_count(state, "__kelora_success_count_parse"));
@@ -95,6 +108,18 @@ pub fn record_filter_stage_success(stage: usize, ctx_internal: &mut HashMap<Stri
             bits & bit != 0
         });
         if seen {
+            // Same invariant tripwire as record_parse_success (debug only, compiled
+            // out of release): a set once-bit must be backed by a real counter in
+            // this run's tracker. A stale bit on a fresh tracker means the per-run
+            // reset was skipped, which would turn a partial filter failure into a
+            // false total (exit 1). Building the key here is free in release — the
+            // whole debug_assert, arguments included, is removed.
+            debug_assert!(
+                ctx_internal.contains_key(&format!("{}{}", FILTER_GATE_SUCCESS_PREFIX, stage)),
+                "filter-stage success once-bit is set but the counter is missing from \
+                 this run's tracker: reset_stage_success_flags() must run at the start \
+                 of every run/worker (see runner.rs / parallel/worker.rs)"
+            );
             return;
         }
     }
@@ -783,6 +808,38 @@ mod stage_outcome_tests {
                 Some(1)
             );
         });
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "reset_stage_success_flags() must run")]
+    fn forgotten_reset_trips_the_parse_success_invariant() {
+        // Run 1 on this thread: a clean reset + a recorded success sets the
+        // once-flag and writes the counter into run 1's tracker.
+        with_internal_tracking(|state| state.clear());
+        reset_stage_success_flags();
+        let mut run1 = HashMap::new();
+        record_parse_success(&mut run1);
+        // Run 2 begins on the *same* thread (the interactive-REPL / pooled-worker
+        // shape) but FORGETS reset_stage_success_flags(). The stale `true` flag
+        // would otherwise skip recording run 2's first success, leaving a fresh
+        // tracker with parse errors but zero successes -> a false exit 1. The debug
+        // tripwire catches the desync here instead of letting it corrupt the run.
+        let mut run2 = HashMap::new();
+        record_parse_success(&mut run2);
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "reset_stage_success_flags() must run")]
+    fn forgotten_reset_trips_the_filter_stage_invariant() {
+        with_internal_tracking(|state| state.clear());
+        reset_stage_success_flags();
+        let mut run1 = HashMap::new();
+        record_filter_stage_success(0, &mut run1);
+        // Same forgotten-reset scenario for the per-stage filter gate.
+        let mut run2 = HashMap::new();
+        record_filter_stage_success(0, &mut run2);
     }
 
     #[test]
