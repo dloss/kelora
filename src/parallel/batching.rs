@@ -737,49 +737,58 @@ pub(crate) fn handle_plain_line(line: String, ctx: PlainLineContext<'_>) -> Resu
         }
     }
 
-    if *ctx.skipped_lines_count < ctx.skip_lines {
-        *ctx.skipped_lines_count += 1;
-        *ctx.filtered_lines += 1;
-        return Ok(());
-    }
+    let is_csv_like = matches!(
+        ctx.input_format,
+        crate::config::InputFormat::Csv(_)
+            | crate::config::InputFormat::Tsv(_)
+            | crate::config::InputFormat::Csvnh
+            | crate::config::InputFormat::Tsvnh
+    );
 
-    // Apply section selection if configured
-    if let Some(selector) = ctx.section_selector {
-        if !selector.should_include_line(&line) {
+    // While a quoted field is open across physical lines, the current line is a
+    // continuation of an in-progress record. Per-line filters must not run on it
+    // (e.g. an empty physical line inside a quoted value must survive); it goes
+    // straight into the batch so the worker's chunker can reassemble the record.
+    let mid_record = is_csv_like && *ctx.csv_quote_open;
+
+    if !mid_record {
+        if *ctx.skipped_lines_count < ctx.skip_lines {
+            *ctx.skipped_lines_count += 1;
             *ctx.filtered_lines += 1;
             return Ok(());
         }
-    }
 
-    if line.is_empty() && !matches!(ctx.input_format, crate::config::InputFormat::Line) {
-        return Ok(());
-    }
+        // Apply section selection if configured
+        if let Some(selector) = ctx.section_selector {
+            if !selector.should_include_line(&line) {
+                *ctx.filtered_lines += 1;
+                return Ok(());
+            }
+        }
 
-    if let Some(keep_regex) = ctx.keep_lines.as_ref() {
-        if !keep_regex.is_match(&line) {
-            *ctx.filtered_lines += 1;
+        if line.is_empty() && !matches!(ctx.input_format, crate::config::InputFormat::Line) {
             return Ok(());
         }
-    }
 
-    if let Some(ignore_regex) = ctx.ignore_lines.as_ref() {
-        if ignore_regex.is_match(&line) {
-            *ctx.filtered_lines += 1;
-            return Ok(());
+        if let Some(keep_regex) = ctx.keep_lines.as_ref() {
+            if !keep_regex.is_match(&line) {
+                *ctx.filtered_lines += 1;
+                return Ok(());
+            }
+        }
+
+        if let Some(ignore_regex) = ctx.ignore_lines.as_ref() {
+            if ignore_regex.is_match(&line) {
+                *ctx.filtered_lines += 1;
+                return Ok(());
+            }
         }
     }
 
     // Track quoted-field parity for csv-like input so a record with an embedded
     // newline is never split across a batch boundary. A batch may only be cut on
     // size/unbuffered while no quoted field is open.
-    if matches!(
-        ctx.input_format,
-        crate::config::InputFormat::Csv(_)
-            | crate::config::InputFormat::Tsv(_)
-            | crate::config::InputFormat::Csvnh
-            | crate::config::InputFormat::Tsvnh
-    ) && line_flips_quote(&line)
-    {
+    if is_csv_like && line_flips_quote(&line) {
         *ctx.csv_quote_open = !*ctx.csv_quote_open;
     }
 
@@ -820,37 +829,13 @@ pub(crate) fn handle_file_aware_line(
         }
     }
 
-    if *ctx.skipped_lines_count < ctx.skip_lines {
-        *ctx.skipped_lines_count += 1;
-        *ctx.filtered_lines += 1;
-        return Ok(());
-    }
-
-    // Apply section selection if configured
-    if let Some(selector) = ctx.section_selector {
-        if !selector.should_include_line(&line) {
-            *ctx.filtered_lines += 1;
-            return Ok(());
-        }
-    }
-
-    if line.is_empty() && !matches!(ctx.input_format, crate::config::InputFormat::Line) {
-        return Ok(());
-    }
-
-    if let Some(ref keep_regex) = ctx.keep_lines {
-        if !keep_regex.is_match(&line) {
-            *ctx.filtered_lines += 1;
-            return Ok(());
-        }
-    }
-
-    if let Some(ref ignore_regex) = ctx.ignore_lines {
-        if ignore_regex.is_match(&line) {
-            *ctx.filtered_lines += 1;
-            return Ok(());
-        }
-    }
+    let is_csv_like = matches!(
+        ctx.input_format,
+        crate::config::InputFormat::Csv(_)
+            | crate::config::InputFormat::Tsv(_)
+            | crate::config::InputFormat::Csvnh
+            | crate::config::InputFormat::Tsvnh
+    );
 
     let filename_changed = match (&filename, &*ctx.last_filename) {
         (Some(new), Some(prev)) => new != prev,
@@ -858,14 +843,54 @@ pub(crate) fn handle_file_aware_line(
         _ => true,
     };
 
-    if matches!(
-        ctx.input_format,
-        crate::config::InputFormat::Csv(_)
-            | crate::config::InputFormat::Tsv(_)
-            | crate::config::InputFormat::Csvnh
-            | crate::config::InputFormat::Tsvnh
-    ) && filename_changed
-    {
+    // A new file starts fresh records; any quote parity left over from a
+    // previous file that ended mid-quote no longer applies, so its first line is
+    // not mistaken for a continuation.
+    if is_csv_like && filename_changed {
+        *ctx.csv_quote_open = false;
+    }
+
+    // While a quoted field is open across physical lines, the current line is a
+    // continuation of an in-progress record. Per-line filters must not run on it
+    // (e.g. an empty physical line inside a quoted value must survive); it goes
+    // straight into the batch so the worker's chunker can reassemble the record.
+    let mid_record = is_csv_like && *ctx.csv_quote_open;
+
+    if !mid_record {
+        if *ctx.skipped_lines_count < ctx.skip_lines {
+            *ctx.skipped_lines_count += 1;
+            *ctx.filtered_lines += 1;
+            return Ok(());
+        }
+
+        // Apply section selection if configured
+        if let Some(selector) = ctx.section_selector {
+            if !selector.should_include_line(&line) {
+                *ctx.filtered_lines += 1;
+                return Ok(());
+            }
+        }
+
+        if line.is_empty() && !matches!(ctx.input_format, crate::config::InputFormat::Line) {
+            return Ok(());
+        }
+
+        if let Some(ref keep_regex) = ctx.keep_lines {
+            if !keep_regex.is_match(&line) {
+                *ctx.filtered_lines += 1;
+                return Ok(());
+            }
+        }
+
+        if let Some(ref ignore_regex) = ctx.ignore_lines {
+            if ignore_regex.is_match(&line) {
+                *ctx.filtered_lines += 1;
+                return Ok(());
+            }
+        }
+    }
+
+    if is_csv_like && filename_changed {
         if !ctx.current_batch.is_empty() {
             send_batch_with_filenames_and_headers(
                 ctx.batch_sender,
@@ -880,10 +905,6 @@ pub(crate) fn handle_file_aware_line(
             *ctx.batch_start_line = *ctx.line_num + 1;
             *ctx.pending_deadline = None;
         }
-
-        // A new file starts fresh records; any quote parity from the previous
-        // file no longer applies.
-        *ctx.csv_quote_open = false;
 
         if let Some(parser) = create_csv_parser_for_file(ctx.input_format, &line, ctx.strict) {
             *ctx.current_headers = Some(parser.get_headers());
@@ -911,14 +932,7 @@ pub(crate) fn handle_file_aware_line(
 
     // Track quoted-field parity (csv-like only) so a record with an embedded
     // newline is never split across a batch boundary. See `handle_plain_line`.
-    if matches!(
-        ctx.input_format,
-        crate::config::InputFormat::Csv(_)
-            | crate::config::InputFormat::Tsv(_)
-            | crate::config::InputFormat::Csvnh
-            | crate::config::InputFormat::Tsvnh
-    ) && line_flips_quote(&line)
-    {
+    if is_csv_like && line_flips_quote(&line) {
         *ctx.csv_quote_open = !*ctx.csv_quote_open;
     }
 

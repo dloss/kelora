@@ -1172,6 +1172,7 @@ fn run_pipeline_sequential_internal<W: Write>(
     let mut current_csv_type_map: Option<TypeMap> = None;
     let mut last_filename: Option<String> = None;
     let mut current_input_format = config.input.format.clone();
+    let mut csv_quote_open = false;
     let mut line_num = 0usize;
     let mut skipped_lines = 0usize;
     let mut section_selector = config
@@ -1267,6 +1268,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     last_filename: &mut last_filename,
                                     current_input_format: &mut current_input_format,
                                     gap_tracker: &mut gap_tracker,
+                                    csv_quote_open: &mut csv_quote_open,
                                 },
                             )? {
                                 shutdown_requested = true;
@@ -1335,6 +1337,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     last_filename: &mut last_filename,
                                     current_input_format: &mut current_input_format,
                                     gap_tracker: &mut gap_tracker,
+                                    csv_quote_open: &mut csv_quote_open,
                                 },
                             )? {
                                 shutdown_requested = true;
@@ -1402,6 +1405,9 @@ struct ReaderContext<'a, W: Write> {
     last_filename: &'a mut Option<String>,
     current_input_format: &'a mut config::InputFormat,
     gap_tracker: &'a mut Option<crate::formatters::GapTracker>,
+    /// True while a quoted CSV/TSV field is open across physical lines, so the
+    /// continuation lines of a multi-line record bypass per-line filtering.
+    csv_quote_open: &'a mut bool,
 }
 
 fn handle_reader_message<W: Write>(
@@ -1421,6 +1427,7 @@ fn handle_reader_message<W: Write>(
         last_filename,
         current_input_format,
         gap_tracker,
+        csv_quote_open,
     } = ctx;
     match message {
         ReaderMessage::FormatDetected { detected } => {
@@ -1432,6 +1439,7 @@ fn handle_reader_message<W: Write>(
             *current_csv_headers = None;
             *current_csv_type_map = None;
             *last_filename = None;
+            *csv_quote_open = false;
             *current_input_format = detected.format.clone();
 
             // Self-gates on stats collection; also feeds the discover footer.
@@ -1457,6 +1465,7 @@ fn handle_reader_message<W: Write>(
                 last_filename,
                 current_input_format,
                 gap_tracker,
+                csv_quote_open,
             )? {
                 ProcessingResult::Continue => Ok(false),
                 ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
@@ -1478,6 +1487,7 @@ fn handle_reader_message<W: Write>(
                 last_filename,
                 current_input_format,
                 gap_tracker,
+                csv_quote_open,
             )? {
                 ProcessingResult::Continue => Ok(false),
                 ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
@@ -1533,6 +1543,7 @@ fn process_line_sequential<W: Write>(
     last_filename: &mut Option<String>,
     current_input_format: &mut config::InputFormat,
     gap_tracker: &mut Option<crate::formatters::GapTracker>,
+    csv_quote_open: &mut bool,
 ) -> Result<ProcessingResult> {
     let line = line_result?;
     *line_num += 1;
@@ -1549,121 +1560,146 @@ fn process_line_sequential<W: Write>(
         }
     }
 
-    // Skip the first N lines if configured (applied before ignore-lines and parsing)
-    if *skipped_lines < config.input.skip_lines {
-        *skipped_lines += 1;
-        // Count skipped line for stats
-        if config.output.stats.is_some() {
-            stats_add_line_filtered();
-        }
-        return Ok(ProcessingResult::Continue);
-    }
-
-    // Apply section selection if configured (filters out lines outside selected sections)
-    if let Some(selector) = section_selector {
-        if !selector.should_include_line(&line) {
-            // Count filtered line for stats
-            if config.output.stats.is_some() {
-                stats_add_line_filtered();
-            }
-            return Ok(ProcessingResult::Continue);
-        }
-    }
-
-    // Apply keep-lines filter if configured (early filtering before parsing)
-    if let Some(ref keep_regex) = config.input.keep_lines {
-        if !keep_regex.is_match(&line) {
-            // Count filtered line for stats
-            if config.output.stats.is_some() {
-                stats_add_line_filtered();
-            }
-            return Ok(ProcessingResult::Continue);
-        }
-    }
-
-    // Apply ignore-lines filter if configured (early filtering before parsing)
-    if let Some(ref ignore_regex) = config.input.ignore_lines {
-        if ignore_regex.is_match(&line) {
-            // Count filtered line for stats
-            if config.output.stats.is_some() {
-                stats_add_line_filtered();
-            }
-            return Ok(ProcessingResult::Continue);
-        }
-    }
-
     let effective_input_format = current_input_format.clone();
-
-    if line.trim().is_empty() {
-        // Only skip empty lines for structured formats, not for line format
-        if !matches!(effective_input_format, config::InputFormat::Line) {
-            return Ok(ProcessingResult::Continue);
-        }
-        // For line format, continue processing the empty line
-    }
-
-    // For CSV formats, detect file changes and reinitialize parser, or handle first line for stdin
-    if matches!(
+    let is_csv_like = matches!(
         effective_input_format,
         config::InputFormat::Csv(_)
             | config::InputFormat::Tsv(_)
             | config::InputFormat::Csvnh
             | config::InputFormat::Tsvnh
-    ) && (current_filename != *last_filename
-        || (current_filename.is_none() && current_csv_headers.is_none()))
-    {
-        // File changed, reinitialize CSV parser for this file
-        let mut temp_parser = match &effective_input_format {
-            config::InputFormat::Csv(ref field_spec) => {
-                let p = parsers::CsvParser::new_csv();
-                if let Some(ref spec) = field_spec {
-                    p.with_field_spec(spec)?
-                        .with_strict(config.processing.strict)
-                } else {
-                    p
-                }
+    );
+
+    // A new file always starts a fresh record: clear any quoted-field state left
+    // over from a previous file that ended mid-quote, so its first line is not
+    // mistaken for a continuation.
+    if is_csv_like && *csv_quote_open && current_filename != *last_filename {
+        *csv_quote_open = false;
+    }
+
+    // While a quoted CSV/TSV field is open across physical lines, the current
+    // line is a continuation of an in-progress record, not a standalone line.
+    // Per-line filters and CSV header re-init must not run on it (e.g. an empty
+    // physical line inside a quoted value must survive, not be dropped); it goes
+    // straight to the chunker, which reassembles the record.
+    let mid_record = is_csv_like && *csv_quote_open;
+
+    if !mid_record {
+        // Skip the first N lines if configured (applied before ignore-lines and parsing)
+        if *skipped_lines < config.input.skip_lines {
+            *skipped_lines += 1;
+            // Count skipped line for stats
+            if config.output.stats.is_some() {
+                stats_add_line_filtered();
             }
-            config::InputFormat::Tsv(ref field_spec) => {
-                let p = parsers::CsvParser::new_tsv();
-                if let Some(ref spec) = field_spec {
-                    p.with_field_spec(spec)?
-                        .with_strict(config.processing.strict)
-                } else {
-                    p
-                }
-            }
-            config::InputFormat::Csvnh => parsers::CsvParser::new_csv_no_headers(),
-            config::InputFormat::Tsvnh => parsers::CsvParser::new_tsv_no_headers(),
-            _ => unreachable!(),
-        };
-
-        // Initialize headers from the first line
-        let was_consumed = temp_parser.initialize_headers_from_line(&line)?;
-
-        // Get the initialized headers
-        let headers = temp_parser.get_headers();
-        let type_map = temp_parser.get_type_map();
-        *current_csv_headers = Some(headers.clone());
-        *current_csv_type_map = if type_map.is_empty() {
-            None
-        } else {
-            Some(type_map)
-        };
-        *last_filename = current_filename.clone();
-
-        replace_pipeline_parser(
-            pipeline,
-            ctx,
-            config,
-            &effective_input_format,
-            Some(headers),
-            current_csv_type_map.clone(),
-        )?;
-
-        // If the first line was consumed as a header, don't process it as data
-        if was_consumed {
             return Ok(ProcessingResult::Continue);
         }
+
+        // Apply section selection if configured (filters out lines outside selected sections)
+        if let Some(selector) = section_selector {
+            if !selector.should_include_line(&line) {
+                // Count filtered line for stats
+                if config.output.stats.is_some() {
+                    stats_add_line_filtered();
+                }
+                return Ok(ProcessingResult::Continue);
+            }
+        }
+
+        // Apply keep-lines filter if configured (early filtering before parsing)
+        if let Some(ref keep_regex) = config.input.keep_lines {
+            if !keep_regex.is_match(&line) {
+                // Count filtered line for stats
+                if config.output.stats.is_some() {
+                    stats_add_line_filtered();
+                }
+                return Ok(ProcessingResult::Continue);
+            }
+        }
+
+        // Apply ignore-lines filter if configured (early filtering before parsing)
+        if let Some(ref ignore_regex) = config.input.ignore_lines {
+            if ignore_regex.is_match(&line) {
+                // Count filtered line for stats
+                if config.output.stats.is_some() {
+                    stats_add_line_filtered();
+                }
+                return Ok(ProcessingResult::Continue);
+            }
+        }
+
+        if line.trim().is_empty() {
+            // Only skip empty lines for structured formats, not for line format
+            if !matches!(effective_input_format, config::InputFormat::Line) {
+                return Ok(ProcessingResult::Continue);
+            }
+            // For line format, continue processing the empty line
+        }
+
+        // For CSV formats, detect file changes and reinitialize parser, or handle first line for stdin
+        if is_csv_like
+            && (current_filename != *last_filename
+                || (current_filename.is_none() && current_csv_headers.is_none()))
+        {
+            // File changed, reinitialize CSV parser for this file
+            let mut temp_parser = match &effective_input_format {
+                config::InputFormat::Csv(ref field_spec) => {
+                    let p = parsers::CsvParser::new_csv();
+                    if let Some(ref spec) = field_spec {
+                        p.with_field_spec(spec)?
+                            .with_strict(config.processing.strict)
+                    } else {
+                        p
+                    }
+                }
+                config::InputFormat::Tsv(ref field_spec) => {
+                    let p = parsers::CsvParser::new_tsv();
+                    if let Some(ref spec) = field_spec {
+                        p.with_field_spec(spec)?
+                            .with_strict(config.processing.strict)
+                    } else {
+                        p
+                    }
+                }
+                config::InputFormat::Csvnh => parsers::CsvParser::new_csv_no_headers(),
+                config::InputFormat::Tsvnh => parsers::CsvParser::new_tsv_no_headers(),
+                _ => unreachable!(),
+            };
+
+            // Initialize headers from the first line
+            let was_consumed = temp_parser.initialize_headers_from_line(&line)?;
+
+            // Get the initialized headers
+            let headers = temp_parser.get_headers();
+            let type_map = temp_parser.get_type_map();
+            *current_csv_headers = Some(headers.clone());
+            *current_csv_type_map = if type_map.is_empty() {
+                None
+            } else {
+                Some(type_map)
+            };
+            *last_filename = current_filename.clone();
+
+            replace_pipeline_parser(
+                pipeline,
+                ctx,
+                config,
+                &effective_input_format,
+                Some(headers),
+                current_csv_type_map.clone(),
+            )?;
+
+            // If the first line was consumed as a header, don't process it as data
+            if was_consumed {
+                return Ok(ProcessingResult::Continue);
+            }
+        }
+    }
+
+    // Update quoted-field parity for csv-like input before the line is handed to
+    // the chunker (which moves it). A line with an odd number of double quotes
+    // flips whether a quoted field is open across the following physical lines.
+    if is_csv_like && !crate::parsers::csv::csv_record_complete(&line) {
+        *csv_quote_open = !*csv_quote_open;
     }
 
     // Update metadata with filename tracking

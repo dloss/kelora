@@ -130,6 +130,46 @@ fn csv_unterminated_quote_at_eof_errors_in_both_modes() {
 }
 
 #[test]
+fn csv_blank_line_inside_quoted_field_is_preserved() {
+    // An empty physical line inside a quoted value is part of the record, not a
+    // standalone blank line to drop. Sequential and parallel must agree.
+    let input = "a,b\n\"x\",\"line1\n\nline3\"\np,q\n";
+    for args in [
+        &["-f", "csv", "-F", "json"][..],
+        &["-f", "csv", "-F", "json", "-P"][..],
+    ] {
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(args, input);
+        assert_eq!(exit_code, 0, "{args:?} stdout: {stdout}");
+        let lines: Vec<&str> = stdout.lines().collect();
+        assert_eq!(lines.len(), 2, "{args:?} stdout: {stdout}");
+        assert_eq!(lines[0], r#"{"a":"x","b":"line1\n\nline3"}"#, "{args:?}");
+        assert_eq!(lines[1], r#"{"a":"p","b":"q"}"#, "{args:?}");
+    }
+}
+
+#[test]
+fn csv_ignore_lines_does_not_eat_record_continuation() {
+    // --ignore-lines applies per physical line, but a line *inside* an open
+    // quoted field is a continuation and must not be filtered out, or the record
+    // is corrupted. Both modes must keep the whole value.
+    let input = "a,b\n\"x\",\"keep\nDEBUG stuff\nmore\"\np,q\n";
+    for args in [
+        &["-f", "csv", "-F", "json", "--ignore-lines", "DEBUG"][..],
+        &["-f", "csv", "-F", "json", "-P", "--ignore-lines", "DEBUG"][..],
+    ] {
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(args, input);
+        assert_eq!(exit_code, 0, "{args:?} stdout: {stdout}");
+        let lines: Vec<&str> = stdout.lines().collect();
+        assert_eq!(lines.len(), 2, "{args:?} stdout: {stdout}");
+        assert_eq!(
+            lines[0], r#"{"a":"x","b":"keep\nDEBUG stuff\nmore"}"#,
+            "{args:?}"
+        );
+        assert_eq!(lines[1], r#"{"a":"p","b":"q"}"#, "{args:?}");
+    }
+}
+
+#[test]
 fn keys_hint_not_raised_for_exec_created_field() {
     let input = "{\"level\":\"INFO\"}\n{\"level\":\"WARN\"}\n";
     let (stdout, stderr, exit_code) = run_kelora_with_input(
