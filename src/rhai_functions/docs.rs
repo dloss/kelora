@@ -192,7 +192,7 @@ abs(x)                               Absolute value of number
 clamp(value, min, max)               Constrain value to be within min/max range
 floor(x)                             Round down to nearest integer
 mod(a, b) / a % b                    Modulo operation with division-by-zero protection
-rand()                               Random float between 0 and 1
+rand()                               Random float between 0 and 1 (set KELORA_SEED for reproducible output)
 rand_int(min, max)                   Random integer between min and max (inclusive)
 round(x)                             Round to nearest integer
 sample_every(n)                      Sample every Nth event (returns true on Nth, 2Nth, 3Nth calls)

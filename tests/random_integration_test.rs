@@ -5,6 +5,17 @@ use tempfile::NamedTempFile;
 
 /// Helper function to run kelora with a temporary file
 fn run_kelora_with_file(args: &[&str], file_content: &str) -> (String, String, i32) {
+    run_kelora_with_file_env(args, file_content, &[])
+}
+
+/// Like `run_kelora_with_file`, but with extra environment variables set on the
+/// child process. Used to pin `KELORA_SEED` so randomness-dependent tests are
+/// deterministic instead of probabilistically flaky.
+fn run_kelora_with_file_env(
+    args: &[&str],
+    file_content: &str,
+    envs: &[(&str, &str)],
+) -> (String, String, i32) {
     let mut temp_file = NamedTempFile::new().expect("Failed to create temp file");
     temp_file
         .write_all(file_content.as_bytes())
@@ -19,6 +30,7 @@ fn run_kelora_with_file(args: &[&str], file_content: &str) -> (String, String, i
 
     let output = Command::new(binary_path)
         .args(&full_args)
+        .envs(envs.iter().copied())
         .output()
         .expect("Failed to execute kelora");
 
@@ -161,8 +173,11 @@ fn test_random_sampling_workflow() {
         .collect::<Vec<_>>()
         .join("\n");
 
-    // Sample approximately 10% of events
-    let (stdout, stderr, exit_code) = run_kelora_with_file(
+    // Sample approximately 10% of events. A fixed KELORA_SEED makes rand()
+    // deterministic so this test asserts an exact result instead of relying on
+    // probability (an unseeded run can, very rarely, sample zero events and
+    // flake on the "not empty" assertion).
+    let (stdout, stderr, exit_code) = run_kelora_with_file_env(
         &[
             "-f",
             "json",
@@ -172,6 +187,7 @@ fn test_random_sampling_workflow() {
             "rand() < 0.1",
         ],
         &input,
+        &[("KELORA_SEED", "42")],
     );
 
     assert_eq!(
@@ -186,11 +202,12 @@ fn test_random_sampling_workflow() {
         .filter(|l| !l.is_empty())
         .collect();
 
-    // Should be roughly 10% (allowing for randomness)
-    assert!(lines.len() <= 100, "Should not have more events than input");
-    assert!(
-        !lines.is_empty(),
-        "Should have at least some events (probabilistically)"
+    // With KELORA_SEED=42 the sampled count is deterministic (~10% of 100).
+    assert_eq!(
+        lines.len(),
+        9,
+        "Seeded rand() < 0.1 over 100 events should sample exactly 9. stderr: {}",
+        stderr
     );
 
     // Verify each line is valid JSON

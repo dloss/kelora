@@ -1189,6 +1189,8 @@ e.random_id = rand_int(1000, 9999)                    // Random ID assignment
 // if sample_every(10) { e.sampled = true }           // Better: counter-based
 ```
 
+Set the `KELORA_SEED` environment variable to a non-negative integer to make `rand()`, `rand_int()`, and `sample_prob()` reproducible (e.g. for tests or repeatable sampling). Reproducibility holds in sequential mode; under `--parallel`, thread scheduling still affects which worker consumes which value.
+
 #### `sample_every(n)`
 Sample every Nth event - returns `true` on calls N, 2N, 3N, etc.
 

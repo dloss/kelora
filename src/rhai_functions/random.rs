@@ -3,7 +3,26 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
 
-static RNG: LazyLock<Mutex<fastrand::Rng>> = LazyLock::new(|| Mutex::new(fastrand::Rng::new()));
+/// Global RNG backing `rand()`, `rand_int()`, and `sample_prob()`.
+///
+/// Seeded from entropy by default. Set `KELORA_SEED` to a non-negative integer
+/// for reproducible output (e.g. in tests or repeatable sampling). Mirrors the
+/// `KELORA_SECRET` convention used for stable pseudonym hashing. Reproducibility
+/// holds in sequential mode; under `--parallel`, thread scheduling still affects
+/// which worker consumes which value.
+static RNG: LazyLock<Mutex<fastrand::Rng>> = LazyLock::new(|| {
+    let rng = match std::env::var("KELORA_SEED") {
+        Ok(s) => match s.trim().parse::<u64>() {
+            Ok(seed) => fastrand::Rng::with_seed(seed),
+            Err(_) => {
+                eprintln!("kelora: KELORA_SEED must be a non-negative integer; using random seed");
+                fastrand::Rng::new()
+            }
+        },
+        Err(_) => fastrand::Rng::new(),
+    };
+    Mutex::new(rng)
+});
 
 // Thread-local counters for sample_every() - each N value gets its own counter
 thread_local! {
