@@ -3697,7 +3697,6 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>pattern
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pattern=&#39;User &lt;ipv4&gt; sent email to &lt;email&gt; with ID &lt;uuid&gt;&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora hint: -k/--keys names field &#39;pattern&#39;, which was never present in the input. Present fields: msg.
 </code></pre></div>
 </div>
 </div>
@@ -3905,7 +3904,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>PROD-A,50,99.99,4274.79
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>PROD-B,25,149.99,3374.78
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>PROD-C,100,49.99,4999.0
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora hint: -k/--keys names fields never present in the input: sku, quantity, unit_price, final_price. Present fields: api, request_id, response, timestamp.
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -3937,7 +3935,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:05:00Z&#39; user=&#39;user456&#39; role=&#39;user&#39; expires=1732157200
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:10:00Z&#39; user=&#39;user789&#39; role=&#39;guest&#39; expires=1700000000
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:15:00Z&#39; user=&#39;user111&#39; role=&#39;moderator&#39; expires=1732160800
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora hint: -k/--keys names fields never present in the input: user, role, expires. Present fields: status, timestamp, token.
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -3965,7 +3962,6 @@ timestamp, date, time, num.</p>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>request_id=&#39;req-abc123&#39; user=&#39;alice&#39; expires_in=-32000000
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>request_id=&#39;req-def456&#39; user=&#39;bob&#39; expires_in=-27000000
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora hint: -k/--keys names field &#39;expires_in&#39;, which was never present in the input. Present fields: endpoint, error, level, request_id, status, timestamp, token, user.
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -3992,7 +3988,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>content
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>content=&#39;secret content&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora hint: -k/--keys names field &#39;content&#39;, which was never present in the input. Present fields: log.
 </code></pre></div>
 </div>
 </div>
@@ -4008,7 +4003,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,message
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15 10:00:00&#39; level=&#39;INFO&#39; message=&#39;User logged in&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora hint: -k/--keys names fields never present in the input: timestamp, level, message. Present fields: line.
 </code></pre></div>
 </div>
 </div>
@@ -4053,7 +4047,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>error=&#39;connection timed out&#39; similarity=2
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>error=&#39;conecttion timeout&#39; similarity=2
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>error=&#39;conection timeot&#39; similarity=2
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora hint: -k/--keys names field &#39;similarity&#39;, which was never present in the input. Present fields: error, service, timestamp.
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -4101,7 +4094,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>user003,653974f7ada0b4cb371ab7c8b1aaeaf6ba2855f89b2b0a9735b664fec7fdbc89,cedd532a6ab34757
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>user004,80905964842ce834af09045642241f609661deefa60e5e926235b3306582725e,14d867ef05bedac8
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>user005,d1d8233690c21cb0eba4915374178b71cafa23599a3d1961beaf1bac2faf0b64,30fe5cfbd1ca7cae
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora hint: -k/--keys names fields never present in the input: sha256, xxh3. Present fields: action, email, ip, user_id.
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -4143,7 +4135,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kC9USgAtR_OvbKPgcs6kHAp1,jvEOhxqnt1nxVTyK0REoUPRU,/home,15
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>KU12CR0zP6NrFyh1qu_mhecX,21fD9S_Mu5xWb43ciUQfQnYq,/checkout,90
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>63fKdSofkibwUyAVggSVZHgd,R-lgjpv6mIcOLG0zj66CVbrS,/home,20
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>kelora hint: -k/--keys names fields never present in the input: anon_user, anon_session. Present fields: duration, email, page, session_id.
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -4174,7 +4165,6 @@ timestamp, date, time, num.</p>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-k<span class="w"> </span>line,error_data
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>line=&#39;2024-01-15 ERROR: Failed with response: {&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}&#39; error_data={&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora hint: -k/--keys names field &#39;error_data&#39;, which was never present in the input. Present fields: line.
 </code></pre></div>
 </div>
 </div>
@@ -4519,7 +4509,6 @@ you can still fall back to manual extraction per event:</p>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2024-01-15T10:07:00Z&#39; user=&#39;bob&#39; user_login_count=3
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:08:00Z&#39; user=&#39;charlie&#39; user_login_count=2
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2024-01-15T10:09:00Z&#39; user=&#39;alice&#39; user_login_count=5
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora hint: -k/--keys names field &#39;user_login_count&#39;, which was never present in the input. Did you mean &#39;user&#39;?
 </code></pre></div>
 </div>
 <div class="tabbed-block">

@@ -3263,7 +3263,6 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  examples/basics.jsonl:2: Missing field during expression evaluation. Check field names, or use e.has(...) / e.get_path(...) when the field is optional.
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  examples/basics.jsonl:3: Missing field during expression evaluation. Check field names, or use e.has(...) / e.get_path(...) when the field is optional.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  [+2 more. Use -v to see each error or --no-diagnostics to suppress this summary.]
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora hint: -k/--keys names field &#39;duration_s&#39;, which was never present in the input. Did you mean &#39;duration_ms&#39;?
 </code></pre></div>
 <p><strong>Key insight:</strong> <code>--exec</code> runs <strong>before</strong> <code>--filter</code>, so the new field is available for filtering.</p>
 <h3 id="modify-existing-fields">Modify Existing Fields<a class="headerlink" href="#modify-existing-fields" title="Permanent link">&para;</a></h3>
@@ -3297,7 +3296,6 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:01:30Z&#39; service=&#39;database&#39; error_type=&#39;Query&#39; message=&#39;Query timeout&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; service=&#39;auth&#39; error_type=&#39;Account&#39; message=&#39;Account locked&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora hint: -k/--keys names field &#39;error_type&#39;, which was never present in the input. Run --discover to list fields.
 </code></pre></div>
 <p><strong>Common string methods:</strong></p>
 <ul>
@@ -3323,7 +3321,6 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;database&#39; message=&#39;Query timeout&#39;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>level=&#39;INFO&#39; severity=&#39;low&#39; service=&#39;api&#39; message=&#39;Request received&#39;
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>level=&#39;ERROR&#39; severity=&#39;high&#39; service=&#39;auth&#39; message=&#39;Account locked&#39;
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora hint: -k/--keys names field &#39;severity&#39;, which was never present in the input. Did you mean &#39;service&#39;?
 </code></pre></div>
 <p><strong>Syntax:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>if condition {
@@ -3349,7 +3346,6 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>id=&#39;123&#39; id_num=123 status=&#39;200&#39; status_num=200 invalid=&#39;abc&#39; invalid_num=999
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>id=&#39;456&#39; id_num=456 status=&#39;404&#39; status_num=404 invalid=&#39;xyz&#39; invalid_num=999
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora hint: -k/--keys names fields never present in the input: id_num, status_num, invalid_num. Present fields: id, invalid, status.
 </code></pre></div>
 <p><strong>Note:</strong> Multiple statements in one <code>-e</code> are separated by semicolons and share the same scope. Use this when operations are related or when you need to share <code>let</code> variables.</p>
 <p><strong>Safe conversion functions:</strong></p>
@@ -3380,7 +3376,6 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  examples/basics.jsonl:2: Missing field during expression evaluation. Check field names, or use e.has(...) / e.get_path(...) when the field is optional.
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  examples/basics.jsonl:3: Missing field during expression evaluation. Check field names, or use e.has(...) / e.get_path(...) when the field is optional.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  [+2 more. Use -v to see each error or --no-diagnostics to suppress this summary.]
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora hint: -k/--keys names field &#39;duration_s&#39;, which was never present in the input. Did you mean &#39;duration_ms&#39;?
 </code></pre></div>
 <p><strong>Rule:</strong> Fields must exist before you filter on them. Scripts run in CLI order.</p>
 <hr />
@@ -3397,7 +3392,6 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>service=&#39;database&#39; slow=true message=&#39;Query timeout&#39;
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>service=&#39;api&#39; slow=false message=&#39;Request received&#39;
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>service=&#39;auth&#39; slow=false message=&#39;Account locked&#39;
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora hint: -k/--keys names field &#39;slow&#39;, which was never present in the input. Run --discover to list fields.
 </code></pre></div>
 <p><strong>Pattern:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>if e.has(&quot;field_name&quot;) {
@@ -3454,7 +3448,6 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>service=&#39;database&#39; level=&#39;ERROR&#39; is_error=true is_slow=true message=&#39;Query timeout&#39;
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>service=&#39;auth&#39; level=&#39;ERROR&#39; is_error=true is_slow=false message=&#39;Account locked&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora hint: -k/--keys names fields never present in the input: is_error, is_slow. Run --discover to list fields.
 </code></pre></div>
 <p><strong>Pattern:</strong> Build up computed fields step-by-step, then filter on the final result.</p>
 <hr />

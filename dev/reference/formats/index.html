@@ -2722,6 +2722,12 @@
 <ul>
 <li>Quoted fields supported: <code>"value, with, commas"</code></li>
 <li>Escaped quotes: <code>"value with ""quotes"""</code></li>
+<li>Embedded newlines inside quoted fields (RFC 4180) are supported: a record that
+  spans several physical lines, e.g. <code>"a","line1&lt;newline&gt;line2"</code>, is reassembled
+  into a single event before parsing. This reassembly is <strong>sequential-only</strong>;
+  under <code>-P</code>/<code>--parallel</code> (which reads line-by-line) such a record is reported as
+  an <code>Unterminated quoted field</code> parse error rather than silently corrupted, so
+  process embedded-newline CSV without <code>--parallel</code>.</li>
 <li>Ragged rows are preserved, not dropped: columns beyond the header (or beyond
   the first row in header-less mode) are kept under positional names (<code>c5</code>,
   <code>c6</code>, ... counted from 1), and rows with fewer columns leave the trailing
