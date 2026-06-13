@@ -538,7 +538,8 @@ fn maybe_print_zero_results_hint(
     // the first that applies, so the hint stays focused on a single culprit.
     let hint = level_filter_zero_hint(config, stats)
         .or_else(|| timestamp_filter_zero_hint(config, stats))
-        .or_else(|| filter_field_zero_hint(config, stats));
+        .or_else(|| filter_field_zero_hint(config, stats))
+        .or_else(|| filter_numeric_string_hint(config, stats));
 
     if let Some(message) = hint {
         let formatted = config
@@ -695,6 +696,43 @@ fn filter_field_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
     ))
 }
 
+/// Hint when a `--filter` compares a *seen* field for equality against a
+/// quoted, numeric-looking literal (`e.status == "404"`). In Rhai a number never
+/// equals a string, so if the field holds numbers the quotes make the test
+/// always false and the result is silently empty — the single most common
+/// beginner mistake on typed (JSON/CSV-typed) data. We only reach here when
+/// every event was dropped and the field *was* seen (so it isn't a typo), and we
+/// phrase the fix conditionally because a genuine string field compared to a
+/// numeric-looking value is legitimately empty too.
+fn filter_numeric_string_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+) -> Option<String> {
+    // `e.field == "123"` / `e.field == "12.5"` — a numeric-looking double-quoted
+    // literal (Rhai strings are double-quoted). Captures the field and literal.
+    let re = regex::Regex::new(r#"\be\.([A-Za-z_][A-Za-z0-9_]*)\s*==\s*"(-?\d[\d_]*(?:\.\d+)?)""#)
+        .expect("valid numeric-string filter regex");
+
+    for stage in &config.processing.stages {
+        let ScriptStageType::Filter { script, .. } = stage else {
+            continue;
+        };
+        for captures in re.captures_iter(script) {
+            let field = captures.get(1)?.as_str();
+            // Only when the field really exists; an unseen field is already
+            // covered (more precisely) by filter_field_zero_hint.
+            if !stats.discovered_keys.contains(field) {
+                continue;
+            }
+            let literal = captures.get(2)?.as_str();
+            return Some(format!(
+                "0 events matched. Filter compares e.{field} to the string \"{literal}\". If e.{field} holds numbers, the quotes force a string-vs-number comparison that is always false — drop them: e.{field} == {literal}. Rerun with -s to check the field's type."
+            ));
+        }
+    }
+    None
+}
+
 /// Hint when `-k/--keys` or `--exclude-keys` names a field that never appeared
 /// in any event across the whole stream. A field present in only some rows is
 /// legitimate in heterogeneous logs; "never present anywhere" is the typo
@@ -743,6 +781,63 @@ fn maybe_print_key_typo_hint(
             .to_string();
         stderr.writeln(&formatted).unwrap_or(());
     }
+}
+
+/// Hint when key selection (`-k/--keys` or `--exclude-keys`) silently dropped
+/// events because it left them with no fields. This is the quiet data-loss case:
+/// the requested key exists in *some* rows but not others, so the rows that lack
+/// it become empty and are removed — yet they're reported only as "filtered",
+/// even though no `--filter`/`--levels`/time gate ran. A run where every row
+/// carries the key drops nothing and stays silent.
+fn maybe_print_key_drop_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+    stderr: &mut SafeStderr,
+) {
+    let dropped = stats.events_dropped_empty_keys;
+    if dropped == 0 {
+        return;
+    }
+
+    // When a requested `-k` key was never present anywhere, the rows didn't empty
+    // because of heterogeneity — the name is a typo, which maybe_print_key_typo_hint
+    // already explains more precisely. Defer to it instead of adding a noisier,
+    // less-accurate second line. (A field is "seen" if it appeared in the input or
+    // was produced by a script stage, matching the typo hint's own test.)
+    if !config.output.keys.is_empty() {
+        let known_keys: BTreeSet<&String> = stats
+            .discovered_keys
+            .iter()
+            .chain(stats.discovered_keys_output.iter())
+            .collect();
+        if config
+            .output
+            .keys
+            .iter()
+            .any(|key| !known_keys.contains(key))
+        {
+            return;
+        }
+    }
+
+    let plural = if dropped == 1 { "" } else { "s" };
+
+    let message = if !config.output.keys.is_empty() {
+        format!(
+            "-k/--keys dropped {dropped} event{plural} that had none of the selected fields ({}): emptied rows are removed and counted as filtered, even though no --filter was given. Widen --keys, or run -d/--discover to see how often each field is missing.",
+            config.output.keys.join(", ")
+        )
+    } else {
+        format!(
+            "--exclude-keys dropped {dropped} event{plural} by removing every field they had: emptied rows are removed and counted as filtered. Exclude fewer fields so some remain."
+        )
+    };
+
+    let formatted = config
+        .format_hint_message(&message)
+        .trim_start_matches('\n')
+        .to_string();
+    stderr.writeln(&formatted).unwrap_or(());
 }
 
 /// Build the typo hint for one key flag, or `None` when every requested key was
@@ -1282,6 +1377,9 @@ fn handle_pipeline_success(
                 // Fires independently of the zero-results hint: an exclude-key
                 // typo leaves output intact but silently fails to drop the field.
                 maybe_print_key_typo_hint(config, s, stderr);
+                // Fires when a present-in-some-rows key emptied (and dropped)
+                // other rows — silent data loss reported only as "filtered".
+                maybe_print_key_drop_hint(config, s, stderr);
                 // With --stats the ragged-row count is already in the stats block.
                 if config.output.stats.is_none() {
                     maybe_print_csv_shape_hint(config, s, stderr);

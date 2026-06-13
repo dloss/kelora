@@ -216,6 +216,7 @@ impl GlobalTracker {
         stats.events_created += internal_stats.events_created as usize;
         stats.events_output += internal_stats.events_output as usize;
         stats.events_filtered += internal_stats.events_filtered as usize;
+        stats.events_dropped_empty_keys += internal_stats.events_dropped_empty_keys as usize;
         stats
             .discovered_levels
             .extend(internal_stats.discovered_levels.iter().cloned());
