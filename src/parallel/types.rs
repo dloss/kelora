@@ -31,6 +31,9 @@ pub(crate) struct PlainLineContext<'a> {
     pub ignore_lines: &'a Option<regex::Regex>,
     pub keep_lines: &'a Option<regex::Regex>,
     pub pending_deadline: &'a mut Option<Instant>,
+    /// True while a quoted CSV/TSV field is open across physical lines, so the
+    /// batcher can defer a size-based cut until the record is complete.
+    pub csv_quote_open: &'a mut bool,
 }
 
 /// Context for processing file-aware lines (with filename tracking)
@@ -56,6 +59,9 @@ pub(crate) struct FileAwareLineContext<'a> {
     pub current_headers: &'a mut Option<Vec<String>>,
     pub current_type_map: &'a mut Option<TypeMap>,
     pub last_filename: &'a mut Option<String>,
+    /// True while a quoted CSV/TSV field is open across physical lines, so the
+    /// batcher can defer a size-based cut until the record is complete.
+    pub csv_quote_open: &'a mut bool,
 }
 
 /// Configuration for batcher thread - groups all configuration parameters

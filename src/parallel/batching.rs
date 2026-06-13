@@ -14,6 +14,13 @@ use super::types::{
 };
 use crate::parsers::type_conversion::TypeMap;
 
+/// True when a physical line carries an odd number of double quotes, i.e. it
+/// flips whether we are inside a quoted CSV/TSV field. Mirrors the parity logic
+/// in `CsvChunker` so the batcher and the worker chunker agree on record bounds.
+fn line_flips_quote(line: &str) -> bool {
+    line.bytes().filter(|&b| b == b'"').count() % 2 == 1
+}
+
 /// Plain IO reader thread - reads from stdin or a single reader
 pub(crate) fn plain_io_reader_thread<R: std::io::BufRead>(
     mut reader: R,
@@ -123,6 +130,7 @@ pub(crate) fn batcher_thread(
     let mut pending_deadline: Option<Instant> = None;
     let mut skipped_lines_count = 0usize;
     let mut filtered_lines = 0usize;
+    let mut csv_quote_open = false;
     let mut section_selector = config
         .section_config
         .map(crate::pipeline::SectionSelector::new);
@@ -133,7 +141,10 @@ pub(crate) fn batcher_thread(
         if let Some(deadline) = pending_deadline {
             let now = Instant::now();
             if deadline <= now {
-                if !current_batch.is_empty() {
+                // Hold a partial batch open while a quoted field spans physical
+                // lines: cutting here would split one logical record across two
+                // batches, which separate workers can't reassemble.
+                if !current_batch.is_empty() && !csv_quote_open {
                     send_batch(
                         &config.batch_sender,
                         &mut current_batch,
@@ -201,6 +212,7 @@ pub(crate) fn batcher_thread(
                                     ignore_lines: &config.ignore_lines,
                                     keep_lines: &config.keep_lines,
                                     pending_deadline: &mut pending_deadline,
+                                    csv_quote_open: &mut csv_quote_open,
                                 },
                             )?;
 
@@ -252,7 +264,9 @@ pub(crate) fn batcher_thread(
                     }
                 }
                 recv(timeout) -> _ => {
-                    if !current_batch.is_empty() {
+                    // Defer the timeout cut while a quoted field is open (see the
+                    // deadline-expiry branch above): the record isn't whole yet.
+                    if !current_batch.is_empty() && !csv_quote_open {
                         send_batch(
                             &config.batch_sender,
                             &mut current_batch,
@@ -318,6 +332,7 @@ pub(crate) fn batcher_thread(
                                     ignore_lines: &config.ignore_lines,
                                     keep_lines: &config.keep_lines,
                                     pending_deadline: &mut pending_deadline,
+                                    csv_quote_open: &mut csv_quote_open,
                                 },
                             )?;
 
@@ -406,6 +421,7 @@ pub(crate) fn file_aware_batcher_thread(
     let mut last_filename: Option<String> = None;
     let mut current_headers: Option<Vec<String>> = None;
     let mut current_type_map: Option<TypeMap> = None;
+    let mut csv_quote_open = false;
     let mut section_selector = section_config.map(crate::pipeline::SectionSelector::new);
 
     let ctrl_rx = ctrl_rx;
@@ -414,7 +430,10 @@ pub(crate) fn file_aware_batcher_thread(
         if let Some(deadline) = pending_deadline {
             let now = Instant::now();
             if deadline <= now {
-                if !current_batch.is_empty() {
+                // Hold a partial batch open while a quoted field spans physical
+                // lines (see the plain batcher): a split record can't be
+                // reassembled across batches by separate workers.
+                if !current_batch.is_empty() && !csv_quote_open {
                     send_batch_with_filenames_and_headers(
                         &batch_sender,
                         &mut current_batch,
@@ -494,6 +513,7 @@ pub(crate) fn file_aware_batcher_thread(
                                 current_headers: &mut current_headers,
                                 current_type_map: &mut current_type_map,
                                 last_filename: &mut last_filename,
+                                csv_quote_open: &mut csv_quote_open,
                             };
                             handle_file_aware_line(line, filename, ctx)?;
 
@@ -554,7 +574,9 @@ pub(crate) fn file_aware_batcher_thread(
                     }
                 }
                 recv(timeout) -> _ => {
-                    if !current_batch.is_empty() {
+                    // Defer the timeout cut while a quoted field is open: the
+                    // record isn't whole yet (see the plain batcher).
+                    if !current_batch.is_empty() && !csv_quote_open {
                         send_batch_with_filenames_and_headers(
                             &batch_sender,
                             &mut current_batch,
@@ -632,6 +654,7 @@ pub(crate) fn file_aware_batcher_thread(
                                 current_headers: &mut current_headers,
                                 current_type_map: &mut current_type_map,
                                 last_filename: &mut last_filename,
+                                csv_quote_open: &mut csv_quote_open,
                             };
                             handle_file_aware_line(line, filename, ctx)?;
 
@@ -746,9 +769,25 @@ pub(crate) fn handle_plain_line(line: String, ctx: PlainLineContext<'_>) -> Resu
         }
     }
 
+    // Track quoted-field parity for csv-like input so a record with an embedded
+    // newline is never split across a batch boundary. A batch may only be cut on
+    // size/unbuffered while no quoted field is open.
+    if matches!(
+        ctx.input_format,
+        crate::config::InputFormat::Csv(_)
+            | crate::config::InputFormat::Tsv(_)
+            | crate::config::InputFormat::Csvnh
+            | crate::config::InputFormat::Tsvnh
+    ) && line_flips_quote(&line)
+    {
+        *ctx.csv_quote_open = !*ctx.csv_quote_open;
+    }
+
     ctx.current_batch.push(line);
 
-    if ctx.current_batch.len() >= ctx.batch_size || ctx.batch_timeout.is_zero() {
+    let record_complete = !*ctx.csv_quote_open;
+    if record_complete && (ctx.current_batch.len() >= ctx.batch_size || ctx.batch_timeout.is_zero())
+    {
         send_batch(
             ctx.batch_sender,
             ctx.current_batch,
@@ -842,6 +881,10 @@ pub(crate) fn handle_file_aware_line(
             *ctx.pending_deadline = None;
         }
 
+        // A new file starts fresh records; any quote parity from the previous
+        // file no longer applies.
+        *ctx.csv_quote_open = false;
+
         if let Some(parser) = create_csv_parser_for_file(ctx.input_format, &line, ctx.strict) {
             *ctx.current_headers = Some(parser.get_headers());
             let type_map = parser.get_type_map();
@@ -866,10 +909,25 @@ pub(crate) fn handle_file_aware_line(
         *ctx.last_filename = filename.clone();
     }
 
+    // Track quoted-field parity (csv-like only) so a record with an embedded
+    // newline is never split across a batch boundary. See `handle_plain_line`.
+    if matches!(
+        ctx.input_format,
+        crate::config::InputFormat::Csv(_)
+            | crate::config::InputFormat::Tsv(_)
+            | crate::config::InputFormat::Csvnh
+            | crate::config::InputFormat::Tsvnh
+    ) && line_flips_quote(&line)
+    {
+        *ctx.csv_quote_open = !*ctx.csv_quote_open;
+    }
+
     ctx.current_batch.push(line);
     ctx.current_filenames.push(filename);
 
-    if ctx.current_batch.len() >= ctx.batch_size || ctx.batch_timeout.is_zero() {
+    let record_complete = !*ctx.csv_quote_open;
+    if record_complete && (ctx.current_batch.len() >= ctx.batch_size || ctx.batch_timeout.is_zero())
+    {
         send_batch_with_filenames_and_headers(
             ctx.batch_sender,
             ctx.current_batch,

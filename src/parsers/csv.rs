@@ -329,17 +329,17 @@ impl CsvParser {
 
     /// Parse a data line using the initialized headers
     fn parse_data_line(&self, line: &str) -> Result<Event> {
-        // A record that ends inside an open quoted field is incomplete. In
-        // sequential mode CsvChunker reassembles such records before we ever get
-        // here, so reaching this guard means either genuinely malformed input or a
-        // multi-line quoted field that was split by parallel batching (which reads
-        // one physical line at a time). Erroring is far better than the csv crate's
-        // silent fallback, which would swallow the run-on field and emit corrupt,
+        // A record that ends inside an open quoted field is incomplete.
+        // CsvChunker reassembles multi-line quoted fields before we ever get here
+        // (in both sequential and parallel mode), so reaching this guard means the
+        // input is genuinely malformed: a quote was opened and never closed before
+        // end of input. Erroring is far better than the csv crate's silent
+        // fallback, which would swallow the run-on field and emit corrupt,
         // misaligned columns.
         if !csv_record_complete(line) {
             return Err(anyhow::anyhow!(
-                "Unterminated quoted field (the value likely contains an embedded newline). \
-                 Multi-line quoted fields are reassembled in sequential mode; rerun without --parallel."
+                "Unterminated quoted field: a quoted value was opened but never closed \
+                 before end of input. Check for an unbalanced double quote (\")."
             ));
         }
 

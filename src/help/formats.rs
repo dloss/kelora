@@ -45,8 +45,7 @@ csv / tsv / csvnh / tsvnh
   from 1); rows with fewer columns leave the trailing fields absent. Both
   are counted and reported as a hint; --strict rejects ragged rows instead.
   Quoted fields may contain embedded newlines (RFC 4180); such records are
-  reassembled before parsing. Note: this reassembly is sequential-only — with
-  -P/--parallel a record split by a newline is reported as a parse error.
+  reassembled before parsing in both sequential and -P/--parallel mode.
 
 cols:<spec>
   Custom column-based parsing with whitespace or custom separator

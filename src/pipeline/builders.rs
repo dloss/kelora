@@ -1033,10 +1033,16 @@ impl PipelineBuilder {
             discovered_keys_output: std::collections::HashSet::new(),
         };
 
-        // Create chunker based on multiline configuration
+        // Create chunker based on multiline configuration. Mirrors `build`: an
+        // explicit --multiline strategy wins; otherwise csv-like input gets the
+        // quote-aware chunker so embedded-newline records that span physical lines
+        // *within a batch* are reassembled before parsing. The batcher guarantees
+        // batches never end mid-record, so the chunker never has to span batches.
         let chunker = if let Some(ref multiline_config) = self.multiline {
             create_multiline_chunker(multiline_config, self.input_format.clone())
                 .map_err(|e| anyhow::anyhow!("Failed to create multiline chunker: {}", e))?
+        } else if self.input_format.is_csv_like() {
+            Box::new(CsvChunker::new()) as Box<dyn super::Chunker>
         } else {
             Box::new(SimpleChunker) as Box<dyn super::Chunker>
         };

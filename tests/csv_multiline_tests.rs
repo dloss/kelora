@@ -53,22 +53,80 @@ fn csv_multiline_strict_does_not_misreport_ragged_rows() {
 }
 
 #[test]
-fn csv_multiline_parallel_errors_clearly_instead_of_corrupting() {
-    // Parallel reads line-by-line; the parser's completeness guard turns what was
-    // silent corruption into a clear, counted parse error pointing at sequential
-    // mode. With --strict it is fatal.
-    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+fn csv_multiline_parallel_matches_sequential() {
+    // Parallel reassembles embedded-newline records too: the batcher keeps whole
+    // records inside a batch and the worker's CsvChunker stitches the physical
+    // lines back together, so output matches sequential mode exactly.
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "csv", "-F", "json", "-P"], RFC4180_MULTILINE);
+    assert_eq!(exit_code, 0, "stdout: {stdout}");
+
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(lines.len(), 2, "expected 2 records, got: {stdout}");
+    assert_eq!(lines[0], r#"{"name":"alice","note":"hello\nworld"}"#);
+    assert_eq!(lines[1], r#"{"name":"bob","note":"ok"}"#);
+}
+
+#[test]
+fn csv_multiline_parallel_strict_does_not_corrupt() {
+    // The well-formed multi-line record must not trip the completeness guard
+    // under parallel+strict now that records are reassembled before parsing.
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
         &["-f", "csv", "-F", "json", "-P", "--strict"],
         RFC4180_MULTILINE,
     );
-    assert_ne!(
-        exit_code, 0,
-        "parallel+strict should fail, stderr: {stderr}"
-    );
+    assert_eq!(exit_code, 0, "parallel+strict stderr: {stderr}");
+    assert_eq!(stdout.lines().count(), 2, "stdout: {stdout}");
     assert!(
-        stderr.contains("Unterminated quoted field"),
-        "expected a clear cause, got: {stderr}"
+        !stderr.contains("Unterminated quoted field"),
+        "well-formed record must not be reported as unterminated: {stderr}"
     );
+}
+
+#[test]
+fn csv_multiline_parallel_field_spanning_several_lines() {
+    // A field broken across three physical lines is one record in parallel too.
+    let input = "a,b\n\"x\",\"one\ntwo\nthree\"\np,q\n";
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "csv", "-F", "json", "-P"], input);
+    assert_eq!(exit_code, 0, "stdout: {stdout}");
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(lines.len(), 2, "stdout: {stdout}");
+    assert_eq!(lines[0], r#"{"a":"x","b":"one\ntwo\nthree"}"#);
+    assert_eq!(lines[1], r#"{"a":"p","b":"q"}"#);
+}
+
+#[test]
+fn csv_multiline_parallel_holds_record_across_tiny_batches() {
+    // --batch-size 1 would normally force one physical line per batch; the
+    // record-aligned batcher must still keep the embedded-newline record whole.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "csv", "-F", "json", "-P", "--batch-size", "1"],
+        RFC4180_MULTILINE,
+    );
+    assert_eq!(exit_code, 0, "stdout: {stdout}");
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(lines.len(), 2, "stdout: {stdout}");
+    assert_eq!(lines[0], r#"{"name":"alice","note":"hello\nworld"}"#);
+    assert_eq!(lines[1], r#"{"name":"bob","note":"ok"}"#);
+}
+
+#[test]
+fn csv_unterminated_quote_at_eof_errors_in_both_modes() {
+    // A quote opened and never closed is genuinely malformed; both modes must
+    // report it (and agree) rather than emit corrupt columns.
+    let input = "name,note\n\"alice\",\"hello\nworld\n";
+    for args in [
+        &["-f", "csv", "-F", "json", "--strict"][..],
+        &["-f", "csv", "-F", "json", "-P", "--strict"][..],
+    ] {
+        let (_stdout, stderr, exit_code) = run_kelora_with_input(args, input);
+        assert_ne!(exit_code, 0, "{args:?} should fail, stderr: {stderr}");
+        assert!(
+            stderr.contains("Unterminated quoted field"),
+            "{args:?} expected a clear cause, got: {stderr}"
+        );
+    }
 }
 
 #[test]
