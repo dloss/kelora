@@ -682,7 +682,17 @@ fn align_to_duration(event_ms: i64, duration_ms: i64) -> i64 {
 }
 
 fn ms_to_datetime(ms: i64) -> DateTime<Utc> {
-    Utc.timestamp_millis_opt(ms).unwrap()
+    // Window boundaries are derived from event timestamps plus the span
+    // duration (end_ms = window_start + duration_ms). A large --span duration
+    // passes the i64-millisecond validation yet pushes a boundary outside
+    // chrono's representable range, where timestamp_millis_opt returns None.
+    // Clamp to the representable min/max instead of unwrapping (which panicked
+    // — aborting the process under the release `panic = "abort"` profile).
+    match Utc.timestamp_millis_opt(ms) {
+        chrono::LocalResult::Single(dt) => dt,
+        _ if ms < 0 => DateTime::<Utc>::MIN_UTC,
+        _ => DateTime::<Utc>::MAX_UTC,
+    }
 }
 
 fn format_duration(duration_ms: i64) -> String {

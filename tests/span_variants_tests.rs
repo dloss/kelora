@@ -85,3 +85,30 @@ fn test_idle_span_forward_only_gaps() {
     assert!(stdout.contains(":2"), "first span should have 2 events");
     assert!(stdout.contains(":1"), "second span should have 1 event");
 }
+
+// Regression: a --span duration that fits in i64 milliseconds but exceeds
+// chrono's representable datetime range used to abort the process (panic in
+// ms_to_datetime, exit 134 under the release panic=abort profile). The window
+// boundary must now clamp to the representable range and complete cleanly.
+#[test]
+fn test_time_span_huge_duration_does_not_panic() {
+    let input = "ts=2024-01-01T00:00:00Z a=1\nts=2024-01-02T00:00:00Z a=2\n";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "--span",
+            "1000000000d",
+            "--span-close",
+            "print(\"closed:\" + span.size.to_string());",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "should not abort; stderr: {stderr}");
+    assert!(
+        !stderr.contains("panicked"),
+        "must not panic; stderr: {stderr}"
+    );
+    // Both events fall into the single (clamped) window.
+    assert!(stdout.contains("closed:2"), "stdout: {stdout}");
+}

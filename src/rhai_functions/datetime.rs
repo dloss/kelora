@@ -521,9 +521,23 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("second", |dt: &mut DateTimeWrapper| {
         dt.inner.second() as i64
     });
-    engine.register_fn("ts_nanos", |dt: &mut DateTimeWrapper| {
-        dt.inner.timestamp_nanos_opt().unwrap_or(0)
-    });
+    engine.register_fn(
+        "ts_nanos",
+        |dt: &mut DateTimeWrapper| -> Result<i64, Box<EvalAltResult>> {
+            // timestamp_nanos_opt() returns None outside ~1677-09-21..2262-04-11
+            // (the i64-nanosecond range). Returning 0 there silently maps such
+            // datetimes to the Unix epoch, corrupting downstream analysis, so
+            // surface an error instead — mirroring round_to/ceil_to.
+            dt.inner.timestamp_nanos_opt().ok_or_else(|| {
+                Box::new(EvalAltResult::ErrorRuntime(
+                    "ts_nanos: timestamp out of range for nanosecond precision \
+                     (must be between 1677-09-21 and 2262-04-11)"
+                        .into(),
+                    Position::NONE,
+                ))
+            })
+        },
+    );
     engine.register_fn("timezone_name", |dt: &mut DateTimeWrapper| {
         dt.inner.timezone().to_string()
     });

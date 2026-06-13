@@ -156,3 +156,64 @@ fn test_datetime_formatting_integration() {
         stdout
     );
 }
+
+// Regression: ts_nanos() must surface an error for datetimes outside the
+// i64-nanosecond range (~1677-09-21..2262-04-11) instead of silently
+// returning 0, which mapped such timestamps to the Unix epoch and corrupted
+// downstream analysis. In-range timestamps must still convert correctly.
+#[test]
+fn test_ts_nanos_out_of_range_errors_not_zero() {
+    let binary = env!("CARGO_BIN_EXE_kelora");
+
+    // Out-of-range (year 9999): must NOT yield 0; must report an error.
+    let out = Command::new(binary)
+        .args([
+            "-e",
+            "e.n = to_datetime(\"9999-12-31T23:59:59Z\").ts_nanos()",
+        ])
+        .arg("--strict")
+        .env("LLVM_PROFILE_FILE", "/dev/null")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut c| {
+            use std::io::Write;
+            c.stdin.as_mut().unwrap().write_all(b"x\n").unwrap();
+            c.wait_with_output()
+        })
+        .expect("run kelora");
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        !stdout.contains("n=0"),
+        "out-of-range ts_nanos must not silently be 0; stdout: {stdout}"
+    );
+    assert!(
+        stderr.contains("out of range"),
+        "expected out-of-range error; stderr: {stderr}"
+    );
+
+    // In-range timestamp must still produce the correct nanosecond value.
+    let out = Command::new(binary)
+        .args([
+            "-e",
+            "e.n = to_datetime(\"2024-01-15T12:00:00Z\").ts_nanos()",
+        ])
+        .env("LLVM_PROFILE_FILE", "/dev/null")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut c| {
+            use std::io::Write;
+            c.stdin.as_mut().unwrap().write_all(b"x\n").unwrap();
+            c.wait_with_output()
+        })
+        .expect("run kelora");
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("n=1705320000000000000"),
+        "in-range ts_nanos must convert correctly; stdout: {stdout}"
+    );
+}
