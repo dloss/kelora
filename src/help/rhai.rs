@@ -67,7 +67,8 @@ CONTROL FLOW:
 LOOPS:
   for i in 0..10 { print(i); }         Range loop (0..10 excludes 10, 0..=10 includes)
   for item in array { print(item); }   Array iteration
-  for (key, value) in map { ... }      Map iteration
+  for key in map.keys() { ... }        Map iteration (maps aren't directly iterable;
+                                       use .keys()/.values(), then index: map[key])
 
   while condition { ... }              While loop
   loop { if done { break; } }          Infinite loop (use break/continue)
@@ -204,8 +205,8 @@ COMMON PATTERNS:
   # Method chaining
   e.domain = e.url.extract_domain().to_lower().strip();
 
-  # Map iteration
-  for (key, val) in e { print(key + " = " + val); }
+  # Map iteration (maps aren't directly iterable; iterate keys, then index)
+  for key in e.keys() { print(key + " = " + e[key]); }
 
 GLOBAL CONTEXT:
   state                                Mutable global map for complex state tracking (sequential mode only)

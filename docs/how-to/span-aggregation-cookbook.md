@@ -88,15 +88,19 @@ kelora -j examples/simple_json.jsonl \
   --span 10m \
   --exec 'track_freq("service", e.service)' \
   --span-close '
-    let path = "/tmp/span-" + span.id + ".csv";
-    for (service, count) in span.metrics {
-      append_file(path, `${span.start},${service},${count}\n`);
+    let counts = span.metrics["service"];
+    for service in counts.keys() {
+      append_file("/tmp/spans.csv", `${span.id},${service},${counts[service]}`);
     }
   ' \
   --allow-fs-writes
 ```
 
 - Remember to enable `--allow-fs-writes` when using `append_file()`.
+- `span.metrics` is keyed by metric *name*; a `track_freq` entry like
+  `span.metrics["service"]` is itself a map of `{value: count}`. Maps aren't
+  directly iterable in Rhai — iterate `.keys()` and index back in.
+- `append_file()` adds a newline per call, so don't append `\n` yourself.
 - Alternatively, pipe Kelora output into `jq`, DuckDB, or spreadsheets for visualisation.
 
 ## Variations

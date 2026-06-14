@@ -135,9 +135,9 @@ for i in 0..=10 { print(i); }         // 0 to 10
 // Array iteration
 for item in array { print(item); }
 
-// Map iteration
-for (key, value) in map {
-    print(`${key} = ${value}`);
+// Map iteration (maps aren't directly iterable; iterate keys, then index)
+for key in map.keys() {
+    print(`${key} = ${map[key]}`);
 }
 
 // While loop
@@ -250,9 +250,9 @@ if e.items.len() > 0 {
 emit_each(e.items)                    // Each element becomes an event
 emit_each(e.items, #{ctx: "value"})   // Add base fields to each
 
-// Map operations
-for (key, val) in e {
-    print(`${key} = ${val}`);
+// Map operations (maps aren't directly iterable; iterate keys, then index)
+for key in e.keys() {
+    print(`${key} = ${e[key]}`);
 }
 ```
 
