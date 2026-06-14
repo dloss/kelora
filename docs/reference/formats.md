@@ -12,7 +12,8 @@ Specify input format with `-f, --input-format <format>`.
 |--------|----------|
 | `auto` | Auto-detect from first non-empty line (default) |
 | `json` | Application logs, structured data (shorthand: `-j`) |
-| `line` | Unstructured logs, raw text |
+| `line` | Unstructured logs, plain text (trailing newline/CR trimmed) |
+| `raw` | Plain text preserved verbatim (no trimming of newline/CR or other artifacts) |
 | `logfmt` | Heroku-style logs, simple structured logs |
 | `csv` / `tsv` | Spreadsheet data, exports |
 | `syslog` | System logs, network devices |
@@ -58,6 +59,26 @@ Specify input format with `-f, --input-format <format>`.
 - Auto-detect falls back to line when it can't identify a structured format
 - Empty lines are skipped
 - Useful for unstructured logs or custom parsing with `--exec`
+
+### Raw Format
+
+**Syntax:** `-f raw`
+
+**Description:** Plain text, one event per line, preserved verbatim. Unlike
+`line`, the trailing newline/CR is **not** trimmed and backslashes and other
+artifacts are kept exactly as read.
+
+**Output Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `raw` | String | Line content, byte-for-byte as read |
+
+**Notes:**
+
+- Choose `raw` over `line` when trailing whitespace or escape characters are
+  significant (e.g. round-tripping data without normalization)
+- Like `line`, it matches every line, so in a cascade it must come last
 
 ### Logfmt Format
 
