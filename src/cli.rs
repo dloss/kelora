@@ -787,6 +787,7 @@ pub struct Cli {
 
     /// Profile final emitted fields instead of parsed input fields.
     #[arg(
+        short = 'D',
         long = "discover-final",
         value_enum,
         value_name = "FORMAT",
@@ -795,7 +796,7 @@ pub struct Cli {
         default_missing_value = "table",
         conflicts_with = "discover_fields",
         help_heading = "Field Discovery",
-        help = "Profile final emitted fields after scripts and filters.\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  --discover-final          Table summary of final fields\n  --discover-final=json     Machine-readable JSON of final fields"
+        help = "Profile final emitted fields after scripts and filters.\nImplies -q/--quiet (events suppressed). Sequential mode only.\n\nFormats: table (default), json\n\nExamples:\n  -D, --discover-final          Table summary of final fields\n  -D=json, --discover-final=json     Machine-readable JSON of final fields"
     )]
     pub discover_final_fields: Option<DiscoverFieldsFormat>,
 

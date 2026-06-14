@@ -1198,7 +1198,7 @@ kelora -j app.log --discover
 kelora -j app.log --discover=json
 ```
 
-#### `--discover-final`
+#### `-D, --discover-final[=FORMAT]`
 
 Profile final emitted fields instead of parsed input fields.
 Use this when you want to inspect the schema after filters and scripts have run.
@@ -1210,10 +1210,10 @@ Use this when you want to inspect the schema after filters and scripts have run.
 
 ```bash
 # Discover only fields that survive filtering/transforms
-kelora -j app.log --discover-final --filter 'e.level == "ERROR"'
+kelora -j app.log -D --filter 'e.level == "ERROR"'
 
 # JSON output of final fields
-kelora -j app.log --discover-final=json --filter 'e.level == "ERROR"'
+kelora -j app.log -D=json --filter 'e.level == "ERROR"'
 ```
 
 #### `--discover-depth <N>`
