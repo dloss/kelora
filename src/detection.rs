@@ -212,7 +212,10 @@ pub fn format_detected_format_notice(
 
     if detected.detected_non_line() {
         let format_name = detected.format.to_display_string();
-        let message = config.format_info_message(&format!("Auto-detected format: {}", format_name));
+        let message = config.format_info_message(&format!(
+            "Auto-detected format: {} (from first line)",
+            format_name
+        ));
         Some(message)
     } else if detected.fell_back_to_line() {
         let message = config.format_hint_message(
