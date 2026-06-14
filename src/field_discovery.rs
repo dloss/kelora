@@ -404,9 +404,9 @@ pub struct FieldDiscovery {
     /// suppresses the timestamp footer fragment and row marker.
     pub timestamp_summary: Option<TimestampSummary>,
     /// When `true`, the table footer points users at `--discover-final`. Set at
-    /// the render site only for plain `--discover` runs whose pipeline can
-    /// reshape the field set (e.g. `--exec`, `--span`), so a bare probe stays
-    /// uncluttered while the "where are my computed fields?" case gets a nudge.
+    /// the render site for plain `--discover` runs whose pipeline filters or
+    /// transforms events, so a bare probe stays uncluttered while the "where are
+    /// my computed/filtered fields?" case gets a nudge.
     pub suggest_discover_final: bool,
 }
 
@@ -729,8 +729,8 @@ impl FieldDiscovery {
         // parsed input, before scripts run.
         if self.suggest_discover_final {
             output.push_str(
-                "\n\nTip: these are parsed input fields, before your scripts run. \
-                 Use --discover-final to profile the fields your pipeline emits.",
+                "\n\nTip: these are parsed input fields, before filters and transforms. \
+                 Use --discover-final to profile the fields your pipeline actually emits.",
             );
         }
 

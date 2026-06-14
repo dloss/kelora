@@ -186,7 +186,7 @@ fn test_discover_and_discover_final_conflict() {
 }
 
 #[test]
-fn test_discover_hints_at_discover_final_when_exec_present() {
+fn test_discover_hints_at_discover_final_when_pipeline_transforms() {
     let input = r#"{"level":"info","status":200}
 {"level":"error","status":500}"#;
 
@@ -210,7 +210,20 @@ fn test_discover_hints_at_discover_final_when_exec_present() {
         stdout
     );
 
-    // A bare probe with no transforms stays uncluttered.
+    // Any filter also fires the hint: the surviving events' schema can differ
+    // from the parsed input shown here.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--discover", "--filter", "e.status >= 500"],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(
+        stdout.contains("--discover-final"),
+        "filter pipeline should hint at --discover-final, got: {}",
+        stdout
+    );
+
+    // A bare probe with no filters or transforms stays uncluttered.
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&["-f", "json", "--discover"], input);
     assert_eq!(exit_code, 0);
     assert!(
