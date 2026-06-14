@@ -62,13 +62,13 @@ Track counts while you inspect events so you can state who is affected and how o
 ```bash
 kelora -j examples/simple_json.jsonl \
   -l error,critical \
-  -e 'track_count("service", e.service)' \
-  -e 'track_count("error_code", e.get_path("error.code", "unknown"))' \
+  -e 'track_freq("service", e.service)' \
+  -e 'track_freq("error_code", e.get_path("error.code", "unknown"))' \
   --metrics \
   --stats
 ```
 
-- `track_count()` tallies per-key counts; combine with `--metrics` to view the table at the end.
+- `track_freq()` tallies per-key counts; combine with `--metrics` to view the table at the end.
 - `--stats` reports records processed, parse failures, and throughput so you can mention data quality in the incident summary.
 
 ## Step 5: Export Evidence
@@ -108,7 +108,7 @@ Alternatives:
   ```bash
   kelora -j examples/simple_json.jsonl \
     -l error,critical \
-    -e 'track_count("account_id", e.account_id)' \
+    -e 'track_freq("account_id", e.account_id)' \
     --metrics
   ```
 

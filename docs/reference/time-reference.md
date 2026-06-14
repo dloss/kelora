@@ -342,7 +342,7 @@ rounded_dt = dt.round_to("interval")
 // Group events into 5-minute buckets
 let timestamp = to_datetime(e.timestamp);
 e.bucket = timestamp.round_to("5m").to_iso();
-track_count("requests_per_5min", e.bucket);
+track_freq("requests_per_5min", e.bucket);
 
 // Hourly aggregation
 let hourly = timestamp.round_to("1h");

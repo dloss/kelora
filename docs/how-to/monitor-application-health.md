@@ -10,14 +10,14 @@ Create a concise operational report from JSON service logs, tracking errors, lat
 ## Before You Start
 - Example commands use `examples/simple_json.jsonl`. Replace it with your application logs.
 - Ensure key fields exist in the payload (e.g., `service`, `level`, `duration_ms`, `memory_percent`, `status`).
-- Rhai metric helpers (`track_count`, `track_avg`, `track_percentiles`, `track_max`, etc.) power the summary; see [Tutorial: Metrics and Tracking](../tutorials/metrics-and-tracking.md) if you need a refresher.
+- Rhai metric helpers (`track_freq`, `track_avg`, `track_percentiles`, `track_max`, etc.) power the summary; see [Tutorial: Metrics and Tracking](../tutorials/metrics-and-tracking.md) if you need a refresher.
 
 ## Step 1: Build a Baseline Scoreboard
 Count events by service and severity to frame the rest of the investigation.
 
 ```bash
 kelora -j examples/simple_json.jsonl \
-  -e 'track_count("service", e.service); track_count("level_" + e.level)' \
+  -e 'track_freq("service", e.service); track_freq("level", e.level)' \
   --metrics \
   --stats
 ```
@@ -45,7 +45,7 @@ Guidance:
 - `e.get_path()` returns unit `()` when a field is missing; check for `()` to avoid polluting metrics.
 - `track_avg()` automatically computes averages without manual sum/count tracking.
 - `track_percentiles()` creates auto-suffixed metrics like `latency|auth_p95` and `latency|auth_p99` for true percentile tracking.
-- Track additional business KPIs (orders, sign-ups) with `track_sum()` or `track_count()` as needed.
+- Track additional business KPIs (orders, sign-ups) with `track_sum()` or `track_freq()` as needed.
 
 ## Step 3: Flag Error Hotspots
 Separate healthy traffic from incidents and identify recurring failure modes.
@@ -54,8 +54,8 @@ Separate healthy traffic from incidents and identify recurring failure modes.
 kelora -j examples/simple_json.jsonl \
   -l error,critical \
   -e 'let code = e.get_path("error.code", "unknown");
-      track_count("errors|" + e.service);
-      track_count("error_code|" + code)' \
+      track_freq("errors", e.service);
+      track_freq("error_code", code)' \
   -k timestamp,service,message \
   --metrics
 ```
@@ -68,7 +68,7 @@ Create a compact report for status updates or documentation.
 
 ```bash
 kelora -j examples/simple_json.jsonl \
-  -e 'track_count("service", e.service);
+  -e 'track_freq("service", e.service);
       let latency = e.get_path("duration_ms");
       if latency != () {
         track_avg("latency_avg|" + e.service, latency);
@@ -146,11 +146,11 @@ kelora -j examples/simple_json.jsonl \
   ```bash
   kelora -j app.log \
     --filter 'e.service == "payments"' \
-    -e 'track_count("level", e.level);
+    -e 'track_freq("level", e.level);
         let latency = e.get_path("duration_ms");
         track_sum("latency_total_ms|" + e.service, latency);
         if latency != () {
-          track_count("latency_samples|" + e.service);
+          track_freq("latency_samples", e.service);
         }' \
     --metrics
   ```
@@ -160,7 +160,7 @@ kelora -j examples/simple_json.jsonl \
   kelora -j app.log \
     --since "2 hours ago" \
     -e 'e.window = e.timestamp.format("%Y-%m-%d %H:00");
-        track_count("window", e.window)' \
+        track_freq("window", e.window)' \
     --metrics
   ```
 
@@ -168,7 +168,7 @@ kelora -j examples/simple_json.jsonl \
   ```bash
   tail -f /var/log/app.log | kelora -j -q \
     -l error \
-    -e 'track_count("service", e.service); eprint("ALERT: error in " + e.service)'
+    -e 'track_freq("service", e.service); eprint("ALERT: error in " + e.service)'
   ```
   Add `--no-emoji` when piping into systems that cannot render emoji.
 

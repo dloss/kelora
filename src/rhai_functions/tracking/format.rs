@@ -211,7 +211,7 @@ pub fn format_metrics_output(
     output.trim_end().to_string()
 }
 
-/// Render a map-valued metric (e.g. from `track_count`) as an aligned,
+/// Render a map-valued metric (e.g. from `track_freq`) as an aligned,
 /// sorted list rather than dumping raw Rhai map syntax (`#{"500": 67, ...}`).
 ///
 /// When every value is numeric the entries are sorted by value descending
@@ -593,7 +593,7 @@ mod tests {
 
     #[test]
     fn test_format_metrics_output_count_categories_named_sum_count() {
-        // A track_count metric whose categories happen to be called "sum" and
+        // A track_freq metric whose categories happen to be called "sum" and
         // "count" must render as a category map, not be mistaken for an average.
         let mut metrics = HashMap::new();
         let mut map = rhai::Map::new();
@@ -610,7 +610,7 @@ mod tests {
 
     #[test]
     fn test_format_metrics_output_count_map_sorted_by_count_desc() {
-        // A track_count map renders as an aligned list sorted by count desc,
+        // A track_freq map renders as an aligned list sorted by count desc,
         // not as raw Rhai map syntax.
         let mut metrics = HashMap::new();
         let mut map = rhai::Map::new();

@@ -80,7 +80,7 @@ kelora -j logs.jsonl \
   -k seq,timestamp,message -F csv
 ```
 
-For simple counting by category, prefer `track_count("category", e.category)`.
+For simple counting by category, prefer `track_freq("category", e.category)`.
 
 ## Convert `state` to a regular map
 

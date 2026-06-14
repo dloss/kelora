@@ -240,7 +240,7 @@ kelora -j app.log \
     --filter 'e.status >= 400' \     # Stage 2: Filter
     --exec 'e.alert = true' \        # Stage 3: Exec (only 4xx/5xx errors)
     --exclude-levels debug \         # Stage 4: Remove any downgraded events
-    --exec 'track_count("path", e.path)'     # Stage 5: Exec (track surviving paths)
+    --exec 'track_freq("path", e.path)'     # Stage 5: Exec (track surviving paths)
 ```
 
 Each stage processes the output of the previous stage sequentially.
@@ -306,7 +306,7 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).
 ```bash
 kelora -j app.log \
     --begin 'print("Starting analysis")' \
-    --exec 'track_count("service", e.service)' \
+    --exec 'track_freq("service", e.service)' \
     --end 'print("Services seen: " + metrics.len())' \
     --metrics
 ```
@@ -442,7 +442,7 @@ Populated by Rhai functions in --exec scripts:
 
 ```bash
 kelora -j app.log \
-    --exec 'track_count("service", e.service)' \
+    --exec 'track_freq("service", e.service)' \
     --exec 'track_sum("total_bytes", e.bytes)' \
     --exec 'track_unique("users", e.user_id)' \
     --metrics
@@ -450,7 +450,7 @@ kelora -j app.log \
 
 **Available Functions:**
 
-- `track_count(name, category)` - Count occurrences per category
+- `track_freq(name, value)` - Count occurrences per category
 - `track_sum(key, value)` - Sum values
 - `track_min(key, value)` - Track minimum value
 - `track_max(key, value)` - Track maximum value
@@ -461,7 +461,7 @@ kelora -j app.log \
 **Access in --end stage:**
 ```bash
 kelora -j app.log \
-    --exec 'track_count("service", e.service)' \
+    --exec 'track_freq("service", e.service)' \
     --end 'print("Total services: " + metrics.len())' \
     --metrics
 ```

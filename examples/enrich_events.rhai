@@ -47,7 +47,7 @@ if duration_in_ms >= 0.0 {
 
 // Track by service and level
 if e.has("service") && e.has("level") {
-    track_count("service_level", e.service + ":" + e.level);
+    track_freq("service_level", e.service + ":" + e.level);
 }
 
 // Return enriched event

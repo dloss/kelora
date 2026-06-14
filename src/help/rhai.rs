@@ -168,14 +168,14 @@ EVENT METADATA:
   meta.parsed_ts                       Parsed UTC timestamp before scripts (or () if missing)
 
   Example: Track errors by filename
-  --exec 'if e.level == "ERROR" { track_count("file", meta.filename) }'
+  --exec 'if e.level == "ERROR" { track_freq("file", meta.filename) }'
 
   Example: Debug with line numbers
   --filter 'e.status >= 500' --exec 'eprint("Error at line " + meta.line_num)'
 
   Example: Bucket by the already-parsed timestamp — no to_datetime() needed.
   meta.parsed_ts is a datetime, so round_to/format/etc. work directly.
-  --exec 'track_count("hour", meta.parsed_ts.round_to("1h").to_iso())'
+  --exec 'track_freq("hour", meta.parsed_ts.round_to("1h").to_iso())'
 
 ARRAY & MAP OPERATIONS:
   JSON arrays → native Rhai arrays (full functionality)
@@ -244,13 +244,13 @@ EXEC SNAPSHOTTING & ROLLBACK SEMANTICS (-e):
   fails partway through, all mutations from that stage are rolled back and the
   pre-stage event is forwarded to the next stage. Rolled back on error:
     • Field assignments and deletions (e.field = ..., e.field = ())
-    • Tracking calls (track_count, track_stats, track_unique, track_sum, ...)
+    • Tracking calls (track_freq, track_stats, track_unique, track_sum, ...)
     • emit_each() calls and skip() requests
     • Pending file operations (append_file, write_file)
   State that intentionally survives the rollback:
     • Error counts and samples (visible in --metrics and the diagnostics
       summary)
-  This means a track_count() that ran two lines before the failure leaves
+  This means a track_freq() that ran two lines before the failure leaves
   no trace in metrics — the whole script body is all-or-nothing. Use
   --strict to turn any exec error into a fatal abort instead.
 

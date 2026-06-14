@@ -70,7 +70,7 @@ This differs from `track_*()` functions, which are **write-only counters** that 
 
 **Don't use `state` for:**
 
-- Simple counting or metrics → use `track_count()`, `track_sum()`, etc.
+- Simple counting or metrics → use `track_freq()`, `track_sum()`, etc.
   - These work in parallel mode too
   - More efficient (atomic operations vs RwLock)
 - Time-based or count-based batching → use [spans](../tutorials/span-aggregation.md)
@@ -250,7 +250,7 @@ See `examples/state_examples.rhai` for more patterns.
 | `span.start` / `span.end` | `DateTime` or `()` | Span boundary timestamps (time spans only). |
 | `span.size` | `Int` | Number of events that survived filters and entered the span. |
 | `span.events` | `Array<Map>` | Copy of each included event, with helper fields (`line`, `line_num`, `filename`, `span_status`, `span_id`, `span_start`, `span_end`). Read-only. |
-| `span.metrics` | `Map` | Per-window values computed from `track_*()` calls since the span opened, for **additive** aggregators only: `track_count`, `track_sum`, `track_avg`, `track_unique`. Zero-delta keys are omitted. Read-only.
+| `span.metrics` | `Map` | Per-window values computed from `track_*()` calls since the span opened, for **additive** aggregators only: `track_freq`, `track_sum`, `track_avg`, `track_unique`. Zero-delta keys are omitted. Read-only.
 
 > `--span-close` runs without a "current event", so `e` and `meta` are empty. Inspect `span.events` when you need per-event details from inside the close hook.
 

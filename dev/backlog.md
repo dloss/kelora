@@ -27,7 +27,7 @@ e.ts = to_datetime(e.timestamp).floor_to("1h")
 
 // Align to 5-minute bucket edges
 bucket_time = to_datetime(e.ts).floor_to("5m")
-track_count(bucket_time.to_string())
+track_freq("bucket", bucket_time.to_string())
 ```
 
 **Implementation:** ~60 lines in `src/rhai_functions/datetime.rs` alongside `ceil_to`.

@@ -73,7 +73,7 @@ kelora -f 'csv status:int duration_ms:int' examples/simple_csv.csv \
 
 - Compare counts with what you expect from upstream systems.
 - Divide `latency_total_ms` by `latency_samples` for averages, or compute per-service stats with additional prefixes.
-- Use `track_count()` to build histograms or `track_unique()` to measure cardinality.
+- Use `track_freq()` to build histograms or `track_unique()` to measure cardinality.
 
 ## Step 5: Export the Prepared Dataset
 Write the cleaned result to CSV, JSON, or logfmt depending on downstream needs.

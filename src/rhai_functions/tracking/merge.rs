@@ -23,8 +23,8 @@ pub(crate) fn op_display_name(op: &str) -> &str {
         "min" => "track_min",
         "max" => "track_max",
         "unique" => "track_unique",
-        // Internal op id predates the 2.0 rename of track_bucket to track_count.
-        "bucket" => "track_count",
+        // Internal op id predates the 2.0 renames (track_bucket → track_freq).
+        "bucket" => "track_freq",
         "cardinality" => "track_cardinality",
         "percentiles" => "track_percentiles",
         "top" => "track_top",

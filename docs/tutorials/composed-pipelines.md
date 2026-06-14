@@ -611,7 +611,7 @@ Export events to stdout, metrics to file:
 ```bash
 kelora -j examples/api_logs.jsonl \
   --filter 'e.level == "ERROR"' \
-  --exec 'track_count("service", e.service)' \
+  --exec 'track_freq("service", e.service)' \
   --metrics-file metrics.json \
   -F json > events.jsonl
 ```
@@ -727,9 +727,9 @@ kelora api.log \
 # Track multiple dimensions in one pass
 kelora app.log \
   --exec '
-    track_count("level", e.level);
-    track_count("service", e.service);
-    track_count("level_service", e.level + ":" + e.service);
+    track_freq("level", e.level);
+    track_freq("service", e.service);
+    track_freq("level_service", e.level + ":" + e.service);
     track_stats("latency", e.response_time);
   ' \
   --metrics

@@ -36,13 +36,13 @@ fn curated_ranking_synonyms_point_to_track_top_by() {
 }
 
 #[test]
-fn curated_aggregation_synonyms_point_to_track_count() {
+fn curated_aggregation_synonyms_point_to_track_freq() {
     for flag in ["--count", "--group-by", "--uniq"] {
         let (_out, err, code) = run_kelora_with_input(&["-f", "json", flag], "{}\n");
         assert_eq!(code, 2, "{flag} should exit 2");
         assert!(
-            err.contains("track_count"),
-            "{flag} hint should mention track_count, got:\n{err}"
+            err.contains("track_freq"),
+            "{flag} hint should mention track_freq, got:\n{err}"
         );
     }
 }

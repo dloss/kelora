@@ -80,7 +80,7 @@ kelora -j examples/fan_out_batches.jsonl \
   -F csv > flattened_orders.csv
 ```
 
-- `track_sum`, `track_count`, and `track_unique` work as usual on flattened events.
+- `track_sum`, `track_freq`, and `track_unique` work as usual on flattened events.
 - Use `-F csv` or `-J` to ship results to downstream systems.
 
 ## Variations

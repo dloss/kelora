@@ -42,7 +42,7 @@ kelora -f syslog -F csv syslog.log                    # Syslog to CSV
 **Metrics:**
 ```bash
 kelora -s app.log                                     # Summary stats
-kelora -q --metrics -e 'track_count("by:" + e.level)' app.log
+kelora -q --metrics -e 'track_freq("by_level", e.level)' app.log
 ```
 
 **Pattern discovery:**

@@ -609,7 +609,7 @@ Spans work seamlessly with multi-stage pipelines:
       -q \
       --exec 'e.is_error = (e.level == "ERROR")' \
       --filter 'e.is_error' \
-      --exec 'track_count("service", e.service)' \
+      --exec 'track_freq("service", e.service)' \
       --span 2 \
       --span-close '
         print("Error batch " + span.id + ":");
@@ -627,7 +627,7 @@ Spans work seamlessly with multi-stage pipelines:
       -q \
       --exec 'e.is_error = (e.level == "ERROR")' \
       --filter 'e.is_error' \
-      --exec 'track_count("service", e.service)' \
+      --exec 'track_freq("service", e.service)' \
       --span 2 \
       --span-close '
         print("Error batch " + span.id + ":");

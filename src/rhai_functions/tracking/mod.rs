@@ -30,7 +30,7 @@ use metrics::{
 pub use rank::set_tracking_warnings_enabled;
 pub(crate) use rank::unique_size_warning;
 use rank::{
-    track_bottom_count_impl, track_bottom_weighted_impl, track_count_impl, track_top_count_impl,
+    track_bottom_count_impl, track_bottom_weighted_impl, track_freq_impl, track_top_count_impl,
     track_top_weighted_impl, track_unique_f64_impl, track_unique_i64_impl,
     track_unique_string_impl,
 };
@@ -43,7 +43,7 @@ pub use state::{
 /// Default N for track_top / track_bottom / track_top_by / track_bottom_by.
 const DEFAULT_RANK_N: i64 = 10;
 
-/// Convert a categorical argument (track_count category, track_top/track_bottom
+/// Convert a categorical argument (track_freq value, track_top/track_bottom
 /// item, track_unique bool value) to the string form used as a map key.
 /// Unit `()` means "missing field" and yields `None` so callers can skip the
 /// event (recording the skip for diagnostics).
@@ -250,13 +250,15 @@ pub fn register_functions(engine: &mut Engine) {
     // - Unit `()` values (missing fields) are skipped, and the skip is counted
     //   for `--diagnostics`.
 
-    // track_count(name, category): count occurrences of each category value
-    // under the metric `name`. Result shape: {name → {category → count}}.
+    // track_freq(name, value): count occurrences of each distinct value under
+    // the metric `name` — a frequency table. Result shape:
+    // {name → {value → count}}. Values may be strings, numbers, or bools and are
+    // stringified into map keys, so no to_string() is needed at the call site.
     engine.register_fn(
-        "track_count",
-        |name: &str, category: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
-            match categorical_to_string("track_count", "category", &category)? {
-                Some(cat) => track_count_impl(name, &cat),
+        "track_freq",
+        |name: &str, value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            match categorical_to_string("track_freq", "value", &value)? {
+                Some(v) => track_freq_impl(name, &v),
                 None => {
                     record_skipped_unit(name);
                     Ok(())
@@ -264,35 +266,75 @@ pub fn register_functions(engine: &mut Engine) {
             }
         },
     );
+    // A non-string name (the reflexive `track_freq(e.status)` where the value
+    // lands in the name slot — including a number) teaches the (name, value)
+    // shape instead of erroring with a bare "must be a string" type mismatch.
     engine.register_fn(
-        "track_count",
-        |name: Dynamic, _category: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+        "track_freq",
+        |name: Dynamic, _value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
             Err(format!(
-                "track_count name must be a string; got {}. Example: track_count(\"status\", e.status)",
+                "track_freq name must be a string; got {}. Pass a metric name first: track_freq(\"status\", e.status)",
                 name.type_name()
             )
             .into())
         },
     );
-    // kelora 2.0 tombstone: the 1.x single-argument form counted the value itself.
+    // Single-argument calls need an explicit name so multiple distributions
+    // don't silently collide into one map; teach the named form (and the
+    // counter alternative, since a bare value reads like "count this").
     engine.register_fn(
-        "track_count",
+        "track_freq",
         |_value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
             Err(
-                "track_count takes a metric name and a category since kelora 2.0: \
-                 track_count(\"status\", e.status) counts each status value. \
-                 For a single counter, use track_sum(\"errors\", 1)"
+                "track_freq needs a name and a value: track_freq(\"status\", e.status). \
+                 For a running counter use track_sum(\"errors\", 1) or track_inc(\"errors\")."
                     .into(),
             )
         },
     );
-    // kelora 2.0 tombstone: track_bucket was folded into track_count.
+
+    // track_inc(name): increment a running counter by 1 — readable sugar for
+    // track_sum(name, 1). Shares the additive "sum" operation so the two are
+    // interchangeable and merge identically across parallel workers / windows.
+    engine.register_fn(
+        "track_inc",
+        |key: &str| -> Result<(), Box<rhai::EvalAltResult>> {
+            ensure_operation_metadata(key, "sum")?;
+            with_user_tracking(|state| {
+                let updated = merge_numeric(state.get(key).cloned(), Dynamic::from(1_i64));
+                state.insert(key.to_string(), updated);
+            });
+            Ok(())
+        },
+    );
+
+    // kelora 2.0 tombstones: "count" was ambiguous (a scalar counter vs. a
+    // per-value frequency table), so it was split — frequency tables are
+    // track_freq, plain counters are track_sum / track_inc. Every arity forks
+    // to the right replacement rather than guessing.
+    fn count_removed_error() -> Box<rhai::EvalAltResult> {
+        "track_count was removed in kelora 2.0 because \"count\" was ambiguous. \
+         For a frequency table use track_freq(\"status\", e.status); \
+         for a running counter use track_sum(\"errors\", 1) or track_inc(\"errors\")."
+            .into()
+    }
+    engine.register_fn(
+        "track_count",
+        |_value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> { Err(count_removed_error()) },
+    );
+    engine.register_fn(
+        "track_count",
+        |_name: Dynamic, _value: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(count_removed_error())
+        },
+    );
+    // track_bucket (1.x) was the same per-value tally under another name.
     engine.register_fn(
         "track_bucket",
         |_key: Dynamic, _bucket: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
             Err(
-                "track_bucket was renamed in kelora 2.0: use track_count(name, category), \
-                 e.g. track_count(\"status_class\", e.status / 100 * 100)"
+                "track_bucket was renamed in kelora 2.0: use track_freq(name, value), \
+                 e.g. track_freq(\"status_class\", e.status / 100 * 100)"
                     .into(),
             )
         },
@@ -582,7 +624,7 @@ pub fn merge_thread_tracking_to_context(ctx: &mut crate::pipeline::PipelineConte
 /// returns the finalized `Dynamic` for a metric key/value pair.
 fn finalize_metric_value(key: &str, value: &Dynamic, operation: Option<&str>) -> Dynamic {
     // Average tracking: {sum, count} map → mean as f64. Gated on the recorded
-    // operation rather than the map's shape: a user's track_count categories
+    // operation rather than the map's shape: a user's track_freq values
     // may legitimately be named "sum" and "count".
     if operation == Some("avg") {
         if let Some(map) = value.clone().try_cast::<rhai::Map>() {
@@ -2154,26 +2196,24 @@ mod tests {
     }
 
     #[test]
-    fn test_track_count_categories() {
+    fn test_track_freq_categories() {
         clear_tracking_state();
 
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
         engine
-            .eval::<()>(r#"track_count("level", "ERROR")"#)
+            .eval::<()>(r#"track_freq("level", "ERROR")"#)
             .unwrap();
         engine
-            .eval::<()>(r#"track_count("level", "ERROR")"#)
+            .eval::<()>(r#"track_freq("level", "ERROR")"#)
             .unwrap();
-        engine
-            .eval::<()>(r#"track_count("level", "INFO")"#)
-            .unwrap();
-        // Numbers and bools are stringified into category keys
-        engine.eval::<()>(r#"track_count("status", 200)"#).unwrap();
-        engine.eval::<()>(r#"track_count("status", 200)"#).unwrap();
-        engine.eval::<()>(r#"track_count("status", 503)"#).unwrap();
-        engine.eval::<()>(r#"track_count("tls", true)"#).unwrap();
+        engine.eval::<()>(r#"track_freq("level", "INFO")"#).unwrap();
+        // Numbers and bools are stringified into value keys — no to_string() needed
+        engine.eval::<()>(r#"track_freq("status", 200)"#).unwrap();
+        engine.eval::<()>(r#"track_freq("status", 200)"#).unwrap();
+        engine.eval::<()>(r#"track_freq("status", 503)"#).unwrap();
+        engine.eval::<()>(r#"track_freq("tls", true)"#).unwrap();
 
         let state = get_thread_tracking_state();
         let level = state
@@ -2218,14 +2258,14 @@ mod tests {
     }
 
     #[test]
-    fn test_track_count_skips_unit_and_records_skip() {
+    fn test_track_freq_skips_unit_and_records_skip() {
         clear_tracking_state();
 
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
-        engine.eval::<()>(r#"track_count("level", ())"#).unwrap();
-        engine.eval::<()>(r#"track_count("level", ())"#).unwrap();
+        engine.eval::<()>(r#"track_freq("level", ())"#).unwrap();
+        engine.eval::<()>(r#"track_freq("level", ())"#).unwrap();
 
         let state = get_thread_tracking_state();
         assert!(!state.contains_key("level"));
@@ -2244,26 +2284,32 @@ mod tests {
     }
 
     #[test]
-    fn test_track_count_rejects_invalid_arguments() {
+    fn test_track_freq_rejects_invalid_arguments() {
         clear_tracking_state();
 
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
-        // Non-string metric name
+        // A value in the name slot (number or otherwise) teaches the named form
+        // rather than erroring with a bare type mismatch.
         let err = engine
-            .eval::<()>(r#"track_count(42, "x")"#)
+            .eval::<()>(r#"track_freq(42, "x")"#)
             .unwrap_err()
             .to_string();
         assert!(err.contains("name must be a string"), "got: {}", err);
+        assert!(
+            err.contains(r#"track_freq("status", e.status)"#),
+            "got: {}",
+            err
+        );
 
-        // Map/array categories are not stringifiable
+        // Map/array values are not stringifiable
         let err = engine
-            .eval::<()>(r#"track_count("x", #{a: 1})"#)
+            .eval::<()>(r#"track_freq("x", #{a: 1})"#)
             .unwrap_err()
             .to_string();
         assert!(
-            err.contains("category must be a string, number, or bool"),
+            err.contains("value must be a string, number, or bool"),
             "got: {}",
             err
         );
@@ -2272,16 +2318,70 @@ mod tests {
     }
 
     #[test]
-    fn test_track_count_one_arg_tombstone() {
+    fn test_track_freq_one_arg_errors_with_named_form() {
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
+        // The bare-value reflex needs an explicit name; the error teaches both
+        // the named freq form and the counter alternative.
         let err = engine
-            .eval::<()>(r#"track_count("errors")"#)
+            .eval::<()>(r#"track_freq("status")"#)
             .unwrap_err()
             .to_string();
+        assert!(err.contains("needs a name and a value"), "got: {}", err);
         assert!(err.contains("track_sum"), "got: {}", err);
-        assert!(err.contains("kelora 2.0"), "got: {}", err);
+        assert!(err.contains("track_inc"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_track_count_removed_forks_to_freq_and_counter() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // Both the 1.x single-arg and 2.0 two-arg forms now fork to the right
+        // replacement instead of guessing.
+        for call in [
+            r#"track_count("errors")"#,
+            r#"track_count("level", e_level)"#,
+        ] {
+            let err = engine
+                .eval::<()>(&format!("let e_level = \"INFO\"; {call}"))
+                .unwrap_err()
+                .to_string();
+            assert!(err.contains("track_freq"), "got: {}", err);
+            assert!(err.contains("track_sum"), "got: {}", err);
+            assert!(err.contains("kelora 2.0"), "got: {}", err);
+        }
+    }
+
+    #[test]
+    fn test_track_inc_counter() {
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        engine.eval::<()>(r#"track_inc("hits")"#).unwrap();
+        engine.eval::<()>(r#"track_inc("hits")"#).unwrap();
+        engine.eval::<()>(r#"track_inc("hits")"#).unwrap();
+
+        let state = get_thread_tracking_state();
+        assert_eq!(state.get("hits").unwrap().as_int().unwrap(), 3);
+
+        // Shares the additive "sum" operation, so it merges like (and is
+        // interchangeable with) track_sum.
+        let internal = get_thread_internal_state();
+        assert_eq!(
+            internal
+                .get("__op_hits")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "sum"
+        );
+
+        clear_tracking_state();
     }
 
     #[test]
@@ -2293,7 +2393,7 @@ mod tests {
             .eval::<()>(r#"track_bucket("status", 200)"#)
             .unwrap_err()
             .to_string();
-        assert!(err.contains("track_count"), "got: {}", err);
+        assert!(err.contains("track_freq"), "got: {}", err);
     }
 
     #[test]
@@ -2434,16 +2534,16 @@ mod tests {
 
     #[test]
     fn test_finalize_count_categories_named_sum_count() {
-        // A track_count metric with categories literally named "sum" and
-        // "count" must finalize as a category map, not as an average.
+        // A track_freq metric whose values are literally named "sum" and
+        // "count" must finalize as a frequency map, not as an average.
         clear_tracking_state();
 
         let mut engine = rhai::Engine::new();
         register_functions(&mut engine);
 
-        engine.eval::<()>(r#"track_count("ops", "sum")"#).unwrap();
-        engine.eval::<()>(r#"track_count("ops", "count")"#).unwrap();
-        engine.eval::<()>(r#"track_count("ops", "count")"#).unwrap();
+        engine.eval::<()>(r#"track_freq("ops", "sum")"#).unwrap();
+        engine.eval::<()>(r#"track_freq("ops", "count")"#).unwrap();
+        engine.eval::<()>(r#"track_freq("ops", "count")"#).unwrap();
 
         let state = get_thread_tracking_state();
         let finalized = finalize_metrics_for_script(&state, &get_thread_internal_state());

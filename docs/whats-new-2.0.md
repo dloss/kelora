@@ -99,11 +99,11 @@ legend shows only on an interactive terminal, so piped output stays clean.
 The tracking family is consolidated around one convention:
 `track_fn(name, args...)`. This is the change most likely to require edits.
 
-**Category counting** — `track_count(name, category)` replaces both the old
-one-argument `track_count(value)` and `track_bucket(key, bucket)` (which were
-the same operation under two names). Counts now land in separate per-name
-sub-maps, so different metrics can no longer collide. Categories are stringified
-automatically.
+**Frequency tables** — `track_freq(name, value)` counts occurrences of each
+distinct value, replacing both the old one-argument `track_count(value)` and
+`track_bucket(key, bucket)` (which were the same operation under two names).
+Counts now land in separate per-name sub-maps, so different metrics can no
+longer collide. Values are stringified automatically.
 
 ```bash
 # Old (1.x)
@@ -111,11 +111,13 @@ kelora app.log --exec 'track_count(e.level)'
 kelora app.log --exec 'track_bucket("status", e.status)'
 
 # New (2.0)
-kelora app.log --exec 'track_count("level", e.level)'
-kelora app.log --exec 'track_count("status", e.status)'   # no to_string() needed
+kelora app.log --exec 'track_freq("level", e.level)'
+kelora app.log --exec 'track_freq("status", e.status)'   # no to_string() needed
 ```
 
-For a plain counter, use `track_sum("errors", 1)`.
+The name is "freq" rather than "count" because *count* was ambiguous — it read
+equally as a per-value frequency table and as a single scalar counter. For a
+plain counter, use the dedicated `track_inc("errors")` (or `track_sum("errors", 1)`).
 
 **Score-based ranking** — the 4-argument `track_top(key, item, n, value)` moves
 to `track_top_by(name, item, score [, n])` (and likewise
@@ -138,7 +140,7 @@ results. Other notes:
 - **Name reuse across functions is a call-time error.** Mixing
   `track_sum("x", …)` and `track_min("x", …)` used to silently blend into
   garbage under parallel merging; it now errors.
-- **Float category labels are preserved** (`200.0` → `"200"`), so JSON
+- **Float value labels are preserved** (`200.0` → `"200"`), so JSON
   consumers keyed on the old `track_bucket` names keep working.
 - **Ranking is now exact.** `track_top_by`/`track_bottom_by` (and the legacy
   `track_top`/`track_bottom`) retain every distinct item and rank only when
@@ -148,11 +150,11 @@ results. Other notes:
 
 | Old (1.x) | New (2.0) |
 | --- | --- |
-| `track_count(value)` | `track_count("name", value)` |
-| `track_bucket(key, bucket)` | `track_count(key, bucket)` |
+| `track_count(value)` | `track_freq("name", value)` |
+| `track_bucket(key, bucket)` | `track_freq(key, bucket)` |
 | `track_top(key, item, n, value)` | `track_top_by(key, item, value, n)` |
 | `track_bottom(key, item, n, value)` | `track_bottom_by(key, item, value, n)` |
-| plain counter via `track_count` | `track_sum("name", 1)` |
+| plain counter via `track_count` | `track_inc("name")` (or `track_sum("name", 1)`) |
 
 ### Breaking: a simpler, record-aware exit-code model
 
@@ -254,8 +256,9 @@ defaults = --wrap
 
 ## Upgrade checklist
 
-1. **Migrate tracking scripts.** Replace `track_count(value)` →
-   `track_count("name", value)`, `track_bucket` → `track_count`, and
+1. **Migrate tracking scripts.** Replace `track_count(value)` and
+   `track_bucket(key, bucket)` → `track_freq("name", value)`, plain counters →
+   `track_inc("name")` (or `track_sum("name", 1)`), and
    `track_top`/`track_bottom` → `track_top_by`/`track_bottom_by` (score before
    `n`). The old forms error with a hint, so a dry run surfaces every site.
 2. **Re-check exit-code expectations.** The exit code now tracks "did the job

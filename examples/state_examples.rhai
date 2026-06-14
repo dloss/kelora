@@ -10,7 +10,7 @@
 //   - Conditional logic based on previous events
 //
 // WHEN NOT TO USE `state`:
-//   - Simple counting or metrics → use track_count(), track_sum(), etc.
+//   - Simple counting or metrics → use track_freq(), track_sum(), etc.
 //     (they work in parallel mode too)
 //
 // Usage:

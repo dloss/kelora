@@ -192,15 +192,15 @@ A field containing the date and time when a log event occurred. Kelora auto-dete
 ### Tracking
 The process of accumulating metrics across events using `track_*()` functions:
 
-- `track_count(key)` - Count occurrences
-- `track_sum(key, value)` - Sum values
-- `track_avg(key, value)` - Average values
-- `track_percentiles(key, value, [percentiles])` - Streaming percentiles (P50/P95/P99)
-- `track_min/max(key, value)` - Track extremes
-- `track_unique(key, value)` - Collect unique values (exact, stores all)
-- `track_cardinality(key, value)` - Estimate unique count (HyperLogLog, ~1% error, ~12KB)
-- `track_count(key, bucket_value)` - Histogram buckets
-- `track_top/bottom(key, item, n, [score])` - Top/bottom N items
+- `track_freq(name, value)` - Frequency table: count occurrences per value (incl. histogram buckets)
+- `track_inc(name)` - Increment a running counter by 1
+- `track_sum(name, value)` - Sum values (`track_sum(name, 1)` is also a plain counter)
+- `track_avg(name, value)` - Average values
+- `track_percentiles(name, value, [percentiles])` - Streaming percentiles (P50/P95/P99)
+- `track_min/max(name, value)` - Track extremes
+- `track_unique(name, value)` - Collect unique values (exact, stores all)
+- `track_cardinality(name, value)` - Estimate unique count (HyperLogLog, ~1% error, ~12KB)
+- `track_top/bottom(name, item, [n])` and `track_top_by/bottom_by(name, item, score, [n])` - Top/bottom N items
 
 See [Metrics and Tracking Tutorial](tutorials/metrics-and-tracking.md).
 

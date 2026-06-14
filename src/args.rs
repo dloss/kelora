@@ -394,9 +394,9 @@ fn unknown_arg_hint(arg: &str) -> Option<String> {
              See --help-functions for track_top_by and related helpers."
         }
         "count" | "uniq" | "uniq-c" | "group-by" | "groupby" => {
-            "kelora has no --count/--group-by flag. Aggregate in a script stage via track_count:\n    \
-             kelora -m --exec 'track_count(\"level\", e.level)' app.log\n  \
-             See --help-functions for track_count and related helpers."
+            "kelora has no --count/--group-by flag. Aggregate in a script stage via track_freq:\n    \
+             kelora -m --exec 'track_freq(\"level\", e.level)' app.log\n  \
+             See --help-functions for track_freq and related helpers."
         }
         _ => return None,
     };

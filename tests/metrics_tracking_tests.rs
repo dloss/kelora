@@ -46,7 +46,7 @@ fn test_metrics_output_has_no_leading_newline_when_events_suppressed() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"level\", e.level)",
+            "track_freq(\"level\", e.level)",
             "--with-metrics",
             "-q",
         ],
@@ -73,7 +73,8 @@ fn test_metrics_mode_surfaces_exec_errors_on_stderr() {
     // Regression: --metrics implies suppress_diagnostics, which used to hide the
     // per-event script-error summary entirely. Script errors go to stderr and
     // cannot pollute the (stdout) metrics, so they must still be surfaced.
-    // The removed 1.x single-argument track_count form errors with a migration hint.
+    // The removed track_count function errors with a migration hint (forking to
+    // track_freq / track_sum).
     let input = r#"{"status": 500}
 {"status": 503}"#;
 
@@ -94,7 +95,7 @@ fn test_metrics_mode_surfaces_exec_errors_on_stderr() {
         stderr
     );
     assert!(
-        stderr.contains("track_count(\"status\", e.status)"),
+        stderr.contains("track_freq(\"status\", e.status)"),
         "the surfaced error should carry the migration hint: {}",
         stderr
     );
@@ -240,7 +241,7 @@ fn test_metrics_mode_surfaces_parse_errors() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"action\", e.action)",
+            "track_freq(\"action\", e.action)",
             "--metrics",
         ],
         input,
@@ -268,7 +269,7 @@ fn test_metrics_mode_all_lines_fail_to_parse() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"action\", e.action)",
+            "track_freq(\"action\", e.action)",
             "--metrics",
         ],
         input,
@@ -384,7 +385,7 @@ fn test_track_unique_function() {
 }
 
 #[test]
-fn test_track_count_function() {
+fn test_track_freq_function() {
     let input = r#"{"status": "200", "method": "GET"}
 {"status": "404", "method": "POST"}
 {"status": "200", "method": "GET"}
@@ -393,7 +394,7 @@ fn test_track_count_function() {
 
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "json",
-        "--exec", "track_count(\"status_counts\", e.status); track_count(\"method_counts\", e.method);",
+        "--exec", "track_freq(\"status_counts\", e.status); track_freq(\"method_counts\", e.method);",
         "--end", "print(`Status 200: ${metrics[\"status_counts\"].get(\"200\") ?? 0}, GET requests: ${metrics[\"method_counts\"].get(\"GET\") ?? 0}`);"
     ], input);
     assert_eq!(exit_code, 0, "kelora should exit successfully");
@@ -465,7 +466,7 @@ fn test_mixed_tracking_functions() {
 
     let (stdout, _stderr, exit_code) = run_kelora_with_input(&[
         "-f", "json",
-        "--exec", "track_sum(\"total\", 1); track_unique(\"users\", e.user); track_count(\"status_dist\", e.status); track_min(\"min_time\", e.response_time); track_max(\"max_time\", e.response_time);",
+        "--exec", "track_sum(\"total\", 1); track_unique(\"users\", e.user); track_freq(\"status_dist\", e.status); track_min(\"min_time\", e.response_time); track_max(\"max_time\", e.response_time);",
         "--end", "print(`Total: ${metrics[\"total\"]}, Users: ${metrics[\"users\"].len()}, Min: ${metrics[\"min_time\"]}, Max: ${metrics[\"max_time\"]}`);"
     ], input);
     assert_eq!(exit_code, 0, "kelora should exit successfully");
@@ -575,7 +576,7 @@ fn test_track_sum_min_max_with_unit() {
 }
 
 #[test]
-fn test_track_count_with_unit() {
+fn test_track_freq_with_unit() {
     let input = r#"{"status": "200", "user": "alice"}
 {"status": "404"}
 {"status": "200", "user": "bob"}
@@ -587,7 +588,7 @@ fn test_track_count_with_unit() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"status_dist\", e.status); track_count(\"user_dist\", e.user.or_empty());",
+            "track_freq(\"status_dist\", e.status); track_freq(\"user_dist\", e.user.or_empty());",
             "--end",
             "print(`Status_200: ${metrics[\"status_dist\"].get(\"200\") ?? 0}, Users: ${metrics[\"user_dist\"].len()}`);"
         ],
@@ -1885,7 +1886,7 @@ fn test_skip_diagnostics_surface_in_parallel_mode() {
 }
 
 #[test]
-fn test_track_count_float_category_labels_match_1x() {
+fn test_track_freq_float_category_labels_match_1x() {
     // Regression: float categories must stringify like 1.x track_bucket did
     // (Rust f64 Display: 200.0 -> "200"), not Rhai's Display ("200.0").
     let input = r#"{"v": 200.0}
@@ -1896,7 +1897,7 @@ fn test_track_count_float_category_labels_match_1x() {
             "-f",
             "json",
             "--exec",
-            "track_count(\"b\", e.v)",
+            "track_freq(\"b\", e.v)",
             "--metrics=json",
         ],
         input,
@@ -1964,7 +1965,7 @@ fn test_multiline_parallel_avg_finalized() {
             "1",
             "-q",
             "--exec",
-            "track_avg(\"len\", e.line.len()); track_count(\"kind\", \"joined\")",
+            "track_avg(\"len\", e.line.len()); track_freq(\"kind\", \"joined\")",
             "--metrics",
         ],
         input,

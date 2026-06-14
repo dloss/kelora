@@ -394,9 +394,9 @@ benchmark_complex_pipeline() {
 
     # kelora
     echo -n "  Testing kelora... " >&2
-    local time=$(time_command "kelora-pipeline" "$BINARY -j $file -l error --exec 'track_count(e.component)' --metrics")
+    local time=$(time_command "kelora-pipeline" "$BINARY -j $file -l error --exec 'track_freq("component", e.component)' --metrics")
     echo "${time}s" >&2
-    echo "| kelora | ${time}s | \`kelora -l error --exec 'track_count(...)' --metrics\` |" >> "$results_file"
+    echo "| kelora | ${time}s | \`kelora -l error --exec 'track_freq(...)' --metrics\` |" >> "$results_file"
 
     # angle-grinder
     if command -v agrind >/dev/null 2>&1; then

@@ -87,7 +87,7 @@ Real-world gains depend on disk speed, decompression cost, and script workload.
 - `--stats` or `-s` print throughput, error counts, time span, and
   key inventory. Compare sequential vs parallel runs with the same dataset.
 
-- `--metrics` combined with `track_sum`/`track_count` can act as lightweight
+- `--metrics` combined with `track_sum`/`track_freq` can act as lightweight
   profilers (e.g., sum `duration_ms` to estimate runtime distribution).
 
 - Use `time`, `hyperfine`, or CI timers around your Kelora command for wall

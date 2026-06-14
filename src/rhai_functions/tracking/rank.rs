@@ -110,21 +110,22 @@ pub(super) fn track_unique_f64_impl(key: &str, value: f64) -> Result<(), Box<rha
     })
 }
 
-/// Count one occurrence of `category` under the metric `key`.
-/// Storage shape: `{key → {category → count}}`. The stored map is mutated in
+/// Count one occurrence of `value` under the metric `key` — a frequency table.
+/// Storage shape: `{key → {value → count}}`. The stored map is mutated in
 /// place: this is the flagship counting function, and cloning the whole
-/// category map per event would be O(distinct categories) per event.
-/// (The internal op id is still "bucket"; the public function was renamed
-/// from track_bucket to track_count in kelora 2.0.)
-pub(super) fn track_count_impl(key: &str, category: &str) -> Result<(), Box<rhai::EvalAltResult>> {
+/// value map per event would be O(distinct values) per event.
+/// (The internal op id stays "bucket"; the public function was renamed from
+/// track_bucket → track_count → track_freq across the kelora 2.0 line. The id
+/// is never user-visible, so it is left stable to avoid churning merge logic.)
+pub(super) fn track_freq_impl(key: &str, value: &str) -> Result<(), Box<rhai::EvalAltResult>> {
     ensure_operation_metadata(key, "bucket")?;
     with_user_tracking(|state| {
         if !state.contains_key(key) {
             state.insert(key.to_string(), Dynamic::from(rhai::Map::new()));
         }
         if let Some(mut map) = state.get_mut(key).and_then(|v| v.write_lock::<rhai::Map>()) {
-            let count = map.get(category).and_then(|v| v.as_int().ok()).unwrap_or(0);
-            map.insert(category.into(), Dynamic::from(count + 1));
+            let count = map.get(value).and_then(|v| v.as_int().ok()).unwrap_or(0);
+            map.insert(value.into(), Dynamic::from(count + 1));
         }
     });
     Ok(())
@@ -169,7 +170,7 @@ fn record_rank_n(state: &mut std::collections::HashMap<String, Dynamic>, key: &s
 
 /// Shared per-event accumulation for track_top / track_bottom. Direction only
 /// affects ordering (applied at format time), so both keep an identical full
-/// `{key → count}` tally, like track_count. This is the fix for the old bug
+/// `{key → count}` tally, like track_freq. This is the fix for the old bug
 /// where truncating to N after every event silently dropped heavy hitters that
 /// first appeared once the N slots were already full.
 fn rank_count_insert(key: &str, item_key: &str, n: i64) {

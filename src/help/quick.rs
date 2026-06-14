@@ -16,7 +16,7 @@ Quick Examples:
   kelora web_access_large.log.gz --stats
   kelora simple_json.jsonl --filter 'e.service == "database"' --exec 'e.duration_s = e.get_path("duration_ms", 0) / 1000' -k timestamp,message,duration_s
   kelora simple_json.jsonl --since 2024-01-15T10:01:00Z --until now -l warn,error --stats
-  kelora audit.jsonl --exec 'track_count("action", e.action)' --metrics
+  kelora audit.jsonl --exec 'track_freq("action", e.action)' --metrics
   kelora app_monitoring.jsonl --drain -k message
   kelora -f json --merge-sorted app-*.jsonl
   kelora payments_latency.jsonl --parallel --filter 'e.duration_ms > 500' -k order_id,duration_ms,status

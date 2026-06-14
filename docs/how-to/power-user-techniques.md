@@ -23,7 +23,7 @@ placeholders so they collapse into one pattern.
       -k pattern
     ```
 
-→ Pair it with `track_count()` to rank error patterns, or let
+→ Pair it with `track_freq()` to rank error patterns, or let
 [`--drain` mine templates automatically](#template-mining). Full pattern list
 and options: [`normalized()` reference](../reference/functions.md).
 
@@ -156,7 +156,7 @@ Lift structured data out of plain-text log lines.
 `extract_jsons()` grabs every object; `absorb_kv("line")` promotes `key=value`
 pairs to fields. → [Function Reference](../reference/functions.md).
 
-## Histogram buckets — `track_count()`
+## Histogram buckets — `track_freq()`
 
 See the *distribution*, not just the average.
 
@@ -167,7 +167,7 @@ See the *distribution*, not just the average.
       --filter 'e.has("response_time")' \
       --metrics \
       --exec 'let bucket = (e.response_time / 0.5).floor() * 0.5;
-              track_count("response_ms", bucket)'
+              track_freq("response_ms", bucket)'
     ```
 
 → [Metrics and Tracking](../tutorials/metrics-and-tracking.md).
@@ -223,7 +223,7 @@ kelora -j api-responses.jsonl \
           e.user_id = ()' \
   --filter 'e.sample_group < 3' \
   --metrics \
-  --exec 'track_count("error_pattern", e.error_pattern)' \
+  --exec 'track_freq("error_pattern", e.error_pattern)' \
   -k order_id,sku,quantity,error_pattern -F csv
 ```
 

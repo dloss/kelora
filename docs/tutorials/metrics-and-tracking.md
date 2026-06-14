@@ -31,7 +31,7 @@ paths resolve relative to the docs root:
 All commands print real output thanks to `markdown-exec`; feel free to tweak the
 expressions and rerun them locally.
 
-## Step 1 – Quick Counts with `track_count()`
+## Step 1 – Quick Counts with `track_freq()`
 
 Count how many events belong to each service while suppressing event output.
 
@@ -39,7 +39,7 @@ Count how many events belong to each service while suppressing event output.
 
     ```bash
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
+      -e 'track_freq("service", e.service)' \
       --metrics
     ```
 
@@ -47,7 +47,7 @@ Count how many events belong to each service while suppressing event output.
 
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
+      -e 'track_freq("service", e.service)' \
       --metrics
     ```
 
@@ -62,7 +62,7 @@ Pair `--metrics` with `--stats` when you need throughput details as well:
 
     ```bash
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
+      -e 'track_freq("service", e.service)' \
       -m --stats
     ```
 
@@ -70,7 +70,7 @@ Pair `--metrics` with `--stats` when you need throughput details as well:
 
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
+      -e 'track_freq("service", e.service)' \
       -m --stats
     ```
 
@@ -109,8 +109,8 @@ response sizes and latency as rolling aggregates.
 - `track_avg(key, value)` - Calculates averages automatically (stores sum and count internally)
 - `track_min(key, value)` - Tracks minimum value seen
 - `track_max(key, value)` - Tracks maximum value seen
-- `track_count(name, category)` - Counts occurrences per category value
-- `track_sum(name, 1)` - The plain-counter idiom (shown above as `duration_count`)
+- `track_freq(name, value)` - Counts occurrences per distinct value (frequency table)
+- `track_inc(name)` - Increment a running counter by 1 (sugar for `track_sum(name, 1)`, shown above as `duration_count`)
 
 **Quick example of `track_avg()`:**
 ```rhai
@@ -121,7 +121,7 @@ kelora -j api_logs.jsonl -m \
 
 The `track_avg()` function internally stores both sum and count, then computes the average during output. This works correctly even in parallel mode.
 
-## Step 3 – Histograms with track_count()
+## Step 3 – Histograms with track_freq()
 
 Build histograms by grouping values into buckets—perfect for latency distributions.
 
@@ -131,7 +131,7 @@ Build histograms by grouping values into buckets—perfect for latency distribut
     kelora -j examples/simple_json.jsonl \
       -e 'if e.has("duration_ms") {
               let bucket = (e.duration_ms / 1000) * 1000;
-              track_count("latency_histogram", bucket)
+              track_freq("latency_histogram", bucket)
           }' \
       --metrics
     ```
@@ -140,32 +140,32 @@ Build histograms by grouping values into buckets—perfect for latency distribut
 
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
-      -e 'if e.has("duration_ms") { let bucket = (e.duration_ms / 1000) * 1000; track_count("latency_histogram", bucket) }' \
+      -e 'if e.has("duration_ms") { let bucket = (e.duration_ms / 1000) * 1000; track_freq("latency_histogram", bucket) }' \
       --metrics
     ```
 
-`track_count(name, category)` creates nested counters where each unique category
+`track_freq(name, value)` creates nested counters where each unique category
 value maintains its own count. Perfect for building histograms.
 
 **Common bucketing patterns:**
 
 ```rhai
 // Round to nearest 100ms
-track_count("latency", (duration_ms / 100) * 100)
+track_freq("latency", (duration_ms / 100) * 100)
 
 // HTTP status code families
-track_count("status_family", (status / 100) * 100)
+track_freq("status_family", (status / 100) * 100)
 
 // File size buckets (KB)
-track_count("file_sizes", (bytes / 1024))
+track_freq("file_sizes", (bytes / 1024))
 
 // Hour of day
-track_count("hour_of_day", timestamp.hour())
+track_freq("hour_of_day", timestamp.hour())
 ```
 
 ## Step 4 – Top N Rankings with track_top() / track_bottom()
 
-When you need the "top 10 errors" or "5 slowest endpoints" without tracking everything, use `track_top()` and `track_bottom()`. These functions maintain bounded, sorted lists—much more memory-efficient than `track_count()` for high-cardinality data.
+When you need the "top 10 errors" or "5 slowest endpoints" without tracking everything, use `track_top()` and `track_bottom()`. These functions maintain bounded, sorted lists—much more memory-efficient than `track_freq()` for high-cardinality data.
 
 ### Frequency Rankings (Count Mode)
 
@@ -223,8 +223,8 @@ In score mode:
 | Scenario | Use This | Why |
 |----------|----------|-----|
 | "Top 10 error messages" | `track_top()` | Bounded memory, auto-sorted |
-| "Error count by type" (low cardinality) | `track_count()` | Tracks all types |
-| "Latency distribution 0-1000ms" | `track_count()` | Need full histogram |
+| "Error count by type" (low cardinality) | `track_freq()` | Tracks all types |
+| "Latency distribution 0-1000ms" | `track_freq()` | Need full histogram |
 | "10 slowest API calls" | `track_top()` | Only care about extremes |
 | Millions of unique IPs | `track_top()` | Bucket would exhaust memory |
 
@@ -522,8 +522,8 @@ call the helper from `--end`.
     RHAI
 
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
-      -e 'track_count("level", e.level)' \
+      -e 'track_freq("service", e.service)' \
+      -e 'track_freq("level", e.level)' \
       -m \
       -I metrics_summary.rhai \
       --end 'summarize_metrics()'
@@ -545,8 +545,8 @@ call the helper from `--end`.
     RHAI
 
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
-      -e 'track_count("level", e.level)' \
+      -e 'track_freq("service", e.service)' \
+      -e 'track_freq("level", e.level)' \
       -m \
       -I metrics_summary.rhai \
       --end 'summarize_metrics()'
@@ -565,7 +565,7 @@ Use `--metrics-file` to serialize the metrics map as JSON for other tools.
 
     ```bash
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
+      -e 'track_freq("service", e.service)' \
       -m \
       --metrics-file metrics.json
 
@@ -577,7 +577,7 @@ Use `--metrics-file` to serialize the metrics map as JSON for other tools.
 
     ```bash exec="on" source="above" result="ansi"
     kelora -j examples/simple_json.jsonl \
-      -e 'track_count("service", e.service)' \
+      -e 'track_freq("service", e.service)' \
       -m \
       --metrics-file metrics.json
 
@@ -597,7 +597,7 @@ This command watches a gzipped access log and surfaces top status classes.
 
     ```bash
     kelora -f combined examples/web_access_large.log.gz \
-      -e 'let klass = ((e.status / 100) * 100).to_string(); track_count("class", klass)' \
+      -e 'let klass = ((e.status / 100) * 100).to_string(); track_freq("class", klass)' \
       -m \
       -n 0
     ```
@@ -606,7 +606,7 @@ This command watches a gzipped access log and surfaces top status classes.
 
     ```bash exec="on" source="above" result="ansi"
     kelora -f combined examples/web_access_large.log.gz \
-      -e 'let klass = ((e.status / 100) * 100).to_string(); track_count("class", klass)' \
+      -e 'let klass = ((e.status / 100) * 100).to_string(); track_freq("class", klass)' \
       -m \
       -n 0
     ```
@@ -615,14 +615,14 @@ Passing `--take 0` (or omitting it) keeps processing the entire file. When you r
 Kelora against a stream (`tail -f | kelora ...`), the metrics snapshot updates when
 you terminate the process.
 
-Need full histograms instead of counts? Swap in `track_count()`:
+Need full histograms instead of counts? Swap in `track_freq()`:
 
 === "Command"
 
     ```bash
     kelora -f combined examples/web_access_large.log.gz \
       -m \
-      -e 'track_count("status_family", (e.status / 100) * 100)' \
+      -e 'track_freq("status_family", (e.status / 100) * 100)' \
       --end '
         let buckets = metrics.status_family.keys();
         buckets.sort();
@@ -639,7 +639,7 @@ Need full histograms instead of counts? Swap in `track_count()`:
     ```bash exec="on" source="above" result="ansi"
     kelora -f combined examples/web_access_large.log.gz \
       -m \
-      -e 'track_count("status_family", (e.status / 100) * 100)' \
+      -e 'track_freq("status_family", (e.status / 100) * 100)' \
       --end '
         let buckets = metrics.status_family.keys();
         buckets.sort();
@@ -651,7 +651,7 @@ Need full histograms instead of counts? Swap in `track_count()`:
       -n 0
     ```
 
-`track_count(name, category)` keeps nested counters so you can emit a
+`track_freq(name, value)` keeps nested counters so you can emit a
 human-readable histogram once processing finishes.
 
 ## Troubleshooting
@@ -679,7 +679,7 @@ human-readable histogram once processing finishes.
 
 | Function | Purpose | Example |
 |----------|---------|---------|
-| `track_count(name, category)` | Count occurrences per category | `track_count("service", e.service)` |
+| `track_freq(name, value)` | Count occurrences per category | `track_freq("service", e.service)` |
 | `track_sum(name, value)` | Sum numeric values (`track_sum(name, 1)` = counter) | `track_sum("bandwidth", e.bytes)` |
 | `track_avg(key, value)` | Average numeric values | `track_avg("avg_latency", e.duration)` |
 | `track_min(key, value)` | Minimum value | `track_min("fastest", e.duration)` |
@@ -704,9 +704,9 @@ human-readable histogram once processing finishes.
 
 You've learned:
 
-- ✅ Count by category with `track_count()` and keep plain counters with `track_sum(name, 1)`
+- ✅ Count by category with `track_freq()` and keep plain counters with `track_inc(name)` (or `track_sum(name, 1)`)
 - ✅ Aggregate numbers with `track_sum()`, `track_avg()`, `track_min()`, `track_max()`
-- ✅ Build histograms with `track_count()`
+- ✅ Build histograms with `track_freq()`
 - ✅ Rank items with `track_top()`/`track_bottom()` (frequency) and `track_top_by()`/`track_bottom_by()` (score)
 - ✅ Count unique values with `track_unique()` (exact) or `track_cardinality()` (approximate, memory-efficient)
 - ✅ Track streaming percentiles with `track_percentiles()` for P50/P95/P99 analysis

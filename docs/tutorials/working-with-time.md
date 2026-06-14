@@ -335,7 +335,7 @@ EOF
 
 # Count requests per hour using meta.parsed_ts
 kelora -j /tmp/api_requests.jsonl \
-    -e 'track_count("requests_by_hour_" + meta.parsed_ts.hour())' \
+    -e 'track_freq("requests_by_hour", meta.parsed_ts.hour())' \
     -m
 ```
 
@@ -450,7 +450,7 @@ EOF
 kelora -j requests.jsonl \
     -e 'let dt = to_datetime(e.timestamp);
         e.bucket = dt.round_to("5m").to_iso()' \
-    -m --exec 'track_count("requests_per_5min", e.bucket)'
+    -m --exec 'track_freq("requests_per_5min", e.bucket)'
 ```
 
 **Output:**
@@ -470,17 +470,17 @@ requests_per_5min:
 kelora -j api_logs.jsonl \
     -e 'let dt = to_datetime(e.timestamp);
         e.hour = dt.round_to("1h").format("%Y-%m-%d %H:00")' \
-    -m --exec 'track_count("hour", e.hour)'
+    -m --exec 'track_freq("hour", e.hour)'
 
 # Daily buckets for weekly trends
 kelora -j api_logs.jsonl \
     -e 'e.date = to_datetime(e.timestamp).round_to("1d").format("%Y-%m-%d")' \
-    -m --exec 'track_count("requests_per_day", e.date)'
+    -m --exec 'track_freq("requests_per_day", e.date)'
 
 # 15-minute buckets for fine-grained analysis
 kelora -j api_logs.jsonl \
     -e 'e.bucket = to_datetime(e.timestamp).round_to("15m").to_iso()' \
-    -m --exec 'track_count("errors", e.bucket)' \
+    -m --exec 'track_freq("errors", e.bucket)' \
     --filter 'e.level == "ERROR"'
 ```
 

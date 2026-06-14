@@ -742,7 +742,7 @@ let avg = times.reduce(|sum, x| sum + x, 0) / times.len()
 // Find most common status codes
 let codes = events.pluck("status")
 for code in codes {
-    track_count("code", code)
+    track_freq("code", code)
 }
 
 // With window for rolling analysis (requires --window)
@@ -1065,7 +1065,7 @@ Accepts duration strings like `"5m"`, `"1h"`, `"1d"`, etc.
 // Group events into 5-minute buckets
 let timestamp = to_datetime(e.timestamp);
 e.bucket = timestamp.round_to("5m").to_iso();
-track_count("requests_per_5min", e.bucket);
+track_freq("requests_per_5min", e.bucket);
 
 // Hourly buckets
 e.hour_bucket = to_datetime(e.time).round_to("1h").format("%Y-%m-%d %H:00");
@@ -1482,7 +1482,7 @@ track_unique("names", e.extracted.or_empty())
 e.tags = e.tags.or_empty()  // [] becomes (), field removed
 
 // Track only events with items
-track_count("item_count", e.items.len())
+track_freq("item_count", e.items.len())
 if e.items.len() == 0 {
     e.items = e.items.or_empty()  // Remove empty array
 }
@@ -1608,7 +1608,7 @@ e.status_category = status_class(e.status)            // 404 → "4xx", 200 → 
 e.is_error = status_class(e.code) == "5xx"
 
 // Track errors by class
-track_count("status_class", status_class(e.status))
+track_freq("status_class", status_class(e.status))
 
 // Group status codes for analysis
 e.status_group = status_class(e.response_code)        // 503 → "5xx"
@@ -1851,7 +1851,7 @@ All tracking functions require the `--metrics` flag.
 Shared conventions across the `track_*()` family:
 
 - **Unit values are skipped.** Missing fields and failed conversions produce Unit `()`, which every `track_*()` function skips instead of erroring. Skips are counted per metric and surfaced via `--diagnostics`, so a field-name typo is detectable.
-- **Categorical arguments accept any scalar.** Category and item arguments take strings, numbers, and bools; non-string values are stringified (`track_count("status", e.status)` just works).
+- **Categorical arguments accept any scalar.** Category and item arguments take strings, numbers, and bools; non-string values are stringified (`track_freq("status", e.status)` just works).
 - **One metric name, one function.** Using the same metric name with two different `track_*()` functions is an error — the aggregation strategies are incompatible. In `--parallel` runs a conflict between `--begin` and the event stages is reported as a warning at merge time instead of a per-call error. Known limitation: the check is per *aggregation*, so a `track_stats("lat", ...)` suffix key (`lat_min`, `lat_sum`, ...) can silently share a name with a standalone call of the matching function (e.g. `track_min("lat_min", ...)`) — keep `track_stats` base names distinct.
 - **`__kelora_*` and `__op_*` metric names are reserved.** Kelora uses these prefixes for internal bookkeeping and hides them from all metrics output.
 
@@ -1869,24 +1869,34 @@ let latency = e.latency_str.to_float()  // Returns () on error
 track_avg("avg_ms", latency)            // Skips () values
 ```
 
-#### `track_count(name, category)`
-Count occurrences of each category value under the metric `name`. The result is a nested map `{name: {category: count}}`. Categories may be strings, numbers, or bools (stringified into the map key); Unit `()` values are skipped.
+#### `track_freq(name, value)`
+Build a frequency table: count occurrences of each distinct value under the metric `name`. The result is a nested map `{name: {value: count}}`. Values may be strings, numbers, or bools (stringified into the map key, so no `to_string()` is needed); Unit `()` values are skipped. `track_freq` is the full-distribution sibling of `track_top`/`track_bottom`, which keep only the most/least frequent N.
 
 ```rhai
-track_count("service", e.service)       // Count events per service
-track_count("status", e.status)         // Integer categories just work
-track_count("level", e.level)           // {level: {ERROR: 12, INFO: 3041}}
+track_freq("service", e.service)        // Count events per service
+track_freq("status", e.status)          // Numeric values just work
+track_freq("level", e.level)            // {level: {ERROR: 12, INFO: 3041}}
 
-// A "bucket" is just a category you computed yourself:
-track_count("status_class", e.status / 100 * 100)        // 200/300/400/500
-track_count("latency_ms", floor(e.response_time / 100) * 100)
+// A histogram "bucket" is just a value you computed yourself:
+track_freq("status_class", e.status / 100 * 100)        // 200/300/400/500
+track_freq("latency_ms", floor(e.response_time / 100) * 100)
 
-// For a single plain counter, use track_sum:
-track_sum("total", 1)
+// For a single running counter, use track_inc (or track_sum):
+track_inc("total")                      // same as track_sum("total", 1)
 ```
 
 !!! note "Changed in kelora 2.0"
-    `track_count` took a single argument in 1.x (the counted value itself) and `track_bucket(key, bucket)` provided the categorized form. The two were merged: use `track_count(name, category)` for categorized counting and `track_sum(name, 1)` for plain counters. `track_bucket` was removed.
+    The categorical counter was named `track_count` in earlier 2.0 previews (and `track_count(value)` / `track_bucket(key, bucket)` in 1.x). It is now `track_freq(name, value)`, because "count" was ambiguous between a per-value frequency table and a plain scalar counter. Use `track_freq(name, value)` for frequency tables and `track_inc(name)` / `track_sum(name, 1)` for running counters. `track_count` and `track_bucket` were removed and error with a migration hint.
+
+#### `track_inc(name)`
+Increment a running counter by 1 — readable sugar for `track_sum(name, 1)`. Shares the additive sum operation, so it merges identically across parallel workers and span windows.
+
+```rhai
+track_inc("events")                     // total event count
+if e.level == "ERROR" {
+    track_inc("errors")                 // conditional counter
+}
+```
 
 #### `track_sum(key, value)`
 Accumulate numeric values for key. Skips Unit `()` values.
@@ -1990,7 +2000,7 @@ track_top_by("cpu_hogs", e.process, e.cpu_time.or_empty())  // Skips ()
     In 1.x, score-based ranking was the 4-argument form `track_top(key, item, n, value)`. It is now its own function with the score in the natural position and `n` optional: `track_top_by(name, item, score [, n])`.
 
 !!! tip "Memory Efficiency"
-    `track_top()` and `track_bottom()` use bounded memory (O(N) per key) unlike `track_unique()` (which stores every distinct value) or `track_count()` (one map entry per distinct category). For high-cardinality fields, prefer top/bottom tracking.
+    `track_top()` and `track_bottom()` use bounded memory (O(N) per key) unlike `track_unique()` (which stores every distinct value) or `track_freq()` (one map entry per distinct category). For high-cardinality fields, prefer top/bottom tracking.
 
 !!! note "Parallel Mode Behavior"
     In parallel mode, each worker maintains its own top/bottom N. During merge, the lists are combined, re-sorted, and trimmed to N. Final results are deterministic.
@@ -2318,7 +2328,7 @@ if e.timestamp > to_datetime("2024-01-01") {
 
 **Metrics Tracking:**
 ```rhai
-track_count("service", e.service)
+track_freq("service", e.service)
 track_sum("bytes", e.response_size)
 track_unique("users", e.user_id)
 ```

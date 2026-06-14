@@ -1034,7 +1034,7 @@ impl Clone for RhaiEngine {
     fn clone(&self) -> Self {
         let mut engine = Engine::new();
         // Use Simple optimization, not Full. Full optimization breaks side-effect functions
-        // like track_count("key"), print("msg"), emit_each(), etc. by trying to evaluate them at
+        // like track_freq("name", value), print("msg"), emit_each(), etc. by trying to evaluate them at
         // compile time when their arguments are constants. These functions MUST run at runtime.
         engine.set_optimization_level(rhai::OptimizationLevel::Simple);
 
@@ -1322,10 +1322,10 @@ impl RhaiEngine {
             "col" => "string, column_selector".to_string(),
             "cols" => "string, column_selectors...".to_string(),
             "status_class" => "status_code_number".to_string(),
-            "track_count" => "key".to_string(),
+            "track_freq" => "name, value".to_string(),
+            "track_inc" => "name".to_string(),
             "track_sum" | "track_min" | "track_max" | "track_avg" => "key, value".to_string(),
             "track_unique" => "key, value".to_string(),
-            "track_bucket" => "key, value, bucket_size".to_string(),
             "count" => "string, substring".to_string(),
             // Common string functions that expect strings
             "len" | "trim" => "string".to_string(),
@@ -1400,13 +1400,13 @@ impl RhaiEngine {
             "col".to_string(),
             "cols".to_string(),
             "status_class".to_string(),
-            "track_count".to_string(),
+            "track_freq".to_string(),
+            "track_inc".to_string(),
             "track_sum".to_string(),
             "track_min".to_string(),
             "track_max".to_string(),
             "track_avg".to_string(),
             "track_unique".to_string(),
-            "track_bucket".to_string(),
             "track_percentiles".to_string(),
             "track_stats".to_string(),
             "track_cardinality".to_string(),
@@ -1446,7 +1446,8 @@ impl RhaiEngine {
                 ];
             } else if func_name.contains("track") {
                 return vec![
-                    "track_count".to_string(),
+                    "track_freq".to_string(),
+                    "track_inc".to_string(),
                     "track_sum".to_string(),
                     "track_unique".to_string(),
                 ];
@@ -1462,7 +1463,7 @@ impl RhaiEngine {
         let mut engine = Engine::new();
 
         // Use Simple optimization, not Full. Full optimization breaks side-effect functions
-        // like track_count("key"), print("msg"), emit_each(), etc. by trying to evaluate them at
+        // like track_freq("name", value), print("msg"), emit_each(), etc. by trying to evaluate them at
         // compile time when their arguments are constants. These functions MUST run at runtime.
         engine.set_optimization_level(rhai::OptimizationLevel::Simple);
 
@@ -2726,7 +2727,7 @@ mod tests {
             r#"e.has("x")"#,
             r#"e.get_path("a.b")"#,
             r#"print(e.msg)"#,
-            r#"track_count(e.level)"#,
+            r#"track_freq("level", e.level)"#,
         ] {
             assert!(
                 !engine.compile_exec(script).unwrap().mutates_event,
@@ -3037,11 +3038,17 @@ mod tests {
         let scope = Scope::new();
 
         let err = EvalAltResult::ErrorRuntime(
-            "track_count requires a string key; got ()".into(),
+            "track_freq requires a string name; got ()".into(),
             rhai::Position::NONE,
         );
         let ctx = debug::ExecutionContext::default();
-        let out = enhancer.enhance_error(&err, &scope, "track_count(e.endpoint)", "exec", &ctx);
+        let out = enhancer.enhance_error(
+            &err,
+            &scope,
+            "track_freq(\"endpoint\", e.endpoint)",
+            "exec",
+            &ctx,
+        );
 
         eprintln!("enhanced error:\n{}", out);
         assert!(

@@ -194,12 +194,12 @@ pub fn decode_warning_sample() -> Option<String> {
     first_decode_warning_sample()
 }
 
-// Thread-local storage for statistics (following track_count pattern)
+// Thread-local storage for statistics (following track_freq pattern)
 thread_local! {
     static THREAD_STATS: RefCell<ProcessingStats> = RefCell::new(ProcessingStats::new());
 }
 
-// Public API functions for stats collection (following track_count pattern)
+// Public API functions for stats collection (following track_freq pattern)
 // Note: These functions are conditionally called based on config.output.stats flag
 pub fn stats_add_line_read() {
     if !stats_enabled() {

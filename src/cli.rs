@@ -1418,7 +1418,7 @@ mod tests {
             "-l".to_string(),
             "error,critical".to_string(),
             "-e".to_string(),
-            "track_count(e.level)".to_string(),
+            "track_freq(\"level\", e.level)".to_string(),
             "--exclude-levels".to_string(),
             "debug".to_string(),
         ];
@@ -1436,7 +1436,7 @@ mod tests {
         ));
         assert!(matches!(
             &stages[1],
-            ScriptStageType::Exec(script) if script == "track_count(e.level)"
+            ScriptStageType::Exec(script) if script == "track_freq(\"level\", e.level)"
         ));
         assert!(matches!(
             &stages[2],
