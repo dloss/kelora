@@ -51,8 +51,16 @@ kelora -j examples/simple_json.jsonl --filter 'e.service == "api"' --top message
 
 All three are repeatable, accept dotted paths for nested fields
 (`--count user.id`), and see only events that survived filtering — the same
-post-pipeline vantage as `--discover-final`. Reach for the `track_*` functions
-directly when you need anything beyond these common cases.
+post-pipeline vantage as `--discover-final`. They imply `-m`, so output is
+controlled by the usual `--metrics=short|full|json` and `--metrics-file`
+options (one table, one format, even when you mix several flags):
+
+```bash
+kelora -j examples/simple_json.jsonl --count level --metrics=json
+```
+
+Reach for the `track_*` functions directly when you need anything beyond these
+common cases.
 
 ## Step 1 – Quick Counts with `track_freq()`
 

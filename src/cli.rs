@@ -762,7 +762,7 @@ pub struct Cli {
         long = "count",
         value_name = "FIELD",
         help_heading = "Metrics and Stats",
-        help = "Count occurrences per distinct value of FIELD (frequency table).\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\n\nExamples:\n  --count level\n  --filter 'e.status>=500' --count url"
+        help = "Count occurrences per distinct value of FIELD (frequency table).\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\nControl output with --metrics=short|full|json or --metrics-file.\n\nExamples:\n  --count level\n  --filter 'e.status>=500' --count url"
     )]
     pub count: Vec<String>,
 
@@ -771,7 +771,7 @@ pub struct Cli {
         long = "describe",
         value_name = "FIELD",
         help_heading = "Metrics and Stats",
-        help = "Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.\n\nShorthand for track_stats(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Non-numeric/missing values are skipped.\n\nExample:\n  --describe duration_ms"
+        help = "Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.\n\nShorthand for track_stats(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Non-numeric/missing values are skipped.\nControl output with --metrics=short|full|json or --metrics-file.\n\nExample:\n  --describe duration_ms"
     )]
     pub describe: Vec<String>,
 
@@ -780,7 +780,7 @@ pub struct Cli {
         long = "top",
         value_name = "FIELD[:N]",
         help_heading = "Metrics and Stats",
-        help = "Top-N most frequent values of FIELD (default N=10).\n\nShorthand for track_top(\"FIELD\", e.FIELD, N). Runs after all filters/transforms\nand implies -m. Repeatable. Pass N as a :N suffix.\n\nExamples:\n  --top url\n  --top url:20"
+        help = "Top-N most frequent values of FIELD (default N=10).\n\nShorthand for track_top(\"FIELD\", e.FIELD, N). Runs after all filters/transforms\nand implies -m. Repeatable. Pass N as a :N suffix.\nControl output with --metrics=short|full|json or --metrics-file.\n\nExamples:\n  --top url\n  --top url:20"
     )]
     pub top: Vec<String>,
 
