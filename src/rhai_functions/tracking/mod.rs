@@ -307,6 +307,29 @@ pub fn register_functions(engine: &mut Engine) {
             Ok(())
         },
     );
+    // A non-string name (e.g. a field value passed where a metric name belongs)
+    // teaches the frequency form rather than failing with a generic arity error.
+    engine.register_fn(
+        "track_inc",
+        |name: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(format!(
+                "track_inc name must be a string; got {}. To count occurrences of a value use track_freq(\"name\", value)",
+                name.type_name()
+            )
+            .into())
+        },
+    );
+    // track_inc always adds 1; point increment-by-N at track_sum.
+    engine.register_fn(
+        "track_inc",
+        |_name: Dynamic, _n: Dynamic| -> Result<(), Box<rhai::EvalAltResult>> {
+            Err(
+                "track_inc adds 1; for increment-by-N use track_sum(\"name\", n), \
+                 e.g. track_sum(\"bytes\", e.bytes)"
+                    .into(),
+            )
+        },
+    );
 
     // kelora 2.0 tombstones: "count" was ambiguous (a scalar counter vs. a
     // per-value frequency table), so it was split — frequency tables are
@@ -2382,6 +2405,28 @@ mod tests {
         );
 
         clear_tracking_state();
+    }
+
+    #[test]
+    fn test_track_inc_rejects_misuse_with_teaching_errors() {
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        // A value (here a number) in the name slot points at the frequency form.
+        let err = engine
+            .eval::<()>(r#"track_inc(200)"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("name must be a string"), "got: {}", err);
+        assert!(err.contains("track_freq"), "got: {}", err);
+
+        // Increment-by-N points at track_sum.
+        let err = engine
+            .eval::<()>(r#"track_inc("bytes", 5)"#)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("adds 1"), "got: {}", err);
+        assert!(err.contains("track_sum"), "got: {}", err);
     }
 
     #[test]
