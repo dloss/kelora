@@ -39,8 +39,8 @@ fn curated_ranking_synonyms_point_to_track_top_by() {
 
 #[test]
 fn curated_aggregation_synonyms_point_to_track_freq() {
-    // --count is a real flag (frequency table); the curated hint covers only the
-    // remaining aggregation synonyms that kelora has no flag for.
+    // The frequency-table flag is --freq; aggregation synonyms kelora has no flag
+    // for point at track_freq in a script stage.
     for flag in ["--group-by", "--uniq"] {
         let (_out, err, code) = run_kelora_with_input(&["-f", "json", flag], "{}\n");
         assert_eq!(code, 2, "{flag} should exit 2");
@@ -49,6 +49,18 @@ fn curated_aggregation_synonyms_point_to_track_freq() {
             "{flag} hint should mention track_freq, got:\n{err}"
         );
     }
+}
+
+#[test]
+fn curated_count_points_to_freq_flag() {
+    // "count" is ambiguous (renamed away from track_count for the same reason),
+    // so --count is not a flag; it redirects to the real --freq flag.
+    let (_out, err, code) = run_kelora_with_input(&["-f", "json", "--count", "level"], "{}\n");
+    assert_eq!(code, 2, "--count should exit 2 (not a real flag)");
+    assert!(
+        err.contains("--freq"),
+        "--count hint should point at --freq, got:\n{err}"
+    );
 }
 
 #[test]

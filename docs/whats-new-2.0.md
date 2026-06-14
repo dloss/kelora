@@ -78,9 +78,9 @@ legend shows only on an interactive terminal, so piped output stays clean.
 - **Keyword search in `--help-functions`** — `kelora --help-functions ip`
   filters the 150+ function catalogue instead of forcing a scroll.
 - **Intent-based hints for unknown flags** — habit flags from other tools point
-  at the Kelora idiom (`--where`/`--grep` → `--filter`; `--sort`/`--top` →
-  `track_top_by`; `--count`/`--group-by` → `track_count`). These stay unknown
-  (exit 2), so no namespace is reserved.
+  at the Kelora idiom (`--where`/`--grep` → `--filter`; `--sort`/`--rank` →
+  `track_top_by`; `--count`/`--group-by`/`--uniq` → `--freq` / `track_freq`).
+  These stay unknown (exit 2), so no namespace is reserved.
 - **`-P` short flag for `--parallel`**, following the `xargs`/GNU `parallel`
   convention.
 - **`-l/--levels` vocabulary-mismatch warning** — when `-l` drops every event

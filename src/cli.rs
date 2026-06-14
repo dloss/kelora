@@ -757,14 +757,14 @@ pub struct Cli {
     )]
     pub metrics_file: Option<String>,
 
-    /// Count occurrences per distinct value of FIELD (frequency table). Shorthand for track_freq.
+    /// Frequency table: count occurrences per distinct value of FIELD. Shorthand for track_freq.
     #[arg(
-        long = "count",
+        long = "freq",
         value_name = "FIELD",
         help_heading = "Metrics and Stats",
-        help = "Count occurrences per distinct value of FIELD (frequency table).\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\nControl output with --metrics=short|full|json or --metrics-file.\n\nExamples:\n  --count level\n  --filter 'e.status>=500' --count url"
+        help = "Frequency table: count occurrences per distinct value of FIELD.\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\nControl output with --metrics=short|full|json or --metrics-file.\n\nExamples:\n  --freq level\n  --filter 'e.status>=500' --freq url"
     )]
-    pub count: Vec<String>,
+    pub freq: Vec<String>,
 
     /// Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99. Shorthand for track_stats.
     #[arg(
@@ -1224,12 +1224,12 @@ impl Cli {
             .map(|(_, stage)| stage)
             .collect();
 
-        // Metrics-sugar flags (--count / --describe / --top) are non-positional,
+        // Metrics-sugar flags (--freq / --describe / --top) are non-positional,
         // so they always run LAST — after every --filter/-l/-e stage. That gives
         // them the same post-pipeline vantage as --discover-final: they see fields
         // created/renamed by earlier stages and only events that survived filtering.
-        for field in &self.count {
-            stages.push(ScriptStageType::Exec(synthesize_count_stage(field)?));
+        for field in &self.freq {
+            stages.push(ScriptStageType::Exec(synthesize_freq_stage(field)?));
         }
         for field in &self.describe {
             stages.push(ScriptStageType::Exec(synthesize_describe_stage(field)?));
@@ -1307,10 +1307,10 @@ fn field_value_accessor(field: &str) -> String {
     }
 }
 
-fn synthesize_count_stage(field: &str) -> Result<String> {
+fn synthesize_freq_stage(field: &str) -> Result<String> {
     if field.is_empty() {
         return Err(anyhow::anyhow!(
-            "--count requires a field name, e.g. --count level"
+            "--freq requires a field name, e.g. --freq level"
         ));
     }
     Ok(format!(

@@ -1984,7 +1984,7 @@ fn test_multiline_parallel_avg_finalized() {
 }
 
 // ---------------------------------------------------------------------------
-// Metrics-sugar CLI flags: --count / --describe / --top
+// Metrics-sugar CLI flags: --freq / --describe / --top
 //
 // These are pure front-end sugar that synthesize the equivalent track_* call
 // as the final per-event stage (after all --filter/-e), and imply -m.
@@ -1996,9 +1996,9 @@ const SUGAR_INPUT: &str = r#"{"level":"INFO","service":"api","ms":10}
 {"level":"WARN","service":"api","ms":30}"#;
 
 #[test]
-fn sugar_count_matches_explicit_track_freq() {
+fn sugar_freq_matches_explicit_track_freq() {
     let (sugar_out, _e1, c1) =
-        run_kelora_with_input(&["-f", "json", "--count", "level"], SUGAR_INPUT);
+        run_kelora_with_input(&["-f", "json", "--freq", "level"], SUGAR_INPUT);
     let (explicit_out, _e2, c2) = run_kelora_with_input(
         &["-f", "json", "-e", "track_freq(\"level\", e.level)", "-m"],
         SUGAR_INPUT,
@@ -2007,14 +2007,14 @@ fn sugar_count_matches_explicit_track_freq() {
     assert_eq!(c2, 0);
     assert_eq!(
         sugar_out, explicit_out,
-        "--count FIELD should equal track_freq(\"FIELD\", e.FIELD) -m"
+        "--freq FIELD should equal track_freq(\"FIELD\", e.FIELD) -m"
     );
 }
 
 #[test]
-fn sugar_count_implies_metrics_only() {
+fn sugar_freq_implies_metrics_only() {
     let (stdout, _stderr, code) =
-        run_kelora_with_input(&["-f", "json", "--count", "level"], SUGAR_INPUT);
+        run_kelora_with_input(&["-f", "json", "--freq", "level"], SUGAR_INPUT);
     assert_eq!(code, 0);
     assert!(
         stdout.contains("level"),
@@ -2053,7 +2053,7 @@ fn sugar_top_respects_n_suffix() {
 }
 
 #[test]
-fn sugar_count_runs_after_filter() {
+fn sugar_freq_runs_after_filter() {
     // Only INFO survives; service tally must reflect just those two api events.
     let (stdout, _stderr, code) = run_kelora_with_input(
         &[
@@ -2061,7 +2061,7 @@ fn sugar_count_runs_after_filter() {
             "json",
             "--filter",
             "e.level==\"INFO\"",
-            "--count",
+            "--freq",
             "service",
         ],
         SUGAR_INPUT,
@@ -2078,14 +2078,14 @@ fn sugar_count_runs_after_filter() {
 }
 
 #[test]
-fn sugar_count_sees_fields_created_by_exec() {
+fn sugar_freq_sees_fields_created_by_exec() {
     let (stdout, _stderr, code) = run_kelora_with_input(
         &[
             "-f",
             "json",
             "-e",
             "e.sev = if e.level==\"ERROR\" {\"high\"} else {\"low\"}",
-            "--count",
+            "--freq",
             "sev",
         ],
         SUGAR_INPUT,
@@ -2102,10 +2102,10 @@ fn sugar_count_sees_fields_created_by_exec() {
 }
 
 #[test]
-fn sugar_count_supports_nested_dotted_path() {
+fn sugar_freq_supports_nested_dotted_path() {
     let nested = "{\"user\":{\"id\":7}}\n{\"user\":{\"id\":7}}\n{\"user\":{\"id\":9}}";
     let (stdout, _stderr, code) =
-        run_kelora_with_input(&["-f", "json", "--count", "user.id"], nested);
+        run_kelora_with_input(&["-f", "json", "--freq", "user.id"], nested);
     assert_eq!(code, 0);
     assert!(stdout.contains("user.id"), "nested metric name: {stdout}");
     assert!(
@@ -2115,9 +2115,9 @@ fn sugar_count_supports_nested_dotted_path() {
 }
 
 #[test]
-fn sugar_no_metrics_overrides_count() {
+fn sugar_no_metrics_overrides_freq() {
     let (stdout, _stderr, code) = run_kelora_with_input(
-        &["-f", "json", "--count", "level", "--no-metrics"],
+        &["-f", "json", "--freq", "level", "--no-metrics"],
         SUGAR_INPUT,
     );
     assert_eq!(code, 0);
@@ -2135,7 +2135,7 @@ fn sugar_no_metrics_overrides_count() {
 #[test]
 fn sugar_multiple_flags_combine() {
     let (stdout, _stderr, code) = run_kelora_with_input(
-        &["-f", "json", "--count", "level", "--count", "service"],
+        &["-f", "json", "--freq", "level", "--freq", "service"],
         SUGAR_INPUT,
     );
     assert_eq!(code, 0);
@@ -2155,13 +2155,13 @@ fn sugar_top_zero_is_rejected() {
 }
 
 #[test]
-fn sugar_count_parallel_matches_sequential() {
-    let (seq, _e1, c1) = run_kelora_with_input(&["-f", "json", "--count", "service"], SUGAR_INPUT);
+fn sugar_freq_parallel_matches_sequential() {
+    let (seq, _e1, c1) = run_kelora_with_input(&["-f", "json", "--freq", "service"], SUGAR_INPUT);
     let (par, _e2, c2) = run_kelora_with_input(
         &[
             "-f",
             "json",
-            "--count",
+            "--freq",
             "service",
             "--parallel",
             "--batch-size",

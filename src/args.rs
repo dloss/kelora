@@ -393,10 +393,15 @@ fn unknown_arg_hint(arg: &str) -> Option<String> {
              kelora -m --exec 'track_top_by(\"slowest\", e.endpoint, e.latency_ms, 10)' app.log\n  \
              For a frequency top-N, use --top FIELD. See --help-functions for details."
         }
+        "count" => {
+            "kelora has no --count flag — \"count\" is ambiguous between a running total and a per-value tally. For a frequency table (\"count by\"), use --freq FIELD:\n    \
+             kelora --freq level app.log\n  \
+             It is shorthand for track_freq(\"level\", e.level). See --help-functions for details."
+        }
         "uniq" | "uniq-c" | "group-by" | "groupby" => {
             "kelora has no --group-by/--uniq flag. To aggregate by a category, use track_freq in a script stage:\n    \
              kelora -m --exec 'track_freq(\"level\", e.level)' app.log\n  \
-             For a quick frequency table, use --count FIELD. See --help-functions for details."
+             For a quick frequency table, use --freq FIELD. See --help-functions for details."
         }
         _ => return None,
     };
