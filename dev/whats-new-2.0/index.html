@@ -2703,20 +2703,22 @@ legend shows only on an interactive terminal, so piped output stays clean.</p>
 <h3 id="breaking-the-tracking-functions-were-redesigned">Breaking: the tracking functions were redesigned<a class="headerlink" href="#breaking-the-tracking-functions-were-redesigned" title="Permanent link">&para;</a></h3>
 <p>The tracking family is consolidated around one convention:
 <code>track_fn(name, args...)</code>. This is the change most likely to require edits.</p>
-<p><strong>Category counting</strong> — <code>track_count(name, category)</code> replaces both the old
-one-argument <code>track_count(value)</code> and <code>track_bucket(key, bucket)</code> (which were
-the same operation under two names). Counts now land in separate per-name
-sub-maps, so different metrics can no longer collide. Categories are stringified
-automatically.</p>
+<p><strong>Frequency tables</strong> — <code>track_freq(name, value)</code> counts occurrences of each
+distinct value, replacing both the old one-argument <code>track_count(value)</code> and
+<code>track_bucket(key, bucket)</code> (which were the same operation under two names).
+Counts now land in separate per-name sub-maps, so different metrics can no
+longer collide. Values are stringified automatically.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Old (1.x)</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status&quot;, e.status)&#39;</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># New (2.0)</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;level&quot;, e.level)&#39;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;status&quot;, e.status)&#39;</span><span class="w">   </span><span class="c1"># no to_string() needed</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;level&quot;, e.level)&#39;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;status&quot;, e.status)&#39;</span><span class="w">   </span><span class="c1"># no to_string() needed</span>
 </code></pre></div>
-<p>For a plain counter, use <code>track_sum("errors", 1)</code>.</p>
+<p>The name is "freq" rather than "count" because <em>count</em> was ambiguous — it read
+equally as a per-value frequency table and as a single scalar counter. For a
+plain counter, use the dedicated <code>track_inc("errors")</code> (or <code>track_sum("errors", 1)</code>).</p>
 <p><strong>Score-based ranking</strong> — the 4-argument <code>track_top(key, item, n, value)</code> moves
 to <code>track_top_by(name, item, score [, n])</code> (and likewise
 <code>track_bottom_by</code>). <code>n</code> now defaults to 10 in all four ranking functions.</p>
@@ -2735,7 +2737,7 @@ results. Other notes:</p>
 <li><strong>Name reuse across functions is a call-time error.</strong> Mixing
   <code>track_sum("x", …)</code> and <code>track_min("x", …)</code> used to silently blend into
   garbage under parallel merging; it now errors.</li>
-<li><strong>Float category labels are preserved</strong> (<code>200.0</code> → <code>"200"</code>), so JSON
+<li><strong>Float value labels are preserved</strong> (<code>200.0</code> → <code>"200"</code>), so JSON
   consumers keyed on the old <code>track_bucket</code> names keep working.</li>
 <li><strong>Ranking is now exact.</strong> <code>track_top_by</code>/<code>track_bottom_by</code> (and the legacy
   <code>track_top</code>/<code>track_bottom</code>) retain every distinct item and rank only when
@@ -2753,11 +2755,11 @@ results. Other notes:</p>
 <tbody>
 <tr>
 <td><code>track_count(value)</code></td>
-<td><code>track_count("name", value)</code></td>
+<td><code>track_freq("name", value)</code></td>
 </tr>
 <tr>
 <td><code>track_bucket(key, bucket)</code></td>
-<td><code>track_count(key, bucket)</code></td>
+<td><code>track_freq(key, bucket)</code></td>
 </tr>
 <tr>
 <td><code>track_top(key, item, n, value)</code></td>
@@ -2769,7 +2771,7 @@ results. Other notes:</p>
 </tr>
 <tr>
 <td>plain counter via <code>track_count</code></td>
-<td><code>track_sum("name", 1)</code></td>
+<td><code>track_inc("name")</code> (or <code>track_sum("name", 1)</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -2852,8 +2854,9 @@ paging to <code>less</code>:</p>
 <p><code>--no-wrap</code> disables it everywhere.</p>
 <h2 id="upgrade-checklist">Upgrade checklist<a class="headerlink" href="#upgrade-checklist" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Migrate tracking scripts.</strong> Replace <code>track_count(value)</code> →
-   <code>track_count("name", value)</code>, <code>track_bucket</code> → <code>track_count</code>, and
+<li><strong>Migrate tracking scripts.</strong> Replace <code>track_count(value)</code> and
+   <code>track_bucket(key, bucket)</code> → <code>track_freq("name", value)</code>, plain counters →
+   <code>track_inc("name")</code> (or <code>track_sum("name", 1)</code>), and
    <code>track_top</code>/<code>track_bottom</code> → <code>track_top_by</code>/<code>track_bottom_by</code> (score before
    <code>n</code>). The old forms error with a hint, so a dry run surfaces every site.</li>
 <li><strong>Re-check exit-code expectations.</strong> The exit code now tracks "did the job

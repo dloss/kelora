@@ -1558,10 +1558,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#histogram-buckets-track_count" class="md-nav__link">
+  <a href="#histogram-buckets-track_freq" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Histogram buckets — track_count()
+        Histogram buckets — track_freq()
       
     </span>
   </a>
@@ -2488,10 +2488,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#histogram-buckets-track_count" class="md-nav__link">
+  <a href="#histogram-buckets-track_freq" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Histogram buckets — track_count()
+        Histogram buckets — track_freq()
       
     </span>
   </a>
@@ -2588,7 +2588,7 @@ placeholders so they collapse into one pattern.</p>
 </div>
 </div>
 </div>
-<p>→ Pair it with <code>track_count()</code> to rank error patterns, or let
+<p>→ Pair it with <code>track_freq()</code> to rank error patterns, or let
 <a href="#template-mining"><code>--drain</code> mine templates automatically</a>. Full pattern list
 and options: <a href="../../reference/functions/"><code>normalized()</code> reference</a>.</p>
 <h2 id="template-mining">Discover log templates automatically — <code>--drain</code><a class="headerlink" href="#template-mining" title="Permanent link">&para;</a></h2>
@@ -2737,7 +2737,7 @@ consistent anonymous IDs (HMAC with <code>KELORA_SECRET</code>).</p>
 </div>
 <p><code>extract_jsons()</code> grabs every object; <code>absorb_kv("line")</code> promotes <code>key=value</code>
 pairs to fields. → <a href="../../reference/functions/">Function Reference</a>.</p>
-<h2 id="histogram-buckets-track_count">Histogram buckets — <code>track_count()</code><a class="headerlink" href="#histogram-buckets-track_count" title="Permanent link">&para;</a></h2>
+<h2 id="histogram-buckets-track_freq">Histogram buckets — <code>track_freq()</code><a class="headerlink" href="#histogram-buckets-track_freq" title="Permanent link">&para;</a></h2>
 <p>See the <em>distribution</em>, not just the average.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="9:1"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Command/Output</label></div>
 <div class="tabbed-content">
@@ -2746,7 +2746,7 @@ pairs to fields. → <a href="../../reference/functions/">Function Reference</a>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;response_time&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let bucket = (e.response_time / 0.5).floor() * 0.5;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_count(&quot;response_ms&quot;, bucket)&#39;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_freq(&quot;response_ms&quot;, bucket)&#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>response_ms  (6 categories):
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  0   11
@@ -2815,7 +2815,7 @@ users, take a deterministic sample, and aggregate, in one command:</p>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="s1">          e.user_id = ()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.sample_group &lt; 3&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;error_pattern&quot;, e.error_pattern)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;error_pattern&quot;, e.error_pattern)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span>-k<span class="w"> </span>order_id,sku,quantity,error_pattern<span class="w"> </span>-F<span class="w"> </span>csv
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>

@@ -2539,7 +2539,7 @@
 <ul>
 <li>Compare counts with what you expect from upstream systems.</li>
 <li>Divide <code>latency_total_ms</code> by <code>latency_samples</code> for averages, or compute per-service stats with additional prefixes.</li>
-<li>Use <code>track_count()</code> to build histograms or <code>track_unique()</code> to measure cardinality.</li>
+<li>Use <code>track_freq()</code> to build histograms or <code>track_unique()</code> to measure cardinality.</li>
 </ul>
 <h2 id="step-5-export-the-prepared-dataset">Step 5: Export the Prepared Dataset<a class="headerlink" href="#step-5-export-the-prepared-dataset" title="Permanent link">&para;</a></h2>
 <p>Write the cleaned result to CSV, JSON, or logfmt depending on downstream needs.</p>

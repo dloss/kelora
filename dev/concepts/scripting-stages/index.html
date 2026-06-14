@@ -4741,13 +4741,13 @@
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.safe = &quot;always_set&quot;&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">       </span><span class="c1"># Always succeeds</span>
 <a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.parsed = parse_json(e.raw)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="c1"># Might fail for some events</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;type&quot;, e.parsed.type)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># Only runs if parsing succeeded</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;type&quot;, e.parsed.type)&#39;</span><span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># Only runs if parsing succeeded</span>
 <a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">    </span>-k<span class="w"> </span>safe,parsed
 <a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="c1"># Events that fail parsing still have &#39;safe&#39; field and appear in output</span>
 <a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>
 <a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a><span class="c1"># Single stage - All-or-nothing</span>
 <a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--resilient<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.safe = &quot;always_set&quot;; e.parsed = parse_json(e.raw); track_count(&quot;type&quot;, e.parsed.type)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.safe = &quot;always_set&quot;; e.parsed = parse_json(e.raw); track_freq(&quot;type&quot;, e.parsed.type)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a><span class="w">    </span>-k<span class="w"> </span>safe,parsed
 <a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a><span class="c1"># If parsing fails, the ENTIRE exec fails - no &#39;safe&#39; field, event unchanged</span>
 </code></pre></div>
@@ -4790,7 +4790,7 @@
 </code></pre></div>
 <h4 id="track-metrics">Track Metrics<a class="headerlink" href="#track-metrics" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_avg(&quot;response_time&quot;, e.duration_ms)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">    </span>--metrics<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="w">    </span>app.log
@@ -4823,7 +4823,7 @@
 </ul>
 <p><strong>Multi-file tracking example:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/*.log<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_count(&quot;file&quot;, meta.filename) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;if e.level == &quot;ERROR&quot; { track_freq(&quot;file&quot;, meta.filename) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for file in metrics.keys() { print(file + &quot;: &quot; + metrics[file] + &quot; errors&quot;) }&#39;</span>
 </code></pre></div>
 <p><strong>Debugging with line numbers:</strong></p>
@@ -4922,7 +4922,7 @@
 <h3 id="the-metrics-map">The metrics Map<a class="headerlink" href="#the-metrics-map" title="Permanent link">&para;</a></h3>
 <p>The global <code>metrics</code> map contains all tracked data from <code>track_*()</code> functions:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for key in metrics.keys() { print(key + &quot;: &quot; + metrics[key]) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-49-4" name="__codelineno-49-4" href="#__codelineno-49-4"></a><span class="w">    </span>app.log
 </code></pre></div>
@@ -4942,19 +4942,19 @@
 </code></pre></div>
 <h4 id="generate-report">Generate Report<a class="headerlink" href="#generate-report" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;=== Service Report ===&quot;); for svc in metrics.keys() { print(svc + &quot;: &quot; + metrics[svc] + &quot; requests&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h4 id="export-metrics-to-file">Export Metrics to File<a class="headerlink" href="#export-metrics-to-file" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--allow-fs-writes<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;append_file(&quot;report.txt&quot;, &quot;Total services: &quot; + metrics.len().to_string())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h4 id="calculate-percentages">Calculate Percentages<a class="headerlink" href="#calculate-percentages" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total&quot;, 1); track_count(&quot;level&quot;, e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total&quot;, 1); track_freq(&quot;level&quot;, e.level)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;for level in [&quot;INFO&quot;, &quot;WARN&quot;, &quot;ERROR&quot;] { let pct = metrics.get(level, 0) / metrics.total * 100; print(level + &quot;: &quot; + pct + &quot;%&quot;) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a><span class="w">    </span>app.log
 </code></pre></div>
@@ -5001,7 +5001,7 @@
 <a id="__codelineno-56-11" name="__codelineno-56-11" href="#__codelineno-56-11"></a>}
 <a id="__codelineno-56-12" name="__codelineno-56-12" href="#__codelineno-56-12"></a>
 <a id="__codelineno-56-13" name="__codelineno-56-13" href="#__codelineno-56-13"></a>// Track metrics
-<a id="__codelineno-56-14" name="__codelineno-56-14" href="#__codelineno-56-14"></a>track_count(&quot;severity&quot;, e.severity);
+<a id="__codelineno-56-14" name="__codelineno-56-14" href="#__codelineno-56-14"></a>track_freq(&quot;severity&quot;, e.severity);
 <a id="__codelineno-56-15" name="__codelineno-56-15" href="#__codelineno-56-15"></a>track_avg(&quot;response_time&quot;, e.duration_s);
 </code></pre></div></p>
 <p><strong>Usage:</strong>
@@ -5062,13 +5062,13 @@
 <h3 id="use-end-for-summaries">Use --end for Summaries<a class="headerlink" href="#use-end-for-summaries" title="Permanent link">&para;</a></h3>
 <p><strong>Good:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-64-2" name="__codelineno-64-2" href="#__codelineno-64-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-64-2" name="__codelineno-64-2" href="#__codelineno-64-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-64-3" name="__codelineno-64-3" href="#__codelineno-64-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Total services: &quot; + metrics.len())&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-64-4" name="__codelineno-64-4" href="#__codelineno-64-4"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p><strong>Bad:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service); print(&quot;Processing...&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service); print(&quot;Processing...&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-65-3" name="__codelineno-65-3" href="#__codelineno-65-3"></a><span class="w">    </span>app.log
 </code></pre></div></p>
 <p>The bad example prints on every event (noisy).</p>
@@ -5101,7 +5101,7 @@
 <h3 id="end-stage-overhead">End Stage Overhead<a class="headerlink" href="#end-stage-overhead" title="Permanent link">&para;</a></h3>
 <p>The <code>--end</code> stage runs once, so complex calculations are fine:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-70-3" name="__codelineno-70-3" href="#__codelineno-70-3"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;let sorted = metrics.keys().sort(); for key in sorted { print(key + &quot;: &quot; + metrics[key]) }&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-70-4" name="__codelineno-70-4" href="#__codelineno-70-4"></a><span class="w">    </span>app.log
 </code></pre></div>
@@ -5111,7 +5111,7 @@
 <p><code>--begin</code> and <code>--end</code> run <strong>once</strong> (not parallelized):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-71-2" name="__codelineno-71-2" href="#__codelineno-71-2"></a><span class="w">    </span>--begin<span class="w"> </span><span class="s1">&#39;conf.start = now()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-71-3" name="__codelineno-71-3" href="#__codelineno-71-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-71-3" name="__codelineno-71-3" href="#__codelineno-71-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-71-4" name="__codelineno-71-4" href="#__codelineno-71-4"></a><span class="w">    </span>--end<span class="w"> </span><span class="s1">&#39;print(&quot;Duration: &quot; + (now() - conf.start))&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a><span class="w">    </span>app.log
 </code></pre></div>
@@ -5124,7 +5124,7 @@
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-72-2" name="__codelineno-72-2" href="#__codelineno-72-2"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;e.duration_s = e.duration_ms / 1000&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-72-3" name="__codelineno-72-3" href="#__codelineno-72-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-72-3" name="__codelineno-72-3" href="#__codelineno-72-3"></a><span class="w">    </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-72-4" name="__codelineno-72-4" href="#__codelineno-72-4"></a><span class="w">    </span>app.log
 </code></pre></div>
 <h3 id="thread-safety">Thread Safety<a class="headerlink" href="#thread-safety" title="Permanent link">&para;</a></h3>

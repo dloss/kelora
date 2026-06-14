@@ -3120,7 +3120,7 @@
 <a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
 <a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>
 <a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>// Multi-file tracking
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_count(&quot;file&quot;, meta.filename) }&#39;
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_freq(&quot;file&quot;, meta.filename) }&#39;
 <a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>
 <a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>// Debugging with line numbers
 <a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>--exec &#39;eprint(&quot;Error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;

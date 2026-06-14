@@ -3578,15 +3578,15 @@
 <h3 id="tracking">Tracking<a class="headerlink" href="#tracking" title="Permanent link">&para;</a></h3>
 <p>The process of accumulating metrics across events using <code>track_*()</code> functions:</p>
 <ul>
-<li><code>track_count(key)</code> - Count occurrences</li>
-<li><code>track_sum(key, value)</code> - Sum values</li>
-<li><code>track_avg(key, value)</code> - Average values</li>
-<li><code>track_percentiles(key, value, [percentiles])</code> - Streaming percentiles (P50/P95/P99)</li>
-<li><code>track_min/max(key, value)</code> - Track extremes</li>
-<li><code>track_unique(key, value)</code> - Collect unique values (exact, stores all)</li>
-<li><code>track_cardinality(key, value)</code> - Estimate unique count (HyperLogLog, ~1% error, ~12KB)</li>
-<li><code>track_count(key, bucket_value)</code> - Histogram buckets</li>
-<li><code>track_top/bottom(key, item, n, [score])</code> - Top/bottom N items</li>
+<li><code>track_freq(name, value)</code> - Frequency table: count occurrences per value (incl. histogram buckets)</li>
+<li><code>track_inc(name)</code> - Increment a running counter by 1</li>
+<li><code>track_sum(name, value)</code> - Sum values (<code>track_sum(name, 1)</code> is also a plain counter)</li>
+<li><code>track_avg(name, value)</code> - Average values</li>
+<li><code>track_percentiles(name, value, [percentiles])</code> - Streaming percentiles (P50/P95/P99)</li>
+<li><code>track_min/max(name, value)</code> - Track extremes</li>
+<li><code>track_unique(name, value)</code> - Collect unique values (exact, stores all)</li>
+<li><code>track_cardinality(name, value)</code> - Estimate unique count (HyperLogLog, ~1% error, ~12KB)</li>
+<li><code>track_top/bottom(name, item, [n])</code> and <code>track_top_by/bottom_by(name, item, score, [n])</code> - Top/bottom N items</li>
 </ul>
 <p>See <a href="../tutorials/metrics-and-tracking/">Metrics and Tracking Tutorial</a>.</p>
 <h3 id="transform">Transform<a class="headerlink" href="#transform" title="Permanent link">&para;</a></h3>
