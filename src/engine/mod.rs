@@ -3018,8 +3018,8 @@ mod tests {
         );
 
         assert!(
-            out.starts_with("Error: Stage filter failed"),
-            "verbose diagnostic should use text prefix when emoji are disabled: {out}"
+            out.starts_with("filter error"),
+            "verbose diagnostic header should match the non-debug \"<stage> error\" form: {out}"
         );
         assert!(
             out.contains("Hint:"),

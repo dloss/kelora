@@ -111,13 +111,20 @@ impl ErrorEnhancer {
         execution_context: &ExecutionContext,
     ) -> String {
         let mut output = String::new();
-        let (stage_prefix, hint_prefix) = if self.debug_config.use_emoji {
-            ("🔸", "💡")
+        let hint_prefix = if self.debug_config.use_emoji {
+            "💡"
         } else {
-            ("Error:", "Hint:")
+            "Hint:"
         };
 
-        output.push_str(&format!("{stage_prefix} Stage {} failed\n", stage));
+        // Header mirrors the non-debug diagnostic ("<stage> error"). The caller
+        // already prefixes "<Stage> error:", so a "Error: Stage <stage> failed"
+        // header here read as the redundant "Filter error: Error: Stage filter failed".
+        if self.debug_config.use_emoji {
+            output.push_str(&format!("🔸 {stage} error\n"));
+        } else {
+            output.push_str(&format!("{stage} error\n"));
+        }
         output.push_str(&format!("  Code: {}\n", script.trim()));
         output.push_str(&format!("  Error: {}\n", error));
 
