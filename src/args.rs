@@ -388,15 +388,15 @@ fn unknown_arg_hint(arg: &str) -> Option<String> {
              kelora --filter 'e.level == \"ERROR\"' app.log\n  \
              See --help-rhai for expression syntax."
         }
-        "sort" | "top" | "top-n" | "topn" | "rank" | "nlargest" => {
-            "kelora has no --sort/--top flag. Ranking happens in a script stage via track_top_by:\n    \
+        "sort" | "top-n" | "topn" | "rank" | "nlargest" => {
+            "kelora has no --sort/--rank flag. To rank by a score, use track_top_by in a script stage:\n    \
              kelora -m --exec 'track_top_by(\"slowest\", e.endpoint, e.latency_ms, 10)' app.log\n  \
-             See --help-functions for track_top_by and related helpers."
+             For a frequency top-N, use --top FIELD. See --help-functions for details."
         }
-        "count" | "uniq" | "uniq-c" | "group-by" | "groupby" => {
-            "kelora has no --count/--group-by flag. Aggregate in a script stage via track_freq:\n    \
+        "uniq" | "uniq-c" | "group-by" | "groupby" => {
+            "kelora has no --group-by/--uniq flag. To aggregate by a category, use track_freq in a script stage:\n    \
              kelora -m --exec 'track_freq(\"level\", e.level)' app.log\n  \
-             See --help-functions for track_freq and related helpers."
+             For a quick frequency table, use --count FIELD. See --help-functions for details."
         }
         _ => return None,
     };
