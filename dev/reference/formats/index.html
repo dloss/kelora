@@ -2098,6 +2098,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#raw-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#logfmt-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2462,6 +2473,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#raw-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#logfmt-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2641,7 +2663,11 @@
 </tr>
 <tr>
 <td><code>line</code></td>
-<td>Unstructured logs, raw text</td>
+<td>Unstructured logs, plain text (trailing newline/CR trimmed)</td>
+</tr>
+<tr>
+<td><code>raw</code></td>
+<td>Plain text preserved verbatim (no trimming of newline/CR or other artifacts)</td>
 </tr>
 <tr>
 <td><code>logfmt</code></td>
@@ -2715,6 +2741,34 @@
 <li>Auto-detect falls back to line when it can't identify a structured format</li>
 <li>Empty lines are skipped</li>
 <li>Useful for unstructured logs or custom parsing with <code>--exec</code></li>
+</ul>
+<h3 id="raw-format">Raw Format<a class="headerlink" href="#raw-format" title="Permanent link">&para;</a></h3>
+<p><strong>Syntax:</strong> <code>-f raw</code></p>
+<p><strong>Description:</strong> Plain text, one event per line, preserved verbatim. Unlike
+<code>line</code>, the trailing newline/CR is <strong>not</strong> trimmed and backslashes and other
+artifacts are kept exactly as read.</p>
+<p><strong>Output Fields:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>raw</code></td>
+<td>String</td>
+<td>Line content, byte-for-byte as read</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes:</strong></p>
+<ul>
+<li>Choose <code>raw</code> over <code>line</code> when trailing whitespace or escape characters are
+  significant (e.g. round-tripping data without normalization)</li>
+<li>Like <code>line</code>, it matches every line, so in a cascade it must come last</li>
 </ul>
 <h3 id="logfmt-format">Logfmt Format<a class="headerlink" href="#logfmt-format" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong> <code>-f logfmt</code></p>
