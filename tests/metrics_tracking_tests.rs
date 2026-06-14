@@ -1982,3 +1982,194 @@ fn test_multiline_parallel_avg_finalized() {
         stdout
     );
 }
+
+// ---------------------------------------------------------------------------
+// Metrics-sugar CLI flags: --count / --describe / --top
+//
+// These are pure front-end sugar that synthesize the equivalent track_* call
+// as the final per-event stage (after all --filter/-e), and imply -m.
+// ---------------------------------------------------------------------------
+
+const SUGAR_INPUT: &str = r#"{"level":"INFO","service":"api","ms":10}
+{"level":"INFO","service":"api","ms":20}
+{"level":"ERROR","service":"db","ms":300}
+{"level":"WARN","service":"api","ms":30}"#;
+
+#[test]
+fn sugar_count_matches_explicit_track_freq() {
+    let (sugar_out, _e1, c1) =
+        run_kelora_with_input(&["-f", "json", "--count", "level"], SUGAR_INPUT);
+    let (explicit_out, _e2, c2) = run_kelora_with_input(
+        &["-f", "json", "-e", "track_freq(\"level\", e.level)", "-m"],
+        SUGAR_INPUT,
+    );
+    assert_eq!(c1, 0);
+    assert_eq!(c2, 0);
+    assert_eq!(
+        sugar_out, explicit_out,
+        "--count FIELD should equal track_freq(\"FIELD\", e.FIELD) -m"
+    );
+}
+
+#[test]
+fn sugar_count_implies_metrics_only() {
+    let (stdout, _stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--count", "level"], SUGAR_INPUT);
+    assert_eq!(code, 0);
+    assert!(
+        stdout.contains("level"),
+        "frequency table should appear: {stdout}"
+    );
+    assert!(stdout.contains("INFO"), "category should appear: {stdout}");
+    // Events are suppressed (metrics-only): no raw event field like the message.
+    assert!(
+        !stdout.contains("\"service\""),
+        "events should be suppressed in metrics-only mode: {stdout}"
+    );
+}
+
+#[test]
+fn sugar_describe_emits_stats_keys() {
+    let (stdout, _stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--describe", "ms"], SUGAR_INPUT);
+    assert_eq!(code, 0);
+    for suffix in [
+        "ms_count", "ms_min", "ms_max", "ms_avg", "ms_p50", "ms_p95", "ms_p99",
+    ] {
+        assert!(stdout.contains(suffix), "expected {suffix} in: {stdout}");
+    }
+}
+
+#[test]
+fn sugar_top_respects_n_suffix() {
+    let (stdout, _stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--top", "service:1"], SUGAR_INPUT);
+    assert_eq!(code, 0);
+    assert!(stdout.contains("#1"), "top should rank items: {stdout}");
+    assert!(
+        !stdout.contains("#2"),
+        "top:1 should keep only one item: {stdout}"
+    );
+}
+
+#[test]
+fn sugar_count_runs_after_filter() {
+    // Only INFO survives; service tally must reflect just those two api events.
+    let (stdout, _stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.level==\"INFO\"",
+            "--count",
+            "service",
+        ],
+        SUGAR_INPUT,
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stdout.contains("api"),
+        "post-filter tally should include api: {stdout}"
+    );
+    assert!(
+        !stdout.contains("db"),
+        "post-filter tally must exclude filtered-out services: {stdout}"
+    );
+}
+
+#[test]
+fn sugar_count_sees_fields_created_by_exec() {
+    let (stdout, _stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "e.sev = if e.level==\"ERROR\" {\"high\"} else {\"low\"}",
+            "--count",
+            "sev",
+        ],
+        SUGAR_INPUT,
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stdout.contains("sev"),
+        "should tally exec-created field: {stdout}"
+    );
+    assert!(
+        stdout.contains("high"),
+        "exec-created value should appear: {stdout}"
+    );
+}
+
+#[test]
+fn sugar_count_supports_nested_dotted_path() {
+    let nested = "{\"user\":{\"id\":7}}\n{\"user\":{\"id\":7}}\n{\"user\":{\"id\":9}}";
+    let (stdout, _stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--count", "user.id"], nested);
+    assert_eq!(code, 0);
+    assert!(stdout.contains("user.id"), "nested metric name: {stdout}");
+    assert!(
+        stdout.contains("7"),
+        "nested value should be tallied: {stdout}"
+    );
+}
+
+#[test]
+fn sugar_no_metrics_overrides_count() {
+    let (stdout, _stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--count", "level", "--no-metrics"],
+        SUGAR_INPUT,
+    );
+    assert_eq!(code, 0);
+    // --no-metrics wins: events are shown, no frequency table.
+    assert!(
+        !stdout.contains("categories"),
+        "--no-metrics should suppress the metrics table: {stdout}"
+    );
+    assert!(
+        stdout.contains("service"),
+        "events should be shown: {stdout}"
+    );
+}
+
+#[test]
+fn sugar_multiple_flags_combine() {
+    let (stdout, _stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--count", "level", "--count", "service"],
+        SUGAR_INPUT,
+    );
+    assert_eq!(code, 0);
+    assert!(stdout.contains("level"), "first tally present: {stdout}");
+    assert!(stdout.contains("service"), "second tally present: {stdout}");
+}
+
+#[test]
+fn sugar_top_zero_is_rejected() {
+    let (_stdout, stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--top", "url:0"], SUGAR_INPUT);
+    assert_eq!(code, 2, "invalid --top N should be a CLI usage error");
+    assert!(
+        stderr.contains("--top"),
+        "error should mention --top: {stderr}"
+    );
+}
+
+#[test]
+fn sugar_count_parallel_matches_sequential() {
+    let (seq, _e1, c1) = run_kelora_with_input(&["-f", "json", "--count", "service"], SUGAR_INPUT);
+    let (par, _e2, c2) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--count",
+            "service",
+            "--parallel",
+            "--batch-size",
+            "2",
+        ],
+        SUGAR_INPUT,
+    );
+    assert_eq!(c1, 0);
+    assert_eq!(c2, 0);
+    assert_eq!(seq, par, "parallel tally must match sequential");
+}

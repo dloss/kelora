@@ -31,6 +31,29 @@ paths resolve relative to the docs root:
 All commands print real output thanks to `markdown-exec`; feel free to tweak the
 expressions and rerun them locally.
 
+## No-Script Shortcuts: `--count`, `--describe`, `--top`
+
+For the most common aggregations you don't need to write Rhai at all. Three
+flags synthesize the equivalent `track_*` call, run it *after* all your
+filters and transforms, and imply `-m`:
+
+| Flag | Equivalent | Use it for |
+|------|------------|------------|
+| `--count FIELD` | `track_freq("FIELD", e.FIELD)` | frequency table ("count by") |
+| `--describe FIELD` | `track_stats("FIELD", e.FIELD)` | numeric summary (count/min/max/avg/p50/p95/p99) |
+| `--top FIELD[:N]` | `track_top("FIELD", e.FIELD, N)` | top-N most frequent values |
+
+```bash
+kelora -j examples/simple_json.jsonl --count level
+kelora -j examples/simple_json.jsonl --describe duration_ms
+kelora -j examples/simple_json.jsonl --filter 'e.service == "api"' --top message:5
+```
+
+All three are repeatable, accept dotted paths for nested fields
+(`--count user.id`), and see only events that survived filtering — the same
+post-pipeline vantage as `--discover-final`. Reach for the `track_*` functions
+directly when you need anything beyond these common cases.
+
 ## Step 1 – Quick Counts with `track_freq()`
 
 Count how many events belong to each service while suppressing event output.

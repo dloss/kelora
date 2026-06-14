@@ -757,6 +757,33 @@ pub struct Cli {
     )]
     pub metrics_file: Option<String>,
 
+    /// Count occurrences per distinct value of FIELD (frequency table). Shorthand for track_freq.
+    #[arg(
+        long = "count",
+        value_name = "FIELD",
+        help_heading = "Metrics and Stats",
+        help = "Count occurrences per distinct value of FIELD (frequency table).\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\n\nExamples:\n  --count level\n  --filter 'e.status>=500' --count url"
+    )]
+    pub count: Vec<String>,
+
+    /// Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99. Shorthand for track_stats.
+    #[arg(
+        long = "describe",
+        value_name = "FIELD",
+        help_heading = "Metrics and Stats",
+        help = "Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.\n\nShorthand for track_stats(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Non-numeric/missing values are skipped.\n\nExample:\n  --describe duration_ms"
+    )]
+    pub describe: Vec<String>,
+
+    /// Top-N most frequent values of FIELD. Shorthand for track_top. Accepts FIELD or FIELD:N.
+    #[arg(
+        long = "top",
+        value_name = "FIELD[:N]",
+        help_heading = "Metrics and Stats",
+        help = "Top-N most frequent values of FIELD (default N=10).\n\nShorthand for track_top(\"FIELD\", e.FIELD, N). Runs after all filters/transforms\nand implies -m. Repeatable. Pass N as a :N suffix.\n\nExamples:\n  --top url\n  --top url:20"
+    )]
+    pub top: Vec<String>,
+
     /// Summarize log templates using Drain (summary-only, requires --keys with exactly one field).
     #[arg(
         long = "drain",
@@ -1192,10 +1219,26 @@ impl Cli {
         }
 
         // Extract just the stages
-        Ok(stages_with_indices
+        let mut stages: Vec<ScriptStageType> = stages_with_indices
             .into_iter()
             .map(|(_, stage)| stage)
-            .collect())
+            .collect();
+
+        // Metrics-sugar flags (--count / --describe / --top) are non-positional,
+        // so they always run LAST — after every --filter/-l/-e stage. That gives
+        // them the same post-pipeline vantage as --discover-final: they see fields
+        // created/renamed by earlier stages and only events that survived filtering.
+        for field in &self.count {
+            stages.push(ScriptStageType::Exec(synthesize_count_stage(field)?));
+        }
+        for field in &self.describe {
+            stages.push(ScriptStageType::Exec(synthesize_describe_stage(field)?));
+        }
+        for spec in &self.top {
+            stages.push(ScriptStageType::Exec(synthesize_top_stage(spec)?));
+        }
+
+        Ok(stages)
     }
 
     /// Get processed begin and end scripts with includes applied
@@ -1234,6 +1277,88 @@ impl Cli {
 
         Ok((processed_begin, processed_end))
     }
+}
+
+/// Render a string as a double-quoted Rhai string literal, escaping `\` and `"`.
+fn rhai_string_literal(s: &str) -> String {
+    format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
+/// Whether `s` is a bare top-level identifier (so `e.<s>` is safe and cheap).
+/// Anything else (dotted paths, brackets, dashes) goes through `get_path`.
+fn is_simple_field_ident(s: &str) -> bool {
+    let mut chars = s.chars();
+    match chars.next() {
+        Some(c) if c.is_ascii_alphabetic() || c == '_' => {}
+        _ => return false,
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+/// Build the value accessor for a metrics-sugar field. Simple identifiers use
+/// cheap property access (`e.field`, which yields `()` for missing fields);
+/// dotted/bracket/special paths use `get_path`, which also yields `()` when
+/// absent — so missing values are skipped by the track_* functions either way.
+fn field_value_accessor(field: &str) -> String {
+    if is_simple_field_ident(field) {
+        format!("e.{field}")
+    } else {
+        format!("get_path(e, {})", rhai_string_literal(field))
+    }
+}
+
+fn synthesize_count_stage(field: &str) -> Result<String> {
+    if field.is_empty() {
+        return Err(anyhow::anyhow!(
+            "--count requires a field name, e.g. --count level"
+        ));
+    }
+    Ok(format!(
+        "track_freq({}, {})",
+        rhai_string_literal(field),
+        field_value_accessor(field)
+    ))
+}
+
+fn synthesize_describe_stage(field: &str) -> Result<String> {
+    if field.is_empty() {
+        return Err(anyhow::anyhow!(
+            "--describe requires a field name, e.g. --describe duration_ms"
+        ));
+    }
+    Ok(format!(
+        "track_stats({}, {})",
+        rhai_string_literal(field),
+        field_value_accessor(field)
+    ))
+}
+
+fn synthesize_top_stage(spec: &str) -> Result<String> {
+    // Accept `FIELD` or `FIELD:N`. Only treat a trailing `:N` as a count when
+    // the suffix is all digits, so field names containing a colon still work.
+    let (field, n) = match spec.rsplit_once(':') {
+        Some((f, n_str)) if !n_str.is_empty() && n_str.chars().all(|c| c.is_ascii_digit()) => {
+            let n: usize = n_str
+                .parse()
+                .map_err(|_| anyhow::anyhow!("--top N is too large in '{spec}'"))?;
+            if n == 0 {
+                return Err(anyhow::anyhow!("--top N must be >= 1, got '{spec}'"));
+            }
+            (f, Some(n))
+        }
+        _ => (spec, None),
+    };
+    if field.is_empty() {
+        return Err(anyhow::anyhow!(
+            "--top requires a field name, e.g. --top url or --top url:20"
+        ));
+    }
+    let name = rhai_string_literal(field);
+    let accessor = field_value_accessor(field);
+    Ok(match n {
+        Some(n) => format!("track_top({name}, {accessor}, {n})"),
+        None => format!("track_top({name}, {accessor})"),
+    })
 }
 
 /// Parse and validate format value - supports standard formats, cols:<spec>, regex:<pattern>, and csv/tsv with type annotations

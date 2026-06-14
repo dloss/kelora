@@ -987,11 +987,17 @@ impl KeloraConfig {
 
         // Metrics logic: determine format and whether events should be shown
         // Check no_metrics first to handle flag conflicts
+        let has_metric_sugar =
+            !cli.count.is_empty() || !cli.describe.is_empty() || !cli.top.is_empty();
         let metrics_format = if cli.no_metrics {
             None
         } else if cli.metrics.is_some() {
             cli.metrics.clone()
         } else if cli.with_metrics {
+            Some(crate::cli::MetricsFormat::Full)
+        } else if has_metric_sugar {
+            // --count/--describe/--top synthesize tracking; default to a full
+            // metrics-only view unless an explicit format / --no-metrics says otherwise.
             Some(crate::cli::MetricsFormat::Full)
         } else {
             None
