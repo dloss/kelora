@@ -217,3 +217,96 @@ fn test_ts_nanos_out_of_range_errors_not_zero() {
         "in-range ts_nanos must convert correctly; stdout: {stdout}"
     );
 }
+
+// Regression: dividing a duration by zero must surface a runtime error rather
+// than panic. chrono's `Duration / i32` panics on a zero divisor, which under
+// the release `panic = "abort"` profile aborted the whole process (exit 134).
+// A divisor that truncates to zero when narrowed to i32 (e.g. 4294967296)
+// reached the same panic, so guard the narrowed divisor.
+#[test]
+fn test_duration_div_zero_errors_not_abort() {
+    let binary = env!("CARGO_BIN_EXE_kelora");
+
+    for divisor in ["0", "4294967296"] {
+        let out = Command::new(binary)
+            .args([
+                "-e",
+                &format!("e.d = (duration_from_seconds(60) / {divisor}).to_string()"),
+            ])
+            .arg("--strict")
+            .env("LLVM_PROFILE_FILE", "/dev/null")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .and_then(|mut c| {
+                use std::io::Write;
+                c.stdin.as_mut().unwrap().write_all(b"x\n").unwrap();
+                c.wait_with_output()
+            })
+            .expect("run kelora");
+        // Must not abort (134 = SIGABRT under panic = "abort").
+        assert_ne!(
+            out.status.code(),
+            Some(134),
+            "duration / {divisor} aborted the process"
+        );
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            stderr.contains("division by zero"),
+            "expected division-by-zero error for divisor {divisor}; stderr: {stderr}"
+        );
+    }
+
+    // A valid divisor must still divide correctly.
+    let out = Command::new(binary)
+        .args(["-e", "e.d = (duration_from_seconds(60) / 3).to_string()"])
+        .env("LLVM_PROFILE_FILE", "/dev/null")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut c| {
+            use std::io::Write;
+            c.stdin.as_mut().unwrap().write_all(b"x\n").unwrap();
+            c.wait_with_output()
+        })
+        .expect("run kelora");
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("d='20s'"),
+        "valid duration division must work; stdout: {stdout}"
+    );
+}
+
+// Regression: clamp() with an inverted range (min > max, e.g. swapped
+// arguments) must surface a runtime error rather than panic. `std`'s `clamp`
+// panics when `min > max`, which under the release `panic = "abort"` profile
+// aborted the whole process (exit 134) on simple user misuse.
+#[test]
+fn test_clamp_inverted_range_errors_not_abort() {
+    let binary = env!("CARGO_BIN_EXE_kelora");
+
+    for expr in ["e.c = clamp(50, 100, 10)", "e.c = clamp(5.0, 10.0, 0.0)"] {
+        let out = Command::new(binary)
+            .args(["-e", expr])
+            .arg("--strict")
+            .env("LLVM_PROFILE_FILE", "/dev/null")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .and_then(|mut c| {
+                use std::io::Write;
+                c.stdin.as_mut().unwrap().write_all(b"x\n").unwrap();
+                c.wait_with_output()
+            })
+            .expect("run kelora");
+        assert_ne!(out.status.code(), Some(134), "`{expr}` aborted the process");
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            stderr.contains("must not be greater than max"),
+            "expected inverted-range error for `{expr}`; stderr: {stderr}"
+        );
+    }
+}

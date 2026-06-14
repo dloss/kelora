@@ -598,9 +598,24 @@ pub fn register_functions(engine: &mut Engine) {
         DurationWrapper::new(dur.inner * n as i32)
     });
 
-    engine.register_fn("/", |dur: DurationWrapper, n: i64| {
-        DurationWrapper::new(dur.inner / n as i32)
-    });
+    engine.register_fn(
+        "/",
+        |dur: DurationWrapper, n: i64| -> Result<DurationWrapper, Box<EvalAltResult>> {
+            // chrono's Duration only implements Div<i32>, so the i64 argument is
+            // narrowed to i32. A literal 0 — or any multiple of 2^32 that
+            // truncates to 0, e.g. 4294967296 — would make the division panic,
+            // aborting the whole process under the release `panic = "abort"`
+            // profile. Reject a zero divisor with a runtime error instead.
+            let divisor = n as i32;
+            if divisor == 0 {
+                return Err(Box::new(EvalAltResult::ErrorRuntime(
+                    "duration division by zero".into(),
+                    Position::NONE,
+                )));
+            }
+            Ok(DurationWrapper::new(dur.inner / divisor))
+        },
+    );
 
     // Duration comparison
     engine.register_fn("==", |dur1: DurationWrapper, dur2: DurationWrapper| {

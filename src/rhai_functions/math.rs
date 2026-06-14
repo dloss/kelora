@@ -1,4 +1,4 @@
-use rhai::{Array, Dynamic, Engine, EvalAltResult};
+use rhai::{Array, Dynamic, Engine, EvalAltResult, Position};
 
 use super::arrays::{determine_array_type, ArrayType};
 
@@ -245,10 +245,18 @@ fn stddev_array(arr: Array) -> Result<f64, Box<EvalAltResult>> {
 /// e.cpu_pct = clamp(e.cpu_usage, 0, 100);
 /// ```
 ///
-/// # Panics
-/// Panics if `min > max`.
-fn clamp_i64(value: i64, min: i64, max: i64) -> i64 {
-    value.clamp(min, max)
+/// # Errors
+/// Returns a runtime error if `min > max` (an inverted range from swapped
+/// arguments). `std`'s `clamp` panics in that case, which would abort the whole
+/// process under the release `panic = "abort"` profile.
+fn clamp_i64(value: i64, min: i64, max: i64) -> Result<i64, Box<EvalAltResult>> {
+    if min > max {
+        return Err(Box::new(EvalAltResult::ErrorRuntime(
+            format!("clamp: min ({min}) must not be greater than max ({max})").into(),
+            Position::NONE,
+        )));
+    }
+    Ok(value.clamp(min, max))
 }
 
 /// Clamp a floating-point value between a minimum and maximum
@@ -276,113 +284,122 @@ fn clamp_i64(value: i64, min: i64, max: i64) -> i64 {
 /// e.normalized_latency = clamp(e.latency / e.baseline, 0.0, 10.0);
 /// ```
 ///
-/// # Panics
-/// Panics if `min > max` or if either value is NaN.
-fn clamp_f64(value: f64, min: f64, max: f64) -> f64 {
-    value.clamp(min, max)
+/// # Errors
+/// Returns a runtime error if the bounds are not ordered (`min <= max` is
+/// false), which also covers a `NaN` bound. `std`'s `clamp` panics in that
+/// case, which would abort the whole process under the release
+/// `panic = "abort"` profile. A `NaN` `value` with valid bounds is returned
+/// unchanged, matching `f64::clamp`.
+fn clamp_f64(value: f64, min: f64, max: f64) -> Result<f64, Box<EvalAltResult>> {
+    if min.is_nan() || max.is_nan() || min > max {
+        return Err(Box::new(EvalAltResult::ErrorRuntime(
+            format!("clamp: min ({min}) must not be greater than max ({max})").into(),
+            Position::NONE,
+        )));
+    }
+    Ok(value.clamp(min, max))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use rhai::Dynamic;
-    use std::panic::{catch_unwind, AssertUnwindSafe};
-
-    fn panic_message(err: Box<dyn std::any::Any + Send>) -> String {
-        if let Some(msg) = err.downcast_ref::<String>() {
-            msg.clone()
-        } else if let Some(msg) = err.downcast_ref::<&str>() {
-            (*msg).to_string()
-        } else {
-            String::new()
-        }
-    }
 
     #[test]
     fn test_clamp_i64_within_range() {
-        assert_eq!(clamp_i64(5, 0, 10), 5);
-        assert_eq!(clamp_i64(50, 0, 100), 50);
-        assert_eq!(clamp_i64(0, 0, 10), 0);
-        assert_eq!(clamp_i64(10, 0, 10), 10);
+        assert_eq!(clamp_i64(5, 0, 10).unwrap(), 5);
+        assert_eq!(clamp_i64(50, 0, 100).unwrap(), 50);
+        assert_eq!(clamp_i64(0, 0, 10).unwrap(), 0);
+        assert_eq!(clamp_i64(10, 0, 10).unwrap(), 10);
     }
 
     #[test]
     fn test_clamp_i64_below_min() {
-        assert_eq!(clamp_i64(-5, 0, 10), 0);
-        assert_eq!(clamp_i64(-100, 0, 100), 0);
-        assert_eq!(clamp_i64(-1, 0, 10), 0);
+        assert_eq!(clamp_i64(-5, 0, 10).unwrap(), 0);
+        assert_eq!(clamp_i64(-100, 0, 100).unwrap(), 0);
+        assert_eq!(clamp_i64(-1, 0, 10).unwrap(), 0);
     }
 
     #[test]
     fn test_clamp_i64_above_max() {
-        assert_eq!(clamp_i64(15, 0, 10), 10);
-        assert_eq!(clamp_i64(200, 0, 100), 100);
-        assert_eq!(clamp_i64(11, 0, 10), 10);
+        assert_eq!(clamp_i64(15, 0, 10).unwrap(), 10);
+        assert_eq!(clamp_i64(200, 0, 100).unwrap(), 100);
+        assert_eq!(clamp_i64(11, 0, 10).unwrap(), 10);
     }
 
     #[test]
     fn test_clamp_i64_negative_range() {
-        assert_eq!(clamp_i64(-5, -10, -1), -5);
-        assert_eq!(clamp_i64(-15, -10, -1), -10);
-        assert_eq!(clamp_i64(0, -10, -1), -1);
+        assert_eq!(clamp_i64(-5, -10, -1).unwrap(), -5);
+        assert_eq!(clamp_i64(-15, -10, -1).unwrap(), -10);
+        assert_eq!(clamp_i64(0, -10, -1).unwrap(), -1);
     }
 
+    // Regression: an inverted range (min > max, e.g. swapped arguments) must
+    // return a runtime error rather than panic — `std`'s `clamp` panics there,
+    // which aborts the whole process under the release `panic = "abort"`
+    // profile.
     #[test]
     fn test_clamp_i64_inverted_range() {
-        let err = catch_unwind(AssertUnwindSafe(|| clamp_i64(5, 10, 0)))
-            .expect_err("clamp_i64 should panic when min > max");
-        let msg = panic_message(err);
+        let err = clamp_i64(5, 10, 0).expect_err("clamp_i64 should error when min > max");
         assert!(
-            msg.contains("assertion failed: min <= max") || msg.contains("min > max"),
-            "unexpected panic message: {msg}"
+            err.to_string()
+                .contains("min (10) must not be greater than max (0)"),
+            "unexpected error: {err}"
         );
     }
 
     #[test]
     fn test_clamp_f64_within_range() {
-        assert_eq!(clamp_f64(3.5, 0.0, 5.0), 3.5);
-        assert_eq!(clamp_f64(2.5, 0.0, 10.0), 2.5);
-        assert_eq!(clamp_f64(0.0, 0.0, 5.0), 0.0);
-        assert_eq!(clamp_f64(5.0, 0.0, 5.0), 5.0);
+        assert_eq!(clamp_f64(3.5, 0.0, 5.0).unwrap(), 3.5);
+        assert_eq!(clamp_f64(2.5, 0.0, 10.0).unwrap(), 2.5);
+        assert_eq!(clamp_f64(0.0, 0.0, 5.0).unwrap(), 0.0);
+        assert_eq!(clamp_f64(5.0, 0.0, 5.0).unwrap(), 5.0);
     }
 
     #[test]
     fn test_clamp_f64_below_min() {
-        assert_eq!(clamp_f64(-1.5, 0.0, 5.0), 0.0);
-        assert_eq!(clamp_f64(-100.0, 0.0, 100.0), 0.0);
-        assert_eq!(clamp_f64(-0.1, 0.0, 10.0), 0.0);
+        assert_eq!(clamp_f64(-1.5, 0.0, 5.0).unwrap(), 0.0);
+        assert_eq!(clamp_f64(-100.0, 0.0, 100.0).unwrap(), 0.0);
+        assert_eq!(clamp_f64(-0.1, 0.0, 10.0).unwrap(), 0.0);
     }
 
     #[test]
     fn test_clamp_f64_above_max() {
-        assert_eq!(clamp_f64(7.8, 0.0, 5.0), 5.0);
-        assert_eq!(clamp_f64(200.5, 0.0, 100.0), 100.0);
-        assert_eq!(clamp_f64(10.1, 0.0, 10.0), 10.0);
+        assert_eq!(clamp_f64(7.8, 0.0, 5.0).unwrap(), 5.0);
+        assert_eq!(clamp_f64(200.5, 0.0, 100.0).unwrap(), 100.0);
+        assert_eq!(clamp_f64(10.1, 0.0, 10.0).unwrap(), 10.0);
     }
 
     #[test]
     fn test_clamp_f64_negative_range() {
-        assert_eq!(clamp_f64(-5.5, -10.0, -1.0), -5.5);
-        assert_eq!(clamp_f64(-15.0, -10.0, -1.0), -10.0);
-        assert_eq!(clamp_f64(0.0, -10.0, -1.0), -1.0);
+        assert_eq!(clamp_f64(-5.5, -10.0, -1.0).unwrap(), -5.5);
+        assert_eq!(clamp_f64(-15.0, -10.0, -1.0).unwrap(), -10.0);
+        assert_eq!(clamp_f64(0.0, -10.0, -1.0).unwrap(), -1.0);
     }
 
+    // Regression: an inverted range or a NaN bound must return a runtime error
+    // rather than panic (see `test_clamp_i64_inverted_range`).
     #[test]
     fn test_clamp_f64_inverted_range() {
-        let err = catch_unwind(AssertUnwindSafe(|| clamp_f64(5.0, 10.0, 0.0)))
-            .expect_err("clamp_f64 should panic when min > max");
-        let msg = panic_message(err);
+        let err = clamp_f64(5.0, 10.0, 0.0).expect_err("clamp_f64 should error when min > max");
         assert!(
-            msg.contains("assertion failed: min <= max") || msg.contains("min > max"),
-            "unexpected panic message: {msg}"
+            err.to_string()
+                .contains("min (10) must not be greater than max (0)"),
+            "unexpected error: {err}"
         );
     }
 
     #[test]
+    fn test_clamp_f64_nan_bound_errors() {
+        assert!(clamp_f64(1.0, f64::NAN, 5.0).is_err());
+        assert!(clamp_f64(1.0, 0.0, f64::NAN).is_err());
+    }
+
+    #[test]
     fn test_clamp_f64_fractional() {
-        assert_eq!(clamp_f64(0.5, 0.0, 1.0), 0.5);
-        assert_eq!(clamp_f64(1.5, 0.0, 1.0), 1.0);
-        assert_eq!(clamp_f64(-0.5, 0.0, 1.0), 0.0);
+        assert_eq!(clamp_f64(0.5, 0.0, 1.0).unwrap(), 0.5);
+        assert_eq!(clamp_f64(1.5, 0.0, 1.0).unwrap(), 1.0);
+        assert_eq!(clamp_f64(-0.5, 0.0, 1.0).unwrap(), 0.0);
     }
 
     #[test]
