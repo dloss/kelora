@@ -55,6 +55,8 @@ text.normalized([patterns])          Replace patterns with placeholders (<ipv4>,
                                      Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
                                      sha1, sha256, path, oauth, function, hexcolor, version, hexnum,
                                      duration, num, credit_card (Luhn), ssn (strict XXX-XX-XXXX), phone (NANP-aware for US/CA; permissive internationally)
+                                     PII patterns (credit_card, ssn, phone) are NOT in the default set;
+                                     pass them explicitly to redact, e.g. normalized(["credit_card","ssn","phone"])
 text.parse_cef()                     Parse Common Event Format line into fields
 text.parse_cols(spec [,sep])         Parse columns according to spec
 text.parse_combined()                Parse Apache/Nginx combined log line
