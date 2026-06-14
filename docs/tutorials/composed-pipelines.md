@@ -158,7 +158,7 @@ Use multiline joining to reconstruct complete stack traces:
 === "Command"
 
     ```bash
-    kelora examples/multiline_stacktrace.log \
+    kelora -f line examples/multiline_stacktrace.log \
       --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --take 3
@@ -167,7 +167,7 @@ Use multiline joining to reconstruct complete stack traces:
 === "Output"
 
     ```bash exec="on" source="above" result="ansi"
-    kelora examples/multiline_stacktrace.log \
+    kelora -f line examples/multiline_stacktrace.log \
       --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --take 3
@@ -175,6 +175,7 @@ Use multiline joining to reconstruct complete stack traces:
 
 **What's happening:**
 
+- `-f line`: Keep each (joined) record as a raw `line` field instead of letting auto-detection parse it into structured columns
 - `--multiline`: Lines not matching the timestamp pattern are joined to the previous event
 - `--multiline-join=newline`: Preserves line breaks in the grouped stack trace
 - Stack traces become part of the error event's `line` field with formatting intact
@@ -187,7 +188,7 @@ Parse the timestamp and level from the reconstructed line, then extract error ty
 === "Command"
 
     ```bash
-    kelora examples/multiline_stacktrace.log \
+    kelora -f line examples/multiline_stacktrace.log \
       --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --exec '
@@ -206,7 +207,7 @@ Parse the timestamp and level from the reconstructed line, then extract error ty
 === "Output"
 
     ```bash exec="on" source="above" result="ansi"
-    kelora examples/multiline_stacktrace.log \
+    kelora -f line examples/multiline_stacktrace.log \
       --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --exec '
@@ -229,7 +230,7 @@ Use drain to find common error patterns in the reconstructed stack traces:
 === "Command"
 
     ```bash
-    kelora examples/multiline_stacktrace.log \
+    kelora -f line examples/multiline_stacktrace.log \
       --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --drain -k line
@@ -238,7 +239,7 @@ Use drain to find common error patterns in the reconstructed stack traces:
 === "Output"
 
     ```bash exec="on" source="above" result="ansi"
-    kelora examples/multiline_stacktrace.log \
+    kelora -f line examples/multiline_stacktrace.log \
       --multiline 'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}' --multiline-join=newline \
       --filter 'e.line.contains("ERROR")' \
       --drain -k line
