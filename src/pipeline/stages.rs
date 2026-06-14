@@ -160,7 +160,7 @@ impl FilterStage {
                 crate::rhai_functions::tracking::track_error(
                     "filter",
                     ctx.meta.line_num,
-                    &format!("Filter error: {}", e),
+                    &e.to_string(),
                     Some(&event.original_line),
                     ctx.meta.filename.as_deref(),
                     ctx.config.verbose,
@@ -175,7 +175,7 @@ impl FilterStage {
                     .is_some()
                     || ctx.config.strict
                 {
-                    return ScriptResult::Error(format!("Filter error: {}", e));
+                    return ScriptResult::Error(e.to_string());
                 } else {
                     false // Filter errors evaluate to false in resilient mode
                 }
@@ -314,7 +314,7 @@ impl ScriptStage for FilterStage {
                 crate::rhai_functions::tracking::track_error(
                     "filter",
                     ctx.meta.line_num,
-                    &format!("Filter error: {}", e),
+                    &e.to_string(),
                     Some(&event.original_line),
                     ctx.meta.filename.as_deref(),
                     ctx.config.verbose,
@@ -331,7 +331,7 @@ impl ScriptStage for FilterStage {
                     .is_some()
                     || ctx.config.strict
                 {
-                    ScriptResult::Error(format!("Filter error: {}", e))
+                    ScriptResult::Error(e.to_string())
                 } else {
                     ScriptResult::Skip
                 }
