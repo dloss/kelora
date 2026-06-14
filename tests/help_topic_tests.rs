@@ -15,6 +15,30 @@ fn test_help_formats_topic() {
     assert_eq!(exit_code, 0, "--help-formats should exit successfully");
     assert!(stdout.contains("Format Reference:"));
     assert!(stdout.contains("tailmap"));
+    // Every concrete input format should have a dedicated description, including
+    // the easily-forgotten 'raw' format (regression guard for the harmonized list).
+    for token in [
+        "Concrete formats",
+        "Meta formats",
+        "\ncef\n",
+        "\ncols:<spec>\n",
+        "\ncombined\n",
+        "csv / tsv / csvnh / tsvnh",
+        "\njson (-j)\n",
+        "\nline\n",
+        "\nlogfmt\n",
+        "\nraw\n",
+        "\nregex:<pattern>\n",
+        "\nsyslog\n",
+        "Named application-log formats",
+        "auto (default)",
+        "auto-per-file",
+    ] {
+        assert!(
+            stdout.contains(token),
+            "--help-formats should describe {token:?}"
+        );
+    }
 }
 
 #[test]

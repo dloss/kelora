@@ -7,45 +7,13 @@ INPUT FORMATS:
 
 Specify with -f, --input-format <format>
 
-json (-j)
-  JSON Lines format, one object per line
-  Fields: All JSON keys preserved with types
-
-line
-  Plain text, one line per event
-  Fields: line
-
-logfmt
-  Heroku-style key=value pairs
-  Fields: All parsed keys
-
-syslog
-  RFC5424/RFC3164 system logs
-  Fields: pri, facility, severity, level, ts, host, prog, pid, msg
-          [msgid, version - RFC5424 only]
-
-combined
-  Apache/Nginx access logs (CLF, Combined, Nginx+request_time)
-  Fields: ip, ts, method, path, protocol, status
-          [identity, user, bytes, referer, agent, request_time]
-  Note: Fields in brackets are optional (omitted if value is "-")
+Concrete formats (parse input directly; listed alphabetically):
 
 cef
   ArcSight Common Event Format
   Fields: cefver, vendor, product, version, eventid, event, severity
           [ts, host - from optional syslog prefix]
           + all extension key=value pairs become top-level fields
-
-csv / tsv / csvnh / tsvnh
-  Comma/tab-separated values, with/without headers
-  Fields: Header names or c1, c2, c3...
-  Type annotations: 'csv status:int bytes:int response_time:float'
-  Supported types: int, float, bool
-  Ragged rows: extra columns are kept under positional names (cN, counted
-  from 1); rows with fewer columns leave the trailing fields absent. Both
-  are counted and reported as a hint; --strict rejects ragged rows instead.
-  Quoted fields may contain embedded newlines (RFC 4180); such records are
-  reassembled before parsing in both sequential and -P/--parallel mode.
 
 cols:<spec>
   Custom column-based parsing with whitespace or custom separator
@@ -60,6 +28,41 @@ cols:<spec>
           *field      - capture rest of line (must be last)
           field:type  - apply type (int, float, bool, string)
 
+combined
+  Apache/Nginx access logs (CLF, Combined, Nginx+request_time)
+  Fields: ip, ts, method, path, protocol, status
+          [identity, user, bytes, referer, agent, request_time]
+  Note: Fields in brackets are optional (omitted if value is "-")
+
+csv / tsv / csvnh / tsvnh
+  Comma/tab-separated values, with/without headers
+  Fields: Header names or c1, c2, c3...
+  Type annotations: 'csv status:int bytes:int response_time:float'
+  Supported types: int, float, bool
+  Ragged rows: extra columns are kept under positional names (cN, counted
+  from 1); rows with fewer columns leave the trailing fields absent. Both
+  are counted and reported as a hint; --strict rejects ragged rows instead.
+  Quoted fields may contain embedded newlines (RFC 4180); such records are
+  reassembled before parsing in both sequential and -P/--parallel mode.
+
+json (-j)
+  JSON Lines format, one object per line
+  Fields: All JSON keys preserved with types
+
+line
+  Plain text, one event per line (trailing newline/CR trimmed)
+  Fields: line
+
+logfmt
+  Heroku-style key=value pairs
+  Fields: All parsed keys
+
+raw
+  Plain text, one event per line, preserved verbatim — unlike 'line', no
+  trailing newline/CR is trimmed and backslashes and other artifacts are
+  kept exactly as read
+  Fields: raw
+
 regex:<pattern>
   Regular expression with named capture groups
   Fields: Named groups (?P<name>...) with optional type annotations
@@ -68,24 +71,22 @@ regex:<pattern>
   Types: (?P<name:int>...), (?P<name:float>...), (?P<name:bool>...)
   Note: Pattern automatically anchored with ^...$
 
-Type annotations (csv/tsv/cols/regex)
-  A type annotation declares the field's type. A value that cannot satisfy it
-  becomes () (explicitly absent), and the rest of the row is kept; with --strict
-  the run aborts instead. For tolerant coercion with a fallback you choose, drop
-  the annotation and convert in a script stage, e.g.
-    -f csv --exec 'e.status = to_int_or(e.status, 0)'
+syslog
+  RFC5424/RFC3164 system logs
+  Fields: pri, facility, severity, level, ts, host, prog, pid, msg
+          [msgid, version - RFC5424 only]
 
 Named application-log formats
   A small set of common application-log layouts, parsed with the regex engine:
-    glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
-    nginx-error     nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
     apache-error    Apache error log ("[Fri Oct 11 14:32:52 2024] [core:error] ... msg")
+    glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
+    haproxy         HAProxy http/tcp traffic log (via syslog); use -f haproxy
+    iso8601-level   ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
     log4j           log4j / Java (2024-01-02 15:04:05,123 INFO [main] logger - msg)
+    nginx-error     nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
     python-logging  Python logging default (... ,123 - logger - INFO - msg)
     redis           Redis 3+ (12345:M 06 Feb 2024 12:00:00.123 * msg)
     s3              AWS S3 server access log (owner bucket [date] ip ... "GET ..." 200 ...)
-    haproxy         HAProxy http/tcp traffic log (via syslog); use -f haproxy
-    iso8601-level   ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
   Select explicitly with -f <name> (e.g. -f log4j), or in a cascade list
   (e.g. -f log4j,line). Most are also tried during auto-detection, just before
   the 'line' fallback, so they never override a format detected earlier; when
@@ -95,6 +96,15 @@ Named application-log formats
   syslog). haproxy lines are syslog-wrapped, so under -f auto they are detected
   as 'syslog' — pass -f haproxy to extract the structured fields.
   Adapted from lnav (BSD-3-Clause; see THIRD_PARTY_LICENSES.md).
+
+Type annotations (csv/tsv/cols/regex)
+  A type annotation declares the field's type. A value that cannot satisfy it
+  becomes () (explicitly absent), and the rest of the row is kept; with --strict
+  the run aborts instead. For tolerant coercion with a fallback you choose, drop
+  the annotation and convert in a script stage, e.g.
+    -f csv --exec 'e.status = to_int_or(e.status, 0)'
+
+Meta formats (select or combine the concrete formats above):
 
 auto (default)
   Auto-detect format from first non-empty line
