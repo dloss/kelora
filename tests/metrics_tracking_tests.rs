@@ -2173,3 +2173,48 @@ fn sugar_freq_parallel_matches_sequential() {
     assert_eq!(c2, 0);
     assert_eq!(seq, par, "parallel tally must match sequential");
 }
+
+const HINT_INPUT: &str = r#"{"n": 1}
+{"n": 2}"#;
+const METRICS_HINT: &str = "Metrics recorded; rerun with -m";
+
+#[test]
+fn metrics_hint_shown_when_tracked_but_not_displayed() {
+    // Bare track_* with no display option: the nudge should fire.
+    let (_out, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "-q", "--exec", "track_inc(\"n\");"],
+        HINT_INPUT,
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stderr.contains(METRICS_HINT),
+        "expected metrics nudge in stderr, got: {stderr}"
+    );
+}
+
+#[test]
+fn metrics_hint_suppressed_when_end_stage_consumes_metrics() {
+    // An --end stage reads the `metrics` global, so the "rerun with -m" nudge
+    // is just noise — it must be suppressed.
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-q",
+            "--exec",
+            "track_inc(\"n\");",
+            "--end",
+            "print(`total=${metrics.n}`)",
+        ],
+        HINT_INPUT,
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stdout.contains("total=2"),
+        "end report should run: {stdout}"
+    );
+    assert!(
+        !stderr.contains(METRICS_HINT),
+        "metrics nudge should be suppressed when --end is present, got: {stderr}"
+    );
+}

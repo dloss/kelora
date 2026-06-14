@@ -507,6 +507,15 @@ pub fn register_functions(engine: &mut Engine) {
         dt.inner.to_rfc3339()
     });
 
+    // String conversion - enables to_string(), print(), and `${dt}` string
+    // interpolation to render RFC3339 instead of the internal type name.
+    engine.register_fn("to_string", |dt: &mut DateTimeWrapper| -> String {
+        dt.to_string()
+    });
+    engine.register_fn("to_debug", |dt: &mut DateTimeWrapper| -> String {
+        dt.to_string()
+    });
+
     engine.register_fn("format", |dt: &mut DateTimeWrapper, fmt: &str| -> String {
         dt.inner.format(fmt).to_string()
     });
@@ -727,6 +736,34 @@ mod tests {
         assert_eq!(DurationWrapper::from_seconds(3660).to_string(), "1h 1m");
         assert_eq!(DurationWrapper::from_seconds(86400).to_string(), "1d");
         assert_eq!(DurationWrapper::from_seconds(90000).to_string(), "1d 1h");
+    }
+
+    #[test]
+    fn test_datetime_string_interpolation_renders_rfc3339() {
+        // Regression: `${dt}` interpolation / to_string()/to_debug() must render
+        // the RFC3339 timestamp, not the internal "DateTimeWrapper" type name.
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let interpolated: String = engine
+            .eval(r#"let dt = to_datetime("2024-07-01T09:00:00Z"); `${dt}`"#)
+            .unwrap();
+        assert_eq!(interpolated, "2024-07-01T09:00:00+00:00");
+
+        let via_to_string: String = engine
+            .eval(r#"to_datetime("2024-07-01T09:00:00Z").to_string()"#)
+            .unwrap();
+        assert_eq!(via_to_string, "2024-07-01T09:00:00+00:00");
+
+        // to_debug (used when a datetime is printed inside an array/map) must not
+        // leak the type path either.
+        let via_debug: String = engine
+            .eval(r#"`${[to_datetime("2024-07-01T09:00:00Z")]}`"#)
+            .unwrap();
+        assert!(
+            via_debug.contains("2024-07-01T09:00:00+00:00"),
+            "debug rendering leaked type name: {via_debug}"
+        );
     }
 
     #[test]

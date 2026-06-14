@@ -1206,9 +1206,13 @@ fn handle_pipeline_success(
         }
     }
 
-    // Hint when metrics were tracked but no metrics output option was requested
-    let metrics_were_requested =
-        config.output.metrics.is_some() || config.output.metrics_file.is_some();
+    // Hint when metrics were tracked but no metrics output option was requested.
+    // An --end stage sees the `metrics` global and is the idiomatic way to
+    // consume metrics into a custom report, so treat its presence as the metrics
+    // already being handled — nudging "rerun with -m" there is just noise.
+    let metrics_were_requested = config.output.metrics.is_some()
+        || config.output.metrics_file.is_some()
+        || config.processing.end.is_some();
     if !metrics_were_requested
         && !pipeline_result.tracking_data.user.is_empty()
         && diagnostics_allowed_runtime
