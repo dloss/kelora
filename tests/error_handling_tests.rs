@@ -452,6 +452,39 @@ fn test_parse_gate_is_order_independent_under_filters() {
 }
 
 #[test]
+fn test_parse_error_summary_is_readable() {
+    // Two formatting regressions in the recovered parse-error report:
+    //   1. the run recap ("Processing completed with N parse errors") was joined
+    //      to the multi-line sample list with "; ", gluing it onto the last
+    //      sample line instead of standing on its own line;
+    //   2. serde's per-line "at line 1 column N" collided with kelora's own line
+    //      counter ("line 3: ... at line 1 column 1"), so the inner "line 1" is
+    //      now dropped, leaving just the column.
+    let input = "x\ny\nz\n";
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json"], input);
+
+    assert_eq!(exit_code, 1, "all-lines-fail is a gate failure: {}", stderr);
+    assert!(
+        !stderr.contains("at line 1 column"),
+        "the redundant serde line number should be stripped: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("at column 1"),
+        "the column should be retained: {}",
+        stderr
+    );
+    // The recap must begin a line, not trail off the last sample line.
+    assert!(
+        stderr
+            .lines()
+            .any(|line| line.trim_start().starts_with("Processing completed with")),
+        "the run recap should be on its own line: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_exec_type_errors_fail_in_strict_mode() {
     let input = r#"{"level": "INFO"}"#;
 

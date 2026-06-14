@@ -5,6 +5,15 @@ use rhai::Dynamic;
 use serde::de::{Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
 use std::fmt;
 
+/// Tidy up a `serde_json` parse error for display. Each input line is parsed
+/// independently, so serde always reports `line 1`, which collides confusingly
+/// with kelora's own line counter in the surrounding diagnostic (`line 3:
+/// Invalid JSON: ... at line 1 column 1`). Drop the redundant `line 1` while
+/// keeping the column; multi-line events (line > 1) keep their full location.
+fn clean_json_error(e: &serde_json::Error) -> String {
+    e.to_string().replace(" at line 1 column ", " at column ")
+}
+
 /// A `rhai::Dynamic` deserialized directly from JSON, skipping the
 /// `serde_json::Value` intermediate tree. Number/nesting semantics mirror
 /// [`crate::event::json_to_dynamic_owned`] exactly.
@@ -171,8 +180,8 @@ impl EventParser for JsonlParser {
         // Non-objects fall through to the slow path purely to reproduce the
         // exact "Expected JSON object" error.
         if line.trim_start().as_bytes().first() == Some(&b'{') {
-            let EventFields(fields) =
-                serde_json::from_str(line).map_err(|e| anyhow::anyhow!("Invalid JSON: {}", e))?;
+            let EventFields(fields) = serde_json::from_str(line)
+                .map_err(|e| anyhow::anyhow!("Invalid JSON: {}", clean_json_error(&e)))?;
             let mut event = Event::with_fields(line.to_string(), fields);
             if self.auto_timestamp {
                 event.extract_timestamp();
@@ -180,8 +189,8 @@ impl EventParser for JsonlParser {
             return Ok(event);
         }
 
-        let json_value: serde_json::Value =
-            serde_json::from_str(line).map_err(|e| anyhow::anyhow!("Invalid JSON: {}", e))?;
+        let json_value: serde_json::Value = serde_json::from_str(line)
+            .map_err(|e| anyhow::anyhow!("Invalid JSON: {}", clean_json_error(&e)))?;
         Err(anyhow::anyhow!("Expected JSON object, got: {}", json_value))
     }
 }

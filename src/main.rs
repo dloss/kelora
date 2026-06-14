@@ -551,7 +551,8 @@ fn maybe_print_zero_results_hint(
     let hint = level_filter_zero_hint(config, stats)
         .or_else(|| timestamp_filter_zero_hint(config, stats))
         .or_else(|| filter_field_zero_hint(config, stats))
-        .or_else(|| filter_numeric_string_hint(config, stats));
+        .or_else(|| filter_numeric_string_hint(config, stats))
+        .or_else(|| generic_filter_zero_hint(config, stats));
 
     if let Some(message) = hint {
         let formatted = config
@@ -743,6 +744,35 @@ fn filter_numeric_string_hint(
         }
     }
     None
+}
+
+/// Generic fallback when every event was dropped and none of the more specific
+/// hints applied. Without it, `-l/--levels` zero-results get an explanatory note
+/// (vocabulary mismatch, missing level field) while an ordinary `--filter` that
+/// excludes everything — `--filter 'e.level == "NOPE"'` — exits in silence. This
+/// restores parity: any active filtering criterion that zeroes the stream gets
+/// at least an acknowledgement pointing at `-s`. Only fires when a filtering
+/// criterion is actually present, so a plain conversion run never trips it.
+fn generic_filter_zero_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+) -> Option<String> {
+    let proc = &config.processing;
+    let has_filter_criterion = proc
+        .stages
+        .iter()
+        .any(|stage| matches!(stage, ScriptStageType::Filter { .. }))
+        || !proc.levels.is_empty()
+        || !proc.exclude_levels.is_empty()
+        || proc.timestamp_filter.is_some();
+    if !has_filter_criterion {
+        return None;
+    }
+
+    Some(format!(
+        "0 of {} events matched. Every event was excluded by the active criteria (--filter/-l/-L/--since/--until). Rerun with -s to inspect the data, or relax the criteria.",
+        stats.events_created
+    ))
 }
 
 /// Hint when `-k/--keys` or `--exclude-keys` names a field that never appeared
@@ -1312,7 +1342,16 @@ fn handle_pipeline_success(
                 }
 
                 if !summaries.is_empty() {
-                    let combined = summaries.join("; ");
+                    // The tracking summary can be multi-line (a "Parse errors: N
+                    // total" header followed by indented per-line samples). Joining
+                    // that with "; " glues the run recap onto the last sample line;
+                    // fall back to a newline whenever any part spans multiple lines.
+                    let separator = if summaries.iter().any(|s| s.contains('\n')) {
+                        "\n"
+                    } else {
+                        "; "
+                    };
+                    let combined = summaries.join(separator);
                     let only_recovered_runtime_errors = tracking_summary.is_some()
                         && stats_summary_empty
                         && !config.processing.strict;

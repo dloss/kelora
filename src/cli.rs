@@ -1436,7 +1436,7 @@ Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, and nam
                 return Ok(s.to_string());
             }
             Err(format!(
-                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols, csv:<spec>, tsv:<spec>, cols:<spec>, regex:<pattern>, or a named format ({})",
+                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a named format ({})",
                 s,
                 crate::parsers::lnav_formats::names_csv()
             ))

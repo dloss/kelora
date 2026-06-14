@@ -5,7 +5,7 @@
 
 use anyhow::Result;
 use clap::error::{ContextKind, ContextValue, ErrorKind};
-use clap::{ArgMatches, CommandFactory, FromArgMatches};
+use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser};
 
 use crate::cli::{Cli, OutputFormat, ShellCompletion};
 use crate::config::MultilineJoin;
@@ -213,6 +213,37 @@ pub fn should_resolve_alias_references(args: &[String], alias_name: &str) -> boo
 }
 
 /// Handle --save-alias command
+/// Remove positional input-file arguments from a would-be alias command so the
+/// saved alias is a reusable bundle of options rather than being pinned to
+/// whichever file happened to be on the command line. Returns the dropped file
+/// names for an informational notice. Best-effort: if the command does not parse
+/// cleanly, nothing is removed and an empty list is returned.
+fn strip_positional_files(command_args: &mut Vec<String>) -> Vec<String> {
+    let mut argv: Vec<String> = Vec::with_capacity(command_args.len() + 1);
+    argv.push("kelora".to_string());
+    argv.extend(command_args.iter().cloned());
+
+    let files = match Cli::try_parse_from(&argv) {
+        Ok(cli) => cli.files,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut dropped = Vec::new();
+    for file in files {
+        // "-" is an explicit stdin marker, not a path to bake in; leave it.
+        if file == "-" {
+            continue;
+        }
+        // Remove the last matching token to bias toward trailing positionals
+        // rather than an earlier flag value that coincidentally equals the name.
+        if let Some(pos) = command_args.iter().rposition(|a| a == &file) {
+            command_args.remove(pos);
+            dropped.push(file);
+        }
+    }
+    dropped
+}
+
 pub fn handle_save_alias(raw_args: &[String], alias_name: &str, use_emoji: bool) {
     // Extract --config-file if specified
     let mut config_file_path: Option<String> = None;
@@ -237,10 +268,31 @@ pub fn handle_save_alias(raw_args: &[String], alias_name: &str, use_emoji: bool)
         command_args.remove(0);
     }
 
+    // Drop positional input files so the alias is a reusable bundle of options
+    // rather than being pinned to whichever file was on the command line when it
+    // was saved (the most common --save-alias surprise).
+    let dropped_files = strip_positional_files(&mut command_args);
+    if !dropped_files.is_empty() {
+        let prefix = if use_emoji { "🔹" } else { "kelora:" };
+        eprintln!(
+            "{} Not saving input file(s) in alias '{}' (aliases store reusable options, not specific inputs): {}",
+            prefix,
+            alias_name,
+            dropped_files.join(", ")
+        );
+    }
+
     // Check if we have any command left to save
     if command_args.is_empty() {
         let prefix = if use_emoji { "⚠️" } else { "kelora:" };
-        eprintln!("{} No command to save as alias '{}'", prefix, alias_name);
+        if dropped_files.is_empty() {
+            eprintln!("{} No command to save as alias '{}'", prefix, alias_name);
+        } else {
+            eprintln!(
+                "{} No options to save as alias '{}' (only input files were given)",
+                prefix, alias_name
+            );
+        }
         std::process::exit(2);
     }
 

@@ -24,7 +24,7 @@ Quick Examples:
   tail -f app.log | kelora -j -l error,warn
 
 Common Options:
-  -f, --input-format <FORMAT>   Choose parser (auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or cascade list e.g. json,line)
+  -f, --input-format <FORMAT>   Choose parser (auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, named formats like glog/nginx-error (see --help-formats), or cascade list e.g. json,line)
   -j                            Shortcut for -f json
   -d, --discover                Profile field names, types, and sample values — start here on unknown files (sequential only)
   -D, --discover-final          Like -d, but profiles the fields your pipeline emits (after filters/transforms)

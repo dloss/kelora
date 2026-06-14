@@ -297,6 +297,37 @@ fn test_zero_results_with_existing_filter_field_does_not_emit_typo_hint() {
 }
 
 #[test]
+fn test_zero_results_valid_field_emits_generic_hint_with_diagnostics() {
+    // A `--filter` on a real field whose value simply never occurs is a
+    // legitimate miss with no specific culprit (not a typo, not a numeric/string
+    // mismatch). It should still get a generic acknowledgement when diagnostics
+    // are requested, mirroring the note `-l/--levels` already gives — rather than
+    // exiting in silence the way it used to.
+    let input = "{\"level\": \"INFO\"}\n{\"level\": \"DEBUG\"}";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--diagnostics",
+            "--filter",
+            r#"e.level == "NOPE""#,
+        ],
+        input,
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "a non-matching filter should remain successful"
+    );
+    assert!(
+        stderr.contains("events matched") && stderr.contains("active criteria"),
+        "stderr should give a generic zero-match note: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_keys_typo_hints_with_nearest_field_suggestion() {
     // `-k levle` is a typo for the `level` field. Every event is emptied and
     // dropped, producing silent empty output + exit 0. The hint should name the

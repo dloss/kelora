@@ -1430,7 +1430,7 @@ pub(crate) fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat>
             if let Some(fmt) = crate::parsers::lnav_formats::by_name(other) {
                 return Ok(InputFormat::Named(fmt));
             }
-            Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: json, line, csv, syslog, cef, logfmt, raw, tsv, csvnh, tsvnh, combined, auto, auto-per-file, cols:<spec>, regex:<pattern>, and named formats ({})", spec, crate::parsers::lnav_formats::names_csv()))
+            Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a named format ({})", spec, crate::parsers::lnav_formats::names_csv()))
         }
     }
 }

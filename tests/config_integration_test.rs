@@ -846,6 +846,60 @@ fn test_save_alias_update_with_self_reference() {
 }
 
 #[test]
+fn test_save_alias_strips_positional_input_files() {
+    // An alias is a reusable bundle of options; the positional input file that
+    // happened to be on the command line when saving should not be baked in.
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join(".kelora.ini");
+
+    let binary_path = if cfg!(debug_assertions) {
+        std::env::current_dir().unwrap().join("target/debug/kelora")
+    } else {
+        std::env::current_dir()
+            .unwrap()
+            .join("target/release/kelora")
+    };
+
+    let output = Command::new(&binary_path)
+        .args([
+            "--save-alias",
+            "errs",
+            "--config-file",
+            config_path.to_str().unwrap(),
+            "examples/simple_json.jsonl",
+            "-j",
+            "-l",
+            "error",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "kelora should exit successfully, stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let config_content = fs::read_to_string(&config_path).unwrap();
+    assert!(
+        config_content.contains("errs = -j -l error"),
+        "alias should keep the options, got: {}",
+        config_content
+    );
+    assert!(
+        !config_content.contains("simple_json.jsonl"),
+        "alias should not bake in the input file, got: {}",
+        config_content
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Not saving input file") && stderr.contains("simple_json.jsonl"),
+        "user should be told the file was dropped, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_save_alias_compose_with_reference() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join(".kelora.ini");
