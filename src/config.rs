@@ -784,6 +784,14 @@ pub fn format_input_open_error(path: &str, err: &str) -> String {
         message.push_str(
             ". Shell glob patterns must be expanded by the shell; remove the quotes or use interactive mode for glob expansion",
         );
+    } else if missing_file && matches!(path, "json" | "table" | "short" | "full") {
+        // --stats/--metrics/--discover take their format via '=' (require_equals),
+        // so `kelora -s json` parses `json` as a filename rather than a format.
+        // A missing "file" named exactly like a format value is almost always
+        // that mistake.
+        message.push_str(&format!(
+            ". If you meant an output format, attach it with '=' — e.g. --stats={path} or --metrics={path} (these flags require '=')",
+        ));
     }
 
     message

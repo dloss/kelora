@@ -724,6 +724,176 @@ impl ProcessingStats {
         self.format_stats_internal(_multiline_enabled, false)
     }
 
+    /// Render the same run statistics as a machine-readable JSON object
+    /// (`--stats=json`). The schema mirrors the table view's logical groups so
+    /// the two stay in sync; fields that the table omits when empty (ragged
+    /// rows, output time span, output keys/levels) are likewise only present
+    /// here when they carry information.
+    pub fn format_stats_json(&self) -> String {
+        use serde_json::{json, Map, Value};
+
+        fn timespan(first: Option<DateTime<Utc>>, last: Option<DateTime<Utc>>) -> Option<Value> {
+            let (first, last) = (first?, last?);
+            Some(json!({
+                "start": first.to_rfc3339(),
+                "end": last.to_rfc3339(),
+                "duration_seconds": (last - first).num_milliseconds() as f64 / 1000.0,
+            }))
+        }
+
+        let mut root = Map::new();
+
+        // Format detection
+        let mut format = Map::new();
+        if let Some(ref f) = self.detected_format {
+            format.insert("detected".to_string(), json!(f));
+        }
+        if !self.detected_format_counts.is_empty() {
+            let counts: Map<String, Value> = self
+                .detected_format_counts
+                .iter()
+                .map(|(k, v)| (k.clone(), json!(v)))
+                .collect();
+            format.insert("per_file".to_string(), Value::Object(counts));
+        }
+        if !self.cascade_format_counts.is_empty() {
+            let counts: Map<String, Value> = self
+                .cascade_format_counts
+                .iter()
+                .map(|(k, v)| (k.clone(), json!(v)))
+                .collect();
+            format.insert("cascade".to_string(), Value::Object(counts));
+        }
+        if !format.is_empty() {
+            root.insert("format".to_string(), Value::Object(format));
+        }
+
+        root.insert(
+            "lines".to_string(),
+            json!({
+                "read": self.lines_read,
+                "filtered": self.lines_filtered,
+                "errors": self.lines_errors,
+            }),
+        );
+        root.insert(
+            "events".to_string(),
+            json!({
+                "created": self.events_created,
+                "output": self.events_output,
+                "filtered": self.events_filtered,
+                "late": self.late_events,
+            }),
+        );
+
+        let duration_secs = self.processing_time.as_secs_f64();
+        let lines_per_second = if duration_secs > 0.0 && self.lines_read > 0 {
+            serde_json::Number::from_f64(self.lines_read as f64 / duration_secs).map(Value::Number)
+        } else {
+            None
+        };
+        root.insert(
+            "throughput".to_string(),
+            json!({
+                "lines_per_second": lines_per_second,
+                "duration_ms": self.processing_time.as_millis() as u64,
+            }),
+        );
+
+        let ts_fields: Vec<String> = if let Some(field) = &self.timestamp_override_field {
+            vec![field.clone()]
+        } else {
+            self.timestamp_fields.keys().cloned().collect()
+        };
+        root.insert(
+            "timestamp".to_string(),
+            json!({
+                "fields": ts_fields,
+                "overridden": self.timestamp_override_field.is_some(),
+                "detected": self.timestamp_detected_events,
+                "parsed": self.timestamp_parsed_events,
+                "absent": self.timestamp_absent_events,
+                "yearless_inferred": self.yearless_timestamps,
+            }),
+        );
+
+        let mut time_span = Map::new();
+        if let Some(span) = timespan(self.first_timestamp, self.last_timestamp) {
+            time_span.insert("input".to_string(), span);
+        }
+        if let Some(span) = timespan(self.first_result_timestamp, self.last_result_timestamp) {
+            time_span.insert("output".to_string(), span);
+        }
+        if !time_span.is_empty() {
+            root.insert("time_span".to_string(), Value::Object(time_span));
+        }
+
+        if !self.discovered_levels.is_empty() {
+            let mut levels = Map::new();
+            levels.insert(
+                "seen".to_string(),
+                json!(self.discovered_levels.iter().collect::<Vec<_>>()),
+            );
+            if !self.discovered_levels_output.is_empty()
+                && self.discovered_levels_output != self.discovered_levels
+            {
+                levels.insert(
+                    "output".to_string(),
+                    json!(self.discovered_levels_output.iter().collect::<Vec<_>>()),
+                );
+            }
+            root.insert("levels".to_string(), Value::Object(levels));
+        }
+
+        if !self.discovered_keys.is_empty() {
+            let mut keys = Map::new();
+            keys.insert(
+                "seen".to_string(),
+                json!(self.discovered_keys.iter().collect::<Vec<_>>()),
+            );
+            if !self.discovered_keys_output.is_empty()
+                && self.discovered_keys_output != self.discovered_keys
+            {
+                keys.insert(
+                    "output".to_string(),
+                    json!(self.discovered_keys_output.iter().collect::<Vec<_>>()),
+                );
+            }
+            root.insert("keys".to_string(), Value::Object(keys));
+        }
+
+        if self.csv_rows_extra_columns > 0 || self.csv_rows_missing_columns > 0 {
+            root.insert(
+                "ragged_rows".to_string(),
+                json!({
+                    "extra_columns": self.csv_rows_extra_columns,
+                    "missing_columns": self.csv_rows_missing_columns,
+                }),
+            );
+        }
+
+        if self.decode_warnings > 0 {
+            root.insert("decode_warnings".to_string(), json!(self.decode_warnings));
+        }
+        if self.assertion_failures > 0 {
+            root.insert(
+                "assertion_failures".to_string(),
+                json!(self.assertion_failures),
+            );
+        }
+        if self.files_processed > 0 || self.files_failed_to_open > 0 {
+            root.insert(
+                "files".to_string(),
+                json!({
+                    "processed": self.files_processed,
+                    "failed_to_open": self.files_failed_to_open,
+                }),
+            );
+        }
+
+        serde_json::to_string_pretty(&Value::Object(root)).unwrap_or_else(|_| "{}".to_string())
+    }
+
     /// Format stats for signal handlers
     ///
     /// `include_line_counts` should only be true when we have accurate mid-run

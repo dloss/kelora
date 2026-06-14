@@ -223,7 +223,7 @@ fn push_count_map(output: &mut String, key: &str, map: &rhai::Map, metrics_level
     let len = map.len();
 
     if len == 0 {
-        output.push_str(&format!("{:<12} (0 categories)\n", key));
+        output.push_str(&format!("{:<12} (0 items)\n", key));
         return;
     }
 
@@ -246,7 +246,7 @@ fn push_count_map(output: &mut String, key: &str, map: &rhai::Map, metrics_level
     let truncate = metrics_level < 2 && len > 10;
     let shown = if truncate { 5 } else { len };
 
-    output.push_str(&format!("{:<12} ({} categories):\n", key, len));
+    output.push_str(&format!("{:<12} ({} items):\n", key, len));
 
     let label_width = entries
         .iter()
@@ -629,7 +629,7 @@ mod tests {
         // No raw Rhai map syntax.
         assert!(!output.contains("#{"), "output: {}", output);
         assert!(
-            output.contains("status       (3 categories):"),
+            output.contains("status       (3 items):"),
             "output: {}",
             output
         );
@@ -651,7 +651,7 @@ mod tests {
 
         // Default level truncates to 5 with a "more" line.
         let output = format_metrics_output(&metrics, &HashMap::new(), 1);
-        assert!(output.contains("(15 categories):"), "output: {}", output);
+        assert!(output.contains("(15 items):"), "output: {}", output);
         assert!(output.contains("[+10 more"), "output: {}", output);
 
         // Full level shows everything.

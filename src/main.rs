@@ -1314,10 +1314,15 @@ fn handle_pipeline_success(
                 // Full stats when --stats flag is used (unless suppressed)
                 // Route to stdout in data-only mode, stderr when showing with events
                 let use_stdout = !config.output.stats_with_events;
-                let mut formatted = config.format_stats_message(
-                    &s.format_stats(config.input.multiline.is_some()),
-                    config.output.stats_with_events, // Show header only for --with-stats
-                );
+                let json_stats = matches!(config.output.stats, Some(cli::StatsFormat::Json));
+                let mut formatted = if json_stats {
+                    s.format_stats_json()
+                } else {
+                    config.format_stats_message(
+                        &s.format_stats(config.input.multiline.is_some()),
+                        config.output.stats_with_events, // Show header only for --with-stats
+                    )
+                };
                 if !events_were_output {
                     formatted = formatted.trim_start_matches('\n').to_string();
                 }

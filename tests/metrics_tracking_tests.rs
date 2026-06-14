@@ -2123,7 +2123,7 @@ fn sugar_no_metrics_overrides_freq() {
     assert_eq!(code, 0);
     // --no-metrics wins: events are shown, no frequency table.
     assert!(
-        !stdout.contains("categories"),
+        !stdout.contains("items):"),
         "--no-metrics should suppress the metrics table: {stdout}"
     );
     assert!(
@@ -2217,4 +2217,43 @@ fn metrics_hint_suppressed_when_end_stage_consumes_metrics() {
         !stderr.contains(METRICS_HINT),
         "metrics nudge should be suppressed when --end is present, got: {stderr}"
     );
+}
+
+#[test]
+fn stats_json_emits_machine_readable_object() {
+    // --stats=json must emit a JSON object (regression: it used to silently
+    // fall back to the human-readable table, ignoring the requested format).
+    let input = "{\"level\":\"INFO\",\"ts\":\"2024-01-15T10:00:00Z\",\"msg\":\"a\"}\n\
+                 {\"level\":\"ERROR\",\"ts\":\"2024-01-15T10:05:00Z\",\"msg\":\"b\"}";
+    let (stdout, _stderr, code) = run_kelora_with_input(&["-f", "json", "--stats=json"], input);
+    assert_eq!(code, 0, "stdout: {stdout}");
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(stdout.trim()).unwrap_or_else(|e| panic!("not JSON ({e}): {stdout}"));
+    assert_eq!(parsed["events"]["created"], 2, "stats json: {stdout}");
+    assert_eq!(parsed["events"]["output"], 2, "stats json: {stdout}");
+    assert_eq!(parsed["lines"]["read"], 2, "stats json: {stdout}");
+    assert_eq!(parsed["format"]["detected"], "json", "stats json: {stdout}");
+    // The human-readable labels must not leak into the JSON output.
+    assert!(
+        !stdout.contains("Events created:"),
+        "json output should not contain table text: {stdout}"
+    );
+}
+
+#[test]
+fn stats_table_still_default() {
+    // Bare -s and --stats=table keep the human-readable table.
+    let input = "{\"level\":\"INFO\",\"msg\":\"a\"}";
+    for args in [
+        vec!["-f", "json", "-s"],
+        vec!["-f", "json", "--stats=table"],
+    ] {
+        let (stdout, _stderr, code) = run_kelora_with_input(&args, input);
+        assert_eq!(code, 0, "args {args:?}: {stdout}");
+        assert!(
+            stdout.contains("Events created:"),
+            "args {args:?} should show table: {stdout}"
+        );
+    }
 }

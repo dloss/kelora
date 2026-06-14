@@ -126,7 +126,7 @@ pub struct Cli {
     /// Named formats (adapted from lnav): glog, nginx-error, apache-error, log4j, python-logging, redis, s3, haproxy, iso8601-level. Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
     /// Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event.
     /// Repeat -f to build a cascade that includes spec-based parsers: -f json -f 'cols:ts(2) level *msg'. Each -f is tried in order; put catch-alls ('line', 'raw', 'cols:') last (regex declines non-matching lines, so it can sit earlier).
-    /// Examples: -f json, -f json,line, -f json -f 'cols:ts level *msg', -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'csv status:int bytes:int'
+    /// Examples: -f json, -f json,line, -f json -f 'cols:ts level *msg', -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'csv status:int bytes:int'.
     #[arg(
         short = 'f',
         long = "input-format",
@@ -138,11 +138,11 @@ pub struct Cli {
     )]
     pub format: Vec<String>,
 
-    /// Shortcut for -f json
+    /// Shortcut for -f json.
     #[arg(short = 'j', help_heading = "Input Options", conflicts_with = "format")]
     pub json_input: bool,
 
-    /// File processing order
+    /// File processing order.
     #[arg(
         long = "file-order",
         value_enum,
@@ -156,7 +156,7 @@ pub struct Cli {
     #[arg(long = "merge-sorted", help_heading = "Input Options")]
     pub merge_ts: bool,
 
-    /// Skip the first N input lines
+    /// Skip the first N input lines.
     #[arg(long = "skip-lines", value_name = "N", help_heading = "Input Options")]
     pub skip_lines: Option<usize>,
 
@@ -218,7 +218,7 @@ pub struct Cli {
     )]
     pub keep_lines: Option<String>,
 
-    /// Ignore input lines matching this regex pattern
+    /// Ignore input lines matching this regex pattern.
     #[arg(
         long = "ignore-lines",
         value_name = "REGEX",
@@ -226,7 +226,7 @@ pub struct Cli {
     )]
     pub ignore_lines: Option<String>,
 
-    /// Custom timestamp field name for parsing
+    /// Custom timestamp field name for parsing.
     #[arg(
         long = "ts-field",
         value_name = "FIELD",
@@ -244,7 +244,7 @@ pub struct Cli {
 
     /// Assume timezone for input timestamps without timezone info (default: UTC).
     /// Use 'local' for system local time.
-    /// Examples: 'Europe/Berlin', 'local', 'UTC'
+    /// Examples: 'Europe/Berlin', 'local', 'UTC'.
     #[arg(long = "input-tz", value_name = "TZ", help_heading = "Input Options")]
     pub input_tz: Option<String>,
 
@@ -259,7 +259,7 @@ pub struct Cli {
     )]
     pub multiline: Option<String>,
 
-    /// Join multiline lines with: space (default), newline, or empty
+    /// Join multiline lines with: space (default), newline, or empty.
     #[arg(
         long = "multiline-join",
         value_enum,
@@ -381,7 +381,7 @@ pub struct Cli {
     )]
     pub span_close: Option<String>,
 
-    /// Exit on first error (fail-fast behavior)
+    /// Exit on first error (fail-fast behavior). Use --no-strict to force resilient mode, overriding a config default.
     #[arg(long = "strict", help_heading = "Error Handling")]
     pub strict: bool,
 
@@ -394,7 +394,7 @@ pub struct Cli {
     )]
     pub no_strict: bool,
 
-    /// Abort on invalid UTF-8 instead of decoding losslessly
+    /// Abort on invalid UTF-8 instead of decoding losslessly.
     #[arg(
         long = "strict-utf8",
         help_heading = "Error Handling",
@@ -406,7 +406,7 @@ pub struct Cli {
     #[arg(short = 'v', long = "verbose", action = clap::ArgAction::Count, help_heading = "Error Handling")]
     pub verbose: u8,
 
-    /// Include only events with these log levels
+    /// Include only events with these log levels.
     #[arg(
         short = 'l',
         long = "levels",
@@ -415,7 +415,7 @@ pub struct Cli {
     )]
     pub levels: Vec<String>,
 
-    /// Exclude events with these log levels
+    /// Exclude events with these log levels.
     #[arg(
         short = 'L',
         long = "exclude-levels",
@@ -424,7 +424,7 @@ pub struct Cli {
     )]
     pub exclude_levels: Vec<String>,
 
-    /// Output only specific fields
+    /// Output only specific fields.
     #[arg(
         short = 'k',
         long = "keys",
@@ -435,7 +435,7 @@ pub struct Cli {
     )]
     pub keys: Vec<String>,
 
-    /// Exclude specific fields from output
+    /// Exclude specific fields from output.
     #[arg(
         short = 'K',
         long = "exclude-keys",
@@ -446,7 +446,7 @@ pub struct Cli {
     )]
     pub exclude_keys: Vec<String>,
 
-    /// Start showing entries on or newer than the specified date
+    /// Start showing entries on or newer than the specified date.
     #[arg(
         long = "since",
         value_name = "TIME",
@@ -456,7 +456,7 @@ pub struct Cli {
     )]
     pub since: Option<String>,
 
-    /// Stop showing entries on or older than the specified date
+    /// Stop showing entries on or older than the specified date.
     #[arg(
         long = "until",
         value_name = "TIME",
@@ -466,7 +466,7 @@ pub struct Cli {
     )]
     pub until: Option<String>,
 
-    /// Limit output to the first N events
+    /// Limit output to the first N events.
     #[arg(
         short = 'n',
         long = "take",
@@ -502,7 +502,7 @@ pub struct Cli {
     )]
     pub context: Option<usize>,
 
-    /// Output format
+    /// Output format.
     #[arg(
         short = 'F',
         long = "output-format",
@@ -514,7 +514,7 @@ pub struct Cli {
     )]
     pub output_format: OutputFormat,
 
-    /// Shortcut for -F json
+    /// Shortcut for -F json.
     #[arg(
         short = 'J',
         help_heading = "Output Options",
@@ -522,11 +522,11 @@ pub struct Cli {
     )]
     pub json_output: bool,
 
-    /// Output only core fields
+    /// Output only core fields.
     #[arg(short = 'c', long = "core", help_heading = "Output Options")]
     pub core: bool,
 
-    /// Output file for formatted events
+    /// Output file for formatted events.
     #[arg(
         short = 'o',
         long = "output-file",
@@ -551,7 +551,7 @@ pub struct Cli {
     #[arg(long = "no-diagnostics", hide = true, help_heading = "Output Options", overrides_with_all = ["diagnostics", "no_diagnostics"])]
     pub no_diagnostics: bool,
 
-    /// Silence pipeline stdout/stderr emitters (events/diagnostics/stats/terminal metrics); script output still allowed. Metrics files still write.
+    /// Silence pipeline stdout/stderr emitters (events/diagnostics/stats/terminal metrics); script output still allowed. Metrics files still write. Use --no-silent to override a config default.
     #[arg(long = "silent", help_heading = "Output Options")]
     pub silent: bool,
 
@@ -559,7 +559,7 @@ pub struct Cli {
     #[arg(long = "no-silent", hide = true, help_heading = "Output Options")]
     pub no_silent: bool,
 
-    /// Enable Rhai print/eprint output
+    /// Enable Rhai print/eprint output.
     #[arg(long = "script-output", help_heading = "Output Options", overrides_with_all = ["no_script_output", "script_output"])]
     pub script_output: bool,
 
@@ -625,11 +625,11 @@ pub struct Cli {
     )]
     pub format_timestamps_utc: bool,
 
-    /// Force colored output
+    /// Force colored output.
     #[arg(long = "force-color", help_heading = "Display Options", overrides_with_all = ["no_color", "force_color"])]
     pub force_color: bool,
 
-    /// Disable colored output
+    /// Disable colored output.
     #[arg(long = "no-color", help_heading = "Display Options", overrides_with_all = ["force_color", "no_color"])]
     pub no_color: bool,
 
@@ -646,11 +646,11 @@ pub struct Cli {
     #[arg(long = "force-emoji", help_heading = "Display Options", overrides_with_all = ["no_emoji", "force_emoji"])]
     pub force_emoji: bool,
 
-    /// Disable emoji prefixes
+    /// Disable emoji prefixes.
     #[arg(long = "no-emoji", help_heading = "Display Options", overrides_with_all = ["force_emoji", "no_emoji"])]
     pub no_emoji: bool,
 
-    /// Enable parallel processing (default: sequential processing).
+    /// Enable parallel processing (default: sequential processing). Use --no-parallel to force sequential, overriding a config default.
     #[arg(short = 'P', long = "parallel", help_heading = "Performance Options")]
     pub parallel: bool,
 
@@ -672,7 +672,7 @@ pub struct Cli {
     )]
     pub threads: usize,
 
-    /// Batch size (events per batch) for parallel processing
+    /// Batch size (events per batch) for parallel processing.
     #[arg(
         long = "batch-size",
         value_name = "N",
@@ -680,7 +680,7 @@ pub struct Cli {
     )]
     pub batch_size: Option<usize>,
 
-    /// Batch timeout in milliseconds
+    /// Batch timeout in milliseconds.
     #[arg(
         long = "batch-timeout",
         value_name = "MS",
@@ -690,7 +690,7 @@ pub struct Cli {
     )]
     pub batch_timeout: u64,
 
-    /// Disable ordered output
+    /// Disable ordered output.
     #[arg(long = "unordered", help_heading = "Performance Options")]
     pub no_preserve_order: bool,
 
@@ -704,7 +704,7 @@ pub struct Cli {
         num_args = 0..=1,
         default_missing_value = "table",
         help_heading = "Metrics and Stats",
-        help = "Show stats only (implies -q/--quiet).\n\nFormats: table, json\n\nExamples:\n  -s              Default table format\n  --stats=json    JSON output"
+        help = "Show stats only (implies -q/--quiet).\n\nFormats: table, json\n\nExamples:\n  -s              Default table format\n  --stats=json    JSON output\n\nUse --no-stats to override a config default. Note the '=': --stats=json (a space, as in '-s json', is read as a filename)."
     )]
     pub stats: Option<StatsFormat>,
 
@@ -731,7 +731,7 @@ pub struct Cli {
         num_args = 0..=1,
         default_missing_value = "full",
         help_heading = "Metrics and Stats",
-        help = "Show metrics only (implies -q/--quiet).\n\nFormats: short (first 5), full (default), json\n\nExamples:\n  -m               Full metrics table\n  --metrics=short  Abbreviated (first 5 items)\n  --metrics=json   JSON output"
+        help = "Show metrics only (implies -q/--quiet).\n\nFormats: short (first 5), full (default), json\n\nExamples:\n  -m               Full metrics table\n  --metrics=short  Abbreviated (first 5 items)\n  --metrics=json   JSON output\n\nUse --no-metrics to override a config default. Note the '=': --metrics=json (a space, as in '-m json', is read as a filename)."
     )]
     pub metrics: Option<MetricsFormat>,
 
@@ -836,7 +836,7 @@ pub struct Cli {
     )]
     pub discover_depth: Option<usize>,
 
-    /// Specify custom configuration file path
+    /// Specify custom configuration file path.
     #[arg(
         long = "config-file",
         value_name = "FILE",
@@ -844,11 +844,11 @@ pub struct Cli {
     )]
     pub config_file: Option<String>,
 
-    /// Ignore configuration file
+    /// Ignore configuration file.
     #[arg(long = "ignore-config", help_heading = "Configuration Options")]
     pub ignore_config: bool,
 
-    /// Use alias from configuration file
+    /// Use alias from configuration file.
     #[arg(
         short = 'a',
         long = "alias",
@@ -857,7 +857,7 @@ pub struct Cli {
     )]
     pub alias: Vec<String>,
 
-    /// Save current command as alias to configuration file
+    /// Save current command as alias to configuration file.
     #[arg(
         long = "save-alias",
         value_name = "NAME",
@@ -865,15 +865,15 @@ pub struct Cli {
     )]
     pub save_alias: Option<String>,
 
-    /// Show configuration file and exit
+    /// Show configuration file and exit.
     #[arg(long = "show-config", help_heading = "Configuration Options")]
     pub show_config: bool,
 
-    /// Edit configuration file in default editor and exit
+    /// Edit configuration file in default editor and exit.
     #[arg(long = "edit-config", help_heading = "Configuration Options")]
     pub edit_config: bool,
 
-    /// Show Rhai scripting guide and exit
+    /// Show Rhai scripting guide and exit.
     #[arg(long = "help-rhai", help_heading = "Help Options")]
     pub help_rhai: bool,
 
@@ -881,27 +881,27 @@ pub struct Cli {
     #[arg(long = "help-functions", value_name = "KEYWORD", num_args = 0..=1, default_missing_value = "", help_heading = "Help Options")]
     pub help_functions: Option<String>,
 
-    /// Show practical Rhai examples and exit
+    /// Show practical Rhai examples and exit.
     #[arg(long = "help-examples", help_heading = "Help Options")]
     pub help_examples: bool,
 
-    /// Show time format help and exit
+    /// Show time format help and exit.
     #[arg(long = "help-time", help_heading = "Help Options")]
     pub help_time: bool,
 
-    /// Show multiline strategy help and exit
+    /// Show multiline strategy help and exit.
     #[arg(long = "help-multiline", help_heading = "Help Options")]
     pub help_multiline: bool,
 
-    /// Show regex format help and exit
+    /// Show regex format help and exit.
     #[arg(long = "help-regex", help_heading = "Help Options")]
     pub help_regex: bool,
 
-    /// Show format reference and exit
+    /// Show format reference and exit.
     #[arg(long = "help-formats", help_heading = "Help Options")]
     pub help_formats: bool,
 
-    /// Generate shell completion script and exit
+    /// Generate shell completion script and exit.
     #[arg(long = "completions", value_enum, help_heading = "Help Options")]
     pub completions: Option<ShellCompletion>,
 }
