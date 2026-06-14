@@ -12,13 +12,12 @@ pub struct MultilineChunker {
     buffer: Vec<String>,
     start_regex: Option<Regex>,
     end_regex: Option<Regex>,
-    input_format: InputFormat,
     timestamp_detector: Option<TimestampDetector>,
     pending_output: Option<String>,
 }
 
 impl MultilineChunker {
-    pub fn new(config: MultilineConfig, input_format: InputFormat) -> Result<Self, String> {
+    pub fn new(config: MultilineConfig, _input_format: InputFormat) -> Result<Self, String> {
         let mut start_regex = None;
         let mut end_regex = None;
         let mut timestamp_detector = None;
@@ -47,7 +46,6 @@ impl MultilineChunker {
             buffer: Vec::new(),
             start_regex,
             end_regex,
-            input_format,
             timestamp_detector,
             pending_output: None,
         })
@@ -89,19 +87,10 @@ impl MultilineChunker {
             return None;
         }
 
-        let content = if self.config.join == MultilineJoin::Space {
-            let joined = match self.config.strategy {
-                MultilineStrategy::All => self.buffer.join("\n"),
-                _ => self.buffer.join(""),
-            };
-
-            match self.config.strategy {
-                MultilineStrategy::All => joined,
-                _ => match self.input_format {
-                    InputFormat::Raw => joined,
-                    _ => joined.replace('\n', " ").replace('\r', ""),
-                },
-            }
+        // The `All` strategy preserves the input's line structure by joining
+        // with newlines, regardless of the configured join mode.
+        let content = if matches!(self.config.strategy, MultilineStrategy::All) {
+            self.buffer.join("\n")
         } else {
             let joiner = match self.config.join {
                 MultilineJoin::Newline => "\n",
@@ -753,6 +742,28 @@ mod tests {
         let content = event.unwrap();
         assert!(!content.contains('\n'));
         assert_eq!(content, "Header  continuation");
+    }
+
+    #[test]
+    fn test_multiline_join_space_inserts_separator() {
+        // Regression: `Space` (the default) must join lines with a single space
+        // between them, not silently concatenate like `Empty`. Lines reach the
+        // chunker with trailing newlines already stripped by the reader.
+        let join_indented = |join| {
+            let config = MultilineConfig {
+                strategy: MultilineStrategy::Indent,
+                join,
+            };
+            let mut chunker = MultilineChunker::new(config, InputFormat::Json).unwrap();
+            chunker.feed_line("Header".to_string());
+            chunker.feed_line("  continuation".to_string());
+            chunker.flush().expect("buffered event")
+        };
+
+        // One joiner space, then the continuation's own two-space indent.
+        assert_eq!(join_indented(MultilineJoin::Space), "Header   continuation");
+        // Space must differ from Empty (the bug made them identical).
+        assert_eq!(join_indented(MultilineJoin::Empty), "Header  continuation");
     }
 
     #[test]
