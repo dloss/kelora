@@ -6,6 +6,7 @@ thread_local! {
     static PENDING_EMISSIONS: RefCell<Vec<Map>> = const { RefCell::new(Vec::new()) };
     static SUPPRESS_CURRENT: Cell<bool> = const { Cell::new(false) };
     static EMIT_STRICT: Cell<bool> = const { Cell::new(false) };
+    static EMIT_USE_EMOJI: Cell<bool> = const { Cell::new(true) };
 }
 
 /// Get and clear pending emissions for this thread
@@ -35,6 +36,20 @@ pub fn set_emit_strict(strict: bool) {
 
 fn is_emit_strict() -> bool {
     EMIT_STRICT.with(|flag| flag.get())
+}
+
+/// Configure whether emit_each diagnostics use emoji prefixes
+pub fn set_emit_use_emoji(use_emoji: bool) {
+    EMIT_USE_EMOJI.with(|flag| flag.set(use_emoji));
+}
+
+/// Warning prefix honoring the active emoji setting, matching Config::format_warning_message
+fn emit_warn_prefix() -> &'static str {
+    if EMIT_USE_EMOJI.with(|flag| flag.get()) {
+        "🔸"
+    } else {
+        "kelora warning:"
+    }
 }
 
 /// Rhai function: emit_each(items: array<map>) -> int
@@ -72,7 +87,8 @@ fn emit_each_impl(
             } else {
                 // Log warning in resilient mode
                 eprintln!(
-                    "🔸 emit_each(): items must be array<map>; got {}; returning 0",
+                    "{} emit_each(): items must be array<map>; got {}; returning 0",
+                    emit_warn_prefix(),
                     items_val.type_name()
                 );
                 return Ok(Dynamic::from(0i64));
@@ -95,7 +111,8 @@ fn emit_each_impl(
                     .into());
                 } else {
                     eprintln!(
-                        "🔸 emit_each(): base must be map; got {}; treating as empty",
+                        "{} emit_each(): base must be map; got {}; treating as empty",
+                        emit_warn_prefix(),
                         base_val.type_name()
                     );
                     None
@@ -123,7 +140,8 @@ fn emit_each_impl(
                     .into());
                 } else {
                     eprintln!(
-                        "🔸 emit_each(): skipping items[{}], expected map (got {})",
+                        "{} emit_each(): skipping items[{}], expected map (got {})",
+                        emit_warn_prefix(),
                         i,
                         item.type_name()
                     );

@@ -381,6 +381,10 @@ impl ScriptStage for ExecStage {
         columns::set_parse_cols_strict(ctx.config.strict);
         absorb::set_absorb_strict(ctx.config.strict);
         emit::set_emit_strict(ctx.config.strict);
+        emit::set_emit_use_emoji(crate::tty::should_use_emoji_with_mode(
+            &ctx.config.emoji_mode,
+            &ctx.config.color_mode,
+        ));
 
         file_ops::clear_pending_ops();
 

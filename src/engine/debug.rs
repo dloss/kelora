@@ -549,10 +549,15 @@ impl ErrorEnhancer {
 
     fn get_stage_help(&self, stage: &str, error: &EvalAltResult) -> String {
         let mut help = String::new();
+        let bullet = if self.debug_config.use_emoji {
+            "🔹 "
+        } else {
+            ""
+        };
 
         match stage {
             "filter" => {
-                help.push_str("\n   🔹 Filter stage tips:\n");
+                help.push_str(&format!("\n   {bullet}Filter stage tips:\n"));
                 help.push_str("   • Filters must return true/false (boolean values)\n");
                 help.push_str("   • Use 'e.field_name' to access event fields\n");
                 help.push_str(
@@ -567,7 +572,7 @@ impl ErrorEnhancer {
                 }
             }
             "exec" => {
-                help.push_str("\n   🔹 Exec stage tips:\n");
+                help.push_str(&format!("\n   {bullet}Exec stage tips:\n"));
                 help.push_str("   • Use 'e.new_field = value' to add fields to events\n");
                 help.push_str("   • Use 'e.field = ()' to remove fields from events\n");
                 help.push_str("   • Use 'e = ()' to remove entire event (filter out)\n");
@@ -575,13 +580,13 @@ impl ErrorEnhancer {
                 help.push_str("   • Use 'print(\"debug: \" + value)' for debugging output\n");
             }
             "begin" => {
-                help.push_str("\n   🔹 Begin stage tips:\n");
+                help.push_str(&format!("\n   {bullet}Begin stage tips:\n"));
                 help.push_str("   • Use 'conf.field = value' to set global initialization data\n");
                 help.push_str("   • Use 'read_file(\"path\")' to load external data\n");
                 help.push_str("   • Variables set here are available in all event processing\n");
             }
             "end" => {
-                help.push_str("\n   🔹 End stage tips:\n");
+                help.push_str(&format!("\n   {bullet}End stage tips:\n"));
                 help.push_str("   • Use 'metrics.key' to access accumulated tracking data\n");
                 help.push_str("   • Use 'print()' to output final results\n");
                 help.push_str("   • This runs after all events are processed\n");

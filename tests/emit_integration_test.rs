@@ -183,6 +183,53 @@ fn test_emit_each_mixed_array() {
 }
 
 #[test]
+fn test_emit_each_skip_warning_honors_no_emoji() {
+    // Skipped-item diagnostics must respect --no-emoji (no 🔸 prefix)
+    let input = r#"{"items": [1]}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--no-emoji", "--exec", "emit_each(e.items)"],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "Expected success, stderr: {}", stderr);
+    assert!(
+        !stderr.contains('🔸'),
+        "--no-emoji must strip emoji from emit_each warnings, got: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("kelora warning:"),
+        "Expected plain 'kelora warning:' prefix, got: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_emit_each_skip_warning_uses_emoji_when_forced() {
+    // With --force-emoji the skip diagnostic keeps the 🔸 prefix
+    let input = r#"{"items": [1]}"#;
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--force-emoji",
+            "--exec",
+            "emit_each(e.items)",
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "Expected success, stderr: {}", stderr);
+    assert!(
+        stderr.contains('🔸'),
+        "--force-emoji should keep emoji prefix on emit_each warnings, got: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_emit_each_with_json_output() {
     let input = r#"{"users": [{"name": "alice"}, {"name": "bob"}]}"#;
 
