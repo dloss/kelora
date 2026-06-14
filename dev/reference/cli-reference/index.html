@@ -3777,10 +3777,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-discover-final" class="md-nav__link">
+  <a href="#-d-discover-finalformat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --discover-final
+        -D, --discover-final[=FORMAT]
       
     </span>
   </a>
@@ -6004,10 +6004,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-discover-final" class="md-nav__link">
+  <a href="#-d-discover-finalformat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --discover-final
+        -D, --discover-final[=FORMAT]
       
     </span>
   </a>
@@ -7127,7 +7127,7 @@ Sequential mode only (not supported with <code>--parallel</code> or thread overr
 <a id="__codelineno-81-4" name="__codelineno-81-4" href="#__codelineno-81-4"></a><span class="c1"># JSON output</span>
 <a id="__codelineno-81-5" name="__codelineno-81-5" href="#__codelineno-81-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover<span class="o">=</span>json
 </code></pre></div>
-<h4 id="-discover-final"><code>--discover-final</code><a class="headerlink" href="#-discover-final" title="Permanent link">&para;</a></h4>
+<h4 id="-d-discover-finalformat"><code>-D, --discover-final[=FORMAT]</code><a class="headerlink" href="#-d-discover-finalformat" title="Permanent link">&para;</a></h4>
 <p>Profile final emitted fields instead of parsed input fields.
 Use this when you want to inspect the schema after filters and scripts have run.</p>
 <p><strong>Formats:</strong></p>
@@ -7136,10 +7136,10 @@ Use this when you want to inspect the schema after filters and scripts have run.
 <li><code>json</code> - Machine-readable output</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a><span class="c1"># Discover only fields that survive filtering/transforms</span>
-<a id="__codelineno-82-2" name="__codelineno-82-2" href="#__codelineno-82-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover-final<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-82-2" name="__codelineno-82-2" href="#__codelineno-82-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-D<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
 <a id="__codelineno-82-3" name="__codelineno-82-3" href="#__codelineno-82-3"></a>
 <a id="__codelineno-82-4" name="__codelineno-82-4" href="#__codelineno-82-4"></a><span class="c1"># JSON output of final fields</span>
-<a id="__codelineno-82-5" name="__codelineno-82-5" href="#__codelineno-82-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--discover-final<span class="o">=</span>json<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<a id="__codelineno-82-5" name="__codelineno-82-5" href="#__codelineno-82-5"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-D<span class="o">=</span>json<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
 </code></pre></div>
 <h4 id="-discover-depth-n"><code>--discover-depth &lt;N&gt;</code><a class="headerlink" href="#-discover-depth-n" title="Permanent link">&para;</a></h4>
 <p>Maximum depth for flattening nested maps and arrays into dotted keys during field
