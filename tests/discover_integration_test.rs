@@ -184,3 +184,56 @@ fn test_discover_and_discover_final_conflict() {
         stderr
     );
 }
+
+#[test]
+fn test_discover_hints_at_discover_final_when_exec_present() {
+    let input = r#"{"level":"info","status":200}
+{"level":"error","status":500}"#;
+
+    // Plain --discover with a field-mutating --exec: the user's computed field
+    // won't appear (input is profiled before scripts run), so the footer should
+    // point them at --discover-final.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--discover",
+            "--exec",
+            "e.slow = e.status >= 500",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(
+        stdout.contains("--discover-final"),
+        "exec pipeline should hint at --discover-final, got: {}",
+        stdout
+    );
+
+    // A bare probe with no transforms stays uncluttered.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(&["-f", "json", "--discover"], input);
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stdout.contains("--discover-final"),
+        "bare discover should not nag about --discover-final, got: {}",
+        stdout
+    );
+
+    // --discover-final itself already shows post-script fields: no self-referential hint.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--discover-final",
+            "--exec",
+            "e.slow = e.status >= 500",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stdout.contains("Use --discover-final"),
+        "discover-final should not hint at itself, got: {}",
+        stdout
+    );
+}

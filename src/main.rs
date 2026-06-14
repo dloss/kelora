@@ -1230,6 +1230,16 @@ fn handle_pipeline_success(
         if let Some(discovery) = pipeline_result.field_discovery.as_mut() {
             discovery.format_summary = format_summary;
             discovery.timestamp_summary = timestamp_summary;
+            // In plain --discover mode, nudge toward --discover-final only when
+            // the pipeline can reshape the emitted field set (--exec adds/renames
+            // fields, --span rebuilds events). Bare probes stay uncluttered.
+            discovery.suggest_discover_final = !config.output.discover_final
+                && (config.processing.span.is_some()
+                    || config
+                        .processing
+                        .stages
+                        .iter()
+                        .any(|stage| matches!(stage, crate::config::ScriptStageType::Exec(_))));
             let formatted = match config.output.discover_fields {
                 Some(cli::DiscoverFieldsFormat::Json) => discovery.format_json(),
                 _ => {
