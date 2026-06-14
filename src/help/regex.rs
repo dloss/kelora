@@ -80,13 +80,11 @@ Instead of regex:
 Use cols:
   -f 'cols:month day time level *msg'
 
-The cols: format:
-  - Splits on whitespace automatically
-  - *field captures remaining line (like .* in regex)
-  - Supports custom separators: --cols-sep=','
-  - No need to worry about escaping special characters
+cols: splits on whitespace (or --cols-sep), captures the rest with *field, and
+needs no escaping of special characters.
 
-Learn more: kelora --help (see --input-format examples)
+For the full cols spec (token counts, skips, type annotations, separators):
+  kelora --help-formats
 
 DEBUGGING:
 
