@@ -151,9 +151,9 @@ results. Other notes:
 | Old (1.x) | New (2.0) |
 | --- | --- |
 | `track_count(value)` | `track_freq("name", value)` |
-| `track_bucket(key, bucket)` | `track_freq(key, bucket)` |
-| `track_top(key, item, n, value)` | `track_top_by(key, item, value, n)` |
-| `track_bottom(key, item, n, value)` | `track_bottom_by(key, item, value, n)` |
+| `track_bucket(key, bucket)` | `track_freq(name, value)` |
+| `track_top(key, item, n, value)` | `track_top_by(name, item, score, n)` |
+| `track_bottom(key, item, n, value)` | `track_bottom_by(name, item, score, n)` |
 | plain counter via `track_count` | `track_inc("name")` (or `track_sum("name", 1)`) |
 
 ### Breaking: a simpler, record-aware exit-code model

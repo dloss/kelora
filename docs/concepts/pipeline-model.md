@@ -451,11 +451,11 @@ kelora -j app.log \
 **Available Functions:**
 
 - `track_freq(name, value)` - Count occurrences per category
-- `track_sum(key, value)` - Sum values
-- `track_min(key, value)` - Track minimum value
-- `track_max(key, value)` - Track maximum value
-- `track_unique(key, value)` - Collect unique values (exact, stores all)
-- `track_cardinality(key, value)` - Estimate unique count (HyperLogLog, ~1% error)
+- `track_sum(name, value)` - Sum values
+- `track_min(name, value)` - Track minimum value
+- `track_max(name, value)` - Track maximum value
+- `track_unique(name, value)` - Collect unique values (exact, stores all)
+- `track_cardinality(name, value)` - Estimate unique count (HyperLogLog, ~1% error)
 - `track_top(name, item [, n])` - Track most frequent items
 
 **Access in --end stage:**

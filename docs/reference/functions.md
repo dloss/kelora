@@ -1857,8 +1857,8 @@ Shared conventions across the `track_*()` family:
 
 ### Tracking Functions {#tracking-functions}
 
-#### `track_avg(key, value)`
-Track average of numeric values for key. Automatically computes the average during output. Skips Unit `()` values. Works correctly in parallel mode.
+#### `track_avg(name, value)`
+Track average of numeric values for the metric `name`. Automatically computes the average during output. Skips Unit `()` values. Works correctly in parallel mode.
 
 ```rhai
 track_avg("avg_latency", e.response_time)
@@ -1898,8 +1898,8 @@ if e.level == "ERROR" {
 }
 ```
 
-#### `track_sum(key, value)`
-Accumulate numeric values for key. Skips Unit `()` values.
+#### `track_sum(name, value)`
+Accumulate numeric values for the metric `name`. Skips Unit `()` values.
 
 ```rhai
 track_sum("total_bytes", e.bytes)
@@ -1910,16 +1910,16 @@ let score = e.score_str.to_int()  // Returns () on error
 track_sum("total_score", score)   // Skips () values
 ```
 
-#### `track_min(key, value)` / `track_max(key, value)`
-Track minimum/maximum value for key. Skips Unit `()` values.
+#### `track_min(name, value)` / `track_max(name, value)`
+Track minimum/maximum value for the metric `name`. Skips Unit `()` values.
 
 ```rhai
 track_min("fastest", e.response_time)
 track_max("slowest", e.response_time)
 ```
 
-#### `track_unique(key, value)`
-Track unique values for key. Skips Unit `()` values.
+#### `track_unique(name, value)`
+Track unique values for the metric `name`. Skips Unit `()` values.
 
 ```rhai
 track_unique("users", e.user_id)
@@ -1929,7 +1929,7 @@ track_unique("ips", e.client_ip)
 track_unique("names", e.message.after("User:").or_empty())
 ```
 
-#### `track_cardinality(key, value)` / `track_cardinality(key, value, error_rate)`
+#### `track_cardinality(name, value)` / `track_cardinality(name, value, error_rate)`
 Estimate unique count using HyperLogLog algorithm. Uses ~12KB of memory regardless of cardinality, with ~1% standard error by default. Skips Unit `()` values. Works correctly in parallel mode.
 
 **When to use:** For high-cardinality data (millions of unique values) where `track_unique()` would consume too much memory. Use `track_unique()` when you need the actual values or have low cardinality.
@@ -1951,7 +1951,7 @@ track_cardinality("unique_emails", e.email.or_empty())
 unique_ips   ≈ 1234567
 ```
 
-**Error rate bounds:** 0.001 (0.1%) to 0.26 (26%). Lower error = more memory.
+**Error rate bounds:** 0.001 (0.1%) to 0.2 (20%). Lower error = more memory. Values outside this range are silently clamped to the nearest bound (not rejected).
 
 !!! tip "track_cardinality vs track_unique"
     | | `track_unique()` | `track_cardinality()` |
@@ -2005,15 +2005,15 @@ track_top_by("cpu_hogs", e.process, e.cpu_time.or_empty())  // Skips ()
 !!! note "Parallel Mode Behavior"
     In parallel mode, each worker maintains its own top/bottom N. During merge, the lists are combined, re-sorted, and trimmed to N. Final results are deterministic.
 
-#### `track_percentiles(key, value [, [percentiles]])`
+#### `track_percentiles(name, value [, [percentiles]])`
 Track streaming percentiles using the t-digest algorithm for memory-efficient percentile estimation. Automatically creates suffixed metrics for each percentile (e.g., `latency_p50`, `latency_p95`, `latency_p99.9`). **This is the only `track_*()` function that auto-suffixes** because percentiles are inherently multi-valued. Skips Unit `()` values. Works correctly in parallel mode.
 
 **Default percentiles:** `[0.50, 0.95, 0.99]` when no array provided.
 
 **Percentile notation:** Use 0.0-1.0 range (quantile notation):
-- `0.50` = 50th percentile (median) → creates `key_p50`
-- `0.95` = 95th percentile → creates `key_p95`
-- `0.999` = 99.9th percentile → creates `key_p99.9`
+- `0.50` = 50th percentile (median) → creates `name_p50`
+- `0.95` = 95th percentile → creates `name_p95`
+- `0.999` = 99.9th percentile → creates `name_p99.9`
 
 **Memory efficiency:** Uses ~4KB per metric regardless of event count (vs. storing all values). Suitable for millions of events.
 
@@ -2053,16 +2053,16 @@ track_percentiles("api_p95", latency)   // Skips () values
 
 ---
 
-#### `track_stats(key, value [, [percentiles]])`
+#### `track_stats(name, value [, [percentiles]])`
 **Convenience function** that tracks comprehensive statistics in a single call: min, max, avg, count, sum, and percentiles. Automatically creates suffixed metrics for each statistic. Ideal for getting the complete statistical picture of a metric without calling multiple `track_*()` functions. Skips Unit `()` values. Works correctly in parallel mode.
 
 **Auto-created metrics:**
-- `{key}_min` - Minimum value
-- `{key}_max` - Maximum value
-- `{key}_avg` - Average (stored as sum+count for parallel merging)
-- `{key}_count` - Total count
-- `{key}_sum` - Total sum
-- `{key}_p50`, `{key}_p95`, `{key}_p99` - Percentiles (default)
+- `{name}_min` - Minimum value
+- `{name}_max` - Maximum value
+- `{name}_avg` - Average (stored as sum+count for parallel merging)
+- `{name}_count` - Total count
+- `{name}_sum` - Total sum
+- `{name}_p50`, `{name}_p95`, `{name}_p99` - Percentiles (default)
 
 **Default percentiles:** `[0.50, 0.95, 0.99]` when no array provided.
 

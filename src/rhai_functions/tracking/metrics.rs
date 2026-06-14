@@ -136,7 +136,13 @@ pub(super) fn track_cardinality_with_error_impl<V: std::hash::Hash>(
     error_rate: f64,
 ) -> Result<(), Box<rhai::EvalAltResult>> {
     ensure_operation_metadata(key, "cardinality")?;
-    let error_rate = error_rate.clamp(0.001, 0.26);
+    // The hyperloglog crate derives its register precision `p` from the error
+    // rate and panics unless `4 <= p <= 16`. Its formula puts the usable window
+    // at roughly [0.00035, 0.232], so clamp to a safe sub-range rather than
+    // rejecting out-of-range values. Going above ~0.232 yields p == 3 and would
+    // abort the run (panic = "abort" in release). Documented in
+    // --help-functions and the function reference.
+    let error_rate = error_rate.clamp(0.001, 0.2);
 
     with_user_tracking(|state| {
         let mut hll = if let Some(existing) = state.get(key) {

@@ -2061,6 +2061,30 @@ mod tests {
     }
 
     #[test]
+    fn test_track_cardinality_out_of_range_error_rate_is_clamped_not_panicking() {
+        // Regression: the underlying HyperLogLog crate panics unless the derived
+        // precision p satisfies 4 <= p <= 16, which rules out error rates at or
+        // above ~0.232. We clamp to [0.001, 0.2], so values far outside the
+        // range (including the previously documented 0.26 upper bound) must be
+        // accepted and clamped rather than aborting the run.
+        clear_tracking_state();
+
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+
+        for rate in ["0.26", "9.9", "0.0", "-1.0"] {
+            engine
+                .eval::<()>(&format!(r#"track_cardinality("uniq", "v", {})"#, rate))
+                .unwrap_or_else(|e| panic!("error_rate {rate} should be clamped, got: {e}"));
+        }
+
+        let state = get_thread_tracking_state();
+        assert!(state.get("uniq").unwrap().is_blob());
+
+        clear_tracking_state();
+    }
+
+    #[test]
     fn test_track_cardinality_operation_metadata() {
         clear_tracking_state();
 

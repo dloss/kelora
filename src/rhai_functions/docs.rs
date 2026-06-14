@@ -290,7 +290,7 @@ strings, numbers, and bools (stringified). One metric name = one track function
 track_avg(name, value)                Track average of numeric values
 track_bottom(name, item [,n])         Track bottom N least frequent items (default n=10)
 track_bottom_by(name, item, score [,n]) Track bottom N distinct items by their lowest score (default n=10)
-track_cardinality(name, value [,err]) Estimate unique count using HyperLogLog (~1% error, ~12KB; err range: 0.001-0.26)
+track_cardinality(name, value [,err]) Estimate unique count using HyperLogLog (~1% error, ~12KB; err clamped to 0.001-0.2)
 track_freq(name, value)               Frequency table — count occurrences per value: {name: {value: n}}; e.g. track_freq("status", e.status)
 track_inc(name)                       Increment a running counter by 1 (sugar for track_sum(name, 1))
 track_max(name, value)                Track maximum numeric value

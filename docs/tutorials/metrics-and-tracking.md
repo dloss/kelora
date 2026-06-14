@@ -105,10 +105,10 @@ response sizes and latency as rolling aggregates.
 
 **Available aggregation functions:**
 
-- `track_sum(key, value)` - Accumulates totals (throughput, volume)
-- `track_avg(key, value)` - Calculates averages automatically (stores sum and count internally)
-- `track_min(key, value)` - Tracks minimum value seen
-- `track_max(key, value)` - Tracks maximum value seen
+- `track_sum(name, value)` - Accumulates totals (throughput, volume)
+- `track_avg(name, value)` - Calculates averages automatically (stores sum and count internally)
+- `track_min(name, value)` - Tracks minimum value seen
+- `track_max(name, value)` - Tracks maximum value seen
 - `track_freq(name, value)` - Counts occurrences per distinct value (frequency table)
 - `track_inc(name)` - Increment a running counter by 1 (sugar for `track_sum(name, 1)`, shown above as `duration_count`)
 
@@ -267,6 +267,9 @@ track_cardinality("unique_sessions", e.session_id)
 // Custom error rate for higher precision (uses more memory)
 track_cardinality("unique_users", e.user_id, 0.005)  // 0.5% error
 ```
+
+The error rate accepts values from `0.001` (0.1%) to `0.2` (20%); values outside
+that range are silently clamped to the nearest bound.
 
 Output shows the `≈` symbol to indicate the value is an estimate:
 
@@ -681,17 +684,17 @@ human-readable histogram once processing finishes.
 |----------|---------|---------|
 | `track_freq(name, value)` | Count occurrences per category | `track_freq("service", e.service)` |
 | `track_sum(name, value)` | Sum numeric values (`track_sum(name, 1)` = counter) | `track_sum("bandwidth", e.bytes)` |
-| `track_avg(key, value)` | Average numeric values | `track_avg("avg_latency", e.duration)` |
-| `track_min(key, value)` | Minimum value | `track_min("fastest", e.duration)` |
-| `track_max(key, value)` | Maximum value | `track_max("slowest", e.duration)` |
-| `track_percentiles(key, value, [percentiles])` | Streaming percentiles (P50/P95/P99 default) | `track_percentiles("latency", e.duration_ms)` |
-| `track_stats(key, value, [percentiles])` | **Comprehensive stats:** min, max, avg, count, sum, percentiles | `track_stats("response_time", e.duration_ms)` |
+| `track_avg(name, value)` | Average numeric values | `track_avg("avg_latency", e.duration)` |
+| `track_min(name, value)` | Minimum value | `track_min("fastest", e.duration)` |
+| `track_max(name, value)` | Maximum value | `track_max("slowest", e.duration)` |
+| `track_percentiles(name, value, [percentiles])` | Streaming percentiles (P50/P95/P99 default) | `track_percentiles("latency", e.duration_ms)` |
+| `track_stats(name, value, [percentiles])` | **Comprehensive stats:** min, max, avg, count, sum, percentiles | `track_stats("response_time", e.duration_ms)` |
 | `track_top(name, item [, n])` | Top N most frequent items | `track_top("errors", e.message)` |
 | `track_bottom(name, item [, n])` | Bottom N least frequent items | `track_bottom("rare", e.error_type, 5)` |
 | `track_top_by(name, item, score [, n])` | Top N by highest score | `track_top_by("slowest", e.endpoint, e.latency)` |
 | `track_bottom_by(name, item, score [, n])` | Bottom N by lowest score | `track_bottom_by("fastest", e.endpoint, e.latency)` |
-| `track_unique(key, value)` | Unique values (exact, stores all) | `track_unique("users", e.user_id)` |
-| `track_cardinality(key, value)` | Unique count estimate (HyperLogLog, ~1% error) | `track_cardinality("unique_ips", e.client_ip)` |
+| `track_unique(name, value)` | Unique values (exact, stores all) | `track_unique("users", e.user_id)` |
+| `track_cardinality(name, value)` | Unique count estimate (HyperLogLog, ~1% error) | `track_cardinality("unique_ips", e.client_ip)` |
 
 **Notes:**
 - `track_avg()` automatically computes averages by storing sum and count internally
