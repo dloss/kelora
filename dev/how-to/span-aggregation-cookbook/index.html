@@ -2557,15 +2557,19 @@
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--span<span class="w"> </span>10m<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    let path = &quot;/tmp/span-&quot; + span.id + &quot;.csv&quot;;</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">    for (service, count) in span.metrics {</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">      append_file(path, `${span.start},${service},${count}\n`);</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    let counts = span.metrics[&quot;service&quot;];</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">    for service in counts.keys() {</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">      append_file(&quot;/tmp/spans.csv&quot;, `${span.id},${service},${counts[service]}`);</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">    }</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--allow-fs-writes
 </code></pre></div>
 <ul>
 <li>Remember to enable <code>--allow-fs-writes</code> when using <code>append_file()</code>.</li>
+<li><code>span.metrics</code> is keyed by metric <em>name</em>; a <code>track_freq</code> entry like
+  <code>span.metrics["service"]</code> is itself a map of <code>{value: count}</code>. Maps aren't
+  directly iterable in Rhai — iterate <code>.keys()</code> and index back in.</li>
+<li><code>append_file()</code> adds a newline per call, so don't append <code>\n</code> yourself.</li>
 <li>Alternatively, pipe Kelora output into <code>jq</code>, DuckDB, or spreadsheets for visualisation.</li>
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
