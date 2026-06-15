@@ -20,6 +20,8 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("absorb_kv", absorb_kv_with_options);
     engine.register_fn("absorb_logfmt", absorb_logfmt_default);
     engine.register_fn("absorb_logfmt", absorb_logfmt_with_options);
+    engine.register_fn("absorb_jwt", absorb_jwt_default);
+    engine.register_fn("absorb_jwt", absorb_jwt_with_options);
     engine.register_fn("absorb_json", absorb_json_default);
     engine.register_fn("absorb_json", absorb_json_with_options);
     engine.register_fn("absorb_regex", absorb_regex_default);
@@ -71,6 +73,18 @@ fn absorb_logfmt_with_options(
         absorb_logfmt_impl(event, field, Some(&options)),
         "absorb_logfmt",
     )
+}
+
+fn absorb_jwt_default(event: &mut Map, field: &str) -> Result<Map, Box<EvalAltResult>> {
+    finalize_result(absorb_jwt_impl(event, field, None), "absorb_jwt")
+}
+
+fn absorb_jwt_with_options(
+    event: &mut Map,
+    field: &str,
+    options: Map,
+) -> Result<Map, Box<EvalAltResult>> {
+    finalize_result(absorb_jwt_impl(event, field, Some(&options)), "absorb_jwt")
 }
 
 fn absorb_json_default(event: &mut Map, field: &str) -> Result<Map, Box<EvalAltResult>> {
@@ -247,6 +261,83 @@ fn absorb_logfmt_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Ab
     let data_map = match crate::rhai_functions::parsers::parse_logfmt_checked(&text) {
         Ok(map) => map,
         Err(err) => return AbsorbResult::parse_error(format!("invalid logfmt: {}", err)),
+    };
+
+    if data_map.is_empty() {
+        let mut result = AbsorbResult::new(AbsorbStatus::Empty);
+        if !opts.keep_source && event.remove(field).is_some() {
+            result.removed_source = true;
+        }
+        return result;
+    }
+
+    let mut result = AbsorbResult::new(AbsorbStatus::Applied);
+    result.data = data_map.clone();
+
+    let preexisting_keys = if opts.overwrite {
+        None
+    } else {
+        Some(
+            event
+                .keys()
+                .map(|key| key.to_string())
+                .collect::<HashSet<String>>(),
+        )
+    };
+
+    for (key, value) in data_map.iter() {
+        if !opts.overwrite {
+            if let Some(existing) = &preexisting_keys {
+                if existing.contains(key.as_str()) {
+                    continue;
+                }
+            }
+        }
+
+        event.insert(key.clone(), value.clone());
+        result.written = true;
+    }
+
+    if !opts.keep_source && event.remove(field).is_some() {
+        result.removed_source = true;
+    }
+
+    result
+}
+
+fn absorb_jwt_impl(event: &mut Map, field: &str, options: Option<&Map>) -> AbsorbResult {
+    let opts = match AbsorbOptions::from_map(options) {
+        Ok(opts) => opts,
+        Err(err) => return AbsorbResult::invalid_option(err),
+    };
+
+    let field_value = match event.get(field) {
+        Some(value) => value.clone(),
+        None => return AbsorbResult::new(AbsorbStatus::MissingField),
+    };
+
+    let immutable = match field_value.try_cast::<ImmutableString>() {
+        Some(value) => value,
+        None => return AbsorbResult::new(AbsorbStatus::NotString),
+    };
+
+    let text = immutable.into_owned();
+    if text.trim().is_empty() {
+        let mut result = AbsorbResult::new(AbsorbStatus::Empty);
+        if !opts.keep_source && event.remove(field).is_some() {
+            result.removed_source = true;
+        }
+        return result;
+    }
+
+    // Flatten only the JWT claims (the payload is a JSON object), mirroring
+    // absorb_json. It is all-or-nothing: a malformed token is a parse_error and
+    // the event is left untouched, never partially extracted. Signatures are
+    // not verified — debugging / trusted tokens only. `sep`/`kv_sep` options are
+    // accepted but ignored, since a JWT's structure is fixed.
+    let data_map = match crate::rhai_functions::parsers::parse_jwt_claims_checked(&text) {
+        Ok(map) => map,
+        Err(err) => return AbsorbResult::parse_error(format!("invalid JWT: {}", err)),
     };
 
     if data_map.is_empty() {
@@ -921,6 +1012,84 @@ mod tests {
         let mut event = Map::new();
 
         let result = absorb_logfmt_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::MissingField);
+    }
+
+    // Header {"alg":"none"}, payload {"sub":"alice","role":"admin","exp":2000000000}
+    // (unsigned, no signature segment).
+    const JWT_ALICE: &str = "eyJhbGciOiJub25lIn0.\
+        eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MjAwMDAwMDAwMH0";
+
+    #[test]
+    fn absorb_jwt_merges_claims() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert("token".into(), map_string(JWT_ALICE));
+
+        let result = absorb_jwt_impl(&mut event, "token", None);
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert!(result.written);
+        assert!(result.removed_source);
+        assert!(!event.contains_key("token"));
+        // Claims are flattened to top level; the header is ignored.
+        assert_eq!(event.get("sub").unwrap().to_string(), "alice");
+        assert_eq!(event.get("role").unwrap().to_string(), "admin");
+        assert_eq!(event.get("exp").unwrap().as_int().unwrap(), 2000000000);
+        assert!(!event.contains_key("alg"));
+        assert_eq!(result.data.get("sub").unwrap().to_string(), "alice");
+    }
+
+    #[test]
+    fn absorb_jwt_keep_source_and_overwrite_false() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert("role".into(), map_string("existing"));
+        event.insert("token".into(), map_string(JWT_ALICE));
+
+        let mut options = Map::new();
+        options.insert("keep_source".into(), Dynamic::from(true));
+        options.insert("overwrite".into(), Dynamic::from(false));
+
+        let result = absorb_jwt_impl(&mut event, "token", Some(&options));
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert!(!result.removed_source);
+        assert_eq!(event.get("token").unwrap().to_string(), JWT_ALICE);
+        assert_eq!(event.get("role").unwrap().to_string(), "existing"); // conflict skipped
+        assert_eq!(event.get("sub").unwrap().to_string(), "alice");
+        assert_eq!(result.data.get("role").unwrap().to_string(), "admin");
+    }
+
+    #[test]
+    fn absorb_jwt_malformed_token_is_parse_error() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert("token".into(), map_string("not-a-jwt"));
+
+        let result = absorb_jwt_impl(&mut event, "token", None);
+        assert_eq!(result.status, AbsorbStatus::ParseError);
+        assert!(result.error.as_ref().unwrap().contains("invalid JWT"));
+        // All-or-nothing: the event is left untouched.
+        assert_eq!(event.get("token").unwrap().to_string(), "not-a-jwt");
+    }
+
+    #[test]
+    fn absorb_jwt_empty_string_removes_field() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert("token".into(), map_string("   "));
+
+        let result = absorb_jwt_impl(&mut event, "token", None);
+        assert_eq!(result.status, AbsorbStatus::Empty);
+        assert!(result.removed_source);
+        assert!(!event.contains_key("token"));
+    }
+
+    #[test]
+    fn absorb_jwt_missing_field() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+
+        let result = absorb_jwt_impl(&mut event, "token", None);
         assert_eq!(result.status, AbsorbStatus::MissingField);
     }
 

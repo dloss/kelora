@@ -352,6 +352,7 @@ const MUTATING_CALL_NAMES: &[&str] = &[
     "absorb_kv",
     "absorb_logfmt",
     "absorb_json",
+    "absorb_jwt",
     "absorb_regex",
     "merge",
     "enrich",
@@ -2644,6 +2645,15 @@ mod tests {
     }
 
     #[test]
+    fn absorb_jwt_persists_to_event() {
+        // Header {"alg":"none"}, payload {"sub":"alice","role":"admin"}.
+        let token = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiJ9";
+        let event = run_exec(r#"e.absorb_jwt("line")"#, build_event_with_line(token));
+        assert_eq!(field_str(&event, "sub").as_deref(), Some("alice"));
+        assert_eq!(field_str(&event, "role").as_deref(), Some("admin"));
+    }
+
+    #[test]
     fn merge_persists_to_event() {
         let event = run_exec(r#"e.merge(#{ z: "9" })"#, build_event_with_line("x"));
         assert_eq!(field_str(&event, "z").as_deref(), Some("9"));
@@ -2698,6 +2708,7 @@ mod tests {
             r#"e.absorb_kv("line")"#,
             r#"e.absorb_logfmt("line")"#,
             r#"e.absorb_json("payload")"#,
+            r#"e.absorb_jwt("token")"#,
             r##"e.absorb_regex("line", #"(?P<u>\w+)"#)"##,
             r#"e.merge(#{ z: 1 })"#,
             r#"e.enrich(#{ z: 1 })"#,

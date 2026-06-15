@@ -327,6 +327,7 @@ emit_each(array [,base_map])         Fan out array elements as separate events (
 e.absorb_kv(field [,options])        Parse key=value tokens from field, merge pairs, return status map (NOT quote-aware; use absorb_logfmt for quoted values)
 e.absorb_logfmt(field [,options])    Parse logfmt (quote-aware, typed) from field, merge keys, return status map
 e.absorb_json(field [,options])      Parse JSON object from field, merge keys, return status map
+e.absorb_jwt(field [,options])       Parse JWT (no verification), merge claims from field, return status map
 e.absorb_regex(field, pattern [,opts]) Extract named captures from field using regex, return status map
 e = ()                               Clear entire event (remove all fields)
 e.field = ()                         Remove individual field from event

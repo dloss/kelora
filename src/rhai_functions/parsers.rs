@@ -984,6 +984,47 @@ fn jwt_segment_to_map(segment: &str) -> Map {
     Map::new()
 }
 
+/// Validate a token's structure and decode its claims (payload) segment into a
+/// JSON-object map, returning a descriptive error instead of silently yielding
+/// an empty map. Used by `absorb_jwt`, which needs to tell a malformed token
+/// (parse_error, leave the event untouched) apart from a valid one. The header
+/// and signature are intentionally ignored — `absorb_jwt` flattens only the
+/// claims, mirroring how `absorb_json` flattens a JSON object.
+pub(crate) fn parse_jwt_claims_checked(input: &str) -> Result<Map, String> {
+    let trimmed = input.trim();
+    if trimmed.is_empty() {
+        return Err("empty input".to_string());
+    }
+    if trimmed.len() > MAX_PARSE_LEN {
+        return Err("input exceeds maximum length".to_string());
+    }
+
+    let parts: Vec<&str> = trimmed.split('.').collect();
+    if parts.len() < 2 || parts.len() > 3 {
+        return Err("expected 2 or 3 dot-separated segments".to_string());
+    }
+    if parts[0].is_empty() || parts[1].is_empty() {
+        return Err("header or claims segment is empty".to_string());
+    }
+    if !parts[0].chars().all(is_base64url_char) || !parts[1].chars().all(is_base64url_char) {
+        return Err("header or claims contains non-base64url characters".to_string());
+    }
+
+    let bytes = decode_jwt_segment(parts[1])
+        .ok_or_else(|| "claims segment is not valid base64url".to_string())?;
+    if bytes.len() > MAX_PARSE_LEN {
+        return Err("claims segment exceeds maximum length".to_string());
+    }
+
+    let json = serde_json::from_slice::<serde_json::Value>(&bytes)
+        .map_err(|err| format!("claims segment is not valid JSON: {}", err))?;
+
+    match crate::event::json_to_dynamic(&json).try_cast::<Map>() {
+        Some(map) => Ok(map),
+        None => Err("claims segment is not a JSON object".to_string()),
+    }
+}
+
 fn parse_jwt_impl(input: &str) -> Map {
     let trimmed = input.trim();
     if trimmed.is_empty() || trimmed.len() > MAX_PARSE_LEN {

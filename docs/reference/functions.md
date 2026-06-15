@@ -2235,6 +2235,26 @@ Options:
 
 Other absorb options (like `sep`) are accepted for consistency but ignored. JSON parsing is all-or-nothing: invalid JSON or non-object payloads set `status = "parse_error"` and leave the event untouched.
 
+#### `e.absorb_jwt(field [, options])`
+Parse a JWT from a string field and merge its **claims** (the decoded payload) into the event, returning the same status map as `absorb_kv()`. The header and signature are ignored — only the claims are flattened, mirroring how `absorb_json()` flattens a JSON object. Signatures are **not** verified, so this is for debugging / trusted tokens only. On success the source field is deleted unless `keep_source` is true, and `remainder` is always `()`.
+
+```rhai
+// e.token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiJ9.sig"
+let res = e.absorb_jwt("token");
+if res.status == "applied" {
+    // e.sub == "alice", e.role == "admin", e.exp == 1735689600 (int), ...
+} else if res.status == "parse_error" {
+    warn(`bad token: ${res.error}`);
+}
+```
+
+Options:
+
+- `keep_source`: bool (default `false`) – keep the original token string instead of deleting the field.
+- `overwrite`: bool (default `true`) – allow claims to replace existing event fields (`false` skips conflicts).
+
+Other absorb options (like `sep`) are accepted for consistency but ignored — a JWT's structure is fixed. Parsing is all-or-nothing: a malformed token sets `status = "parse_error"` and leaves the event untouched. The time claims land as raw integers; for datetime-typed `exp`/`iat`/`nbf` (e.g. to compare against `now()`), use [`parse_jwt()`](#textparse_jwt) instead.
+
 #### `e.absorb_regex(field, pattern [, options])`
 Extract named capture groups from a string field using a regular expression pattern, merge the extracted values into the event, and return a status map (same structure as `absorb_kv()` and `absorb_json()`).
 

@@ -96,6 +96,13 @@ kelora -j examples/auth-logs.jsonl \
   --filter 'e.token.parse_jwt().expires_at < now()'
 ```
 
+To flatten the claims straight onto the event in one step (dropping the token),
+use `absorb_jwt()` — the JWT member of the [absorb family](../reference/functions.md#eabsorb_jwtfield-options):
+
+```bash
+kelora -j examples/auth-logs.jsonl --exec 'e.absorb_jwt("token")'
+```
+
 !!! warning
     Does **not** verify signatures — debugging / trusted tokens only.
 
