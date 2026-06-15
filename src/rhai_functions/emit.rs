@@ -7,6 +7,18 @@ thread_local! {
     static SUPPRESS_CURRENT: Cell<bool> = const { Cell::new(false) };
     static EMIT_STRICT: Cell<bool> = const { Cell::new(false) };
     static EMIT_USE_EMOJI: Cell<bool> = const { Cell::new(true) };
+    // When set, emit_each() is rejected with an error naming the stage. The
+    // begin/end stages run outside the per-event loop that materializes
+    // pending emissions, so events emitted there would be silently dropped
+    // (or, before this guard, picked up only as an accidental side effect of
+    // the first event). Disallow it outright rather than emit confusingly.
+    static EMIT_DISALLOWED_STAGE: Cell<Option<&'static str>> = const { Cell::new(None) };
+}
+
+/// Mark emit_each() as disallowed for the current stage (e.g. "--begin").
+/// Pass `None` to re-enable it before the per-event loop runs.
+pub fn set_emit_disallowed(stage: Option<&'static str>) {
+    EMIT_DISALLOWED_STAGE.with(|s| s.set(stage));
 }
 
 /// Get and clear pending emissions for this thread
@@ -72,6 +84,17 @@ fn emit_each_impl(
     items_val: Dynamic,
     base_val: Dynamic,
 ) -> Result<Dynamic, Box<rhai::EvalAltResult>> {
+    // Reject before any mutation so the pending buffer / suppress flag stay clean.
+    if let Some(stage) = EMIT_DISALLOWED_STAGE.with(|s| s.get()) {
+        return Err(format!(
+            "emit_each() is not available in the {stage} stage; \
+             it only works in a per-event stage (-e/--exec or --filter). \
+             The {stage} stage runs outside the event loop, so emitted events \
+             cannot be materialized there."
+        )
+        .into());
+    }
+
     let strict = is_emit_strict();
 
     // Validate and extract items array

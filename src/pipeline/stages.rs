@@ -767,11 +767,17 @@ impl BeginStage {
             columns::set_parse_cols_strict(ctx.config.strict);
             absorb::set_absorb_strict(ctx.config.strict);
             file_ops::clear_pending_ops();
-            let _init_map = ctx.rhai.execute_compiled_begin(
+            // emit_each() cannot be materialized outside the per-event loop;
+            // reject it in --begin. Reset before returning so the per-event
+            // stages (same thread, sequential mode) can still emit.
+            emit::set_emit_disallowed(Some("--begin"));
+            let exec_result = ctx.rhai.execute_compiled_begin(
                 compiled,
                 &mut ctx.tracker,
                 &mut ctx.internal_tracker,
-            )?;
+            );
+            emit::set_emit_disallowed(None);
+            let _init_map = exec_result?;
             let ops = file_ops::take_pending_ops();
             file_ops::execute_ops(&ops)?;
             Ok(())
@@ -801,8 +807,14 @@ impl EndStage {
             columns::set_parse_cols_strict(ctx.config.strict);
             absorb::set_absorb_strict(ctx.config.strict);
             file_ops::clear_pending_ops();
-            ctx.rhai
-                .execute_compiled_end(compiled, &ctx.tracker, &ctx.internal_tracker)?;
+            // emit_each() cannot be materialized after the event loop; reject it
+            // in --end. Reset afterward to leave no stale guard on the thread.
+            emit::set_emit_disallowed(Some("--end"));
+            let exec_result =
+                ctx.rhai
+                    .execute_compiled_end(compiled, &ctx.tracker, &ctx.internal_tracker);
+            emit::set_emit_disallowed(None);
+            exec_result?;
             let ops = file_ops::take_pending_ops();
             file_ops::execute_ops(&ops)
         } else {

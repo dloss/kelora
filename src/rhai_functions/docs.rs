@@ -324,6 +324,7 @@ span.metrics                         Per-window metrics from additive track_* ca
 
 EVENT MANIPULATION:
 emit_each(array [,base_map])         Fan out array elements as separate events (returns emitted count)
+                                     Per-event stages only (-e/--exec, --filter); errors in --begin/--end
 e.absorb_kv(field [,options])        Parse key=value tokens from field, merge pairs, return status map (NOT quote-aware; use absorb_logfmt for quoted values)
 e.absorb_logfmt(field [,options])    Parse logfmt (quote-aware, typed) from field, merge keys, return status map
 e.absorb_json(field [,options])      Parse JSON object from field, merge keys, return status map

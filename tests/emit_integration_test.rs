@@ -475,3 +475,78 @@ fn test_emit_each_complex_base_and_filtering() {
         assert!(line.contains("method="), "Missing method: {}", line);
     }
 }
+
+// emit_each() runs outside the per-event loop in --begin/--end, so emitted
+// events cannot be materialized there. Rather than silently drop them (the old
+// behavior: lost under --no-input, accidentally interleaved with real input),
+// the call is rejected with a clear error. See src/rhai_functions/emit.rs.
+
+#[test]
+fn test_emit_each_rejected_in_begin_no_input() {
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_input(&["--no-input", "--begin", "emit_each([#{a: 1}])"], "");
+
+    assert_eq!(exit_code, 1, "Expected exit 1, stdout: {}", stdout);
+    assert!(
+        stderr.contains("emit_each() is not available in the --begin stage"),
+        "Expected begin-stage rejection, stderr: {}",
+        stderr
+    );
+    assert!(
+        stdout.trim().is_empty(),
+        "Expected no emitted events, stdout: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_emit_each_rejected_in_begin_with_input() {
+    // Previously this "worked" by accident, interleaving the emitted event after
+    // the first input line. It must now error instead.
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "--begin", "emit_each([#{x: 1}])"], "a\nb\n");
+
+    assert_eq!(exit_code, 1, "Expected exit 1, stderr: {}", stderr);
+    assert!(
+        stderr.contains("emit_each() is not available in the --begin stage"),
+        "Expected begin-stage rejection, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_emit_each_rejected_in_end() {
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "line", "--end", "emit_each([#{x: 1}])"], "a\n");
+
+    assert_eq!(exit_code, 1, "Expected exit 1, stderr: {}", stderr);
+    assert!(
+        stderr.contains("emit_each() is not available in the --end stage"),
+        "Expected end-stage rejection, stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_emit_each_still_works_with_begin_present() {
+    // The begin-stage guard must reset before the per-event loop: emit_each in
+    // --exec keeps working even when a --begin stage is present (same thread,
+    // sequential mode).
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "line",
+            "--begin",
+            "state.seen = 0",
+            "--exec",
+            "emit_each([#{n: e.line}])",
+        ],
+        "a\nb\n",
+    );
+
+    assert_eq!(exit_code, 0, "Expected success, stderr: {}", stderr);
+    let lines: Vec<&str> = stdout.trim().split('\n').collect();
+    assert_eq!(lines.len(), 2, "Expected 2 events, got: {}", stdout);
+    assert!(lines[0].contains("n='a'"), "got: {}", lines[0]);
+    assert!(lines[1].contains("n='b'"), "got: {}", lines[1]);
+}
