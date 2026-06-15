@@ -449,6 +449,44 @@ fn test_logfmt_formatter_nested_values_are_quoted_and_parseable() {
 }
 
 #[test]
+fn test_logfmt_formatter_single_key_nested_preserves_key() {
+    // Regression: a nested structure that flattens to a single entry must keep
+    // its key (e.g. meta="b=1"), not collapse to just the leaf value (meta=1),
+    // which silently dropped the field name and broke round-tripping.
+    let mut single = Map::new();
+    single.insert("b".into(), Dynamic::from(1_i64));
+
+    let deep_inner = {
+        let mut m = Map::new();
+        m.insert("c".into(), Dynamic::from(1_i64));
+        m
+    };
+    let mut deep = Map::new();
+    deep.insert("b".into(), Dynamic::from(deep_inner));
+
+    let single_elem: Array = vec![Dynamic::from(42_i64)];
+
+    let mut event = Event::default();
+    event.set_field("single".to_string(), Dynamic::from(single));
+    event.set_field("deep".to_string(), Dynamic::from(deep));
+    event.set_field("arr".to_string(), Dynamic::from(single_elem));
+
+    let formatter = LogfmtFormatter::new();
+    let result = formatter.format(&event);
+
+    assert!(result.contains("single=\"b=1\""), "got: {}", result);
+    assert!(result.contains("deep=\"b_c=1\""), "got: {}", result);
+    // Single-element arrays keep their index, matching the multi-element form.
+    assert!(result.contains("arr=\"0=42\""), "got: {}", result);
+
+    // And it must still round-trip cleanly through the logfmt parser.
+    let parser = crate::parsers::logfmt::LogfmtParser::new();
+    let parsed = crate::pipeline::EventParser::parse(&parser, &result).unwrap();
+    assert_eq!(parsed.fields.get("single").unwrap().to_string(), "b=1");
+    assert_eq!(parsed.fields.get("deep").unwrap().to_string(), "b_c=1");
+}
+
+#[test]
 fn test_logfmt_formatter_empty_event() {
     let event = Event::default();
     let formatter = LogfmtFormatter::new();
@@ -1135,6 +1173,24 @@ fn test_csv_formatter_basic() {
     // Should include header and data
     assert!(result.contains("name,age,city"));
     assert!(result.contains("Alice,25,New York"));
+}
+
+#[test]
+fn test_csv_formatter_single_key_nested_preserves_key() {
+    // Regression: a single-key nested object must keep its key in the compact
+    // cell (obj cell = "b:1"), not collapse to just the leaf value ("1").
+    let keys = vec!["id".to_string(), "obj".to_string()];
+    let formatter = CsvFormatter::new(keys);
+
+    let mut inner = Map::new();
+    inner.insert("b".into(), Dynamic::from(1i64));
+
+    let mut event = Event::default();
+    event.set_field("id".to_string(), Dynamic::from(7i64));
+    event.set_field("obj".to_string(), Dynamic::from(inner));
+
+    let result = formatter.format(&event);
+    assert!(result.contains("7,b:1"), "got: {}", result);
 }
 
 #[test]

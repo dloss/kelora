@@ -80,9 +80,13 @@ fn to_logfmt_impl(map: rhai::Map) -> String {
             // Handle nested structures by flattening
             let flattened = flatten_dynamic(&value, FlattenStyle::Underscore, 0);
 
-            let formatted_value = if flattened.len() == 1 {
-                flattened.values().next().unwrap().to_string()
-            } else if flattened.is_empty() {
+            // flatten_dynamic always yields at least one entry; an empty
+            // map/array collapses to a single UNIT placeholder, rendered as an
+            // empty value. Every other case - including a single real key -
+            // must keep its "key=value" shape so nested keys are not lost.
+            let formatted_value = if flattened.is_empty()
+                || (flattened.len() == 1 && flattened.values().next().unwrap().is_unit())
+            {
                 String::new()
             } else {
                 // Format as "key1=val1,key2=val2" for nested structures
@@ -443,6 +447,30 @@ mod tests {
         let result = to_logfmt_impl(map);
         assert!(result.contains("level=info") || result.contains("level=\"info\""));
         assert!(result.contains("msg=test") || result.contains("msg=\"test\""));
+    }
+
+    #[test]
+    fn test_to_logfmt_single_key_nested_preserves_key() {
+        // Regression: a nested map with a single key must keep its key in the
+        // compact representation, not collapse to just the leaf value.
+        let mut inner = rhai::Map::new();
+        inner.insert("b".into(), Dynamic::from(1_i64));
+        let mut map = rhai::Map::new();
+        map.insert("outer".into(), Dynamic::from(inner));
+
+        let result = to_logfmt_impl(map);
+        // Must be outer="b=1", never outer=1.
+        assert_eq!(result, "outer=\"b=1\"", "got: {}", result);
+    }
+
+    #[test]
+    fn test_to_logfmt_empty_nested_renders_empty() {
+        // An empty map collapses to an empty value (no synthetic placeholder key).
+        let mut map = rhai::Map::new();
+        map.insert("outer".into(), Dynamic::from(rhai::Map::new()));
+
+        let result = to_logfmt_impl(map);
+        assert_eq!(result, "outer=\"\"", "got: {}", result);
     }
 
     #[test]

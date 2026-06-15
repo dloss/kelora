@@ -111,15 +111,17 @@ impl LogfmtFormatter {
             // Flatten nested structures using underscore style for logfmt safety
             let flattened = flatten_dynamic(value, FlattenStyle::Underscore, 0);
 
-            if flattened.len() == 1 {
-                // Single flattened value - use it directly
-                flattened.values().next().unwrap().to_string()
-            } else if flattened.is_empty() {
-                // Empty structure
+            // flatten_dynamic always yields at least one entry; an empty
+            // map/array collapses to a single UNIT placeholder, which we render
+            // as an empty value. Every other case - including a single real
+            // key - must keep its "key=value" shape so nested keys/indices are
+            // preserved and the output round-trips back through the parser.
+            if flattened.is_empty()
+                || (flattened.len() == 1 && flattened.values().next().unwrap().is_unit())
+            {
                 String::new()
             } else {
-                // Multiple flattened values - create a compact representation
-                // Format as "key1=val1,key2=val2" for logfmt-style readability
+                // Compact representation: "key1=val1,key2=val2".
                 flattened
                     .iter()
                     .map(|(k, v)| format!("{}={}", k, v))

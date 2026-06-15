@@ -189,15 +189,16 @@ impl CsvFormatter {
             // Flatten nested structures using underscore style for CSV safety
             let flattened = flatten_dynamic(value, FlattenStyle::Underscore, 0);
 
-            if flattened.len() == 1 {
-                // Single flattened value - use it directly
-                flattened.values().next().unwrap().to_string()
-            } else if flattened.is_empty() {
-                // Empty structure
+            // flatten_dynamic always yields at least one entry; an empty
+            // map/array collapses to a single UNIT placeholder, rendered as an
+            // empty cell. Every other case - including a single real key - must
+            // keep its "key:value" shape so nested keys/indices are not lost.
+            if flattened.is_empty()
+                || (flattened.len() == 1 && flattened.values().next().unwrap().is_unit())
+            {
                 String::new()
             } else {
-                // Multiple flattened values - create a compact representation
-                // Format as "key1:val1,key2:val2" for readability in CSV cells
+                // Compact representation: "key1:val1,key2:val2".
                 flattened
                     .iter()
                     .map(|(k, v)| format!("{}:{}", k, v))
