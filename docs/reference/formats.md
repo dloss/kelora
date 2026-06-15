@@ -343,13 +343,15 @@ kelora -f alb access.log \
 
 Its `ts` is **naive**: like the other timestamp-only formats, it is resolved
 through `--input-tz` (default `UTC`), **not** the zone abbreviation logged on the
-line. The abbreviation is preserved in the `tz` field for inspection but not
+line. The abbreviation is preserved in the `log_tz` field for inspection but not
 applied to the timestamp, because zone abbreviations are ambiguous (`CST`,
 `BST`, `IST` each map to several zones) and an abbreviation alone cannot encode
-DST — so it cannot be reliably converted to an offset. A Postgres server logging
-in UTC (the common, recommended configuration) is therefore correct by default;
-for a server logging in a non-UTC zone, pass `--input-tz <IANA>` matching its
-`log_timezone`, e.g. `--input-tz Europe/Berlin`.
+DST — so it cannot be reliably converted to an offset. (The field is named
+`log_tz`, not `tz`, to signal that it is the abbreviation the server logged, not
+the zone applied to the timestamp.) A Postgres server logging in UTC (the
+common, recommended configuration) is therefore correct by default; for a server
+logging in a non-UTC zone, pass `--input-tz <IANA>` matching its `log_timezone`,
+e.g. `--input-tz Europe/Berlin`.
 
 ### Column Format
 

@@ -195,21 +195,23 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     },
     // PostgreSQL server log with the default `log_line_prefix = '%m [%p] '`:
     // `2024-01-02 15:04:05.123 UTC [1234] LOG:  message`.
-    // Layout is `<ts> <tz> [<pid>] <LEVEL>:  <message>` where tz is the configured
-    // log_timezone abbreviation (kept verbatim in `tz`, outside the `ts` capture so
-    // the timestamp stays clean and the adaptive parser resolves it). Postgres uses
-    // two spaces after the colon, so `:\s+` is tolerant.
+    // Layout is `<ts> <log_tz> [<pid>] <LEVEL>:  <message>` where log_tz is the
+    // configured log_timezone abbreviation (kept verbatim in `log_tz`, outside the
+    // `ts` capture so the timestamp stays clean and the adaptive parser resolves
+    // it). Postgres uses two spaces after the colon, so `:\s+` is tolerant.
     //
     // Timezone caveat: the naive `ts` is resolved via `--input-tz` (default UTC),
-    // *not* the logged abbreviation. We deliberately do not apply `tz`: a zone
+    // *not* the logged abbreviation. We deliberately do not apply `log_tz`: a zone
     // abbreviation can't be reliably converted to an offset (CST/BST/IST are
     // ambiguous, and an abbreviation alone can't encode DST), and chrono's `%Z`
     // can't parse one into an offset — so pinning a ts_format here would just make
     // the timestamp fail to parse. This matches every other naive-timestamp format
     // (log4j, python-logging, syslog). UTC-logged Postgres (the common/recommended
     // config) is therefore correct by default; for a server logging a non-UTC zone,
-    // pass `--input-tz <IANA>` (e.g. `--input-tz Europe/Berlin`). `tz` is kept as
-    // the ground-truth label for inspection.
+    // pass `--input-tz <IANA>` (e.g. `--input-tz Europe/Berlin`). The field is named
+    // `log_tz` (not `tz`) precisely so it reads as "the abbreviation the server
+    // logged", not "the zone applied to this timestamp"; it is kept as a
+    // ground-truth label for inspection.
     //
     // NOTE: log_line_prefix is operator-configurable; this matches the common
     // default. Non-default prefixes (adding user@db, app name, etc.) won't match
@@ -217,7 +219,7 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     LnavFormat {
         name: "postgres",
         patterns: &[
-            r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?) (?P<tz>[A-Z]{2,5}) \[(?P<pid:int>\d+)\] (?P<level>LOG|ERROR|FATAL|PANIC|WARNING|NOTICE|INFO|DEBUG[1-5]?|STATEMENT|DETAIL|HINT|CONTEXT):\s+(?P<msg>.*)",
+            r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?) (?P<log_tz>[A-Z]{2,5}) \[(?P<pid:int>\d+)\] (?P<level>LOG|ERROR|FATAL|PANIC|WARNING|NOTICE|INFO|DEBUG[1-5]?|STATEMENT|DETAIL|HINT|CONTEXT):\s+(?P<msg>.*)",
         ],
         ts_format: None,
         samples: &[
