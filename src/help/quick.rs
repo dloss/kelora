@@ -33,6 +33,7 @@ Common Options:
   --since/--until <TIME>        Keep events within a time range (journalctl-style; see --help-time)
   -e, --exec <EXPR>             Transform events or emit metrics (can repeat; run in the order given)
   -k, --keys <KEYS>             Pick or reorder output fields
+  -b, --brief                   Output only field values (omit keys)
   -F, --output-format <FORMAT>  Output format (default/json/logfmt/inspect/levelmap/keymap/tailmap/csv/tsv/csvnh/tsvnh)
   -q, --quiet                   Suppress event output (-s/--stats and -m/--metrics imply this)
   -n, --take <N>                Limit output to first N events
