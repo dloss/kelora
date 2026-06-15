@@ -409,12 +409,14 @@ x = 1                                 // Error: x not declared
 let name = 'alice';                   // Error: single quotes not allowed
 if x > 5: print("big")                // Error: colon not allowed, braces required
 "5" + 3                               // Error: no implicit conversion
+let n = state.x = 1;                  // Error: assignment is not an expression
 
 // ✅ Correct
 let x = 1;                            // Declare with let
 let name = "alice";                   // Double quotes
 if x > 5 { print("big"); }            // Braces required
 "5".to_int() + 3                      // Explicit conversion
+state.x = 1; let n = state.x;         // Assign, then read on separate statements
 ```
 
 **Special behaviors:**
