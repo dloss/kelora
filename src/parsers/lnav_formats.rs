@@ -193,6 +193,26 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
             "2024-06-12 08:00:00,500 - root - ERROR - Unhandled exception",
         ],
     },
+    // PostgreSQL server log with the default `log_line_prefix = '%m [%p] '`:
+    // `2024-01-02 15:04:05.123 UTC [1234] LOG:  message`.
+    // Layout is `<ts> <tz> [<pid>] <LEVEL>:  <message>` where tz is the configured
+    // log_timezone abbreviation (kept verbatim in `tz`, outside the `ts` capture so
+    // the timestamp stays clean and the adaptive parser resolves it — no ts_format
+    // pinned). Postgres uses two spaces after the colon, so `:\s+` is tolerant.
+    // NOTE: log_line_prefix is operator-configurable; this matches the common
+    // default. Non-default prefixes (adding user@db, app name, etc.) won't match
+    // auto-detection — reach those with `-f regex:` or a custom prefix parser.
+    LnavFormat {
+        name: "postgres",
+        patterns: &[
+            r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?) (?P<tz>[A-Z]{2,5}) \[(?P<pid:int>\d+)\] (?P<level>LOG|ERROR|FATAL|PANIC|WARNING|NOTICE|INFO|DEBUG[1-5]?|STATEMENT|DETAIL|HINT|CONTEXT):\s+(?P<msg>.*)",
+        ],
+        ts_format: None,
+        samples: &[
+            "2024-01-02 15:04:05.123 UTC [1234] LOG:  database system is ready to accept connections",
+            "2024-06-12 08:00:00.001 UTC [5678] ERROR:  relation \"users\" does not exist",
+        ],
+    },
     // Redis (3.0+): `pid:role date level msg`, e.g.
     // `12345:M 06 Feb 2024 12:00:00.123 * Ready to accept connections`.
     // role is X/C/S/M (sentinel/child/slave/master); level is a single glyph
@@ -225,6 +245,31 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
         samples: &[
             r#"79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be mybucket [06/Feb/2024:00:00:38 +0000] 192.0.2.3 79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be 3E57427F33A59F07 REST.GET.OBJECT photos/cat.jpg "GET /photos/cat.jpg?x-id=GetObject HTTP/1.1" 200 - 2662 2662 14 12 "-" "aws-cli/2.0" - host-id-xyz SigV4 ECDHE-RSA AuthHeader mybucket.s3.amazonaws.com TLSv1.2"#,
             r#"79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be mybucket [06/Feb/2024:00:01:00 +0000] 192.0.2.3 - 891CE47D2EXAMPLE REST.GET.BUCKET - "GET /?list-type=2 HTTP/1.1" 200 - 1024 - 7 6 "-" "aws-sdk-go/1.0""#,
+        ],
+    },
+    // AWS Application Load Balancer (ALB) access log. One space-and-quote
+    // delimited line per request, e.g.
+    // `http 2018-07-02T22:23:00.186641Z app/my-lb/50dc6c… 10.0.0.1:2817 10.0.0.2:80 0.000 0.001 0.000 200 200 34 366 "GET http://… HTTP/1.1" "curl/7.46.0" - - arn:aws:… …`.
+    // Detection is anchored on the distinctive head — the closed-enum connection
+    // `type` (http/https/h2/grpcs/ws/wss), an ISO-8601-Z timestamp, and the
+    // `app/<name>/<id>` resource id — which almost nothing else shares, so the
+    // false-positive risk against the `line` fallback is low. AWS keeps *appending*
+    // trailing columns across versions (target_group_arn, trace_id, the
+    // action/redirect/classification fields, conn_trace_id, …); rather than
+    // enumerate a fixed ~29-field tail that would break on older/newer variants,
+    // we capture the stable, useful head and let `(?:\s.*)?` absorb the rest. The
+    // dropped tail is not lost: the full raw line is always available in a script
+    // as `line` / `meta.line` for an optional second-stage re-parse. No level
+    // field (access logs have none). The RFC3339 timestamp needs no ts_format.
+    LnavFormat {
+        name: "alb",
+        patterns: &[
+            r#"(?P<type>https?|h2|grpcs|wss?) (?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z) (?P<elb>app/\S+) (?P<client>\S+):(?P<client_port:int>\d+) (?P<target>\S+) (?P<request_processing_time>\S+) (?P<target_processing_time>\S+) (?P<response_processing_time>\S+) (?P<elb_status_code>\d{3}|-) (?P<target_status_code>\d{3}|-) (?P<received_bytes:int>\d+) (?P<sent_bytes:int>\d+) "(?P<request>[^"]*)" "(?P<user_agent>[^"]*)"(?:\s.*)?"#,
+        ],
+        ts_format: None,
+        samples: &[
+            r#"http 2018-07-02T22:23:00.186641Z app/my-loadbalancer/50dc6c495c0c9188 192.168.131.39:2817 10.0.0.1:80 0.000 0.001 0.000 200 200 34 366 "GET http://www.example.com:80/ HTTP/1.1" "curl/7.46.0" - - arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067 "Root=1-58337262-36d228ad5d99923122bbe354" "-" "-" 0 2018-07-02T22:22:48.364000Z "forward" "-" "-" "10.0.0.1:80" "200" "-" "-""#,
+            r#"https 2018-08-26T14:17:23.186641Z app/my-loadbalancer/50dc6c495c0c9188 192.168.131.39:2817 - -1 -1 -1 502 - 34 366 "GET https://www.example.com:443/ HTTP/2.0" "curl/7.46.0" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067 "Root=1-58337281-1d84f3d73c47ec4e58577259" "-" "-" 0 2018-08-26T14:17:23.186641Z "forward" "-" "-" "-" "-" "-" "-""#,
         ],
     },
     // HAProxy traffic logs (HTTP and TCP), as emitted through syslog:

@@ -78,6 +78,7 @@ syslog
 
 Named application-log formats
   A small set of common application-log layouts, parsed with the regex engine:
+    alb             AWS ALB access log (http 2018-07-02T… app/lb/… ip:port … "GET …" 200 …)
     apache-error    Apache error log ("[Fri Oct 11 14:32:52 2024] [core:error] ... msg")
     cri             Kubernetes CRI/containerd log (2024-07-17T12:12:05.0Z stdout F msg)
     glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
@@ -85,6 +86,7 @@ Named application-log formats
     iso8601-level   ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
     log4j           log4j / Java (2024-01-02 15:04:05,123 INFO [main] logger - msg)
     nginx-error     nginx error log (2024/01/02 15:04:05 [error] 29#29: msg)
+    postgres        PostgreSQL log, default prefix (2024-01-02 15:04:05.123 UTC [1234] LOG:  msg)
     python-logging  Python logging default (... ,123 - logger - INFO - msg)
     redis           Redis 3+ (12345:M 06 Feb 2024 12:00:00.123 * msg)
     s3              AWS S3 server access log (owner bucket [date] ip ... "GET ..." 200 ...)
@@ -95,7 +97,15 @@ Named application-log formats
   extras (thread, logger, pid, ...).
   Notes: glog/redis omit the year, so 'ts' assumes the current year (like
   syslog). haproxy lines are syslog-wrapped, so under -f auto they are detected
-  as 'syslog' — pass -f haproxy to extract the structured fields. 'cri' is the
+  as 'syslog' — pass -f haproxy to extract the structured fields. The access-log
+  formats ('alb', 's3', 'haproxy') keep only a curated set of useful fields and
+  drop the long, version-dependent tail; the full raw line is still available in
+  a script as 'line' / 'meta.line', so a dropped column can be recovered with a
+  second-stage parse, e.g.:
+    kelora -f alb access.log --exec 'e.trace_id = meta.line.extract_regex("Root=([0-9a-f-]+)", 1)'
+  'postgres' matches the default log_line_prefix ('%m [%p] '); a customized
+  prefix (user@db, app name, …) won't auto-detect — use -f regex: for those.
+  'cri' is the
   exception to the "tried last" rule: because a CRI message is often itself JSON
   or logfmt, it is detected early (before logfmt/csv) so auto-detect works
   regardless of the payload; its fields are 'ts', 'stream' (stdout/stderr),
