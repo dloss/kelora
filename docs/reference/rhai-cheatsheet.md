@@ -425,7 +425,7 @@ state["x"] = 1; let n = state["x"];   // Assign, then read on separate statement
 - Semicolons recommended but often optional
 - Function calls without args: `e.len` same as `e.len()`
 - No implicit type conversion (use `to_int()`, `to_float()`, etc.)
-- Brackets for keys, dot for methods: `m[k]` reads/writes a map key and is the only form that accepts a dynamic or non-identifier key (`state[e.user]`, `e["user-agent"]`); reserve `.` for method calls (`state.get(k)`) and known fields (`e.level`)
+- Map keys: `m.key` and `m["key"]` are equivalent for static identifier keys — use whichever reads better. Brackets are **required** for dynamic or non-identifier keys (`state[e.user]`, `e["user-agent"]`); `m.user-agent` parses as subtraction, not a key
 
 ## Quick Reference
 
