@@ -224,11 +224,14 @@ e.severity = cef["severity"]
 ```
 
 #### `text.parse_kv([sep [, kv_sep]])`
-Parse key-value pairs from text. Only extracts tokens containing the key-value separator; tokens without the separator are skipped (e.g., prose words or unpaired values).
+Split key-value pairs from text. Only extracts tokens containing the key-value separator; tokens without the separator are skipped (e.g., prose words or unpaired values).
+
+This is a simple splitter and is **not quote-aware**: it does not strip surrounding quotes from values and will split on a separator that appears *inside* a quoted value. For `key="value with spaces"` input (logfmt-style logs), use [`parse_logfmt()`](#textparse_logfmt) instead, which handles quoting and infers numeric/boolean types.
 
 ```rhai
 e.params = e.query.parse_kv("&", "=")                 // "a=1&b=2" → {a: "1", b: "2"}
 e.fields = e.msg.parse_kv()                           // "Payment timeout order=1234" → {order: "1234"}
+// e.msg.parse_kv() on 'err="connection refused"' would split mid-value — use parse_logfmt()
 ```
 
 #### `text.parse_url()`
@@ -2188,6 +2191,28 @@ Options:
 - `overwrite`: bool (default `true`) – allow parsed keys to overwrite existing event fields; set `false` to skip conflicts.
 
 Unknown option keys set `status = "invalid_option"`; in `--strict` mode this aborts the pipeline.
+
+`absorb_kv` is a simple splitter and is **not quote-aware** — it keeps surrounding quotes on values and splits on separators inside quoted values. For logfmt-style fields with quoted values (e.g. `err="connection refused"`), use `absorb_logfmt()` instead.
+
+#### `e.absorb_logfmt(field [, options])`
+Parse a logfmt string field, merge its keys into the event, and return the same status map as `absorb_kv()`. Unlike `absorb_kv()`, this is quote-aware (surrounding quotes are stripped and quoted values may contain spaces) and infers numeric/boolean types. It is all-or-nothing like `absorb_json()`: a bare, unpaired token makes the whole field a `parse_error` (no partial extraction), so `remainder` is always `()`. On success the source field is deleted unless `keep_source` is true.
+
+```rhai
+// 'pod="kube-system/foo" err="connection refused" replicas=3'
+let res = e.absorb_logfmt("msg");
+if res.status == "applied" {
+    // e.pod == "kube-system/foo", e.err == "connection refused", e.replicas == 3 (int)
+} else if res.status == "parse_error" {
+    warn(`not logfmt: ${res.error}`);
+}
+```
+
+Options:
+
+- `keep_source`: bool (default `false`) – keep the original logfmt string instead of deleting the field.
+- `overwrite`: bool (default `true`) – allow parsed keys to replace existing event fields (`false` skips conflicts).
+
+Other absorb options (like `sep`/`kv_sep`) are accepted for consistency but ignored — logfmt has a fixed syntax.
 
 #### `e.absorb_json(field [, options])`
 Parse a JSON object from a string field, merge its keys into the event, and return the same status map as `absorb_kv()`. On success the source field is deleted unless `keep_source` is true, and `remainder` is always `()`.

@@ -850,6 +850,18 @@ fn parse_logfmt_impl(line: &str) -> Map {
     parse_event_with(&*LOGFMT_PARSER, line)
 }
 
+/// Parse a logfmt line into a field map, surfacing the parser's error instead
+/// of swallowing it into an empty map like [`parse_logfmt_impl`] does. Used by
+/// `absorb_logfmt`, which needs to report a `parse_error` status (mirroring
+/// `absorb_json`) when a non-empty field is not clean logfmt — for example when
+/// it contains a bare, unpaired token.
+pub(crate) fn parse_logfmt_checked(line: &str) -> Result<Map, String> {
+    LOGFMT_PARSER
+        .parse(line)
+        .map(event_to_map)
+        .map_err(|err| err.to_string())
+}
+
 fn parse_combined_impl(line: &str) -> Map {
     parse_event_with(&*COMBINED_PARSER, line)
 }

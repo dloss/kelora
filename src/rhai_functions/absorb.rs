@@ -18,6 +18,8 @@ thread_local! {
 pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("absorb_kv", absorb_kv_default);
     engine.register_fn("absorb_kv", absorb_kv_with_options);
+    engine.register_fn("absorb_logfmt", absorb_logfmt_default);
+    engine.register_fn("absorb_logfmt", absorb_logfmt_with_options);
     engine.register_fn("absorb_json", absorb_json_default);
     engine.register_fn("absorb_json", absorb_json_with_options);
     engine.register_fn("absorb_regex", absorb_regex_default);
@@ -33,7 +35,7 @@ fn is_absorb_strict() -> bool {
 }
 
 fn absorb_kv_default(event: &mut Map, field: &str) -> Result<Map, Box<EvalAltResult>> {
-    finalize_result(absorb_kv_impl(event, field, None))
+    finalize_result(absorb_kv_impl(event, field, None), "absorb_kv")
 }
 
 fn absorb_kv_with_options(
@@ -41,23 +43,38 @@ fn absorb_kv_with_options(
     field: &str,
     options: Map,
 ) -> Result<Map, Box<EvalAltResult>> {
-    finalize_result(absorb_kv_impl(event, field, Some(&options)))
+    finalize_result(absorb_kv_impl(event, field, Some(&options)), "absorb_kv")
 }
 
-fn finalize_result(result: AbsorbResult) -> Result<Map, Box<EvalAltResult>> {
+fn finalize_result(result: AbsorbResult, fn_name: &str) -> Result<Map, Box<EvalAltResult>> {
     if result.status == AbsorbStatus::InvalidOption && is_absorb_strict() {
         let message = result
             .error
             .clone()
             .unwrap_or_else(|| "invalid absorb option".to_string());
-        return Err(format!("absorb_kv: {}", message).into());
+        return Err(format!("{}: {}", fn_name, message).into());
     }
 
     Ok(result.into_map())
 }
 
+fn absorb_logfmt_default(event: &mut Map, field: &str) -> Result<Map, Box<EvalAltResult>> {
+    finalize_result(absorb_logfmt_impl(event, field, None), "absorb_logfmt")
+}
+
+fn absorb_logfmt_with_options(
+    event: &mut Map,
+    field: &str,
+    options: Map,
+) -> Result<Map, Box<EvalAltResult>> {
+    finalize_result(
+        absorb_logfmt_impl(event, field, Some(&options)),
+        "absorb_logfmt",
+    )
+}
+
 fn absorb_json_default(event: &mut Map, field: &str) -> Result<Map, Box<EvalAltResult>> {
-    finalize_result(absorb_json_impl(event, field, None))
+    finalize_result(absorb_json_impl(event, field, None), "absorb_json")
 }
 
 fn absorb_json_with_options(
@@ -65,7 +82,10 @@ fn absorb_json_with_options(
     field: &str,
     options: Map,
 ) -> Result<Map, Box<EvalAltResult>> {
-    finalize_result(absorb_json_impl(event, field, Some(&options)))
+    finalize_result(
+        absorb_json_impl(event, field, Some(&options)),
+        "absorb_json",
+    )
 }
 
 fn absorb_regex_default(
@@ -73,7 +93,10 @@ fn absorb_regex_default(
     field: &str,
     pattern: &str,
 ) -> Result<Map, Box<EvalAltResult>> {
-    finalize_result(absorb_regex_impl(event, field, pattern, None))
+    finalize_result(
+        absorb_regex_impl(event, field, pattern, None),
+        "absorb_regex",
+    )
 }
 
 fn absorb_regex_with_options(
@@ -82,7 +105,10 @@ fn absorb_regex_with_options(
     pattern: &str,
     options: Map,
 ) -> Result<Map, Box<EvalAltResult>> {
-    finalize_result(absorb_regex_impl(event, field, pattern, Some(&options)))
+    finalize_result(
+        absorb_regex_impl(event, field, pattern, Some(&options)),
+        "absorb_regex",
+    )
 }
 
 fn absorb_kv_impl(event: &mut Map, field: &str, options: Option<&Map>) -> AbsorbResult {
@@ -184,6 +210,82 @@ fn absorb_kv_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Absorb
                 }
             }
         }
+    }
+
+    result
+}
+
+fn absorb_logfmt_impl(event: &mut Map, field: &str, options: Option<&Map>) -> AbsorbResult {
+    let opts = match AbsorbOptions::from_map(options) {
+        Ok(opts) => opts,
+        Err(err) => return AbsorbResult::invalid_option(err),
+    };
+
+    let field_value = match event.get(field) {
+        Some(value) => value.clone(),
+        None => return AbsorbResult::new(AbsorbStatus::MissingField),
+    };
+
+    let immutable = match field_value.try_cast::<ImmutableString>() {
+        Some(value) => value,
+        None => return AbsorbResult::new(AbsorbStatus::NotString),
+    };
+
+    let text = immutable.into_owned();
+    if text.trim().is_empty() {
+        let mut result = AbsorbResult::new(AbsorbStatus::Empty);
+        if !opts.keep_source && event.remove(field).is_some() {
+            result.removed_source = true;
+        }
+        return result;
+    }
+
+    // Unlike absorb_kv's whitespace splitter, this delegates to the quote-aware,
+    // type-inferring logfmt parser. It is all-or-nothing (like absorb_json): a
+    // bare, unpaired token makes the whole field a parse_error rather than a
+    // partial extraction, so there is no remainder.
+    let data_map = match crate::rhai_functions::parsers::parse_logfmt_checked(&text) {
+        Ok(map) => map,
+        Err(err) => return AbsorbResult::parse_error(format!("invalid logfmt: {}", err)),
+    };
+
+    if data_map.is_empty() {
+        let mut result = AbsorbResult::new(AbsorbStatus::Empty);
+        if !opts.keep_source && event.remove(field).is_some() {
+            result.removed_source = true;
+        }
+        return result;
+    }
+
+    let mut result = AbsorbResult::new(AbsorbStatus::Applied);
+    result.data = data_map.clone();
+
+    let preexisting_keys = if opts.overwrite {
+        None
+    } else {
+        Some(
+            event
+                .keys()
+                .map(|key| key.to_string())
+                .collect::<HashSet<String>>(),
+        )
+    };
+
+    for (key, value) in data_map.iter() {
+        if !opts.overwrite {
+            if let Some(existing) = &preexisting_keys {
+                if existing.contains(key.as_str()) {
+                    continue;
+                }
+            }
+        }
+
+        event.insert(key.clone(), value.clone());
+        result.written = true;
+    }
+
+    if !opts.keep_source && event.remove(field).is_some() {
+        result.removed_source = true;
     }
 
     result
@@ -738,6 +840,88 @@ mod tests {
         assert!(result.remainder.is_none());
         assert!(!event.contains_key("msg"));
         assert!(result.removed_source);
+    }
+
+    #[test]
+    fn absorb_logfmt_quote_aware_typed_merge() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert(
+            "msg".into(),
+            map_string(r#"pod="kube-system/foo" err="connection refused" replicas=3"#),
+        );
+
+        let result = absorb_logfmt_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert!(result.written);
+        assert!(result.removed_source);
+        // Surrounding quotes stripped, embedded spaces preserved (unlike absorb_kv).
+        assert_eq!(event.get("pod").unwrap().to_string(), "kube-system/foo");
+        assert_eq!(event.get("err").unwrap().to_string(), "connection refused");
+        // Numeric values are typed, like absorb_json.
+        assert_eq!(event.get("replicas").unwrap().as_int().unwrap(), 3);
+    }
+
+    #[test]
+    fn absorb_logfmt_keep_source_and_overwrite_false() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert("user".into(), map_string("existing"));
+        event.insert("msg".into(), map_string(r#"user=alice role=admin"#));
+
+        let mut options = Map::new();
+        options.insert("keep_source".into(), Dynamic::from(true));
+        options.insert("overwrite".into(), Dynamic::from(false));
+
+        let result = absorb_logfmt_impl(&mut event, "msg", Some(&options));
+        assert_eq!(result.status, AbsorbStatus::Applied);
+        assert!(!result.removed_source);
+        assert_eq!(
+            event.get("msg").unwrap().to_string(),
+            "user=alice role=admin"
+        );
+        assert_eq!(event.get("user").unwrap().to_string(), "existing"); // skipped conflict
+        assert_eq!(event.get("role").unwrap().to_string(), "admin");
+        assert_eq!(result.data.get("user").unwrap().to_string(), "alice");
+    }
+
+    #[test]
+    fn absorb_logfmt_bare_token_is_parse_error() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert("msg".into(), map_string("prefix user=alice suffix"));
+
+        // logfmt is all-or-nothing: a bare token makes the whole field invalid,
+        // and the event is left untouched (mirroring absorb_json).
+        let result = absorb_logfmt_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::ParseError);
+        assert!(result.error.as_ref().unwrap().contains("invalid logfmt"));
+        assert_eq!(
+            event.get("msg").unwrap().to_string(),
+            "prefix user=alice suffix"
+        );
+        assert!(!event.contains_key("user"));
+    }
+
+    #[test]
+    fn absorb_logfmt_empty_string_removes_field() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+        event.insert("msg".into(), map_string("   "));
+
+        let result = absorb_logfmt_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::Empty);
+        assert!(result.removed_source);
+        assert!(!event.contains_key("msg"));
+    }
+
+    #[test]
+    fn absorb_logfmt_missing_field() {
+        set_absorb_strict(false);
+        let mut event = Map::new();
+
+        let result = absorb_logfmt_impl(&mut event, "msg", None);
+        assert_eq!(result.status, AbsorbStatus::MissingField);
     }
 
     #[test]

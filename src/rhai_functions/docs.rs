@@ -64,7 +64,7 @@ text.parse_content_disposition()     Parse Content-Disposition header parameters
 text.parse_email()                   Parse email address into parts
 text.parse_json()                    Parse JSON string into map/array
 text.parse_jwt()                     Parse JWT into header/claims without verification
-text.parse_kv([sep [,kv_sep]])       Parse key-value pairs from text (skips tokens without separator)
+text.parse_kv([sep [,kv_sep]])       Split key-value pairs from text (skips tokens without separator; NOT quote-aware — use parse_logfmt for quoted/typed values)
 text.parse_logfmt()                  Parse logfmt line into structured fields
 text.parse_media_type()              Parse media type tokens and parameters
 text.parse_path()                    Parse filesystem path into components
@@ -324,7 +324,8 @@ span.metrics                         Per-window metrics from additive track_* ca
 
 EVENT MANIPULATION:
 emit_each(array [,base_map])         Fan out array elements as separate events (returns emitted count)
-e.absorb_kv(field [,options])        Parse key=value tokens from field, merge pairs, return status map
+e.absorb_kv(field [,options])        Parse key=value tokens from field, merge pairs, return status map (NOT quote-aware; use absorb_logfmt for quoted values)
+e.absorb_logfmt(field [,options])    Parse logfmt (quote-aware, typed) from field, merge keys, return status map
 e.absorb_json(field [,options])      Parse JSON object from field, merge keys, return status map
 e.absorb_regex(field, pattern [,opts]) Extract named captures from field using regex, return status map
 e = ()                               Clear entire event (remove all fields)
