@@ -26,6 +26,85 @@ impl FieldType {
 /// Type map for field name -> desired type
 pub type TypeMap = HashMap<String, FieldType>;
 
+/// Returns true if `s` is a syntactically valid JSON number (RFC 8259 §6):
+///
+/// ```text
+/// number = [ "-" ] int [ frac ] [ exp ]
+/// int    = "0" / ( digit1-9 *DIGIT )
+/// frac   = "." 1*DIGIT
+/// exp    = ("e" / "E") [ "+" / "-" ] 1*DIGIT
+/// ```
+///
+/// This is the boundary Kelora uses to decide whether a bare value from a
+/// type-inferring parser (logfmt, CEF) should be coerced to a number. It
+/// deliberately rejects leading zeros (`007`), a leading `+`, and the
+/// Rust-only spellings `inf`/`nan`/`infinity` that `f64::parse` would otherwise
+/// accept. That keeps zero-padded IDs (zip codes, account numbers), signed
+/// phone numbers, and version segments like `01` as strings instead of silently
+/// rewriting them — and makes the same token resolve to the same type whether
+/// it arrives on JSON input (where leading-zero numbers are illegal anyway) or
+/// in a logfmt/CEF field, which matters for mixed-format cascades.
+///
+/// A value that passes this gate is not guaranteed to fit in `i64`; callers
+/// still try `i64` then fall back to `f64` (e.g. for integers larger than
+/// `i64::MAX`), exactly as before — this only decides *whether* to attempt a
+/// numeric parse at all.
+pub fn looks_like_json_number(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    if len == 0 {
+        return false;
+    }
+    let mut i = 0;
+
+    // optional minus (JSON allows only "-", never "+")
+    if bytes[i] == b'-' {
+        i += 1;
+        if i == len {
+            return false;
+        }
+    }
+
+    // int part: "0" alone, or digit1-9 followed by digits (no leading zero)
+    if bytes[i] == b'0' {
+        i += 1;
+    } else if bytes[i].is_ascii_digit() {
+        i += 1;
+        while i < len && bytes[i].is_ascii_digit() {
+            i += 1;
+        }
+    } else {
+        return false;
+    }
+
+    // optional frac: "." then at least one digit
+    if i < len && bytes[i] == b'.' {
+        i += 1;
+        if i == len || !bytes[i].is_ascii_digit() {
+            return false;
+        }
+        while i < len && bytes[i].is_ascii_digit() {
+            i += 1;
+        }
+    }
+
+    // optional exp: e/E, optional sign, then at least one digit
+    if i < len && (bytes[i] == b'e' || bytes[i] == b'E') {
+        i += 1;
+        if i < len && (bytes[i] == b'+' || bytes[i] == b'-') {
+            i += 1;
+        }
+        if i == len || !bytes[i].is_ascii_digit() {
+            return false;
+        }
+        while i < len && bytes[i].is_ascii_digit() {
+            i += 1;
+        }
+    }
+
+    i == len
+}
+
 /// Parse a field specification with optional type annotation
 /// Returns (field_name, optional_type)
 ///
@@ -133,6 +212,68 @@ pub fn convert_value_to_type(
 mod tests {
     use super::*;
     use proptest::prelude::*;
+
+    #[test]
+    fn test_looks_like_json_number_accepts_valid_numbers() {
+        for s in [
+            "0",
+            "-0",
+            "5",
+            "-5",
+            "42",
+            "123456789012345678",
+            "1.5",
+            "-1.5",
+            "0.5",
+            "-0.5",
+            "1e3",
+            "1E3",
+            "1e+3",
+            "1e-3",
+            "1.5e10",
+            "-2.5E-4",
+            "100",
+        ] {
+            assert!(
+                looks_like_json_number(s),
+                "expected {s:?} to be a JSON number"
+            );
+        }
+    }
+
+    #[test]
+    fn test_looks_like_json_number_rejects_non_json_numbers() {
+        for s in [
+            "",
+            "007",       // leading zero
+            "02134",     // zip code
+            "01",        // version segment
+            "00.5",      // leading-zero frac
+            "+5",        // leading plus
+            "+15551234", // signed phone number
+            "inf",       // Rust-only float spelling
+            "Infinity",  // ditto
+            "-inf",      // ditto
+            "nan",       // ditto
+            "NaN",       // ditto
+            "1_000",     // digit separators
+            "0x1F",      // hex
+            "1.",        // frac needs a digit
+            ".5",        // int part required
+            "1e",        // exp needs a digit
+            "1e+",       // ditto
+            "5abc",      // trailing garbage
+            "- 5",       // space
+            "--5",       // double sign
+            "5.5.5",     // two dots
+            "5-",        // trailing sign
+        ] {
+            assert!(
+                !looks_like_json_number(s),
+                "expected {s:?} NOT to be a JSON number"
+            );
+        }
+    }
 
     #[test]
     fn test_field_type_from_str() {

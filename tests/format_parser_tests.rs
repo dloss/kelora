@@ -469,3 +469,46 @@ fn test_csv_no_headers_with_filename_tracking() {
         stdout
     );
 }
+
+#[test]
+fn test_logfmt_preserves_zero_padded_and_signed_values() {
+    // Regression: logfmt used to coerce any i64/f64-parseable token, silently
+    // dropping leading zeros and a leading '+'. Values are now coerced only when
+    // they are valid JSON numbers, so zero-padded IDs and signed phone numbers
+    // survive intact while genuine numbers still infer.
+    let input = "zip=02134 id=007 phone=+15551234 ver=01 status=500 dur=1.5 neg=-5 sci=1e3";
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "logfmt", "-F", "json"], input);
+    assert_eq!(exit_code, 0, "logfmt parsing should succeed");
+
+    let event: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("output should be valid JSON");
+
+    // Zero-padded / signed tokens stay strings (no data loss)
+    assert_eq!(event["zip"].as_str().unwrap(), "02134");
+    assert_eq!(event["id"].as_str().unwrap(), "007");
+    assert_eq!(event["phone"].as_str().unwrap(), "+15551234");
+    assert_eq!(event["ver"].as_str().unwrap(), "01");
+
+    // Genuine numbers still infer as before
+    assert_eq!(event["status"].as_i64().unwrap(), 500);
+    assert_eq!(event["neg"].as_i64().unwrap(), -5);
+    assert!((event["dur"].as_f64().unwrap() - 1.5).abs() < 1e-9);
+    assert!((event["sci"].as_f64().unwrap() - 1000.0).abs() < 1e-9);
+}
+
+#[test]
+fn test_logfmt_inf_nan_stay_strings() {
+    // inf/nan are Rust-only float spellings, not JSON numbers; keeping them as
+    // strings also avoids the old "becomes null on JSON output" surprise.
+    let input = "a=inf b=nan c=Infinity";
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "logfmt", "-F", "json"], input);
+    assert_eq!(exit_code, 0, "logfmt parsing should succeed");
+
+    let event: serde_json::Value =
+        serde_json::from_str(stdout.trim()).expect("output should be valid JSON");
+    assert_eq!(event["a"].as_str().unwrap(), "inf");
+    assert_eq!(event["b"].as_str().unwrap(), "nan");
+    assert_eq!(event["c"].as_str().unwrap(), "Infinity");
+}

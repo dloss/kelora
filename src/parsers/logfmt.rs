@@ -1,4 +1,5 @@
 use crate::event::Event;
+use crate::parsers::type_conversion::looks_like_json_number;
 use crate::pipeline::EventParser;
 use anyhow::Result;
 use rhai::Dynamic;
@@ -109,14 +110,19 @@ impl LogfmtParser {
 
     /// Try to convert string to a numeric Dynamic value, falling back to string
     fn parse_value_to_dynamic(&self, value: String) -> Dynamic {
-        // Try integer first
-        if let Ok(i) = value.parse::<i64>() {
-            return Dynamic::from(i);
-        }
+        // Only coerce values that are syntactically valid JSON numbers. This
+        // keeps zero-padded IDs ("007"), signed values ("+1555..."), and
+        // inf/nan as strings rather than silently rewriting them.
+        if looks_like_json_number(&value) {
+            // Try integer first
+            if let Ok(i) = value.parse::<i64>() {
+                return Dynamic::from(i);
+            }
 
-        // Try float
-        if let Ok(f) = value.parse::<f64>() {
-            return Dynamic::from(f);
+            // Try float (e.g. fractional, exponent, or integers beyond i64)
+            if let Ok(f) = value.parse::<f64>() {
+                return Dynamic::from(f);
+            }
         }
 
         // Try boolean

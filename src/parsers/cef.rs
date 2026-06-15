@@ -1,4 +1,5 @@
 use crate::event::Event;
+use crate::parsers::type_conversion::looks_like_json_number;
 use crate::pipeline::EventParser;
 use anyhow::Result;
 use nom::Parser;
@@ -145,14 +146,18 @@ impl CefParser {
 
     /// Convert string to appropriate Dynamic type
     fn parse_value_to_dynamic(&self, value: String) -> Dynamic {
-        // Try integer
-        if let Ok(i) = value.parse::<i64>() {
-            return Dynamic::from(i);
-        }
+        // Only coerce values that are syntactically valid JSON numbers, so
+        // zero-padded IDs, signed values, and inf/nan stay strings.
+        if looks_like_json_number(&value) {
+            // Try integer
+            if let Ok(i) = value.parse::<i64>() {
+                return Dynamic::from(i);
+            }
 
-        // Try float
-        if let Ok(f) = value.parse::<f64>() {
-            return Dynamic::from(f);
+            // Try float
+            if let Ok(f) = value.parse::<f64>() {
+                return Dynamic::from(f);
+            }
         }
 
         // Try boolean
