@@ -271,6 +271,7 @@ drain_templates()                    Return array of templates with same fields 
 STATE MANAGEMENT (sequential mode only; errors in --parallel mode):
 state["key"]                         Get/set state value via indexer (state["count"] = 0)
 state.get(key)                       Get value from state (returns () if not found)
+state.get(key, default)              Get value with fallback (missing or () returns default)
 state.set(key, value)                Set value in state
 state.contains(key)                  Check if key exists in state
 state.remove(key)                    Remove key from state (returns removed value or ())

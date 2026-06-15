@@ -71,6 +71,19 @@ pub fn register(engine: &mut Engine) {
             let map = state.inner.read().unwrap();
             map.get(key).cloned().unwrap_or(Dynamic::UNIT)
         })
+        // state.get(key, default) - read a value with a fallback.
+        // Mirrors map.get(key, default): a missing key or a unit () value is
+        // treated as absent, so it agrees with the `??` null-coalescing operator.
+        .register_fn(
+            "get",
+            |state: &mut StateMap, key: &str, default: Dynamic| -> Dynamic {
+                let map = state.inner.read().unwrap();
+                match map.get(key) {
+                    Some(value) if !value.is_unit() => value.clone(),
+                    _ => default,
+                }
+            },
+        )
         .register_fn("set", |state: &mut StateMap, key: &str, value: Dynamic| {
             let mut map = state.inner.write().unwrap();
             map.insert(key.into(), value);
@@ -223,6 +236,20 @@ pub fn register(engine: &mut Engine) {
         .register_fn(
             "get",
             |_state: &mut StateNotAvailable, _key: &str| -> Result<Dynamic, Box<EvalAltResult>> {
+                Err(EvalAltResult::ErrorRuntime(
+                    "'state' is not available in --parallel mode. Rerun without --parallel if you need shared mutable state; use track_* helpers for parallel-safe aggregation."
+                        .into(),
+                    Position::NONE,
+                )
+                .into())
+            },
+        )
+        .register_fn(
+            "get",
+            |_state: &mut StateNotAvailable,
+             _key: &str,
+             _default: Dynamic|
+             -> Result<Dynamic, Box<EvalAltResult>> {
                 Err(EvalAltResult::ErrorRuntime(
                     "'state' is not available in --parallel mode. Rerun without --parallel if you need shared mutable state; use track_* helpers for parallel-safe aggregation."
                         .into(),

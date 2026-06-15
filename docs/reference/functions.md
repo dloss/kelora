@@ -1671,16 +1671,21 @@ if !state.contains("seen_ips") {
 state["seen_ips"].push(e.ip)
 ```
 
-#### `state.get(key)` / `state.set(key, value)`
-Get or set values using method syntax. `get()` returns `()` if key doesn't exist.
+#### `state.get(key)` / `state.get(key, default)` / `state.set(key, value)`
+Get or set values using method syntax. `get(key)` returns `()` if the key doesn't
+exist. `get(key, default)` returns `default` when the key is missing or holds `()`,
+mirroring `map.get(key, default)`.
 
 ```rhai
 let count = state.get("count")                        // Returns () if not found
 state.set("total_bytes", 0)
 
-// Safer pattern with default
-let current = state.get("count") ?? 0
+// Default-arg form, equivalent to the `??` idiom below
+let current = state.get("count", 0)
 state.set("count", current + 1)
+
+// `??` remains the recommended idiom for inline use
+state.set("count", (state.get("count") ?? 0) + 1)
 ```
 
 #### `state.contains(key)`

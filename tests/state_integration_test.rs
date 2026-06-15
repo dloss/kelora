@@ -66,6 +66,69 @@ fn test_state_basic_set_and_get() {
 }
 
 #[test]
+fn test_state_get_with_default() {
+    // state.get(key, default) mirrors map.get(key, default): a missing key (or a
+    // unit () value) yields the default; a present non-unit value is returned as-is.
+    let input = r#"{"id": 1}
+{"id": 2}
+{"id": 3}"#;
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            r#"
+                // First event: key missing -> default 100; afterwards reads stored value.
+                e.before = state.get("count", 100);
+                state.set("count", state.get("count", 0) + 1);
+                e.after = state.get("count", 100);
+            "#,
+        ],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "Command should succeed. stderr: {}", stderr);
+    // Event 1: missing -> default 100, then stored becomes 1.
+    assert!(stdout.contains(r#""before":100"#), "stdout: {}", stdout);
+    assert!(stdout.contains(r#""after":1"#), "stdout: {}", stdout);
+    // Event 2: reads stored 1, increments to 2.
+    assert!(stdout.contains(r#""before":1"#), "stdout: {}", stdout);
+    assert!(stdout.contains(r#""after":2"#), "stdout: {}", stdout);
+    // Event 3: reads stored 2, increments to 3.
+    assert!(stdout.contains(r#""before":2"#), "stdout: {}", stdout);
+    assert!(stdout.contains(r#""after":3"#), "stdout: {}", stdout);
+}
+
+#[test]
+fn test_state_get_with_default_parallel_errors() {
+    // In --parallel mode, state is unavailable; the 2-arg get must error like the
+    // rest of the state API rather than silently succeeding.
+    let input = "{\"id\": 1}";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--parallel",
+            "--strict",
+            "--exec",
+            r#"e.x = state.get("count", 0);"#,
+        ],
+        input,
+    );
+
+    assert_ne!(exit_code, 0, "Parallel state access should fail");
+    assert!(
+        stderr.contains("not available in --parallel mode"),
+        "stderr: {}",
+        stderr
+    );
+}
+
+#[test]
 fn test_state_deduplication() {
     let input = r#"{"request_id": "req-001", "status": "start"}
 {"request_id": "req-002", "status": "start"}
