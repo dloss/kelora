@@ -350,6 +350,7 @@ fn extract_field_accesses(ast: &AST) -> Vec<FieldAccess> {
 const MUTATING_CALL_NAMES: &[&str] = &[
     // Kelora whole-event mutators
     "absorb_kv",
+    "absorb_logfmt",
     "absorb_json",
     "absorb_regex",
     "merge",
@@ -2625,6 +2626,15 @@ mod tests {
     }
 
     #[test]
+    fn absorb_logfmt_persists_to_event() {
+        let event = run_exec(
+            r#"e.absorb_logfmt("line")"#,
+            build_event_with_line(r#"pod="kube-system/foo" replicas=3"#),
+        );
+        assert_eq!(field_str(&event, "pod").as_deref(), Some("kube-system/foo"));
+    }
+
+    #[test]
     fn absorb_regex_persists_to_event() {
         let event = run_exec(
             r##"e.absorb_regex("line", #"User (?P<user>\w+)"#)"##,
@@ -2686,6 +2696,7 @@ mod tests {
         let mut engine = RhaiEngine::new();
         for script in [
             r#"e.absorb_kv("line")"#,
+            r#"e.absorb_logfmt("line")"#,
             r#"e.absorb_json("payload")"#,
             r##"e.absorb_regex("line", #"(?P<u>\w+)"#)"##,
             r#"e.merge(#{ z: 1 })"#,
