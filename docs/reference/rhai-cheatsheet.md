@@ -426,20 +426,12 @@ state["x"] = 1; let n = state["x"];   // Assign, then read on separate statement
 - No implicit type conversion (use `to_int()`, `to_float()`, etc.)
 - Map keys: `m.key` and `m["key"]` are equivalent for static identifier keys — use whichever reads better. Brackets are **required** for dynamic or non-identifier keys (`state[e.user]`, `e["user-agent"]`); `m.user-agent` parses as subtraction, not a key
 
-### Calling style: function vs. method vs. property
+### Calling style (in practice)
 
-Three syntaxes, and they are **not** interchangeable. Pick by what you're calling:
-
-| Call | Native fn (`to_upper`, `split`, `len`) | Script `fn f(x)` (incl. `--include`) | Object map (`e`, `state`) |
-|------|------|------|------|
-| `f(x)` function-style | ✅ | ✅ | `len(m)`, `keys(m)` ✅ |
-| `x.f()` method-style | ✅ (receiver = 1st arg) | ❌ *Function not found* | `m.len()` ✅ |
-| `x.f` bare, no parens | only if a **getter** (`s.len`); `s.to_upper` ❌ | ❌ | reads the *key* `f`, never a method |
-
-- **Native functions are interchangeable:** `to_upper(s)` == `s.to_upper()` — the receiver is just the first argument.
-- **Script-defined functions are not.** Method-style binds the receiver to `this` (not arg 0), so a plain `fn f(x)` is callable only as `f(x)`; `x.f()` reports *Function not found*. To make one method-callable, write it with `this` (`fn f() { this * 2 }`) or typed (`fn int.f() { … }`). **So always call helpers from `--include` function-style: `is_problem(e)`, not `e.is_problem()`.**
-- **Bare `x.f` (no parens) is property/getter access only** — a registered getter (`s.len`, `arr.len`) or a map key. It never calls an arbitrary method; `s.to_upper` errors with *getter not registered*.
-- **On a map, bare `m.len` is the key `len`** (or `()` if absent), never the method, so 0-arity methods need parens (`m.len()`). Keys and method names never collide. When a key might shadow a name, prefer function-style `len(m)` — no dot to misread.
+- **Built-in functions:** either style — chain with method style. `e.msg.to_upper().trim()` or `to_upper(e.msg)`.
+- **Your own helpers** (`--include` or inline `fn f(x)`): **function-style only** — `is_problem(e)`, *not* `e.is_problem()` (that fails with *Function not found*).
+- **Fields & state keys:** `e.field` / `state.key` for plain names; brackets for dynamic or non-identifier keys — `e[var]`, `e["user-agent"]`, `state[e.user]`.
+- **Length/keys of a map:** use `len(e)` / `keys(e)` (or `e.len()`); bare `e.len` reads a field *named* `len`, not the count.
 
 ## Quick Reference
 
