@@ -4865,6 +4865,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eabsorb_jwtfield-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e.absorb_jwt(field [, options])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#eabsorb_regexfield-pattern-options" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7846,6 +7857,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#eabsorb_jwtfield-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        e.absorb_jwt(field [, options])
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#eabsorb_regexfield-pattern-options" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8146,9 +8168,42 @@
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>e.os = ua[&quot;os&quot;]
 </code></pre></div>
 <h4 id="textparse_jwt"><code>text.parse_jwt()</code><a class="headerlink" href="#textparse_jwt" title="Permanent link">&para;</a></h4>
-<p>Parse a JWT into <code>header</code> and <code>claims</code> (the decoded payload) without verification. Also returns <code>signature_b64u</code> plus <code>alg</code>/<code>kid</code>/<code>typ</code> when present in the header.</p>
+<p>Parse a JWT into <code>header</code> and <code>claims</code> (the decoded payload) without verification. Also returns <code>signature_b64u</code> plus <code>alg</code>/<code>kid</code>/<code>typ</code> when present in the header. The standard NumericDate claims <code>exp</code>, <code>iat</code>, and <code>nbf</code> are additionally exposed as datetime values under <code>expires_at</code>, <code>issued_at</code>, and <code>not_before</code>, so they compose with <code>now()</code> and datetime arithmetic.</p>
+<p>The decoded datetimes pair with their source claims as follows (the raw integers remain available under <code>claims</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Datetime field</th>
+<th>Source claim</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expires_at</code></td>
+<td><code>claims.exp</code></td>
+<td>Expiration time</td>
+</tr>
+<tr>
+<td><code>issued_at</code></td>
+<td><code>claims.iat</code></td>
+<td>Issued-at time</td>
+</tr>
+<tr>
+<td><code>not_before</code></td>
+<td><code>claims.nbf</code></td>
+<td>Not-valid-before time</td>
+</tr>
+</tbody>
+</table>
+<p>A field is present only when its claim is present and a valid numeric date.</p>
+<p>These three are real <strong>datetime values, not strings</strong>: <code>expires_at &lt; now()</code> is a chronological comparison and <code>expires_at - issued_at</code> yields a duration, whereas <code>claims.exp</code> is the raw integer (Unix seconds) straight from the token. To render a datetime back to text, call <code>.to_iso()</code> or <code>.format("%Y-%m-%d")</code> — never compare it as a string, since lexical and chronological order can disagree.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>let jwt = e.token.parse_jwt()
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>e.user_id = jwt[&quot;claims&quot;][&quot;sub&quot;]
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>e.expired = jwt.expires_at &lt; now()                 // bool (chronological)
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>e.lifetime = (jwt.expires_at - jwt.issued_at).to_string()
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>e.exp_iso = jwt.expires_at.to_iso()                // datetime -&gt; string
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>e.exp_raw = jwt.claims.exp                          // raw int, e.g. 1735689600
 </code></pre></div>
 <h4 id="textparse_path"><code>text.parse_path()</code><a class="headerlink" href="#textparse_path" title="Permanent link">&para;</a></h4>
 <p>Parse filesystem path into components.</p>
@@ -9599,19 +9654,35 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <li><code>overwrite</code>: bool (default <code>true</code>) – allow parsed keys to replace existing event fields (<code>false</code> skips conflicts).</li>
 </ul>
 <p>Other absorb options (like <code>sep</code>) are accepted for consistency but ignored. JSON parsing is all-or-nothing: invalid JSON or non-object payloads set <code>status = "parse_error"</code> and leave the event untouched.</p>
+<h4 id="eabsorb_jwtfield-options"><code>e.absorb_jwt(field [, options])</code><a class="headerlink" href="#eabsorb_jwtfield-options" title="Permanent link">&para;</a></h4>
+<p>Parse a JWT from a string field and merge its <strong>claims</strong> (the decoded payload) into the event, returning the same status map as <code>absorb_kv()</code>. The header and signature are ignored — only the claims are flattened, mirroring how <code>absorb_json()</code> flattens a JSON object. Signatures are <strong>not</strong> verified, so this is for debugging / trusted tokens only. On success the source field is deleted unless <code>keep_source</code> is true, and <code>remainder</code> is always <code>()</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-191-1" name="__codelineno-191-1" href="#__codelineno-191-1"></a>// e.token = &quot;eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZSIsInJvbGUiOiJhZG1pbiJ9.sig&quot;
+<a id="__codelineno-191-2" name="__codelineno-191-2" href="#__codelineno-191-2"></a>let res = e.absorb_jwt(&quot;token&quot;);
+<a id="__codelineno-191-3" name="__codelineno-191-3" href="#__codelineno-191-3"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-191-4" name="__codelineno-191-4" href="#__codelineno-191-4"></a>    // e.sub == &quot;alice&quot;, e.role == &quot;admin&quot;, e.exp == 1735689600 (int), ...
+<a id="__codelineno-191-5" name="__codelineno-191-5" href="#__codelineno-191-5"></a>} else if res.status == &quot;parse_error&quot; {
+<a id="__codelineno-191-6" name="__codelineno-191-6" href="#__codelineno-191-6"></a>    warn(`bad token: ${res.error}`);
+<a id="__codelineno-191-7" name="__codelineno-191-7" href="#__codelineno-191-7"></a>}
+</code></pre></div>
+<p>Options:</p>
+<ul>
+<li><code>keep_source</code>: bool (default <code>false</code>) – keep the original token string instead of deleting the field.</li>
+<li><code>overwrite</code>: bool (default <code>true</code>) – allow claims to replace existing event fields (<code>false</code> skips conflicts).</li>
+</ul>
+<p>Other absorb options (like <code>sep</code>) are accepted for consistency but ignored — a JWT's structure is fixed. Parsing is all-or-nothing: a malformed token sets <code>status = "parse_error"</code> and leaves the event untouched. The time claims land as raw integers; for datetime-typed <code>exp</code>/<code>iat</code>/<code>nbf</code> (e.g. to compare against <code>now()</code>), use <a href="#textparse_jwt"><code>parse_jwt()</code></a> instead.</p>
 <h4 id="eabsorb_regexfield-pattern-options"><code>e.absorb_regex(field, pattern [, options])</code><a class="headerlink" href="#eabsorb_regexfield-pattern-options" title="Permanent link">&para;</a></h4>
 <p>Extract named capture groups from a string field using a regular expression pattern, merge the extracted values into the event, and return a status map (same structure as <code>absorb_kv()</code> and <code>absorb_json()</code>).</p>
 <p>The pattern must use <strong>named capture groups</strong> (<code>(?P&lt;name&gt;...)</code>) to define which parts of the text to extract. Only named captures become event fields; numbered groups are ignored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-191-1" name="__codelineno-191-1" href="#__codelineno-191-1"></a>// Extract user and IP from log message
-<a id="__codelineno-191-2" name="__codelineno-191-2" href="#__codelineno-191-2"></a>let res = e.absorb_regex(&quot;msg&quot;, #&quot;User (?P&lt;user&gt;\w+) logged in from (?P&lt;ip&gt;[\d.]+)&quot;#);
-<a id="__codelineno-191-3" name="__codelineno-191-3" href="#__codelineno-191-3"></a>if res.status == &quot;applied&quot; {
-<a id="__codelineno-191-4" name="__codelineno-191-4" href="#__codelineno-191-4"></a>    print(`${e.user} from ${e.ip}`);  // Extracted fields now on event
-<a id="__codelineno-191-5" name="__codelineno-191-5" href="#__codelineno-191-5"></a>}
-<a id="__codelineno-191-6" name="__codelineno-191-6" href="#__codelineno-191-6"></a>
-<a id="__codelineno-191-7" name="__codelineno-191-7" href="#__codelineno-191-7"></a>// Parse structured log line with multiple fields
-<a id="__codelineno-191-8" name="__codelineno-191-8" href="#__codelineno-191-8"></a>let pattern = #&quot;(?P&lt;date&gt;[\d-]+) (?P&lt;level&gt;\w+) (?P&lt;file&gt;[\w.]+):(?P&lt;line&gt;\d+) (?P&lt;message&gt;.+)&quot;#;
-<a id="__codelineno-191-9" name="__codelineno-191-9" href="#__codelineno-191-9"></a>e.absorb_regex(&quot;line&quot;, pattern);
-<a id="__codelineno-191-10" name="__codelineno-191-10" href="#__codelineno-191-10"></a>// Now e.date, e.level, e.file, e.line, e.message are all populated
+<div class="highlight"><pre><span></span><code><a id="__codelineno-192-1" name="__codelineno-192-1" href="#__codelineno-192-1"></a>// Extract user and IP from log message
+<a id="__codelineno-192-2" name="__codelineno-192-2" href="#__codelineno-192-2"></a>let res = e.absorb_regex(&quot;msg&quot;, #&quot;User (?P&lt;user&gt;\w+) logged in from (?P&lt;ip&gt;[\d.]+)&quot;#);
+<a id="__codelineno-192-3" name="__codelineno-192-3" href="#__codelineno-192-3"></a>if res.status == &quot;applied&quot; {
+<a id="__codelineno-192-4" name="__codelineno-192-4" href="#__codelineno-192-4"></a>    print(`${e.user} from ${e.ip}`);  // Extracted fields now on event
+<a id="__codelineno-192-5" name="__codelineno-192-5" href="#__codelineno-192-5"></a>}
+<a id="__codelineno-192-6" name="__codelineno-192-6" href="#__codelineno-192-6"></a>
+<a id="__codelineno-192-7" name="__codelineno-192-7" href="#__codelineno-192-7"></a>// Parse structured log line with multiple fields
+<a id="__codelineno-192-8" name="__codelineno-192-8" href="#__codelineno-192-8"></a>let pattern = #&quot;(?P&lt;date&gt;[\d-]+) (?P&lt;level&gt;\w+) (?P&lt;file&gt;[\w.]+):(?P&lt;line&gt;\d+) (?P&lt;message&gt;.+)&quot;#;
+<a id="__codelineno-192-9" name="__codelineno-192-9" href="#__codelineno-192-9"></a>e.absorb_regex(&quot;line&quot;, pattern);
+<a id="__codelineno-192-10" name="__codelineno-192-10" href="#__codelineno-192-10"></a>// Now e.date, e.level, e.file, e.line, e.message are all populated
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <ul>
@@ -9634,31 +9705,31 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <li><strong>absorb_json()</strong> – Parse JSON objects (type-aware)</li>
 <li><strong>Regex input format</strong> (<code>-f regex</code>) – Use for whole-log parsing at input time</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-192-1" name="__codelineno-192-1" href="#__codelineno-192-1"></a>// Complex example: parse Apache access log format
-<a id="__codelineno-192-2" name="__codelineno-192-2" href="#__codelineno-192-2"></a>let apache_pattern = r#&quot;(?P&lt;ip&gt;\S+) \S+ \S+ \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\S+) (?P&lt;path&gt;\S+)[^&quot;]*&quot; (?P&lt;status&gt;\d+) (?P&lt;bytes&gt;\d+)&quot;#;
-<a id="__codelineno-192-3" name="__codelineno-192-3" href="#__codelineno-192-3"></a>e.absorb_regex(&quot;line&quot;, apache_pattern);
-<a id="__codelineno-192-4" name="__codelineno-192-4" href="#__codelineno-192-4"></a>
-<a id="__codelineno-192-5" name="__codelineno-192-5" href="#__codelineno-192-5"></a>// Keep source for debugging
-<a id="__codelineno-192-6" name="__codelineno-192-6" href="#__codelineno-192-6"></a>e.absorb_regex(&quot;raw_message&quot;, r&quot;ERROR: (?P&lt;error_code&gt;\d+) - (?P&lt;error_msg&gt;.+)&quot;,
-<a id="__codelineno-192-7" name="__codelineno-192-7" href="#__codelineno-192-7"></a>               #{ keep_source: true });
+<div class="highlight"><pre><span></span><code><a id="__codelineno-193-1" name="__codelineno-193-1" href="#__codelineno-193-1"></a>// Complex example: parse Apache access log format
+<a id="__codelineno-193-2" name="__codelineno-193-2" href="#__codelineno-193-2"></a>let apache_pattern = r#&quot;(?P&lt;ip&gt;\S+) \S+ \S+ \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\S+) (?P&lt;path&gt;\S+)[^&quot;]*&quot; (?P&lt;status&gt;\d+) (?P&lt;bytes&gt;\d+)&quot;#;
+<a id="__codelineno-193-3" name="__codelineno-193-3" href="#__codelineno-193-3"></a>e.absorb_regex(&quot;line&quot;, apache_pattern);
+<a id="__codelineno-193-4" name="__codelineno-193-4" href="#__codelineno-193-4"></a>
+<a id="__codelineno-193-5" name="__codelineno-193-5" href="#__codelineno-193-5"></a>// Keep source for debugging
+<a id="__codelineno-193-6" name="__codelineno-193-6" href="#__codelineno-193-6"></a>e.absorb_regex(&quot;raw_message&quot;, r&quot;ERROR: (?P&lt;error_code&gt;\d+) - (?P&lt;error_msg&gt;.+)&quot;,
+<a id="__codelineno-193-7" name="__codelineno-193-7" href="#__codelineno-193-7"></a>               #{ keep_source: true });
 </code></pre></div>
 <h2 id="span-context-span-close-only">Span Context – <code>--span-close</code> Only<a class="headerlink" href="#span-context-span-close-only" title="Permanent link">&para;</a></h2>
 <p>A read-only <code>span</code> object is injected into scope whenever a <code>--span-close</code> script runs. Use it to emit per-span rollups after Kelora closes a count- or time-based window.</p>
 <h3 id="span-identity">Span Identity<a class="headerlink" href="#span-identity" title="Permanent link">&para;</a></h3>
 <p><code>span.id</code> returns the current span identifier. Count-based spans use <code>#&lt;index&gt;</code> (zero-based). Time-based spans use <code>ISO_START/DURATION</code> (e.g. <code>2024-05-19T12:00:00Z/5m</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-193-1" name="__codelineno-193-1" href="#__codelineno-193-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-194-1" name="__codelineno-194-1" href="#__codelineno-194-1"></a>let id = span.id;  // &quot;#0&quot; or &quot;2024-05-19T12:05:00Z/5m&quot;
 </code></pre></div>
 <h3 id="span-boundaries">Span Boundaries<a class="headerlink" href="#span-boundaries" title="Permanent link">&para;</a></h3>
 <p><code>span.start</code> and <code>span.end</code> expose the half-open window bounds as <code>DateTime</code> values. Count-based spans return <code>()</code> for both fields.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-194-1" name="__codelineno-194-1" href="#__codelineno-194-1"></a>if span.start != () {
-<a id="__codelineno-194-2" name="__codelineno-194-2" href="#__codelineno-194-2"></a>    print(`Window: ${span.start} → ${span.end}`);
-<a id="__codelineno-194-3" name="__codelineno-194-3" href="#__codelineno-194-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-195-1" name="__codelineno-195-1" href="#__codelineno-195-1"></a>if span.start != () {
+<a id="__codelineno-195-2" name="__codelineno-195-2" href="#__codelineno-195-2"></a>    print(`Window: ${span.start} → ${span.end}`);
+<a id="__codelineno-195-3" name="__codelineno-195-3" href="#__codelineno-195-3"></a>}
 </code></pre></div>
 <h3 id="span-size-and-events">Span Size and Events<a class="headerlink" href="#span-size-and-events" title="Permanent link">&para;</a></h3>
 <p><code>span.size</code> reports how many events survived filters and were buffered in the span. <code>span.events</code> returns those events in arrival order. Each map includes span metadata fields (<code>span_status</code>, <code>span_id</code>, <code>span_start</code>, <code>span_end</code>) alongside the original event data.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-195-1" name="__codelineno-195-1" href="#__codelineno-195-1"></a>let included = span.events
-<a id="__codelineno-195-2" name="__codelineno-195-2" href="#__codelineno-195-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
-<a id="__codelineno-195-3" name="__codelineno-195-3" href="#__codelineno-195-3"></a>    .len();
+<div class="highlight"><pre><span></span><code><a id="__codelineno-196-1" name="__codelineno-196-1" href="#__codelineno-196-1"></a>let included = span.events
+<a id="__codelineno-196-2" name="__codelineno-196-2" href="#__codelineno-196-2"></a>    .filter(|evt| evt.span_status == &quot;included&quot;)
+<a id="__codelineno-196-3" name="__codelineno-196-3" href="#__codelineno-196-3"></a>    .len();
 </code></pre></div>
 <h3 id="metrics-snapshot">Metrics Snapshot<a class="headerlink" href="#metrics-snapshot" title="Permanent link">&para;</a></h3>
 <p><code>span.metrics</code> contains per-window values from <code>track_*</code> calls, computed automatically for each span so you can emit summaries without manual bookkeeping. This works for <strong>additive</strong> aggregators: <code>track_count</code>, <code>track_sum</code>, <code>track_avg</code>, and <code>track_unique</code>.</p>
@@ -9666,39 +9737,39 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <p class="admonition-title">Non-additive aggregators are omitted</p>
 <p><code>track_min</code>, <code>track_max</code>, <code>track_percentiles</code>, <code>track_cardinality</code>, <code>track_top</code>, and <code>track_bottom</code> accumulate global state that cannot be reduced to a single window (a t-digest or HLL has no subtraction, and a global max is not a per-window max). These keys are <strong>omitted from <code>span.metrics</code></strong> and Kelora prints a one-time warning. Compute them per window by iterating <code>span.events</code> instead — e.g. <code>span.events.map(|ev| ev.rt).filter(|v| v != ()).reduce(|a, b| if b &gt; a { b } else { a })</code> for a per-window max.</p>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-196-1" name="__codelineno-196-1" href="#__codelineno-196-1"></a>let metrics = span.metrics;
-<a id="__codelineno-196-2" name="__codelineno-196-2" href="#__codelineno-196-2"></a>let hits = metrics[&quot;events&quot;];          // from track_sum(&quot;events&quot;, 1)
-<a id="__codelineno-196-3" name="__codelineno-196-3" href="#__codelineno-196-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_sum(&quot;failures&quot;, 1)
-<a id="__codelineno-196-4" name="__codelineno-196-4" href="#__codelineno-196-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
-<a id="__codelineno-196-5" name="__codelineno-196-5" href="#__codelineno-196-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
+<div class="highlight"><pre><span></span><code><a id="__codelineno-197-1" name="__codelineno-197-1" href="#__codelineno-197-1"></a>let metrics = span.metrics;
+<a id="__codelineno-197-2" name="__codelineno-197-2" href="#__codelineno-197-2"></a>let hits = metrics[&quot;events&quot;];          // from track_sum(&quot;events&quot;, 1)
+<a id="__codelineno-197-3" name="__codelineno-197-3" href="#__codelineno-197-3"></a>let failures = metrics[&quot;failures&quot;];    // from track_sum(&quot;failures&quot;, 1)
+<a id="__codelineno-197-4" name="__codelineno-197-4" href="#__codelineno-197-4"></a>let ratio = if hits &gt; 0 { failures * 100 / hits } else { 0 };
+<a id="__codelineno-197-5" name="__codelineno-197-5" href="#__codelineno-197-5"></a>print(span.id + &quot;: &quot; + ratio.to_string() + &quot;% failure rate&quot;);
 </code></pre></div>
 <hr />
 <h2 id="quick-reference-by-use-case">Quick Reference by Use Case<a class="headerlink" href="#quick-reference-by-use-case" title="Permanent link">&para;</a></h2>
 <p><strong>Error Extraction:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-197-1" name="__codelineno-197-1" href="#__codelineno-197-1"></a>e.error_code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-198-1" name="__codelineno-198-1" href="#__codelineno-198-1"></a>e.error_code = e.message.extract_regex(r&quot;ERR-(\d+)&quot;, 1)
 </code></pre></div></p>
 <p><strong>IP Anonymization:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-198-1" name="__codelineno-198-1" href="#__codelineno-198-1"></a>e.masked_ip = e.client_ip.mask_ip()
-<a id="__codelineno-198-2" name="__codelineno-198-2" href="#__codelineno-198-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-199-1" name="__codelineno-199-1" href="#__codelineno-199-1"></a>e.masked_ip = e.client_ip.mask_ip()
+<a id="__codelineno-199-2" name="__codelineno-199-2" href="#__codelineno-199-2"></a>e.ip_alias = pseudonym(e.client_ip, &quot;ips&quot;)
 </code></pre></div></p>
 <p><strong>Time Filtering:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-199-1" name="__codelineno-199-1" href="#__codelineno-199-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
-<a id="__codelineno-199-2" name="__codelineno-199-2" href="#__codelineno-199-2"></a>    // Process recent events
-<a id="__codelineno-199-3" name="__codelineno-199-3" href="#__codelineno-199-3"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-200-1" name="__codelineno-200-1" href="#__codelineno-200-1"></a>if e.timestamp &gt; to_datetime(&quot;2024-01-01&quot;) {
+<a id="__codelineno-200-2" name="__codelineno-200-2" href="#__codelineno-200-2"></a>    // Process recent events
+<a id="__codelineno-200-3" name="__codelineno-200-3" href="#__codelineno-200-3"></a>}
 </code></pre></div></p>
 <p><strong>Metrics Tracking:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-200-1" name="__codelineno-200-1" href="#__codelineno-200-1"></a>track_freq(&quot;service&quot;, e.service)
-<a id="__codelineno-200-2" name="__codelineno-200-2" href="#__codelineno-200-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
-<a id="__codelineno-200-3" name="__codelineno-200-3" href="#__codelineno-200-3"></a>track_unique(&quot;users&quot;, e.user_id)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-201-1" name="__codelineno-201-1" href="#__codelineno-201-1"></a>track_freq(&quot;service&quot;, e.service)
+<a id="__codelineno-201-2" name="__codelineno-201-2" href="#__codelineno-201-2"></a>track_sum(&quot;bytes&quot;, e.response_size)
+<a id="__codelineno-201-3" name="__codelineno-201-3" href="#__codelineno-201-3"></a>track_unique(&quot;users&quot;, e.user_id)
 </code></pre></div></p>
 <p><strong>Array Fan-Out:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-201-1" name="__codelineno-201-1" href="#__codelineno-201-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
+<div class="highlight"><pre><span></span><code><a id="__codelineno-202-1" name="__codelineno-202-1" href="#__codelineno-202-1"></a>emit_each(e.users, #{batch_id: e.batch_id})
 </code></pre></div></p>
 <p><strong>Safe Field Access:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-202-1" name="__codelineno-202-1" href="#__codelineno-202-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
-<a id="__codelineno-202-2" name="__codelineno-202-2" href="#__codelineno-202-2"></a>if e.has_path(&quot;error.details.code&quot;) {
-<a id="__codelineno-202-3" name="__codelineno-202-3" href="#__codelineno-202-3"></a>    e.detailed = true
-<a id="__codelineno-202-4" name="__codelineno-202-4" href="#__codelineno-202-4"></a>}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-203-1" name="__codelineno-203-1" href="#__codelineno-203-1"></a>e.user_name = e.get_path(&quot;user.profile.name&quot;, &quot;unknown&quot;)
+<a id="__codelineno-203-2" name="__codelineno-203-2" href="#__codelineno-203-2"></a>if e.has_path(&quot;error.details.code&quot;) {
+<a id="__codelineno-203-3" name="__codelineno-203-3" href="#__codelineno-203-3"></a>    e.detailed = true
+<a id="__codelineno-203-4" name="__codelineno-203-4" href="#__codelineno-203-4"></a>}
 </code></pre></div></p>
 <hr />
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
@@ -9709,10 +9780,10 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <li><a href="../../how-to/extract-and-mask-sensitive-data/">How-To: Sanitize Logs Before Sharing</a> - Practical examples</li>
 </ul>
 <p>For more details, run:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-203-1" name="__codelineno-203-1" href="#__codelineno-203-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">       </span><span class="c1"># This reference in CLI form</span>
-<a id="__codelineno-203-2" name="__codelineno-203-2" href="#__codelineno-203-2"></a>kelora<span class="w"> </span>--help-functions<span class="w"> </span>ip<span class="w">    </span><span class="c1"># Search the catalogue by keyword (name/description)</span>
-<a id="__codelineno-203-3" name="__codelineno-203-3" href="#__codelineno-203-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">            </span><span class="c1"># Rhai language guide</span>
-<a id="__codelineno-203-4" name="__codelineno-203-4" href="#__codelineno-203-4"></a>kelora<span class="w"> </span>--help-examples<span class="w">        </span><span class="c1"># Common usage patterns</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-204-1" name="__codelineno-204-1" href="#__codelineno-204-1"></a>kelora<span class="w"> </span>--help-functions<span class="w">       </span><span class="c1"># This reference in CLI form</span>
+<a id="__codelineno-204-2" name="__codelineno-204-2" href="#__codelineno-204-2"></a>kelora<span class="w"> </span>--help-functions<span class="w"> </span>ip<span class="w">    </span><span class="c1"># Search the catalogue by keyword (name/description)</span>
+<a id="__codelineno-204-3" name="__codelineno-204-3" href="#__codelineno-204-3"></a>kelora<span class="w"> </span>--help-rhai<span class="w">            </span><span class="c1"># Rhai language guide</span>
+<a id="__codelineno-204-4" name="__codelineno-204-4" href="#__codelineno-204-4"></a>kelora<span class="w"> </span>--help-examples<span class="w">        </span><span class="c1"># Common usage patterns</span>
 </code></pre></div></p>
 
 
