@@ -282,11 +282,15 @@ The decoded datetimes pair with their source claims as follows (the raw integers
 
 A field is present only when its claim is present and a valid numeric date.
 
+These three are real **datetime values, not strings**: `expires_at < now()` is a chronological comparison and `expires_at - issued_at` yields a duration, whereas `claims.exp` is the raw integer (Unix seconds) straight from the token. To render a datetime back to text, call `.to_iso()` or `.format("%Y-%m-%d")` — never compare it as a string, since lexical and chronological order can disagree.
+
 ```rhai
 let jwt = e.token.parse_jwt()
 e.user_id = jwt["claims"]["sub"]
-e.expired = jwt.expires_at < now()                 // bool
+e.expired = jwt.expires_at < now()                 // bool (chronological)
 e.lifetime = (jwt.expires_at - jwt.issued_at).to_string()
+e.exp_iso = jwt.expires_at.to_iso()                // datetime -> string
+e.exp_raw = jwt.claims.exp                          // raw int, e.g. 1735689600
 ```
 
 #### `text.parse_path()`

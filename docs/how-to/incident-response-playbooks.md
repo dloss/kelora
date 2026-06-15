@@ -274,6 +274,36 @@ kelora examples/auth_burst.jsonl \
   --metrics
 ```
 
+### Audit JWT Tokens (2 minutes)
+
+When requests carry a JWT, decode it (no signature verification) to attribute
+activity and surface tokens that should have been rejected. `absorb_jwt()`
+flattens the claims onto the event; `parse_jwt()` exposes `exp`/`iat`/`nbf` as
+datetimes for expiry checks:
+
+```bash
+# Who is behind each request, and was the token already expired?
+# (Check expiry first — absorb_jwt() consumes the token field.)
+kelora examples/auth-logs.jsonl \
+  --exec 'e.expired = e.token.parse_jwt().expires_at < now();
+          e.absorb_jwt("token")' \
+  -k timestamp,sub,role,expired
+```
+
+```bash
+# Surface only requests presenting an expired token
+kelora examples/auth-logs.jsonl \
+  --filter 'e.token.parse_jwt().expires_at < now()'
+```
+
+**What to look for:**
+- Accepted requests (`status == 200`) with `expired == true` = expiry not enforced
+- Unexpected `role` / `sub` values = privilege escalation or token reuse
+
+!!! warning
+    `parse_jwt()`/`absorb_jwt()` do **not** verify signatures — use them to
+    triage trusted logs, not to make trust decisions.
+
 ---
 
 ## 4. Database Performance Degradation

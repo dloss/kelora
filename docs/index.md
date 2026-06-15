@@ -182,8 +182,8 @@ Beyond basic filtering and conversion, Kelora includes specialized functions tha
 - **[Deterministic sampling](how-to/power-user-techniques.md#deterministic-sampling-with-bucket)** - Consistent sampling across log rotations
   `--filter 'e.request_id.bucket() % 10 == 0'`
 
-- **[JWT parsing](how-to/power-user-techniques.md#jwt-parsing-without-verification)** - Extract claims without verification
-  `e.token.parse_jwt().claims.sub`
+- **[JWT parsing](how-to/power-user-techniques.md#jwt-parsing-without-verification)** - Extract claims (or flag expired tokens) without verification
+  `e.token.parse_jwt().expires_at < now()`
 
 - **[Cryptographic pseudonymization](how-to/power-user-techniques.md#multiple-hash-algorithms)** - Privacy-preserving anonymization with HMAC
   `e.anon_user = pseudonym(e.email, "users")`
