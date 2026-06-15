@@ -170,6 +170,13 @@ pub struct ProcessingConfig {
     pub quiet_events: bool,
     /// Suppress diagnostics and summaries (--no-diagnostics)
     pub suppress_diagnostics: bool,
+    /// True only when the user *explicitly* suppressed diagnostics
+    /// (`--no-diagnostics`, not overridden by `--diagnostics`), as opposed to the
+    /// implicit suppression a data-only mode (`-m`/`--drain`/`--discover`) applies
+    /// to keep machine-readable stdout clean. Stuck-user signals (e.g. the
+    /// "every tracked value was missing" typo hint) survive the implicit
+    /// suppression but still honor this explicit request.
+    pub diagnostics_user_suppressed: bool,
     /// Suppress pipeline stdout/stderr emitters except the single fatal line (--silent)
     pub silent: bool,
     /// Suppress Rhai print/eprint and side-effect warnings (--no-script-output, data-only modes)
@@ -954,6 +961,10 @@ impl KeloraConfig {
         } else {
             false // Default: diagnostics enabled
         };
+        // Capture the *explicit* user intent now, before the data-only modes below
+        // force `suppress_diagnostics` on. Stuck-user signals key off this so they
+        // survive a mode's implicit suppression but still obey a real --no-diagnostics.
+        let diagnostics_user_suppressed = suppress_diagnostics;
         let mut silent = cli.silent;
         if cli.no_silent {
             silent = false;
@@ -1153,6 +1164,7 @@ impl KeloraConfig {
                 verbose: verbose_level,
                 quiet_events,
                 suppress_diagnostics,
+                diagnostics_user_suppressed,
                 silent,
                 suppress_script_output,
                 quiet_level,
@@ -1258,6 +1270,7 @@ impl Default for KeloraConfig {
                 verbose: 0,
                 quiet_events: false,
                 suppress_diagnostics: false,
+                diagnostics_user_suppressed: false,
                 silent: false,
                 suppress_script_output: false,
                 quiet_level: 0,

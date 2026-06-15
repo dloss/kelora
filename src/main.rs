@@ -1207,7 +1207,18 @@ fn handle_pipeline_success(
     // Surface per-metric counts of skipped Unit () values (missing fields).
     // The track_* functions skip missing values silently; a high skip count
     // usually means a field-name typo, so it deserves a diagnostic line.
-    if diagnostics_allowed_runtime && !SHOULD_TERMINATE.load(Ordering::Relaxed) {
+    //
+    // This is a stuck-user signal — most acute under the `--freq`/`--describe`/
+    // `--top` sugar (and `--metrics`/`--drain`), where a typo'd field name yields
+    // a bare "No metrics tracked" with no clue why. Those data-only modes imply
+    // diagnostics suppression to keep stdout clean, which used to hide this hint
+    // exactly where it's needed. So gate it like the script-error summary: survive
+    // a mode's *implicit* suppression, but still obey an explicit --no-diagnostics
+    // and --silent.
+    let skip_hint_allowed = !config.processing.silent
+        && !config.processing.diagnostics_user_suppressed
+        && !SHOULD_TERMINATE.load(Ordering::Relaxed);
+    if skip_hint_allowed {
         let mut skips: Vec<(String, i64)> = pipeline_result
             .tracking_data
             .internal

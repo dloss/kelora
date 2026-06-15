@@ -2257,3 +2257,45 @@ fn stats_table_still_default() {
         );
     }
 }
+
+#[test]
+fn test_missing_field_skip_hint_survives_implied_metrics_suppression() {
+    // The `--freq`/`--describe`/`--top` sugar (and --metrics/--drain) imply
+    // diagnostics suppression to keep stdout clean. A typo'd field name then
+    // skipped every event and produced a bare "No metrics tracked" with no clue
+    // why. The missing-value typo hint is a stuck-user signal and must survive a
+    // mode's *implicit* suppression, on stderr, without polluting stdout metrics.
+    let input = "{\"status\":200}\n{\"status\":404}\n";
+
+    let (stdout, stderr, code) = run_kelora_with_input(&["-f", "json", "--freq", "stauts"], input);
+    assert_eq!(code, 0, "an empty result is legitimate (exit 0): {stderr}");
+    assert!(
+        stdout.contains("No metrics tracked"),
+        "stdout still reports the empty data channel: {stdout}"
+    );
+    assert!(
+        stderr.contains("skipped events with missing values") && stderr.contains("stauts"),
+        "the typo hint must surface on stderr in the implied -m mode: {stderr}"
+    );
+    assert!(
+        !stdout.contains("skipped events with missing values"),
+        "the hint must not pollute machine-readable stdout: {stdout}"
+    );
+}
+
+#[test]
+fn test_missing_field_skip_hint_honors_explicit_no_diagnostics() {
+    // The survival above is scoped to a mode's *implicit* suppression; an
+    // explicit --no-diagnostics is a real user request and still wins.
+    let input = "{\"status\":200}\n{\"status\":404}\n";
+
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--freq", "stauts", "--no-diagnostics"],
+        input,
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("skipped events with missing values"),
+        "explicit --no-diagnostics must still suppress the advisory hint: {stderr}"
+    );
+}
