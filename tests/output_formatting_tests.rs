@@ -36,17 +36,22 @@ fn test_brief_output_mode() {
 
 #[test]
 fn test_logfmt_blank_csv_header_round_trips() {
-    // A blank CSV header column yields an empty field key. The logfmt
-    // formatter must not emit "=value" for it, because Kelora's own logfmt
-    // parser rejects empty keys ("Empty key found"). Regression for the
-    // self-round-trip break: csv -> logfmt -> logfmt parse.
-    let input = "a,,c\n1,2,3\n";
+    // Blank CSV header columns (`a,,,c`) used to become empty field keys that
+    // collided into one "" field (dropping data) and rendered as unparseable
+    // "=value" logfmt. They now get positional cN names, so all columns survive
+    // and the output round-trips: csv -> logfmt -> logfmt parse.
+    let input = "a,,,c\n1,2,3,4\n";
     let (logfmt_out, _stderr, exit_code) =
         run_kelora_with_input(&["-f", "csv", "-F", "logfmt"], input);
     assert_eq!(exit_code, 0, "csv -> logfmt should succeed");
     assert!(
         !logfmt_out.contains(" =") && !logfmt_out.starts_with('='),
         "logfmt output must not contain an empty key: {logfmt_out:?}"
+    );
+    // No data lost: both blank columns are present under positional names.
+    assert!(
+        logfmt_out.contains("c2=2") && logfmt_out.contains("c3=3"),
+        "blank columns must be preserved, not collapsed: {logfmt_out:?}"
     );
 
     // Feed the logfmt output back into the logfmt parser; it must parse cleanly.

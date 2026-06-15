@@ -32,7 +32,9 @@ pub fn csv_record_complete(record: &str) -> bool {
 /// Ragged rows are preserved, not dropped: columns beyond the known headers are
 /// kept under positional names (cN), rows with fewer columns leave the trailing
 /// fields absent, and both cases are counted as diagnostics. With --strict, a
-/// ragged row is a parse error instead.
+/// ragged row is a parse error instead. Blank header cells (e.g. `a,,c`) also
+/// take the positional cN name rather than an empty key, so they stay
+/// addressable and never collide into a single "" field.
 pub struct CsvParser {
     delimiter: u8,
     has_headers: bool,
@@ -210,7 +212,8 @@ impl CsvParser {
             let record = result.context("Failed to parse CSV header line")?;
             let headers: Vec<String> = record
                 .iter()
-                .map(|s| {
+                .enumerate()
+                .map(|(i, s)| {
                     let raw = s.trim();
                     let mut parts = raw.splitn(2, ':');
                     let field_name = parts.next().unwrap_or("").trim();
@@ -218,14 +221,26 @@ impl CsvParser {
 
                     if let Some(type_str) = field_type {
                         if let Some(ftype) = FieldType::from_str(type_str) {
-                            if !self.type_map.contains_key(field_name) {
+                            if !field_name.is_empty() && !self.type_map.contains_key(field_name) {
                                 self.type_map.insert(field_name.to_string(), ftype);
+                            }
+                            if field_name.is_empty() {
+                                return format!("c{}", i + 1);
                             }
                             return field_name.to_string();
                         }
                     }
 
-                    raw.to_string()
+                    // A blank header cell has no name; logfmt has no notion of an
+                    // empty key and, worse, multiple blank columns would collide
+                    // into a single empty-string field and silently drop data.
+                    // Fall back to the positional cN name used for headerless and
+                    // ragged-overflow columns so every column stays addressable.
+                    if raw.is_empty() {
+                        format!("c{}", i + 1)
+                    } else {
+                        raw.to_string()
+                    }
                 })
                 .collect();
             Ok(headers)
@@ -786,5 +801,34 @@ mod tests {
             1234
         );
         assert!(data_result.fields.get("status:int").is_none());
+    }
+
+    #[test]
+    fn test_csv_blank_header_columns_get_positional_names() {
+        // A blank header cell has no name. It must not become an empty key:
+        // logfmt can't represent one, and multiple blanks would collide into a
+        // single "" field and silently drop data. Each blank gets its cN name.
+        let mut parser = CsvParser::new_csv();
+        let was_consumed = parser.initialize_headers_from_line("a,,,c").unwrap();
+        assert!(was_consumed);
+
+        let event = parser.parse("1,2,3,4").unwrap();
+        assert_eq!(event.fields.get("a").unwrap().to_string(), "1");
+        assert_eq!(event.fields.get("c2").unwrap().to_string(), "2");
+        assert_eq!(event.fields.get("c3").unwrap().to_string(), "3");
+        assert_eq!(event.fields.get("c").unwrap().to_string(), "4");
+        // No empty-string key, and no data lost to a collision.
+        assert!(event.fields.get("").is_none());
+    }
+
+    #[test]
+    fn test_csv_blank_typed_header_gets_positional_name() {
+        // ":int" with no name in front still needs a column name.
+        let mut parser = CsvParser::new_csv();
+        parser.initialize_headers_from_line("a,:int,c").unwrap();
+
+        let event = parser.parse("1,2,3").unwrap();
+        assert_eq!(event.fields.get("c2").unwrap().to_string(), "2");
+        assert!(event.fields.get("").is_none());
     }
 }
