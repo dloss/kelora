@@ -72,7 +72,9 @@ flat rows. → [Flatten Nested JSON for Analysis](fan-out-nested-structures.md).
 
 ## Inspect JWT claims — `parse_jwt()` {#jwt-parsing-without-verification}
 
-Read header and claims for debugging, no signature setup.
+Read header and claims for debugging, no signature setup. The standard time
+claims `exp`/`iat`/`nbf` come back as datetimes (`expires_at`, `issued_at`,
+`not_before`), so you can format them or compare against `now()` directly.
 
 === "Command/Output"
 
@@ -82,9 +84,17 @@ Read header and claims for debugging, no signature setup.
       --exec 'let jwt = e.token.parse_jwt();
               e.user = jwt.claims.sub;
               e.role = jwt.claims.role;
+              e.expires = jwt.expires_at.to_iso();
               e.token = ()' \
-      -k timestamp,user,role
+      -k timestamp,user,role,expires
     ```
+
+Find expired tokens by comparing the decoded expiry against the current time:
+
+```bash
+kelora -j examples/auth-logs.jsonl \
+  --filter 'e.token.parse_jwt().expires_at < now()'
+```
 
 !!! warning
     Does **not** verify signatures — debugging / trusted tokens only.

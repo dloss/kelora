@@ -63,7 +63,7 @@ text.parse_combined()                Parse Apache/Nginx combined log line
 text.parse_content_disposition()     Parse Content-Disposition header parameters
 text.parse_email()                   Parse email address into parts
 text.parse_json()                    Parse JSON string into map/array
-text.parse_jwt()                     Parse JWT into header/claims without verification
+text.parse_jwt()                     Parse JWT into header/claims (+ exp/iat/nbf as datetimes) without verification
 text.parse_kv([sep [,kv_sep]])       Split key-value pairs from text (skips tokens without separator; NOT quote-aware — use parse_logfmt for quoted/typed values)
 text.parse_logfmt()                  Parse logfmt line into structured fields
 text.parse_media_type()              Parse media type tokens and parameters
@@ -706,6 +706,9 @@ kelora -j security_audit.jsonl --filter 'e.has("src_ip") && !e.src_ip.is_private
 
 # Parse JWT tokens (no verification)
 kelora -j auth_burst.jsonl --exec 'let jwt = e.token.parse_jwt(); e.user = jwt.claims.sub'
+
+# Flag expired JWTs using the decoded exp claim (exposed as a datetime)
+kelora -j auth_burst.jsonl --filter 'e.token.parse_jwt().expires_at < now()'
 
 # Hash sensitive fields with domain separation (set KELORA_SECRET for stable, reproducible output)
 kelora -j audit_findings.jsonl --exec 'e.email_hash = pseudonym(e.email, "users"); e.email = ()'

@@ -5,6 +5,7 @@
 
 use base64::engine::general_purpose::{URL_SAFE, URL_SAFE_NO_PAD};
 use base64::Engine as _;
+use chrono::{TimeZone, Utc};
 use rhai::{Array, Dynamic, Engine, Map};
 use std::path::Path;
 use std::sync::LazyLock;
@@ -13,6 +14,7 @@ use url::Url;
 use crate::event::Event;
 use crate::parsers::{CefParser, CombinedParser, LogfmtParser, SyslogParser};
 use crate::pipeline::EventParser;
+use crate::rhai_functions::datetime::DateTimeWrapper;
 
 /// Maximum length for parsed inputs (1MB)
 const MAX_PARSE_LEN: usize = 1_048_576;
@@ -930,6 +932,44 @@ fn decode_jwt_segment(segment: &str) -> Option<Vec<u8>> {
     }
 }
 
+/// Interpret a JWT claim value as a NumericDate (seconds since the Unix epoch).
+///
+/// RFC 7519 defines `exp`/`iat`/`nbf` as NumericDate values, which may carry a
+/// fractional part. JSON numbers reach us as `i64`, `u64`, or `f64`, so accept
+/// all three. Returns `(seconds, nanoseconds)` or `None` when the value is
+/// missing, non-numeric, or otherwise unusable.
+fn claim_epoch_seconds(value: &Dynamic) -> Option<(i64, u32)> {
+    if let Ok(i) = value.as_int() {
+        return Some((i, 0));
+    }
+    if let Some(u) = value.clone().try_cast::<u64>() {
+        return i64::try_from(u).ok().map(|s| (s, 0));
+    }
+    if let Ok(f) = value.as_float() {
+        if !f.is_finite() {
+            return None;
+        }
+        let secs = f.floor();
+        if secs < i64::MIN as f64 || secs > i64::MAX as f64 {
+            return None;
+        }
+        let nanos = ((f - secs) * 1_000_000_000.0).round() as u32;
+        return Some((secs as i64, nanos.min(999_999_999)));
+    }
+    None
+}
+
+/// Decode a JWT NumericDate claim into a UTC `DateTimeWrapper` so it composes
+/// with the rest of kelora's datetime functions (comparison, subtraction,
+/// `format()`, ...). Returns `None` for missing/invalid/out-of-range claims.
+fn jwt_numeric_date(claims: &Map, key: &str) -> Option<DateTimeWrapper> {
+    let (secs, nanos) = claim_epoch_seconds(claims.get(key)?)?;
+    match Utc.timestamp_opt(secs, nanos) {
+        chrono::LocalResult::Single(dt) => Some(DateTimeWrapper::from_utc(dt)),
+        _ => None,
+    }
+}
+
 fn jwt_segment_to_map(segment: &str) -> Map {
     if let Some(bytes) = decode_jwt_segment(segment) {
         if bytes.len() <= MAX_PARSE_LEN {
@@ -993,6 +1033,19 @@ fn parse_jwt_impl(input: &str) -> Map {
         .and_then(|v| v.clone().into_string().ok())
     {
         result.insert("typ".into(), Dynamic::from(typ));
+    }
+
+    // Surface the standard time claims as datetimes so callers can compare
+    // them against now() and subtract them to get token lifetimes without
+    // hand-converting Unix seconds.
+    for (claim, field) in [
+        ("exp", "expires_at"),
+        ("iat", "issued_at"),
+        ("nbf", "not_before"),
+    ] {
+        if let Some(dt) = jwt_numeric_date(&claims_map, claim) {
+            result.insert(field.into(), Dynamic::from(dt));
+        }
     }
 
     result
@@ -1116,6 +1169,50 @@ mod tests {
             result.get("typ").unwrap().clone().into_string().unwrap(),
             "JWT"
         );
+    }
+
+    #[test]
+    fn test_parse_jwt_time_claims() {
+        // Build an unsigned token whose payload carries the standard NumericDate
+        // claims. exp = 2033-05-18, iat = 2001-09-09, nbf = 2017-07-14.
+        let header = URL_SAFE_NO_PAD.encode(br#"{"alg":"none"}"#);
+        let payload = URL_SAFE_NO_PAD
+            .encode(br#"{"sub":"x","iat":1000000000,"nbf":1500000000,"exp":2000000000}"#);
+        let token = format!("{header}.{payload}");
+
+        let result = parse_jwt_impl(&token);
+
+        let expires_at = result
+            .get("expires_at")
+            .and_then(|v| v.clone().try_cast::<DateTimeWrapper>())
+            .expect("expires_at should be a datetime");
+        assert_eq!(expires_at.inner.timestamp(), 2000000000);
+
+        let issued_at = result
+            .get("issued_at")
+            .and_then(|v| v.clone().try_cast::<DateTimeWrapper>())
+            .expect("issued_at should be a datetime");
+        assert_eq!(issued_at.inner.timestamp(), 1000000000);
+
+        let not_before = result
+            .get("not_before")
+            .and_then(|v| v.clone().try_cast::<DateTimeWrapper>())
+            .expect("not_before should be a datetime");
+        assert_eq!(not_before.inner.timestamp(), 1500000000);
+    }
+
+    #[test]
+    fn test_parse_jwt_omits_missing_or_invalid_time_claims() {
+        // Payload with no time claims and a non-numeric exp must not produce
+        // datetime fields.
+        let header = URL_SAFE_NO_PAD.encode(br#"{"alg":"none"}"#);
+        let payload = URL_SAFE_NO_PAD.encode(br#"{"sub":"x","exp":"soon"}"#);
+        let token = format!("{header}.{payload}");
+
+        let result = parse_jwt_impl(&token);
+        assert!(!result.contains_key("expires_at"));
+        assert!(!result.contains_key("issued_at"));
+        assert!(!result.contains_key("not_before"));
     }
 
     #[test]
