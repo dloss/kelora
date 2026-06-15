@@ -2416,6 +2416,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Rhai Quirks &amp; Gotchas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calling-style-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling style (in practice)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2761,6 +2778,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Rhai Quirks &amp; Gotchas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#calling-style-in-practice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling style (in practice)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3166,19 +3200,28 @@
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>let name = &#39;alice&#39;;                   // Error: single quotes not allowed
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>if x &gt; 5: print(&quot;big&quot;)                // Error: colon not allowed, braces required
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>&quot;5&quot; + 3                               // Error: no implicit conversion
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>// ✅ Correct
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>let x = 1;                            // Declare with let
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>let name = &quot;alice&quot;;                   // Double quotes
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>if x &gt; 5 { print(&quot;big&quot;); }            // Braces required
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>&quot;5&quot;.to_int() + 3                      // Explicit conversion
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>let n = state[&quot;x&quot;] = 1;               // Error: assignment is not an expression
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>// ✅ Correct
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>let x = 1;                            // Declare with let
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>let name = &quot;alice&quot;;                   // Double quotes
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>if x &gt; 5 { print(&quot;big&quot;); }            // Braces required
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>&quot;5&quot;.to_int() + 3                      // Explicit conversion
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>state[&quot;x&quot;] = 1; let n = state[&quot;x&quot;];   // Assign, then read on separate statements
 </code></pre></div>
 <p><strong>Special behaviors:</strong></p>
 <ul>
 <li>Last expression in block is return value (no <code>return</code> needed)</li>
 <li>Semicolons recommended but often optional</li>
-<li>Function calls without args: <code>e.len</code> same as <code>e.len()</code></li>
 <li>No implicit type conversion (use <code>to_int()</code>, <code>to_float()</code>, etc.)</li>
+<li>Map keys: <code>m.key</code> and <code>m["key"]</code> are equivalent for static identifier keys — use whichever reads better. Brackets are required for dynamic or non-identifier keys (<code>state[e.user]</code>, <code>e["user-agent"]</code>); <code>m.user-agent</code> parses as subtraction, not a key</li>
+</ul>
+<h3 id="calling-style-in-practice">Calling style (in practice)<a class="headerlink" href="#calling-style-in-practice" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Built-in functions: either style — chain with method style. <code>e.msg.to_upper().trim()</code> or <code>to_upper(e.msg)</code>.</li>
+<li>Your own helpers (<code>--include</code> or inline <code>fn f(x)</code>): function-style only — <code>is_problem(e)</code>, not <code>e.is_problem()</code> (that fails with <code>Function not found</code>).</li>
+<li>Fields &amp; state keys: <code>e.field</code> / <code>state.key</code> for plain names; brackets for dynamic or non-identifier keys — <code>e[var]</code>, <code>e["user-agent"]</code>, <code>state[e.user]</code>.</li>
+<li>Length/keys of a map: use <code>len(e)</code> / <code>keys(e)</code> (or <code>e.len()</code>); bare <code>e.len</code> reads a field named <code>len</code>, not the count.</li>
 </ul>
 <h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>// Event manipulation
