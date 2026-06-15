@@ -423,10 +423,23 @@ state["x"] = 1; let n = state["x"];   // Assign, then read on separate statement
 
 - Last expression in block is return value (no `return` needed)
 - Semicolons recommended but often optional
-- Getter/method without args needs no parens on strings/arrays/scalars: `s.len` == `s.len()` (but **not** on maps — see below)
 - No implicit type conversion (use `to_int()`, `to_float()`, etc.)
 - Map keys: `m.key` and `m["key"]` are equivalent for static identifier keys — use whichever reads better. Brackets are **required** for dynamic or non-identifier keys (`state[e.user]`, `e["user-agent"]`); `m.user-agent` parses as subtraction, not a key
-- Map method vs. key: on a map, bare `m.len` reads the *key* `len` (or `()` if absent) and never calls a method, so 0-arity methods always need parens — `m.len()`, `m.keys()`. Method names and keys therefore never collide. When a same-named key may exist, prefer function-style `len(m)` / `keys(m)`: with no dot, it can't be misread as key access
+
+### Calling style: function vs. method vs. property
+
+Three syntaxes, and they are **not** interchangeable. Pick by what you're calling:
+
+| Call | Native fn (`to_upper`, `split`, `len`) | Script `fn f(x)` (incl. `--include`) | Object map (`e`, `state`) |
+|------|------|------|------|
+| `f(x)` function-style | ✅ | ✅ | `len(m)`, `keys(m)` ✅ |
+| `x.f()` method-style | ✅ (receiver = 1st arg) | ❌ *Function not found* | `m.len()` ✅ |
+| `x.f` bare, no parens | only if a **getter** (`s.len`); `s.to_upper` ❌ | ❌ | reads the *key* `f`, never a method |
+
+- **Native functions are interchangeable:** `to_upper(s)` == `s.to_upper()` — the receiver is just the first argument.
+- **Script-defined functions are not.** Method-style binds the receiver to `this` (not arg 0), so a plain `fn f(x)` is callable only as `f(x)`; `x.f()` reports *Function not found*. To make one method-callable, write it with `this` (`fn f() { this * 2 }`) or typed (`fn int.f() { … }`). **So always call helpers from `--include` function-style: `is_problem(e)`, not `e.is_problem()`.**
+- **Bare `x.f` (no parens) is property/getter access only** — a registered getter (`s.len`, `arr.len`) or a map key. It never calls an arbitrary method; `s.to_upper` errors with *getter not registered*.
+- **On a map, bare `m.len` is the key `len`** (or `()` if absent), never the method, so 0-arity methods need parens (`m.len()`). Keys and method names never collide. When a key might shadow a name, prefer function-style `len(m)` — no dot to misread.
 
 ## Quick Reference
 
