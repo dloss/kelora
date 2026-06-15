@@ -18,3 +18,15 @@ benchmarks/comparison_results/
 fuzz/artifacts/
 fuzz/corpus/
 fuzz/target/
+
+# Stray output files from `-o <format>` (meant `-F <format>`); see guardrail in main.rs
+/json
+/logfmt
+/csv
+/tsv
+/csvnh
+/tsvnh
+/inspect
+/levelmap
+/keymap
+/tailmap

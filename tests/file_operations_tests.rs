@@ -470,3 +470,65 @@ fn test_truncate_file_creates_empty_file() {
     let content = fs::read_to_string(&output_file).unwrap();
     assert!(content.is_empty(), "File should be empty");
 }
+
+// Run kelora inside `dir` with stdin `input`. Used so a bare `-o <format>`
+// value writes into a throwaway directory instead of the crate root.
+fn run_kelora_in_dir(dir: &std::path::Path, args: &[&str], input: &str) -> (String, String, i32) {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_kelora"))
+        .args(args)
+        .current_dir(dir)
+        .env("LLVM_PROFILE_FILE", "/dev/null")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("Failed to start kelora");
+    cmd.stdin
+        .as_mut()
+        .unwrap()
+        .write_all(input.as_bytes())
+        .expect("Failed to write stdin");
+    let out = cmd.wait_with_output().expect("Failed to read output");
+    (
+        String::from_utf8_lossy(&out.stdout).to_string(),
+        String::from_utf8_lossy(&out.stderr).to_string(),
+        out.status.code().unwrap_or(-1),
+    )
+}
+
+#[test]
+fn test_output_file_named_like_format_warns() {
+    // `-o json` is a common mistake for `-F json`; it should warn (but still
+    // write the file, preserving behavior).
+    let dir = TempDir::new().unwrap();
+    let (_stdout, stderr, exit_code) =
+        run_kelora_in_dir(dir.path(), &["-f", "logfmt", "-o", "json"], "a=1\n");
+
+    assert_eq!(exit_code, 0, "should still succeed, stderr: {}", stderr);
+    assert!(
+        stderr.contains("did you mean -F json"),
+        "should warn about format/file confusion, got: {}",
+        stderr
+    );
+    assert!(
+        dir.path().join("json").exists(),
+        "file should still be written as requested"
+    );
+}
+
+#[test]
+fn test_output_file_with_extension_does_not_warn() {
+    // A real filename (has an extension) must not trigger the guardrail.
+    let dir = TempDir::new().unwrap();
+    let (_stdout, stderr, exit_code) =
+        run_kelora_in_dir(dir.path(), &["-f", "logfmt", "-o", "out.json"], "a=1\n");
+
+    assert_eq!(exit_code, 0, "should succeed, stderr: {}", stderr);
+    assert!(
+        !stderr.contains("did you mean"),
+        "should not warn for a real filename, got: {}",
+        stderr
+    );
+}

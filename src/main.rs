@@ -344,6 +344,29 @@ fn main() -> Result<()> {
     let terminal_allowed = !config.processing.silent;
 
     let result = if let Some(ref output_file_path) = cli.output_file {
+        // Guardrail: `-o`/`--output-file` takes a FILE, but it is easy to
+        // mistake it for an output-FORMAT selector (which is `-F`). A bare
+        // value that exactly matches a known format name (no path, no
+        // extension) is almost always that mistake — e.g. `-o json` silently
+        // writes a file literally named `json`. Warn, but still honor the
+        // request so existing scripts are unaffected.
+        if !config.processing.silent
+            && !output_file_path.contains(std::path::is_separator)
+            && !output_file_path.contains('.')
+        {
+            const FORMAT_NAMES: &[&str] = &[
+                "default", "json", "logfmt", "inspect", "levelmap", "keymap", "tailmap", "csv",
+                "tsv", "csvnh", "tsvnh", "line", "raw", "syslog", "cef", "combined",
+            ];
+            if FORMAT_NAMES.contains(&output_file_path.to_ascii_lowercase().as_str()) {
+                stderr
+                    .writeln(&config.format_warning_message(&format!(
+                        "writing output to a file named '{}'; did you mean -F {} (--output-format)?",
+                        output_file_path, output_file_path
+                    )))
+                    .unwrap_or(());
+            }
+        }
         // Use file output
         let file_output = match SafeFileOut::new(output_file_path) {
             Ok(file) => file,
