@@ -157,6 +157,8 @@ map.unflatten([separator])           Reconstruct nested object from flat keys
 DATETIME FUNCTIONS:
 now()                                Current UTC timestamp (DateTimeWrapper)
 to_datetime(text [,fmt [,tz]])       Convert string into DateTimeWrapper with optional hints
+to_datetime(int)                     Convert integer Unix timestamp (unit inferred from digits, like the string form)
+to_datetime(int, unit)               Convert integer Unix timestamp with explicit unit ("s"/"ms"/"us"/"ns")
 to_duration("1h30m")                 Convert duration string into DurationWrapper
 duration_from_<unit>(n)              Create duration from seconds/minutes/hours/days/ms/ns
 humanize_duration(ms)                Convert milliseconds to human-readable format (e.g., "1h 30m")

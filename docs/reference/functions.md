@@ -982,6 +982,20 @@ e.parsed = to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "UTC")
 e.auto = to_datetime("2024-01-15T10:30:00Z")          // Auto-detect format
 ```
 
+#### `to_datetime(int [, unit])`
+Convert an integer Unix timestamp into a datetime value. With no unit, the unit
+is inferred from the number of digits (10→seconds, 13→milliseconds,
+16→microseconds, 19→nanoseconds), exactly like passing the same number as a
+string. Other digit counts (and small values such as `0`) are ambiguous and
+raise an error — pass an explicit unit in those cases.
+
+```rhai
+e.a = to_datetime(1700000000)            // seconds (10 digits)
+e.b = to_datetime(1700000000000)         // milliseconds (13 digits)
+e.c = to_datetime(e.ts, "ms")            // explicit unit: "s", "ms", "us", "ns"
+e.d = to_datetime(0, "s")                // explicit unit handles the epoch
+```
+
 #### `to_duration("1h30m")`
 Convert duration string into duration value.
 

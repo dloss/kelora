@@ -169,6 +169,61 @@ pub fn to_datetime(
     )))
 }
 
+/// Convert an integer Unix timestamp into a `DateTimeWrapper`, mirroring the
+/// string path: the unit (s/ms/µs/ns) is inferred from the number of digits,
+/// exactly like `to_datetime(n.to_string())`.
+pub fn to_datetime_int(n: i64) -> Result<DateTimeWrapper, Box<EvalAltResult>> {
+    to_datetime(&n.to_string(), None, None).map_err(|_| {
+        Box::new(EvalAltResult::ErrorRuntime(
+            format!(
+                "Cannot infer Unix timestamp unit for integer {n}; \
+                 pass an explicit unit, e.g. to_datetime({n}, \"s\")"
+            )
+            .into(),
+            Position::NONE,
+        ))
+    })
+}
+
+/// Convert an integer Unix timestamp into a `DateTimeWrapper` using an explicit
+/// unit: "s"/"sec"/"seconds", "ms"/"millis", "us"/"µs"/"micros", or "ns"/"nanos".
+pub fn to_datetime_int_unit(n: i64, unit: &str) -> Result<DateTimeWrapper, Box<EvalAltResult>> {
+    let dt = match unit.to_lowercase().as_str() {
+        "s" | "sec" | "secs" | "second" | "seconds" => DateTime::from_timestamp(n, 0),
+        "ms" | "milli" | "millis" | "millisecond" | "milliseconds" => DateTime::from_timestamp(
+            n.div_euclid(1_000),
+            (n.rem_euclid(1_000) * 1_000_000) as u32,
+        ),
+        "us" | "µs" | "micro" | "micros" | "microsecond" | "microseconds" => {
+            DateTime::from_timestamp(
+                n.div_euclid(1_000_000),
+                (n.rem_euclid(1_000_000) * 1_000) as u32,
+            )
+        }
+        "ns" | "nano" | "nanos" | "nanosecond" | "nanoseconds" => DateTime::from_timestamp(
+            n.div_euclid(1_000_000_000),
+            n.rem_euclid(1_000_000_000) as u32,
+        ),
+        other => {
+            return Err(Box::new(EvalAltResult::ErrorRuntime(
+                format!(
+                    "Invalid Unix timestamp unit '{other}'; expected one of \
+                     \"s\", \"ms\", \"us\", \"ns\""
+                )
+                .into(),
+                Position::NONE,
+            )))
+        }
+    };
+
+    dt.map(DateTimeWrapper::from_utc).ok_or_else(|| {
+        Box::new(EvalAltResult::ErrorRuntime(
+            format!("Unix timestamp {n} ({unit}) is out of range").into(),
+            Position::NONE,
+        ))
+    })
+}
+
 /// Convert a string like "1h 30m" or "2d" into a `DurationWrapper`.
 pub fn to_duration(s: &str) -> Result<DurationWrapper, Box<EvalAltResult>> {
     let mut total_duration = Duration::zero();
@@ -449,6 +504,21 @@ pub fn register_functions(engine: &mut Engine) {
         "to_datetime",
         |s: &str, format: &str, tz: &str| -> Result<DateTimeWrapper, Box<EvalAltResult>> {
             to_datetime(s, Some(format), Some(tz))
+        },
+    );
+
+    // Integer Unix-timestamp overloads. The bare form infers the unit from the
+    // digit count, mirroring `to_datetime(n.to_string())`; the two-arg form
+    // takes an explicit unit ("s"/"ms"/"us"/"ns") to avoid that inference.
+    engine.register_fn(
+        "to_datetime",
+        |n: i64| -> Result<DateTimeWrapper, Box<EvalAltResult>> { to_datetime_int(n) },
+    );
+
+    engine.register_fn(
+        "to_datetime",
+        |n: i64, unit: &str| -> Result<DateTimeWrapper, Box<EvalAltResult>> {
+            to_datetime_int_unit(n, unit)
         },
     );
 
@@ -1018,6 +1088,53 @@ mod tests {
         // Test Unix timestamp with non-numeric characters
         let invalid_chars = to_datetime("1735566123a", None, None);
         assert!(invalid_chars.is_err());
+    }
+
+    #[test]
+    fn test_to_datetime_int_mirrors_string() {
+        // The bare integer overload must resolve identically to the equivalent
+        // string, including which digit counts succeed and which fail.
+        for &n in &[
+            1_735_566_123_i64,
+            1_735_566_123_000,
+            1_735_566_123_000_000,
+            1_735_566_123_000_000_000,
+        ] {
+            let from_int = to_datetime_int(n).expect("int should parse");
+            let from_str = to_datetime(&n.to_string(), None, None).expect("string should parse");
+            assert_eq!(from_int.inner, from_str.inner, "mismatch for {n}");
+        }
+
+        // Dead zones that the string path rejects must also reject as integers.
+        for &n in &[0_i64, 12345, 999_999_999, 17_000_000_000] {
+            assert!(to_datetime_int(n).is_err(), "expected error for {n}");
+            assert!(to_datetime(&n.to_string(), None, None).is_err());
+        }
+    }
+
+    #[test]
+    fn test_to_datetime_int_explicit_unit() {
+        // Same instant expressed in each unit resolves to the same second.
+        let secs = to_datetime_int_unit(1_700_000_000, "s").unwrap();
+        let millis = to_datetime_int_unit(1_700_000_000_000, "ms").unwrap();
+        let micros = to_datetime_int_unit(1_700_000_000_000_000, "us").unwrap();
+        let nanos = to_datetime_int_unit(1_700_000_000_000_000_000, "ns").unwrap();
+        assert_eq!(secs.inner, millis.inner);
+        assert_eq!(secs.inner, micros.inner);
+        assert_eq!(secs.inner, nanos.inner);
+        assert_eq!(secs.inner.year(), 2023);
+
+        // Explicit unit handles the values the bare overload rejects.
+        let epoch = to_datetime_int_unit(0, "s").unwrap();
+        assert_eq!(epoch.inner.year(), 1970);
+        assert!(to_datetime_int_unit(-100, "s").is_ok());
+
+        // Sub-second components survive the unit conversion.
+        let frac = to_datetime_int_unit(1_700_000_000_500, "ms").unwrap();
+        assert_eq!(frac.inner.timestamp_subsec_millis(), 500);
+
+        // Unknown units are rejected.
+        assert!(to_datetime_int_unit(1_700_000_000, "weeks").is_err());
     }
 
     #[test]

@@ -281,6 +281,8 @@ Complete reference for working with dates and times in Rhai scripts.
 | `to_datetime(text)` | Parse ISO 8601 timestamp (auto-format) | `to_datetime("2024-01-15T10:30:00Z")` |
 | `to_datetime(text, fmt)` | Parse with custom format | `to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S")` |
 | `to_datetime(text, fmt, tz)` | Parse with format and timezone | `to_datetime("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S", "America/New_York")` |
+| `to_datetime(int)` | Integer Unix timestamp (unit inferred from digit count) | `to_datetime(1700000000)` |
+| `to_datetime(int, unit)` | Integer Unix timestamp with explicit unit (`s`/`ms`/`us`/`ns`) | `to_datetime(1700000000000, "ms")` |
 | `now()` | Current time (UTC) | `now()` |
 
 ### DateTime Components
