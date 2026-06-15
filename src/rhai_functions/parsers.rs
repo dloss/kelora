@@ -934,37 +934,26 @@ fn decode_jwt_segment(segment: &str) -> Option<Vec<u8>> {
 
 /// Interpret a JWT claim value as a NumericDate (seconds since the Unix epoch).
 ///
-/// RFC 7519 defines `exp`/`iat`/`nbf` as NumericDate values, which may carry a
-/// fractional part. JSON numbers reach us as `i64`, `u64`, or `f64`, so accept
-/// all three. Returns `(seconds, nanoseconds)` or `None` when the value is
-/// missing, non-numeric, or otherwise unusable.
-fn claim_epoch_seconds(value: &Dynamic) -> Option<(i64, u32)> {
+/// RFC 7519 defines `exp`/`iat`/`nbf` as NumericDate values. In practice these
+/// are always whole seconds, so we accept `i64` (and `u64` for large JSON
+/// numbers) and ignore the spec's rarely-used fractional form. Returns the
+/// seconds, or `None` when the value is missing, non-numeric, or out of range.
+fn claim_epoch_seconds(value: &Dynamic) -> Option<i64> {
     if let Ok(i) = value.as_int() {
-        return Some((i, 0));
+        return Some(i);
     }
-    if let Some(u) = value.clone().try_cast::<u64>() {
-        return i64::try_from(u).ok().map(|s| (s, 0));
-    }
-    if let Ok(f) = value.as_float() {
-        if !f.is_finite() {
-            return None;
-        }
-        let secs = f.floor();
-        if secs < i64::MIN as f64 || secs > i64::MAX as f64 {
-            return None;
-        }
-        let nanos = ((f - secs) * 1_000_000_000.0).round() as u32;
-        return Some((secs as i64, nanos.min(999_999_999)));
-    }
-    None
+    value
+        .clone()
+        .try_cast::<u64>()
+        .and_then(|u| i64::try_from(u).ok())
 }
 
 /// Decode a JWT NumericDate claim into a UTC `DateTimeWrapper` so it composes
 /// with the rest of kelora's datetime functions (comparison, subtraction,
 /// `format()`, ...). Returns `None` for missing/invalid/out-of-range claims.
 fn jwt_numeric_date(claims: &Map, key: &str) -> Option<DateTimeWrapper> {
-    let (secs, nanos) = claim_epoch_seconds(claims.get(key)?)?;
-    match Utc.timestamp_opt(secs, nanos) {
+    let secs = claim_epoch_seconds(claims.get(key)?)?;
+    match Utc.timestamp_opt(secs, 0) {
         chrono::LocalResult::Single(dt) => Some(DateTimeWrapper::from_utc(dt)),
         _ => None,
     }
