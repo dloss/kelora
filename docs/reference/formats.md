@@ -19,6 +19,8 @@ Specify input format with `-f, --input-format <format>`.
 | `syslog` | System logs, network devices |
 | `combined` | Apache/Nginx web server access logs |
 | `cef` | ArcSight Common Event Format, SIEM data |
+| `cri` | Kubernetes CRI/containerd container logs (`kubectl logs --timestamps`, `/var/log/pods/*`) |
+| `<name>` | Named application-log formats (`glog`, `log4j`, …) — see `--help-formats` |
 | `cols:<spec>` | Custom column-based logs |
 | `regex:<pattern>` | Custom regex parsing with named groups and type annotations |
 | `<fmt1>,<fmt2>[,…]` | Cascade mode — try parsers in order, first success wins (e.g. `json,line`) |
@@ -262,6 +264,64 @@ CEF:0|Security|threatmanager|1.0|100|worm successfully stopped|10|src=10.0.0.1 d
 
 **Extensions:** All extension key=value pairs become top-level fields with automatic type conversion (integers, floats, booleans)
 
+### CRI Format
+
+**Syntax:** `-f cri`
+
+**Description:** The Kubernetes CRI/containerd on-disk container-log layout —
+`<RFC3339Nano> <stream> <tag> <message>`. This is the raw shape of
+`/var/log/pods/*/*.log`, of `kubectl logs --timestamps`, and of what node-level
+log shippers (Fluent Bit, Vector, promtail) read before forwarding. The message
+is often itself JSON or logfmt; it is kept verbatim in `msg` for an optional
+second-stage parse.
+
+**Input Example:**
+```
+2024-07-17T12:12:05.123456789Z stdout F {"level":"info","msg":"started"}
+2024-07-17T12:12:06.223456789Z stderr P panic: runtime error: nil pointer
+```
+
+**Output Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ts` | String | RFC3339Nano timestamp written by the runtime |
+| `stream` | String | `stdout` or `stderr` |
+| `tag` | String | `F` (full line) or `P` (partial — the runtime split a line longer than ~16 KiB; consumers rejoin consecutive `P` lines up to the next `F`) |
+| `msg` | String | The container's log line, kept verbatim |
+
+**Example Usage:**
+```bash
+# Show only stderr lines from a pod log file
+kelora pod.log -f cri --filter 'e.stream == "stderr"' -k ts,msg
+
+# Fan a structured JSON payload back into top-level fields, then filter on it
+kelora pod.log -f cri --exec 'e.absorb_json("msg")' --filter 'e.level == "error"'
+```
+
+**Notes:**
+
+- Unlike the other named application-log formats (see below), `cri` is part of
+  auto-detection's early path — it is tried **before** the logfmt and CSV steps,
+  because a CRI message is frequently itself JSON or logfmt (whose commas/pairs
+  would otherwise be misdetected as CSV/logfmt). Auto-detection therefore
+  recognises CRI logs regardless of the message payload.
+- The Docker `json-file` log driver writes a *different* shape (one JSON object
+  per line with `log`/`stream`/`time` keys) — use `-f json` for those.
+
+### Named Application-Log Formats
+
+Beyond the wire/access formats above, Kelora ships a curated set of named
+application-log layouts — `glog` (Go/Kubernetes klog), `nginx-error`,
+`apache-error`, `log4j`/Java, `python-logging`, `redis`, `s3`, `haproxy`, and
+`iso8601-level` — that parse into `ts`, `level`, `msg`, and format-specific
+extras. Select them with `-f <name>` (e.g. `-f log4j`) or inside a cascade
+(`-f log4j,line`). With the exception of `cri` (above), they are tried only as
+the last step before the `line` fallback, so they never override a format
+detected earlier. Run `kelora --help-formats` for the full catalogue, sample
+lines, and per-format notes. (These definitions are adapted from
+[lnav](https://lnav.org), BSD-3-Clause; `cri` is Kelora-original.)
+
 ### Column Format
 
 **Syntax:** `-f 'cols:<spec>'`
@@ -374,12 +434,14 @@ The following names cannot be used: `original_line`, `parsed_ts`, `fields`
 **Detection Order:**
 
 1. JSON (starts with `{`)
-2. Syslog (starts with `<NNN>`)
+2. Syslog (starts with `<NNN>` or an RFC3164 date)
 3. CEF (starts with `CEF:`)
 4. Combined (matches Apache/Nginx pattern)
-5. Logfmt (contains `key=value` pairs)
-6. CSV (contains commas with consistent pattern)
-7. Line (fallback)
+5. CRI (`<RFC3339Nano> stdout|stderr F|P …`, tried early so a JSON/logfmt message isn't misread as CSV/logfmt)
+6. Logfmt (contains `key=value` pairs)
+7. CSV (contains commas with consistent pattern)
+8. Named application-log formats (regex-based: `glog`, `log4j`, …; see `--help-formats`)
+9. Line (fallback)
 
 **Notes:**
 
