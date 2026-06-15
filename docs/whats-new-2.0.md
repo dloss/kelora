@@ -251,6 +251,46 @@ now treats a ragged row as a parse error. **Action:** if you were relying on
 silent truncation, expect new `c<N>` fields; add `--strict` to reject ragged
 rows instead.
 
+### Breaking: logfmt/CEF stop mangling zero-padded and signed values
+
+The type-inferring parsers (`logfmt`, `cef`) used to coerce *any* token that
+Rust's number parser accepted, which silently rewrote data: leading zeros were
+dropped (`zip=02134` → `2134`, `id=007` → `7`, `ver=01` → `1`), a leading `+`
+was stripped (`phone=+15551234` → `15551234`), and the Rust-only float spellings
+`inf`/`nan`/`Infinity` became floats (then `null` on JSON output). Worse, csv/tsv
+kept these as strings, so the *same* token got a different type depending on the
+format — a real hazard in mixed-format cascades.
+
+A value is now coerced only when it is a valid JSON number (no leading zeros, no
+leading `+`, no `inf`/`nan`); everything else stays a string.
+
+```bash
+# Old (1.x): leading zero silently lost
+echo 'zip=02134' | kelora -f logfmt -F logfmt
+# zip=2134
+
+# New (2.0): preserved as a string
+echo 'zip=02134' | kelora -f logfmt -F logfmt
+# zip=02134
+```
+
+Genuine numbers still infer exactly as before (`status=500`, `dur=1.5`, `n=-5`,
+`big=123456789012345678`, `sci=1e3`), so the numeric filters and stats these
+formats are built around keep working. The win is that the same token now
+resolves to the same type whether it arrives via JSON (where leading-zero numbers
+are illegal anyway) or a logfmt/CEF field, logfmt round-trips IDs faithfully, and
+`--discover` no longer shows already-corrupted sample values. csv/tsv/cols/regex
+are unchanged — they remain string-by-default with opt-in `:int`/`:float`
+annotations.
+
+**Action:** if a script compared a now-string field numerically (e.g. `code=007`
+matched with `== 7`), either compare as a string (`== "007"`) or coerce in a
+script stage:
+
+```bash
+kelora app.log -f logfmt --exec 'e.code = to_int_or(e.code, 0)'
+```
+
 ### Breaking: default-format word-wrapping is now TTY-aware
 
 The default output format no longer wraps wide events onto continuation lines
@@ -289,7 +329,11 @@ defaults = --wrap
    where you want a fallback.
 6. **Check CSV/TSV consumers** for new `c<N>` overflow fields, or add `--strict`
    to reject ragged rows.
-7. **Check line-oriented pipelines.** If you piped default-format output into
+7. **Re-check logfmt/CEF numeric fields.** Zero-padded IDs, `+`-prefixed values,
+   and `inf`/`nan` now stay strings instead of being coerced. If you compared
+   such a field numerically, compare as a string or coerce with
+   `to_int_or(...)`.
+8. **Check line-oriented pipelines.** If you piped default-format output into
    `wc -l`/`head`/`sed`, wrapping is now off by pipe default — add `--wrap` only
    if you actually want continuation lines.
 
