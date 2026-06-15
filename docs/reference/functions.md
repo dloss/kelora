@@ -272,6 +272,16 @@ e.os = ua["os"]
 #### `text.parse_jwt()`
 Parse a JWT into `header` and `claims` (the decoded payload) without verification. Also returns `signature_b64u` plus `alg`/`kid`/`typ` when present in the header. The standard NumericDate claims `exp`, `iat`, and `nbf` are additionally exposed as datetime values under `expires_at`, `issued_at`, and `not_before`, so they compose with `now()` and datetime arithmetic.
 
+The decoded datetimes pair with their source claims as follows (the raw integers remain available under `claims`):
+
+| Datetime field | Source claim | Meaning |
+| --- | --- | --- |
+| `expires_at` | `claims.exp` | Expiration time |
+| `issued_at` | `claims.iat` | Issued-at time |
+| `not_before` | `claims.nbf` | Not-valid-before time |
+
+A field is present only when its claim is present and a valid numeric date.
+
 ```rhai
 let jwt = e.token.parse_jwt()
 e.user_id = jwt["claims"]["sub"]
