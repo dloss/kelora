@@ -35,6 +35,30 @@ fn test_brief_output_mode() {
 }
 
 #[test]
+fn test_logfmt_blank_csv_header_round_trips() {
+    // A blank CSV header column yields an empty field key. The logfmt
+    // formatter must not emit "=value" for it, because Kelora's own logfmt
+    // parser rejects empty keys ("Empty key found"). Regression for the
+    // self-round-trip break: csv -> logfmt -> logfmt parse.
+    let input = "a,,c\n1,2,3\n";
+    let (logfmt_out, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "csv", "-F", "logfmt"], input);
+    assert_eq!(exit_code, 0, "csv -> logfmt should succeed");
+    assert!(
+        !logfmt_out.contains(" =") && !logfmt_out.starts_with('='),
+        "logfmt output must not contain an empty key: {logfmt_out:?}"
+    );
+
+    // Feed the logfmt output back into the logfmt parser; it must parse cleanly.
+    let (_stdout, _stderr2, reparse_code) =
+        run_kelora_with_input(&["-f", "logfmt", "-F", "json"], logfmt_out.trim());
+    assert_eq!(
+        reparse_code, 0,
+        "Kelora's logfmt output must parse back without errors: {logfmt_out:?}"
+    );
+}
+
+#[test]
 fn test_brief_output_mode_short_form() {
     let input = r#"{"level": "INFO", "message": "hello world"}"#;
 

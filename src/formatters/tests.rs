@@ -609,7 +609,9 @@ fn test_sanitize_logfmt_key_function() {
         sanitize_logfmt_key("field_with_underscores"),
         "field_with_underscores"
     );
-    assert_eq!(sanitize_logfmt_key(""), "");
+    // An empty key must map to a placeholder, never "", otherwise it renders
+    // as "=value" which logfmt parsers (including Kelora's) reject.
+    assert_eq!(sanitize_logfmt_key(""), "_");
 
     // Test edge cases
     assert_eq!(sanitize_logfmt_key("==="), "___");

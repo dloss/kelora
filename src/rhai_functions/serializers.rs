@@ -369,6 +369,13 @@ fn to_combined_impl(map: rhai::Map) -> String {
 
 /// Sanitize a field key to ensure logfmt compliance
 fn sanitize_logfmt_key(key: &str) -> String {
+    // An empty key would render as "=value", which logfmt parsers reject as
+    // "Empty key found". Map it to a placeholder so to_logfmt() output stays
+    // parseable, mirroring the LogfmtFormatter.
+    if key.is_empty() {
+        return "_".to_string();
+    }
+
     key.chars()
         .map(|c| match c {
             ' ' | '\t' | '\n' | '\r' | '=' => '_',
@@ -489,6 +496,8 @@ mod tests {
         assert_eq!(sanitize_logfmt_key("normal_key"), "normal_key");
         assert_eq!(sanitize_logfmt_key("key with spaces"), "key_with_spaces");
         assert_eq!(sanitize_logfmt_key("key=value"), "key_value");
+        // Empty keys must not render as "=value", which logfmt parsers reject.
+        assert_eq!(sanitize_logfmt_key(""), "_");
     }
 
     #[test]

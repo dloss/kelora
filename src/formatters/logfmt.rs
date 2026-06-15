@@ -60,9 +60,18 @@ fn format_quoted_logfmt_value(value: &str, output: &mut String) {
 ///
 /// # Examples
 /// - sanitize_logfmt_key("field with spaces") -> "field_with_spaces"
-/// - sanitize_logfmt_key("field=with=equals") -> "field_with_equals"  
+/// - sanitize_logfmt_key("field=with=equals") -> "field_with_equals"
 /// - sanitize_logfmt_key("normal_field") -> "normal_field"
+/// - sanitize_logfmt_key("") -> "_"
 pub(crate) fn sanitize_logfmt_key(key: &str) -> String {
+    // An empty key would render as "=value", which standard logfmt parsers
+    // (including Kelora's own) reject as "Empty key found". Empty keys arise
+    // naturally from blank CSV header columns, so map them to a placeholder to
+    // keep the output parseable. See sanitize_logfmt_key tests.
+    if key.is_empty() {
+        return "_".to_string();
+    }
+
     key.chars()
         .map(|c| match c {
             ' ' | '\t' | '\n' | '\r' | '=' => '_',
