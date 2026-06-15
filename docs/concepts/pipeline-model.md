@@ -405,7 +405,10 @@ kelora -j large.log \
 **Incompatible Features:**
 
 - **Spans** - Cannot maintain span state across batches (forces sequential)
-- **Cross-event context** - Each batch processed independently
+- **Cross-event context** (`--window`, `-B`/`-C`) - Order-dependent across
+  batches, so it also forces sequential. kelora ignores
+  `--parallel`/`--threads`/`--batch-size` (with a warning) when these are set;
+  otherwise per-worker buffers would silently return wrong cross-event results.
 
 **Multiline Behavior:**
 

@@ -1183,7 +1183,20 @@ impl KeloraConfig {
 
     /// Check if parallel processing should be used
     pub fn should_use_parallel(&self) -> bool {
-        if self.processing.span.is_some() {
+        // Span aggregation and cross-event context (--window, -B/-C) are all
+        // order-dependent: they need every event in original sequence. Under
+        // parallel batching each worker keeps its own per-batch buffer, which
+        // silently corrupts the results (issue #281), so force sequential the
+        // same way spans always have.
+        //
+        // This guards the explicit flags only. A script may also reference the
+        // `window` variable without --window (window_size == 0), but in that
+        // case the window only ever holds the current event, so parallel and
+        // sequential agree and there is nothing to protect.
+        if self.processing.span.is_some()
+            || self.processing.window_size > 0
+            || self.processing.context.is_active()
+        {
             return false;
         }
         self.performance.parallel

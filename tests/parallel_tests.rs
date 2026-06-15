@@ -2238,3 +2238,162 @@ fn test_parallel_batch_boundaries_correctness() {
     assert_eq!(ids[0], 1, "Should start at 1");
     assert_eq!(ids[96], 97, "Should end at 97");
 }
+
+/// Regression for issue #281: `--window` must produce identical output with and
+/// without `--parallel`. Parallel batching used to maintain per-worker window
+/// buffers that silently corrupted cross-event results (window reset at batch
+/// boundaries, plus stale events leaking between non-contiguous batches). The
+/// fix forces sequential mode whenever `--window` is set.
+#[test]
+fn test_window_parallel_matches_sequential() {
+    let input: String = (1..=100).map(|n| format!("{{\"n\": {}}}\n", n)).collect();
+    let window_script = "e.prev = (if window.len() > 1 { window[1][\"n\"] } else { -1 })";
+
+    let (seq_out, _seq_err, seq_code) = run_kelora_with_file(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--window",
+            "1",
+            "-e",
+            window_script,
+        ],
+        &input,
+    );
+    let (par_out, par_err, par_code) = run_kelora_with_file(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--parallel",
+            "--batch-size",
+            "5",
+            "--window",
+            "1",
+            "-e",
+            window_script,
+        ],
+        &input,
+    );
+
+    assert_eq!(seq_code, 0, "sequential run should succeed");
+    assert_eq!(par_code, 0, "parallel run should succeed");
+    assert_eq!(
+        par_out, seq_out,
+        "--window output must be identical with and without --parallel"
+    );
+    assert!(
+        par_err.contains("requires sequential mode"),
+        "expected a sequential-fallback warning, stderr: {}",
+        par_err
+    );
+    // Batch-boundary row that used to be wrong (prev=-1) and a row that used to
+    // leak a stale value (prev=5) must now be correct.
+    assert!(
+        seq_out.contains("{\"n\":6,\"prev\":5}"),
+        "n=6 should see prev=5, got: {}",
+        seq_out
+    );
+    assert!(
+        seq_out.contains("{\"n\":16,\"prev\":15}"),
+        "n=16 should see prev=15, got: {}",
+        seq_out
+    );
+}
+
+/// Regression for issue #281: `-C` before-context must produce identical output
+/// with and without `--parallel`. The preceding line at a batch boundary was
+/// previously taken from an unrelated batch (non-deterministically 35/40 instead
+/// of 45). The fix forces sequential mode whenever context is requested.
+#[test]
+fn test_context_parallel_matches_sequential() {
+    let input: String = (1..=100).map(|n| format!("{{\"n\": {}}}\n", n)).collect();
+
+    let (seq_out, _seq_err, seq_code) = run_kelora_with_file(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "-C",
+            "1",
+            "--filter",
+            "e.n == 46",
+        ],
+        &input,
+    );
+    let (par_out, par_err, par_code) = run_kelora_with_file(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--parallel",
+            "--batch-size",
+            "5",
+            "-C",
+            "1",
+            "--filter",
+            "e.n == 46",
+        ],
+        &input,
+    );
+
+    assert_eq!(seq_code, 0, "sequential run should succeed");
+    assert_eq!(par_code, 0, "parallel run should succeed");
+    assert_eq!(
+        par_out, seq_out,
+        "-C context output must be identical with and without --parallel"
+    );
+    assert!(
+        par_err.contains("requires sequential mode"),
+        "expected a sequential-fallback warning, stderr: {}",
+        par_err
+    );
+    // before-context must be the true preceding line (45), not a leaked one.
+    assert!(
+        seq_out.contains("{\"n\":45}"),
+        "before-context should be n=45, got: {}",
+        seq_out
+    );
+}
+
+/// Issue #281 follow-up: a script that references `window` WITHOUT `--window`
+/// must NOT be downgraded to sequential. With `window_size == 0` the window only
+/// ever holds the current event, so parallel and sequential agree and there is
+/// nothing to protect — forcing sequential there would only cost parallelism.
+#[test]
+fn test_implicit_window_stays_parallel() {
+    let input: String = (1..=100).map(|n| format!("{{\"n\": {}}}\n", n)).collect();
+
+    let (out, err, code) = run_kelora_with_file(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--parallel",
+            "--batch-size",
+            "5",
+            "-e",
+            "e.wlen = window.len()",
+        ],
+        &input,
+    );
+
+    assert_eq!(code, 0, "run should succeed");
+    assert!(
+        !err.contains("requires sequential mode"),
+        "implicit window must not trigger a sequential fallback, stderr: {}",
+        err
+    );
+    // Without --window the window holds only the current event.
+    assert!(
+        out.contains("\"wlen\":1"),
+        "expected window length 1 without --window, got: {}",
+        out
+    );
+}

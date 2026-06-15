@@ -134,14 +134,24 @@ fn main() -> Result<()> {
     // track_unique size warning) honor the same gate as other diagnostics.
     crate::rhai_functions::tracking::set_tracking_warnings_enabled(diagnostics_allowed);
 
-    if config.processing.span.is_some()
-        && diagnostics_allowed
-        && (config.performance.parallel
-            || config.performance.threads > 0
-            || config.performance.batch_size.is_some())
-    {
+    let parallel_requested = config.performance.parallel
+        || config.performance.threads > 0
+        || config.performance.batch_size.is_some();
+
+    if config.processing.span.is_some() && diagnostics_allowed && parallel_requested {
         let warning = config.format_error_message(
             "span aggregation requires sequential mode; ignoring --parallel settings. Rerun without --parallel if you need span aggregation.",
+        );
+        stderr.writeln(&warning).unwrap_or(());
+    } else if (config.processing.window_size > 0 || config.processing.context.is_active())
+        && diagnostics_allowed
+        && parallel_requested
+    {
+        // Cross-event context (--window, -B/-C) is order-dependent and would be
+        // silently corrupted by parallel batching (issue #281), so we force
+        // sequential just like spans. Warn once, mirroring the span fallback.
+        let warning = config.format_error_message(
+            "cross-event context (--window or -B/-C) requires sequential mode; ignoring --parallel settings. Rerun without --parallel if you need cross-event context.",
         );
         stderr.writeln(&warning).unwrap_or(());
     }

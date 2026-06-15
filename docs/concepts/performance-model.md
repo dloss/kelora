@@ -33,9 +33,12 @@ pipelines.
   - `--batch-size <N>` – number of events per batch before flushing to workers.
   - `--batch-timeout <ms>` – flush partially filled batches after idle period.
   - `--threads <N>` – override the thread count (0 = auto).
-- Context windows and sliding windows still work, but they maintain per-worker
-  buffers internally. Increase `--window` sparingly to avoid large per-thread
-  allocations.
+- Context windows (`-B`/`-C`) and sliding windows (`--window`) are
+  order-dependent and therefore force sequential mode: kelora ignores
+  `--parallel`/`--threads`/`--batch-size` (with a one-line warning) when any of
+  them is set, just as it does for spans. Running them under parallel batching
+  would silently produce wrong cross-event results, so parallelism is disabled
+  rather than risk corrupt output.
 
 #### Sequential vs Parallel in Practice
 
