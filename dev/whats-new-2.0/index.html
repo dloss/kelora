@@ -655,6 +655,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: logfmt/CEF stop mangling zero-padded and signed values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#breaking-default-format-word-wrapping-is-now-tty-aware" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2568,6 +2579,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: logfmt/CEF stop mangling zero-padded and signed values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#breaking-default-format-word-wrapping-is-now-tty-aware" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2851,15 +2873,46 @@ keep trailing fields absent, and both cases are counted in <code>--stats</code>.
 now treats a ragged row as a parse error. <strong>Action:</strong> if you were relying on
 silent truncation, expect new <code>c&lt;N&gt;</code> fields; add <code>--strict</code> to reject ragged
 rows instead.</p>
+<h3 id="breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values">Breaking: logfmt/CEF stop mangling zero-padded and signed values<a class="headerlink" href="#breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values" title="Permanent link">&para;</a></h3>
+<p>The type-inferring parsers (<code>logfmt</code>, <code>cef</code>) used to coerce <em>any</em> token that
+Rust's number parser accepted, which silently rewrote data: leading zeros were
+dropped (<code>zip=02134</code> → <code>2134</code>, <code>id=007</code> → <code>7</code>, <code>ver=01</code> → <code>1</code>), a leading <code>+</code>
+was stripped (<code>phone=+15551234</code> → <code>15551234</code>), and the Rust-only float spellings
+<code>inf</code>/<code>nan</code>/<code>Infinity</code> became floats (then <code>null</code> on JSON output). Worse, csv/tsv
+kept these as strings, so the <em>same</em> token got a different type depending on the
+format — a real hazard in mixed-format cascades.</p>
+<p>A value is now coerced only when it is a valid JSON number (no leading zeros, no
+leading <code>+</code>, no <code>inf</code>/<code>nan</code>); everything else stays a string.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Old (1.x): leading zero silently lost</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;zip=02134&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># zip=2134</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># New (2.0): preserved as a string</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;zip=02134&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># zip=02134</span>
+</code></pre></div>
+<p>Genuine numbers still infer exactly as before (<code>status=500</code>, <code>dur=1.5</code>, <code>n=-5</code>,
+<code>big=123456789012345678</code>, <code>sci=1e3</code>), so the numeric filters and stats these
+formats are built around keep working. The win is that the same token now
+resolves to the same type whether it arrives via JSON (where leading-zero numbers
+are illegal anyway) or a logfmt/CEF field, logfmt round-trips IDs faithfully, and
+<code>--discover</code> no longer shows already-corrupted sample values. csv/tsv/cols/regex
+are unchanged — they remain string-by-default with opt-in <code>:int</code>/<code>:float</code>
+annotations.</p>
+<p><strong>Action:</strong> if a script compared a now-string field numerically (e.g. <code>code=007</code>
+matched with <code>== 7</code>), either compare as a string (<code>== "007"</code>) or coerce in a
+script stage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = to_int_or(e.code, 0)&#39;</span>
+</code></pre></div>
 <h3 id="breaking-default-format-word-wrapping-is-now-tty-aware">Breaking: default-format word-wrapping is now TTY-aware<a class="headerlink" href="#breaking-default-format-word-wrapping-is-now-tty-aware" title="Permanent link">&para;</a></h3>
 <p>The default output format no longer wraps wide events onto continuation lines
 when piped or redirected — wrapping is now <strong>auto</strong> (on for a terminal, off for
 a pipe), matching color and emoji. This fixes over-counting by <code>wc -l</code>,
 <code>head -n</code>, and other line-oriented consumers. To keep the old behavior when
 paging to <code>less</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--wrap<span class="w">          </span><span class="c1"># force wrapping through a pipe</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1"># or in .kelora.ini:</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nv">defaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>--wrap
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--wrap<span class="w">          </span><span class="c1"># force wrapping through a pipe</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># or in .kelora.ini:</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nv">defaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>--wrap
 </code></pre></div>
 <p><code>--no-wrap</code> disables it everywhere.</p>
 <h2 id="upgrade-checklist">Upgrade checklist<a class="headerlink" href="#upgrade-checklist" title="Permanent link">&para;</a></h2>
@@ -2884,6 +2937,10 @@ paging to <code>less</code>:</p>
    where you want a fallback.</li>
 <li><strong>Check CSV/TSV consumers</strong> for new <code>c&lt;N&gt;</code> overflow fields, or add <code>--strict</code>
    to reject ragged rows.</li>
+<li><strong>Re-check logfmt/CEF numeric fields.</strong> Zero-padded IDs, <code>+</code>-prefixed values,
+   and <code>inf</code>/<code>nan</code> now stay strings instead of being coerced. If you compared
+   such a field numerically, compare as a string or coerce with
+   <code>to_int_or(...)</code>.</li>
 <li><strong>Check line-oriented pipelines.</strong> If you piped default-format output into
    <code>wc -l</code>/<code>head</code>/<code>sed</code>, wrapping is now off by pipe default — add <code>--wrap</code> only
    if you actually want continuation lines.</li>
