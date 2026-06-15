@@ -32,6 +32,10 @@ pub struct InputConfig {
     pub ts_format: Option<String>,
     /// Default timezone for naive timestamps (None = local time)
     pub default_timezone: Option<String>,
+    /// True when the UTC default for naive timestamps is a *silent* assumption:
+    /// neither `--input-tz` nor a non-empty `TZ` was provided. Gates the #287
+    /// naive-timestamp diagnostic so it never fires when the user chose a zone.
+    pub timezone_assumed: bool,
     /// Extract text before separator to specified field (runs before parsing)
     pub extract_prefix: Option<String>,
     /// Separator string for prefix extraction (default: pipe '|')
@@ -952,6 +956,14 @@ impl KeloraConfig {
         };
 
         let default_timezone = determine_default_timezone(cli)?;
+        // The naive-timestamp diagnostic (#287) must only fire when the UTC
+        // default was assumed silently. Mirror determine_default_timezone's
+        // precedence: an explicit --input-tz or a non-empty TZ means the user
+        // chose a zone, so the assumption is not silent.
+        let tz_from_env = std::env::var("TZ")
+            .map(|tz| !tz.is_empty())
+            .unwrap_or(false);
+        let timezone_assumed = cli.input_tz.is_none() && !tz_from_env;
         let mut quiet_events = cli.quiet;
         // Diagnostics: positive flag enables, negative flag disables (last one wins via overrides_with)
         let mut suppress_diagnostics = if cli.diagnostics {
@@ -1110,6 +1122,7 @@ impl KeloraConfig {
                 ts_field: cli.ts_field.clone(),
                 ts_format: cli.ts_format.clone(),
                 default_timezone: default_timezone.clone(),
+                timezone_assumed,
                 extract_prefix: cli.extract_prefix.clone(),
                 prefix_sep: cli.prefix_sep.clone(),
                 cols_sep: cli.cols_sep.clone(),
@@ -1224,6 +1237,7 @@ impl Default for KeloraConfig {
                 ts_field: None,
                 ts_format: None,
                 default_timezone: None,
+                timezone_assumed: false,
                 extract_prefix: None,
                 prefix_sep: "|".to_string(),
                 cols_sep: None,

@@ -307,6 +307,9 @@ fn try_parse_with_format(
         if !candidates.is_empty() {
             // Track that we used year inference for statistics
             crate::stats::stats_add_yearless_timestamp();
+            // Yearless timestamps are also naive (no zone offset); record the
+            // default-timezone assumption so #287 can surface it once per run.
+            crate::stats::stats_add_naive_timestamp();
             return Some(choose_best_timestamp(&candidates, now));
         }
     }
@@ -315,7 +318,14 @@ fn try_parse_with_format(
     if let Ok(naive_dt) =
         chrono::NaiveDateTime::parse_from_str(&processed_ts_str, &processed_format)
     {
-        return apply_timezone_to_naive(naive_dt, default_timezone);
+        if let Some(dt) = apply_timezone_to_naive(naive_dt, default_timezone) {
+            // The input carried no zone offset and was resolved with the default
+            // timezone; record it so #287 can warn once when that default is the
+            // silent UTC assumption (the explicit/default gate is applied later).
+            crate::stats::stats_add_naive_timestamp();
+            return Some(dt);
+        }
+        return None;
     }
 
     None

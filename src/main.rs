@@ -608,6 +608,50 @@ fn maybe_print_no_input_hint(
     stderr.writeln(&formatted).unwrap_or(());
 }
 
+/// Hint when input timestamps carry no zone offset and the UTC default was
+/// assumed silently (#287). Naive timestamps (syslog, log4j, python-logging,
+/// glog, apache-error, postgres, …) are resolved with `--input-tz` (default
+/// UTC) everywhere; for a source that logs local time this shifts every
+/// `parsed_ts` with no signal, quietly moving `--since`/`--until`/`--span`
+/// boundaries and — under `--normalize-ts` — baking the wrong offset into the
+/// output itself.
+///
+/// To avoid crying wolf on the common UTC cloud-log case, the hint fires only
+/// when the run actually *depends on* or *materializes* the assumption: a time
+/// filter, a span, or `--normalize-ts` is active. It stays silent when the user
+/// chose a zone (`config.input.timezone_assumed` is false for an explicit
+/// `--input-tz` or a non-empty `TZ`). Like the other one-time hints this lives
+/// behind the `diagnostics_allowed_runtime` gate at the call site, so
+/// `--no-diagnostics` / `-q` / `--silent` already suppress it.
+fn maybe_print_naive_tz_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+    stderr: &mut SafeStderr,
+) {
+    if stats.naive_timestamps == 0 || !config.input.timezone_assumed {
+        return;
+    }
+
+    let normalize = config.processing.normalize_timestamps;
+    let time_op_active = normalize
+        || config.processing.timestamp_filter.is_some()
+        || config.processing.span.is_some();
+    if !time_op_active {
+        return;
+    }
+
+    let message = if normalize {
+        "Timestamps carry no zone offset; assuming UTC, and --normalize-ts writes that offset into the output. Pass --input-tz <zone> if your source is not UTC."
+    } else {
+        "Timestamps carry no zone offset; assuming UTC. Pass --input-tz <zone> if your source is not UTC."
+    };
+    let formatted = config
+        .format_hint_message(message)
+        .trim_start_matches('\n')
+        .to_string();
+    stderr.writeln(&formatted).unwrap_or(());
+}
+
 /// Hint when `-l/--levels` dropped every event. Two structural causes are
 /// distinguished, both far more actionable than a silent empty result:
 ///
@@ -1400,6 +1444,9 @@ fn handle_pipeline_success(
                 // nothing was created — the empty-input case it can't explain.
                 maybe_print_no_input_hint(config, s, stderr);
                 maybe_print_zero_results_hint(config, s, stderr);
+                // Surfaces the silent UTC assumption for naive timestamps when a
+                // time filter, span, or --normalize-ts relies on it (#287).
+                maybe_print_naive_tz_hint(config, s, stderr);
                 // Fires independently of the zero-results hint: an exclude-key
                 // typo leaves output intact but silently fails to drop the field.
                 maybe_print_key_typo_hint(config, s, stderr);

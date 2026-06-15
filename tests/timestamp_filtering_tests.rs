@@ -1218,3 +1218,133 @@ fn test_anchored_timestamp_with_relative_time() {
         "Should exclude event 4 (1.5h after start, beyond window)"
     );
 }
+
+// --- #287: naive-timestamp UTC-assumption diagnostic ----------------------
+//
+// Naive timestamps (no zone offset) are resolved with the default timezone
+// (UTC unless --input-tz/TZ says otherwise). The hint surfaces that silent
+// assumption, but only when the run depends on or materializes it: a time
+// filter, a span, or --normalize-ts. TZ="" forces the "no zone chosen" path
+// deterministically regardless of the parent environment.
+const NAIVE_SYSLOG: &str = "Jan  2 15:04:05 host app: hello";
+
+#[test]
+fn test_naive_ts_hint_fires_with_since() {
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-f", "syslog", "--since", "2020-01-01"],
+        NAIVE_SYSLOG,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stderr.contains("no zone offset") && stderr.contains("--input-tz"),
+        "a naive timestamp with --since should warn about the UTC assumption: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_ts_hint_fires_with_span() {
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-f", "syslog", "--span", "1m"],
+        NAIVE_SYSLOG,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stderr.contains("no zone offset"),
+        "a naive timestamp with --span should warn: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_ts_hint_mentions_normalize() {
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-f", "syslog", "--normalize-ts"],
+        NAIVE_SYSLOG,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stderr.contains("no zone offset") && stderr.contains("--normalize-ts"),
+        "--normalize-ts bakes the offset into output, so the wording should call it out: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_ts_no_hint_without_time_op() {
+    // Plain naive output never depends on the assumption -> stay quiet.
+    let (_out, stderr, code) =
+        run_kelora_with_input_env(&["-f", "syslog"], NAIVE_SYSLOG, &[("TZ", "")]);
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("no zone offset"),
+        "without a time op the assumption changes nothing; no hint expected: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_ts_no_hint_with_explicit_input_tz() {
+    // The user chose a zone explicitly; there is nothing silent to surface.
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &[
+            "-f",
+            "syslog",
+            "--since",
+            "2020-01-01",
+            "--input-tz",
+            "America/New_York",
+        ],
+        NAIVE_SYSLOG,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("no zone offset"),
+        "explicit --input-tz means the zone was chosen; no hint expected: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_ts_no_hint_with_tz_env() {
+    // A non-empty TZ is also a deliberate choice.
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-f", "syslog", "--since", "2020-01-01"],
+        NAIVE_SYSLOG,
+        &[("TZ", "America/New_York")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("no zone offset"),
+        "a non-empty TZ is a chosen zone; no hint expected: {stderr}"
+    );
+}
+
+#[test]
+fn test_offset_ts_no_hint() {
+    // Timestamps that carry an explicit offset are never assumed.
+    let line = r#"127.0.0.1 - - [10/Oct/2024:13:55:36 -0700] "GET / HTTP/1.1" 200 1"#;
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-f", "combined", "--since", "2020-01-01"],
+        line,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("no zone offset"),
+        "offset-bearing timestamps are not naive; no hint expected: {stderr}"
+    );
+}
+
+#[test]
+fn test_naive_ts_hint_suppressed_by_no_diagnostics() {
+    let (_out, stderr, code) = run_kelora_with_input_env(
+        &["-f", "syslog", "--since", "2020-01-01", "--no-diagnostics"],
+        NAIVE_SYSLOG,
+        &[("TZ", "")],
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("no zone offset"),
+        "--no-diagnostics must suppress the naive-timestamp hint: {stderr}"
+    );
+}

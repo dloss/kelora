@@ -49,6 +49,10 @@ pub struct ProcessingStats {
     pub timestamp_override_failed: bool,
     pub timestamp_override_warning: Option<String>,
     pub yearless_timestamps: usize, // Count of timestamps parsed with year inference
+    /// Count of naive timestamps (no zone offset) resolved using the default
+    /// timezone. Drives the #287 diagnostic that surfaces the silent UTC
+    /// assumption; the explicit-vs-default gate is applied at emit time.
+    pub naive_timestamps: usize,
     pub detected_format: Option<String>, // Format detected for this processing session
     pub detected_format_counts: IndexMap<String, usize>, // Per-file detected format counts
     /// Per-format event counts when running in cascade mode. Empty otherwise.
@@ -319,6 +323,15 @@ pub fn stats_add_yearless_timestamp() {
     }
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().yearless_timestamps += 1;
+    });
+}
+
+pub fn stats_add_naive_timestamp() {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().naive_timestamps += 1;
     });
 }
 

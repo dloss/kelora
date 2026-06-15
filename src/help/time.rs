@@ -51,6 +51,19 @@ Common examples:
 %d/%b/%Y:%H:%M:%S %z        15/Jan/2024:14:30:45 +0000 (Apache access log)
 %Y-%m-%d %H:%M:%S,%3f       2024-01-15 14:30:45,123 (Python logging)
 
+Timezone policy (how the zone is decided):
+  - Numeric offset present (e.g. +0200, -0700): always honored as-is.
+  - No offset (naive: syslog, log4j, python-logging, glog, apache-error,
+    postgres, ...): resolved with --input-tz, which defaults to UTC. Set
+    --input-tz <zone> (or the TZ env var) if your source logs local time,
+    otherwise every timestamp is shifted silently and so are --since/--until,
+    --span boundaries, and ordering.
+  - Zone abbreviation present (CEST, PST, ...): not parsed (abbreviations are
+    ambiguous and cannot encode DST) and treated as naive. Use --input-tz.
+  When timestamps are naive and no zone was chosen, kelora prints a one-time
+  stderr hint if a time filter, --span, or --normalize-ts relies on the
+  assumption (suppress with --no-diagnostics / --silent).
+
 Naive timestamp + timezone example:
   kelora app.log --ts-format "%Y-%m-%d %H:%M:%S" --input-tz Europe/Berlin
   (parses local timestamps and normalises them internally)

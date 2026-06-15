@@ -185,7 +185,9 @@ kelora -j --input-tz America/New_York app.log
 2. `TZ` environment variable
 3. UTC (default)
 
-**Important:** `--input-tz` only affects naive timestamps. Timestamps with explicit timezone info (like `2024-01-15T10:30:00+01:00`) preserve their original timezone.
+**Important:** `--input-tz` only affects naive timestamps. Timestamps with explicit timezone info (like `2024-01-15T10:30:00+01:00`) preserve their original timezone. Timestamps that carry only a zone *abbreviation* (e.g. `CEST`, `PST`) are not parsed — abbreviations are ambiguous and cannot encode DST — so they are treated as naive and resolved with `--input-tz`.
+
+**The UTC default is silent, so kelora warns you.** When timestamps are naive and you did not choose a zone (no `--input-tz`, no `TZ`), the UTC assumption shifts every timestamp for a source that logs local time — quietly moving `--since`/`--until` and `--span` boundaries, and, with `--normalize-ts`, baking the wrong offset into the output. To catch this, kelora prints a one-time stderr hint whenever naive timestamps are assumed UTC *and* a time filter, `--span`, or `--normalize-ts` depends on it. Pass `--input-tz <zone>` (or set `TZ`) to silence it and resolve timestamps correctly. The hint follows the usual diagnostics gating (`--no-diagnostics` / `--silent` suppress it).
 
 ## Step 5: Converting Timestamps in Events
 

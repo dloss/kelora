@@ -42,6 +42,9 @@ fn processing_stats_delta(
         yearless_timestamps: after
             .yearless_timestamps
             .saturating_sub(before.yearless_timestamps),
+        naive_timestamps: after
+            .naive_timestamps
+            .saturating_sub(before.naive_timestamps),
         csv_rows_extra_columns: after
             .csv_rows_extra_columns
             .saturating_sub(before.csv_rows_extra_columns),
@@ -115,6 +118,7 @@ fn processing_stats_is_empty(stats: &crate::stats::ProcessingStats) -> bool {
         && !stats.timestamp_override_failed
         && stats.timestamp_override_warning.is_none()
         && stats.yearless_timestamps == 0
+        && stats.naive_timestamps == 0
         && stats.cascade_format_counts.is_empty()
 }
 
