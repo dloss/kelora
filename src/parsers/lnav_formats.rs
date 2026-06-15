@@ -197,8 +197,20 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
     // `2024-01-02 15:04:05.123 UTC [1234] LOG:  message`.
     // Layout is `<ts> <tz> [<pid>] <LEVEL>:  <message>` where tz is the configured
     // log_timezone abbreviation (kept verbatim in `tz`, outside the `ts` capture so
-    // the timestamp stays clean and the adaptive parser resolves it — no ts_format
-    // pinned). Postgres uses two spaces after the colon, so `:\s+` is tolerant.
+    // the timestamp stays clean and the adaptive parser resolves it). Postgres uses
+    // two spaces after the colon, so `:\s+` is tolerant.
+    //
+    // Timezone caveat: the naive `ts` is resolved via `--input-tz` (default UTC),
+    // *not* the logged abbreviation. We deliberately do not apply `tz`: a zone
+    // abbreviation can't be reliably converted to an offset (CST/BST/IST are
+    // ambiguous, and an abbreviation alone can't encode DST), and chrono's `%Z`
+    // can't parse one into an offset — so pinning a ts_format here would just make
+    // the timestamp fail to parse. This matches every other naive-timestamp format
+    // (log4j, python-logging, syslog). UTC-logged Postgres (the common/recommended
+    // config) is therefore correct by default; for a server logging a non-UTC zone,
+    // pass `--input-tz <IANA>` (e.g. `--input-tz Europe/Berlin`). `tz` is kept as
+    // the ground-truth label for inspection.
+    //
     // NOTE: log_line_prefix is operator-configurable; this matches the common
     // default. Non-default prefixes (adding user@db, app name, etc.) won't match
     // auto-detection — reach those with `-f regex:` or a custom prefix parser.

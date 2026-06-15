@@ -105,6 +105,10 @@ Named application-log formats
     kelora -f alb access.log --exec 'e.trace_id = meta.line.extract_regex("Root=([0-9a-f-]+)", 1)'
   'postgres' matches the default log_line_prefix ('%m [%p] '); a customized
   prefix (user@db, app name, …) won't auto-detect — use -f regex: for those.
+  Its 'ts' is naive: it is resolved via --input-tz (default UTC), not the logged
+  zone abbreviation (kept in 'tz'), since abbreviations are ambiguous and can't
+  be converted to an offset. UTC-logged servers are correct by default; for a
+  non-UTC server pass --input-tz <IANA> (e.g. --input-tz Europe/Berlin).
   'cri' is the
   exception to the "tried last" rule: because a CRI message is often itself JSON
   or logfmt, it is detected early (before logfmt/csv) so auto-detect works
