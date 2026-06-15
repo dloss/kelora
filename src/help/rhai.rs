@@ -84,12 +84,14 @@ FUNCTIONS & CLOSURES:
   [1,2,3].filter(|x| x > 1)            Predicate closures
 
 FUNCTION-AS-METHOD SYNTAX:
-  Rhai allows calling any function as a method on its first argument:
+  Any built-in function can be called as a method on its first argument:
 
   extract_regex(e.line, "\d+")         Function call style
   e.line.extract_regex("\d+")          Method call style (same thing!)
 
   Use method style for chaining: e.url.extract_domain().lower().strip()
+  Exception: your own functions (--include / fn) bind the receiver to
+  `this`, so call them function-style: is_problem(e), not e.is_problem()
 
 RHAI QUIRKS & GOTCHAS:
   • Strings use double quotes only: "hello" (not 'hello')
@@ -101,7 +103,7 @@ RHAI QUIRKS & GOTCHAS:
   • Arrays/maps are reference types: modifying copies affects original
   • Last expression in block is return value (no return needed)
   • Single-line comments: // ...  Multi-line: /* ... */
-  • Function calls without parens ok if no args: e.len (same as e.len())
+  • No-parens x.name is a property/getter or map key, not a method: text.len (string length) works, but on a map e.len is the field "len" — use len(e) or e.len() for a count
 
 KELORA PIPELINE STAGES:
   --begin         Pre-run once before parsing; populate global `conf` map (becomes read-only)
