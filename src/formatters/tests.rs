@@ -408,6 +408,47 @@ fn test_logfmt_formatter_types() {
 }
 
 #[test]
+fn test_logfmt_formatter_nested_values_are_quoted_and_parseable() {
+    // A nested map flattens into a compact "k=v,k=v" string. That string
+    // contains '=' and ',' and MUST be quoted, otherwise the emitted logfmt
+    // is ambiguous and breaks round-tripping back through the logfmt parser.
+    let mut meta = Map::new();
+    meta.insert("a".into(), Dynamic::from("x"));
+    meta.insert("b".into(), Dynamic::from("y"));
+
+    let tags: Array = vec![Dynamic::from("blue"), Dynamic::from("green")];
+
+    let mut event = Event::default();
+    event.set_field("id".to_string(), Dynamic::from(1_i64));
+    event.set_field("meta".to_string(), Dynamic::from(meta));
+    event.set_field("tags".to_string(), Dynamic::from(tags));
+
+    let formatter = LogfmtFormatter::new();
+    let result = formatter.format(&event);
+
+    // Scalars stay unquoted; the compact nested cells must be quoted.
+    assert!(result.contains("id=1"), "got: {}", result);
+    assert!(result.contains("meta=\"a=x,b=y\""), "got: {}", result);
+    assert!(
+        result.contains("tags=\"0=blue,1=green\""),
+        "got: {}",
+        result
+    );
+
+    // And the output must survive a round-trip through the logfmt parser
+    // (no stray unquoted '=' splitting the value into bogus keys).
+    let parser = crate::parsers::logfmt::LogfmtParser::new();
+    let parsed = crate::pipeline::EventParser::parse(&parser, &result);
+    assert!(parsed.is_ok(), "should parse: {}", result);
+    let parsed = parsed.unwrap();
+    assert_eq!(parsed.fields.get("meta").unwrap().to_string(), "a=x,b=y");
+    assert_eq!(
+        parsed.fields.get("tags").unwrap().to_string(),
+        "0=blue,1=green"
+    );
+}
+
+#[test]
 fn test_logfmt_formatter_empty_event() {
     let event = Event::default();
     let formatter = LogfmtFormatter::new();

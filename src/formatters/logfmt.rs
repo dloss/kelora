@@ -90,9 +90,13 @@ impl LogfmtFormatter {
     /// Format a Dynamic value directly into buffer for performance
     fn format_dynamic_value_into(&self, value: &Dynamic, output: &mut String) {
         let string_val = self.format_logfmt_value(value);
-        let is_string = value.is_string();
 
-        if is_string {
+        // Strings need quoting when they contain logfmt-special characters.
+        // Nested maps/arrays are flattened into a compact "k=v,k=v" string that
+        // likewise contains '=' and ',', so they must go through the same
+        // quoting path to stay parseable (mirrors how the CSV formatter escapes
+        // its compact cells). Numeric and boolean scalars never need quoting.
+        if value.is_string() || value.is::<rhai::Map>() || value.is::<rhai::Array>() {
             format_quoted_logfmt_value(&string_val, output);
         } else {
             output.push_str(&string_val);
