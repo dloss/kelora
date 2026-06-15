@@ -3258,14 +3258,40 @@ second-stage parse.</p>
 <h3 id="named-application-log-formats">Named Application-Log Formats<a class="headerlink" href="#named-application-log-formats" title="Permanent link">&para;</a></h3>
 <p>Beyond the wire/access formats above, Kelora ships a curated set of named
 application-log layouts — <code>glog</code> (Go/Kubernetes klog), <code>nginx-error</code>,
-<code>apache-error</code>, <code>log4j</code>/Java, <code>python-logging</code>, <code>redis</code>, <code>s3</code>, <code>haproxy</code>, and
-<code>iso8601-level</code> — that parse into <code>ts</code>, <code>level</code>, <code>msg</code>, and format-specific
-extras. Select them with <code>-f &lt;name&gt;</code> (e.g. <code>-f log4j</code>) or inside a cascade
-(<code>-f log4j,line</code>). With the exception of <code>cri</code> (above), they are tried only as
-the last step before the <code>line</code> fallback, so they never override a format
-detected earlier. Run <code>kelora --help-formats</code> for the full catalogue, sample
-lines, and per-format notes. (These definitions are adapted from
-<a href="https://lnav.org">lnav</a>, BSD-3-Clause; <code>cri</code> is Kelora-original.)</p>
+<code>apache-error</code>, <code>log4j</code>/Java, <code>python-logging</code>, <code>postgres</code> (PostgreSQL server
+log), <code>redis</code>, <code>s3</code>, <code>alb</code> (AWS ALB access log), <code>haproxy</code>, and <code>iso8601-level</code>
+— that parse into <code>ts</code>, <code>level</code>, <code>msg</code>, and format-specific extras. Select them
+with <code>-f &lt;name&gt;</code> (e.g. <code>-f log4j</code>) or inside a cascade (<code>-f log4j,line</code>). With
+the exception of <code>cri</code> (above), they are tried only as the last step before the
+<code>line</code> fallback, so they never override a format detected earlier. Run <code>kelora
+--help-formats</code> for the full catalogue, sample lines, and per-format notes.
+(These definitions are adapted from <a href="https://lnav.org">lnav</a>, BSD-3-Clause;
+<code>cri</code> and <code>alb</code> are Kelora-original.)</p>
+<p>The access-log formats (<code>alb</code>, <code>s3</code>, <code>haproxy</code>) keep only a curated set of
+useful fields and drop the long, version-dependent tail (for <code>alb</code>, AWS appends
+columns across versions: target group ARN, trace id, action/redirect/error
+reason, classification, …). Nothing is lost: the full raw line is always
+available to a script as <code>line</code> / <code>meta.line</code>, so a dropped column can be
+recovered with a second-stage parse. For example, to pull the AWS X-Ray trace
+id out of an ALB line's tail:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>alb<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.trace_id = meta.line.extract_regex(&quot;Root=([0-9a-f-]+)&quot;, 1)&#39;</span>
+</code></pre></div>
+<p><code>postgres</code> matches the default <code>log_line_prefix = '%m [%p] '</code>
+(<code>2024-01-02 15:04:05.123 UTC [1234] LOG:  …</code>); a customized prefix (adding
+<code>user@db</code>, an application name, etc.) won't auto-detect — reach those with
+<code>-f regex:</code>.</p>
+<p>Its <code>ts</code> is <strong>naive</strong>: like the other timestamp-only formats, it is resolved
+through <code>--input-tz</code> (default <code>UTC</code>), <strong>not</strong> the zone abbreviation logged on the
+line. The abbreviation is preserved in the <code>log_tz</code> field for inspection but not
+applied to the timestamp, because zone abbreviations are ambiguous (<code>CST</code>,
+<code>BST</code>, <code>IST</code> each map to several zones) and an abbreviation alone cannot encode
+DST — so it cannot be reliably converted to an offset. (The field is named
+<code>log_tz</code>, not <code>tz</code>, to signal that it is the abbreviation the server logged, not
+the zone applied to the timestamp.) A Postgres server logging in UTC (the
+common, recommended configuration) is therefore correct by default; for a server
+logging in a non-UTC zone, pass <code>--input-tz &lt;IANA&gt;</code> matching its <code>log_timezone</code>,
+e.g. <code>--input-tz Europe/Berlin</code>.</p>
 <h3 id="column-format">Column Format<a class="headerlink" href="#column-format" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong> <code>-f 'cols:&lt;spec&gt;'</code></p>
 <p><strong>Description:</strong> Custom column-based parsing with whitespace (or custom separator) splitting.</p>
@@ -3280,16 +3306,16 @@ lines, and per-format notes. (These definitions are adapted from
 </ul>
 <p><strong>Examples:</strong></p>
 <p>Simple fields:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Input: ERROR api &quot;Connection failed&quot;</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *msg&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Input: ERROR api &quot;Connection failed&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *msg&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Multi-token timestamp:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Input: 2024-01-15 10:30:00 INFO Connection failed</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>ts
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Input: 2024-01-15 10:30:00 INFO Connection failed</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>ts
 </code></pre></div></p>
 <p>Custom separator:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Input: name|age|city</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>data.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Input: name|age|city</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>data.txt
 </code></pre></div></p>
 <p><strong>Output Fields:</strong> Field names from specification with applied type conversions.</p>
 <p><strong>Notes:</strong></p>
@@ -3307,16 +3333,16 @@ lines, and per-format notes. (These definitions are adapted from
 <p><strong>Supported Types:</strong> <code>int</code>, <code>float</code>, <code>bool</code> (lowercase only)</p>
 <p><strong>Examples:</strong></p>
 <p>Simple extraction:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Input: 404 Not found</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;code:int&gt;\d+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Input: 404 Not found</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;code:int&gt;\d+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Structured logs:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Input: 2025-01-15T10:00:00Z [ERROR] Database connection failed</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ts&gt;\S+) \[(?P&lt;level&gt;\w+)\] (?P&lt;msg&gt;.+)$&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Input: 2025-01-15T10:00:00Z [ERROR] Database connection failed</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ts&gt;\S+) \[(?P&lt;level&gt;\w+)\] (?P&lt;msg&gt;.+)$&#39;</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Apache-style logs with typed fields:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Input: 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] &quot;GET /api/users HTTP/1.1&quot; 200 1234</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ip&gt;\S+) - - \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\w+) (?P&lt;path&gt;\S+) HTTP/[\d.]+&quot; (?P&lt;status:int&gt;\d+) (?P&lt;bytes:int&gt;\d+)$&#39;</span><span class="w"> </span>access.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Input: 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] &quot;GET /api/users HTTP/1.1&quot; 200 1234</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ip&gt;\S+) - - \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\w+) (?P&lt;path&gt;\S+) HTTP/[\d.]+&quot; (?P&lt;status:int&gt;\d+) (?P&lt;bytes:int&gt;\d+)$&#39;</span><span class="w"> </span>access.log
 </code></pre></div></p>
 <p><strong>Output Fields:</strong> Field names from capture groups with applied type conversions.</p>
 <p><strong>Behavior:</strong></p>
@@ -3374,11 +3400,11 @@ each input file, then apply that parser to the rest of the file.</p>
 <p><strong>Good fit:</strong> Batch runs where each file is internally consistent, but
 different files use different formats.</p>
 <p><strong>Example Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># JSON app logs and logfmt worker logs in one invocation</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto-per-file<span class="w"> </span>-J<span class="w"> </span>logs/api/*.log<span class="w"> </span>logs/workers/*.log
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Aggregate error events across mixed file formats without splitting first</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto-per-file<span class="w"> </span>--levels<span class="w"> </span>error,warn<span class="w"> </span>logs/**/*<span class="w"> </span>-J
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># JSON app logs and logfmt worker logs in one invocation</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto-per-file<span class="w"> </span>-J<span class="w"> </span>logs/api/*.log<span class="w"> </span>logs/workers/*.log
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Aggregate error events across mixed file formats without splitting first</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>auto-per-file<span class="w"> </span>--levels<span class="w"> </span>error,warn<span class="w"> </span>logs/**/*<span class="w"> </span>-J
 </code></pre></div></p>
 <p><strong>Notes:</strong></p>
 <ul>
@@ -3394,23 +3420,23 @@ succeeds handles the event. Designed for the common "noisy JSON" case —
 structured logs with plain-text noise (stack traces, panics, startup banners)
 interspersed — without requiring users to split the stream with <code>grep</code> first.</p>
 <p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>{&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;hello&quot;}
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>Server starting on port 8080
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>{&quot;level&quot;:&quot;error&quot;,&quot;msg&quot;:&quot;connection refused&quot;}
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>java.lang.NullPointerException
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>{&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;hello&quot;}
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Server starting on port 8080
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>{&quot;level&quot;:&quot;error&quot;,&quot;msg&quot;:&quot;connection refused&quot;}
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>java.lang.NullPointerException
 </code></pre></div></p>
 <p><strong>Example Usage:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Noisy JSON with plain-text fallback</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Three-way cascade</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,logfmt,line<span class="w"> </span>mixed.log
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Segment downstream by how each event was parsed</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e._format == &quot;line&quot;&#39;</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1"># See per-format breakdown</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--stats
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Noisy JSON with plain-text fallback</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Three-way cascade</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,logfmt,line<span class="w"> </span>mixed.log
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1"># Segment downstream by how each event was parsed</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e._format == &quot;line&quot;&#39;</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="c1"># See per-format breakdown</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--stats
 </code></pre></div></p>
 <p><strong>The <code>_format</code> field:</strong> Every event emitted in cascade mode gets a
 <code>_format</code> field naming the winning parser (e.g. <code>"json"</code>, <code>"line"</code>). This
@@ -3419,7 +3445,7 @@ Filter or group by it in Rhai, or inspect it in the output to debug
 classification.</p>
 <p><strong>Diagnostic counts:</strong> With <code>--stats</code>, cascade mode adds a per-format
 breakdown so silent misclassification surfaces immediately:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Cascade formats: json=9812, line=23
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Cascade formats: json=9812, line=23
 </code></pre></div>
 <p><strong>Allowed in a comma list:</strong> <code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>,
 <code>cef</code>, <code>combined</code>.</p>
@@ -3434,11 +3460,11 @@ breakdown so silent misclassification surfaces immediately:</p>
 <p><strong>Cascades with <code>cols:</code>/<code>regex:</code> — use repeated <code>-f</code>.</strong> Pass one <code>-f</code> per
 format and they are tried in order, exactly like a comma list, but each spec
 is taken whole so <code>cols:</code>/<code>regex:</code> work as members:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># JSON lines plus a &#39;timestamp LEVEL message&#39; app log in one file</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Selective regex first, raw line as the catch-all for anything else</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;ts&gt;\S+ \S+) (?P&lt;level&gt;\w+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># JSON lines plus a &#39;timestamp LEVEL message&#39; app log in one file</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Selective regex first, raw line as the catch-all for anything else</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;ts&gt;\S+ \S+) (?P&lt;level&gt;\w+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log
 </code></pre></div>
 <p>A comma list and repeated <code>-f</code> can be combined; comma-list members are
 flattened into the cascade in order.</p>
@@ -3563,13 +3589,13 @@ so piped or redirected output stays clean. Override with:</p>
 - Request latency tracking
 - Any time-series numeric data where tail latencies matter</p>
 <p><strong>Examples:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>method<span class="w"> </span>access.log<span class="w">          </span><span class="c1"># Show HTTP method patterns</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>--keys<span class="w"> </span>status<span class="w"> </span>api.log<span class="w">         </span><span class="c1"># Show status field patterns</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log<span class="w">     </span><span class="c1"># Visualize response time distribution</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>query_time_ms<span class="w"> </span>db.log<span class="w">  </span><span class="c1"># Show database query performance</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>json<span class="w">                      </span><span class="c1"># Output as JSON</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>-F<span class="w"> </span>csv<span class="w"> </span>--keys<span class="w"> </span>ts,level,msg<span class="w">   </span><span class="c1"># Output as CSV</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>-k<span class="w"> </span>method<span class="w"> </span>access.log<span class="w">          </span><span class="c1"># Show HTTP method patterns</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>kelora<span class="w"> </span>-F<span class="w"> </span>keymap<span class="w"> </span>--keys<span class="w"> </span>status<span class="w"> </span>api.log<span class="w">         </span><span class="c1"># Show status field patterns</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>-k<span class="w"> </span>response_time<span class="w"> </span>api.log<span class="w">     </span><span class="c1"># Visualize response time distribution</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>kelora<span class="w"> </span>-F<span class="w"> </span>tailmap<span class="w"> </span>--keys<span class="w"> </span>query_time_ms<span class="w"> </span>db.log<span class="w">  </span><span class="c1"># Show database query performance</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--stats<span class="w">                      </span><span class="c1"># Only stats</span>
 </code></pre></div></p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

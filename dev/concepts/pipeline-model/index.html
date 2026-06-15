@@ -3483,7 +3483,10 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <p><strong>Incompatible Features:</strong></p>
 <ul>
 <li><strong>Spans</strong> - Cannot maintain span state across batches (forces sequential)</li>
-<li><strong>Cross-event context</strong> - Each batch processed independently</li>
+<li><strong>Cross-event context</strong> (<code>--window</code>, <code>-B</code>/<code>-C</code>) - Order-dependent across
+  batches, so it also forces sequential. kelora ignores
+  <code>--parallel</code>/<code>--threads</code>/<code>--batch-size</code> (with a warning) when these are set;
+  otherwise per-worker buffers would silently return wrong cross-event results.</li>
 </ul>
 <p><strong>Multiline Behavior:</strong></p>
 <ul>
