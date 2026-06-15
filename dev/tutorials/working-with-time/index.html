@@ -3221,7 +3221,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: json
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 3 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 3 total, 3 output, 0 filtered (0.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 2766 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 3195 lines/s in 0ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts, timestamp, time (auto-detected) - 3/3 parsed (100.0%).
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2024-01-15T10:30:00+00:00 to 2024-01-15T10:32:00+00:00 (2m)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Keys seen: message,time,timestamp,ts
@@ -3356,7 +3356,8 @@
 <li><code>TZ</code> environment variable</li>
 <li>UTC (default)</li>
 </ol>
-<p><strong>Important:</strong> <code>--input-tz</code> only affects naive timestamps. Timestamps with explicit timezone info (like <code>2024-01-15T10:30:00+01:00</code>) preserve their original timezone.</p>
+<p><strong>Important:</strong> <code>--input-tz</code> only affects naive timestamps. Timestamps with explicit timezone info (like <code>2024-01-15T10:30:00+01:00</code>) preserve their original timezone. Timestamps that carry only a zone <em>abbreviation</em> (e.g. <code>CEST</code>, <code>PST</code>) are not parsed — abbreviations are ambiguous and cannot encode DST — so they are treated as naive and resolved with <code>--input-tz</code>.</p>
+<p><strong>The UTC default is silent, so kelora warns you.</strong> When timestamps are naive and you did not choose a zone (no <code>--input-tz</code>, no <code>TZ</code>), the UTC assumption shifts every timestamp for a source that logs local time — quietly moving <code>--since</code>/<code>--until</code> and <code>--span</code> boundaries, and, with <code>--normalize-ts</code>, baking the wrong offset into the output. To catch this, kelora prints a one-time stderr hint whenever naive timestamps are assumed UTC <em>and</em> a time filter, <code>--span</code>, or <code>--normalize-ts</code> depends on it. Pass <code>--input-tz &lt;zone&gt;</code> (or set <code>TZ</code>) to silence it and resolve timestamps correctly. The hint follows the usual diagnostics gating (<code>--no-diagnostics</code> / <code>--silent</code> suppress it).</p>
 <h2 id="step-5-converting-timestamps-in-events">Step 5: Converting Timestamps in Events<a class="headerlink" href="#step-5-converting-timestamps-in-events" title="Permanent link">&para;</a></h2>
 <p>Use <code>--normalize-ts</code> to normalize the primary timestamp (the same field Kelora uses for filtering and stats) to RFC3339:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Convert the detected timestamp field to RFC3339</span>
