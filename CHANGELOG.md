@@ -6,9 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [1.99.0] - 2026-06-15
-
-This is the **2.0 preview** release. The final 2.0 will follow once it's ready. The headline changes are a redesigned tracking-function family, a set of named application-log formats, composable parser cascades, and a much more capable `--discover` mode. Breaking changes are flagged below — most affect tracking scripts and a few error/validation behaviors. See each entry for migration notes.
+This is the **2.0** line. The headline changes are a redesigned tracking-function family, a set of named application-log formats, composable parser cascades, and a much more capable `--discover` mode. Breaking changes are flagged below — most affect tracking scripts and a few error/validation behaviors. See each entry for migration notes.
 
 ### Added
 
@@ -803,8 +801,7 @@ _Initial release (yanked)._
 
 ---
 
-[Unreleased]: https://github.com/dloss/kelora/compare/v1.99.0...HEAD
-[1.99.0]: https://github.com/dloss/kelora/compare/v1.5.0...v1.99.0
+[Unreleased]: https://github.com/dloss/kelora/compare/v1.5.0...HEAD
 [1.5.0]: https://github.com/dloss/kelora/compare/v1.4.10...v1.5.0
 [1.4.10]: https://github.com/dloss/kelora/compare/v1.4.3...v1.4.10
 [1.4.3]: https://github.com/dloss/kelora/compare/v1.4.2...v1.4.3
