@@ -423,9 +423,10 @@ state["x"] = 1; let n = state["x"];   // Assign, then read on separate statement
 
 - Last expression in block is return value (no `return` needed)
 - Semicolons recommended but often optional
-- Function calls without args: `e.len` same as `e.len()`
+- Getter/method without args needs no parens on strings/arrays/scalars: `s.len` == `s.len()` (but **not** on maps — see below)
 - No implicit type conversion (use `to_int()`, `to_float()`, etc.)
 - Map keys: `m.key` and `m["key"]` are equivalent for static identifier keys — use whichever reads better. Brackets are **required** for dynamic or non-identifier keys (`state[e.user]`, `e["user-agent"]`); `m.user-agent` parses as subtraction, not a key
+- Map method vs. key: on a map, bare `m.len` reads the *key* `len` (or `()` if absent) and never calls a method, so 0-arity methods always need parens — `m.len()`, `m.keys()`. Method names and keys therefore never collide. When a same-named key may exist, prefer function-style `len(m)` / `keys(m)`: with no dot, it can't be misread as key access
 
 ## Quick Reference
 
