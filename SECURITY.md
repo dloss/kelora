@@ -152,12 +152,13 @@ All other advisories result in build failures.
 
 **Protections:**
 - Log data is parsed and processed but cannot execute code
-- Rhai scripts run with reduced capabilities rather than a full sandbox: they cannot open network connections or spawn subprocesses, and filesystem writes are denied by default
-  - No network egress: scripts have no networking functions, and the no-networking policy check (`just check-no-networking`) is enforced in CI
+- Rhai is a capability-based sandbox: a script can only call functions the host registers, and the language itself has no built-in filesystem, network, or system access. Kelora registers a deliberately limited set of capabilities:
+  - No network egress: no networking functions are registered, and the no-networking policy check (`just check-no-networking`) is enforced in CI
   - No subprocess execution: scripts cannot shell out, and new `Command::new(...)` call sites in `src/` are flagged by `just check-subprocess-usage`
-  - File writes require explicit `--allow-fs-writes` flag (enables functions such as `append_file()`, `truncate_file()`, and `mkdir()`)
+  - File writes are denied by default and require the explicit `--allow-fs-writes` flag (enables functions such as `append_file()`, `truncate_file()`, and `mkdir()`)
   - Standard output redirection (`>`, `>>`) is controlled by the shell, not Kelora
-  - Note: scripts can still read environment variables (`get_env`) and, during `--begin`, read files (`read_file`/`read_lines`). Because there is no network or subprocess capability, this data cannot be exfiltrated by the script itself, but treat scripts from untrusted sources accordingly (see Known Limitations)
+  - Capabilities Kelora *does* grant: scripts can read environment variables (`get_env`) and, during `--begin`, read files (`read_file`/`read_lines`). Because there is no network or subprocess capability, a script cannot exfiltrate this data itself, but treat scripts from untrusted sources accordingly (see Known Limitations)
+- Rhai's default safety limits are active (e.g. call-stack-depth limits guard against stack overflow). However, Rhai's *optional* limits against runaway operations and over-sized data (`max_operations`, `max_string_size`, etc.) default to unlimited and are **not** enabled by Kelora — see Known Limitation 2 on resource exhaustion
 - Malformed log entries are skipped with diagnostics (default resilient mode)
 
 ### Known Limitations
