@@ -152,9 +152,12 @@ All other advisories result in build failures.
 
 **Protections:**
 - Log data is parsed and processed but cannot execute code
-- Rhai scripts run in a sandboxed environment with no filesystem write access by default
+- Rhai scripts run with reduced capabilities rather than a full sandbox: they cannot open network connections or spawn subprocesses, and filesystem writes are denied by default
+  - No network egress: scripts have no networking functions, and the no-networking policy check (`just check-no-networking`) is enforced in CI
+  - No subprocess execution: scripts cannot shell out, and new `Command::new(...)` call sites in `src/` are flagged by `just check-subprocess-usage`
   - File writes require explicit `--allow-fs-writes` flag (enables functions such as `append_file()`, `truncate_file()`, and `mkdir()`)
   - Standard output redirection (`>`, `>>`) is controlled by the shell, not Kelora
+  - Note: scripts can still read environment variables (`get_env`) and, during `--begin`, read files (`read_file`/`read_lines`). Because there is no network or subprocess capability, this data cannot be exfiltrated by the script itself, but treat scripts from untrusted sources accordingly (see Known Limitations)
 - Malformed log entries are skipped with diagnostics (default resilient mode)
 
 ### Known Limitations
