@@ -2,8 +2,11 @@ use rhai::{Array, Engine, EvalAltResult};
 
 /// Register window-related functions with the Rhai engine
 pub fn register_functions(engine: &mut Engine) {
-    // Register array statistical functions
+    // Register array statistical functions. Accept both float and integer
+    // percentiles so the idiomatic `arr.percentile(95)` works alongside
+    // `arr.percentile(95.0)` (Rhai does not auto-coerce int args to f64).
     engine.register_fn("percentile", percentile);
+    engine.register_fn("percentile", |arr: Array, p: i64| percentile(arr, p as f64));
 }
 
 /// Calculate percentile of numeric array
@@ -127,6 +130,25 @@ mod tests {
         // Test maximum (100th percentile)
         let max = percentile(arr, 100.0).unwrap();
         assert_eq!(max, 5.0);
+    }
+
+    #[test]
+    fn test_percentile_integer_overload_via_engine() {
+        // Regression: the idiomatic `arr.percentile(95)` (integer arg) must
+        // work, not just `arr.percentile(95.0)`. Rhai does not auto-coerce
+        // int args to f64, so an explicit i64 overload is required.
+        let mut engine = Engine::new();
+        register_functions(&mut engine);
+
+        let median: f64 = engine.eval("[1, 2, 3, 4, 5].percentile(50)").unwrap();
+        assert_eq!(median, 3.0);
+
+        let p100: f64 = engine.eval("[1, 2, 3, 4, 5].percentile(100)").unwrap();
+        assert_eq!(p100, 5.0);
+
+        // Float form must keep working alongside the integer form.
+        let p50_float: f64 = engine.eval("[1, 2, 3, 4, 5].percentile(50.0)").unwrap();
+        assert_eq!(p50_float, 3.0);
     }
 
     #[test]
