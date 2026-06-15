@@ -43,6 +43,17 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
         return Ok(ConfigInputFormat::Combined);
     }
 
+    // 5. Kubernetes CRI / containerd container log: `<RFC3339Nano> <stream> <F|P> msg`.
+    //    This prefix is highly specific, but the message after it is frequently
+    //    JSON or logfmt, so it must be claimed *before* the logfmt and CSV steps
+    //    (a JSON message's commas would otherwise trip CSV; key=value pairs would
+    //    trip logfmt). Unlike the other named formats — which are only tried as
+    //    the last step before `line` — CRI gets a dedicated early detector so
+    //    auto-detection works regardless of the message payload.
+    if let Some(fmt) = detect_cri(trimmed) {
+        return Ok(ConfigInputFormat::Named(fmt));
+    }
+
     // 6. Logfmt detection - key=value patterns
     if detect_logfmt(trimmed) {
         return Ok(ConfigInputFormat::Logfmt);
@@ -101,6 +112,21 @@ fn detect_combined_logs(line: &str) -> bool {
     } else {
         false // Regex compilation failed (shouldn't happen)
     }
+}
+
+/// Detect the Kubernetes CRI / containerd container-log layout
+/// (`<RFC3339Nano> <stream> <F|P> <message>`) by reusing the `cri` named
+/// format's own pattern, so detection and `-f cri` share one source of truth.
+/// Returns the static format definition so the auto-detect notice and `--stats`
+/// show the name `cri` (rather than a bare `regex`).
+fn detect_cri(line: &str) -> Option<&'static crate::parsers::lnav_formats::LnavFormat> {
+    let fmt = crate::parsers::lnav_formats::by_name("cri")?;
+    let matches = fmt.patterns.iter().any(|pattern| {
+        crate::parsers::RegexParser::new(pattern)
+            .map(|parser| parser.parse(line).is_ok())
+            .unwrap_or(false)
+    });
+    matches.then_some(fmt)
 }
 
 /// Detect logfmt format using actual parser for 100% accuracy
@@ -275,6 +301,38 @@ mod tests {
                 }
                 other => panic!("expected named format {expected} for {line}, got {other:?}"),
             }
+        }
+    }
+
+    #[test]
+    fn test_detect_cri() {
+        // JSON message: the commas inside it would trip the CSV detector, but the
+        // dedicated CRI step runs first.
+        match detect_format(r#"2024-07-17T12:12:05.123456789Z stdout F {"level":"info","a":"b"}"#)
+            .unwrap()
+        {
+            ConfigInputFormat::Named(fmt) => assert_eq!(fmt.name, "cri"),
+            other => panic!("expected cri for JSON-message CRI line, got {other:?}"),
+        }
+        // Plaintext message, stderr stream, partial (P) tag.
+        match detect_format("2024-07-17T12:12:06.223456789Z stderr P panic: nil pointer").unwrap() {
+            ConfigInputFormat::Named(fmt) => assert_eq!(fmt.name, "cri"),
+            other => panic!("expected cri for plaintext CRI line, got {other:?}"),
+        }
+        // Numeric timezone offset instead of Z.
+        match detect_format("2024-07-17T12:12:06.223+02:00 stdout F hello").unwrap() {
+            ConfigInputFormat::Named(fmt) => assert_eq!(fmt.name, "cri"),
+            other => panic!("expected cri for offset-timezone CRI line, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_cri_does_not_shadow_plain_iso_logs() {
+        // A normal ISO-8601 + level application log has no stdout/stderr + F/P
+        // marker, so it must still detect as iso8601-level, not cri.
+        match detect_format("2024-01-02T15:04:05.123Z INFO Starting service").unwrap() {
+            ConfigInputFormat::Named(fmt) => assert_eq!(fmt.name, "iso8601-level"),
+            other => panic!("expected iso8601-level, got {other:?}"),
         }
     }
 

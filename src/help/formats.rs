@@ -79,6 +79,7 @@ syslog
 Named application-log formats
   A small set of common application-log layouts, parsed with the regex engine:
     apache-error    Apache error log ("[Fri Oct 11 14:32:52 2024] [core:error] ... msg")
+    cri             Kubernetes CRI/containerd log (2024-07-17T12:12:05.0Z stdout F msg)
     glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
     haproxy         HAProxy http/tcp traffic log (via syslog); use -f haproxy
     iso8601-level   ISO-8601 timestamp + level + message (2024-01-02T15:04:05Z INFO msg)
@@ -94,8 +95,13 @@ Named application-log formats
   extras (thread, logger, pid, ...).
   Notes: glog/redis omit the year, so 'ts' assumes the current year (like
   syslog). haproxy lines are syslog-wrapped, so under -f auto they are detected
-  as 'syslog' — pass -f haproxy to extract the structured fields.
-  Adapted from lnav (BSD-3-Clause; see THIRD_PARTY_LICENSES.md).
+  as 'syslog' — pass -f haproxy to extract the structured fields. 'cri' is the
+  exception to the "tried last" rule: because a CRI message is often itself JSON
+  or logfmt, it is detected early (before logfmt/csv) so auto-detect works
+  regardless of the payload; its fields are 'ts', 'stream' (stdout/stderr),
+  'tag' (F full / P partial), and 'msg'.
+  Most definitions are adapted from lnav (BSD-3-Clause; see
+  THIRD_PARTY_LICENSES.md); 'cri' is Kelora-original.
 
 Type annotations (csv/tsv/cols/regex)
   A type annotation declares the field's type. A value that cannot satisfy it
@@ -108,13 +114,13 @@ Meta formats (select or combine the concrete formats above):
 
 auto (default)
   Auto-detect format from first non-empty line
-  Detection order: json → syslog → cef → combined → logfmt → csv
+  Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → named app-log formats (regex) → line
   Note: Detects once and applies to all lines
 
 auto-per-file
   Auto-detect format separately for each input file
-  Detection order: json → syslog → cef → combined → logfmt → csv
+  Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → named app-log formats (regex) → line
   Note: Detects once per file and applies to that file's lines
   stdin: behaves like 'auto' (single input stream)

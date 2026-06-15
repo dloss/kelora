@@ -35,6 +35,19 @@ auto-detection they're tried only as the last step before the `line` fallback,
 so nothing Kelora already detected changes. (The definitions are adapted from
 [lnav](https://lnav.org), BSD-3-Clause — see `THIRD_PARTY_LICENSES.md`.)
 
+A Kelora-original `cri` format covers Kubernetes container logs — the
+CRI/containerd on-disk layout `<RFC3339Nano> <stream> <tag> <message>` that
+`/var/log/pods/*/*.log`, `kubectl logs --timestamps`, and log shippers emit. It
+parses `ts`, `stream` (stdout/stderr), `tag` (`F` full / `P` partial), and
+`msg`. Because a CRI message is often itself JSON or logfmt, `cri` is the one
+named format detected *early* (before the logfmt/CSV steps) so auto-detection
+works regardless of the payload; fan a JSON message back into fields with a
+second-stage `--exec 'e.absorb_json("msg")'`:
+
+```bash
+kelora pod.log --filter 'e.stream == "stderr"' -k ts,msg
+```
+
 ### Composable parser cascades with repeatable `-f`
 
 `-f` is now repeatable, building a cascade from each spec in order. This is the

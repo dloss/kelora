@@ -116,6 +116,29 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
             "E0612 09:10:11.000001 7 reflector.go:138] Failed to watch",
         ],
     },
+    // Kubernetes CRI / containerd on-disk container log (also `kubectl logs
+    // --timestamps`): `2024-07-17T12:12:05.123456789Z stdout F <message>`.
+    // Layout is `<RFC3339Nano> <stream> <tag> <message>` where stream is
+    // stdout/stderr and tag is F (full line) or P (partial — a line the runtime
+    // split because it exceeded ~16 KiB). The message is frequently itself JSON
+    // or logfmt; like the other named formats this keeps it verbatim in `msg`
+    // for an optional second-stage parse. The RFC3339 timestamp is one the
+    // adaptive parser already resolves, so no ts_format is pinned.
+    //
+    // NOTE: unlike the entries above, this layout is *not* from lnav — it is a
+    // Kelora-original definition for the Kubernetes container-runtime log format.
+    // It reuses the same LnavFormat machinery only because the mechanism fits.
+    LnavFormat {
+        name: "cri",
+        patterns: &[
+            r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:?\d{2}))\s+(?P<stream>stdout|stderr)\s+(?P<tag>[FP])\s+(?P<msg>.*)",
+        ],
+        ts_format: None,
+        samples: &[
+            r#"2024-07-17T12:12:05.123456789Z stdout F {"level":"info","msg":"started"}"#,
+            "2024-07-17T12:12:06.223456789Z stderr P panic: runtime error: nil pointer",
+        ],
+    },
     // nginx error log: `2024/01/02 15:04:05 [error] 29#29: *1 open() failed`
     LnavFormat {
         name: "nginx-error",
