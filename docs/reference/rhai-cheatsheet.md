@@ -424,14 +424,14 @@ state["x"] = 1; let n = state["x"];   // Assign, then read on separate statement
 - Last expression in block is return value (no `return` needed)
 - Semicolons recommended but often optional
 - No implicit type conversion (use `to_int()`, `to_float()`, etc.)
-- Map keys: `m.key` and `m["key"]` are equivalent for static identifier keys — use whichever reads better. Brackets are **required** for dynamic or non-identifier keys (`state[e.user]`, `e["user-agent"]`); `m.user-agent` parses as subtraction, not a key
+- Map keys: `m.key` and `m["key"]` are equivalent for static identifier keys — use whichever reads better. Brackets are required for dynamic or non-identifier keys (`state[e.user]`, `e["user-agent"]`); `m.user-agent` parses as subtraction, not a key
 
 ### Calling style (in practice)
 
-- **Built-in functions:** either style — chain with method style. `e.msg.to_upper().trim()` or `to_upper(e.msg)`.
-- **Your own helpers** (`--include` or inline `fn f(x)`): **function-style only** — `is_problem(e)`, *not* `e.is_problem()` (that fails with *Function not found*).
-- **Fields & state keys:** `e.field` / `state.key` for plain names; brackets for dynamic or non-identifier keys — `e[var]`, `e["user-agent"]`, `state[e.user]`.
-- **Length/keys of a map:** use `len(e)` / `keys(e)` (or `e.len()`); bare `e.len` reads a field *named* `len`, not the count.
+- Built-in functions: either style — chain with method style. `e.msg.to_upper().trim()` or `to_upper(e.msg)`.
+- Your own helpers (`--include` or inline `fn f(x)`): function-style only — `is_problem(e)`, not `e.is_problem()` (that fails with `Function not found`).
+- Fields & state keys: `e.field` / `state.key` for plain names; brackets for dynamic or non-identifier keys — `e[var]`, `e["user-agent"]`, `state[e.user]`.
+- Length/keys of a map: use `len(e)` / `keys(e)` (or `e.len()`); bare `e.len` reads a field named `len`, not the count.
 
 ## Quick Reference
 
