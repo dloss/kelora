@@ -1110,12 +1110,16 @@ Disable processing statistics explicitly (default: off).
 
 #### `-m, --metrics[=FORMAT]`
 
-Show metrics only (implies `-q/--quiet`). Use `-m` for default full table format, or `--metrics=FORMAT` for explicit format.
+Show metrics only (implies `-q/--quiet`). Bare `-m` auto-selects the format like `ls`: the human-readable table on a terminal, the `tsv` record stream when stdout is piped or redirected. Use `--metrics=FORMAT` to force one.
 
-Formats: `short` (first 5 items), `full` (default), `json`
+Formats: `short` (first 5 items), `full`, `tsv`, `json`
+
+`tsv` emits one tab-separated `metric<TAB>key<TAB>value` record per line, sorted by count/score descending — so `--freq url | head` is top-N and `| tail` is bottom-N. The three-column shape is fixed (scalars use an empty key column), and floats keep full precision (the table rounds for display; `tsv`/`json` do not).
 
 ```bash
-kelora -j --exec 'track_freq("service", e.service)' -m app.log               # Default full table
+kelora -j --exec 'track_freq("service", e.service)' -m app.log               # Auto: table on a TTY, tsv when piped
+kelora -j --exec 'track_freq("service", e.service)' --metrics=full app.log   # Force the table even through a pipe
+kelora -j --exec 'track_freq("service", e.service)' --metrics=tsv app.log    # Force the record stream even to a TTY
 kelora -j --exec 'track_freq("service", e.service)' --metrics=short app.log  # Abbreviated (first 5)
 kelora -j --exec 'track_freq("service", e.service)' --metrics=json app.log   # JSON format
 ```

@@ -84,6 +84,35 @@ built from the data actually seen (e.g. `E = ERROR | I = INFO | W = WARN`). New
 `--legend` / `--no-legend` flags control all three map formats; by default the
 legend shows only on an interactive terminal, so piped output stays clean.
 
+### No-script aggregation shortcuts: `--freq`, `--describe`
+
+The two most common aggregations are now plain flags, so you don't have to drop
+into Rhai. `--freq FIELD` is a frequency table (`track_freq`) and
+`--describe FIELD` is a numeric summary (`track_stats` — count/min/max/avg/
+p50/p95/p99). Both run after all filters/transforms and imply `-m`:
+
+```bash
+kelora app.log --freq level
+kelora app.log --describe duration_ms
+```
+
+There's deliberately no `--top`/`--bottom` flag. `--freq` already sorts by
+count descending, and — like the new pipe-aware wrapping — metrics output
+auto-selects its format: the human table on a terminal, a tab-separated record
+stream when piped or redirected. So ranking is left to the shell, which
+composes far more flexibly than baked-in selectors:
+
+```bash
+kelora app.log --freq url | head     # top-N
+kelora app.log --freq url | tail     # bottom-N
+kelora app.log --freq url | awk -F'\t' '$3 >= 100'
+```
+
+`--metrics=full` forces the table through a pipe; `--metrics=tsv` forces the
+stream even to a terminal; `--metrics=json` is unchanged. (Note: `kelora -m … >
+file` now writes the `tsv` records rather than the table — add `--metrics=full`
+for the old rendering.)
+
 ### Smaller niceties
 
 - **`e.get()` map accessor** — `e.get("key")` and `e.get("key", default)`,
