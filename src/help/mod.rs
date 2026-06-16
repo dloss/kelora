@@ -39,7 +39,7 @@ pub fn print_functions_help(filter: Option<&str>) {
                     "No functions matching \"{keyword}\". Run --help-functions for the full catalogue."
                 );
             } else {
-                println!("Functions matching \"{keyword}\":\n{filtered}");
+                println!("Functions matching \"{keyword}\":\n{}", filtered.trim_end());
             }
         }
     }
@@ -64,7 +64,7 @@ pub fn print_cli_help_filtered(keyword: &str) {
              (search a flag like '-j' or '--since', or a bare word like 'time')."
         );
     } else {
-        println!("Options matching \"{keyword}\":\n{filtered}");
+        println!("Options matching \"{keyword}\":\n{}", filtered.trim_end());
     }
 }
 

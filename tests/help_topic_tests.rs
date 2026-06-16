@@ -112,6 +112,8 @@ fn test_help_functions_keyword_filter() {
     assert!(stdout.contains("STRING FUNCTIONS:"));
     // Unrelated functions are filtered out.
     assert!(!stdout.contains("array.join(separator)"));
+    // The filtered output ends with a single newline, not a trailing blank line.
+    assert!(stdout.ends_with('\n') && !stdout.ends_with("\n\n"));
 }
 
 #[test]
@@ -159,6 +161,8 @@ fn test_help_keyword_filters_cli_reference() {
     // A long-only flag (indent 6) must not be merged into the preceding
     // short-aliased entry, so unrelated options stay filtered out.
     assert!(!stdout.contains("--exclude-keys"));
+    // The filtered output ends with a single newline, not a trailing blank line.
+    assert!(stdout.ends_with('\n') && !stdout.ends_with("\n\n"));
 }
 
 #[test]
