@@ -1311,8 +1311,9 @@ fn handle_pipeline_success(
     }
 
     // Surface per-metric counts of skipped Unit () values (missing fields).
-    // The track_* functions skip missing values silently; a high skip count
-    // usually means a field-name typo, so it deserves a diagnostic line.
+    // The track_* functions skip missing values silently; a metric whose field
+    // is missing from *every* event usually means a field-name typo, so it
+    // deserves a diagnostic line.
     //
     // This is a stuck-user signal — most acute under the `--freq`/`--describe`
     // sugar (and `--metrics`/`--drain`), where a typo'd field name yields
@@ -1321,10 +1322,34 @@ fn handle_pipeline_success(
     // exactly where it's needed. So gate it like the script-error summary: survive
     // a mode's *implicit* suppression, but still obey an explicit --no-diagnostics
     // and --silent.
+    //
+    // Gating: a *partial* skip count is normal for varying-shape logs (a field
+    // present in some events and absent in others), so a bare `count > 0` fired
+    // the hint constantly. Only flag a metric that recorded a value on *no*
+    // event — the strong typo signal — and only once the input is large enough
+    // that an all-absent field is conclusive rather than a small-sample fluke.
+    const SKIP_HINT_MIN_EVENTS: usize = 5;
+    let total_events = pipeline_result
+        .stats
+        .as_ref()
+        .map_or(0, |s| s.events_created);
     let skip_hint_allowed = !config.processing.silent
         && !config.processing.diagnostics_user_suppressed
+        && total_events >= SKIP_HINT_MIN_EVENTS
         && !SHOULD_TERMINATE.load(Ordering::Relaxed);
     if skip_hint_allowed {
+        let user = &pipeline_result.tracking_data.user;
+        // A metric that recorded at least one value keys either directly on its
+        // name (track_avg/track_freq/…) or on a derived sub-key (track_stats ->
+        // `<name>_count`/`<name>_sum`/…, track_percentiles -> `<name>_p50`/…).
+        // Treat any such key as "recorded", so a field present in even one event
+        // is never flagged.
+        let metric_recorded = |name: &str| {
+            user.contains_key(name) || {
+                let prefix = format!("{}_", name);
+                user.keys().any(|k| k.starts_with(&prefix))
+            }
+        };
         let mut skips: Vec<(String, i64)> = pipeline_result
             .tracking_data
             .internal
@@ -1333,7 +1358,7 @@ fn handle_pipeline_success(
                 key.strip_prefix("__kelora_track_skipped_")
                     .map(|name| (name.to_string(), value.as_int().unwrap_or(0)))
             })
-            .filter(|(_, count)| *count > 0)
+            .filter(|(name, count)| *count > 0 && !metric_recorded(name))
             .collect();
         if !skips.is_empty() {
             skips.sort();
@@ -1343,7 +1368,7 @@ fn handle_pipeline_success(
                 .collect::<Vec<_>>()
                 .join(", ");
             let mut hint = config.format_hint_message(&format!(
-                "Tracking skipped events with missing values: {}. A high count can indicate a field-name typo.",
+                "Tracking skipped events with missing values: {}. These metrics never recorded a value — likely a field-name typo.",
                 detail
             ));
             if !events_were_output {
