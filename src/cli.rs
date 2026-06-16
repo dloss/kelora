@@ -878,7 +878,7 @@ pub struct Cli {
     #[arg(long = "help-rhai", help_heading = "Help Options")]
     pub help_rhai: bool,
 
-    /// Show available Rhai functions and exit (optional KEYWORD filters by name/description)
+    /// Show available Rhai functions and exit (optional KEYWORD filters by name/description; smartcase: lowercase matches any case, uppercase is exact)
     #[arg(long = "help-functions", value_name = "KEYWORD", num_args = 0..=1, default_missing_value = "", help_heading = "Help Options")]
     pub help_functions: Option<String>,
 
