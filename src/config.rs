@@ -1018,7 +1018,8 @@ impl KeloraConfig {
 
         // Metrics logic: determine format and whether events should be shown
         // Check no_metrics first to handle flag conflicts
-        let has_metric_sugar = !cli.freq.is_empty() || !cli.describe.is_empty();
+        let has_metric_sugar =
+            !cli.freq.is_empty() || !cli.describe.is_empty() || !cli.card.is_empty();
         let metrics_format = if cli.no_metrics {
             None
         } else if cli.metrics.is_some() {

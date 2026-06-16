@@ -31,9 +31,9 @@ paths resolve relative to the docs root:
 All commands print real output thanks to `markdown-exec`; feel free to tweak the
 expressions and rerun them locally.
 
-## No-Script Shortcuts: `--freq`, `--describe`
+## No-Script Shortcuts: `--freq`, `--describe`, `--card`
 
-For the most common aggregations you don't need to write Rhai at all. Two
+For the most common aggregations you don't need to write Rhai at all. These
 flags synthesize the equivalent `track_*` call, run it *after* all your
 filters and transforms, and imply `-m`:
 
@@ -41,10 +41,12 @@ filters and transforms, and imply `-m`:
 |------|------------|------------|
 | `--freq FIELD` | `track_freq("FIELD", e.FIELD)` | frequency table ("count by") |
 | `--describe FIELD` | `track_stats("FIELD", e.FIELD)` | numeric summary (count/min/max/avg/p50/p95/p99) |
+| `--card FIELD` | `track_cardinality("FIELD", e.FIELD)` | distinct-value estimate (HyperLogLog, constant memory) |
 
 ```bash
 kelora -j examples/simple_json.jsonl --freq level
 kelora -j examples/simple_json.jsonl --describe duration_ms
+kelora -j examples/simple_json.jsonl --card user.id
 ```
 
 There is no `--top`/`--bottom` flag: `--freq` already sorts by count
@@ -58,7 +60,7 @@ kelora -j examples/simple_json.jsonl --freq level | tail -3   # 3 rarest
 kelora -j examples/simple_json.jsonl --freq level | awk -F'\t' '$3 >= 3'
 ```
 
-Both are repeatable, accept dotted paths for nested fields
+All three are repeatable, accept dotted paths for nested fields
 (`--freq user.id`), and see only events that survived filtering — the same
 post-pipeline vantage as `--discover-final`. They imply `-m`, so output is
 controlled by the usual `--metrics=short|full|tsv|json` and `--metrics-file`

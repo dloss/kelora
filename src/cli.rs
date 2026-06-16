@@ -784,6 +784,15 @@ pub struct Cli {
     )]
     pub describe: Vec<String>,
 
+    /// Estimate the number of distinct values of FIELD. Shorthand for track_cardinality.
+    #[arg(
+        long = "card",
+        value_name = "FIELD",
+        help_heading = "Metrics and Stats",
+        help = "Estimate the number of distinct values of FIELD (HyperLogLog).\n\nShorthand for track_cardinality(\"FIELD\", e.FIELD). Runs after all\nfilters/transforms and implies -m. Repeatable. Missing values are skipped.\nThe count is approximate (~1% error) but uses constant memory, so it scales to\nhigh-cardinality fields where track_freq/track_unique would not.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nExamples:\n  --card user.id\n  --filter 'e.status>=500' --card client_ip"
+    )]
+    pub card: Vec<String>,
+
     /// Summarize log templates using Drain (summary-only, requires --keys with exactly one field).
     #[arg(
         long = "drain",
@@ -1234,6 +1243,9 @@ impl Cli {
         for field in &self.describe {
             stages.push(ScriptStageType::Exec(synthesize_describe_stage(field)?));
         }
+        for field in &self.card {
+            stages.push(ScriptStageType::Exec(synthesize_card_stage(field)?));
+        }
 
         Ok(stages)
     }
@@ -1325,6 +1337,19 @@ fn synthesize_describe_stage(field: &str) -> Result<String> {
     }
     Ok(format!(
         "track_stats({}, {})",
+        rhai_string_literal(field),
+        field_value_accessor(field)
+    ))
+}
+
+fn synthesize_card_stage(field: &str) -> Result<String> {
+    if field.is_empty() {
+        return Err(anyhow::anyhow!(
+            "--card requires a field name, e.g. --card user.id"
+        ));
+    }
+    Ok(format!(
+        "track_cardinality({}, {})",
         rhai_string_literal(field),
         field_value_accessor(field)
     ))

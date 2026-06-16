@@ -2052,6 +2052,45 @@ fn sugar_describe_emits_stats_keys() {
 }
 
 #[test]
+fn sugar_card_matches_explicit_track_cardinality() {
+    let (sugar_out, _e1, c1) =
+        run_kelora_with_input(&["-f", "json", "--card", "service"], SUGAR_INPUT);
+    let (explicit_out, _e2, c2) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-e",
+            "track_cardinality(\"service\", e.service)",
+            "-m",
+        ],
+        SUGAR_INPUT,
+    );
+    assert_eq!(c1, 0);
+    assert_eq!(c2, 0);
+    assert_eq!(
+        sugar_out, explicit_out,
+        "--card FIELD should equal track_cardinality(\"FIELD\", e.FIELD) -m"
+    );
+}
+
+#[test]
+fn sugar_card_implies_metrics_only() {
+    // Two distinct services (api, db); HLL estimate rounds near 2.
+    let (stdout, _stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--card", "service"], SUGAR_INPUT);
+    assert_eq!(code, 0);
+    assert!(
+        stdout.contains("service"),
+        "cardinality metric should appear: {stdout}"
+    );
+    // Events are suppressed (metrics-only): no raw event field like the level.
+    assert!(
+        !stdout.contains("\"level\""),
+        "events should be suppressed in metrics-only mode: {stdout}"
+    );
+}
+
+#[test]
 fn sugar_freq_runs_after_filter() {
     // Only INFO survives; service tally must reflect just those two api events.
     let (stdout, _stderr, code) = run_kelora_with_input(
