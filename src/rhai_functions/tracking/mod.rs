@@ -1059,7 +1059,7 @@ mod tests {
         let summary =
             extract_error_summary_from_tracking(&snapshot, 0, Some(&stats), None).unwrap();
 
-        assert!(summary.contains("Year-less timestamp format detected"));
+        assert!(summary.contains("Year-less timestamps detected"));
         assert!(summary.contains("5 parse"));
     }
 

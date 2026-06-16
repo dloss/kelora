@@ -1044,10 +1044,8 @@ impl ProcessingStats {
 
         if self.yearless_timestamps > 0 {
             let warning_msg = format!(
-                "Year-less timestamp format detected ({} parse{})\n\
-                 Format lacks year (e.g., \"Dec 31 23:59:59\")\n\
-                 Year inferred using heuristic (±1 year from current date)\n\
-                 Timestamps >18 months old may be incorrect",
+                "Year-less timestamps detected ({} parse{}, e.g. \"Dec 31 23:59:59\")\n\
+                 Year inferred via ±1yr heuristic; stamps >18 months old may be wrong",
                 self.yearless_timestamps,
                 if self.yearless_timestamps == 1 {
                     ""
