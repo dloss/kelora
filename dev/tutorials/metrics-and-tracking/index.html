@@ -761,10 +761,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#no-script-shortcuts-freq-describe" class="md-nav__link">
+  <a href="#no-script-shortcuts-freq-describe-card" class="md-nav__link">
     <span class="md-ellipsis">
       
-        No-Script Shortcuts: --freq, --describe
+        No-Script Shortcuts: --freq, --describe, --card
       
     </span>
   </a>
@@ -2595,10 +2595,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#no-script-shortcuts-freq-describe" class="md-nav__link">
+  <a href="#no-script-shortcuts-freq-describe-card" class="md-nav__link">
     <span class="md-ellipsis">
       
-        No-Script Shortcuts: --freq, --describe
+        No-Script Shortcuts: --freq, --describe, --card
       
     </span>
   </a>
@@ -2937,8 +2937,8 @@ paths resolve relative to the docs root:</p>
 </ul>
 <p>All commands print real output thanks to <code>markdown-exec</code>; feel free to tweak the
 expressions and rerun them locally.</p>
-<h2 id="no-script-shortcuts-freq-describe">No-Script Shortcuts: <code>--freq</code>, <code>--describe</code><a class="headerlink" href="#no-script-shortcuts-freq-describe" title="Permanent link">&para;</a></h2>
-<p>For the most common aggregations you don't need to write Rhai at all. Two
+<h2 id="no-script-shortcuts-freq-describe-card">No-Script Shortcuts: <code>--freq</code>, <code>--describe</code>, <code>--card</code><a class="headerlink" href="#no-script-shortcuts-freq-describe-card" title="Permanent link">&para;</a></h2>
+<p>For the most common aggregations you don't need to write Rhai at all. These
 flags synthesize the equivalent <code>track_*</code> call, run it <em>after</em> all your
 filters and transforms, and imply <code>-m</code>:</p>
 <table>
@@ -2960,10 +2960,16 @@ filters and transforms, and imply <code>-m</code>:</p>
 <td><code>track_stats("FIELD", e.FIELD)</code></td>
 <td>numeric summary (count/min/max/avg/p50/p95/p99)</td>
 </tr>
+<tr>
+<td><code>--card FIELD</code></td>
+<td><code>track_cardinality("FIELD", e.FIELD)</code></td>
+<td>distinct-value estimate (HyperLogLog, constant memory)</td>
+</tr>
 </tbody>
 </table>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>--freq<span class="w"> </span>level
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>--describe<span class="w"> </span>duration_ms
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>--card<span class="w"> </span>user.id
 </code></pre></div>
 <p>There is no <code>--top</code>/<code>--bottom</code> flag: <code>--freq</code> already sorts by count
 descending, so let the shell rank for you. Piped or redirected output
@@ -2973,7 +2979,7 @@ top-N and <code>tail</code> is bottom-N:</p>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>--freq<span class="w"> </span>level<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-3<span class="w">   </span><span class="c1"># 3 rarest</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span>--freq<span class="w"> </span>level<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">&#39;\t&#39;</span><span class="w"> </span><span class="s1">&#39;$3 &gt;= 3&#39;</span>
 </code></pre></div>
-<p>Both are repeatable, accept dotted paths for nested fields
+<p>All three are repeatable, accept dotted paths for nested fields
 (<code>--freq user.id</code>), and see only events that survived filtering — the same
 post-pipeline vantage as <code>--discover-final</code>. They imply <code>-m</code>, so output is
 controlled by the usual <code>--metrics=short|full|tsv|json</code> and <code>--metrics-file</code>
@@ -3046,7 +3052,7 @@ any time you want a quick histogram after a batch run.</p>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Detected format: json
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Lines processed: 20 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Events created: 20 total, 20 output, 0 filtered (0.0%)
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Throughput: 3372 lines/s in 5ms
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>Throughput: 3258 lines/s in 6ms
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>Timestamp: timestamp (auto-detected) - 20/20 parsed (100.0%).
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Time span: 2024-01-15T10:00:00+00:00 to 2024-01-15T10:30:00+00:00 (30m)
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>Levels seen: CRITICAL,DEBUG,ERROR,INFO,WARN
