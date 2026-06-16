@@ -4400,10 +4400,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stategetkey-statesetkey-value" class="md-nav__link">
+  <a href="#stategetkey-stategetkey-default-statesetkey-value" class="md-nav__link">
     <span class="md-ellipsis">
       
-        state.get(key) / state.set(key, value)
+        state.get(key) / state.get(key, default) / state.set(key, value)
       
     </span>
   </a>
@@ -7392,10 +7392,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#stategetkey-statesetkey-value" class="md-nav__link">
+  <a href="#stategetkey-stategetkey-default-statesetkey-value" class="md-nav__link">
     <span class="md-ellipsis">
       
-        state.get(key) / state.set(key, value)
+        state.get(key) / state.get(key, default) / state.set(key, value)
       
     </span>
   </a>
@@ -9182,14 +9182,19 @@ For lightweight normalization without Drain, use <code>normalized()</code> on th
 <a id="__codelineno-156-10" name="__codelineno-156-10" href="#__codelineno-156-10"></a>}
 <a id="__codelineno-156-11" name="__codelineno-156-11" href="#__codelineno-156-11"></a>state[&quot;seen_ips&quot;].push(e.ip)
 </code></pre></div>
-<h4 id="stategetkey-statesetkey-value"><code>state.get(key)</code> / <code>state.set(key, value)</code><a class="headerlink" href="#stategetkey-statesetkey-value" title="Permanent link">&para;</a></h4>
-<p>Get or set values using method syntax. <code>get()</code> returns <code>()</code> if key doesn't exist.</p>
+<h4 id="stategetkey-stategetkey-default-statesetkey-value"><code>state.get(key)</code> / <code>state.get(key, default)</code> / <code>state.set(key, value)</code><a class="headerlink" href="#stategetkey-stategetkey-default-statesetkey-value" title="Permanent link">&para;</a></h4>
+<p>Get or set values using method syntax. <code>get(key)</code> returns <code>()</code> if the key doesn't
+exist. <code>get(key, default)</code> returns <code>default</code> when the key is missing or holds <code>()</code>,
+mirroring <code>map.get(key, default)</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>let count = state.get(&quot;count&quot;)                        // Returns () if not found
 <a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>state.set(&quot;total_bytes&quot;, 0)
 <a id="__codelineno-157-3" name="__codelineno-157-3" href="#__codelineno-157-3"></a>
-<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>// Safer pattern with default
-<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>let current = state.get(&quot;count&quot;) ?? 0
+<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>// Default-arg form, equivalent to the `??` idiom below
+<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>let current = state.get(&quot;count&quot;, 0)
 <a id="__codelineno-157-6" name="__codelineno-157-6" href="#__codelineno-157-6"></a>state.set(&quot;count&quot;, current + 1)
+<a id="__codelineno-157-7" name="__codelineno-157-7" href="#__codelineno-157-7"></a>
+<a id="__codelineno-157-8" name="__codelineno-157-8" href="#__codelineno-157-8"></a>// `??` remains the recommended idiom for inline use
+<a id="__codelineno-157-9" name="__codelineno-157-9" href="#__codelineno-157-9"></a>state.set(&quot;count&quot;, (state.get(&quot;count&quot;) ?? 0) + 1)
 </code></pre></div>
 <h4 id="statecontainskey"><code>state.contains(key)</code><a class="headerlink" href="#statecontainskey" title="Permanent link">&para;</a></h4>
 <p>Check if a key exists in state.</p>
