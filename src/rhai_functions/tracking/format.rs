@@ -16,6 +16,18 @@ pub(crate) fn ranked_op_params(op: &str) -> Option<(bool, &'static str)> {
     }
 }
 
+/// Human label for the trailing number column of a ranked metric, so the text
+/// view distinguishes occurrence tallies (`track_top`/`track_bottom`) from
+/// score rankings (`track_top_by`/`track_bottom_by`). The `count` field is a
+/// frequency; the `value` field is the highest/lowest score seen for the item.
+fn ranked_measure(field: &str) -> &'static str {
+    if field == "value" {
+        "score"
+    } else {
+        "count"
+    }
+}
+
 /// Sort a retained ranked array (one `{key, count|value}` map per distinct
 /// item) into rank order and truncate to `n`. `is_top` selects descending
 /// (top) vs ascending (bottom); ties break by key ascending, matching the
@@ -124,14 +136,15 @@ pub fn format_metrics_output(
 
                 if is_top_bottom {
                     let field_name = ranked_field.unwrap_or("count");
+                    let measure = ranked_measure(field_name);
 
                     if metrics_level >= 2 || len <= 10 {
-                        output.push_str(&format!("{:<12} ({} items):\n", key, len));
+                        output.push_str(&format!("{:<12} ({} items, by {}):\n", key, len, measure));
                         for (idx, item) in arr.iter().enumerate() {
                             push_ranked_item(&mut output, idx, item, field_name);
                         }
                     } else {
-                        output.push_str(&format!("{:<12} ({} items):\n", key, len));
+                        output.push_str(&format!("{:<12} ({} items, by {}):\n", key, len, measure));
                         for (idx, item) in arr.iter().take(5).enumerate() {
                             push_ranked_item(&mut output, idx, item, field_name);
                         }
@@ -190,7 +203,15 @@ pub fn format_metrics_output(
 
         if value.is::<rhai::Map>() {
             if let Some(map) = value.clone().try_cast::<rhai::Map>() {
-                push_count_map(&mut output, key, &map, metrics_level);
+                // track_freq tallies occurrences, so its numbers are counts. A
+                // raw user-built map carries no such guarantee, so we only label
+                // the column when we know the operation is a frequency table.
+                let measure = if metric_operation(ops, key).as_deref() == Some("bucket") {
+                    Some("count")
+                } else {
+                    None
+                };
+                push_count_map(&mut output, key, &map, metrics_level, measure);
                 continue;
             }
         }
@@ -365,7 +386,13 @@ fn push_tsv_scalar(output: &mut String, metric: &str, value: &str) {
 /// to sorting by key so the order is at least stable. Like the array
 /// formatters, the list is truncated to 5 entries unless `metrics_level >= 2`
 /// (`--metrics=full`) or the map has 10 or fewer entries.
-fn push_count_map(output: &mut String, key: &str, map: &rhai::Map, metrics_level: u8) {
+fn push_count_map(
+    output: &mut String,
+    key: &str,
+    map: &rhai::Map,
+    metrics_level: u8,
+    measure: Option<&str>,
+) {
     let len = map.len();
 
     if len == 0 {
@@ -392,7 +419,10 @@ fn push_count_map(output: &mut String, key: &str, map: &rhai::Map, metrics_level
     let truncate = metrics_level < 2 && len > 10;
     let shown = if truncate { 5 } else { len };
 
-    output.push_str(&format!("{:<12} ({} items):\n", key, len));
+    match measure {
+        Some(m) => output.push_str(&format!("{:<12} ({} items, by {}):\n", key, len, m)),
+        None => output.push_str(&format!("{:<12} ({} items):\n", key, len)),
+    }
 
     let label_width = entries
         .iter()
@@ -775,7 +805,7 @@ mod tests {
         // No raw Rhai map syntax.
         assert!(!output.contains("#{"), "output: {}", output);
         assert!(
-            output.contains("status       (3 items):"),
+            output.contains("status       (3 items, by count):"),
             "output: {}",
             output
         );
@@ -804,6 +834,58 @@ mod tests {
         let full = format_metrics_output(&metrics, &HashMap::new(), 2);
         assert!(!full.contains("more"), "output: {}", full);
         assert!(full.contains("cat00"), "output: {}", full);
+    }
+
+    #[test]
+    fn test_format_metrics_output_labels_count_vs_score() {
+        // The trailing number column looks identical for a frequency ranking
+        // (track_top -> "count") and a score ranking (track_top_by -> "score"),
+        // so the header must spell out which one it is.
+        let mut metrics = HashMap::new();
+        let mut ops = HashMap::new();
+
+        let freq = vec![{
+            let mut m = rhai::Map::new();
+            m.insert("key".into(), Dynamic::from("/a".to_string()));
+            m.insert("count".into(), Dynamic::from(3i64));
+            Dynamic::from(m)
+        }];
+        metrics.insert("hits".to_string(), Dynamic::from(freq));
+        ops.insert("__op_hits".to_string(), Dynamic::from("top".to_string()));
+
+        let scored = vec![{
+            let mut m = rhai::Map::new();
+            m.insert("key".into(), Dynamic::from("/b".to_string()));
+            m.insert("value".into(), Dynamic::from(300.0f64));
+            Dynamic::from(m)
+        }];
+        metrics.insert("bytes".to_string(), Dynamic::from(scored));
+        ops.insert(
+            "__op_bytes".to_string(),
+            Dynamic::from("top_by".to_string()),
+        );
+
+        let output = format_metrics_output(&metrics, &ops, 1);
+        assert!(output.contains("hits"), "output: {}", output);
+        assert!(output.contains("by count"), "output: {}", output);
+        assert!(output.contains("by score"), "output: {}", output);
+    }
+
+    #[test]
+    fn test_format_metrics_output_freq_map_labeled_by_count() {
+        let mut metrics = HashMap::new();
+        let mut map = rhai::Map::new();
+        map.insert("200".into(), Dynamic::from(3i64));
+        map.insert("500".into(), Dynamic::from(1i64));
+        metrics.insert("status".to_string(), Dynamic::from(map));
+        let mut ops = HashMap::new();
+        ops.insert(
+            "__op_status".to_string(),
+            Dynamic::from("bucket".to_string()),
+        );
+
+        let output = format_metrics_output(&metrics, &ops, 1);
+        assert!(output.contains("by count"), "output: {}", output);
     }
 
     #[test]
