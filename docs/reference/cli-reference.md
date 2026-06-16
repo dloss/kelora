@@ -56,6 +56,7 @@ kelora -                          # Explicitly read stdin
 | Flag | Description |
 |------|-------------|
 | `-h, --help` | Print complete help (use `-h` for summary) |
+| `--help [KEYWORD]` | Search the full CLI reference; pass a flag (`--help -j`, `--help --since`) for a precise whole-token match, or a bare word (`--help time`) for a substring search |
 | `-V, --version` | Print version information |
 
 ### Help Topics

@@ -149,6 +149,80 @@ fn test_help_functions_keyword_no_match() {
 }
 
 #[test]
+fn test_help_keyword_filters_cli_reference() {
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help", "since"]);
+    assert_eq!(exit_code, 0, "--help KEYWORD should exit successfully");
+    assert!(stdout.contains("Options matching \"since\":"));
+    // The matched flag and its section heading are kept for context.
+    assert!(stdout.contains("Filtering Options:"));
+    assert!(stdout.contains("--since <TIME>"));
+    // A long-only flag (indent 6) must not be merged into the preceding
+    // short-aliased entry, so unrelated options stay filtered out.
+    assert!(!stdout.contains("--exclude-keys"));
+}
+
+#[test]
+fn test_help_keyword_equals_form_matches_literal_flag() {
+    // The =KEYWORD form is an alternative to the space form for flag queries.
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help=--since"]);
+    assert_eq!(exit_code, 0, "--help=KEYWORD should exit successfully");
+    assert!(stdout.contains("Options matching \"--since\":"));
+    assert!(stdout.contains("--since <TIME>"));
+}
+
+#[test]
+fn test_help_short_flag_query_is_precise() {
+    // A short flag is a whole-token, case-sensitive match: `-j` finds only the
+    // `-j` option, not `-J` (case) and not the `-j` buried in `--multiline-join`
+    // (substring). This is the payoff of special-casing flag queries.
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help", "-j"]);
+    assert_eq!(exit_code, 0, "--help -j should exit successfully");
+    assert!(stdout.contains("Options matching \"-j\":"));
+    assert!(stdout.contains("Shortcut for -f json"));
+    assert!(
+        !stdout.contains("multiline-join"),
+        "-j must not match the substring inside --multiline-join: {stdout}"
+    );
+    assert!(
+        !stdout.contains("Shortcut for -F json"),
+        "-j must not case-fold into the -J option: {stdout}"
+    );
+}
+
+#[test]
+fn test_help_short_flag_query_is_case_sensitive() {
+    // The uppercase counterpart resolves to its own distinct option.
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help", "-J"]);
+    assert_eq!(exit_code, 0, "--help -J should exit successfully");
+    assert!(stdout.contains("Shortcut for -F json"));
+    assert!(
+        !stdout.contains("Shortcut for -f json"),
+        "-J must not match the lowercase -j option: {stdout}"
+    );
+}
+
+#[test]
+fn test_help_keyword_no_match() {
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help", "nonexistentxyz"]);
+    assert_eq!(
+        exit_code, 0,
+        "--help with no match should still exit cleanly"
+    );
+    assert!(stdout.contains("No options matching \"nonexistentxyz\""));
+}
+
+#[test]
+fn test_bare_help_still_renders_full_reference() {
+    // A keyword routes to the filtered search; bare --help must stay on clap's
+    // full renderer (regression guard for the interception heuristic).
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help"]);
+    assert_eq!(exit_code, 0, "--help should exit successfully");
+    assert!(!stdout.contains("Options matching"));
+    assert!(stdout.contains("Usage: kelora"));
+    assert!(stdout.contains("Filtering Options:"));
+}
+
+#[test]
 fn test_help_examples_topic() {
     let (stdout, _stderr, exit_code) = run_kelora(&["--help-examples"]);
     assert_eq!(exit_code, 0, "--help-examples should exit successfully");

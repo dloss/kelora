@@ -527,6 +527,28 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
         std::process::exit(0);
     }
 
+    // Check for --help KEYWORD (filtered CLI reference search). Bare --help is
+    // left to clap's full renderer; only a following keyword routes here. The
+    // keyword may be a flag (e.g. --help -j, --help --since) or a bare word
+    // (e.g. --help time); the --help=KEYWORD form works too. After --help there
+    // is no other meaning for a trailing token, so a dashed token is taken as
+    // the search keyword rather than skipped.
+    if let Some(pos) = raw_args
+        .iter()
+        .position(|arg| arg == "--help" || arg.starts_with("--help="))
+    {
+        let arg = &raw_args[pos];
+        let keyword = if let Some(kw) = arg.strip_prefix("--help=") {
+            (!kw.is_empty()).then(|| kw.to_string())
+        } else {
+            raw_args.get(pos + 1).map(|next| next.to_string())
+        };
+        if let Some(keyword) = keyword {
+            help::print_cli_help_filtered(&keyword);
+            std::process::exit(0);
+        }
+    }
+
     // Check for -h (brief help)
     if raw_args.iter().any(|arg| arg == "-h") {
         help::print_quick_help();
