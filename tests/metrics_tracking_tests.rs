@@ -1866,13 +1866,9 @@ fn test_track_avg_finalized_in_parallel_end() {
 fn test_skip_diagnostics_surface_in_parallel_mode() {
     // Regression: skipped-unit counters must survive the worker -> global
     // tracker channel so field-name typos stay detectable under --parallel.
-    // (Enough events to clear the skip-hint minimum-sample gate.)
     let input = r#"{"ms":10}
 {"ms":20}
-{"ms":30}
-{"ms":40}
-{"ms":50}
-{"ms":60}"#;
+{"ms":30}"#;
 
     let (_stdout, stderr, exit_code) = run_kelora_with_input(
         &[
@@ -1890,7 +1886,7 @@ fn test_skip_diagnostics_surface_in_parallel_mode() {
     );
     assert_eq!(exit_code, 0, "kelora should exit successfully");
     assert!(
-        stderr.contains("skipped events with missing values") && stderr.contains("bytes (6)"),
+        stderr.contains("skipped events with missing values") && stderr.contains("bytes (3)"),
         "parallel runs should report skipped-unit counts: {}",
         stderr
     );
@@ -2351,9 +2347,7 @@ fn test_missing_field_skip_hint_survives_implied_metrics_suppression() {
 fn test_missing_field_skip_hint_honors_explicit_no_diagnostics() {
     // The survival above is scoped to a mode's *implicit* suppression; an
     // explicit --no-diagnostics is a real user request and still wins.
-    // (Enough events that the hint would otherwise fire, so this isn't a
-    // trivial pass via the minimum-sample gate.)
-    let input = "{\"status\":200}\n{\"status\":404}\n{\"status\":500}\n{\"status\":200}\n{\"status\":404}\n";
+    let input = "{\"status\":200}\n{\"status\":404}\n";
 
     let (_stdout, stderr, code) = run_kelora_with_input(
         &["-f", "json", "--freq", "stauts", "--no-diagnostics"],
@@ -2389,29 +2383,5 @@ fn test_partial_field_skip_does_not_hint() {
     assert!(
         !stderr.contains("skipped events with missing values"),
         "a partially-present field records a value and must not be flagged: {stderr}"
-    );
-}
-
-#[test]
-fn test_skip_hint_suppressed_on_tiny_input() {
-    // Below the minimum-sample gate, an all-absent field is as likely a small
-    // sample as a typo, so stay quiet even though the metric recorded nothing.
-    let input = "{\"status\":200}\n{\"status\":404}\n";
-
-    let (_stdout, stderr, code) = run_kelora_with_input(
-        &[
-            "-f",
-            "json",
-            "--exec",
-            "track_avg(\"latency\", e.nosuch)",
-            "--metrics",
-            "--diagnostics",
-        ],
-        input,
-    );
-    assert_eq!(code, 0, "{stderr}");
-    assert!(
-        !stderr.contains("skipped events with missing values"),
-        "tiny inputs must not trip the skip hint: {stderr}"
     );
 }

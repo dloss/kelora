@@ -1326,16 +1326,9 @@ fn handle_pipeline_success(
     // Gating: a *partial* skip count is normal for varying-shape logs (a field
     // present in some events and absent in others), so a bare `count > 0` fired
     // the hint constantly. Only flag a metric that recorded a value on *no*
-    // event — the strong typo signal — and only once the input is large enough
-    // that an all-absent field is conclusive rather than a small-sample fluke.
-    const SKIP_HINT_MIN_EVENTS: usize = 5;
-    let total_events = pipeline_result
-        .stats
-        .as_ref()
-        .map_or(0, |s| s.events_created);
+    // event — the strong typo signal that a field is missing everywhere.
     let skip_hint_allowed = !config.processing.silent
         && !config.processing.diagnostics_user_suppressed
-        && total_events >= SKIP_HINT_MIN_EVENTS
         && !SHOULD_TERMINATE.load(Ordering::Relaxed);
     if skip_hint_allowed {
         let user = &pipeline_result.tracking_data.user;
