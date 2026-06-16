@@ -443,7 +443,7 @@ fn unknown_arg_hint(arg: &str) -> Option<String> {
         "sort" | "top-n" | "topn" | "rank" | "nlargest" => {
             "kelora has no --sort/--rank flag. To rank by a score, use track_top_by in a script stage:\n    \
              kelora -m --exec 'track_top_by(\"slowest\", e.endpoint, e.latency_ms, 10)' app.log\n  \
-             For a frequency top-N, use --top FIELD. See --help-functions for details."
+             For a frequency top-N, use --freq FIELD (sorted by count, so pipe to head/tail). See --help-functions for details."
         }
         "count" => {
             "kelora has no --count flag — \"count\" is ambiguous between a running total and a per-value tally. For a frequency table (\"count by\"), use --freq FIELD:\n    \
@@ -662,7 +662,7 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
     // suggestion matches on string distance, not intent, and is frequently misleading
     // here (--sort -> --assert, --where -> --help-regex). These are NOT aliases: the
     // flags stay unknown and still exit 2, so we reserve no namespace and could later
-    // add a real --sort/--top flag without a breaking collision.
+    // add a real --sort flag without a breaking collision.
     let matches = match Cli::command().try_get_matches_from(processed_args) {
         Ok(matches) => matches,
         Err(e) => {

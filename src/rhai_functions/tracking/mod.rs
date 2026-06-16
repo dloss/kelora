@@ -17,7 +17,7 @@ pub use errors::{
     record_filter_stage_success, record_parse_success, reset_stage_success_flags,
     stage_failed_completely, track_error,
 };
-pub use format::{format_metrics_json, format_metrics_output};
+pub use format::{format_metrics_json, format_metrics_output, format_metrics_tsv};
 pub(crate) use merge::op_display_name;
 use merge::{
     deserialize_hll, deserialize_tdigest, ensure_operation_metadata, is_hll_blob, merge_numeric,

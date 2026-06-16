@@ -211,6 +211,152 @@ pub fn format_metrics_output(
     output.trim_end().to_string()
 }
 
+/// Render metrics as a tab-separated record stream for piping to standard Unix
+/// tools (`head`, `tail`, `sort`, `awk`, `wc`). Every metric emits one or more
+/// `metric<TAB>key<TAB>value` rows:
+///
+/// - frequency tables (`track_freq`) and ranked metrics (`track_top`/`bottom`)
+///   emit one row per entry, sorted by count/score **descending** — so a single
+///   `--freq url | head` is top-N and `| tail` is bottom-N, no flag needed;
+/// - scalars (`track_sum`, `track_min`, percentiles, `--describe`'s `name_p95`,
+///   …) emit a single row with an empty key column.
+///
+/// The three-column shape never changes with the number of metrics (a script can
+/// rely on it), and `cut -f2,3` drops the metric-name column when it's redundant.
+/// Floats keep full precision (the human table rounds for readability; tsv/json
+/// do not). Tabs and newlines inside keys/values are flattened to spaces so each
+/// record stays exactly one line with three fields.
+pub fn format_metrics_tsv(
+    metrics: &HashMap<String, Dynamic>,
+    ops: &HashMap<String, Dynamic>,
+) -> String {
+    let mut output = String::new();
+
+    let mut user_values: Vec<_> = metrics
+        .iter()
+        .filter(|(k, _)| !k.starts_with("__op_") && !k.starts_with("__kelora_"))
+        .collect();
+    if user_values.is_empty() {
+        return String::new();
+    }
+    // Stable metric-block ordering (each block's rows are then count-sorted).
+    user_values.sort_by_key(|(k, _)| k.as_str());
+
+    for (key, value) in user_values {
+        // avg maps finalize to a scalar, like the text/json views.
+        if metric_operation(ops, key).as_deref() == Some("avg") {
+            if let Some(avg) = average_value(value) {
+                push_tsv_scalar(&mut output, key, &avg.to_string());
+                continue;
+            }
+        }
+
+        if let Ok(blob) = value.clone().into_blob() {
+            if is_hll_blob(&blob) {
+                if let Some(hll) = deserialize_hll(&blob) {
+                    push_tsv_scalar(&mut output, key, &hll.len().to_string());
+                    continue;
+                }
+            }
+            if let Some(digest) = deserialize_tdigest(&blob) {
+                if let Some(p_pos) = key.rfind("_p") {
+                    if let Ok(percentile) = key[p_pos + 2..].parse::<f64>() {
+                        let v = digest.estimate_quantile(percentile / 100.0);
+                        push_tsv_scalar(&mut output, key, &v.to_string());
+                        continue;
+                    }
+                }
+            }
+        }
+
+        // Ranked metrics: rank and truncate to N, then one row per item.
+        if let Some((is_top, field)) = metric_operation(ops, key)
+            .as_deref()
+            .and_then(ranked_op_params)
+        {
+            if let Ok(arr) = value.clone().into_array() {
+                let n = metric_top_n(metrics, key).unwrap_or(arr.len());
+                for item in rank_array(&arr, is_top, field, n) {
+                    if let Some(map) = item.clone().try_cast::<rhai::Map>() {
+                        if let (Some(k), Some(v)) = (map.get("key"), map.get(field)) {
+                            push_tsv_row(&mut output, key, &dynamic_to_tsv(k), &dynamic_to_tsv(v));
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+
+        // Frequency tables: sort categories by count descending, ties by key.
+        if value.is::<rhai::Map>() {
+            if let Some(map) = value.clone().try_cast::<rhai::Map>() {
+                let mut entries: Vec<(String, &Dynamic)> =
+                    map.iter().map(|(k, v)| (k.to_string(), v)).collect();
+                entries.sort_by(|(ak, a), (bk, b)| {
+                    numeric_value(b)
+                        .partial_cmp(&numeric_value(a))
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                        .then_with(|| ak.cmp(bk))
+                });
+                for (cat, v) in entries {
+                    push_tsv_row(&mut output, key, &cat, &dynamic_to_tsv(v));
+                }
+                continue;
+            }
+        }
+
+        // A plain array that isn't a tracked ranked metric (e.g. a retained
+        // sample): one row per element, order preserved.
+        if value.is::<rhai::Array>() {
+            if let Ok(arr) = value.clone().into_array() {
+                for item in arr {
+                    push_tsv_row(&mut output, key, "", &dynamic_to_tsv(&item));
+                }
+                continue;
+            }
+        }
+
+        push_tsv_scalar(&mut output, key, &dynamic_to_tsv(value));
+    }
+
+    output.trim_end().to_string()
+}
+
+/// Flatten a tab/newline inside a TSV field to a space so each record stays one
+/// line with a fixed column count.
+fn tsv_sanitize(s: &str) -> String {
+    if s.contains(['\t', '\n', '\r']) {
+        s.replace(['\t', '\n', '\r'], " ")
+    } else {
+        s.to_string()
+    }
+}
+
+/// Full-precision scalar text for a TSV value (Rust `f64` Display is the
+/// shortest round-tripping form: `200.0` -> `200`, `0.5` -> `0.5`).
+fn dynamic_to_tsv(value: &Dynamic) -> String {
+    if value.is_int() {
+        value.as_int().unwrap_or(0).to_string()
+    } else if value.is_float() {
+        format!("{}", value.as_float().unwrap_or(0.0))
+    } else {
+        value.to_string()
+    }
+}
+
+fn push_tsv_row(output: &mut String, metric: &str, key: &str, value: &str) {
+    output.push_str(&format!(
+        "{}\t{}\t{}\n",
+        tsv_sanitize(metric),
+        tsv_sanitize(key),
+        tsv_sanitize(value)
+    ));
+}
+
+fn push_tsv_scalar(output: &mut String, metric: &str, value: &str) {
+    push_tsv_row(output, metric, "", value);
+}
+
 /// Render a map-valued metric (e.g. from `track_freq`) as an aligned,
 /// sorted list rather than dumping raw Rhai map syntax (`#{"500": 67, ...}`).
 ///

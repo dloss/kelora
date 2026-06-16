@@ -137,7 +137,13 @@ fn test_metrics_mode_reports_every_event_failure_scope() {
 {"status": 503}"#;
 
     let (stdout, stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "--exec", "track_count(e.status)", "--metrics"],
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "track_count(e.status)",
+            "--metrics=full",
+        ],
         input,
     );
 
@@ -290,7 +296,8 @@ fn test_metrics_mode_all_lines_fail_to_parse() {
 fn test_metrics_command_reports_when_nothing_was_tracked() {
     let input = r#"{"level": "INFO"}"#;
 
-    let (stdout, _stderr, exit_code) = run_kelora_with_input(&["-f", "json", "--metrics"], input);
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--metrics=full"], input);
 
     assert_eq!(
         exit_code, 0,
@@ -1984,10 +1991,14 @@ fn test_multiline_parallel_avg_finalized() {
 }
 
 // ---------------------------------------------------------------------------
-// Metrics-sugar CLI flags: --freq / --describe / --top
+// Metrics-sugar CLI flags: --freq / --describe
 //
 // These are pure front-end sugar that synthesize the equivalent track_* call
-// as the final per-event stage (after all --filter/-e), and imply -m.
+// as the final per-event stage (after all --filter/-e), and imply -m. Ranking
+// (top/bottom-N) is not a flag: --freq sorts by count, so pipe its tsv output
+// to head/tail. The test harness pipes stdout, so the implied -m resolves to
+// tsv (the ls-style auto default); tests that pin the human table pass
+// --metrics=full explicitly.
 // ---------------------------------------------------------------------------
 
 const SUGAR_INPUT: &str = r#"{"level":"INFO","service":"api","ms":10}
@@ -2038,18 +2049,6 @@ fn sugar_describe_emits_stats_keys() {
     ] {
         assert!(stdout.contains(suffix), "expected {suffix} in: {stdout}");
     }
-}
-
-#[test]
-fn sugar_top_respects_n_suffix() {
-    let (stdout, _stderr, code) =
-        run_kelora_with_input(&["-f", "json", "--top", "service:1"], SUGAR_INPUT);
-    assert_eq!(code, 0);
-    assert!(stdout.contains("#1"), "top should rank items: {stdout}");
-    assert!(
-        !stdout.contains("#2"),
-        "top:1 should keep only one item: {stdout}"
-    );
 }
 
 #[test]
@@ -2144,17 +2143,6 @@ fn sugar_multiple_flags_combine() {
 }
 
 #[test]
-fn sugar_top_zero_is_rejected() {
-    let (_stdout, stderr, code) =
-        run_kelora_with_input(&["-f", "json", "--top", "url:0"], SUGAR_INPUT);
-    assert_eq!(code, 2, "invalid --top N should be a CLI usage error");
-    assert!(
-        stderr.contains("--top"),
-        "error should mention --top: {stderr}"
-    );
-}
-
-#[test]
 fn sugar_freq_parallel_matches_sequential() {
     let (seq, _e1, c1) = run_kelora_with_input(&["-f", "json", "--freq", "service"], SUGAR_INPUT);
     let (par, _e2, c2) = run_kelora_with_input(
@@ -2172,6 +2160,75 @@ fn sugar_freq_parallel_matches_sequential() {
     assert_eq!(c1, 0);
     assert_eq!(c2, 0);
     assert_eq!(seq, par, "parallel tally must match sequential");
+}
+
+// ---------------------------------------------------------------------------
+// Pipe-friendly tsv metrics output (the ls-style auto default + --metrics=tsv).
+// ---------------------------------------------------------------------------
+
+#[test]
+fn freq_piped_emits_tsv_records_sorted_desc() {
+    // The harness pipes stdout (not a TTY), so the implied -m auto-resolves to
+    // tsv: tab-separated `metric<TAB>key<TAB>count` rows, no human header, and
+    // sorted by count descending so | head is top-N and | tail is bottom-N.
+    let (stdout, _stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--freq", "level"], SUGAR_INPUT);
+    assert_eq!(code, 0);
+    assert!(
+        !stdout.contains("items):"),
+        "tsv stream must not carry the human report header: {stdout}"
+    );
+    assert!(
+        stdout.contains("level\tINFO\t2"),
+        "expected a tab-separated record for the top value: {stdout:?}"
+    );
+    // INFO (count 2) must sort ahead of the count-1 values.
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(
+        lines.first().copied(),
+        Some("level\tINFO\t2"),
+        "most frequent value must come first (head = top-N): {lines:?}"
+    );
+}
+
+#[test]
+fn metrics_tsv_flag_forces_stream_and_full_forces_table() {
+    // Explicit --metrics=tsv is the stream; --metrics=full forces the human
+    // table even through a pipe (the escape hatch).
+    let (tsv, _e1, c1) = run_kelora_with_input(
+        &["-f", "json", "--freq", "level", "--metrics=tsv"],
+        SUGAR_INPUT,
+    );
+    assert_eq!(c1, 0);
+    assert!(
+        tsv.contains('\t') && !tsv.contains("items):"),
+        "--metrics=tsv should emit the record stream: {tsv:?}"
+    );
+
+    let (full, _e2, c2) = run_kelora_with_input(
+        &["-f", "json", "--freq", "level", "--metrics=full"],
+        SUGAR_INPUT,
+    );
+    assert_eq!(c2, 0);
+    assert!(
+        full.contains("items):"),
+        "--metrics=full should force the human table through a pipe: {full}"
+    );
+}
+
+#[test]
+fn describe_tsv_emits_one_row_per_stat() {
+    // --describe under the piped auto default: each stat is its own scalar row
+    // with an empty key column (metric<TAB><TAB>value).
+    let (stdout, _stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--describe", "ms"], SUGAR_INPUT);
+    assert_eq!(code, 0);
+    for suffix in ["ms_count", "ms_min", "ms_max", "ms_avg", "ms_p95"] {
+        assert!(
+            stdout.contains(&format!("{suffix}\t\t")),
+            "expected scalar tsv row for {suffix}: {stdout:?}"
+        );
+    }
 }
 
 const HINT_INPUT: &str = r#"{"n": 1}
@@ -2260,14 +2317,17 @@ fn stats_table_still_default() {
 
 #[test]
 fn test_missing_field_skip_hint_survives_implied_metrics_suppression() {
-    // The `--freq`/`--describe`/`--top` sugar (and --metrics/--drain) imply
-    // diagnostics suppression to keep stdout clean. A typo'd field name then
-    // skipped every event and produced a bare "No metrics tracked" with no clue
-    // why. The missing-value typo hint is a stuck-user signal and must survive a
-    // mode's *implicit* suppression, on stderr, without polluting stdout metrics.
+    // The `--freq`/`--describe` sugar (and --metrics/--drain) imply diagnostics
+    // suppression to keep stdout clean. A typo'd field name then skipped every
+    // event and produced a bare "No metrics tracked" with no clue why. The
+    // missing-value typo hint is a stuck-user signal and must survive a mode's
+    // *implicit* suppression, on stderr, without polluting stdout metrics.
+    // (--metrics=full pins the human empty-state wording; --freq still implies
+    // the suppression under test regardless of format.)
     let input = "{\"status\":200}\n{\"status\":404}\n";
 
-    let (stdout, stderr, code) = run_kelora_with_input(&["-f", "json", "--freq", "stauts"], input);
+    let (stdout, stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--freq", "stauts", "--metrics=full"], input);
     assert_eq!(code, 0, "an empty result is legitimate (exit 0): {stderr}");
     assert!(
         stdout.contains("No metrics tracked"),

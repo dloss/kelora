@@ -1204,9 +1204,38 @@ fn handle_pipeline_success(
             use crate::cli::MetricsFormat;
             // Route to stdout in data-only mode, stderr when showing with events
             let use_stdout = !config.output.metrics_with_events;
-            match metrics_format {
+            // Resolve the auto default like `ls`: the human table on a terminal,
+            // the tsv record stream when stdout is piped or redirected. An
+            // explicit --metrics=full forces the table through a pipe.
+            let resolved_format = match metrics_format {
+                MetricsFormat::Auto => {
+                    if use_stdout && !std::io::stdout().is_terminal() {
+                        MetricsFormat::Tsv
+                    } else {
+                        MetricsFormat::Full
+                    }
+                }
+                other => other.clone(),
+            };
+            match &resolved_format {
+                MetricsFormat::Auto => unreachable!("Auto is resolved above"),
+                MetricsFormat::Tsv => {
+                    let tsv_output = crate::rhai_functions::tracking::format_metrics_tsv(
+                        &pipeline_result.tracking_data.user,
+                        &pipeline_result.tracking_data.internal,
+                    );
+                    // A record stream is written verbatim: no header, no leading
+                    // newline, so downstream head/tail/awk see only data rows.
+                    if !tsv_output.is_empty() {
+                        if use_stdout {
+                            stdout.writeln(&tsv_output).unwrap_or(());
+                        } else {
+                            stderr.writeln(&tsv_output).unwrap_or(());
+                        }
+                    }
+                }
                 MetricsFormat::Short | MetricsFormat::Full => {
-                    let metrics_level = match metrics_format {
+                    let metrics_level = match &resolved_format {
                         MetricsFormat::Short => 1,
                         MetricsFormat::Full => 2,
                         _ => 1,
@@ -1285,8 +1314,8 @@ fn handle_pipeline_success(
     // The track_* functions skip missing values silently; a high skip count
     // usually means a field-name typo, so it deserves a diagnostic line.
     //
-    // This is a stuck-user signal — most acute under the `--freq`/`--describe`/
-    // `--top` sugar (and `--metrics`/`--drain`), where a typo'd field name yields
+    // This is a stuck-user signal — most acute under the `--freq`/`--describe`
+    // sugar (and `--metrics`/`--drain`), where a typo'd field name yields
     // a bare "No metrics tracked" with no clue why. Those data-only modes imply
     // diagnostics suppression to keep stdout clean, which used to hide this hint
     // exactly where it's needed. So gate it like the script-error summary: survive

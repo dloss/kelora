@@ -53,6 +53,14 @@ pub enum MetricsFormat {
     Short,
     Full,
     Json,
+    /// Tab-separated record stream (one `metric<TAB>key<TAB>value` row per line,
+    /// sorted by count/score descending) for piping to head/tail/sort/awk.
+    Tsv,
+    /// Resolve at output time: the human report on a terminal, `tsv` when piped
+    /// or redirected. The default for `-m` and `--freq`/`--describe`. Hidden
+    /// because it is the implicit default rather than something to type.
+    #[value(hide = true)]
+    Auto,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]
@@ -730,9 +738,9 @@ pub struct Cli {
         value_name = "FORMAT",
         require_equals = true,
         num_args = 0..=1,
-        default_missing_value = "full",
+        default_missing_value = "auto",
         help_heading = "Metrics and Stats",
-        help = "Show metrics only (implies -q/--quiet).\n\nFormats: short (first 5), full (default), json\n\nExamples:\n  -m               Full metrics table\n  --metrics=short  Abbreviated (first 5 items)\n  --metrics=json   JSON output\n\nUse --no-metrics to override a config default. Note the '=': --metrics=json (a space, as in '-m json', is read as a filename)."
+        help = "Show metrics only (implies -q/--quiet).\n\nFormats: short (first 5), full, tsv, json. Bare -m auto-selects: the\nhuman-readable table on a terminal, tsv when piped or redirected (like ls).\n\ntsv emits one tab-separated 'metric<TAB>key<TAB>value' record per line, sorted\nby count descending, so | head is top-N and | tail is bottom-N.\n\nExamples:\n  -m               Auto (table on a TTY, tsv when piped)\n  --metrics=full   Force the table even through a pipe\n  --metrics=tsv    Force the record stream even to a TTY\n  --metrics=short  Abbreviated (first 5 items)\n  --metrics=json   JSON output\n\nUse --no-metrics to override a config default. Note the '=': --metrics=json (a space, as in '-m json', is read as a filename)."
     )]
     pub metrics: Option<MetricsFormat>,
 
@@ -763,7 +771,7 @@ pub struct Cli {
         long = "freq",
         value_name = "FIELD",
         help_heading = "Metrics and Stats",
-        help = "Frequency table: count occurrences per distinct value of FIELD.\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\nControl output with --metrics=short|full|json or --metrics-file.\n\nExamples:\n  --freq level\n  --filter 'e.status>=500' --freq url"
+        help = "Frequency table: count occurrences per distinct value of FIELD.\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\nResults are sorted by count descending, so piping the tsv output to head gives\nthe top-N and tail gives the bottom-N (no --top/--bottom flags needed).\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nExamples:\n  --freq level\n  --filter 'e.status>=500' --freq url\n  --freq url | head        # top URLs (tsv auto-selected when piped)\n  --freq url | tail        # rarest URLs"
     )]
     pub freq: Vec<String>,
 
@@ -772,18 +780,9 @@ pub struct Cli {
         long = "describe",
         value_name = "FIELD",
         help_heading = "Metrics and Stats",
-        help = "Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.\n\nShorthand for track_stats(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Non-numeric/missing values are skipped.\nControl output with --metrics=short|full|json or --metrics-file.\n\nExample:\n  --describe duration_ms"
+        help = "Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.\n\nShorthand for track_stats(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Non-numeric/missing values are skipped.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nExample:\n  --describe duration_ms"
     )]
     pub describe: Vec<String>,
-
-    /// Top-N most frequent values of FIELD. Shorthand for track_top. Accepts FIELD or FIELD:N.
-    #[arg(
-        long = "top",
-        value_name = "FIELD[:N]",
-        help_heading = "Metrics and Stats",
-        help = "Top-N most frequent values of FIELD (default N=10).\n\nShorthand for track_top(\"FIELD\", e.FIELD, N). Runs after all filters/transforms\nand implies -m. Repeatable. Pass N as a :N suffix.\nControl output with --metrics=short|full|json or --metrics-file.\n\nExamples:\n  --top url\n  --top url:20"
-    )]
-    pub top: Vec<String>,
 
     /// Summarize log templates using Drain (summary-only, requires --keys with exactly one field).
     #[arg(
@@ -1225,18 +1224,15 @@ impl Cli {
             .map(|(_, stage)| stage)
             .collect();
 
-        // Metrics-sugar flags (--freq / --describe / --top) are non-positional,
-        // so they always run LAST — after every --filter/-l/-e stage. That gives
-        // them the same post-pipeline vantage as --discover-final: they see fields
+        // Metrics-sugar flags (--freq / --describe) are non-positional, so they
+        // always run LAST — after every --filter/-l/-e stage. That gives them the
+        // same post-pipeline vantage as --discover-final: they see fields
         // created/renamed by earlier stages and only events that survived filtering.
         for field in &self.freq {
             stages.push(ScriptStageType::Exec(synthesize_freq_stage(field)?));
         }
         for field in &self.describe {
             stages.push(ScriptStageType::Exec(synthesize_describe_stage(field)?));
-        }
-        for spec in &self.top {
-            stages.push(ScriptStageType::Exec(synthesize_top_stage(spec)?));
         }
 
         Ok(stages)
@@ -1332,34 +1328,6 @@ fn synthesize_describe_stage(field: &str) -> Result<String> {
         rhai_string_literal(field),
         field_value_accessor(field)
     ))
-}
-
-fn synthesize_top_stage(spec: &str) -> Result<String> {
-    // Accept `FIELD` or `FIELD:N`. Only treat a trailing `:N` as a count when
-    // the suffix is all digits, so field names containing a colon still work.
-    let (field, n) = match spec.rsplit_once(':') {
-        Some((f, n_str)) if !n_str.is_empty() && n_str.chars().all(|c| c.is_ascii_digit()) => {
-            let n: usize = n_str
-                .parse()
-                .map_err(|_| anyhow::anyhow!("--top N is too large in '{spec}'"))?;
-            if n == 0 {
-                return Err(anyhow::anyhow!("--top N must be >= 1, got '{spec}'"));
-            }
-            (f, Some(n))
-        }
-        _ => (spec, None),
-    };
-    if field.is_empty() {
-        return Err(anyhow::anyhow!(
-            "--top requires a field name, e.g. --top url or --top url:20"
-        ));
-    }
-    let name = rhai_string_literal(field);
-    let accessor = field_value_accessor(field);
-    Ok(match n {
-        Some(n) => format!("track_top({name}, {accessor}, {n})"),
-        None => format!("track_top({name}, {accessor})"),
-    })
 }
 
 /// Parse and validate format value - supports standard formats, cols:<spec>, regex:<pattern>, and csv/tsv with type annotations
