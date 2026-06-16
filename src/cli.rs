@@ -107,7 +107,8 @@ pub enum ShellCompletion {
 #[command(after_long_help = "Exit Codes:\n  \
     0    Success — the run did its job. By default Kelora is resilient: malformed\n       \
          lines in an otherwise-valid stream, and best-effort --exec transform\n       \
-         errors, are reported on stderr and counted but do NOT change the exit code.\n  \
+         errors, are reported on stderr and counted but do NOT change the exit code\n       \
+         (use --strict to make the first such error fatal instead).\n  \
     1    Error. Any of:\n         \
          - a named input file could not be opened\n         \
          - an --assert condition failed\n         \
@@ -119,8 +120,7 @@ pub enum ShellCompletion {
     130  Interrupted (SIGINT / Ctrl-C).\n  \
     134  Internal panic (SIGABRT) — a bug; please report it.\n  \
     141  Broken pipe (SIGPIPE).\n  \
-    143  Terminated (SIGTERM).\n\
-    \nUse --strict to make the first parse/filter/exec error fatal instead of recovered.")]
+    143  Terminated (SIGTERM).")]
 pub struct Cli {
     /// Input files (stdin if not specified, or use "-" to explicitly specify stdin)
     pub files: Vec<String>,
