@@ -137,22 +137,19 @@ pub fn format_metrics_output(
                 if is_top_bottom {
                     let field_name = ranked_field.unwrap_or("count");
                     let measure = ranked_measure(field_name);
-
-                    if metrics_level >= 2 || len <= 10 {
-                        output.push_str(&format!("{:<12} ({} items, by {}):\n", key, len, measure));
-                        for (idx, item) in arr.iter().enumerate() {
-                            push_ranked_item(&mut output, idx, item, field_name);
-                        }
-                    } else {
-                        output.push_str(&format!("{:<12} ({} items, by {}):\n", key, len, measure));
-                        for (idx, item) in arr.iter().take(5).enumerate() {
-                            push_ranked_item(&mut output, idx, item, field_name);
-                        }
-                        output.push_str(&format!(
-                            "  [+{} more. Use --metrics=full or --metrics-file for full list]\n",
-                            len - 5
-                        ));
-                    }
+                    let rows: Vec<(String, String)> = arr
+                        .iter()
+                        .filter_map(|item| ranked_row(item, field_name))
+                        .collect();
+                    render_kv_block(
+                        &mut output,
+                        key,
+                        len,
+                        "value",
+                        measure,
+                        &rows,
+                        metrics_level,
+                    );
                 } else if metrics_level >= 2 {
                     output.push_str(&format!("{:<12} ({} unique):\n", key, len));
                     for item in arr.iter() {
@@ -379,13 +376,17 @@ fn push_tsv_scalar(output: &mut String, metric: &str, value: &str) {
 }
 
 /// Render a map-valued metric (e.g. from `track_freq`) as an aligned,
-/// sorted list rather than dumping raw Rhai map syntax (`#{"500": 67, ...}`).
+/// sorted, column-headed table rather than dumping raw Rhai map syntax
+/// (`#{"500": 67, ...}`).
 ///
 /// When every value is numeric the entries are sorted by value descending
 /// (most frequent first), matching `track_top_count`; otherwise they fall back
 /// to sorting by key so the order is at least stable. Like the array
 /// formatters, the list is truncated to 5 entries unless `metrics_level >= 2`
-/// (`--metrics=full`) or the map has 10 or fewer entries.
+/// (`--metrics=full`) or the map has 10 or fewer entries. `measure` is the
+/// column header for the number column: `Some("count")` for a `track_freq`
+/// table (we know its numbers are tallies), `None` for an arbitrary numeric map
+/// (whose numbers we can only call generic values).
 fn push_count_map(
     output: &mut String,
     key: &str,
@@ -416,28 +417,73 @@ fn push_count_map(
         entries.sort_by(|(ak, _), (bk, _)| ak.cmp(bk));
     }
 
+    let rows: Vec<(String, String)> = entries
+        .into_iter()
+        .map(|(k, v)| (k, format_metric_value(v)))
+        .collect();
+
+    render_kv_block(
+        output,
+        key,
+        len,
+        "value",
+        measure.unwrap_or("value"),
+        &rows,
+        metrics_level,
+    );
+}
+
+/// Render a two-column `key`/number list (frequency tables and `track_top`/
+/// `track_bottom[_by]` rankings share this) as an aligned table with a header
+/// row naming both columns. The rows are assumed already sorted/ranked; this
+/// only handles widths, the column header, and truncation. The header row is
+/// what disambiguates the number column — so e.g. `200   3` reads as a `value`
+/// of `200` with a `count` of `3`, not as two numbers. Rank position is implied
+/// by row order, so no `#n` prefix is emitted.
+fn render_kv_block(
+    output: &mut String,
+    metric: &str,
+    len: usize,
+    left_header: &str,
+    right_header: &str,
+    rows: &[(String, String)],
+    metrics_level: u8,
+) {
+    output.push_str(&format!("{:<12} ({} items):\n", metric, len));
+
     let truncate = metrics_level < 2 && len > 10;
     let shown = if truncate { 5 } else { len };
 
-    match measure {
-        Some(m) => output.push_str(&format!("{:<12} ({} items, by {}):\n", key, len, m)),
-        None => output.push_str(&format!("{:<12} ({} items):\n", key, len)),
-    }
-
-    let label_width = entries
+    let left_width = rows
         .iter()
         .take(shown)
         .map(|(k, _)| k.chars().count())
+        .chain(std::iter::once(left_header.chars().count()))
         .max()
         .unwrap_or(0)
         .min(40);
+    let right_width = rows
+        .iter()
+        .take(shown)
+        .map(|(_, v)| v.chars().count())
+        .chain(std::iter::once(right_header.chars().count()))
+        .max()
+        .unwrap_or(0);
 
-    for (cat, value) in entries.iter().take(shown) {
+    output.push_str(&format!(
+        "  {:<lw$}  {:>rw$}\n",
+        left_header,
+        right_header,
+        lw = left_width,
+        rw = right_width
+    ));
+    for (k, v) in rows.iter().take(shown) {
         output.push_str(&format!(
-            "  {:<width$} {}\n",
-            cat,
-            format_metric_value(value),
-            width = label_width
+            "  {:<lw$}  {:>rw$}\n",
+            k,
+            v,
+            lw = left_width,
+            rw = right_width
         ));
     }
 
@@ -471,24 +517,19 @@ fn format_metric_value(value: &Dynamic) -> String {
     }
 }
 
-fn push_ranked_item(output: &mut String, idx: usize, item: &Dynamic, field_name: &str) {
-    if let Some(map) = item.clone().try_cast::<rhai::Map>() {
-        if let (Some(k), Some(v)) = (map.get("key"), map.get(field_name)) {
-            let key_str = k.clone().into_string().unwrap_or_default();
-            if field_name == "count" {
-                let count = v.as_int().unwrap_or(0);
-                output.push_str(&format!("  #{:<2} {:<30} {}\n", idx + 1, key_str, count));
-            } else {
-                let val = v.as_float().unwrap_or(0.0);
-                output.push_str(&format!(
-                    "  #{:<2} {:<30} {}\n",
-                    idx + 1,
-                    key_str,
-                    format_metric_float(val)
-                ));
-            }
-        }
-    }
+/// Turn one retained ranked entry (`{key, count|value}`) into a `(key, number)`
+/// row for `render_kv_block`. `count` fields render as plain integers; `value`
+/// (score) fields go through the float trimming used elsewhere in the table.
+fn ranked_row(item: &Dynamic, field_name: &str) -> Option<(String, String)> {
+    let map = item.clone().try_cast::<rhai::Map>()?;
+    let key_str = map.get("key")?.clone().into_string().unwrap_or_default();
+    let v = map.get(field_name)?;
+    let num = if field_name == "count" {
+        v.as_int().unwrap_or(0).to_string()
+    } else {
+        format_metric_float(v.as_float().unwrap_or(0.0))
+    };
+    Some((key_str, num))
 }
 
 /// Round a float to a fixed number of significant figures for the human-readable
@@ -805,10 +846,12 @@ mod tests {
         // No raw Rhai map syntax.
         assert!(!output.contains("#{"), "output: {}", output);
         assert!(
-            output.contains("status       (3 items, by count):"),
+            output.contains("status       (3 items):"),
             "output: {}",
             output
         );
+        // The number column is labeled so 200/3 doesn't read as two numbers.
+        assert!(output.contains("count"), "output: {}", output);
         // Highest count first.
         let p500 = output.find("500").unwrap();
         let p200 = output.find("200").unwrap();
@@ -867,8 +910,12 @@ mod tests {
 
         let output = format_metrics_output(&metrics, &ops, 1);
         assert!(output.contains("hits"), "output: {}", output);
-        assert!(output.contains("by count"), "output: {}", output);
-        assert!(output.contains("by score"), "output: {}", output);
+        // The frequency ranking labels its number column "count"; the score
+        // ranking labels its column "score".
+        assert!(output.contains("count"), "output: {}", output);
+        assert!(output.contains("score"), "output: {}", output);
+        // The redundant rank prefix is gone (rows are already in rank order).
+        assert!(!output.contains("#1"), "output: {}", output);
     }
 
     #[test]
@@ -885,7 +932,10 @@ mod tests {
         );
 
         let output = format_metrics_output(&metrics, &ops, 1);
-        assert!(output.contains("by count"), "output: {}", output);
+        // The number column carries a "count" header, and the left column the
+        // distinct values it tallies.
+        assert!(output.contains("value"), "output: {}", output);
+        assert!(output.contains("count"), "output: {}", output);
     }
 
     #[test]

@@ -2211,7 +2211,7 @@ fn metrics_tsv_flag_forces_stream_and_full_forces_table() {
     );
     assert_eq!(c2, 0);
     assert!(
-        full.contains("items, by count):"),
+        full.contains("items):"),
         "--metrics=full should force the human table through a pipe: {full}"
     );
 }
