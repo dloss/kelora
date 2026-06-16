@@ -341,7 +341,12 @@ For other help topics: kelora -h
 "#
 }
 
-/// Filter the function catalogue by a case-insensitive keyword.
+/// Filter the function catalogue by a keyword using smartcase matching.
+///
+/// Matching is case-insensitive when `keyword` is all lowercase, and
+/// case-sensitive as soon as it contains any uppercase letter (the same
+/// "smartcase" convention used by editors like Vim). For example, "json"
+/// matches "JSON" and "Json", while "JSON" matches only "JSON".
 ///
 /// Returns only the sections and function entries that match `keyword`.
 /// A function entry is matched when the keyword appears anywhere in its
@@ -351,7 +356,21 @@ For other help topics: kelora -h
 /// matching entries so the output keeps its context.
 pub fn filter_help_text(keyword: &str) -> String {
     let full = generate_help_text();
-    let needle = keyword.to_lowercase();
+    // Smartcase: a lowercase keyword matches any case; an uppercase letter
+    // anywhere makes the search case-sensitive.
+    let case_sensitive = keyword.chars().any(|c| c.is_uppercase());
+    let needle = if case_sensitive {
+        keyword.to_string()
+    } else {
+        keyword.to_lowercase()
+    };
+    let contains = |haystack: &str| -> bool {
+        if case_sensitive {
+            haystack.contains(&needle)
+        } else {
+            haystack.to_lowercase().contains(&needle)
+        }
+    };
     let lines: Vec<&str> = full.lines().collect();
 
     // A section header sits at column 0 and ends with ':'. Function entries
@@ -393,10 +412,8 @@ pub fn filter_help_text(keyword: &str) -> String {
         }
         let entry = &lines[entry_start..i];
 
-        let header_matches = current_section
-            .map(|h| h.to_lowercase().contains(&needle))
-            .unwrap_or(false);
-        let entry_matches = entry.iter().any(|l| l.to_lowercase().contains(&needle));
+        let header_matches = matches!(current_section, Some(h) if contains(h));
+        let entry_matches = entry.iter().any(|l| contains(l));
 
         if header_matches || entry_matches {
             if !section_printed {
@@ -750,4 +767,47 @@ COMMON IDIOMS:
 
 For other help topics: kelora -h
 "###
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lowercase_keyword_is_case_insensitive() {
+        // A lowercase keyword should match regardless of case in the catalogue,
+        // so "json" finds the JSON-related entries/sections.
+        let out = filter_help_text("json");
+        assert!(
+            out.to_lowercase().contains("json"),
+            "expected lowercase 'json' to match JSON content"
+        );
+    }
+
+    #[test]
+    fn uppercase_keyword_is_case_sensitive() {
+        // An uppercase letter triggers case-sensitive matching. Picking a
+        // keyword whose only occurrences differ in case lets us prove the
+        // smartcase switch: lowercase matches, exact-but-miscased does not.
+        let lower = filter_help_text("string");
+        assert!(
+            !lower.trim().is_empty(),
+            "lowercase 'string' should match the STRING FUNCTIONS section"
+        );
+
+        // "STRING" appears verbatim in the section header, so a case-sensitive
+        // search for it still matches.
+        let exact = filter_help_text("STRING");
+        assert!(
+            !exact.trim().is_empty(),
+            "case-sensitive 'STRING' should match the uppercase header"
+        );
+
+        // A miscased keyword that never appears verbatim yields nothing.
+        let miscased = filter_help_text("StRiNg");
+        assert!(
+            miscased.trim().is_empty(),
+            "case-sensitive 'StRiNg' should not match anything"
+        );
+    }
 }

@@ -22,7 +22,8 @@ use crate::rhai_functions;
 /// Print available Rhai functions help.
 ///
 /// With `filter` set, only matching sections/functions are shown (a
-/// case-insensitive keyword search); otherwise the full catalogue is printed.
+/// smartcase keyword search: case-insensitive unless the keyword contains an
+/// uppercase letter); otherwise the full catalogue is printed.
 pub fn print_functions_help(filter: Option<&str>) {
     match filter {
         None => {
