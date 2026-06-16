@@ -141,15 +141,9 @@ pub fn format_metrics_output(
                         .iter()
                         .filter_map(|item| ranked_row(item, field_name))
                         .collect();
-                    render_kv_block(
-                        &mut output,
-                        key,
-                        len,
-                        "value",
-                        measure,
-                        &rows,
-                        metrics_level,
-                    );
+                    // track_top/_by rank distinct items, so the left column is
+                    // the "item"; track_freq tallies field values ("value").
+                    render_kv_block(&mut output, key, len, "item", measure, &rows, metrics_level);
                 } else if metrics_level >= 2 {
                     output.push_str(&format!("{:<12} ({} unique):\n", key, len));
                     for item in arr.iter() {
@@ -422,12 +416,19 @@ fn push_count_map(
         .map(|(k, v)| (k, format_metric_value(v)))
         .collect();
 
+    // A track_freq table tallies distinct field values, so the left column is
+    // "value" and the number column "count". An arbitrary numeric map carries
+    // no such meaning: it's a plain "key" -> "value" pairing.
+    let (left_header, right_header) = match measure {
+        Some(m) => ("value", m),
+        None => ("key", "value"),
+    };
     render_kv_block(
         output,
         key,
         len,
-        "value",
-        measure.unwrap_or("value"),
+        left_header,
+        right_header,
         &rows,
         metrics_level,
     );
