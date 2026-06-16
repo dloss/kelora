@@ -390,8 +390,16 @@ fn push_count_map(
 ) {
     let len = map.len();
 
+    // A track_freq table tallies distinct field values, so the left column is
+    // "value" and the number column "count". An arbitrary numeric map carries
+    // no such meaning: it's a plain "key" -> "value" pairing.
+    let (left_header, right_header) = match measure {
+        Some(m) => ("value", m),
+        None => ("key", "value"),
+    };
+
     if len == 0 {
-        output.push_str(&format!("{:<12} (0 items)\n", key));
+        output.push_str(&format!("{:<12} (0 {}s)\n", key, left_header));
         return;
     }
 
@@ -416,13 +424,6 @@ fn push_count_map(
         .map(|(k, v)| (k, format_metric_value(v)))
         .collect();
 
-    // A track_freq table tallies distinct field values, so the left column is
-    // "value" and the number column "count". An arbitrary numeric map carries
-    // no such meaning: it's a plain "key" -> "value" pairing.
-    let (left_header, right_header) = match measure {
-        Some(m) => ("value", m),
-        None => ("key", "value"),
-    };
     render_kv_block(
         output,
         key,
@@ -450,7 +451,10 @@ fn render_kv_block(
     rows: &[(String, String)],
     metrics_level: u8,
 ) {
-    output.push_str(&format!("{:<12} ({} items):\n", metric, len));
+    // The count noun agrees with the left column ("3 values" over a `value`
+    // column, "3 items" over an `item` column), so the header and table reinforce
+    // each other; `len` is the full total even when the list is truncated below.
+    output.push_str(&format!("{:<12} ({} {}s):\n", metric, len, left_header));
 
     let truncate = metrics_level < 2 && len > 10;
     let shown = if truncate { 5 } else { len };
@@ -847,7 +851,7 @@ mod tests {
         // No raw Rhai map syntax.
         assert!(!output.contains("#{"), "output: {}", output);
         assert!(
-            output.contains("status       (3 items):"),
+            output.contains("status       (3 values):"),
             "output: {}",
             output
         );
@@ -871,7 +875,8 @@ mod tests {
 
         // Default level truncates to 5 with a "more" line.
         let output = format_metrics_output(&metrics, &HashMap::new(), 1);
-        assert!(output.contains("(15 items):"), "output: {}", output);
+        // No tracking op, so this is a generic key/value map.
+        assert!(output.contains("(15 keys):"), "output: {}", output);
         assert!(output.contains("[+10 more"), "output: {}", output);
 
         // Full level shows everything.

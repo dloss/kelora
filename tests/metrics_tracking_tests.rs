@@ -2122,7 +2122,7 @@ fn sugar_no_metrics_overrides_freq() {
     assert_eq!(code, 0);
     // --no-metrics wins: events are shown, no frequency table.
     assert!(
-        !stdout.contains("items):"),
+        !stdout.contains("values):"),
         "--no-metrics should suppress the metrics table: {stdout}"
     );
     assert!(
@@ -2175,7 +2175,7 @@ fn freq_piped_emits_tsv_records_sorted_desc() {
         run_kelora_with_input(&["-f", "json", "--freq", "level"], SUGAR_INPUT);
     assert_eq!(code, 0);
     assert!(
-        !stdout.contains("items):"),
+        !stdout.contains("values):"),
         "tsv stream must not carry the human report header: {stdout}"
     );
     assert!(
@@ -2201,7 +2201,7 @@ fn metrics_tsv_flag_forces_stream_and_full_forces_table() {
     );
     assert_eq!(c1, 0);
     assert!(
-        tsv.contains('\t') && !tsv.contains("items):"),
+        tsv.contains('\t') && !tsv.contains("values):"),
         "--metrics=tsv should emit the record stream: {tsv:?}"
     );
 
@@ -2211,7 +2211,7 @@ fn metrics_tsv_flag_forces_stream_and_full_forces_table() {
     );
     assert_eq!(c2, 0);
     assert!(
-        full.contains("items):"),
+        full.contains("values):"),
         "--metrics=full should force the human table through a pipe: {full}"
     );
 }
