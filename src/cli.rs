@@ -117,9 +117,9 @@ pub enum ShellCompletion {
          - with --strict, ANY single parse/filter/exec error (also aborts early)\n  \
     2    Invalid command-line usage (unknown flag, bad value, conflicting options).\n  \
     130  Interrupted (SIGINT / Ctrl-C).\n  \
+    134  Internal panic (SIGABRT) — a bug; please report it.\n  \
     141  Broken pipe (SIGPIPE).\n  \
-    143  Terminated (SIGTERM).\n  \
-    134  Internal panic (SIGABRT) — a bug; please report it.\n\
+    143  Terminated (SIGTERM).\n\
     \nUse --strict to make the first parse/filter/exec error fatal instead of recovered.")]
 pub struct Cli {
     /// Input files (stdin if not specified, or use "-" to explicitly specify stdin)
