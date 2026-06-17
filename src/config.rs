@@ -718,9 +718,11 @@ impl KeloraConfig {
         config: &KeloraConfig,
         stderr: &mut crate::platform::SafeStderr,
     ) {
-        // Config expansion is informational; gate it on the umbrella (both tiers
-        // suppressed, i.e. --no-diagnostics) and --silent.
-        if config.diagnostics_suppressed() || config.processing.silent {
+        // Config expansion is informational status (🔹), not a diagnostic, so it
+        // rides the visibility axis (`-q`/`--silent`) rather than the
+        // --no-warnings/--no-hints/--no-diagnostics flags. (Details are further
+        // gated by verbosity below.)
+        if config.processing.silent || config.processing.quiet_events {
             return;
         }
 

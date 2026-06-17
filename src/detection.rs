@@ -187,10 +187,11 @@ pub fn detect_format_for_parallel_mode(
     }
 }
 
-/// Base gate for detection notices: never emitted when output is silenced,
-/// events are suppressed, or we're not writing to a terminal. Callers add the
-/// tier-specific gate (warnings vs hints vs the info umbrella) on top.
-pub fn detection_notices_allowed(config: &KeloraConfig, terminal_output: bool) -> bool {
+/// Visibility gate for the informational auto-detect notice (🔹). Info is
+/// status, not a diagnostic: it rides the visibility axis (terminal + `-q` +
+/// `--silent`), independent of the `--no-warnings`/`--no-hints`/`--no-diagnostics`
+/// flags, and is terminal-only so it can't spam pipes on every successful run.
+pub fn info_notice_allowed(config: &KeloraConfig, terminal_output: bool) -> bool {
     if config.processing.silent || config.processing.quiet_events {
         return false;
     }
@@ -204,13 +205,9 @@ pub fn format_detected_format_notice(
     detected: &DetectedFormat,
     terminal_output: bool,
 ) -> Option<String> {
-    if !detection_notices_allowed(config, terminal_output) {
-        return None;
-    }
-
     if detected.detected_non_line() {
-        // Informational: rides the --no-diagnostics umbrella.
-        if config.diagnostics_suppressed() {
+        // Informational status (🔹): visibility axis only — see info_notice_allowed.
+        if !info_notice_allowed(config, terminal_output) {
             return None;
         }
         let format_name = detected.format.to_display_string();
@@ -220,8 +217,11 @@ pub fn format_detected_format_notice(
         ));
         Some(message)
     } else if detected.fell_back_to_line() {
-        // Advisory hint (💡): obeys --no-hints.
-        if config.processing.suppress_hints {
+        // Advisory hint (💡): obeys --no-hints / --silent like every other hint,
+        // and surfaces even when stderr is redirected (no terminal gate) — the
+        // "I fell back to whole-line parsing" notice is exactly what someone
+        // exploring an unknown file in a pipe wants to see.
+        if !config.hints_allowed() {
             return None;
         }
         let message = config.format_hint_message(
@@ -251,12 +251,11 @@ pub fn parse_failure_warning_message(
     stats: Option<&ProcessingStats>,
     auto_detected_non_line: bool,
     events_were_output: bool,
-    terminal_output: bool,
 ) -> Option<String> {
-    if !auto_detected_non_line
-        || !detection_notices_allowed(config, terminal_output)
-        || !config.warnings_allowed()
-    {
+    // A warning (🔸): obeys --no-warnings / --silent only. Unlike the info
+    // notice it carries no terminal gate, so "parsing mostly failed" reaches a
+    // stuck user even when stderr is redirected to a file or captured by CI.
+    if !auto_detected_non_line || !config.warnings_allowed() {
         return None;
     }
 
@@ -330,15 +329,10 @@ pub fn emit_parse_failure_warning(
     stats: Option<&ProcessingStats>,
     auto_detected_non_line: bool,
     events_were_output: bool,
-    terminal_output: bool,
 ) {
-    if let Some(message) = parse_failure_warning_message(
-        config,
-        stats,
-        auto_detected_non_line,
-        events_were_output,
-        terminal_output,
-    ) {
+    if let Some(message) =
+        parse_failure_warning_message(config, stats, auto_detected_non_line, events_were_output)
+    {
         eprintln!("{}", message);
     }
 }
@@ -385,7 +379,7 @@ mod tests {
             ..Default::default()
         };
 
-        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false)
             .expect("expected warning");
 
         assert!(
@@ -409,7 +403,7 @@ mod tests {
             ..Default::default()
         };
 
-        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false)
             .expect("expected warning");
 
         assert!(
@@ -434,7 +428,7 @@ mod tests {
             ..Default::default()
         };
 
-        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false)
             .expect("expected warning");
 
         assert!(
@@ -460,7 +454,7 @@ mod tests {
             ..Default::default()
         };
 
-        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false, true)
+        let message = parse_failure_warning_message(&cfg, Some(&stats), true, false)
             .expect("expected warning");
 
         assert!(
@@ -494,7 +488,7 @@ mod tests {
         };
 
         assert!(
-            parse_failure_warning_message(&cfg, Some(&stats), true, false, true).is_none(),
+            parse_failure_warning_message(&cfg, Some(&stats), true, false).is_none(),
             "should not warn on low error rate"
         );
     }

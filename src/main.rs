@@ -1559,7 +1559,6 @@ fn handle_pipeline_success(
         pipeline_result.stats.as_ref(),
         auto_detected_non_line,
         events_were_output,
-        std::io::stderr().is_terminal(),
     );
     (pipeline_result.stats, Some(pipeline_result.tracking_data))
 }

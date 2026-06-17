@@ -193,3 +193,97 @@ fn silent_suppresses_everything() {
     let (_o, wstderr, _c) = run(&wargs, INPUT);
     assert!(!has_warning(&wstderr), "--silent hides warnings: {wstderr}");
 }
+
+// --- Detection-notice gating: warnings/hints follow the tier flags with NO
+// terminal gate (so they reach redirected/CI stderr), while the auto-detect
+// INFO notice stays terminal-only. The test harness pipes stderr, i.e. stderr
+// is NOT a TTY — exactly the redirected case. ---
+
+// First line is valid JSON (locks auto-detect to json), then enough garbage to
+// trip the parse-failure WARNING threshold (>=10 errors).
+fn parse_failure_input() -> String {
+    let mut s = String::from("{\"a\":1}\n");
+    for i in 0..12 {
+        s.push_str(&format!("garbage line {i}\n"));
+    }
+    s
+}
+const PF_ARGS: &[&str] = &["-f", "auto", "--no-emoji"];
+// Ambiguous plain text auto-detects to nothing and falls back to `line`,
+// emitting the format-fallback HINT.
+const FALLBACK_ARGS: &[&str] = &["--no-emoji"];
+const FALLBACK_INPUT: &str = "just some plain text\nmore plain text\n";
+
+#[test]
+fn parse_failure_warning_surfaces_with_redirected_stderr() {
+    // The whole point: a "parsing mostly failed" warning must reach a stuck user
+    // even when stderr is captured (CI / 2>file) — no terminal gate.
+    let (_o, stderr, _c) = run(PF_ARGS, &parse_failure_input());
+    assert!(
+        has_warning(&stderr),
+        "parse-failure warning must surface on redirected stderr: {stderr}"
+    );
+}
+
+#[test]
+fn parse_failure_warning_obeys_only_the_warning_tier() {
+    let input = parse_failure_input();
+
+    let mut nw = PF_ARGS.to_vec();
+    nw.push("--no-warnings");
+    let (_o, s, _c) = run(&nw, &input);
+    assert!(!has_warning(&s), "--no-warnings hides parse-failure: {s}");
+
+    // --no-hints must NOT touch a warning.
+    let mut nh = PF_ARGS.to_vec();
+    nh.push("--no-hints");
+    let (_o, s2, _c) = run(&nh, &input);
+    assert!(
+        has_warning(&s2),
+        "--no-hints must not hide the parse-failure warning: {s2}"
+    );
+}
+
+#[test]
+fn fallback_hint_surfaces_piped_and_obeys_only_the_hint_tier() {
+    let (_o, s, _c) = run(FALLBACK_ARGS, FALLBACK_INPUT);
+    assert!(
+        has_hint(&s),
+        "format-fallback hint must surface on redirected stderr: {s}"
+    );
+
+    let mut nh = FALLBACK_ARGS.to_vec();
+    nh.push("--no-hints");
+    let (_o, s2, _c) = run(&nh, FALLBACK_INPUT);
+    assert!(!has_hint(&s2), "--no-hints hides the fallback hint: {s2}");
+
+    let mut nw = FALLBACK_ARGS.to_vec();
+    nw.push("--no-warnings");
+    let (_o, s3, _c) = run(&nw, FALLBACK_INPUT);
+    assert!(
+        has_hint(&s3),
+        "--no-warnings must not hide the fallback hint: {s3}"
+    );
+}
+
+#[test]
+fn autodetect_info_is_terminal_only() {
+    // The 🔹 "Auto-detected format" status line is terminal-only, so with stderr
+    // redirected (as in this harness) it never appears — and that's independent
+    // of the diagnostic flags, since info is not a diagnostic.
+    let (_o, s, _c) = run(&["-f", "auto", "--no-emoji"], "{\"a\":1}\n");
+    assert!(
+        !s.contains("Auto-detected format"),
+        "auto-detect info must stay terminal-only on redirected stderr: {s}"
+    );
+    // Even --diagnostics (which forces both advisory tiers on) does not pull the
+    // info notice into redirected stderr — it's on the visibility axis.
+    let (_o, s2, _c) = run(
+        &["-f", "auto", "--no-emoji", "--diagnostics"],
+        "{\"a\":1}\n",
+    );
+    assert!(
+        !s2.contains("Auto-detected format"),
+        "info is visibility-gated, not diagnostic-gated: {s2}"
+    );
+}
