@@ -617,14 +617,17 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
                     stderr
                         .writeln(&format!("kelora: Config error: {}", e))
                         .unwrap_or(());
-                    std::process::exit(1);
+                    // A malformed config file is invalid usage (like a bad flag or
+                    // value), not a runtime failure — exit 2 to match the other
+                    // configuration-validation paths and the --help exit-code table.
+                    ExitCode::InvalidUsage.exit();
                 }
             },
             Err(e) => {
                 stderr
                     .writeln(&format!("kelora: Config file error: {}", e))
                     .unwrap_or(());
-                std::process::exit(1);
+                ExitCode::InvalidUsage.exit();
             }
         }
     } else if disable_auto_config {
@@ -642,14 +645,17 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
                     stderr
                         .writeln(&format!("kelora: Config error: {}", e))
                         .unwrap_or(());
-                    std::process::exit(1);
+                    // A malformed config file is invalid usage (like a bad flag or
+                    // value), not a runtime failure — exit 2 to match the other
+                    // configuration-validation paths and the --help exit-code table.
+                    ExitCode::InvalidUsage.exit();
                 }
             },
             Err(e) => {
                 stderr
                     .writeln(&format!("kelora: Config file error: {}", e))
                     .unwrap_or(());
-                std::process::exit(1);
+                ExitCode::InvalidUsage.exit();
             }
         }
     };

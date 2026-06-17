@@ -116,7 +116,8 @@ pub enum ShellCompletion {
            line, or a --filter errored on every event)\n         \
          - a forbidden operation (e.g. mutating `conf` outside --begin)\n         \
          - with --strict, ANY single parse/filter/exec error (also aborts early)\n  \
-    2    Invalid command-line usage (unknown flag, bad value, conflicting options).\n  \
+    2    Invalid command-line usage (unknown flag, bad value, conflicting options, or a\n         \
+         malformed config file).\n  \
     130  Interrupted (SIGINT / Ctrl-C).\n  \
     134  Internal panic (SIGABRT) — a bug; please report it.\n  \
     141  Broken pipe (SIGPIPE).\n  \
