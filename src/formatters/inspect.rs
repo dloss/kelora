@@ -256,6 +256,23 @@ impl InspectFormatter {
             return ("null".to_string(), "null".to_string());
         }
 
+        // Custom wrapper scalars (datetime, duration) render via their Display
+        // rather than leaking the internal Rust type name.
+        if let Some(s) = crate::rhai_functions::datetime::render_custom_scalar(value) {
+            let type_label = if value.is::<crate::rhai_functions::datetime::DateTimeWrapper>() {
+                "datetime"
+            } else {
+                "duration"
+            };
+            let escaped = escape_for_display(&s);
+            let (truncated, was_truncated) = self.truncate_value(&escaped);
+            let mut repr = truncated;
+            if was_truncated {
+                repr.push_str("...");
+            }
+            return (type_label.to_string(), repr);
+        }
+
         // Fallback for other scalar types
         let type_label = value.type_name().to_string();
         let rendered = escape_for_display(&value.to_string());

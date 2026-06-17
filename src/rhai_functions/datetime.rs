@@ -101,6 +101,22 @@ impl fmt::Display for DurationWrapper {
     }
 }
 
+/// Render Kelora's custom Rhai scalar wrappers (`DateTimeWrapper`,
+/// `DurationWrapper`) via their `Display`. Rust-level `Dynamic::to_string()`
+/// returns the *type name* for custom types, so output serializers must call
+/// this before any `to_string()` / `{:?}` fallback — otherwise a datetime or
+/// duration stored in an event field leaks e.g.
+/// "kelora::rhai_functions::datetime::DateTimeWrapper" into the output.
+pub fn render_custom_scalar(value: &rhai::Dynamic) -> Option<String> {
+    if let Some(dt) = value.read_lock::<DateTimeWrapper>() {
+        Some(dt.to_string())
+    } else {
+        value
+            .read_lock::<DurationWrapper>()
+            .map(|dur| dur.to_string())
+    }
+}
+
 // Thread-local adaptive parser for Rhai timestamp parsing
 thread_local! {
     static RHAI_TS_PARSER: RefCell<crate::timestamp::AdaptiveTsParser> =

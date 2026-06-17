@@ -105,7 +105,11 @@ impl LogfmtFormatter {
         // likewise contains '=' and ',', so they must go through the same
         // quoting path to stay parseable (mirrors how the CSV formatter escapes
         // its compact cells). Numeric and boolean scalars never need quoting.
-        if value.is_string() || value.is::<rhai::Map>() || value.is::<rhai::Array>() {
+        if value.is_string()
+            || value.is::<rhai::Map>()
+            || value.is::<rhai::Array>()
+            || crate::rhai_functions::datetime::render_custom_scalar(value).is_some()
+        {
             format_quoted_logfmt_value(&string_val, output);
         } else {
             output.push_str(&string_val);
@@ -137,6 +141,8 @@ impl LogfmtFormatter {
                     .collect::<Vec<_>>()
                     .join(",")
             }
+        } else if let Some(s) = crate::rhai_functions::datetime::render_custom_scalar(value) {
+            s
         } else {
             // Simple scalar value
             value.to_string()

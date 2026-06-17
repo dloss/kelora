@@ -145,6 +145,10 @@ fn dynamic_to_json_value(value: &rhai::Dynamic) -> serde_json::Value {
         return serde_json::Value::Object(json_obj);
     }
 
+    if let Some(s) = crate::rhai_functions::datetime::render_custom_scalar(value) {
+        return serde_json::Value::String(s);
+    }
+
     // Fallback: try to convert to string
     serde_json::Value::String(format!("{:?}", value))
 }

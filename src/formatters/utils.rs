@@ -30,6 +30,10 @@ pub(crate) fn format_dynamic_value(value: &Dynamic) -> (String, bool) {
         } else {
             (value.to_string(), false)
         }
+    } else if let Some(s) = crate::rhai_functions::datetime::render_custom_scalar(value) {
+        // Custom wrapper scalars (datetime, duration) render via their Display;
+        // flag as quotable so formats that quote on spaces (e.g. "1m 30s") do so.
+        (s, true)
     } else {
         // Numbers, booleans, etc. - never need quotes
         (value.to_string(), false)
@@ -94,6 +98,8 @@ pub(super) fn dynamic_to_json(value: &Dynamic) -> serde_json::Value {
             json_obj.insert(key.to_string(), dynamic_to_json(&val));
         }
         serde_json::Value::Object(json_obj)
+    } else if let Some(s) = crate::rhai_functions::datetime::render_custom_scalar(value) {
+        serde_json::Value::String(s)
     } else {
         // For any remaining types, convert to string
         serde_json::Value::String(value.to_string())

@@ -1161,6 +1161,33 @@ fn test_shared_escaping_utilities() {
 }
 
 #[test]
+fn test_custom_scalar_types_render_without_type_name_leak() {
+    // A datetime or duration stored in an event field (e.g. `e.r =
+    // meta.parsed_ts`) must render via its Display, not leak the internal Rust
+    // type path through any output path. Regression for the 2.0 user-test find.
+    use crate::rhai_functions::datetime::{DateTimeWrapper, DurationWrapper};
+
+    let dt = Dynamic::from(DateTimeWrapper::from_utc(
+        Utc.with_ymd_and_hms(2026, 1, 2, 15, 4, 5).unwrap(),
+    ));
+    let dur = Dynamic::from(DurationWrapper::from_seconds(90));
+
+    for v in [&dt, &dur] {
+        let (s, _) = format_dynamic_value(v);
+        assert!(!s.contains("Wrapper"), "default/logfmt leak: {s}");
+        let j = super::utils::dynamic_to_json(v).to_string();
+        assert!(!j.contains("Wrapper"), "json leak: {j}");
+    }
+
+    assert_eq!(format_dynamic_value(&dt).0, "2026-01-02T15:04:05+00:00");
+    assert_eq!(format_dynamic_value(&dur), ("1m 30s".to_string(), true));
+    assert_eq!(
+        super::utils::dynamic_to_json(&dur),
+        serde_json::Value::String("1m 30s".to_string())
+    );
+}
+
+#[test]
 fn test_csv_formatter_basic() {
     let keys = vec!["name".to_string(), "age".to_string(), "city".to_string()];
     let formatter = CsvFormatter::new(keys);

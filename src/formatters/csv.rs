@@ -205,6 +205,8 @@ impl CsvFormatter {
                     .collect::<Vec<_>>()
                     .join(",")
             }
+        } else if let Some(s) = crate::rhai_functions::datetime::render_custom_scalar(value) {
+            s
         } else {
             // Simple scalar value
             value.to_string()

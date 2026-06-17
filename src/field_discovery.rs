@@ -77,6 +77,10 @@ impl FieldType {
             FieldType::Array
         } else if value.is_map() {
             FieldType::Map
+        } else if value.is::<crate::rhai_functions::datetime::DateTimeWrapper>() {
+            FieldType::Other("datetime".to_string())
+        } else if value.is::<crate::rhai_functions::datetime::DurationWrapper>() {
+            FieldType::Other("duration".to_string())
         } else {
             FieldType::Other(value.type_name().to_string())
         }

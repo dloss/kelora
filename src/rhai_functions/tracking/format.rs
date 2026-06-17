@@ -633,6 +633,10 @@ pub(crate) fn dynamic_to_json(value: Dynamic) -> serde_json::Value {
         return serde_json::Value::String(string.into());
     }
 
+    if let Some(s) = crate::rhai_functions::datetime::render_custom_scalar(&value) {
+        return serde_json::Value::String(s);
+    }
+
     serde_json::Value::String(value.to_string())
 }
 
