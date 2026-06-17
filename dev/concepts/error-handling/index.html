@@ -1930,6 +1930,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-kelora-prints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What kelora prints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quietsilent-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3194,6 +3205,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#what-kelora-prints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What kelora prints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quietsilent-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3890,8 +3912,67 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--strict<span class="w"> </span>--verbose<span class="w"> </span>app.log
 </code></pre></div>
 <p>Errors are shown immediately, then processing aborts.</p>
+<h2 id="what-kelora-prints">What kelora prints<a class="headerlink" href="#what-kelora-prints" title="Permanent link">&para;</a></h2>
+<p>kelora follows the Unix <strong>rule of silence</strong>: a successful run prints only its
+data. It speaks up only to flag a problem, point at a likely mistake, or report
+an error — and <code>-v</code>/<code>--verbose</code> shows what it decided. Everything except the
+event data goes to <strong>stderr</strong>, so a pipeline's stdout stays clean.</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Looks like</th>
+<th>Appears when</th>
+<th>Silence with</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Events</strong> (data)</td>
+<td>your records, on <strong>stdout</strong></td>
+<td>always — this is the result</td>
+<td><code>-q</code> / <code>--quiet</code></td>
+</tr>
+<tr>
+<td><strong>Error</strong> ⚠️</td>
+<td><code>⚠️</code> / <code>kelora:</code></td>
+<td>the run hit a fatal problem</td>
+<td><code>--silent</code> (one fatal line still prints)</td>
+</tr>
+<tr>
+<td><strong>Warning</strong> 🔸</td>
+<td><code>kelora warning:</code></td>
+<td>something may be wrong but the run continued — recovered <code>--exec</code> errors, conflicting flags, mostly-failed parsing</td>
+<td><code>--no-warnings</code>, <code>--no-diagnostics</code>, <code>--silent</code>, <code>KELORA_NO_WARNINGS</code></td>
+</tr>
+<tr>
+<td><strong>Hint</strong> 💡</td>
+<td><code>kelora hint:</code></td>
+<td>a likely mistake with a concrete fix — a quoted numeric filter that's always false, a format that fell back to whole-line</td>
+<td><code>--no-hints</code>, <code>--no-diagnostics</code>, <code>--silent</code>, <code>KELORA_NO_HINTS</code></td>
+</tr>
+<tr>
+<td><strong>Status</strong> 🔹</td>
+<td><code>🔹</code> / <code>kelora:</code></td>
+<td>only under <code>-v</code>/<code>--verbose</code> — <em>what kelora did</em>: detected format, loaded config, applied defaults/aliases</td>
+<td>hidden by default</td>
+</tr>
+</tbody>
+</table>
+<p>Two consequences worth knowing:</p>
+<ul>
+<li><strong>Success is silent.</strong> A confident auto-detection and a successfully-loaded
+  config are not announced on a normal run — their effects are the confirmation,
+  and a config that <em>fails</em> to load is a loud error. Run with <code>-v</code> to see those
+  decisions. Likewise, an empty result after your own filter prints nothing: a
+  zero-match hint appears only when there is a concrete, non-obvious mistake to
+  point at (e.g. a quoted numeric comparison, a typo'd field, no timestamps for
+  <code>--since/--until</code>).</li>
+<li><strong>Warnings and hints are anomaly-triggered and reach redirected stderr</strong> (CI,
+  <code>2&gt;file</code>), so a stuck user still sees them. Silence them with the flags above.</li>
+</ul>
 <h2 id="quietsilent-controls">Quiet/Silent Controls<a class="headerlink" href="#quietsilent-controls" title="Permanent link">&para;</a></h2>
-<p>Use the new orthogonal toggles to control output for automation:</p>
+<p>Each channel can be silenced independently; these flags compose for automation:</p>
 <table>
 <thead>
 <tr>
