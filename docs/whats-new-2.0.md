@@ -22,8 +22,9 @@ and minor flag), see the [full changelog](https://github.com/dloss/kelora/blob/m
 
 A curated set of common application-log layouts now parse into structured
 fields out of the box: `glog` (Go/klog), `nginx-error`, `apache-error`,
-`log4j`/Java, `python-logging`, `redis`, `s3` (AWS S3 access log), `haproxy`
-(http/tcp), and `iso8601-level`. Select them with `-f <name>`:
+`log4j`/Java, `python-logging`, `postgres` (PostgreSQL server log), `redis`,
+`s3` (AWS S3 access log), `haproxy` (http/tcp), and `iso8601-level`. Select them
+with `-f <name>`:
 
 ```bash
 kelora -f log4j app.log -k ts,level,msg
@@ -34,6 +35,16 @@ notice and `--stats`, and documented in `--help-formats`. During
 auto-detection they're tried only as the last step before the `line` fallback,
 so nothing Kelora already detected changes. (The definitions are adapted from
 [lnav](https://lnav.org), BSD-3-Clause — see `THIRD_PARTY_LICENSES.md`.)
+
+`postgres` matches the default `log_line_prefix = '%m [%p] '` and extracts `ts`,
+`log_tz`, `pid`, `level`, and `msg`. A PostgreSQL error often spans several
+lines — an `ERROR:`/`STATEMENT:` record followed by tab-indented query
+continuation — so pair it with `-M indent`, which folds the indented lines into
+the preceding record before parsing:
+
+```bash
+kelora -f postgres -M indent postgresql.log --filter 'e.level == "ERROR"'
+```
 
 A Kelora-original `cri` format covers Kubernetes container logs — the
 CRI/containerd on-disk layout `<RFC3339Nano> <stream> <tag> <message>` that

@@ -78,7 +78,6 @@ syslog
 
 Named application-log formats
   A small set of common application-log layouts, parsed with the regex engine:
-    alb             AWS ALB access log (http 2018-07-02T… app/lb/… ip:port … "GET …" 200 …)
     apache-error    Apache error log ("[Fri Oct 11 14:32:52 2024] [core:error] ... msg")
     cri             Kubernetes CRI/containerd log (2024-07-17T12:12:05.0Z stdout F msg)
     glog            Go/glog and Kubernetes klog (I0102 15:04:05.123 1 f.go:42] msg)
@@ -98,13 +97,17 @@ Named application-log formats
   Notes: glog/redis omit the year, so 'ts' assumes the current year (like
   syslog). haproxy lines are syslog-wrapped, so under -f auto they are detected
   as 'syslog' — pass -f haproxy to extract the structured fields. The access-log
-  formats ('alb', 's3', 'haproxy') keep only a curated set of useful fields and
-  drop the long, version-dependent tail; the full raw line is still available in
+  formats ('s3', 'haproxy') keep only a curated set of useful fields and may
+  drop a long, version-dependent tail; the full raw line is still available in
   a script as 'line' / 'meta.line', so a dropped column can be recovered with a
   second-stage parse, e.g.:
-    kelora -f alb access.log --exec 'e.trace_id = meta.line.extract_regex("Root=([0-9a-f-]+)", 1)'
+    kelora -f s3 access.log --exec 'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'
   'postgres' matches the default log_line_prefix ('%m [%p] '); a customized
   prefix (user@db, app name, …) won't auto-detect — use -f regex: for those.
+  Multi-line statements (an ERROR/STATEMENT followed by tab-indented query
+  continuation lines) parse cleanly with -M indent, which folds the indented
+  lines into the preceding record; without it those lines are reported as parse
+  errors. -f postgres,line instead keeps them as raw 'line' events.
   Its 'ts' is naive: it is resolved via --input-tz (default UTC), not the logged
   zone abbreviation (kept in 'log_tz'), since abbreviations are ambiguous and
   can't be converted to an offset. UTC-logged servers are correct by default;

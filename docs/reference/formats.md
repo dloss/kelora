@@ -314,32 +314,37 @@ kelora pod.log -f cri --exec 'e.absorb_json("msg")' --filter 'e.level == "error"
 Beyond the wire/access formats above, Kelora ships a curated set of named
 application-log layouts — `glog` (Go/Kubernetes klog), `nginx-error`,
 `apache-error`, `log4j`/Java, `python-logging`, `postgres` (PostgreSQL server
-log), `redis`, `s3`, `alb` (AWS ALB access log), `haproxy`, and `iso8601-level`
+log), `redis`, `s3`, `haproxy`, and `iso8601-level`
 — that parse into `ts`, `level`, `msg`, and format-specific extras. Select them
 with `-f <name>` (e.g. `-f log4j`) or inside a cascade (`-f log4j,line`). With
 the exception of `cri` (above), they are tried only as the last step before the
 `line` fallback, so they never override a format detected earlier. Run `kelora
 --help-formats` for the full catalogue, sample lines, and per-format notes.
 (These definitions are adapted from [lnav](https://lnav.org), BSD-3-Clause;
-`cri` and `alb` are Kelora-original.)
+`cri` is Kelora-original.)
 
-The access-log formats (`alb`, `s3`, `haproxy`) keep only a curated set of
-useful fields and drop the long, version-dependent tail (for `alb`, AWS appends
-columns across versions: target group ARN, trace id, action/redirect/error
-reason, classification, …). Nothing is lost: the full raw line is always
-available to a script as `line` / `meta.line`, so a dropped column can be
-recovered with a second-stage parse. For example, to pull the AWS X-Ray trace
-id out of an ALB line's tail:
+The access-log formats (`s3`, `haproxy`) keep only a curated set of useful
+fields and may drop a long, version-dependent tail. Nothing is lost: the full
+raw line is always available to a script as `line` / `meta.line`, so a dropped
+column can be recovered with a second-stage parse, e.g. extracting a trailing
+quoted column off the raw line:
 
 ```bash
-kelora -f alb access.log \
-  --exec 'e.trace_id = meta.line.extract_regex("Root=([0-9a-f-]+)", 1)'
+kelora -f s3 access.log \
+  --exec 'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'
 ```
 
 `postgres` matches the default `log_line_prefix = '%m [%p] '`
 (`2024-01-02 15:04:05.123 UTC [1234] LOG:  …`); a customized prefix (adding
 `user@db`, an application name, etc.) won't auto-detect — reach those with
 `-f regex:`.
+
+A PostgreSQL error often spans several physical lines — an `ERROR:`/`STATEMENT:`
+record followed by tab-indented query-continuation lines that carry no prefix.
+Parse those with `-M indent`, which folds the indented lines into the preceding
+record before parsing; without it they are reported as parse errors and dropped.
+(`-f postgres,line` is the alternative: it keeps each unmatched continuation
+line as a raw `line` event instead of folding it.)
 
 Its `ts` is **naive**: like the other timestamp-only formats, it is resolved
 through `--input-tz` (default `UTC`), **not** the zone abbreviation logged on the
