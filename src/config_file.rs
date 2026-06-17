@@ -16,8 +16,6 @@ pub struct ConfigFile {
 pub struct ConfigExpansionInfo {
     /// Path to the config file that was loaded (if any)
     pub loaded_config_path: Option<PathBuf>,
-    /// Whether the user explicitly selected a config file path via --config-file
-    pub explicit_config_path: bool,
     /// Defaults that were applied (raw string from config)
     pub applied_defaults: Option<String>,
     /// Aliases that were expanded: (alias_name, final_expansion)

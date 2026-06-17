@@ -297,12 +297,12 @@ fn test_zero_results_with_existing_filter_field_does_not_emit_typo_hint() {
 }
 
 #[test]
-fn test_zero_results_valid_field_emits_generic_hint_with_diagnostics() {
+fn test_zero_results_valid_field_stays_silent() {
     // A `--filter` on a real field whose value simply never occurs is a
     // legitimate miss with no specific culprit (not a typo, not a numeric/string
-    // mismatch). It should still get a generic acknowledgement when diagnostics
-    // are requested, mirroring the note `-l/--levels` already gives — rather than
-    // exiting in silence the way it used to.
+    // mismatch). Under the Rule of Silence it produces no hint — empty output
+    // after your own filter is self-evident — not even with --diagnostics, which
+    // only forces the advisory tiers on, it does not invent advice.
     let input = "{\"level\": \"INFO\"}\n{\"level\": \"DEBUG\"}";
 
     let (_stdout, stderr, exit_code) = run_kelora_with_input(
@@ -321,8 +321,8 @@ fn test_zero_results_valid_field_emits_generic_hint_with_diagnostics() {
         "a non-matching filter should remain successful"
     );
     assert!(
-        stderr.contains("events matched") && stderr.contains("active criteria"),
-        "stderr should give a generic zero-match note: {}",
+        !stderr.contains("events matched"),
+        "a legitimate filter miss with no detectable culprit should stay silent: {}",
         stderr
     );
 }

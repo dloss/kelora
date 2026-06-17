@@ -187,27 +187,18 @@ pub fn detect_format_for_parallel_mode(
     }
 }
 
-/// Visibility gate for the informational auto-detect notice (🔹). Info is
-/// status, not a diagnostic: it rides the visibility axis (terminal + `-q` +
-/// `--silent`), independent of the `--no-warnings`/`--no-hints`/`--no-diagnostics`
-/// flags, and is terminal-only so it can't spam pipes on every successful run.
-pub fn info_notice_allowed(config: &KeloraConfig, terminal_output: bool) -> bool {
-    if config.processing.silent || config.processing.quiet_events {
-        return false;
-    }
-
-    terminal_output
-}
-
 /// Format a notice about detected format
 pub fn format_detected_format_notice(
     config: &KeloraConfig,
     detected: &DetectedFormat,
-    terminal_output: bool,
 ) -> Option<String> {
     if detected.detected_non_line() {
-        // Informational status (🔹): visibility axis only — see info_notice_allowed.
-        if !info_notice_allowed(config, terminal_output) {
+        // "What kelora did" status (🔹). A *confident* auto-detection is not
+        // surprising, so a successful run stays silent (Rule of Silence) and this
+        // line surfaces only under -v/--verbose. `verbose` is forced to 0 by
+        // --silent / --no-diagnostics (see config.rs), so this single check also
+        // covers those cases.
+        if config.processing.verbose == 0 {
             return None;
         }
         let format_name = detected.format.to_display_string();
@@ -234,12 +225,8 @@ pub fn format_detected_format_notice(
 }
 
 /// Emit a notice about detected format to stderr
-pub fn emit_detected_format_notice(
-    config: &KeloraConfig,
-    detected: &DetectedFormat,
-    terminal_output: bool,
-) {
-    if let Some(message) = format_detected_format_notice(config, detected, terminal_output) {
+pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFormat) {
+    if let Some(message) = format_detected_format_notice(config, detected) {
         eprintln!("{}", message);
     }
 }
@@ -354,16 +341,24 @@ mod tests {
     }
 
     #[test]
-    fn detected_format_notice_for_non_line_format() {
-        let cfg = base_config();
+    fn detected_format_notice_is_verbose_only() {
         let detected = DetectedFormat {
             format: config::InputFormat::Json,
             had_input: true,
         };
 
-        let message =
-            format_detected_format_notice(&cfg, &detected, true).expect("expected info notice");
+        // A confident auto-detection is silent on a normal run...
+        let cfg = base_config();
+        assert!(
+            format_detected_format_notice(&cfg, &detected).is_none(),
+            "confident auto-detect must stay silent without -v"
+        );
 
+        // ...and surfaces only under -v/--verbose.
+        let mut verbose_cfg = base_config();
+        verbose_cfg.processing.verbose = 1;
+        let message =
+            format_detected_format_notice(&verbose_cfg, &detected).expect("expected info notice");
         assert!(
             message.contains("Auto-detected format: json"),
             "message was {message}"

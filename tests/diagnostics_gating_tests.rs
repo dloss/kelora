@@ -196,8 +196,8 @@ fn silent_suppresses_everything() {
 
 // --- Detection-notice gating: warnings/hints follow the tier flags with NO
 // terminal gate (so they reach redirected/CI stderr), while the auto-detect
-// INFO notice stays terminal-only. The test harness pipes stderr, i.e. stderr
-// is NOT a TTY — exactly the redirected case. ---
+// STATUS notice is silent on success and surfaces only under -v. The test
+// harness pipes stderr, i.e. stderr is NOT a TTY — exactly the redirected case. ---
 
 // First line is valid JSON (locks auto-detect to json), then enough garbage to
 // trip the parse-failure WARNING threshold (>=10 errors).
@@ -267,23 +267,29 @@ fn fallback_hint_surfaces_piped_and_obeys_only_the_hint_tier() {
 }
 
 #[test]
-fn autodetect_info_is_terminal_only() {
-    // The 🔹 "Auto-detected format" status line is terminal-only, so with stderr
-    // redirected (as in this harness) it never appears — and that's independent
-    // of the diagnostic flags, since info is not a diagnostic.
+fn autodetect_info_is_verbose_only() {
+    // The 🔹 "Auto-detected format" status line is "what kelora did": a confident
+    // detection is unsurprising, so a normal run stays silent (Rule of Silence)...
     let (_o, s, _c) = run(&["-f", "auto", "--no-emoji"], "{\"a\":1}\n");
     assert!(
         !s.contains("Auto-detected format"),
-        "auto-detect info must stay terminal-only on redirected stderr: {s}"
+        "auto-detect status must be silent without -v: {s}"
     );
-    // Even --diagnostics (which forces both advisory tiers on) does not pull the
-    // info notice into redirected stderr — it's on the visibility axis.
+    // ...and --diagnostics, which forces the advisory tiers on, does NOT pull in
+    // status — it's not a diagnostic.
     let (_o, s2, _c) = run(
         &["-f", "auto", "--no-emoji", "--diagnostics"],
         "{\"a\":1}\n",
     );
     assert!(
         !s2.contains("Auto-detected format"),
-        "info is visibility-gated, not diagnostic-gated: {s2}"
+        "status is not a diagnostic; --diagnostics must not show it: {s2}"
+    );
+    // It surfaces only under -v/--verbose — and then even on redirected stderr,
+    // because -v is an explicit "show me what you did".
+    let (_o, s3, _c) = run(&["-f", "auto", "--no-emoji", "-v"], "{\"a\":1}\n");
+    assert!(
+        s3.contains("Auto-detected format: json"),
+        "-v must surface the auto-detect status: {s3}"
     );
 }

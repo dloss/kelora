@@ -611,7 +611,6 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
             Ok((config_file, loaded_path)) => match config_file.process_args(raw_args) {
                 Ok((processed, mut info)) => {
                     info.loaded_config_path = loaded_path;
-                    info.explicit_config_path = true;
                     (processed, info)
                 }
                 Err(e) => {
@@ -637,7 +636,6 @@ pub fn process_args_with_config(stderr: &mut SafeStderr) -> (ArgMatches, Cli, Co
             Ok((config_file, loaded_path)) => match config_file.process_args(raw_args) {
                 Ok((processed, mut info)) => {
                     info.loaded_config_path = loaded_path;
-                    info.explicit_config_path = config_file_path.is_some();
                     (processed, info)
                 }
                 Err(e) => {

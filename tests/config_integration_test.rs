@@ -142,7 +142,7 @@ fn test_default_config_path_is_not_printed_on_normal_runs() {
 }
 
 #[test]
-fn test_explicit_config_file_path_is_still_printed() {
+fn test_explicit_config_file_path_is_silent_on_success_shown_under_verbose() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("custom.ini");
     fs::write(&config_path, "defaults = -f line\n").unwrap();
@@ -150,6 +150,9 @@ fn test_explicit_config_file_path_is_still_printed() {
     let log_file = temp_dir.path().join("test.log");
     fs::write(&log_file, "hello\n").unwrap();
 
+    // Loading a config — even an explicitly requested one — is "what kelora did":
+    // silent on success (Rule of Silence). The config's effects are the
+    // confirmation, and a config that fails to load is a loud error.
     let (_stdout, stderr, exit_code) = run_kelora_in_dir(
         temp_dir.path(),
         &[
@@ -159,12 +162,29 @@ fn test_explicit_config_file_path_is_still_printed() {
         ],
         "",
     );
-
     assert_eq!(exit_code, 0, "kelora should exit successfully");
     assert!(
-        stderr.contains("Config:"),
-        "explicit config file path should still be shown: {}",
+        !stderr.contains("Config:"),
+        "config load should be silent on success: {}",
         stderr
+    );
+
+    // -v surfaces what it did, including the loaded config path.
+    let (_stdout, vstderr, vexit) = run_kelora_in_dir(
+        temp_dir.path(),
+        &[
+            "-v",
+            "--config-file",
+            config_path.to_str().unwrap(),
+            log_file.to_str().unwrap(),
+        ],
+        "",
+    );
+    assert_eq!(vexit, 0, "kelora should exit successfully");
+    assert!(
+        vstderr.contains("Config:") && vstderr.contains("custom.ini"),
+        "-v should show the loaded config path: {}",
+        vstderr
     );
 }
 
@@ -307,11 +327,9 @@ fn test_ignore_config_env_still_allows_explicit_config_file() {
     );
 
     assert_eq!(exit_code, 0, "kelora should exit successfully");
-    assert!(
-        stderr.contains("Config:"),
-        "Expected explicit config file to load, got: {}",
-        stderr
-    );
+    // The explicit config loads despite KELORA_IGNORE_CONFIG — proven by its
+    // *effect* (it sets --with-stats), not by a status line. Config loading is
+    // silent on success; the applied defaults are the confirmation.
     assert!(
         stderr.contains("Events") || stderr.contains("processed"),
         "Expected explicit config defaults to apply, got: {}",

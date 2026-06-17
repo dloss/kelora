@@ -8,7 +8,7 @@ use crossbeam_channel::{bounded, select, Receiver, Sender};
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::fs;
-use std::io::{self, BufRead, BufReader, IsTerminal, Write};
+use std::io::{self, BufRead, BufReader, Write};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -176,8 +176,6 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
     output: W,
     ctrl_rx: &Receiver<Ctrl>,
 ) -> Result<PipelineResult> {
-    let terminal_output = std::io::stderr().is_terminal();
-
     // Handle auto-detection for parallel mode
     let (final_config, auto_detected_non_line, detected_reader) =
         if matches!(config.input.format, config::InputFormat::Auto) {
@@ -188,7 +186,7 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
                 config.processing.strict,
             )?;
 
-            detection::emit_detected_format_notice(config, &detected_format, terminal_output);
+            detection::emit_detected_format_notice(config, &detected_format);
 
             // Create new config with detected format
             let mut new_config = config.clone();
@@ -443,8 +441,6 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
     output: &mut W,
     ctrl_rx: Receiver<Ctrl>,
 ) -> Result<(config::InputFormat, bool)> {
-    let terminal_output = std::io::stderr().is_terminal();
-
     if config.input.no_input {
         // For --no-input mode, skip auto-detection and use empty input with Line format
         let mut final_config = config.clone();
@@ -463,7 +459,7 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
 
         let detected_format = detection::detect_format_from_peekable_reader(&mut peekable_reader)?;
 
-        detection::emit_detected_format_notice(config, &detected_format, terminal_output);
+        detection::emit_detected_format_notice(config, &detected_format);
 
         let mut final_config = config.clone();
         final_config.input.format = detected_format.format.clone();
@@ -558,7 +554,7 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
             }
         };
 
-        detection::emit_detected_format_notice(config, &detected_format, terminal_output);
+        detection::emit_detected_format_notice(config, &detected_format);
 
         let mut final_config = config.clone();
         final_config.input.format = detected_format.format.clone();
@@ -710,7 +706,6 @@ fn spawn_file_reader_auto_per_file(
     ctrl_rx: Receiver<Ctrl>,
 ) -> thread::JoinHandle<Result<()>> {
     thread::spawn(move || {
-        let terminal_output = std::io::stderr().is_terminal();
         for file_path in files {
             match ctrl_rx.try_recv() {
                 Ok(Ctrl::Shutdown { immediate }) => {
@@ -730,7 +725,7 @@ fn spawn_file_reader_auto_per_file(
             let mut peekable_reader = readers::PeekableLineReader::new(reader);
             let detected = detection::detect_format_from_peekable_reader(&mut peekable_reader)?;
 
-            detection::emit_detected_format_notice(&config, &detected, terminal_output);
+            detection::emit_detected_format_notice(&config, &detected);
 
             if sender
                 .send(ReaderMessage::FormatDetected {

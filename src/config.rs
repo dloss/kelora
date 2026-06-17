@@ -712,63 +712,42 @@ impl KeloraConfig {
         }
     }
 
-    /// Display config expansion information at startup (if diagnostics enabled)
+    /// Display config expansion information at startup (verbose only).
     pub fn display_config_expansion(
         info: &ConfigExpansionInfo,
         config: &KeloraConfig,
         stderr: &mut crate::platform::SafeStderr,
     ) {
-        // Config expansion is informational status (🔹), not a diagnostic, so it
-        // rides the visibility axis (`-q`/`--silent`) rather than the
-        // --no-warnings/--no-hints/--no-diagnostics flags. (Details are further
-        // gated by verbosity below.)
-        if config.processing.silent || config.processing.quiet_events {
+        // "What kelora did" status (🔹): which config loaded, and the defaults and
+        // aliases it applied. A successful run is silent (Rule of Silence) — the
+        // applied config shows up as changed behavior, and a config that fails to
+        // load is a loud error — so this surfaces only under -v/--verbose. There
+        // is no exception for an explicit --config-file: success is silent there
+        // too, exactly like a confident auto-detection. `verbose` is forced to 0
+        // under --silent / --no-diagnostics, so this one check covers those.
+        if config.processing.verbose == 0 {
             return;
         }
 
-        // Check if there's anything to display
-        let show_verbose_details = config.processing.verbose > 0 || info.explicit_config_path;
-        let show_loaded_path = show_verbose_details;
-        let show_defaults = show_verbose_details;
-        let show_aliases = show_verbose_details || !info.expanded_aliases.is_empty();
-
-        let has_content = (show_loaded_path && info.loaded_config_path.is_some())
-            || (show_defaults && info.applied_defaults.is_some())
-            || (show_aliases && !info.expanded_aliases.is_empty());
-
-        if !has_content {
-            return;
-        }
-
-        // Build output lines
         let mut lines = Vec::new();
 
         // Config file loaded
-        if show_loaded_path {
-            if let Some(path) = &info.loaded_config_path {
-                let msg = config.format_info_message(&format!("Config: {}", path.display()));
-                lines.push(msg);
-            }
+        if let Some(path) = &info.loaded_config_path {
+            lines.push(config.format_info_message(&format!("Config: {}", path.display())));
         }
 
         // Defaults applied (use info message with indentation)
-        if show_defaults {
-            if let Some(defaults) = &info.applied_defaults {
-                let msg = config.format_info_message(&format!("  Defaults: {}", defaults));
-                lines.push(msg);
-            }
+        if let Some(defaults) = &info.applied_defaults {
+            lines.push(config.format_info_message(&format!("  Defaults: {}", defaults)));
         }
 
         // Aliases expanded (use info message with indentation)
-        if show_aliases {
-            for (alias_name, expansion) in &info.expanded_aliases {
-                let msg = config
-                    .format_info_message(&format!("  Alias: -a {} → {}", alias_name, expansion));
-                lines.push(msg);
-            }
+        for (alias_name, expansion) in &info.expanded_aliases {
+            lines.push(
+                config.format_info_message(&format!("  Alias: -a {} → {}", alias_name, expansion)),
+            );
         }
 
-        // Write all lines
         for line in lines {
             stderr.writeln(&line).unwrap_or(());
         }
