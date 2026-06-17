@@ -261,9 +261,36 @@ kelora -j --strict --verbose app.log
 
 Errors are shown immediately, then processing aborts.
 
+## What kelora prints
+
+kelora follows the Unix **rule of silence**: a successful run prints only its
+data. It speaks up only to flag a problem, point at a likely mistake, or report
+an error — and `-v`/`--verbose` shows what it decided. Everything except the
+event data goes to **stderr**, so a pipeline's stdout stays clean.
+
+| Channel | Looks like | Appears when | Silence with |
+|---------|-----------|--------------|--------------|
+| **Events** (data) | your records, on **stdout** | always — this is the result | `-q` / `--quiet` |
+| **Error** ⚠️ | `⚠️` / `kelora:` | the run hit a fatal problem | `--silent` (one fatal line still prints) |
+| **Warning** 🔸 | `kelora warning:` | something may be wrong but the run continued — recovered `--exec` errors, conflicting flags, mostly-failed parsing | `--no-warnings`, `--no-diagnostics`, `--silent`, `KELORA_NO_WARNINGS` |
+| **Hint** 💡 | `kelora hint:` | a likely mistake with a concrete fix — a quoted numeric filter that's always false, a format that fell back to whole-line | `--no-hints`, `--no-diagnostics`, `--silent`, `KELORA_NO_HINTS` |
+| **Status** 🔹 | `🔹` / `kelora:` | only under `-v`/`--verbose` — *what kelora did*: detected format, loaded config, applied defaults/aliases | hidden by default |
+
+Two consequences worth knowing:
+
+- **Success is silent.** A confident auto-detection and a successfully-loaded
+  config are not announced on a normal run — their effects are the confirmation,
+  and a config that *fails* to load is a loud error. Run with `-v` to see those
+  decisions. Likewise, an empty result after your own filter prints nothing: a
+  zero-match hint appears only when there is a concrete, non-obvious mistake to
+  point at (e.g. a quoted numeric comparison, a typo'd field, no timestamps for
+  `--since/--until`).
+- **Warnings and hints are anomaly-triggered and reach redirected stderr** (CI,
+  `2>file`), so a stuck user still sees them. Silence them with the flags above.
+
 ## Quiet/Silent Controls
 
-Use the new orthogonal toggles to control output for automation:
+Each channel can be silenced independently; these flags compose for automation:
 
 | Flag | Effect |
 |------|--------|
