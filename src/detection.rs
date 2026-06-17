@@ -187,13 +187,11 @@ pub fn detect_format_for_parallel_mode(
     }
 }
 
-/// Check if detection notices are allowed based on config and terminal state
+/// Base gate for detection notices: never emitted when output is silenced,
+/// events are suppressed, or we're not writing to a terminal. Callers add the
+/// tier-specific gate (warnings vs hints vs the info umbrella) on top.
 pub fn detection_notices_allowed(config: &KeloraConfig, terminal_output: bool) -> bool {
-    if config.processing.silent
-        || config.processing.suppress_diagnostics
-        || config.processing.quiet_events
-        || std::env::var("KELORA_NO_TIPS").is_ok()
-    {
+    if config.processing.silent || config.processing.quiet_events {
         return false;
     }
 
@@ -211,6 +209,10 @@ pub fn format_detected_format_notice(
     }
 
     if detected.detected_non_line() {
+        // Informational: rides the --no-diagnostics umbrella.
+        if config.diagnostics_suppressed() {
+            return None;
+        }
         let format_name = detected.format.to_display_string();
         let message = config.format_info_message(&format!(
             "Auto-detected format: {} (from first line)",
@@ -218,6 +220,10 @@ pub fn format_detected_format_notice(
         ));
         Some(message)
     } else if detected.fell_back_to_line() {
+        // Advisory hint (💡): obeys --no-hints.
+        if config.processing.suppress_hints {
+            return None;
+        }
         let message = config.format_hint_message(
             "No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(2) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(2) level *msg'. See --help-formats.",
         );
@@ -247,7 +253,10 @@ pub fn parse_failure_warning_message(
     events_were_output: bool,
     terminal_output: bool,
 ) -> Option<String> {
-    if !auto_detected_non_line || !detection_notices_allowed(config, terminal_output) {
+    if !auto_detected_non_line
+        || !detection_notices_allowed(config, terminal_output)
+        || !config.warnings_allowed()
+    {
         return None;
     }
 
@@ -263,7 +272,7 @@ pub fn parse_failure_warning_message(
         let text = mixed_format_suggestion(stats).unwrap_or_else(|| {
             "Parsing mostly failed. The input may use the wrong format, contain mixed formats, or require multiline parsing. Try -f line, specify -f <fmt>, or see --help-formats / --help-multiline.".to_string()
         });
-        let mut message = config.format_error_message(&text);
+        let mut message = config.format_warning_message(&text);
         if !events_were_output {
             message = message.trim_start_matches('\n').to_string();
         }
@@ -345,7 +354,8 @@ mod tests {
         cfg.output.color = ColorMode::Never;
         cfg.processing.quiet_events = false;
         cfg.processing.silent = false;
-        cfg.processing.suppress_diagnostics = false;
+        cfg.processing.suppress_warnings = false;
+        cfg.processing.suppress_hints = false;
         cfg
     }
 

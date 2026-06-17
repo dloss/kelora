@@ -561,10 +561,10 @@ pub fn extract_error_summary_from_tracking(
                     // did rolls back and is recovered (exit 0). The coaching points
                     // at --strict either way (fail on the first error / immediately).
                     summary.push_str(", affecting every event");
-                    // The follow-up coaching is advisory (a typo/script-bug tip), so
-                    // it honors --no-diagnostics and the suppression implied by
-                    // data-only modes. Re-enable with --diagnostics.
-                    if config.is_some_and(|c| !c.processing.suppress_diagnostics) {
+                    // The follow-up coaching is advisory (a typo/script-bug tip),
+                    // so it is a hint (💡): honors --no-hints and the suppression
+                    // implied by data-only modes. Re-enable with --hints.
+                    if config.is_some_and(|c| c.hints_allowed()) {
                         summary.push_str(
                             "\n  This usually means a script bug or field-name typo. Use --strict to fail immediately, or --verbose to inspect each error.",
                         );

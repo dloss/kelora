@@ -196,8 +196,10 @@ pub struct PipelineConfig {
     pub verbose: u8,
     /// Suppress formatter/event output
     pub quiet_events: bool,
-    /// Suppress diagnostics and summaries
-    pub suppress_diagnostics: bool,
+    /// Suppress warnings 🔸
+    pub suppress_warnings: bool,
+    /// Suppress hints 💡
+    pub suppress_hints: bool,
     /// Suppress all stdout/stderr emitters except the fatal line
     pub silent: bool,
     /// Suppress Rhai print/eprint and side-effect warnings

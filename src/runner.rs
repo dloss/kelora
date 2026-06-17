@@ -61,7 +61,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
     }
 
     // Enable/disable stats collection up front to avoid per-event overhead when diagnostics are off.
-    // Data-only modes (--metrics/--drain) set suppress_diagnostics to keep stdout clean, but they
+    // Data-only modes (--metrics/--drain) suppress both advisory tiers to keep stdout clean, but they
     // still surface error summaries on stderr (everything except --silent). Those summaries report
     // error scope ("affecting every event") from stats.events_created, so keep collecting in those
     // modes — otherwise the scope signal is silently dropped exactly where a stuck user needs it.
@@ -71,7 +71,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         || (!config.processing.silent
             && (config.output.metrics.is_some()
                 || config.output.drain.is_some()
-                || !config.processing.suppress_diagnostics));
+                || !config.diagnostics_suppressed()));
     set_collect_stats(collect_stats);
 
     // Choose strict vs. lossy UTF-8 decoding at the byte->String boundary before
@@ -296,10 +296,9 @@ fn run_pipeline_parallel<W: Write + Send + 'static>(
         }
         ctx.internal_tracker.insert(key.clone(), value.clone());
     }
-    // A cross-stage conflict means the merged value is unreliable - that is a
-    // correctness signal, not an advisory diagnostic, so like the error
-    // summaries it survives data-only modes and only --silent hides it.
-    if !op_conflicts.is_empty() && !config.processing.silent {
+    // A cross-stage conflict means the merged value is unreliable. It is a
+    // warning (🔸): shown by default, hidden by --no-warnings or --silent.
+    if !op_conflicts.is_empty() && config.warnings_allowed() {
         op_conflicts.sort();
         let message = crate::config::format_warning_message_auto(&format!(
             "metric name used by different track functions across stages: {}; the merged value is unreliable — use a distinct name per track function",

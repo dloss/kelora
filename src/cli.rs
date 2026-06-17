@@ -548,16 +548,35 @@ pub struct Cli {
     #[arg(short = 'q', long = "quiet", help_heading = "Output Options")]
     pub quiet: bool,
 
-    /// Show advisory diagnostics (zero-result hints, format/typo tips) even in
-    /// data-only modes like --metrics/--drain/--discover. Error summaries always
-    /// show unless --silent.
+    /// Show warnings (🔸) — problems that did not stop the run. Overrides a
+    /// KELORA_NO_WARNINGS / config default and re-enables warnings in data-only
+    /// modes like --metrics/--drain/--discover.
+    #[arg(long = "warnings", help_heading = "Output Options", overrides_with_all = ["no_warnings", "warnings"])]
+    pub warnings: bool,
+
+    /// Suppress warnings (🔸). Errors still print; use --silent to hide those too.
+    #[arg(long = "no-warnings", help_heading = "Output Options", overrides_with_all = ["warnings", "no_warnings"])]
+    pub no_warnings: bool,
+
+    /// Show hints (💡) — advisory suggestions (zero-result/typo/format tips).
+    /// Overrides a KELORA_NO_HINTS / config default and re-enables hints in
+    /// data-only modes like --metrics/--drain/--discover.
+    #[arg(long = "hints", help_heading = "Output Options", overrides_with_all = ["no_hints", "hints"])]
+    pub hints: bool,
+
+    /// Suppress hints (💡, zero-result hints, format/typo tips).
+    #[arg(long = "no-hints", help_heading = "Output Options", overrides_with_all = ["hints", "no_hints"])]
+    pub no_hints: bool,
+
+    /// Show both warnings and hints (shortcut for --warnings --hints), even in
+    /// data-only modes. Error summaries always show unless --silent.
     #[arg(long = "diagnostics", help_heading = "Output Options", overrides_with_all = ["no_diagnostics", "diagnostics"])]
     pub diagnostics: bool,
 
-    /// Suppress advisory diagnostics (zero-result hints, format/typo tips,
-    /// per-line verbose errors). Error and parse summaries still print; use
+    /// Suppress both warnings and hints (shortcut for --no-warnings --no-hints),
+    /// plus per-line verbose errors. Error and parse summaries still print; use
     /// --silent to hide those too.
-    #[arg(long = "no-diagnostics", hide = true, help_heading = "Output Options", overrides_with_all = ["diagnostics", "no_diagnostics"])]
+    #[arg(long = "no-diagnostics", help_heading = "Output Options", overrides_with_all = ["diagnostics", "no_diagnostics"])]
     pub no_diagnostics: bool,
 
     /// Silence pipeline stdout/stderr emitters (events/diagnostics/stats/terminal metrics); script output still allowed. Metrics files still write. Use --no-silent to override a config default.

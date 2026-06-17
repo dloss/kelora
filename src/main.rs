@@ -129,28 +129,28 @@ fn main() -> Result<()> {
 
     // Set the ordered stages directly
     config.processing.stages = ordered_stages;
-    let diagnostics_allowed = !config.processing.silent && !config.processing.suppress_diagnostics;
+    let warnings_allowed = config.warnings_allowed();
     // Runtime warnings emitted from inside tracking functions (e.g. the
-    // track_unique size warning) honor the same gate as other diagnostics.
-    crate::rhai_functions::tracking::set_tracking_warnings_enabled(diagnostics_allowed);
+    // track_unique size warning) honor the same gate as other warnings.
+    crate::rhai_functions::tracking::set_tracking_warnings_enabled(warnings_allowed);
 
     let parallel_requested = config.performance.parallel
         || config.performance.threads > 0
         || config.performance.batch_size.is_some();
 
-    if config.processing.span.is_some() && diagnostics_allowed && parallel_requested {
-        let warning = config.format_error_message(
+    if config.processing.span.is_some() && warnings_allowed && parallel_requested {
+        let warning = config.format_warning_message(
             "span aggregation requires sequential mode; ignoring --parallel settings. Rerun without --parallel if you need span aggregation.",
         );
         stderr.writeln(&warning).unwrap_or(());
     } else if (config.processing.window_size > 0 || config.processing.context.is_active())
-        && diagnostics_allowed
+        && warnings_allowed
         && parallel_requested
     {
         // Cross-event context (--window, -B/-C) is order-dependent and would be
         // silently corrupted by parallel batching (issue #281), so we force
         // sequential just like spans. Warn once, mirroring the span fallback.
-        let warning = config.format_error_message(
+        let warning = config.format_warning_message(
             "cross-event context (--window or -B/-C) requires sequential mode; ignoring --parallel settings. Rerun without --parallel if you need cross-event context.",
         );
         stderr.writeln(&warning).unwrap_or(());
@@ -158,8 +158,8 @@ fn main() -> Result<()> {
 
     if let Some(span_cfg) = &config.processing.span {
         if let SpanMode::Count { events_per_span } = span_cfg.mode {
-            if events_per_span > 100_000 && diagnostics_allowed {
-                let warning = config.format_error_message(
+            if events_per_span > 100_000 && warnings_allowed {
+                let warning = config.format_warning_message(
                     "span size above 100000 may require substantial memory; consider time-based spans",
                 );
                 stderr.writeln(&warning).unwrap_or(());
@@ -349,8 +349,7 @@ fn main() -> Result<()> {
     }
 
     // Handle output destination and run pipeline
-    let diagnostics_allowed_runtime =
-        !config.processing.silent && !config.processing.suppress_diagnostics;
+    let hints_allowed_runtime = config.hints_allowed();
     let terminal_allowed = !config.processing.silent;
 
     let result = if let Some(ref output_file_path) = cli.output_file {
@@ -358,9 +357,9 @@ fn main() -> Result<()> {
         // mistake it for an output-FORMAT selector (which is `-F`). A bare
         // value that exactly matches a known format name (no path, no
         // extension) is almost always that mistake — e.g. `-o json` silently
-        // writes a file literally named `json`. Warn, but still honor the
+        // writes a file literally named `json`. Hint, but still honor the
         // request so existing scripts are unaffected.
-        if !config.processing.silent
+        if config.hints_allowed()
             && !output_file_path.contains(std::path::is_separator)
             && !output_file_path.contains('.')
         {
@@ -370,7 +369,7 @@ fn main() -> Result<()> {
             ];
             if FORMAT_NAMES.contains(&output_file_path.to_ascii_lowercase().as_str()) {
                 stderr
-                    .writeln(&config.format_warning_message(&format!(
+                    .writeln(&config.format_hint_message(&format!(
                         "writing output to a file named '{}'; did you mean -F {} (--output-format)?",
                         output_file_path, output_file_path
                     )))
@@ -400,7 +399,7 @@ fn main() -> Result<()> {
             pipeline_result,
             &mut stdout,
             &mut stderr,
-            diagnostics_allowed_runtime,
+            hints_allowed_runtime,
             terminal_allowed,
         ),
         Err(e) => {
@@ -480,7 +479,7 @@ fn main() -> Result<()> {
     };
 
     if config.processing.strict && override_failed {
-        if diagnostics_allowed_runtime && config.output.stats.is_none() {
+        if hints_allowed_runtime && config.output.stats.is_none() {
             if let Some(message) = override_message.clone() {
                 let formatted = config.format_error_message(&message);
                 stderr.writeln(&formatted).unwrap_or(());
@@ -604,7 +603,7 @@ fn maybe_print_zero_results_hint(
 /// crashed. A one-line nudge points them at the actual options instead.
 ///
 /// Fires only when truly nothing flowed: this lives behind the
-/// `diagnostics_allowed_runtime` gate at the call site, which guarantees stats
+/// `hints_allowed_runtime` gate at the call site, which guarantees stats
 /// were collected. Note that `lines_read` is only incremented under `-s/--stats`
 /// (see `process_single_line` in runner.rs), so on the normal diagnostics path
 /// it stays zero even when lines *were* read — the reliable "input arrived"
@@ -654,7 +653,7 @@ fn maybe_print_no_input_hint(
 /// filter, a span, or `--normalize-ts` is active. It stays silent when the user
 /// chose a zone (`config.input.timezone_assumed` is false for an explicit
 /// `--input-tz` or a non-empty `TZ`). Like the other one-time hints this lives
-/// behind the `diagnostics_allowed_runtime` gate at the call site, so
+/// behind the `hints_allowed_runtime` gate at the call site, so
 /// `--no-diagnostics` / `-q` / `--silent` already suppress it.
 fn maybe_print_naive_tz_hint(
     config: &KeloraConfig,
@@ -1188,7 +1187,7 @@ fn handle_pipeline_success(
     mut pipeline_result: PipelineResult,
     stdout: &mut SafeStdout,
     stderr: &mut SafeStderr,
-    diagnostics_allowed_runtime: bool,
+    hints_allowed_runtime: bool,
     terminal_allowed: bool,
 ) -> (Option<stats::ProcessingStats>, Option<TrackingSnapshot>) {
     let auto_detected_non_line = pipeline_result.auto_detected_non_line;
@@ -1328,7 +1327,7 @@ fn handle_pipeline_success(
     // the hint constantly. Only flag a metric that recorded a value on *no*
     // event — the strong typo signal that a field is missing everywhere.
     let skip_hint_allowed = !config.processing.silent
-        && !config.processing.diagnostics_user_suppressed
+        && !config.processing.hints_user_suppressed
         && !SHOULD_TERMINATE.load(Ordering::Relaxed);
     if skip_hint_allowed {
         let user = &pipeline_result.tracking_data.user;
@@ -1380,7 +1379,7 @@ fn handle_pipeline_success(
         || config.processing.end.is_some();
     if !metrics_were_requested
         && !pipeline_result.tracking_data.user.is_empty()
-        && diagnostics_allowed_runtime
+        && hints_allowed_runtime
         && !SHOULD_TERMINATE.load(Ordering::Relaxed)
     {
         let mut hint = config
@@ -1495,15 +1494,25 @@ fn handle_pipeline_success(
                     let only_recovered_runtime_errors = tracking_summary.is_some()
                         && stats_summary_empty
                         && !config.processing.strict;
-                    let mut formatted = if only_recovered_runtime_errors {
-                        config.format_warning_message(&combined)
+                    // Recovered runtime errors (exit 0) are a warning and obey
+                    // --no-warnings; a real error summary stays an error and shows
+                    // unless --silent.
+                    let emit = if only_recovered_runtime_errors {
+                        config.warnings_allowed()
                     } else {
-                        config.format_error_message(&combined)
+                        true
                     };
-                    if !events_were_output {
-                        formatted = formatted.trim_start_matches('\n').to_string();
+                    if emit {
+                        let mut formatted = if only_recovered_runtime_errors {
+                            config.format_warning_message(&combined)
+                        } else {
+                            config.format_error_message(&combined)
+                        };
+                        if !events_were_output {
+                            formatted = formatted.trim_start_matches('\n').to_string();
+                        }
+                        stderr.writeln(&formatted).unwrap_or(());
                     }
-                    stderr.writeln(&formatted).unwrap_or(());
                 }
             }
 
@@ -1512,14 +1521,14 @@ fn handle_pipeline_success(
             // user should see that invalid bytes were replaced rather than the
             // stream silently truncated (#239). With --stats it's already in the
             // stats block.
-            if errors_allowed && config.output.stats.is_none() {
+            if config.warnings_allowed() && config.output.stats.is_none() {
                 if let Some(message) = s.format_decode_warning() {
                     let formatted = config.format_warning_message(&message);
                     stderr.writeln(&formatted).unwrap_or(());
                 }
             }
 
-            if diagnostics_allowed_runtime && terminal_allowed {
+            if hints_allowed_runtime && terminal_allowed {
                 // Fires before the zero-results hint, which returns early when
                 // nothing was created — the empty-input case it can't explain.
                 maybe_print_no_input_hint(config, s, stderr);
@@ -1576,7 +1585,7 @@ fn handle_signal_termination(
             stderr.writeln(&formatted).unwrap_or(());
         } else if stats.has_errors()
             && !config.processing.silent
-            && !config.processing.suppress_diagnostics
+            && !config.diagnostics_suppressed()
         {
             // Error summary by default when errors occur (unless suppressed)
             let mut formatted = config.format_error_message(&stats.format_error_summary());

@@ -172,15 +172,18 @@ pub struct ProcessingConfig {
     pub verbose: u8,
     /// Suppress formatter/event output (-q/--quiet, -s, -m)
     pub quiet_events: bool,
-    /// Suppress diagnostics and summaries (--no-diagnostics)
-    pub suppress_diagnostics: bool,
-    /// True only when the user *explicitly* suppressed diagnostics
-    /// (`--no-diagnostics`, not overridden by `--diagnostics`), as opposed to the
-    /// implicit suppression a data-only mode (`-m`/`--drain`/`--discover`) applies
-    /// to keep machine-readable stdout clean. Stuck-user signals (e.g. the
-    /// "every tracked value was missing" typo hint) survive the implicit
-    /// suppression but still honor this explicit request.
-    pub diagnostics_user_suppressed: bool,
+    /// Suppress warnings 🔸 (--no-warnings / --no-diagnostics / KELORA_NO_WARNINGS)
+    pub suppress_warnings: bool,
+    /// Suppress hints 💡 (--no-hints / --no-diagnostics / KELORA_NO_HINTS)
+    pub suppress_hints: bool,
+    /// True only when the user *explicitly* suppressed hints (`--no-hints` /
+    /// `--no-diagnostics`, not overridden by `--hints` / `--diagnostics`), as
+    /// opposed to the implicit suppression a data-only mode
+    /// (`-m`/`--drain`/`--discover`) applies to keep machine-readable stdout
+    /// clean. Stuck-user signals (e.g. the "every tracked value was missing"
+    /// typo hint) survive the implicit suppression but still honor this explicit
+    /// request.
+    pub hints_user_suppressed: bool,
     /// Suppress pipeline stdout/stderr emitters except the single fatal line (--silent)
     pub silent: bool,
     /// Suppress Rhai print/eprint and side-effect warnings (--no-script-output, data-only modes)
@@ -630,6 +633,27 @@ impl KeloraConfig {
         }
     }
 
+    /// Whether warnings (🔸) may be emitted. Warnings show unless the user asked
+    /// to hide them (`--no-warnings` / `--no-diagnostics` / KELORA_NO_WARNINGS)
+    /// or silenced everything (`--silent`).
+    pub fn warnings_allowed(&self) -> bool {
+        !self.processing.silent && !self.processing.suppress_warnings
+    }
+
+    /// Whether hints (💡) may be emitted. Hints show unless the user asked to
+    /// hide them (`--no-hints` / `--no-diagnostics` / KELORA_NO_HINTS) or
+    /// silenced everything (`--silent`).
+    pub fn hints_allowed(&self) -> bool {
+        !self.processing.silent && !self.processing.suppress_hints
+    }
+
+    /// Whether *all* advisory output (both warnings and hints) is suppressed —
+    /// the legacy `--no-diagnostics` umbrella. Used to gate informational output
+    /// (config expansion) and per-line verbose error detail.
+    pub fn diagnostics_suppressed(&self) -> bool {
+        self.processing.suppress_warnings && self.processing.suppress_hints
+    }
+
     /// Format a hint/tip message with a lightbulb emoji when allowed
     pub fn format_hint_message(&self, message: &str) -> String {
         let use_emoji =
@@ -694,8 +718,9 @@ impl KeloraConfig {
         config: &KeloraConfig,
         stderr: &mut crate::platform::SafeStderr,
     ) {
-        // Check if diagnostics are suppressed
-        if config.processing.suppress_diagnostics || config.processing.silent {
+        // Config expansion is informational; gate it on the umbrella (both tiers
+        // suppressed, i.e. --no-diagnostics) and --silent.
+        if config.diagnostics_suppressed() || config.processing.silent {
             return;
         }
 
@@ -843,9 +868,9 @@ pub fn print_verbose_error_to_stderr(
     message: &str,
     config: Option<&KeloraConfig>,
 ) {
-    // Check if output is suppressed (quiet mode)
+    // Per-line verbose error detail rides the umbrella (--no-diagnostics) gate.
     if let Some(cfg) = config {
-        if cfg.processing.silent || cfg.processing.suppress_diagnostics {
+        if cfg.processing.silent || cfg.diagnostics_suppressed() {
             return;
         }
     }
@@ -862,9 +887,9 @@ pub fn print_verbose_error_to_stderr_pipeline(
     message: &str,
     config: Option<&crate::pipeline::PipelineConfig>,
 ) {
-    // Check if output is suppressed (quiet mode)
+    // Per-line verbose error detail rides the umbrella (--no-diagnostics) gate.
     if let Some(cfg) = config {
-        if cfg.silent || cfg.suppress_diagnostics {
+        if cfg.silent || (cfg.suppress_warnings && cfg.suppress_hints) {
             return;
         }
     }
@@ -965,18 +990,42 @@ impl KeloraConfig {
             .unwrap_or(false);
         let timezone_assumed = cli.input_tz.is_none() && !tz_from_env;
         let mut quiet_events = cli.quiet;
-        // Diagnostics: positive flag enables, negative flag disables (last one wins via overrides_with)
-        let mut suppress_diagnostics = if cli.diagnostics {
+        // Advisory tiers: warnings (🔸) and hints (💡). Each resolves independently
+        // with precedence: explicit per-tier flag > --diagnostics/--no-diagnostics
+        // shortcut > env var > default (shown). The positive flags exist so a user
+        // can override an env var or config default on a single run.
+        let env_no_warnings = std::env::var("KELORA_NO_WARNINGS").is_ok();
+        let env_no_hints = std::env::var("KELORA_NO_HINTS").is_ok();
+        let suppress_warnings = if cli.warnings {
+            false
+        } else if cli.no_warnings {
+            true
+        } else if cli.diagnostics {
             false
         } else if cli.no_diagnostics {
             true
         } else {
-            false // Default: diagnostics enabled
+            env_no_warnings
         };
-        // Capture the *explicit* user intent now, before the data-only modes below
-        // force `suppress_diagnostics` on. Stuck-user signals key off this so they
-        // survive a mode's implicit suppression but still obey a real --no-diagnostics.
-        let diagnostics_user_suppressed = suppress_diagnostics;
+        let mut suppress_hints = if cli.hints {
+            false
+        } else if cli.no_hints {
+            true
+        } else if cli.diagnostics {
+            false
+        } else if cli.no_diagnostics {
+            true
+        } else {
+            env_no_hints
+        };
+        // Whether the user explicitly asked to *show* hints (per-tier flag or the
+        // --diagnostics shortcut). Data-only modes consult this so an explicit
+        // request survives their implicit hint suppression.
+        let force_show_hints = cli.hints || cli.diagnostics;
+        // Capture the *explicit* hint suppression now, before the data-only modes
+        // below force `suppress_hints` on. Stuck-user signals key off this so they
+        // survive a mode's implicit suppression but still obey a real --no-hints.
+        let hints_user_suppressed = suppress_hints;
         let mut silent = cli.silent;
         if cli.no_silent {
             silent = false;
@@ -1058,28 +1107,22 @@ impl KeloraConfig {
             cli.output_format.clone().into()
         };
 
-        // Data-only modes suppress script output. They also imply diagnostics
-        // suppression so machine-readable stdout stays clean — but an explicit
-        // `--diagnostics` must win over that implied suppression (otherwise the
-        // user has no way to re-enable diagnostics in these modes).
+        // Data-only modes (--metrics/--drain/--discover) suppress script output
+        // and hush hints (advisory noise) to keep the machine-readable stdout
+        // focused. Warnings are NOT auto-suppressed: they go to stderr (never
+        // polluting the stdout data channel) and may flag a real problem — e.g.
+        // recovered exec errors — that a stuck user needs to see (#239). Hide
+        // them explicitly with --no-warnings or --silent. An explicit
+        // --hints/--diagnostics re-enables hints even in these modes.
+        let data_only_mode = suppress_events_for_metrics
+            || suppress_events_for_drain
+            || suppress_events_for_discover;
         if suppress_events_for_stats {
             suppress_script_output = true;
         }
-        if suppress_events_for_metrics {
-            if !cli.diagnostics {
-                suppress_diagnostics = true;
-            }
-            suppress_script_output = true;
-        }
-        if suppress_events_for_drain {
-            if !cli.diagnostics {
-                suppress_diagnostics = true;
-            }
-            suppress_script_output = true;
-        }
-        if suppress_events_for_discover {
-            if !cli.diagnostics {
-                suppress_diagnostics = true;
+        if data_only_mode {
+            if !force_show_hints {
+                suppress_hints = true;
             }
             suppress_script_output = true;
         }
@@ -1090,14 +1133,17 @@ impl KeloraConfig {
 
         let metrics_file = cli.metrics_file.clone();
 
+        // The legacy "all advisory suppressed" umbrella, used for derived quiet
+        // levels and per-line verbose error detail.
+        let diagnostics_suppressed = suppress_warnings && suppress_hints;
         let quiet_level = if suppress_script_output {
             3
-        } else if suppress_diagnostics || silent {
+        } else if diagnostics_suppressed || silent {
             1
         } else {
             0
         };
-        let verbose_level = if suppress_diagnostics || silent {
+        let verbose_level = if diagnostics_suppressed || silent {
             0
         } else {
             cli.verbose
@@ -1177,8 +1223,9 @@ impl KeloraConfig {
                 strict_utf8: cli.strict_utf8,
                 verbose: verbose_level,
                 quiet_events,
-                suppress_diagnostics,
-                diagnostics_user_suppressed,
+                suppress_warnings,
+                suppress_hints,
+                hints_user_suppressed,
                 silent,
                 suppress_script_output,
                 quiet_level,
@@ -1297,8 +1344,9 @@ impl Default for KeloraConfig {
                 strict_utf8: false,
                 verbose: 0,
                 quiet_events: false,
-                suppress_diagnostics: false,
-                diagnostics_user_suppressed: false,
+                suppress_warnings: false,
+                suppress_hints: false,
+                hints_user_suppressed: false,
                 silent: false,
                 suppress_script_output: false,
                 quiet_level: 0,

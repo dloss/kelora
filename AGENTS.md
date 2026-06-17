@@ -104,6 +104,6 @@ Justfile                 # Build automation
 
 **Test quickly:** `time ./target/release/kelora -f json logfile.json --filter "e.level == 'ERROR'" > /dev/null`
 
-**Quiet/output toggles:** `-q/--quiet` (suppress events), `--diagnostics/--no-diagnostics` (control diagnostics), `--silent` (suppress terminal output except fatal line; metrics files still write), `--script-output/--no-script-output` (control Rhai print/eprint; suppression implied by --silent, -m, -s), `-m`, `-s`. Positive flags override config defaults.
+**Quiet/output toggles:** `-q/--quiet` (suppress events); the three-tier diagnostic model — `--warnings/--no-warnings` (🔸 problems that didn't stop the run), `--hints/--no-hints` (💡 advisory suggestions), `--diagnostics/--no-diagnostics` (shortcut for both); errors (⚠️) show unless `--silent`. Env vars `KELORA_NO_WARNINGS` / `KELORA_NO_HINTS` mirror the negative flags (precedence: explicit flag > env > config default). `--silent` (suppress terminal output except fatal line; metrics files still write), `--script-output/--no-script-output` (control Rhai print/eprint; suppression implied by --silent, -m, -s), `-m`, `-s`. Data-only modes (`-m`/`--drain`/`--discover`) hush hints but still surface warnings to stderr. Positive flags override env/config defaults.
 
 **Config precedence:** CLI args > `.kelora.ini` (project) > `~/.config/kelora/kelora.ini` (user) > defaults

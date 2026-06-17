@@ -659,7 +659,7 @@ impl SpanProcessor {
     /// global extremes (min/max), giving wrong-or-missing per-window stats with
     /// no indication anything was lost.
     fn warn_non_additive(&mut self, dropped: &[(String, String)], ctx: &PipelineContext) {
-        if ctx.config.suppress_diagnostics || ctx.config.silent {
+        if ctx.config.suppress_warnings || ctx.config.silent {
             return;
         }
         for (key, op) in dropped {
