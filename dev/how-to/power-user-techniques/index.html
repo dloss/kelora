@@ -2741,7 +2741,8 @@ consistent anonymous IDs (HMAC with <code>KELORA_SECRET</code>).</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>kelora<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.data = e.line.extract_json()&#39;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;data&quot;)&#39;</span><span class="w"> </span>-k<span class="w"> </span>line,data
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>line=&#39;2024-01-15 ERROR: Failed with response: {&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}&#39; data={&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora hint: No input format detected; keeping whole lines as &#39;line&#39;. For &#39;timestamp LEVEL message&#39; app logs, extract fields with -f &#39;cols:ts(2) level *msg&#39; (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f &#39;cols:ts(2) level *msg&#39;. See --help-formats.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>line=&#39;2024-01-15 ERROR: Failed with response: {&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}&#39; data={&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}
 </code></pre></div>
 </div>
 </div>
