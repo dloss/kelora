@@ -108,23 +108,20 @@ If implemented anyway: trip only after a meaningful absolute output (e.g. >100 M
 **and** ratio > 1000:1 — this clears even highly repetitive real logs while
 catching bombs. Recommend deferring until there is a concrete need.
 
-### Rhai script limits (off; opt-in, low priority)
+### Rhai script limits (one knob: `--script-timeout`)
 
-These protect the *script* surface (untrusted scripts / unattended runs), not the
-input pipeline. Default off to preserve batch-job parity. The **only CLI knob on
-this axis is `--script-timeout`** (wall-clock subsumes runaway scripts). The rest
-are config-only power knobs under `[script]`, off by default, for the rare
-untrusted-script deployment:
+This protects the *script* surface (untrusted scripts / unattended runs), not the
+input pipeline. Just one knob, off by default to preserve batch-job parity:
+`--script-timeout` (wall-clock, via the existing `on_progress` hook). Recommended
+~30–60 s for an interactive/untrusted context; unset for batch jobs that
+legitimately run long.
 
-| Knob | Surface | Recommended (untrusted) | Rhai API |
-|---|---|---|---|
-| Wall-clock timeout | **CLI** `--script-timeout` | 30–60 s ("interactive query") | `on_progress` callback |
-| Max operations | config only | 10⁸–10⁹ | `set_max_operations` |
-| Max call depth | config only | 128 | `set_max_call_levels` |
-| Max string / array / map | config only | as needed | `set_max_string_size` / `…array_size` / `…map_size` |
-
-Note: Rhai has no single total-memory cap; strict total caps need OS controls
-(`ulimit`, cgroups).
+Rhai's other guards (`set_max_operations`, `set_max_call_levels`,
+`set_max_string_size`/`…array_size`/`…map_size`) are intentionally **not** exposed.
+Wall-clock already catches runaway loops, and nobody hand-tunes an op-budget in a
+config file — a documented surface no one uses is just maintenance. Add them only
+if a concrete untrusted-script deployment asks. (Note: Rhai has no single
+total-memory cap anyway; strict caps need OS controls — `ulimit`, cgroups.)
 
 ### Capability gating (read-only default)
 
@@ -167,9 +164,10 @@ deprecation. Read-only is the floor; `--allow-fs-writes` is the only escalation.
 
 Deliberately **not** flags:
 
-- **`--max-ops`** — a second knob on the *script runtime* axis. Wall-clock already
-  covers runaway loops; an op-budget only adds determinism. Expose it (if at all)
-  as a config-only power knob under `[script]`, never as a CLI flag.
+- **`--max-ops`** (and the string/array/map/depth budgets) — a second knob on the
+  *script runtime* axis. Wall-clock already covers runaway loops; an op-budget only
+  adds determinism. Not exposed at all — not as a flag, not as config. Add only if
+  a real untrusted-script deployment needs it.
 - **`--allow-rhai-io`** — would wrongly imply it gates reads too. Reads/env are on
   by default, so the only thing to toggle is writes; `--allow-fs-writes` names
   that honestly.
@@ -179,7 +177,7 @@ Deliberately **not** flags:
   axes. With limits off by default, "unlimited" is the default and needs no flag;
   a preset can be added later if users ask, but it must not become a fourth axis.
 
-Config (`.kelora.ini`) mirrors the three flags under `[input]` / `[script]`;
+Config (`.kelora.ini`) mirrors the three flags (nothing config-only beyond them);
 precedence follows the project default: CLI > project config > user config >
 defaults.
 
