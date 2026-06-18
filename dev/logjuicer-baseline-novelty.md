@@ -1,7 +1,9 @@
 # Baseline Novelty Detection — Design Note (logjuicer-inspired)
 
-Status: **proposal / not started — concept UX-validated and gating tech risk
-spiked (resolved positively).**
+Status: **approved, deferred to v2.1.** Concept UX-validated and gating tech
+risk spiked (resolved positively); design is de-risked end to end.
+Implementation is planned for the 2.1 cycle (owner: maintainer) — this note is
+the spec to build from.
 Captures whether and how to borrow
 [logjuicer](https://github.com/logjuicer/logjuicer)'s core idea — *highlight
 the lines in a target log that don't appear in a known-good baseline* — without
