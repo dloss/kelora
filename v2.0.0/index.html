@@ -1,0 +1,2864 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v2.0.0/">
+      
+      
+      
+        <link rel="next" href="installation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="kelora-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kelora" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="how-to/" class="md-tabs__link">
+          
+  
+  
+  How-To Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="concepts/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-quick-tour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A quick tour
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-kelora-helps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When Kelora helps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="More examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-convert-the-basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter &amp; Convert (The Basics)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modify-anonymize-scripting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modify &amp; Anonymize (Scripting)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stateful-analysis-streaming-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stateful Analysis (Streaming Stats)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Approach
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="whats-new-2.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's New in 2.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction to Rhai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and Tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/begin-end-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Begin and End Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/advanced-scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing Custom Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/span-aggregation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Span Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/configuration-and-reusability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Reusability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/composed-pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composed Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/incident-response-playbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incident Response Playbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/debug-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug Issues Systematically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triage Production Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze Web Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Service Health Snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Investigate Syslog Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose a Multiline Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sanitize Logs Before Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pseudonymize Identifiers for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare CSV Exports for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flatten Nested JSON for Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/build-streaming-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Streaming Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process Archives at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/merge-timestamp-sorted-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merge Timestamp-Sorted Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/span-aggregation-cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roll Up Logs with Span Windows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/integrate-external-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrate Kelora with External Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/power-user-techniques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Power-User Techniques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="how-to/stateful-processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic with state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/pipeline-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processing Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/events-and-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events and Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/scripting-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/multiline-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/performance-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/performance-comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Comparisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/benchmark-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/configuration-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/common-errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Function Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-quick-tour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A quick tour
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-kelora-helps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When Kelora helps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="More examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-convert-the-basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter &amp; Convert (The Basics)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modify-anonymize-scripting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modify &amp; Anonymize (Scripting)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stateful-analysis-streaming-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stateful Analysis (Streaming Stats)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get Started
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Approach
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="kelora">Kelora<a class="headerlink" href="#kelora" title="Permanent link">&para;</a></h1>
+<p><strong>One command for messy logs.</strong> Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, plain text, and your own custom formats — with embedded <a href="https://rhai.rs">Rhai</a> scripting when simple filters aren't enough.</p>
+<p>Watch Hack the Clown's <a href="https://www.youtube.com/watch?v=IwkicmS3RYo"><strong>5-minute introduction video</strong></a> to see Kelora in action.</p>
+<p>See <strong><a href="whats-new-2.0/">What's New in 2.0</a></strong> for the highlights and a migration guide.</p>
+<p><a class="md-button" href="installation/">Install Kelora</a></p>
+<h2 id="a-quick-tour">A quick tour<a class="headerlink" href="#a-quick-tour" title="Permanent link">&para;</a></h2>
+<p><strong>You don't even know what's in the file yet. Start there</strong> — no flags, no regex. Kelora decompresses the gzip, recognizes the Apache combined format, and profiles every field with real sample values:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>--discover
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Field       Type    Seen  Miss   Uniq  Examples
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ip          string  1200    0%  ~1200  &quot;178.28.169.124&quot;, &quot;122.133.215.248&quot;, &quot;167.218.48.211&quot;, &quot;32.151.123.30&quot;, &quot;93.230.194.210&quot;, &quot;94.85.124.181&quot;, &quot;240.138.244.202&quot;, &quot;151.92.11.251&quot;, ...
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ts          string  1200    0%  ~1168  &quot;04/Oct/2025:10:39:55 +0200&quot;, &quot;04/Oct/2025:11:29:49 +0200&quot;, &quot;04/Oct/2025:11:29:40 +0200&quot;, &quot;04/Oct/2025:10:56:32 +0200&quot;, &quot;04/Oct/2025:10:22:35 +0200&quot;, &quot;04/Oct/...
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>request     string  1200    0%  ~1200  &quot;PATCH /distributed/cross-platform/extend HTTP/1.1&quot;, &quot;DELETE /bandwidth/rich HTTP/2.0&quot;, &quot;PUT /whiteboard/synergize/revolutionize/experiences HTTP/1.0&quot;, &quot;PATCH...
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>method      string  1200    0%      6  &quot;GET&quot;, &quot;PUT&quot;, &quot;POST&quot;, &quot;PATCH&quot;, &quot;HEAD&quot;, &quot;DELETE&quot;
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>path        string  1200    0%  ~1050  &quot;/visionary/visionary/infrastructures/sticky&quot;, &quot;/markets&quot;, &quot;/action-items/benchmark/facilitate&quot;, &quot;/expedite/integrated/niches/efficient&quot;, &quot;/visionary/enable/c...
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>protocol    string  1200    0%      3  &quot;HTTP/1.0&quot;, &quot;HTTP/1.1&quot;, &quot;HTTP/2.0&quot;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>status      int     1200    0%     21  302, 500, 301, 304, 203, 504, 100, 405, ...
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>bytes       int     1200    0%  ~1175  40607, 61325, 62596, 72150, 93509, 89810, 32347, 47359, ...
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>referer     string  1200    0%  ~1200  &quot;https://www.directworld-class.io/cross-platform/web-enabled/integrate&quot;, &quot;http://www.regionaldot-com.info/cross-platform/iterate/intuitive/bandwidth&quot;, &quot;http:/...
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>user_agent  string  1200    0%  ~1200  &quot;Mozilla/5.0 (Windows; U; Windows NT 6.1) AppleWebKit/533.39.1 (KHTML, like Gecko) Version/6.0 Safari/533.39.1&quot;, &quot;Mozilla/5.0 (Windows; U; Windows NT 4.0) App...
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>user        string   580   52%   ~564  &quot;denesik8024&quot;, &quot;terry2142&quot;, &quot;graham1715&quot;, &quot;damore6011&quot;, &quot;steuber8635&quot;, &quot;king8088&quot;, &quot;vandervort1212&quot;, &quot;gutkowski5805&quot;, ...
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>1200 events scanned | format: combined (auto-detected) | timestamp: ts -&gt; meta.parsed_ts
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>Mixed formats in one file are the normal case, not the exception.</strong> Give Kelora a cascade of parsers (<code>-f json,line</code>) and it tries each one per line, tagging every event with the winner in <code>_format</code> — so you keep the structured lines, drop the noise, and emit clean CSV in a single pass:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command/Output</label><label for="__tabbed_2_2">Input Data</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>examples/mixed_format.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e._format == &quot;json&quot;&#39;</span><span class="w"> </span>-k<span class="w"> </span>timestamp,level,msg<span class="w"> </span>-F<span class="w"> </span>csv
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp,level,msg
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2024-01-15T10:00:02Z,INFO,Order 4412 captured for user alice
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>2024-01-15T10:00:03Z,WARN,Retrying upstream auth.svc after HTTP 503
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>2024-01-15T10:00:05Z,ERROR,Upstream auth.svc timeout after 5000ms
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>2024-01-15T10:00:08Z,INFO,Order 4413 captured for user bob
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>2024-01-15T10:00:09Z,WARN,Connection pool at 85% capacity
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Server starting up, plaintext logger active before JSON init
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Loading config from /etc/checkout/config.yml
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:02Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;msg&quot;:&quot;Order 4412 captured for user alice&quot;}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:03Z&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;msg&quot;:&quot;Retrying upstream auth.svc after HTTP 503&quot;}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>[legacy] 2024-01-15 10:00:04 ERROR gateway connection reset by peer
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:05Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;msg&quot;:&quot;Upstream auth.svc timeout after 5000ms&quot;}
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Traceback (most recent call last):
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  File &quot;worker.py&quot;, line 42, in process_order
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:08Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;msg&quot;:&quot;Order 4413 captured for user bob&quot;}
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:09Z&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;msg&quot;:&quot;Connection pool at 85% capacity&quot;}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>And when those logs are a wall of near-duplicate errors that differ only by hostname, UUID, or timestamp, cut straight to what's actually breaking.</strong> Point <code>--drain</code> at a field (<code>-k msg</code>, the syslog message here) and it groups near-identical lines by inferring where the values varied — <code>&lt;fqdn&gt;</code>, <code>&lt;uuid&gt;</code>, <code>&lt;path&gt;</code>, <code>&lt;duration&gt;</code> — so 742 noisy lines collapse into the handful of patterns causing the noise:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Command/Output</label><label for="__tabbed_3_2">Input (8 of 742 lines)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/syslog_errors.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>templates (4 items):
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  438: Connection timeout to database host &lt;fqdn&gt; after &lt;duration&gt;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  187: Upstream &lt;fqdn&gt; returned &lt;num&gt; for request &lt;uuid&gt;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   94: Failed to acquire lock on resource &lt;path&gt; after &lt;duration&gt;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>   23: Payment gateway &lt;fqdn&gt; rejected transaction &lt;uuid&gt; insufficient_funds
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>&lt;27&gt;Mar 14 08:00:01 worker01 checkout[5331]: Connection timeout to database host db-replica-1.prod.internal after 10404ms
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>&lt;27&gt;Mar 14 08:00:03 api01 worker[5571]: Payment gateway adyen.gateway.internal rejected transaction c39f2e8b-2392-4450-939c-a51d53906989: insufficient_funds
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>&lt;27&gt;Mar 14 08:00:05 api01 checkout[5735]: Connection timeout to database host db-replica-1.prod.internal after 22354ms
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>&lt;27&gt;Mar 14 08:00:06 edge01 checkout[8861]: Upstream search.svc.internal returned 504 for request 267f0b10-b1df-40dd-ba9e-8bcdf85452c6
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>&lt;27&gt;Mar 14 08:00:09 api02 checkout[2996]: Connection timeout to database host db-replica-2.prod.internal after 26137ms
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>&lt;27&gt;Mar 14 08:00:11 worker02 checkout[3399]: Connection timeout to database host db-shard-3.prod.internal after 7504ms
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>&lt;27&gt;Mar 14 08:00:13 web01 checkout[2294]: Connection timeout to database host db-shard-3.prod.internal after 12361ms
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>&lt;27&gt;Mar 14 08:00:15 edge01 checkout[8849]: Connection timeout to database host db-replica-1.prod.internal after 15399ms
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="when-kelora-helps">When Kelora helps<a class="headerlink" href="#when-kelora-helps" title="Permanent link">&para;</a></h2>
+<p>Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's the middle ground between "grep is enough" and "I need a real observability platform."</p>
+<ul>
+<li><strong>Chained pipelines collapse into one command.</strong> <code>grep | awk | jq | script.py</code> becomes <code>kelora</code>, with state preserved across the pipeline instead of lost between pipes.</li>
+<li><strong>Messy formats parse cleanly.</strong> Mixed JSON and plaintext in the same file, key=value pairs inside message strings, nested JSON fanned out to flat rows — without regex gymnastics.</li>
+<li><strong>Embedded scripting when you need it.</strong> Simple filters are one-liners. When logic gets stateful — session reconstruction, per-service error rates, request/response correlation — there's a full scripting layer.</li>
+<li><strong>Plays well with your existing tools.</strong> Pipe <code>ripgrep</code> or <code>jq</code> upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.</li>
+</ul>
+<p>Kelora trades raw <a href="concepts/performance-comparisons/">speed</a> for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. Kelora <a href="how-to/integrate-external-tools/">plays well</a> with <code>ripgrep</code>, <code>jq</code>, <code>qsv</code>, and other Unix tools.</p>
+<h2 id="more-examples">More examples<a class="headerlink" href="#more-examples" title="Permanent link">&para;</a></h2>
+<h3 id="filter-convert-the-basics">Filter &amp; Convert (The Basics)<a class="headerlink" href="#filter-convert-the-basics" title="Permanent link">&para;</a></h3>
+<p><em>Scenario: Filter a Logfmt file for slow requests and output clean JSON.</em></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Command/Output</label><label for="__tabbed_4_2">Input Data</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/traffic_logfmt.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.status &gt;= 500 || e.latency_ms &gt; 1000&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-F<span class="w"> </span>json
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;ts&quot;:&quot;2024-07-17T12:00:04Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/checkout&quot;,&quot;status&quot;:200,&quot;latency_ms&quot;:1450}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;ts&quot;:&quot;2024-07-17T12:00:05Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/checkout&quot;,&quot;status&quot;:502,&quot;latency_ms&quot;:2100}
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ts=2024-07-17T11:59:40Z level=INFO method=GET path=/docs status=200 latency_ms=280
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ts=2024-07-17T11:59:55Z level=INFO method=POST path=/checkout status=200 latency_ms=950
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ts=2024-07-17T12:00:01Z level=INFO method=GET path=/docs status=200 latency_ms=320
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>ts=2024-07-17T12:00:04Z level=INFO method=POST path=/checkout status=200 latency_ms=1450
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>ts=2024-07-17T12:00:05Z level=ERROR method=POST path=/checkout status=502 latency_ms=2100
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>ts=2024-07-17T12:00:07Z level=WARN method=GET path=/billing status=200 latency_ms=900
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="modify-anonymize-scripting">Modify &amp; Anonymize (Scripting)<a class="headerlink" href="#modify-anonymize-scripting" title="Permanent link">&para;</a></h3>
+<p><em>Scenario: Mask user emails for privacy and convert milliseconds to seconds before printing.</em></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Command/Output</label><label for="__tabbed_5_2">Input Data</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/audit.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.email = &quot;***&quot;; e.duration_sec = e.ms / 1000.0;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--keys<span class="w"> </span>timestamp,user_id,email,duration_sec
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; user_id=&#39;usr_123&#39; email=&#39;***&#39; duration_sec=1.25
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:05:00Z&#39; user_id=&#39;usr_456&#39; email=&#39;***&#39; duration_sec=0.34
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:10:00Z&#39; user_id=&#39;usr_789&#39; email=&#39;***&#39; duration_sec=2.1
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:15:00Z&#39; user_id=&#39;usr_234&#39; email=&#39;***&#39; duration_sec=0.89
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:00Z&quot;,&quot;user_id&quot;:&quot;usr_123&quot;,&quot;email&quot;:&quot;alice@example.com&quot;,&quot;action&quot;:&quot;login&quot;,&quot;ms&quot;:1250}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:05:00Z&quot;,&quot;user_id&quot;:&quot;usr_456&quot;,&quot;email&quot;:&quot;bob@company.org&quot;,&quot;action&quot;:&quot;view_document&quot;,&quot;ms&quot;:340}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:10:00Z&quot;,&quot;user_id&quot;:&quot;usr_789&quot;,&quot;email&quot;:&quot;charlie@domain.net&quot;,&quot;action&quot;:&quot;update_profile&quot;,&quot;ms&quot;:2100}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:15:00Z&quot;,&quot;user_id&quot;:&quot;usr_234&quot;,&quot;email&quot;:&quot;diana@email.com&quot;,&quot;action&quot;:&quot;download_report&quot;,&quot;ms&quot;:890}
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="stateful-analysis-streaming-stats">Stateful Analysis (Streaming Stats)<a class="headerlink" href="#stateful-analysis-streaming-stats" title="Permanent link">&para;</a></h3>
+<p><em>Scenario: 800 API calls across three endpoints. The average latency looks fine — but the tail might not be. Compute a full distribution summary (avg, min/max, p50/p95/p99) per endpoint in one pass, no external aggregator.</em></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Command/Output</label><label for="__tabbed_6_2">Input Data</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/api_latency_incident.jsonl<span class="w"> </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_stats(&quot;latency_&quot; + e.endpoint.after(&quot;/&quot;, -1), e.response_time_ms)&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>latency_posts_avg       146.6142714694471
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>latency_posts_count     261
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>latency_posts_max       1000
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>latency_posts_min       38.80401816366475
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>latency_posts_p50       99.29855374396752
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>latency_posts_p95       386.8110029886961
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>latency_posts_p99       880.1589150573112
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>latency_posts_sum       38266.32485352569
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>latency_search_avg      136.74529883317723
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>latency_search_count        256
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>latency_search_max      914.089985589136
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>latency_search_min      38.41200046695686
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>latency_search_p50      58.567401927088085
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>latency_search_p95      391.37520665797547
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>latency_search_p99      888.3565953312707
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>latency_search_sum      35006.79650129337
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>latency_users_avg       137.4664766693681
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>latency_users_count     283
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>latency_users_max       913.710194540903
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>latency_users_min       40.08425944552916
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>latency_users_p50       97.50887914455556
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>latency_users_p95       383.87714424025705
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>latency_users_p99       796.4844047782076
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>latency_users_sum       38903.012897431174
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;: &quot;2025-01-20T14:00:00Z&quot;, &quot;level&quot;: &quot;INFO&quot;, &quot;endpoint&quot;: &quot;/api/search&quot;, &quot;response_time_ms&quot;: 52.10434414818461, &quot;status&quot;: 200}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;: &quot;2025-01-20T14:00:03Z&quot;, &quot;level&quot;: &quot;INFO&quot;, &quot;endpoint&quot;: &quot;/api/users&quot;, &quot;response_time_ms&quot;: 47.39308575090249, &quot;status&quot;: 200}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;: &quot;2025-01-20T14:00:06Z&quot;, &quot;level&quot;: &quot;INFO&quot;, &quot;endpoint&quot;: &quot;/api/posts&quot;, &quot;response_time_ms&quot;: 49.60562557980427, &quot;status&quot;: 200}
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Look at <code>latency_posts</code>: the average (~147ms) looks healthy, but p99 is ~880ms — a 6× tail the average hides entirely. <code>track_stats</code> maintains streaming state across events (averages and counts directly, percentiles via t-digest), so this scales to files of any size without holding everything in memory. <code>--exec</code> runs per event; <code>--metrics</code> prints just the tracked metrics at the end (it implies <code>--quiet</code>, so individual events are suppressed).</p>
+<hr />
+<h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
+<p>Beyond basic filtering and conversion, Kelora includes specialized functions that solve problems you'd otherwise need multiple tools or custom scripts for:</p>
+<ul>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#extract-json-from-unstructured-text">Extract JSON from text</a></strong> - Pull structured data from unstructured lines
+  <code>e.data = e.line.extract_json()</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#deep-structure-flattening">Deep flattening</a></strong> - Fan out nested arrays to flat records
+  <code>emit_each(e.get_path("data.orders", []))</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#pattern-normalization">Pattern normalization</a></strong> - Group errors by replacing IPs, UUIDs, emails with placeholders
+  <code>e.error_pattern = e.message.normalized()</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#deterministic-sampling-with-bucket">Deterministic sampling</a></strong> - Consistent sampling across log rotations
+  <code>--filter 'e.request_id.bucket() % 10 == 0'</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#jwt-parsing-without-verification">JWT parsing</a></strong> - Extract claims (or flag expired tokens) without verification
+  <code>e.token.parse_jwt().expires_at &lt; now()</code></p>
+</li>
+<li>
+<p><strong><a href="how-to/power-user-techniques/#multiple-hash-algorithms">Cryptographic pseudonymization</a></strong> - Privacy-preserving anonymization with HMAC
+  <code>e.anon_user = pseudonym(e.email, "users")</code></p>
+</li>
+</ul>
+<p>See <strong><a href="how-to/power-user-techniques/">Power-User Techniques</a></strong> for real-world examples.</p>
+<hr />
+<h2 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h2>
+<p><strong><a href="installation/">→ Installation</a></strong> - macOS, Linux, Windows, and Cargo</p>
+<p><strong><a href="quickstart/">→ Quickstart (5 minutes)</a></strong> - Run your first commands</p>
+<p><strong><a href="tutorials/basics/">→ Tutorial: Basics (30 minutes)</a></strong> - Learn input formats, filtering, and output</p>
+<p><strong><a href="how-to/">→ How-To Guides</a></strong> - Solve specific problems (including <a href="how-to/debug-issues/">debugging</a>)</p>
+<p>Need to reconstruct one timeline from several already-ordered log shards? See
+<a href="how-to/merge-timestamp-sorted-files/">Merge Sorted Files by Timestamp</a>.</p>
+<p>For deeper understanding, see <a href="concepts/">Concepts</a>. For complete reference, see <a href="glossary/">Glossary</a>, <a href="reference/functions/">Functions</a>, <a href="reference/formats/">Formats</a>, and <a href="reference/cli-reference/">CLI options</a>.</p>
+<p>Upgrading from 1.x? See <a href="whats-new-2.0/">What's New in 2.0</a> for the highlights and a migration guide.</p>
+<div class="admonition tip">
+<p class="admonition-title">On-call?</p>
+<p>Jump to <strong><a href="how-to/incident-response-playbooks/">Incident Response Playbooks</a></strong> for copy-paste commands covering latency spikes, error surges, auth failures, and more.</p>
+</div>
+<hr />
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>Kelora is open source software licensed under the <a href="https://github.com/dloss/kelora/blob/main/LICENSE">MIT License</a>.</p>
+<h2 id="development-approach">Development Approach<a class="headerlink" href="#development-approach" title="Permanent link">&para;</a></h2>
+<p>Kelora is an experiment in agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus <code>cargo audit</code> and <code>cargo deny</code>. Kelora is local-only with no networking or telemetry, enforced by a CI check.</p>
+<p>This is a single-developer spare-time project, and support is best-effort. Review the <a href="https://github.com/dloss/kelora/blob/main/SECURITY.md">Security Policy</a> before using it on sensitive data in production.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
