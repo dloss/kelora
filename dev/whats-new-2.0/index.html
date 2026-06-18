@@ -2185,10 +2185,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#named-application-log-formats" class="md-nav__link">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Named application-log formats
+        Built-in application-log formats
       
     </span>
   </a>
@@ -2437,10 +2437,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#named-application-log-formats" class="md-nav__link">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Named application-log formats
+        Built-in application-log formats
       
     </span>
   </a>
@@ -2671,7 +2671,7 @@ and minor flag), see the <a href="https://github.com/dloss/kelora/blob/main/CHAN
 that's the change most likely to affect you.</p>
 </div>
 <h2 id="highlights">Highlights<a class="headerlink" href="#highlights" title="Permanent link">&para;</a></h2>
-<h3 id="named-application-log-formats">Named application-log formats<a class="headerlink" href="#named-application-log-formats" title="Permanent link">&para;</a></h3>
+<h3 id="built-in-application-log-formats">Built-in application-log formats<a class="headerlink" href="#built-in-application-log-formats" title="Permanent link">&para;</a></h3>
 <p>A curated set of common application-log layouts now parse into structured
 fields out of the box: <code>glog</code> (Go/klog), <code>nginx-error</code>, <code>apache-error</code>,
 <code>log4j</code>/Java, <code>python-logging</code>, <code>postgres</code> (PostgreSQL server log), <code>redis</code>,
@@ -2696,7 +2696,7 @@ CRI/containerd on-disk layout <code>&lt;RFC3339Nano&gt; &lt;stream&gt; &lt;tag&g
 <code>/var/log/pods/*/*.log</code>, <code>kubectl logs --timestamps</code>, and log shippers emit. It
 parses <code>ts</code>, <code>stream</code> (stdout/stderr), <code>tag</code> (<code>F</code> full / <code>P</code> partial), and
 <code>msg</code>. Because a CRI message is often itself JSON or logfmt, <code>cri</code> is the one
-named format detected <em>early</em> (before the logfmt/CSV steps) so auto-detection
+built-in format detected <em>early</em> (before the logfmt/CSV steps) so auto-detection
 works regardless of the payload; fan a JSON message back into fields with a
 second-stage <code>--exec 'e.absorb_json("msg")'</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.stream == &quot;stderr&quot;&#39;</span><span class="w"> </span>-k<span class="w"> </span>ts,msg
@@ -2982,7 +2982,7 @@ paging to <code>less</code>:</p>
 <ul>
 <li><a href="https://github.com/dloss/kelora/blob/main/CHANGELOG.md">Full changelog</a> — the complete, change-by-change record.</li>
 <li><a href="../tutorials/metrics-and-tracking/">Metrics and Tracking tutorial</a> — the redesigned tracking functions in depth.</li>
-<li><a href="../reference/formats/">Format Reference</a> — the named application-log formats and cascades.</li>
+<li><a href="../reference/formats/">Format Reference</a> — the built-in application-log formats and cascades.</li>
 <li><a href="../concepts/error-handling/">Error Handling</a> — resilient vs. <code>--strict</code> vs. <code>--assert</code>.</li>
 </ul>
 

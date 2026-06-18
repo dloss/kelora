@@ -2129,10 +2129,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#named-application-log-formats" class="md-nav__link">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Named Application-Log Formats
+        Built-in Application-Log Formats
       
     </span>
   </a>
@@ -2554,10 +2554,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#named-application-log-formats" class="md-nav__link">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Named Application-Log Formats
+        Built-in Application-Log Formats
       
     </span>
   </a>
@@ -2721,7 +2721,7 @@
 </tr>
 <tr>
 <td><code>&lt;name&gt;</code></td>
-<td>Named application-log formats (<code>glog</code>, <code>log4j</code>, …) — see <code>--help-formats</code></td>
+<td>Built-in application-log formats (<code>glog</code>, <code>log4j</code>, …) — see <code>--help-formats</code></td>
 </tr>
 <tr>
 <td><code>cols:&lt;spec&gt;</code></td>
@@ -3229,7 +3229,7 @@ second-stage parse.</p>
 </code></pre></div></p>
 <p><strong>Notes:</strong></p>
 <ul>
-<li>Unlike the other named application-log formats (see below), <code>cri</code> is part of
+<li>Unlike the other built-in application-log formats (see below), <code>cri</code> is part of
   auto-detection's early path — it is tried <strong>before</strong> the logfmt and CSV steps,
   because a CRI message is frequently itself JSON or logfmt (whose commas/pairs
   would otherwise be misdetected as CSV/logfmt). Auto-detection therefore
@@ -3237,8 +3237,8 @@ second-stage parse.</p>
 <li>The Docker <code>json-file</code> log driver writes a <em>different</em> shape (one JSON object
   per line with <code>log</code>/<code>stream</code>/<code>time</code> keys) — use <code>-f json</code> for those.</li>
 </ul>
-<h3 id="named-application-log-formats">Named Application-Log Formats<a class="headerlink" href="#named-application-log-formats" title="Permanent link">&para;</a></h3>
-<p>Beyond the wire/access formats above, Kelora ships a curated set of named
+<h3 id="built-in-application-log-formats">Built-in Application-Log Formats<a class="headerlink" href="#built-in-application-log-formats" title="Permanent link">&para;</a></h3>
+<p>Beyond the wire/access formats above, Kelora ships a curated set of built-in
 application-log layouts — <code>glog</code> (Go/Kubernetes klog), <code>nginx-error</code>,
 <code>apache-error</code>, <code>log4j</code>/Java, <code>python-logging</code>, <code>postgres</code> (PostgreSQL server
 log), <code>redis</code>, <code>s3</code>, <code>haproxy</code>, and <code>iso8601-level</code>
@@ -3371,7 +3371,7 @@ e.g. <code>--input-tz Europe/Berlin</code>.</p>
 <li>CRI (<code>&lt;RFC3339Nano&gt; stdout|stderr F|P …</code>, tried early so a JSON/logfmt message isn't misread as CSV/logfmt)</li>
 <li>Logfmt (contains <code>key=value</code> pairs)</li>
 <li>CSV (contains commas with consistent pattern)</li>
-<li>Named application-log formats (regex-based: <code>glog</code>, <code>log4j</code>, …; see <code>--help-formats</code>)</li>
+<li>Built-in application-log formats (regex-based: <code>glog</code>, <code>log4j</code>, …; see <code>--help-formats</code>)</li>
 <li>Line (fallback)</li>
 </ol>
 <p><strong>Notes:</strong></p>
