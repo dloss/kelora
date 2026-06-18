@@ -35,8 +35,14 @@
 
 === "Cargo"
 
+    From [crates.io](https://crates.io/crates/kelora):
     ```bash
     cargo install kelora
+    ```
+
+    From source (a cloned checkout — useful for a specific commit or local changes):
+    ```bash
+    cargo install --path . --locked
     ```
 
 === "Other"
