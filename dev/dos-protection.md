@@ -60,7 +60,7 @@ per-line cap closes this case for every format at once.
 | Purpose | turn OOM/crash into a clean error | restrict untrusted input/scripts |
 | Default | **on** | **off** (opt-in) |
 | Value | very high — ~zero false positives | low — tuned to context |
-| Example | `--max-line-bytes 64MiB` | `--max-line-bytes 1MiB`, timeout, max-ops |
+| Example | `--max-line-bytes 64MiB` | `--max-line-bytes 1MiB`, `--script-timeout` |
 
 Only the per-line circuit breaker has a defensible "on by default" value.
 Everything else defaults **off**: a legitimate batch job over a huge file *does*
