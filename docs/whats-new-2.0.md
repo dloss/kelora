@@ -137,11 +137,8 @@ for the old rendering.)
 - **`-P` short flag for `--parallel`**, following the `xargs`/GNU `parallel`
   convention.
 - **`-l/--levels` vocabulary-mismatch warning** — when `-l` drops every event
-  because the stream uses a different level dialect than your filter (glog logs
-  `I/W/E/F`, syslog uses `CRIT` not `CRITICAL`), Kelora now lists the levels
-  actually present (`-l ERROR matched none of the levels present: E,I`) instead
-  of returning a silent empty result. Single-letter glog/klog levels are now
-  colored in the default and `levelmap` output too.
+  because the stream uses a different level dialect (glog logs `I/W/E/F`), Kelora
+  now lists the levels present instead of returning a silent empty result.
 - **"No input" hint** — a bare `kelora` reading from an empty non-TTY source
   now prints a one-line stderr hint instead of exiting silently.
 
@@ -205,8 +202,8 @@ results. Other notes:
 | --- | --- |
 | `track_count(value)` | `track_freq("name", value)` |
 | `track_bucket(key, bucket)` | `track_freq(key, bucket)` |
-| `track_top(key, item, n, value)` | `track_top_by(key, item, value, n)` |
-| `track_bottom(key, item, n, value)` | `track_bottom_by(key, item, value, n)` |
+| `track_top(name, item, n, value)` | `track_top_by(name, item, score, n)` |
+| `track_bottom(name, item, n, value)` | `track_bottom_by(name, item, score, n)` |
 | plain counter via `track_count` | `track_inc("name")` (or `track_sum("name", 1)`) |
 
 ### Breaking: a simpler, record-aware exit-code model
