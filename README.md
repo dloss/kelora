@@ -142,6 +142,10 @@ For common patterns and usage recipes, run:
 kelora --help-examples
 ```
 
+## Use with AI coding agents
+
+Kelora ships an [Agent Skill](skills/log-analysis/SKILL.md) for Claude Code and compatible coding agents. Drop the [`skills/log-analysis/`](https://github.com/dloss/kelora/tree/main/skills/log-analysis) directory into your agent's skills directory and it gains a curated cheat-sheet for parsing, filtering, and summarizing logs with Kelora — including when to reach for `--discover`, `--drain`, and the `--freq`/`--describe`/`--card` shorthands.
+
 ## How Kelora is built
 
 Kelora is an experiment in agentic AI development: AI agents generate all implementation and tests, and I steer requirements rather than writing or reviewing code. Validation relies on an extensive automated test suite plus `cargo audit` and `cargo deny`. Kelora is local-only with no networking or telemetry, enforced by a CI check.
