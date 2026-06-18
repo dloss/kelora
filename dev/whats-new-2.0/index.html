@@ -2774,11 +2774,8 @@ for the old rendering.)</p>
 <li><strong><code>-P</code> short flag for <code>--parallel</code></strong>, following the <code>xargs</code>/GNU <code>parallel</code>
   convention.</li>
 <li><strong><code>-l/--levels</code> vocabulary-mismatch warning</strong> — when <code>-l</code> drops every event
-  because the stream uses a different level dialect than your filter (glog logs
-  <code>I/W/E/F</code>, syslog uses <code>CRIT</code> not <code>CRITICAL</code>), Kelora now lists the levels
-  actually present (<code>-l ERROR matched none of the levels present: E,I</code>) instead
-  of returning a silent empty result. Single-letter glog/klog levels are now
-  colored in the default and <code>levelmap</code> output too.</li>
+  because the stream uses a different level dialect (glog logs <code>I/W/E/F</code>), Kelora
+  now lists the levels present instead of returning a silent empty result.</li>
 <li><strong>"No input" hint</strong> — a bare <code>kelora</code> reading from an empty non-TTY source
   now prints a one-line stderr hint instead of exiting silently.</li>
 </ul>
@@ -2845,12 +2842,12 @@ results. Other notes:</p>
 <td><code>track_freq(key, bucket)</code></td>
 </tr>
 <tr>
-<td><code>track_top(key, item, n, value)</code></td>
-<td><code>track_top_by(key, item, value, n)</code></td>
+<td><code>track_top(name, item, n, value)</code></td>
+<td><code>track_top_by(name, item, score, n)</code></td>
 </tr>
 <tr>
-<td><code>track_bottom(key, item, n, value)</code></td>
-<td><code>track_bottom_by(key, item, value, n)</code></td>
+<td><code>track_bottom(name, item, n, value)</code></td>
+<td><code>track_bottom_by(name, item, score, n)</code></td>
 </tr>
 <tr>
 <td>plain counter via <code>track_count</code></td>
