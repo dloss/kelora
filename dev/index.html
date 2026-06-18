@@ -252,17 +252,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="quickstart/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="quickstart/" class="md-tabs__link">
+          
   
-  Quickstart
+  
+  Getting Started
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -597,6 +598,58 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="quickstart/" class="md-nav__link">
         
@@ -614,6 +667,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="whats-new-2.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's New in 2.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2275,34 +2364,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="whats-new-2.0/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    What's New in 2.0
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2487,6 +2548,10 @@
 <p><strong>One command for messy logs.</strong> Parse, filter, transform, and summarize logs across JSON, logfmt, syslog, CSV, plain text, and your own custom formats — with embedded <a href="https://rhai.rs">Rhai</a> scripting when simple filters aren't enough.</p>
 <p>Watch Hack the Clown's <a href="https://www.youtube.com/watch?v=IwkicmS3RYo"><strong>5-minute introduction video</strong></a> to see Kelora in action.</p>
 <p><a class="md-button" href="#installation">Install Kelora</a></p>
+<div class="admonition note">
+<p class="admonition-title">Already using Kelora?</p>
+<p>See <a href="whats-new-2.0/">What's New in 2.0</a> for the highlights and a migration guide.</p>
+</div>
 <h2 id="a-quick-tour">A quick tour<a class="headerlink" href="#a-quick-tour" title="Permanent link">&para;</a></h2>
 <p><strong>You don't even know what's in the file yet. Start there</strong> — no flags, no regex. Kelora decompresses the gzip, recognizes the Apache combined format, and profiles every field with real sample values:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label></div>
@@ -2495,17 +2560,17 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/web_access_large.log.gz<span class="w"> </span>--discover
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Field       Type    Seen  Miss   Uniq  Examples
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ip          string  1200    0%  ~1200  &quot;130.248.225.105&quot;, &quot;199.74.36.84&quot;, &quot;56.212.235.244&quot;, &quot;143.219.49.246&quot;, &quot;64.194.69.230&quot;, &quot;166.142.32.6&quot;, &quot;59.38.182.214&quot;, &quot;5.216.53.63&quot;, ...
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ts          string  1200    0%  ~1168  &quot;04/Oct/2025:10:04:58 +0200&quot;, &quot;04/Oct/2025:10:57:07 +0200&quot;, &quot;04/Oct/2025:11:56:30 +0200&quot;, &quot;04/Oct/2025:11:32:48 +0200&quot;, &quot;04/Oct/2025:10:26:55 +0200&quot;, &quot;04/Oct/...
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>request     string  1200    0%  ~1200  &quot;PUT /synthesize/scalable HTTP/1.1&quot;, &quot;POST /transform/syndicate/embrace/vertical HTTP/1.0&quot;, &quot;GET /sexy/holistic HTTP/2.0&quot;, &quot;DELETE /cutting-edge/leverage/clic...
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ip          string  1200    0%  ~1200  &quot;185.42.103.47&quot;, &quot;56.186.186.17&quot;, &quot;252.170.126.133&quot;, &quot;62.243.135.70&quot;, &quot;189.241.169.78&quot;, &quot;178.30.124.94&quot;, &quot;237.47.125.189&quot;, &quot;99.110.23.82&quot;, ...
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ts          string  1200    0%  ~1168  &quot;04/Oct/2025:10:56:00 +0200&quot;, &quot;04/Oct/2025:10:26:19 +0200&quot;, &quot;04/Oct/2025:10:35:11 +0200&quot;, &quot;04/Oct/2025:11:41:40 +0200&quot;, &quot;04/Oct/2025:11:07:59 +0200&quot;, &quot;04/Oct/...
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>request     string  1200    0%  ~1200  &quot;HEAD /enhance/engineer/benchmark HTTP/1.0&quot;, &quot;PATCH /e-enable/brand/extensible/bricks-and-clicks HTTP/2.0&quot;, &quot;PUT /sticky/maximize/convergence/e-business HTTP/...
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>method      string  1200    0%      6  &quot;GET&quot;, &quot;PUT&quot;, &quot;POST&quot;, &quot;PATCH&quot;, &quot;HEAD&quot;, &quot;DELETE&quot;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>path        string  1200    0%  ~1050  &quot;/optimize/integrated/synergies/compelling&quot;, &quot;/engage/architectures&quot;, &quot;/action-items/scalable&quot;, &quot;/turn-key/aggregate/schemas&quot;, &quot;/monetize/optimize/user-centri...
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>path        string  1200    0%  ~1050  &quot;/unleash/portals/plug-and-play&quot;, &quot;/deploy/incubate&quot;, &quot;/bandwidth/visionary/deliverables/aggregate&quot;, &quot;/schemas/markets&quot;, &quot;/seize&quot;, &quot;/efficient/ubiquitous&quot;, &quot;/...
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>protocol    string  1200    0%      3  &quot;HTTP/1.0&quot;, &quot;HTTP/1.1&quot;, &quot;HTTP/2.0&quot;
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>status      int     1200    0%     21  403, 500, 301, 416, 203, 406, 100, 204, ...
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>bytes       int     1200    0%  ~1175  44523, 71246, 97194, 19894, 94857, 66639, 51101, 82022, ...
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>referer     string  1200    0%  ~1200  &quot;https://www.dynamice-tailers.info/experiences/morph&quot;, &quot;http://www.leadextend.info/relationships/aggregate&quot;, &quot;https://www.internal24/365.biz/synthesize/exploi...
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>user_agent  string  1200    0%  ~1200  &quot;Mozilla/5.0 (X11; Linux i686) AppleWebKit/5312 (KHTML, like Gecko) Chrome/40.0.874.0 Mobile Safari/5312&quot;, &quot;Opera/8.58 (X11; Linux i686; en-US) Presto/2.10.30...
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>user        string   580   52%   ~564  &quot;wilderman7385&quot;, &quot;kautzer1575&quot;, &quot;blick8132&quot;, &quot;predovic1853&quot;, &quot;shields5568&quot;, &quot;crooks2737&quot;, &quot;witting1540&quot;, &quot;zboncak1482&quot;, ...
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>status      int     1200    0%     21  403, 405, 503, 201, 302, 401, 100, 400, ...
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>bytes       int     1200    0%  ~1175  19044, 74700, 57341, 83540, 6999, 47463, 2896, 10135, ...
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>referer     string  1200    0%  ~1200  &quot;http://www.regionalrepurpose.biz/mesh/incentivize&quot;, &quot;http://www.seniorintegrate.biz/optimize/redefine/frictionless&quot;, &quot;https://www.chiefmagnetic.org/holistic/...
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>user_agent  string  1200    0%  ~1200  &quot;Mozilla/5.0 (iPad; CPU OS 7_2_2 like Mac OS X; en-US) AppleWebKit/533.45.7 (KHTML, like Gecko) Version/3.0.5 Mobile/8B114 Safari/6533.45.7&quot;, &quot;Opera/9.56 (Win...
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>user        string   580   52%   ~564  &quot;bergstrom7350&quot;, &quot;koch3721&quot;, &quot;brekke1435&quot;, &quot;becker7872&quot;, &quot;gibson7836&quot;, &quot;lubowitz1401&quot;, &quot;hegmann6828&quot;, &quot;rempel6267&quot;, ...
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>1200 events scanned | format: combined (auto-detected) | timestamp: ts -&gt; meta.parsed_ts
 </code></pre></div>
