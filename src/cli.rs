@@ -133,7 +133,7 @@ pub struct Cli {
     /// Input format. Available formats: auto (default), auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>.
     /// With 'auto', the format is detected from the first non-empty line and applied to every line; for files that mix formats use a cascade (below) instead.
     /// Use cols:<spec> for column parsing, regex:<pattern> for regex parsing with named groups, and csv/tsv with optional type annotations.
-    /// Named formats: cri (Kubernetes container logs) plus glog, nginx-error, apache-error, log4j, python-logging, redis, s3, haproxy, iso8601-level (adapted from lnav). Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
+    /// Built-in application-log formats: cri (Kubernetes container logs) plus glog, nginx-error, apache-error, log4j, python-logging, redis, s3, haproxy, iso8601-level (adapted from lnav). Select with -f <name>; most are also recognized by auto-detection. See --help-formats.
     /// Cascade mode: pass a comma-separated list (e.g. 'json,logfmt,line') to try each parser in order; the first success wins, so put catch-all fallbacks like 'line' or 'raw' last. Adds an '_format' field to each event.
     /// Repeat -f to build a cascade that includes spec-based parsers: -f json -f 'cols:ts(2) level *msg'. Each -f is tried in order; put catch-alls ('line', 'raw', 'cols:') last (regex declines non-matching lines, so it can sit earlier).
     /// Examples: -f json, -f json,line, -f json -f 'cols:ts level *msg', -f 'regex:(?P<code:int>\\d+) (?P<msg>.*)', -f 'csv status:int bytes:int'.
@@ -1415,7 +1415,7 @@ fn parse_format_value(s: &str) -> Result<String, String> {
             if p.is_empty() {
                 return Err(format!("Empty entry in cascade format list: '{}'", s));
             }
-            // Built-in named formats (adapted from lnav) are also valid in cascade.
+            // Built-in application-log formats (adapted from lnav) are also valid in cascade.
             if !allowed.contains(&p.as_str()) && crate::parsers::lnav_formats::by_name(&p).is_none()
             {
                 let hint = if p == "cols"
@@ -1429,7 +1429,7 @@ fn parse_format_value(s: &str) -> Result<String, String> {
                 };
                 return Err(format!(
                     "Unknown or unsupported format '{}' in cascade list '{}'. \
-Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, and named formats ({}).{}",
+Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, and built-in application-log formats ({}).{}",
                     part.trim(),
                     s,
                     crate::parsers::lnav_formats::names_csv(),
@@ -1445,12 +1445,12 @@ Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined, and nam
         "auto" | "auto-per-file" | "json" | "line" | "raw" | "logfmt" | "syslog" | "cef"
         | "csv" | "tsv" | "csvnh" | "tsvnh" | "combined" | "cols" => Ok(s.to_string()),
         other => {
-            // Built-in named formats (adapted from lnav), e.g. -f log4j
+            // Built-in application-log formats (adapted from lnav), e.g. -f log4j
             if crate::parsers::lnav_formats::by_name(other).is_some() {
                 return Ok(s.to_string());
             }
             Err(format!(
-                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a named format ({})",
+                "Unknown format '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a built-in application-log format ({})",
                 s,
                 crate::parsers::lnav_formats::names_csv()
             ))

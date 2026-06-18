@@ -30,7 +30,7 @@ fn test_help_formats_topic() {
         "\nraw\n",
         "\nregex:<pattern>\n",
         "\nsyslog\n",
-        "Named application-log formats",
+        "Built-in application-log formats",
         "auto (default)",
         "auto-per-file",
     ] {

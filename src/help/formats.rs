@@ -76,7 +76,7 @@ syslog
   Fields: pri, facility, severity, level, ts, host, prog, pid, msg
           [msgid, version - RFC5424 only]
 
-Named application-log formats
+Built-in application-log formats
   A small set of common application-log layouts, parsed with the regex engine:
     apache-error    Apache error log ("[Fri Oct 11 14:32:52 2024] [core:error] ... msg")
     cri             Kubernetes CRI/containerd log (2024-07-17T12:12:05.0Z stdout F msg)
@@ -132,13 +132,13 @@ Meta formats (select or combine the concrete formats above):
 auto (default)
   Auto-detect format from first non-empty line
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
-                   → named app-log formats (regex) → line
+                   → application-log formats (regex) → line
   Note: Detects once and applies to all lines
 
 auto-per-file
   Auto-detect format separately for each input file
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
-                   → named app-log formats (regex) → line
+                   → application-log formats (regex) → line
   Note: Detects once per file and applies to that file's lines
   stdin: behaves like 'auto' (single input stream)
 

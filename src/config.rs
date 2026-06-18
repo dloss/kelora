@@ -240,7 +240,7 @@ pub enum InputFormat {
     Combined,
     Cols(String),  // Contains the column spec
     Regex(String), // Contains the regex pattern with optional type annotations
-    /// Built-in named format adapted from lnav (e.g. log4j, glog). Backed by a
+    /// Built-in application-log format adapted from lnav (e.g. log4j, glog). Backed by a
     /// static regex definition; selectable via `-f <name>` and produced by
     /// auto-detection. See `crate::parsers::lnav_formats`.
     Named(&'static crate::parsers::lnav_formats::LnavFormat),
@@ -1504,11 +1504,11 @@ pub(crate) fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat>
         "tsvnh" => Ok(InputFormat::Tsvnh),
         "combined" => Ok(InputFormat::Combined),
         other => {
-            // Built-in named formats (adapted from lnav), e.g. -f log4j
+            // Built-in application-log formats (adapted from lnav), e.g. -f log4j
             if let Some(fmt) = crate::parsers::lnav_formats::by_name(other) {
                 return Ok(InputFormat::Named(fmt));
             }
-            Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a named format ({})", spec, crate::parsers::lnav_formats::names_csv()))
+            Err(anyhow::anyhow!("Unknown input format: '{}'. Supported formats: auto, auto-per-file, json, line, raw, logfmt, syslog, cef, csv, tsv, csvnh, tsvnh, combined, cols:<spec>, regex:<pattern>, or a built-in application-log format ({})", spec, crate::parsers::lnav_formats::names_csv()))
         }
     }
 }
@@ -1562,13 +1562,13 @@ fn parse_cascade_spec(spec: &str) -> anyhow::Result<InputFormat> {
                 ));
             }
             other => {
-                // Built-in named formats (adapted from lnav) are regex-backed and
-                // safe to try per-line, so they are allowed in cascade lists.
+                // Built-in application-log formats (adapted from lnav) are regex-backed
+                // and safe to try per-line, so they are allowed in cascade lists.
                 if let Some(fmt) = crate::parsers::lnav_formats::by_name(other) {
                     InputFormat::Named(fmt)
                 } else {
                     return Err(anyhow::anyhow!(
-                        "Unknown format '{}' in cascade list. Allowed: json, line, raw, logfmt, syslog, cef, combined, and named formats ({})",
+                        "Unknown format '{}' in cascade list. Allowed: json, line, raw, logfmt, syslog, cef, combined, and built-in application-log formats ({})",
                         part,
                         crate::parsers::lnav_formats::names_csv()
                     ));

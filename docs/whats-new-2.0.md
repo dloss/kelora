@@ -18,7 +18,7 @@ and minor flag), see the [full changelog](https://github.com/dloss/kelora/blob/m
 
 ## Highlights
 
-### Named application-log formats
+### Built-in application-log formats
 
 A curated set of common application-log layouts now parse into structured
 fields out of the box: `glog` (Go/klog), `nginx-error`, `apache-error`,
@@ -51,7 +51,7 @@ CRI/containerd on-disk layout `<RFC3339Nano> <stream> <tag> <message>` that
 `/var/log/pods/*/*.log`, `kubectl logs --timestamps`, and log shippers emit. It
 parses `ts`, `stream` (stdout/stderr), `tag` (`F` full / `P` partial), and
 `msg`. Because a CRI message is often itself JSON or logfmt, `cri` is the one
-named format detected *early* (before the logfmt/CSV steps) so auto-detection
+built-in format detected *early* (before the logfmt/CSV steps) so auto-detection
 works regardless of the payload; fan a JSON message back into fields with a
 second-stage `--exec 'e.absorb_json("msg")'`:
 
@@ -378,5 +378,5 @@ defaults = --wrap
 
 - [Full changelog](https://github.com/dloss/kelora/blob/main/CHANGELOG.md) — the complete, change-by-change record.
 - [Metrics and Tracking tutorial](tutorials/metrics-and-tracking.md) — the redesigned tracking functions in depth.
-- [Format Reference](reference/formats.md) — the named application-log formats and cascades.
+- [Format Reference](reference/formats.md) — the built-in application-log formats and cascades.
 - [Error Handling](concepts/error-handling.md) — resilient vs. `--strict` vs. `--assert`.
