@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fs;
 use std::io::{self, BufRead, BufReader, Read};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread;
 
 use crate::decompression::DecompressionReader;
@@ -15,6 +15,17 @@ use crate::decompression::DecompressionReader;
 // truncates the rest of the stream. See issue #239.
 static STRICT_UTF8: AtomicBool = AtomicBool::new(false);
 
+// Circuit breaker for runaway memory: the maximum number of bytes a single
+// physical line (the run up to the next `\n`) may contribute to the in-memory
+// buffer. `0` disables the cap. The danger is newline-free input — including a
+// few-KB gzip/zstd payload that decompresses to one enormous line — which would
+// otherwise grow `read_until`'s buffer until OOM. Set once during pipeline
+// setup; read on every reader thread. See SECURITY.md ("Input-pipeline limits").
+static MAX_LINE_BYTES: AtomicUsize = AtomicUsize::new(0);
+// When true, an over-limit line is a hard error (exit 1) instead of the default
+// truncate-and-warn recovery. Mirrors the global `--strict` contract.
+static LINE_OVERFLOW_STRICT: AtomicBool = AtomicBool::new(false);
+
 /// Select strict (abort-on-invalid) vs. lossy UTF-8 decoding for all line reads.
 /// Set once during pipeline setup; read on every reader thread.
 pub fn set_strict_utf8(enabled: bool) {
@@ -23,6 +34,45 @@ pub fn set_strict_utf8(enabled: bool) {
 
 fn strict_utf8() -> bool {
     STRICT_UTF8.load(Ordering::Relaxed)
+}
+
+/// Configure the per-line byte cap (`0` = unlimited) and whether exceeding it is
+/// fatal (`strict`) or recovered by truncate-and-warn. Set once during pipeline
+/// setup, before any reader thread is spawned.
+pub fn set_line_limit(max_bytes: usize, strict: bool) {
+    MAX_LINE_BYTES.store(max_bytes, Ordering::Relaxed);
+    LINE_OVERFLOW_STRICT.store(strict, Ordering::Relaxed);
+}
+
+fn line_overflow_strict() -> bool {
+    LINE_OVERFLOW_STRICT.load(Ordering::Relaxed)
+}
+
+/// Discard the remainder of an over-limit physical line, in bounded chunks, so
+/// the next read resumes at the following line. Crucially this never buffers the
+/// discarded bytes (unlike `read_until`), so draining a multi-GB newline-free
+/// remainder stays in constant memory.
+fn discard_to_newline<R: BufRead + ?Sized>(reader: &mut R) -> io::Result<()> {
+    loop {
+        let consumed = {
+            let available = match reader.fill_buf() {
+                Ok(buf) => buf,
+                Err(ref e) if e.kind() == io::ErrorKind::Interrupted => continue,
+                Err(e) => return Err(e),
+            };
+            if available.is_empty() {
+                return Ok(()); // EOF before the next newline
+            }
+            match available.iter().position(|&b| b == b'\n') {
+                Some(i) => (i + 1, true),
+                None => (available.len(), false),
+            }
+        };
+        reader.consume(consumed.0);
+        if consumed.1 {
+            return Ok(());
+        }
+    }
 }
 
 /// Read a single line (through the next `\n`, inclusive) from `reader`, decoding
@@ -51,7 +101,35 @@ pub(crate) fn read_line_lossy<R: BufRead + ?Sized>(
     SCRATCH.with(|cell| {
         let mut bytes = cell.borrow_mut();
         bytes.clear();
-        let n = reader.read_until(b'\n', &mut bytes)?;
+
+        let max = MAX_LINE_BYTES.load(Ordering::Relaxed);
+        let n = if max == 0 {
+            reader.read_until(b'\n', &mut bytes)?
+        } else {
+            // Bounded read: stop after at most `max` bytes so one newline-free
+            // line can't grow the buffer without limit (the circuit breaker).
+            let n = (&mut *reader)
+                .take(max as u64)
+                .read_until(b'\n', &mut bytes)?;
+            // Over-limit when the cap was reached without capturing a newline.
+            // `take` guarantees `bytes.len() <= max`, so equality means the cap
+            // was hit; a trailing `\n` means we captured a complete line just in
+            // time and there is no overflow.
+            if n > 0 && bytes.len() >= max && bytes.last() != Some(&b'\n') {
+                if line_overflow_strict() {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!("line exceeds --max-line-bytes ({max} bytes); aborting (--strict)"),
+                    ));
+                }
+                // Resilient default: drop the rest of the over-limit line so the
+                // stream resumes cleanly at the next one, then record a warning.
+                discard_to_newline(reader)?;
+                crate::stats::stats_record_line_truncation(max);
+            }
+            n
+        };
+
         if n == 0 {
             return Ok(0);
         }

@@ -245,6 +245,10 @@ impl GlobalTracker {
         // reader thread, so merge them here the same way (see #239).
         stats.decode_warnings = crate::stats::decode_warning_count();
         stats.first_decode_warning_sample = crate::stats::decode_warning_sample();
+        // Circuit-breaker truncations are also counted in a process-wide atomic
+        // by the reader thread; merge them like decode warnings.
+        stats.truncated_lines = crate::stats::truncated_line_count();
+        stats.line_byte_cap = crate::stats::truncation_byte_cap();
         // File-open failures happen on reader/decompression threads and land in a
         // process-wide atomic, not in per-worker stats — so read them here (same
         // pattern as decode warnings) to keep the structural-failure exit code

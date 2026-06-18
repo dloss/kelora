@@ -78,6 +78,11 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
     // any reader thread is spawned, so sequential and parallel paths agree.
     readers::set_strict_utf8(config.processing.strict_utf8);
 
+    // Arm the per-line memory circuit breaker before any reader thread starts, so
+    // sequential and parallel paths agree. An over-limit line is fatal under
+    // --strict, otherwise truncated-and-warned (see SECURITY.md).
+    readers::set_line_limit(config.input.max_line_bytes, config.processing.strict);
+
     // Start statistics collection if enabled
     if collect_stats {
         stats_start_timer();

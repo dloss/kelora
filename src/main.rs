@@ -13,6 +13,7 @@ use std::sync::atomic::Ordering;
 use signal_hook::consts::{SIGINT, SIGTERM};
 
 mod args;
+mod byte_size;
 mod cli;
 mod colors;
 mod config;
@@ -1499,6 +1500,12 @@ fn handle_pipeline_success(
             // stats block.
             if config.warnings_allowed() && config.output.stats.is_none() {
                 if let Some(message) = s.format_decode_warning() {
+                    let formatted = config.format_warning_message(&message);
+                    stderr.writeln(&formatted).unwrap_or(());
+                }
+                // Circuit-breaker truncations are a recovery, not a failure
+                // (exit stays 0); surface them the same way as decode warnings.
+                if let Some(message) = s.format_line_truncation_warning() {
                     let formatted = config.format_warning_message(&message);
                     stderr.writeln(&formatted).unwrap_or(());
                 }

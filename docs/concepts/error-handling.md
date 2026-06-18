@@ -272,7 +272,7 @@ event data goes to **stderr**, so a pipeline's stdout stays clean.
 |---------|-----------|--------------|--------------|
 | **Events** (data) | your records, on **stdout** | always — this is the result | `-q` / `--quiet` |
 | **Error** ⚠️ | `⚠️` / `kelora:` | the run hit a fatal problem | `--silent` (one fatal line still prints) |
-| **Warning** 🔸 | `kelora warning:` | something may be wrong but the run continued — recovered `--exec` errors, conflicting flags, mostly-failed parsing | `--no-warnings`, `--no-diagnostics`, `--silent`, `KELORA_NO_WARNINGS` |
+| **Warning** 🔸 | `kelora warning:` | something may be wrong but the run continued — recovered `--exec` errors, conflicting flags, mostly-failed parsing, lines truncated at `--max-line-bytes` | `--no-warnings`, `--no-diagnostics`, `--silent`, `KELORA_NO_WARNINGS` |
 | **Hint** 💡 | `kelora hint:` | a likely mistake with a concrete fix — a quoted numeric filter that's always false, a format that fell back to whole-line | `--no-hints`, `--no-diagnostics`, `--silent`, `KELORA_NO_HINTS` |
 | **Status** 🔹 | `🔹` / `kelora:` | only under `-v`/`--verbose` — *what kelora did*: detected format, loaded config, applied defaults/aliases | hidden by default |
 

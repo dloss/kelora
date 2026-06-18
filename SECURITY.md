@@ -159,13 +159,14 @@ All other advisories result in build failures.
   - Standard output redirection (`>`, `>>`) is controlled by the shell, not Kelora
   - Capabilities Kelora *does* grant: scripts can read environment variables (`get_env`) and, during `--begin`, read files (`read_file`/`read_lines`). Because there is no network or subprocess capability, a script cannot exfiltrate this data itself, but treat scripts from untrusted sources accordingly (see Known Limitations)
 - Rhai's default safety limits are active (e.g. call-stack-depth limits guard against stack overflow). However, Rhai's *optional* limits against runaway operations and over-sized data (`max_operations`, `max_string_size`, etc.) default to unlimited and are **not** enabled by Kelora — see Known Limitation 2 on resource exhaustion
+- **Input-pipeline memory circuit breaker:** Reading is streamed, so a large multi-line file (including gzip/zstd input) is processed in roughly constant memory. The one unbounded case — a newline-free stream, e.g. a tiny compressed payload that decompresses into a single enormous line — is capped by `--max-line-bytes` (default **64 MiB**). An over-limit line is truncated to the cap with a warning (exit 0); under `--strict` it is a hard error (exit 1). The cap is sized for ~zero false positives on real logs and can be tuned (`--max-line-bytes 1MiB`) or disabled (`--max-line-bytes 0`). Note: recursive ZIP bombs (e.g. `42.zip`) are a non-issue — ZIP input is rejected outright; only gzip and zstd are supported.
 - Malformed log entries are skipped with diagnostics (default resilient mode)
 
 ### Known Limitations
 
 1. **Rhai script safety:** User-provided scripts execute with the same privileges as the Kelora process. Users should review scripts from untrusted sources.
 
-2. **Resource exhaustion:** There are currently no built-in CPU/time/memory guardrails for Rhai execution. Processing very large files or complex scripts can consume significant resources. Use `--parallel` for large archives and monitor resource usage; apply OS-level limits (`ulimit`, cgroups) when handling untrusted inputs.
+2. **Resource exhaustion:** Memory from runaway *input* is bounded by the `--max-line-bytes` circuit breaker (see Protections), but there are still no built-in CPU/time guardrails for *Rhai* execution: a complex or runaway script can consume significant CPU. Use `--parallel` for large archives, monitor resource usage, and apply OS-level limits (`ulimit`, cgroups) plus a `timeout(1)` wrapper when handling untrusted inputs or scripts.
 
 3. **Regex complexity:** User-provided regex patterns in scripts could be computationally expensive on crafted input. The regex engine (Rust `regex` crate) has DoS protections, but extremely complex patterns may still be slow.
 
@@ -195,6 +196,9 @@ sleep 60 && kill $PID 2>/dev/null
 
 # Use strict mode to fail fast on malformed input
 kelora -j logs.jsonl --strict --filter 'e.valid_field'
+
+# Tighten the per-line memory cap for untrusted input (default is 64MiB)
+kelora -j untrusted.jsonl --max-line-bytes 1MiB --filter 'e.level == "ERROR"'
 ```
 
 ## Dependency Policy

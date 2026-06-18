@@ -344,6 +344,33 @@ defaults = --wrap
 
 `--no-wrap` disables it everywhere.
 
+### Breaking: input lines are capped at 64 MiB by default
+
+Kelora now caps the memory a single input line may use at **64 MiB** by default,
+a safety circuit breaker against runaway RAM. The motivating case is a
+newline-free stream — for example a tiny gzip/zstd payload that decompresses
+into one enormous line — which would otherwise grow the read buffer until the
+process is killed. Reading is streamed, so large *multi-line* files (compressed
+or not) are unaffected; only a single over-long line trips the cap.
+
+No real log line approaches 64 MiB (Docker and Kubernetes/CRI split lines at
+16 KB; even fat JSON with embedded stack traces tops out in the low single-digit
+MB), so normal use sees no change. When a line does exceed the cap it is
+truncated to the cap and a warning reports how many lines were clipped — the run
+still succeeds (exit 0). Under `--strict` an over-limit line is a hard error
+(exit 1) instead.
+
+If you genuinely process single lines larger than 64 MiB, raise or disable it:
+
+```bash
+kelora big.log --max-line-bytes 256MiB   # raise the cap
+kelora big.log --max-line-bytes 0        # disable (1.x behavior)
+```
+
+For untrusted input you can tighten it instead (`--max-line-bytes 1MiB`).
+Recursive ZIP bombs such as `42.zip` were never a risk — kelora rejects ZIP
+input and supports only gzip/zstd.
+
 ## Upgrade checklist
 
 1. **Migrate tracking scripts.** Replace `track_count(value)` and
@@ -373,6 +400,10 @@ defaults = --wrap
 8. **Check line-oriented pipelines.** If you piped default-format output into
    `wc -l`/`head`/`sed`, wrapping is now off by pipe default — add `--wrap` only
    if you actually want continuation lines.
+9. **Check for very long lines.** If any workflow processes single lines larger
+   than 64 MiB, raise (`--max-line-bytes 256MiB`) or disable
+   (`--max-line-bytes 0`) the new per-line cap; otherwise such lines are
+   truncated with a warning.
 
 ## See also
 

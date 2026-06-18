@@ -42,7 +42,17 @@ pub struct InputConfig {
     pub prefix_sep: String,
     /// Column separator for cols format (None = whitespace)
     pub cols_sep: Option<String>,
+    /// Per-line byte cap (circuit breaker; 0 = unlimited). Guards against a
+    /// newline-free stream growing the read buffer without bound. Default is
+    /// `DEFAULT_MAX_LINE_BYTES`. See SECURITY.md ("Input-pipeline limits").
+    pub max_line_bytes: usize,
 }
+
+/// Default per-line byte cap (64 MiB). Derived from real log-line sizes
+/// (Docker/CRI split at 16 KB; fat JSON tops out in low single-digit MB) with
+/// generous headroom, while staying small enough that even many parallel reader
+/// buffers can't exhaust RAM. Designed for ~zero false positives.
+pub const DEFAULT_MAX_LINE_BYTES: usize = 64 * 1024 * 1024;
 
 /// Output configuration
 #[derive(Debug, Clone)]
@@ -1154,6 +1164,11 @@ impl KeloraConfig {
                 extract_prefix: cli.extract_prefix.clone(),
                 prefix_sep: cli.prefix_sep.clone(),
                 cols_sep: cli.cols_sep.clone(),
+                max_line_bytes: match &cli.max_line_bytes {
+                    Some(s) => crate::byte_size::parse_byte_size(s)
+                        .map_err(|e| anyhow::anyhow!("--max-line-bytes: {e}"))?,
+                    None => DEFAULT_MAX_LINE_BYTES,
+                },
             },
             output: OutputConfig {
                 format: output_format,
@@ -1283,6 +1298,7 @@ impl Default for KeloraConfig {
                 extract_prefix: None,
                 prefix_sep: "|".to_string(),
                 cols_sep: None,
+                max_line_bytes: DEFAULT_MAX_LINE_BYTES,
             },
             output: OutputConfig {
                 format: OutputFormat::Default,

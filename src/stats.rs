@@ -73,6 +73,12 @@ pub struct ProcessingStats {
     pub decode_warnings: usize,
     /// First line where a UTF-8 replacement occurred, captured for diagnostics.
     pub first_decode_warning_sample: Option<String>,
+    /// Number of input lines that exceeded `--max-line-bytes` and were truncated
+    /// to the cap (resilient default). A recovery, not an error: exit code stays
+    /// 0. See SECURITY.md ("Input-pipeline limits").
+    pub truncated_lines: usize,
+    /// The byte cap in effect when a truncation occurred, for the diagnostic.
+    pub line_byte_cap: usize,
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -95,6 +101,10 @@ const MAX_PARSE_ERROR_SAMPLE_LEN: usize = 1024;
 // because lossy decoding happens on reader/worker threads, like file failures.
 static DECODE_WARNINGS: AtomicUsize = AtomicUsize::new(0);
 static FIRST_DECODE_WARNING_SAMPLE: OnceLock<Mutex<Option<String>>> = OnceLock::new();
+// Lines truncated by the --max-line-bytes circuit breaker. Atomic because
+// truncation happens on reader threads, like decode warnings and file failures.
+static TRUNCATED_LINES: AtomicUsize = AtomicUsize::new(0);
+static LINE_BYTE_CAP: AtomicUsize = AtomicUsize::new(0);
 
 pub fn set_collect_stats(enabled: bool) {
     COLLECT_STATS.store(enabled, Ordering::Relaxed);
@@ -196,6 +206,29 @@ pub fn decode_warning_count() -> usize {
 /// First decode-warning sample line (process-wide), for the parallel path.
 pub fn decode_warning_sample() -> Option<String> {
     first_decode_warning_sample()
+}
+
+/// Record that an input line exceeded `--max-line-bytes` and was truncated to
+/// `cap`. Counts on any reader thread; the cap is stored so the diagnostic can
+/// name it. Like a decode warning, this is a recovery and never affects the exit
+/// code (deliberately excluded from `has_errors()`).
+pub fn stats_record_line_truncation(cap: usize) {
+    if !stats_enabled() {
+        return;
+    }
+    TRUNCATED_LINES.fetch_add(1, Ordering::Relaxed);
+    LINE_BYTE_CAP.store(cap, Ordering::Relaxed);
+}
+
+/// Number of lines truncated by the circuit breaker (process-wide). Exposed so
+/// the parallel tracker can merge it into its final stats.
+pub fn truncated_line_count() -> usize {
+    TRUNCATED_LINES.load(Ordering::Relaxed)
+}
+
+/// The byte cap that was in effect when truncation occurred (process-wide).
+pub fn truncation_byte_cap() -> usize {
+    LINE_BYTE_CAP.load(Ordering::Relaxed)
 }
 
 // Thread-local storage for statistics (following track_freq pattern)
@@ -437,6 +470,8 @@ pub fn get_thread_stats() -> ProcessingStats {
         s.first_parse_error_sample = first_parse_error_sample();
         s.decode_warnings = DECODE_WARNINGS.load(Ordering::Relaxed);
         s.first_decode_warning_sample = first_decode_warning_sample();
+        s.truncated_lines = TRUNCATED_LINES.load(Ordering::Relaxed);
+        s.line_byte_cap = LINE_BYTE_CAP.load(Ordering::Relaxed);
         s
     })
 }
@@ -1242,6 +1277,25 @@ impl ProcessingStats {
             message.push_str(&format!(" (first: {})", sample));
         }
         Some(message)
+    }
+
+    /// Warning for lines clipped by the `--max-line-bytes` circuit breaker.
+    /// Returns `None` when nothing was truncated.
+    pub fn format_line_truncation_warning(&self) -> Option<String> {
+        if self.truncated_lines == 0 {
+            return None;
+        }
+        Some(format!(
+            "{} line{} exceeded --max-line-bytes ({}) and {} truncated",
+            self.truncated_lines,
+            if self.truncated_lines == 1 { "" } else { "s" },
+            crate::byte_size::format_byte_size(self.line_byte_cap as u64),
+            if self.truncated_lines == 1 {
+                "was"
+            } else {
+                "were"
+            }
+        ))
     }
 
     /// Format a concise error summary for default output (when errors occur)

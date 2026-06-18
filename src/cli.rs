@@ -412,6 +412,15 @@ pub struct Cli {
     )]
     pub strict_utf8: bool,
 
+    /// Cap the bytes a single line may use (circuit breaker; default 64MiB, 0 disables).
+    #[arg(
+        long = "max-line-bytes",
+        value_name = "SIZE",
+        help_heading = "Input Options",
+        help = "Cap the number of bytes a single input line may consume in memory (default 64MiB).\n\nThis is a safety circuit breaker against runaway memory: a newline-free stream — including a tiny gzip/zstd payload that decompresses into one enormous line — would otherwise grow without bound and exhaust RAM. No real log line approaches the default, so it normally never triggers.\n\nWhen a line exceeds the cap it is truncated to the cap and a warning (\u{1f538}) reports how many lines were clipped; the run still succeeds (exit 0). With --strict an over-limit line is a hard error (exit 1) instead. Accepts a byte count or an IEC/SI suffix (64MiB, 1GiB, 1048576); 0/off/unlimited disables the cap.\n\nReading is streamed, so a large multi-line compressed file is unaffected — only a single over-long line trips this."
+    )]
+    pub max_line_bytes: Option<String>,
+
     /// Show detailed error information (use multiple times for more verbosity: -v, -vv, -vvv)
     #[arg(short = 'v', long = "verbose", action = clap::ArgAction::Count, help_heading = "Error Handling")]
     pub verbose: u8,
