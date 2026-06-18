@@ -1174,9 +1174,17 @@ fn handle_pipeline_success(
         .as_ref()
         .is_some_and(|s| !config.processing.quiet_events && s.events_output > 0);
 
-    // Print metrics if enabled (only if not terminated)
+    // Print metrics if enabled.
+    //
+    // The metrics table is an aggregation produced at end of input. On an
+    // unbounded stream (`tail -f … -m`) that end only ever arrives via Ctrl-C,
+    // so it must flush on signal termination — otherwise accumulated track_*
+    // data is dropped and the run yields nothing. This mirrors how `--stats`
+    // already flushes on signal (handle_signal_termination). Only --silent
+    // (terminal_allowed) suppresses it; a second Ctrl-C still bails immediately
+    // via the signal handler before reaching this point.
     if let Some(ref metrics_format) = config.output.metrics {
-        if terminal_allowed && !SHOULD_TERMINATE.load(Ordering::Relaxed) {
+        if terminal_allowed {
             use crate::cli::MetricsFormat;
             // Route to stdout in data-only mode, stderr when showing with events
             let use_stdout = !config.output.metrics_with_events;
@@ -1252,8 +1260,11 @@ fn handle_pipeline_success(
         }
     }
 
+    // Drain templates are an end-of-input aggregation like metrics; flush them
+    // on signal termination too so `tail -f … --drain` yields its summary on
+    // Ctrl-C rather than nothing.
     if let Some(drain_format) = config.output.drain.clone() {
-        if terminal_allowed && !SHOULD_TERMINATE.load(Ordering::Relaxed) {
+        if terminal_allowed {
             let templates = crate::drain::drain_templates();
             let output = match drain_format {
                 crate::cli::DrainFormat::Table
@@ -1367,8 +1378,12 @@ fn handle_pipeline_success(
         stderr.writeln(&hint).unwrap_or(());
     }
 
-    // Print field discovery results if requested
-    if !SHOULD_TERMINATE.load(Ordering::Relaxed) {
+    // Print field discovery results if requested. Like the metrics/drain
+    // aggregations above, this is a data-only summary produced at end of input,
+    // so flush it on signal termination too: `tail -f … --discover` then yields
+    // its table on Ctrl-C instead of nothing. The block also scopes the summary
+    // locals.
+    {
         let format_summary =
             build_discover_format_summary(&config.input.format, pipeline_result.stats.as_ref());
         let timestamp_summary = build_discover_timestamp_summary(pipeline_result.stats.as_ref());
