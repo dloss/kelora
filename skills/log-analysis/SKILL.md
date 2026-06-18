@@ -11,12 +11,16 @@ Kelora is a streaming log processor with embedded Rhai scripting. It auto-detect
 
 ## Getting Help
 
-Run these for detailed reference (prefer over asking the user):
-- `kelora --help-examples` - Common patterns
+Kelora ships its own reference on these dedicated screens — consult them before asking the user:
+- `kelora -h` - One-screen quick reference (cheat sheet)
+- `kelora --help [KEYWORD]` - Full CLI reference (searchable, e.g. `--help since`)
+- `kelora --help-examples` - Practical end-to-end patterns
 - `kelora --help-functions [KEYWORD]` - All 150+ functions (KEYWORD filters, e.g. `--help-functions ip`)
-- `kelora --help [KEYWORD]` - Full CLI reference (searchable)
-- `kelora --help-rhai` - Scripting guide
+- `kelora --help-rhai` - Rhai scripting guide and stage semantics
 - `kelora --help-formats` - Input/output format reference
+- `kelora --help-time` - Timestamp formats (`--since`/`--until`, parsing)
+- `kelora --help-multiline` - Multiline event strategies (`-M`)
+- `kelora --help-regex` - Regex parsing guide (`-f regex:...`)
 
 ## Start Here: Explore Unknown Logs
 
