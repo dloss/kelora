@@ -4,7 +4,7 @@
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
 
-[Install Kelora](#installation){ .md-button }
+[Install Kelora](installation.md){ .md-button }
 
 !!! note "Already using Kelora?"
     See [What's New in 2.0](whats-new-2.0.md) for the highlights and a migration guide.
@@ -58,54 +58,6 @@ Reach for Kelora when you'd otherwise be writing a throwaway Python script. It's
 - **Plays well with your existing tools.** Pipe `ripgrep` or `jq` upstream to pre-filter; pipe Kelora's JSON or CSV output into whatever comes next.
 
 Kelora trades raw [speed](concepts/performance-comparisons.md) for programmability. Simple filters and format conversions handle multi-GB files comfortably; heavy Rhai scripting tops out in the low hundreds of thousands of lines before you'll want to pre-filter. Kelora [plays well](how-to/integrate-external-tools.md) with `ripgrep`, `jq`, `qsv`, and other Unix tools.
-
-<a id="installation"></a>
-## Installation
-
-=== "macOS"
-
-    ```bash
-    brew tap dloss/kelora && brew install kelora
-    ```
-
-    Or download a signed binary: [Apple Silicon](https://github.com/dloss/kelora/releases/latest/download/kelora-aarch64-apple-darwin.tar.gz) | [Intel](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-apple-darwin.tar.gz)
-
-=== "Linux"
-
-    **Binary:**
-    ```bash
-    curl -LO https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-unknown-linux-musl.tar.gz
-    tar xzf kelora-x86_64-unknown-linux-musl.tar.gz
-    sudo mv kelora /usr/local/bin/
-    ```
-
-    **Debian/Ubuntu:** download [.deb](https://github.com/dloss/kelora/releases/latest), then:
-    ```bash
-    sudo dpkg -i kelora_*_amd64.deb
-    ```
-
-    **Fedora/RHEL:** download [.rpm](https://github.com/dloss/kelora/releases/latest), then:
-    ```bash
-    sudo dnf install kelora-*.x86_64.rpm
-    ```
-
-    **ARM:** see [releases](https://github.com/dloss/kelora/releases) for aarch64 binaries.
-
-=== "Windows"
-
-    Download [kelora-x86_64-pc-windows-msvc.zip](https://github.com/dloss/kelora/releases/latest/download/kelora-x86_64-pc-windows-msvc.zip), extract, and add to PATH.
-
-=== "Cargo"
-
-    ```bash
-    cargo install kelora
-    ```
-
-=== "Other"
-
-    See [all releases](https://github.com/dloss/kelora/releases) for ARM Linux, FreeBSD, OpenBSD, and more.
-
----
 
 ## More examples
 
@@ -191,7 +143,9 @@ See **[Power-User Techniques](how-to/power-user-techniques.md)** for real-world 
 
 ## Get Started
 
-**[→ Quickstart (5 minutes)](quickstart.md)** - Install and run your first commands
+**[→ Installation](installation.md)** - macOS, Linux, Windows, and Cargo
+
+**[→ Quickstart (5 minutes)](quickstart.md)** - Run your first commands
 
 **[→ Tutorial: Basics (30 minutes)](tutorials/basics.md)** - Learn input formats, filtering, and output
 

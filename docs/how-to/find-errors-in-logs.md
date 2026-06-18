@@ -8,7 +8,7 @@ Quickly focus on error-level events, capture the surrounding context, and hand o
 - Developers preparing error samples for debugging.
 
 ## Before You Start
-- Kelora installed (see [Installation](../quickstart.md#installation) for download options).
+- Kelora installed (see [Installation](../installation.md) for download options).
 - Access to the relevant log files or streams. Examples below use `examples/simple_json.jsonl`; swap in your own paths.
 - Familiarity with the log format you are reading (`-j` for JSON, `-f logfmt` for logfmt, `-f combined` for web access logs, etc.).
 

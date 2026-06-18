@@ -10,7 +10,7 @@ brew tap dloss/kelora
 brew install kelora
 ```
 
-**Other platforms:** [Download pre-built binaries](index.md#installation) or install via Cargo:
+**Other platforms:** see [Installation](installation.md) for pre-built binaries (Linux, Windows, ARM, …), or install via Cargo:
 
 ```bash
 cargo install kelora
