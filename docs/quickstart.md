@@ -2,20 +2,7 @@
 
 Get Kelora running in 5 minutes with three commands.
 
-## Installation
-
-**macOS (Homebrew):**
-```bash
-brew tap dloss/kelora
-brew install kelora
-```
-
-**Other platforms:** see [Installation](installation.md) for pre-built binaries (Linux, Windows, ARM, …), or install via Cargo:
-
-```bash
-cargo install kelora
-```
-
+Don't have Kelora yet? See [Installation](installation.md) for Homebrew, pre-built binaries (Linux, macOS, Windows, ARM, …), and Cargo.
 
 ## Three Essential Commands
 
