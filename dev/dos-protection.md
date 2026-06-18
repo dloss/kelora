@@ -1,94 +1,187 @@
-# Hardened and Sandbox Modes for Rhai Execution
+# Resource Limits & Capability Gating for kelora
 
-## Baseline (unchanged)
-- Default: no resource limits on Rhai execution; filesystem writes are blocked unless `--allow-rhai-io`. Filesystem reads remain allowed unless explicitly sandboxed.
-- Goal: keep parity with jq/awk/Python so normal/local usage is not surprised by limits.
+Status: design / evaluation. Defaults unchanged until implemented.
 
-## Objectives
-- Only two primary switches: resilience (`--hardened`) and capability reduction (`--sandbox`).
-- Everything else is opt-in; no surprise limits for trusted workflows.
+## Framing: where the real risk is
 
-## Modes
-### `--hardened` (DoS resilience preset)
-- Purpose: protect against runaway CPU/time/memory/depth in Rhai code paths.
-- Effect: applies a preset of resource budgets to every Rhai engine (filters, `--exec`, `--begin`/`--end`, span hooks, per-worker in `--parallel`).
-- Preset values (tunable constants in config layer):
-  - Max operations: 100_000_000
-  - Wall-clock: 60s per engine
-  - Max string: 32 MiB
-  - Max array/map: 200_000 elements
-  - Max call depth: 128
-- All budgets remain configurable individually via config file (see Configuration).
-- Diagnostics: terminate with exit code 1 and name the tripped guard ("Rhai limit hit: exceeded max operations (100,000,000)"); honor emoji/no-emoji.
-- `--script-unlimited` still disables all budgets even if `--hardened` is present (mutual exclusion with a warning).
+kelora is a local log-analysis CLI that aims for parity with `jq`/`awk`/`python`.
+For the dominant use case — you running your own scripts over your own logs —
+"DoS protection" is protection against your own typos, which `Ctrl-C` already
+handles (the engine cooperatively checks `SHOULD_TERMINATE` in `on_progress`).
 
-### `--sandbox` (capability restriction)
-- Purpose: reduce data exfiltration/side effects from Rhai scripts.
-- Effect:
-  - Deny filesystem reads and writes from Rhai by default.
-  - `--allow-rhai-io` re-allows both reads and writes explicitly (still blocked by OS perms).
-  - Environment access remains as currently implemented; if we add env restrictions later, gate them here.
-- Independent of `--hardened`; users can combine both.
+Resource limits only earn their keep in two situations:
 
-## Configuration Surface
+1. **Untrusted input** — kelora ingests arbitrary/attacker-controlled log files.
+2. **Unattended execution** — CI/cron, or a service that accepts user-supplied
+   Rhai, where a runaway job must fail instead of hang or OOM the host.
 
-### CLI Flags
-- **Primary modes:**
-  - `--hardened` / `script.hardened = true` - Enable DoS protection preset
-  - `--sandbox` / `script.sandbox = true` - Block filesystem access
-  - `--script-timeout <duration>` / `script.timeout = "60s"` - Override wall-clock timeout (common need)
-  - `--script-unlimited` / `script.unlimited = true` - Disable all budgets (overrides `--hardened`)
+The realistic DoS surface for a log tool is **(1), the input pipeline** — not the
+Rhai script. An earlier draft of this spec only constrained the Rhai *script*
+(`max_string`/`max_array`/`max_map`). Those limits do nothing for the input
+pipeline: an oversized line is allocated in the reader **before any Rhai code
+runs**, so by the time a filter sees `e.message` the giant `String` is already
+resident. This spec leads with the input side.
 
-### Config File (`[script]` section)
-Advanced users can tune individual limits in `.kelora.ini`:
-```ini
-[script]
-hardened = true
-sandbox = false
-timeout = "120s"
+## Threat inventory (current behavior)
 
-# Individual limit overrides (power users)
-max_ops = 100000000
-max_str = "32MiB"
-max_array = 200000
-max_map = 200000
-max_depth = 128
+| Vector | Current state | Verdict |
+|---|---|---|
+| **42.zip** (recursive ZIP bomb) | ZIP rejected outright (`decompression.rs`) | Non-issue |
+| **gzip bomb** | Streamed; DEFLATE capped at 1032:1 per member | Low risk (see below) |
+| **zstd bomb** | Streamed, but zstd ratios are effectively unbounded | Bounded by streaming + line cap |
+| **Huge line** (no `\n`) | `read_until(b'\n', …)` in `read_line_lossy`, **no cap** | **Real OOM — unmitigated** |
+| **Multiline accumulation** | Logical event accumulates physical lines, no ceiling | Same class as huge line |
+| **Rhai FS writes** | Gated behind `--allow-fs-writes` (default off) | OK |
+| **Rhai FS reads** (`read_file`, `read_lines`) | **Ungated** | Capability gap |
+| **Rhai env** (`get_env`) | **Ungated** | Capability gap |
+| **Runaway Rhai** (CPU/depth) | Only `Ctrl-C` | Opt-in limits, low priority |
+
+### Why streaming defuses most "bomb" framing
+
+Decompression (`decompression.rs`) and line reading (`readers.rs`) are both
+**streaming**: a `.gz`/`.zst` that expands to many GB across many lines is
+processed line-by-line in roughly constant memory — that is just "a big log,"
+and capping total size would break parity with `zcat | awk`. So:
+
+- **Total decompressed size** → no cap needed; streaming handles it.
+- **Compression ratio** → not a *memory* issue; at most CPU/work amplification.
+- **Per-line bytes** → the one buffer that grows without bound (no `\n`), and the
+  only number that actually pins RAM.
+
+The dangerous combination is **bomb + no newline**: a few-KB file that
+decompresses to one enormous newline-free "line." Streaming does not help,
+because `read_until` grows a single buffer until `\n` (never) or OOM. The
+per-line cap closes this case for every format at once.
+
+## Two tiers (do not conflate)
+
+|  | **Circuit breaker** | **Policy limit** |
+|---|---|---|
+| Purpose | turn OOM/crash into a clean error | restrict untrusted input/scripts |
+| Default | **on** | **off** (opt-in) |
+| Value | very high — ~zero false positives | low — tuned to context |
+| Example | `--max-line-bytes 64MiB` | `--max-line-bytes 1MiB`, timeout, max-ops |
+
+Only the per-line circuit breaker has a defensible "on by default" value.
+Everything else defaults **off**: a legitimate batch job over a huge file *does*
+run for minutes and *does* execute billions of ops, so any default timeout or
+op-budget is a parity-breaking footgun. Those knobs ship as documented
+*recommendations* for untrusted contexts, not as defaults.
+
+## Defaults, derived (not arbitrary)
+
+### `--max-line-bytes` (circuit breaker, on by default: 64 MiB)
+
+Anchor to real data. Largest *legitimate* single lines observed in practice:
+
+| Source | Typical line |
+|---|---|
+| syslog / app logs | 100 B – 2 KB (RFC 5424 historically 480–2048 B) |
+| Docker json-file / K8s CRI | 16 KB (they *split* longer lines) |
+| JSON logs w/ embedded stack trace or base64 blob | 10 KB – low single-digit MB |
+
+Derivation:
+
+> default = (largest plausible legit line ≈ a few MB) × generous headroom,
+> bounded so `N_workers × cap` stays ≈ 1 GiB.
+
+→ **64 MiB**: ~20–1000× above any real line (≈ zero false positives), and even at
+16 parallel workers the worst case is ~1 GiB transient — and only the *offending*
+stream approaches the cap; normal lines stay tiny.
+
+- Untrusted-input policy value: **1 MiB**.
+- Optional RAM-relative form: `max(64 MiB, RAM/64)` for tiny-RAM hosts. Prefer a
+  fixed, memorable value for reproducibility (tests/CI).
+- On overflow: error in `--strict`; otherwise truncate the line and warn (🔸).
+- Apply the same ceiling to multiline accumulation (max bytes per logical event).
+
+### Compression ratio guard (off; likely skip)
+
+Mostly unnecessary given streaming + the line cap:
+
+- **gzip/DEFLATE** is mathematically capped at **1032:1** per member — a 1 KB `.gz`
+  expands to ≤ ~1 MB, so a *tiny* gzip bomb is not possible.
+- **zstd** is the only real outlier (RLE + large windows → very high ratios), so a
+  guard, if added, should be **zstd-scoped**.
+
+If implemented anyway: trip only after a meaningful absolute output (e.g. >100 MB)
+**and** ratio > 1000:1 — this clears even highly repetitive real logs while
+catching bombs. Recommend deferring until there is a concrete need.
+
+### Rhai script limits (off; opt-in, low priority)
+
+These protect the *script* surface (untrusted scripts / unattended runs), not the
+input pipeline. Default off to preserve batch-job parity. Recommended values for
+untrusted-script contexts only:
+
+| Knob | Recommended (untrusted) | Rhai API |
+|---|---|---|
+| Wall-clock timeout | 30–60 s (anchor: "interactive query") | `on_progress` callback |
+| Max operations | 10⁸–10⁹ | `set_max_operations` |
+| Max call depth | 128 | `set_max_call_levels` |
+| Max string / array / map | as needed | `set_max_string_size` / `set_max_array_size` / `set_max_map_size` |
+
+Note: Rhai has no single total-memory cap; strict total caps need OS controls
+(`ulimit`, cgroups).
+
+### Capability gating (close the read/env gap)
+
+`read_file`, `read_lines`, and `get_env` are currently ungated while
+`--allow-fs-writes` already gates writes. Rather than introduce a second
+capability axis (`--sandbox` + `--allow-rhai-io`) and force users to reason about
+three overlapping flags, **generalize the existing gate**: extend
+`--allow-fs-writes` to also cover Rhai reads/env (or rename to a single
+`--allow-rhai-io` covering read+write+env). Default remains: writes blocked,
+reads/env blocked — opt in explicitly. OS permissions still apply on top.
+
+## CLI surface
+
+```
+--max-line-bytes <size>     Per-line buffer cap (default 64MiB; circuit breaker)
+--allow-rhai-io             Allow Rhai filesystem read/write + env (default off)
+
+# Opt-in, untrusted-context knobs (default off):
+--script-timeout <dur>      Wall-clock per Rhai engine
+--max-ops <n>               Rhai operation budget
 ```
 
-### Precedence & Help
-- Precedence: CLI > project config > user config; `--script-unlimited` overrides others.
-- Help/Docs: show current limits and whether sandbox is active in `--help-rhai` intro.
+Config (`.kelora.ini`) mirrors these under `[script]` / `[input]`; precedence
+follows the project default: CLI > project config > user config > defaults.
 
-## Behavior
-- Hardened budgets are applied when constructing each `RhaiEngine` and cloned into worker engines.
-- Sandbox applies at IO gating points: deny FS reads/writes unless `--allow-rhai-io`; other side-effect gates unchanged.
-- When a limit is exceeded: fail fast, emit guard-specific diagnostic, exit code 1; avoid partial output flushing beyond what already streamed.
+## Behavior on limit hit
 
-## Implementation Notes
+- Fail fast with a guard-specific diagnostic naming the tripped limit
+  (e.g. "Line exceeds --max-line-bytes (64 MiB)"); honor `--no-emoji`.
+- Exit code 1 for hard errors; truncate-and-warn path stays exit 0.
+- Avoid flushing partial output beyond what already streamed.
 
-### Rhai Engine Limits
-All proposed limits are directly supported by Rhai `Engine` API:
-- `set_max_operations(u64)` - Operation budget
-- `on_progress(callback)` - Wall-clock timeout via callback
-- `set_max_string_size(usize)` - String size limit
-- `set_max_array_size(usize)` - Array element limit
-- `set_max_map_size(usize)` - Map element limit
-- `set_max_call_levels(usize)` - Call stack depth
+## Implementation notes
 
-**Note on memory limits:** Rhai does not provide a single method to limit total memory allocation across all data structures. Memory protection is achieved through the combination of individual limits (strings, arrays, maps). For strict total memory caps, use OS-level controls (`ulimit`, cgroups).
+- **Per-line cap**: bound `read_until` in `read_line_lossy` (`readers.rs`) via a
+  `Read::take`-style limit or a manual capped loop. Single chokepoint → covers
+  plain, gzip, and zstd inputs uniformly, before any value reaches Rhai.
+- **Script limits**: applied when constructing each `RhaiEngine` and cloned into
+  worker engines (`engine/mod.rs`); reuse the existing `on_progress` hook for the
+  timeout.
+- **Capability gate**: thread the existing `RuntimeConfig`/`allow_fs_writes`
+  plumbing (`rhai_functions/file_ops.rs`, `pipeline/`) to also cover `conf.rs`
+  reads and `environment.rs`.
 
 ## Testing
-- **Hardened mode:**
-  - Infinite loop under `--exec --hardened` hits TooManyOperations quickly.
-  - Push loop hits DataTooLarge under default hardened mem cap.
-  - Recursion hits max call depth.
-  - Normal examples still pass under default (non-hardened) mode.
-  - Parallel smoke: per-worker budget applies.
-  - `--script-unlimited` allows above to run (mark slow/ignored in CI).
-- **Sandbox mode:**
-  - Rhai FS read/write fails under `--sandbox` without `--allow-rhai-io`.
-  - FS operations succeed when `--allow-rhai-io` is combined with `--sandbox`.
 
-## Migration & Rollout
-- Defaults unchanged; features are opt-in.
-- Document in CHANGELOG and `--help-rhai`; clarify that `--hardened` targets runaway scripts and `--sandbox` targets IO isolation.
+- Newline-free input (plain and as a gzip/zstd payload) hits `--max-line-bytes`
+  with a clean error / truncation, not OOM.
+- Large *multi-line* `.gz`/`.zst` streams in bounded memory (no false trip).
+- Multiline accumulation respects the per-event ceiling.
+- Normal examples pass unchanged with defaults (only the 64 MiB breaker active).
+- Untrusted-context: `--script-timeout` / `--max-ops` trip on infinite loops;
+  off by default lets long batch jobs run.
+- `--allow-rhai-io` toggles read/write/env access; default denies.
+
+## Rollout
+
+- Defaults unchanged except the 64 MiB per-line circuit breaker (designed for
+  ~zero false positives).
+- Document in CHANGELOG and `--help-rhai`; clarify the two tiers (always-on
+  breaker vs opt-in untrusted-context limits) and that 42.zip/ZIP is already
+  rejected.
