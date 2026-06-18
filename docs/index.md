@@ -6,6 +6,9 @@ Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com
 
 [Install Kelora](#installation){ .md-button }
 
+!!! note "Already using Kelora?"
+    See [What's New in 2.0](whats-new-2.0.md) for the highlights and a migration guide.
+
 ## A quick tour
 
 **You don't even know what's in the file yet. Start there** — no flags, no regex. Kelora decompresses the gzip, recognizes the Apache combined format, and profiles every field with real sample values:
