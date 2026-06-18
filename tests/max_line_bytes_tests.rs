@@ -40,9 +40,13 @@ fn oversized_line_is_truncated_and_warned_by_default() {
     input.push(b'\n');
     input.extend_from_slice(b"after\n");
 
-    let (stdout, stderr, exit_code) = run_kelora_bytes(&["-f", "line", "--max-line-bytes", "1KiB"], &input);
+    let (stdout, stderr, exit_code) =
+        run_kelora_bytes(&["-f", "line", "--max-line-bytes", "1KiB"], &input);
 
-    assert_eq!(exit_code, 0, "truncation is a recovery, exit stays 0: {stderr}");
+    assert_eq!(
+        exit_code, 0,
+        "truncation is a recovery, exit stays 0: {stderr}"
+    );
     // The first emitted line carries at most the cap (1024) worth of payload.
     let first = String::from_utf8_lossy(&stdout)
         .lines()
@@ -50,7 +54,10 @@ fn oversized_line_is_truncated_and_warned_by_default() {
         .unwrap_or_default()
         .to_string();
     let x_count = first.bytes().filter(|&b| b == b'x').count();
-    assert_eq!(x_count, 1024, "payload must be clipped to the cap: got {x_count}");
+    assert_eq!(
+        x_count, 1024,
+        "payload must be clipped to the cap: got {x_count}"
+    );
     // The following line must survive — the stream resumes after the discarded tail.
     assert!(
         String::from_utf8_lossy(&stdout).contains("after"),
@@ -67,10 +74,15 @@ fn oversized_line_is_fatal_under_strict() {
     let mut input = vec![b'x'; 100_000];
     input.push(b'\n');
 
-    let (_stdout, stderr, exit_code) =
-        run_kelora_bytes(&["-f", "line", "--max-line-bytes", "1KiB", "--strict"], &input);
+    let (_stdout, stderr, exit_code) = run_kelora_bytes(
+        &["-f", "line", "--max-line-bytes", "1KiB", "--strict"],
+        &input,
+    );
 
-    assert_eq!(exit_code, 1, "over-limit line aborts under --strict: {stderr}");
+    assert_eq!(
+        exit_code, 1,
+        "over-limit line aborts under --strict: {stderr}"
+    );
     assert!(
         stderr.contains("max-line-bytes"),
         "error should name the limit: {stderr}"
