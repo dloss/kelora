@@ -32,8 +32,8 @@ resident. This spec leads with the input side.
 | **Huge line** (no `\n`) | `read_until(b'\n', …)` in `read_line_lossy`, **no cap** | **Real OOM — unmitigated** |
 | **Multiline accumulation** | Logical event accumulates physical lines, no ceiling | Same class as huge line |
 | **Rhai FS writes** | Gated behind `--allow-fs-writes` (default off) | OK |
-| **Rhai FS reads** (`read_file`, `read_lines`) | **Ungated** | Capability gap |
-| **Rhai env** (`get_env`) | **Ungated** | Capability gap |
+| **Rhai FS reads** (`read_file`, `read_lines`) | Allowed (read-only default) | OK — parity with jq/awk/python |
+| **Rhai env** (`get_env`) | Allowed (read-only default) | OK — parity with jq/awk/python |
 | **Runaway Rhai** (CPU/depth) | Only `Ctrl-C` | Opt-in limits, low priority |
 
 ### Why streaming defuses most "bomb" framing
@@ -126,15 +126,24 @@ untrusted-script deployment:
 Note: Rhai has no single total-memory cap; strict total caps need OS controls
 (`ulimit`, cgroups).
 
-### Capability gating (close the read/env gap)
+### Capability gating (read-only default)
 
-`read_file`, `read_lines`, and `get_env` are currently ungated while
-`--allow-fs-writes` already gates writes. Rather than introduce a second
-capability axis (`--sandbox` + `--allow-rhai-io`) and force users to reason about
-three overlapping flags, **generalize the existing gate**: extend
-`--allow-fs-writes` to also cover Rhai reads/env (or rename to a single
-`--allow-rhai-io` covering read+write+env). Default remains: writes blocked,
-reads/env blocked — opt in explicitly. OS permissions still apply on top.
+The default is **read-only IO**: Rhai may read files and env (`read_file`,
+`read_lines`, `get_env`) but not write — exactly like `jq`/`awk`/`python`, and
+exactly what kelora does today. Reads/env are *not* a gap to close; gating them
+would break parity and surprise normal workflows. Only **writes** are a real
+side effect, and they are already gated behind the existing `--allow-fs-writes`
+(default off). OS permissions still apply on top.
+
+So the capability axis is a single existing boolean — no new flag:
+
+- Default: read-only (reads + env on, writes off).
+- `--allow-fs-writes`: escalate to read-write.
+
+Dropping *below* read-only (block reads/env for an untrusted-script lockdown) is a
+separate, rarely-needed concern. It is **deferred**, not part of the core surface;
+if it ever ships it should be one restrictive flag (e.g. `--no-rhai-reads`), not a
+`--sandbox` bundle.
 
 ## CLI surface (tight & orthogonal)
 
@@ -143,24 +152,29 @@ are different knobs on the same axis.
 
 ```
 --max-line-bytes <size>   Input-pipeline memory safety (circuit breaker, default 64MiB)
---allow-rhai-io           Capability gate: Rhai filesystem read/write + env (default off)
+--allow-fs-writes         Capability: escalate read-only IO to read-write (default off)
 --script-timeout <dur>    Script runtime bound (default off)
 ```
 
-| Axis | Flag | Why it's the whole axis |
-|---|---|---|
-| Input memory | `--max-line-bytes` | The only buffer that pins RAM is the per-line read |
-| Capability | `--allow-rhai-io` | A single boolean: side effects allowed or not |
-| Script runtime | `--script-timeout` | Wall-clock subsumes "runaway script" generally |
+| Axis | Flag | Default | Why it's the whole axis |
+|---|---|---|---|
+| Input memory | `--max-line-bytes` | 64 MiB | The only buffer that pins RAM is the per-line read |
+| Capability | `--allow-fs-writes` | read-only | Reads/env are the parity default; writes are the one escalation |
+| Script runtime | `--script-timeout` | off | Wall-clock subsumes "runaway script" generally |
+
+The capability axis is the *existing* flag — no new flag, no rename, no
+deprecation. Read-only is the floor; `--allow-fs-writes` is the only escalation.
 
 Deliberately **not** flags:
 
 - **`--max-ops`** — a second knob on the *script runtime* axis. Wall-clock already
   covers runaway loops; an op-budget only adds determinism. Expose it (if at all)
   as a config-only power knob under `[script]`, never as a CLI flag.
-- **`--allow-fs-writes`** — subsumed by `--allow-rhai-io` (reads + writes + env are
-  one capability axis). Keep the old name as a deprecated alias for back-compat
-  (it maps to the same gate); do not grow a second capability flag.
+- **`--allow-rhai-io`** — would wrongly imply it gates reads too. Reads/env are on
+  by default, so the only thing to toggle is writes; `--allow-fs-writes` names
+  that honestly.
+- **`--no-rhai-reads`** (drop below read-only) — deferred; rare untrusted-script
+  lockdown only. If shipped, one restrictive flag, not a `--sandbox` bundle.
 - **`--sandbox` / `--hardened` / `--script-unlimited`** — bundles and presets, not
   axes. With limits off by default, "unlimited" is the default and needs no flag;
   a preset can be added later if users ask, but it must not become a fourth axis.
@@ -184,9 +198,10 @@ defaults.
 - **Script limits**: applied when constructing each `RhaiEngine` and cloned into
   worker engines (`engine/mod.rs`); reuse the existing `on_progress` hook for the
   timeout.
-- **Capability gate**: thread the existing `RuntimeConfig`/`allow_fs_writes`
-  plumbing (`rhai_functions/file_ops.rs`, `pipeline/`) to also cover `conf.rs`
-  reads and `environment.rs`.
+- **Capability gate**: nothing to add for the default — reads (`conf.rs`) and env
+  (`environment.rs`) stay on; writes stay gated by the existing
+  `RuntimeConfig`/`allow_fs_writes` plumbing (`rhai_functions/file_ops.rs`,
+  `pipeline/`). A future read-lockdown would reuse the same plumbing.
 
 ## Testing
 
@@ -195,9 +210,10 @@ defaults.
 - Large *multi-line* `.gz`/`.zst` streams in bounded memory (no false trip).
 - Multiline accumulation respects the per-event ceiling.
 - Normal examples pass unchanged with defaults (only the 64 MiB breaker active).
-- Untrusted-context: `--script-timeout` / `--max-ops` trip on infinite loops;
-  off by default lets long batch jobs run.
-- `--allow-rhai-io` toggles read/write/env access; default denies.
+- Untrusted-context: `--script-timeout` trips on infinite loops; off by default
+  lets long batch jobs run.
+- Default allows Rhai reads/env and denies writes; `--allow-fs-writes` enables
+  writes.
 
 ## Rollout
 
