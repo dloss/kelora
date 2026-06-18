@@ -1,10 +1,12 @@
 # Baseline Novelty Detection — Design Note (logjuicer-inspired)
 
-Status: **proposal / not started.** Captures whether and how to borrow
+Status: **proposal / not started — concept UX-validated by simulation.**
+Captures whether and how to borrow
 [logjuicer](https://github.com/logjuicer/logjuicer)'s core idea — *highlight
 the lines in a target log that don't appear in a known-good baseline* — without
 importing its machinery wholesale. Written after stress-testing the idea
-against the real `src/drain.rs` implementation.
+against the real `src/drain.rs` and simulating the end-to-end UX with the
+existing `drain_template()` Rhai function (see "Template ID stability").
 
 ## What logjuicer does (and what we'd actually borrow)
 
@@ -28,50 +30,71 @@ set membership**, deliberately **skipping** the cosine-similarity/hashing-trick
 ML core (fuzzy, non-reproducible, new dependency) and the HTML report (out of
 scope — Kelora emits events and pipes to other tools).
 
-## Template ID stability — TESTED, and it's good news
+## Template ID stability — TESTED end-to-end on realistic logs
 
-An earlier draft of this note claimed Drain template IDs were *unstable* across
-corpora (that the same line could yield different templates depending on what
-else was ingested), which would have killed the simple "diff two ID lists"
-design. **That claim was tested against the real binary and is false** for
-kelora's configuration. Findings (debug build, default drain config):
+This section has flip-flopped; here is the empirically-settled truth. Two
+claims were tested against the real binary, simulating `--novel-vs` with the
+existing `drain_template()` Rhai function (the exact primitive the feature
+would use) on a 200-line baseline vs a 203-line target (same normal traffic +
+3 injected anomalies: a NullPointerException, a DB-pool-exhausted error, an
+OutOfMemoryError).
 
-- **Generalization comes entirely from the deterministic grok masking step**
-  (`default_filter_patterns()`), which is a pure per-line function. `value is 1`,
-  `value is 22`, `value is 333` all mask to `value is <num>` →
-  `v1:eae236493a5d9680`, *identical across a 4-value baseline and a
-  single-value target*.
-- **Drain's own similarity-merge never produced a `<*>` wildcard.** Across five
-  scenarios — varying early, middle, and late tokens; 12 distinct values; a
-  mature 20-line cluster followed by variants — unmasked words were **never**
-  generalized. Each distinct unmasked line became its own literal template.
-- Therefore, in practice: `template(line) ≈ grok_mask(line)` — a pure function
-  of the single line, **independent of corpus content and ingestion order**.
-  `template_id = SHA256` of that is correspondingly stable.
+**Finding 1 — IDs are NOT corpus-stable for realistic lines.** An interim draft
+claimed `template(line) ≈ grok_mask(line)`, a pure per-line function, based on
+toy 4–5 token tests. That was wrong: those tests never triggered Drain's
+leaf-level similarity-merging. Realistic multi-token lines *do* trigger it, and
+the resulting wildcard placement is **order- and corpus-dependent**. Concretely,
+identical normal traffic produced disjoint template sets in two independent
+runs:
 
-**Consequence:** the simple design is viable. A "baseline model" is just a
-**saved set of template IDs** (a plain text file) — no `DrainTree`
-serialization, no dependency on `drain-rs` serde, no shared-tree two-phase
-gymnastics. Build the baseline ID set once; for each target line compute its ID
-and test set membership. Two independent runs compare cleanly.
+```
+BASELINE run:   ... msg="GET <path> <num> in <duration>     (GET generalized)
+                ... msg="PUT /login <num> in <duration>     (PUT kept literal)
+TARGET run:     ... msg="PUT <path> <num> in <duration>     (PUT generalized)
+                ... msg="GET /health <num> in <duration>    (GET kept literal)
+```
 
-**Caveats (the honest fine print):**
+→ **zero ID overlap** between the two runs, even for lines of the same shape.
+(For the same input fed twice, batch `--drain=id` and per-event
+`drain_template()` *do* agree — the instability is across *different* corpora,
+not across code paths.)
 
-- This stability is a property of the *current* setup: grok masking does the
-  work and Drain similarity-merging is effectively inert at the default
-  `similarity = 0.4` / `depth = 4`. If a future change actually activates
-  similarity-merging (or `drain-rs` changes behavior on upgrade), corpus-
-  dependent `<*>` wildcards could appear and reintroduce instability. A novelty
-  feature should pin/record the drain config it was built with.
-- IDs also shift if `default_filter_patterns()` changes (a new mask = a new
-  template string). The `v1:` prefix versions the *hashing*; a model file must
-  *additionally* record the drain config + a filter-set version and refuse
-  mismatched loads.
-- Only as good as the masking: a variable token that grok does **not** mask
-  (an unmasked username, a bare word ID) stays literal, so each distinct value
-  is its own template. That inflates the baseline ID set and can cause
-  false-positive novelty. This is a tuning/coverage issue (extend filters or
-  add ignore patterns), not an instability.
+**Finding 2 — the naive "saved ID set" design is UNUSABLE.** Building a baseline
+ID set and testing target IDs against it flagged **203 of 203** target events as
+novel — every normal line a false positive, the 3 real anomalies buried. This
+kills the "model = a text file of IDs / diff two `--drain=id` outputs" design.
+
+**Finding 3 — the shared-tree design WORKS, and works well.** Feeding baseline
+then target through *one* drain state (shared tree), and flagging target lines
+whose template ID was not seen during the baseline phase, surfaced **exactly 3
+of 203** — precisely the injected anomalies, zero false positives, zero misses.
+This is the design the very first draft proposed (and an interim draft wrongly
+discarded). It is the design to build.
+
+**Consequences for the design:**
+
+- A baseline "model" is **not** a portable set of IDs. Correct novelty needs the
+  baseline *ingested into the same tree* that classifies the target. The simple
+  implementation re-ingests the baseline file on every run (cheap). A truly
+  portable precomputed model needs the serialized `DrainTree` (`drain-rs`
+  0.3.0 serde support **unverified** — validate before promising it).
+- **Freeze risk to validate in implementation:** as target lines merge into an
+  existing cluster, that cluster's template string can generalize further and
+  its hash/ID can drift, which could make a known line look novel. It did not
+  bite in this test, but the robust implementation should *freeze* the tree
+  after the baseline phase and do **read-only matching** for the target (no new
+  clusters, no further generalization). `drain-rs`'s `add_log_line` mutates;
+  whether a read-only match path exists upstream is an open question.
+
+**Caveats that still hold:**
+
+- IDs shift if `default_filter_patterns()` or drain config changes. The `v1:`
+  prefix versions only the *hashing*; any persisted model must additionally
+  record drain config + a filter-set version and refuse mismatched loads.
+- Novelty quality tracks **grok masking coverage**: a variable token grok does
+  not mask (a bare-word ID, an unmasked username) stays literal, so each value
+  is its own template — inflating the baseline set and causing false positives.
+  Mitigate with ignore patterns / extended filters, not by trusting the default.
 
 ## Proposed CLI surface
 
@@ -81,12 +104,13 @@ Primary, flag-driven for the main use case:
 kelora --novel-vs <baseline-file> [target...]
 ```
 
-- Mechanism (simpler than first thought — see stability finding above): in a
-  Begin pre-pass, drain `<baseline-file>` and collect the **set of template
-  IDs**; then stream targets and keep only events whose drained template ID is
-  *not* in that set. No shared tree, no freeze step — just a `HashSet<String>`
-  of IDs. Equivalently, `--novel-vs` could accept a saved ID-set file produced
-  by `--drain=id`, since IDs are corpus-independent.
+- Mechanism (shared-tree, two-phase — see the tested findings above): in a Begin
+  pre-pass, ingest `<baseline-file>` into the drain tree and record the set of
+  template IDs produced; **freeze** the tree; then stream targets through the
+  *same* tree (read-only match) and keep only events whose template ID was not
+  in the baseline set. Validated to surface exactly the anomalies with no false
+  positives. The naive "diff two independent `--drain=id` runs" does **not**
+  work (100% false positives) — do not implement that.
 - Reuses the existing one-field constraint: requires `--keys` with exactly one
   field (same rule as `--drain`), drained via the same grok pipeline.
 - Output is **normal events** (novel ones), so it composes with `-J`, `-k`,
@@ -107,10 +131,10 @@ sources, not nice-to-haves):
 - `--novel-extra-baseline <file>` (repeatable): fold additional known-good
   lines into the baseline that the primary baseline omits (logjuicer's
   "extra baseline" — the answer to "rare-but-normal" false positives).
-- Reuse existing drain tuning (`depth`, `max_children`, `similarity`). Note the
-  **grok filter set — not the similarity threshold — is the dominant signal
-  knob** here, since similarity-merging is effectively inert (see stability
-  section). What gets masked determines what counts as "the same" line.
+- Reuse existing drain tuning (`depth`, `max_children`, `similarity`). Both the
+  grok filter set *and* the similarity threshold matter: masking decides which
+  tokens are variable, and similarity-merging (which **is** active on realistic
+  lines) decides how aggressively lines collapse into shared templates.
 
 Optional frequency mode (binary membership is all-or-nothing — a template at
 0.001% in the baseline reads as "seen" even if it's 60% of the target):
@@ -120,77 +144,87 @@ misses. Defer unless usage shows membership alone is too coarse.
 
 ## Integration points
 
-- `src/drain.rs`: minimal change. `generate_template_id` is already exactly the
-  primitive we need and is contractually stable (`v1:`). Add a way to compute a
-  template ID for a single line against a *fresh, throwaway* drain state (so the
-  baseline pre-pass and the target classification don't share/contaminate state)
-  — or simply collect the baseline ID set from one drain run and the target IDs
-  from another, which is sound given IDs are corpus-independent.
+- `src/drain.rs`: needs a real extension, not a one-liner. The baseline and
+  target **must share one tree** (independent runs give 100% false positives).
+  Add: (a) a way to record the set of template IDs seen during a "baseline
+  phase", and (b) a *frozen / read-only match* mode so target lines are
+  classified against the baseline clusters without mutating them (no new
+  clusters, no further generalization that would drift a cluster's ID). Today's
+  `drain_template()` always mutates; the read-only path is the core new work and
+  may need an upstream `drain-rs` capability. `generate_template_id` stays as-is.
 - `src/pipeline/stages.rs`: today `DrainStage` (line ~1112) is summary-only and
-  passes events through unchanged. Novelty needs a *classifying* stage that
-  holds the baseline `HashSet<String>` of IDs and `Skip`s events whose template
-  ID is present. Baseline ingestion is a Begin-phase pre-pass (batch), then
-  per-event classification streams as normal. Sequential-only, consistent with
+  passes events through unchanged. Novelty needs a *classifying* stage holding
+  the baseline ID set that `Skip`s events whose (read-only-matched) template ID
+  is present. Baseline ingestion is a Begin-phase pre-pass into the shared tree,
+  then per-event classification streams. Sequential-only, consistent with
   `--drain` (`drain` state is `thread_local`).
 - `src/cli.rs`: add the flags near the existing `--drain` block (~line 818),
   with the same "data-only mode" semantics (hush hints, still surface warnings).
 
 ## Limitations / forcing functions (be honest in docs)
 
+- **Requires a shared, frozen tree — not a portable ID file.** The biggest
+  constraint (tested): baseline and target must be clustered together. Re-
+  ingesting the baseline each run is the practical answer; a portable model
+  needs `DrainTree` serialization (unverified).
 - **Binary membership misses rate shifts.** A template at 0.001% in baseline but
   60% in target reads as "seen." Membership is all-or-nothing where logjuicer's
   cosine is continuous. Optional ratio mode is the mitigation.
-- **Novelty quality = masking coverage.** Because generalization is the grok
-  masking step (not Drain similarity), signal quality depends on the filter
-  patterns catching the variable tokens. Unmasked variable tokens (bare-word
-  IDs, usernames) inflate the baseline set and cause false-positive novelty.
-  Surface this; let users extend filters / add ignore patterns.
+- **Novelty quality = masking coverage.** Unmasked variable tokens (bare-word
+  IDs, usernames) stay literal, so each value is its own template — inflating
+  the baseline set and causing false positives. Let users extend filters / add
+  ignore patterns; don't trust the default masking blindly.
 - **Single field only.** Novelty in structured fields (a new `error_code`)
   isn't caught unless folded into the drained text. Same scope as `--drain`.
 - **Incomplete baseline → false positives** (rare-but-normal lines). Mitigated,
   not solved, by `--novel-extra-baseline` and `--novel-ignore`.
 - **No semantic understanding** — same ceiling logjuicer hits. Statistical
   novelty, not root-cause reasoning.
-- **Template strings shift if grok filters change.** Any change to
-  `default_filter_patterns()` invalidates a saved ID-set model. The model file
-  must record the drain config + a filter-set version and refuse mismatched
-  loads.
+- **Template strings shift if grok filters / drain config change.** Any
+  persisted model must record them and refuse mismatched loads.
 
 ## Alternatives considered
 
-- *Diff two `--drain=id` outputs* (naive). **No longer rejected** — testing
-  showed cross-corpus ID equality *is* reliable in kelora's config (see
-  stability section). This is now a legitimate, even trivial, implementation
-  path: a baseline model is just a saved ID set.
-- *Shared-tree, two-phase, per-cluster baseline/target counts.* The over-
-  engineered design from the first draft, motivated by a stability fear that
-  didn't hold. Dropped in favor of the ID-set approach.
+- *Diff two independent `--drain=id` outputs* (saved-ID-set model). **Rejected —
+  tested, 203/203 false positives.** Independent corpora generalize the same
+  lines into different templates, so their ID sets don't overlap. The appeal of
+  a portable, dependency-free model file is real, but it doesn't work.
+- *Shared-tree, two-phase, baseline frozen + read-only target match.*
+  **Selected — tested, surfaced exactly the anomalies with zero false
+  positives.** Costs a baseline re-ingest per run and some real work in
+  `drain.rs`, but it's the design that actually works.
 - *Port logjuicer's cosine-similarity engine.* Rejected for now — different
   philosophy from Kelora's deterministic streaming model, adds vector-math
   dependency and a "training" concept that sits awkwardly in a Unix-pipe tool.
   Template membership gets ~80% of the value, deterministic and explainable.
-- *Pure Rhai-only solution* (no flag). Fine as a *secondary* path now that the
-  primitive is just "compute ID, test set membership"; keep the flag as the
-  primary ergonomic entry point.
+- *Pure Rhai-only solution* (no flag). Awkward as the primary path — sharing one
+  frozen tree across a baseline pre-pass and per-event classification is hard to
+  express in script. Keep the flag primary; a Rhai predicate can come later.
 
 ## Phasing
 
-1. **Spike (validate signal, not stability — stability is confirmed):**
-   prototype `--novel-vs` as baseline ID-set + per-target membership; eyeball
-   results on a real before/after log pair. Confirm masking coverage is good
-   enough to separate novel from known lines without drowning in false
-   positives.
-2. **Productionize:** CLI flags, `--novel-ignore`, `--novel-extra-baseline`,
-   a portable `--novel-model <file>` (saved ID set + recorded drain/filter
-   version), docs (`--help-functions`/`docs.rs` if the Rhai predicate ships),
-   tests (clustering already has good coverage to model after).
-3. **Maybe:** `--novel-vs-ratio` frequency mode, only if membership proves
-   too coarse in practice.
+The signal quality is already validated by the simulation above (shared-tree:
+exactly the 3 anomalies, no false positives). Remaining work is the
+implementation, not proving the concept.
 
-## Should we?
+1. **Build the shared-tree core:** extend `src/drain.rs` with a baseline-phase
+   ID set + a frozen, read-only match mode (the real work; may need an upstream
+   `drain-rs` capability — spike that first). Wire a classifying stage and the
+   `--novel-vs` flag.
+2. **Productionize:** `--novel-ignore`, `--novel-extra-baseline`, sensible
+   defaults for which field is drained, docs, tests (clustering has good
+   coverage to model after).
+3. **Maybe:** portable `--novel-model <file>` *iff* `DrainTree` serde works
+   (else stop at re-ingestion); `--novel-vs-ratio` frequency mode if membership
+   proves too coarse; a Rhai predicate for annotate-don't-drop workflows.
 
-Yes — but only the focused, Kelora-idiomatic subset above (template membership
-on the existing grok+Drain pipeline, output-as-events). It's a genuine
-differentiator with low architectural risk and high reuse. Hold the line
-against the cosine-similarity ML engine and the HTML report. Kelora should
-borrow logjuicer's *question*, not become logjuicer.
+## Should we? — yes, and it's usable
+
+Validated end-to-end on a realistic before/after pair: the shared-tree design
+surfaced exactly the injected anomalies with zero false positives, which is the
+UX that makes this worth shipping. The naive saved-ID-set shortcut is **not**
+usable (100% false positives) and must be avoided. Build the focused,
+Kelora-idiomatic subset (shared-tree template-novelty on the existing grok+Drain
+pipeline, output-as-events); hold the line against the cosine-similarity ML
+engine and the HTML report. Kelora should borrow logjuicer's *question*, not
+become logjuicer.
