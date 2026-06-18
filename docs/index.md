@@ -4,12 +4,6 @@
 
 Watch Hack the Clown's [**5-minute introduction video**](https://www.youtube.com/watch?v=IwkicmS3RYo) to see Kelora in action.
 
-!!! info "New: Kelora 2.0"
-    A feature release with breaking changes — redesigned tracking functions,
-    named application-log formats, composable parser cascades, and a richer
-    `--discover`. See [**What's New in 2.0**](whats-new-2.0.md) for the
-    highlights and a migration guide.
-
 [Install Kelora](#installation){ .md-button }
 
 ## A quick tour
@@ -204,6 +198,8 @@ Need to reconstruct one timeline from several already-ordered log shards? See
 [Merge Sorted Files by Timestamp](how-to/merge-timestamp-sorted-files.md).
 
 For deeper understanding, see [Concepts](concepts/index.md). For complete reference, see [Glossary](glossary.md), [Functions](reference/functions.md), [Formats](reference/formats.md), and [CLI options](reference/cli-reference.md).
+
+Upgrading from 1.x? See [What's New in 2.0](whats-new-2.0.md) for the highlights and a migration guide.
 
 !!! tip "On-call?"
     Jump to **[Incident Response Playbooks](how-to/incident-response-playbooks.md)** for copy-paste commands covering latency spikes, error surges, auth failures, and more.
