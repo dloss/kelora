@@ -782,6 +782,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#breaking-input-lines-are-capped-at-64-mib-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: input lines are capped at 64 MiB by default
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2698,6 +2709,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#breaking-input-lines-are-capped-at-64-mib-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: input lines are capped at 64 MiB by default
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3039,6 +3061,26 @@ paging to <code>less</code>:</p>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nv">defaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>--wrap
 </code></pre></div>
 <p><code>--no-wrap</code> disables it everywhere.</p>
+<h3 id="breaking-input-lines-are-capped-at-64-mib-by-default">Breaking: input lines are capped at 64 MiB by default<a class="headerlink" href="#breaking-input-lines-are-capped-at-64-mib-by-default" title="Permanent link">&para;</a></h3>
+<p>Kelora now caps the memory a single input line may use at <strong>64 MiB</strong> by default,
+a safety circuit breaker against runaway RAM. The motivating case is a
+newline-free stream — for example a tiny gzip/zstd payload that decompresses
+into one enormous line — which would otherwise grow the read buffer until the
+process is killed. Reading is streamed, so large <em>multi-line</em> files (compressed
+or not) are unaffected; only a single over-long line trips the cap.</p>
+<p>No real log line approaches 64 MiB (Docker and Kubernetes/CRI split lines at
+16 KB; even fat JSON with embedded stack traces tops out in the low single-digit
+MB), so normal use sees no change. When a line does exceed the cap it is
+truncated to the cap and a warning reports how many lines were clipped — the run
+still succeeds (exit 0). Under <code>--strict</code> an over-limit line is a hard error
+(exit 1) instead.</p>
+<p>If you genuinely process single lines larger than 64 MiB, raise or disable it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>big.log<span class="w"> </span>--max-line-bytes<span class="w"> </span>256MiB<span class="w">   </span><span class="c1"># raise the cap</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>big.log<span class="w"> </span>--max-line-bytes<span class="w"> </span><span class="m">0</span><span class="w">        </span><span class="c1"># disable (1.x behavior)</span>
+</code></pre></div>
+<p>For untrusted input you can tighten it instead (<code>--max-line-bytes 1MiB</code>).
+Recursive ZIP bombs such as <code>42.zip</code> were never a risk — kelora rejects ZIP
+input and supports only gzip/zstd.</p>
 <h2 id="upgrade-checklist">Upgrade checklist<a class="headerlink" href="#upgrade-checklist" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Migrate tracking scripts.</strong> Replace <code>track_count(value)</code> and
@@ -3068,6 +3110,10 @@ paging to <code>less</code>:</p>
 <li><strong>Check line-oriented pipelines.</strong> If you piped default-format output into
    <code>wc -l</code>/<code>head</code>/<code>sed</code>, wrapping is now off by pipe default — add <code>--wrap</code> only
    if you actually want continuation lines.</li>
+<li><strong>Check for very long lines.</strong> If any workflow processes single lines larger
+   than 64 MiB, raise (<code>--max-line-bytes 256MiB</code>) or disable
+   (<code>--max-line-bytes 0</code>) the new per-line cap; otherwise such lines are
+   truncated with a warning.</li>
 </ol>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
