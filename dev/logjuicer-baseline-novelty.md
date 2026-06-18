@@ -1,6 +1,7 @@
 # Baseline Novelty Detection — Design Note (logjuicer-inspired)
 
-Status: **proposal / not started — concept UX-validated by simulation.**
+Status: **proposal / not started — concept UX-validated and gating tech risk
+spiked (resolved positively).**
 Captures whether and how to borrow
 [logjuicer](https://github.com/logjuicer/logjuicer)'s core idea — *highlight
 the lines in a target log that don't appear in a known-good baseline* — without
@@ -75,16 +76,45 @@ discarded). It is the design to build.
 
 - A baseline "model" is **not** a portable set of IDs. Correct novelty needs the
   baseline *ingested into the same tree* that classifies the target. The simple
-  implementation re-ingests the baseline file on every run (cheap). A truly
-  portable precomputed model needs the serialized `DrainTree` (`drain-rs`
-  0.3.0 serde support **unverified** — validate before promising it).
-- **Freeze risk to validate in implementation:** as target lines merge into an
-  existing cluster, that cluster's template string can generalize further and
-  its hash/ID can drift, which could make a known line look novel. It did not
-  bite in this test, but the robust implementation should *freeze* the tree
-  after the baseline phase and do **read-only matching** for the target (no new
-  clusters, no further generalization). `drain-rs`'s `add_log_line` mutates;
-  whether a read-only match path exists upstream is an open question.
+  implementation re-ingests the baseline file on every run (cheap). A portable
+  precomputed model is also feasible: `DrainTree`/`Node`/`Leaf` all
+  `#[derive(Serialize, Deserialize)]` (verified in `drain-rs` 0.3.0 source), so
+  the tree + baseline ID set can be serialized and reloaded.
+
+## Spike: is there a read-only "frozen match"? (RESOLVED)
+
+The open risk gating the feature was whether target lines could be classified
+against a frozen baseline tree *without* mutating it (avoiding ID drift). Spiked
+against `drain-rs` 0.3.0 source + a built repro. Results:
+
+- **`drain-rs` HAS a read-only API** — `DrainTree::log_group(&self, &str)`,
+  documented "does NOT modify the underlying tree." But it is **broken for
+  kelora's config.** A built repro flagged **200 of 200 baseline lines as novel
+  when matched against the tree they just built.**
+- **Root cause (precise):** insertion (`add_child_recur`) rewrites any
+  navigation token containing a digit to a `WildCard` tree key
+  (`if s.chars().any(|c| c.is_numeric())`), but the read path
+  (`dig_inner_prefix_tree`, used by `log_group`) does **not** apply that
+  rewrite — it looks up the literal token. kelora's filter capture names
+  `ipv4`/`ipv6`/`md5`/`sha1`/`sha256` contain digits, so masked tokens like
+  `<ipv4>` are *stored* under `WildCard` but *searched* under `<ipv4>` →
+  guaranteed miss. A minimal probe confirmed it: a digit-free navigation token
+  matches via `log_group`; swapping in `<ipv4>` makes it miss. This is an
+  upstream insert/read asymmetry, not fixable cleanly in kelora.
+- **But we don't need it.** The shared-tree design using the *mutating*
+  `add_log_line` for both phases — novel = template ID not seen during the
+  baseline phase — was re-verified in the same repro: **exactly 3 of 203, the
+  injected anomalies, zero false positives.** The feared ID-drift from mutating
+  on classify did **not** materialize: a representative baseline produces
+  clusters general enough that normal target traffic merges without changing the
+  cluster string/ID. (Robustness refinement if it ever bites: track baseline
+  *cluster identity*, not just the string ID, and treat a merge into a
+  baseline-era cluster as "seen.") Crucially, this path uses only the
+  `add_log_line` API kelora already calls — **no upstream change required.**
+
+Net: the gating risk is **resolved positively** — build on `add_log_line` +
+baseline ID set; do not attempt to use `log_group` (broken) and do not block on
+a read-only mode (unnecessary).
 
 **Caveats that still hold:**
 
@@ -144,20 +174,19 @@ misses. Defer unless usage shows membership alone is too coarse.
 
 ## Integration points
 
-- `src/drain.rs`: needs a real extension, not a one-liner. The baseline and
-  target **must share one tree** (independent runs give 100% false positives).
-  Add: (a) a way to record the set of template IDs seen during a "baseline
-  phase", and (b) a *frozen / read-only match* mode so target lines are
-  classified against the baseline clusters without mutating them (no new
-  clusters, no further generalization that would drift a cluster's ID). Today's
-  `drain_template()` always mutates; the read-only path is the core new work and
-  may need an upstream `drain-rs` capability. `generate_template_id` stays as-is.
+- `src/drain.rs`: modest extension, no upstream change needed (see spike). The
+  baseline and target **must share one tree** (independent runs give 100% false
+  positives), and both phases use the existing mutating `add_log_line`. Add: (a)
+  record the set of template IDs produced during a "baseline phase"; (b) a flag
+  marking when the baseline phase ends so the stage knows when to start
+  classifying. Do **not** use `log_group` (broken for our digit-containing
+  filter names). `generate_template_id` stays as-is.
 - `src/pipeline/stages.rs`: today `DrainStage` (line ~1112) is summary-only and
   passes events through unchanged. Novelty needs a *classifying* stage holding
-  the baseline ID set that `Skip`s events whose (read-only-matched) template ID
-  is present. Baseline ingestion is a Begin-phase pre-pass into the shared tree,
-  then per-event classification streams. Sequential-only, consistent with
-  `--drain` (`drain` state is `thread_local`).
+  the baseline ID set that `Skip`s events whose template ID is in it. Baseline
+  ingestion is a Begin-phase pre-pass into the shared tree, then per-event
+  classification streams. Sequential-only, consistent with `--drain` (`drain`
+  state is `thread_local`).
 - `src/cli.rs`: add the flags near the existing `--drain` block (~line 818),
   with the same "data-only mode" semantics (hush hints, still surface warnings).
 
@@ -189,10 +218,13 @@ misses. Defer unless usage shows membership alone is too coarse.
   tested, 203/203 false positives.** Independent corpora generalize the same
   lines into different templates, so their ID sets don't overlap. The appeal of
   a portable, dependency-free model file is real, but it doesn't work.
-- *Shared-tree, two-phase, baseline frozen + read-only target match.*
+- *Shared-tree, two-phase, baseline frozen + read-only `log_group` match.*
+  Intended design, but `log_group` is **broken** for kelora's digit-containing
+  filter names (spike: 200/200 false positives). Abandoned.
+- *Shared-tree, two-phase, `add_log_line` both phases + baseline ID set.*
   **Selected — tested, surfaced exactly the anomalies with zero false
-  positives.** Costs a baseline re-ingest per run and some real work in
-  `drain.rs`, but it's the design that actually works.
+  positives, no upstream change needed.** Costs a baseline re-ingest per run;
+  mutating-on-classify is theoretically a drift risk but did not bite.
 - *Port logjuicer's cosine-similarity engine.* Rejected for now — different
   philosophy from Kelora's deterministic streaming model, adds vector-math
   dependency and a "training" concept that sits awkwardly in a Unix-pipe tool.
@@ -203,20 +235,20 @@ misses. Defer unless usage shows membership alone is too coarse.
 
 ## Phasing
 
-The signal quality is already validated by the simulation above (shared-tree:
-exactly the 3 anomalies, no false positives). Remaining work is the
-implementation, not proving the concept.
+Both signal quality and the gating technical risk are now validated (shared-tree
+id-set: exactly the 3 anomalies, no false positives; read-only mode unnecessary
+— see spike). Remaining work is implementation.
 
 1. **Build the shared-tree core:** extend `src/drain.rs` with a baseline-phase
-   ID set + a frozen, read-only match mode (the real work; may need an upstream
-   `drain-rs` capability — spike that first). Wire a classifying stage and the
-   `--novel-vs` flag.
+   ID set + an end-of-baseline marker (using the existing `add_log_line` API —
+   no upstream change). Wire a classifying stage and the `--novel-vs` flag.
 2. **Productionize:** `--novel-ignore`, `--novel-extra-baseline`, sensible
    defaults for which field is drained, docs, tests (clustering has good
    coverage to model after).
-3. **Maybe:** portable `--novel-model <file>` *iff* `DrainTree` serde works
-   (else stop at re-ingestion); `--novel-vs-ratio` frequency mode if membership
-   proves too coarse; a Rhai predicate for annotate-don't-drop workflows.
+3. **Maybe:** portable `--novel-model <file>` via `DrainTree` serde (confirmed
+   available) + saved baseline ID set; `--novel-vs-ratio` frequency mode if
+   membership proves too coarse; a Rhai predicate for annotate-don't-drop
+   workflows.
 
 ## Should we? — yes, and it's usable
 
