@@ -13,6 +13,7 @@ use span::SpanProcessor;
 pub mod builders;
 pub mod defaults;
 pub mod multiline;
+pub mod prefilter;
 pub mod prefix_extractor;
 pub mod prefix_parser;
 pub mod section_selector;
@@ -234,6 +235,20 @@ pub struct MetaData {
 /// Parse raw text lines into structured events
 pub trait EventParser: Send + Sync {
     fn parse(&self, line: &str) -> Result<Event>;
+
+    /// Whether this parser extracts the log level *verbatim from the line text*
+    /// — i.e. the string value stored in a level field always appears as a
+    /// substring of the raw line. This gates the raw-line level pre-filter (see
+    /// [`prefilter`]): only when it holds can a line lacking every accepted
+    /// level token be dropped before parsing without risking a false negative.
+    ///
+    /// Defaults to `false` (pre-filter disabled). Enable it only for parsers
+    /// whose level handling is provably textual — never for parsers that derive
+    /// the level from non-textual encodings (syslog `<13>` priority numbers) or
+    /// through level mapping tables / stream-name inference.
+    fn level_appears_verbatim(&self) -> bool {
+        false
+    }
 }
 
 /// Optional line-level filtering before parsing
@@ -292,6 +307,10 @@ pub struct Pipeline {
     pub line_filter: Option<Box<dyn LineFilter>>,
     pub chunker: Box<dyn Chunker>,
     pub parser: Box<dyn EventParser>,
+    /// Raw-line level pre-filter, active only when the safety gate is satisfied
+    /// (see [`prefilter`] and the builder). `None` means the gate is off and the
+    /// pre-filter is inert — behavior is identical to before this feature.
+    pub level_prefilter: Option<prefilter::LevelPrefilter>,
     pub script_stages: Vec<Box<dyn ScriptStage>>,
     pub limiter: Option<Box<dyn EventLimiter>>,
     pub formatter: Box<dyn Formatter>,
@@ -528,6 +547,18 @@ impl Pipeline {
         ctx: &mut PipelineContext,
     ) -> Result<Vec<FormattedOutput>> {
         let mut results = Vec::new();
+
+        // Raw-line level pre-filter (runs after multiline assembly, before the
+        // parser). When active, a line containing none of the accepted level
+        // tokens cannot survive the downstream LevelFilterStage, so it is
+        // dropped here without the cost of parsing. The safety gate in the
+        // builder guarantees this is only Some(..) when dropping is provably
+        // equivalent to a post-parse level-filter drop (see prefilter.rs).
+        if let Some(prefilter) = &self.level_prefilter {
+            if !prefilter.keep(&chunk) {
+                return Ok(results);
+            }
+        }
 
         // Parse stage
         let mut event = match self.parser.parse(&chunk) {

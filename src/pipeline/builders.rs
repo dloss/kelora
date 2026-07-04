@@ -38,6 +38,12 @@ impl EventParser for TimestampConfiguredParser {
         event.extract_timestamp_with_config(None, &self.ts_config);
         Ok(event)
     }
+
+    /// Timestamp configuration never touches the level field, so verbatim-level
+    /// extraction is whatever the wrapped parser guarantees.
+    fn level_appears_verbatim(&self) -> bool {
+        self.inner.level_appears_verbatim()
+    }
 }
 
 use super::{
@@ -177,6 +183,12 @@ pub struct PipelineBuilder {
     strict: bool,
     state_available: bool,
     csv_type_map: Option<TypeMap>,
+    /// Whether the run's output mode permits the raw-line level pre-filter.
+    /// Set false by modes that observe dropped-before-parse lines differently
+    /// than dropped-after-parse events (`--stats`/`--with-stats`, `--discover`).
+    /// Defaults true; the remaining per-line correctness gates (include levels
+    /// present, no context, verbatim parser) are checked at build time.
+    allow_level_prefilter: bool,
 }
 
 impl PipelineBuilder {
@@ -448,7 +460,86 @@ impl PipelineBuilder {
             strict: false,
             state_available: true,
             csv_type_map: None,
+            allow_level_prefilter: true,
         }
+    }
+
+    /// Derive the raw-line level pre-filter for a stage list, or `None` when the
+    /// safety gate forbids it (see `prefilter.rs`). `parser` is the fully
+    /// assembled parser (wrappers included) so its `level_appears_verbatim`
+    /// reflects the real level-extraction path.
+    ///
+    /// The token set is taken from the level-filter stages themselves — the same
+    /// include lists `LevelFilterStage` matches against — so the pre-filter and
+    /// the stage can never drift. A surviving event must pass every level
+    /// filter, so its (verbatim) level is contained in *each* include list;
+    /// using the first non-empty include list is therefore free of false
+    /// negatives.
+    fn build_level_prefilter(
+        &self,
+        stages: &[crate::config::ScriptStageType],
+        parser: &dyn EventParser,
+    ) -> Option<super::prefilter::LevelPrefilter> {
+        // Gate 1 (mode): stats/discover observe pre-parse drops; gate 2
+        // (context): a dropped line could be needed as neighbouring context.
+        if !self.allow_level_prefilter || self.context_config.is_active() {
+            return None;
+        }
+
+        // Gate 3 (parser): the level must come verbatim from the line text.
+        if !parser.level_appears_verbatim() {
+            return None;
+        }
+
+        // Gate 4 (stage order): the pre-filter drops a line before *any* stage
+        // runs, so it is safe only when no event-observing stage precedes the
+        // level filter. A --filter/--exec/--assert ordered before --levels runs
+        // on every event in the baseline (side effects: metrics, asserts,
+        // emits), so a pre-parse drop would change its behavior. Walk the stage
+        // list in order: stop at the first include-level filter and take its
+        // tokens; bail out if an observing stage comes first.
+        //
+        // Token set is the include list of that first level filter — the same
+        // list LevelFilterStage matches against, so the two cannot drift. A
+        // surviving event must pass every level filter, so its (verbatim) level
+        // is contained in each include list; the first non-empty one is a
+        // false-negative-free needle set. An exclude-only filter yields no
+        // tokens (spec gate 1: `--exclude-levels` alone -> disabled) and is
+        // skipped over (it has no observable effect on pre-parse-dropped lines).
+        let has_inline_level_stage = stages
+            .iter()
+            .any(|s| matches!(s, crate::config::ScriptStageType::LevelFilter { .. }));
+
+        let mut tokens: Option<&[String]> = None;
+        for stage in stages {
+            match stage {
+                crate::config::ScriptStageType::LevelFilter { include, .. }
+                    if !include.is_empty() =>
+                {
+                    tokens = Some(include.as_slice());
+                    break;
+                }
+                crate::config::ScriptStageType::Filter { .. }
+                | crate::config::ScriptStageType::Exec(_)
+                | crate::config::ScriptStageType::Assert(_) => {
+                    // An observing stage precedes every level filter -> unsafe.
+                    return None;
+                }
+                // Exclude-only level filter (no include tokens): no observable
+                // effect on lines the pre-filter would drop, so keep scanning.
+                crate::config::ScriptStageType::LevelFilter { .. } => {}
+            }
+        }
+
+        // Fallback include levels (only when no inline level stage exists at
+        // all). The fallback filter is appended after every script stage, so it
+        // is safe only when no observing stage exists — which the loop above
+        // already guaranteed by returning None on the first such stage.
+        if tokens.is_none() && !has_inline_level_stage && !self.levels.is_empty() {
+            tokens = Some(self.levels.as_slice());
+        }
+
+        tokens.and_then(super::prefilter::LevelPrefilter::new)
     }
 
     pub fn with_config(mut self, config: PipelineConfig) -> Self {
@@ -492,6 +583,10 @@ impl PipelineBuilder {
 
         stats_set_timestamp_override(self.ts_field.clone(), self.ts_format.clone());
         let parser = self.build_parser_internal()?;
+
+        // Raw-line level pre-filter (safety-gated; None when disabled). Computed
+        // before `stages` is consumed by the stage-building loop below.
+        let level_prefilter = self.build_level_prefilter(&stages, parser.as_ref());
 
         // Create formatter
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -757,6 +852,7 @@ impl PipelineBuilder {
             line_filter: None, // No line filter implementation yet
             chunker,
             parser,
+            level_prefilter,
             script_stages,
             limiter,
             formatter,
@@ -841,6 +937,11 @@ impl PipelineBuilder {
 
         stats_set_timestamp_override(self.ts_field.clone(), self.ts_format.clone());
         let parser = self.build_parser_internal()?;
+
+        // Raw-line level pre-filter (safety-gated; None when disabled). Same
+        // gate and token source as the sequential path, so both paths drop the
+        // identical set of lines. Computed before `stages` is consumed below.
+        let level_prefilter = self.build_level_prefilter(&stages, parser.as_ref());
 
         // Create formatter (workers still need formatters for output)
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1069,6 +1170,7 @@ impl PipelineBuilder {
             line_filter: None,
             chunker,
             parser,
+            level_prefilter,
             script_stages,
             limiter,
             formatter,
@@ -1230,6 +1332,15 @@ pub fn create_pipeline_builder_from_config(
     builder.context_config = config.processing.context.clone();
     builder.strict = config.processing.strict;
     builder.state_available = !config.should_use_parallel();
+    // Disable the raw-line level pre-filter in output modes that observe
+    // dropped-before-parse lines differently than dropped-after-parse events:
+    // --stats/--with-stats surface events_created and the discovered-level set,
+    // and --discover observes input-side fields at parse time. In those modes a
+    // pre-parse drop would change visible output, so keep the pre-filter inert.
+    // (The remaining correctness gates — include levels, no context, verbatim
+    // parser — are enforced at build time.)
+    builder.allow_level_prefilter =
+        config.output.stats.is_none() && config.output.discover_fields.is_none();
     builder
 }
 

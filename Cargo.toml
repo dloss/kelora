@@ -34,6 +34,7 @@ serde_json = { version = "1.0", features = ["preserve_order"] }  # JSON log form
 nom = "8"  # Parser combinator library for logfmt and other text formats
 csv = "1.3"  # CSV format parsing and output
 regex = "1.10"  # Pattern matching for filters and field extraction
+memchr = "2"  # Fast byte search for the raw-line level pre-filter (already in tree transitively)
 
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }  # Timestamp parsing, manipulation, and formatting

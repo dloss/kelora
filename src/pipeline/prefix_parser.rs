@@ -35,6 +35,14 @@ impl EventParser for PrefixExtractingParser {
 
         Ok(event)
     }
+
+    /// Prefix extraction only strips a leading segment of the raw line before
+    /// handing the remainder to the inner parser; the level still comes from
+    /// text that is a substring of the raw line. So verbatim-level extraction is
+    /// whatever the inner parser guarantees.
+    fn level_appears_verbatim(&self) -> bool {
+        self.inner.level_appears_verbatim()
+    }
 }
 
 #[cfg(test)]

@@ -193,6 +193,15 @@ impl EventParser for JsonlParser {
             .map_err(|e| anyhow::anyhow!("Invalid JSON: {}", clean_json_error(&e)))?;
         Err(anyhow::anyhow!("Expected JSON object, got: {}", json_value))
     }
+
+    /// JSON level fields hold the value straight from the object text
+    /// (`"level":"error"` -> "error"), so the level string appears verbatim in
+    /// the raw line. This enables the raw-line level pre-filter. (Pathological
+    /// unicode-escaped level values like `"error"` are out of scope — the
+    /// pre-filter targets realistic textual level tokens.)
+    fn level_appears_verbatim(&self) -> bool {
+        true
+    }
 }
 
 #[cfg(test)]

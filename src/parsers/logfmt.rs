@@ -159,6 +159,14 @@ impl EventParser for LogfmtParser {
         }
         Ok(event)
     }
+
+    /// logfmt level fields carry the value straight from the `key=value` text
+    /// (`level=error` -> "error", `level="error"` -> "error"), so the level
+    /// string appears verbatim in the raw line. This enables the raw-line level
+    /// pre-filter.
+    fn level_appears_verbatim(&self) -> bool {
+        true
+    }
 }
 
 #[cfg(test)]
