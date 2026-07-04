@@ -1,0 +1,7 @@
+# Generated corpora (regenerate deterministically with gen_corpus.py).
+corpus/
+# Compiled benchmark binaries (baseline snapshot + candidate copies).
+bin/
+# Raw hyperfine exports; the curated summary lives in results/*.md.
+results/raw/
+results/raw-baseline/
