@@ -1,0 +1,6 @@
+# Generated corpora (large, reproducible via gen_corpus.py)
+corpus/
+# Built binaries kept side-by-side for A/B benchmarking
+bin/
+# Raw hyperfine exports (the curated results/*.md are committed)
+results/raw/
