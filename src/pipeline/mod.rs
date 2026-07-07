@@ -234,6 +234,23 @@ pub struct MetaData {
 /// Parse raw text lines into structured events
 pub trait EventParser: Send + Sync {
     fn parse(&self, line: &str) -> Result<Event>;
+
+    /// Whether this parser extracts the log level as text that appears
+    /// *verbatim* in the raw line. When true, a line whose level field will
+    /// match `--levels` is guaranteed to contain that level token as a
+    /// case-insensitive substring, which lets the raw-line level pre-filter
+    /// safely drop non-matching lines before parsing (see
+    /// `Pipeline::level_prefilter_needles`).
+    ///
+    /// Defaults to `false` (pre-filter disabled) — the safe choice. Enable it
+    /// only for parsers whose level comes straight from the line text (e.g.
+    /// `json`, `logfmt`). Parsers that *derive* the level from a non-textual
+    /// encoding — syslog priority numbers, severity mapping tables, stream-name
+    /// or default inference — must leave it `false`, or the pre-filter could
+    /// drop a line that would have matched (a false negative).
+    fn level_appears_verbatim(&self) -> bool {
+        false
+    }
 }
 
 /// Optional line-level filtering before parsing
@@ -303,6 +320,15 @@ pub struct Pipeline {
     /// set or any script stage reads the `window` variable. When false, the
     /// window manager is never touched, avoiding two event clones per line.
     pub window_active: bool,
+    /// Lowercased needles for the raw-line level pre-filter. Non-empty only when
+    /// the safety gate (see `PipelineBuilder`) allows it: an include-only
+    /// `--levels` filter that is the first stage, a verbatim-level parser, no
+    /// context, and no observability feature that would diverge. When non-empty,
+    /// an assembled chunk containing none of these needles (case-insensitive) is
+    /// dropped before parsing, since its parsed level could not match `--levels`.
+    /// Empty means the pre-filter is inert — one branch per line, no behavior
+    /// change.
+    pub level_prefilter_needles: Vec<Vec<u8>>,
 }
 
 impl Pipeline {
@@ -527,6 +553,24 @@ impl Pipeline {
         chunk: String,
         ctx: &mut PipelineContext,
     ) -> Result<Vec<FormattedOutput>> {
+        // Raw-line level pre-filter. Runs here — after multiline assembly, so a
+        // continuation line can never be lost — and before parsing, so a line
+        // whose level cannot match `--levels` is dropped without the parse +
+        // FieldMap allocation cost. Inert (empty needles) unless the safety gate
+        // enabled it at build time, so the disabled cost is one branch per line.
+        // A dropped line is skipped exactly like the pre-parse line filters
+        // (--keep-lines/--ignore-lines): no event is created, so it does not
+        // count toward event/parse stats. The gate guarantees those counters are
+        // unobservable when the pre-filter is active.
+        if !self.level_prefilter_needles.is_empty()
+            && !stages::raw_line_matches_level_needles(
+                chunk.as_bytes(),
+                &self.level_prefilter_needles,
+            )
+        {
+            return Ok(Vec::new());
+        }
+
         let mut results = Vec::new();
 
         // Parse stage

@@ -35,6 +35,14 @@ impl EventParser for PrefixExtractingParser {
 
         Ok(event)
     }
+
+    // The prefix is stripped from the front of the line and the remainder — a
+    // substring of the original line — is handed to the inner parser, so any
+    // level the inner parser reads verbatim still appears verbatim in the
+    // original raw line. Verbatim-ness therefore follows the inner parser.
+    fn level_appears_verbatim(&self) -> bool {
+        self.inner.level_appears_verbatim()
+    }
 }
 
 #[cfg(test)]

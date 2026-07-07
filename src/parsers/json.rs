@@ -172,6 +172,14 @@ impl JsonlParser {
 }
 
 impl EventParser for JsonlParser {
+    // The level is read straight from the JSON string value, so it appears
+    // verbatim in the line text (the only theoretical exception — a `\uXXXX`
+    // escaped level value like "error" — never occurs in practice and is
+    // documented as a known limitation of the pre-filter).
+    fn level_appears_verbatim(&self) -> bool {
+        true
+    }
+
     fn parse(&self, line: &str) -> Result<Event> {
         let line = line.trim_end_matches('\n').trim_end_matches('\r');
 

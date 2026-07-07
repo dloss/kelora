@@ -823,6 +823,67 @@ impl EndStage {
     }
 }
 
+/// Single source of truth for the raw-line level pre-filter's needles.
+///
+/// [`LevelFilterStage`] accepts an event under `--levels` when its level field
+/// value equals one of the include tokens, compared with `eq_ignore_ascii_case`
+/// (see `evaluate_level_filter`). For a parser that extracts the level verbatim
+/// from the line text, that field value is a substring of the raw line, so any
+/// line that will be accepted must contain one of these include tokens as a
+/// case-insensitive substring. The pre-filter therefore drops a line only when
+/// *none* of these needles appear — never a false negative.
+///
+/// The needles are exactly the (lowercased) include tokens the stage matches
+/// against. Returning them from one function keeps the stage and the pre-filter
+/// from drifting: there is no aliasing or prefix logic to re-derive today, and
+/// if any were ever added to the stage it would have to be reflected here too.
+pub fn level_prefilter_needles(include_levels: &[String]) -> Vec<Vec<u8>> {
+    include_levels
+        .iter()
+        .filter(|tok| !tok.is_empty())
+        .map(|tok| tok.to_ascii_lowercase().into_bytes())
+        .collect()
+}
+
+/// True if the raw line contains at least one of the pre-filter needles as a
+/// case-insensitive ASCII substring. Zero-allocation: the needles are
+/// pre-lowercased and each is anchored with a two-case first-byte scan
+/// (`memchr2`) followed by an in-place `eq_ignore_ascii_case` verification.
+pub fn raw_line_matches_level_needles(line: &[u8], needles: &[Vec<u8>]) -> bool {
+    needles.iter().any(|needle| contains_ascii_ci(line, needle))
+}
+
+/// Case-insensitive ASCII substring search. `needle_lc` must already be
+/// lowercased. Non-ASCII bytes compare by exact value (they are unaffected by
+/// `eq_ignore_ascii_case`), which is correct: level tokens are ASCII, and a
+/// non-ASCII byte in the line simply never matches an ASCII needle byte.
+fn contains_ascii_ci(haystack: &[u8], needle_lc: &[u8]) -> bool {
+    let n = needle_lc.len();
+    if n == 0 {
+        return true;
+    }
+    if haystack.len() < n {
+        return false;
+    }
+    let first_lc = needle_lc[0];
+    let first_uc = first_lc.to_ascii_uppercase();
+    let last_start = haystack.len() - n;
+    let mut offset = 0;
+    while offset <= last_start {
+        match memchr::memchr2(first_lc, first_uc, &haystack[offset..=last_start]) {
+            Some(i) => {
+                let start = offset + i;
+                if haystack[start..start + n].eq_ignore_ascii_case(needle_lc) {
+                    return true;
+                }
+                offset = start + 1;
+            }
+            None => return false,
+        }
+    }
+    false
+}
+
 /// Level filtering stage for --levels and --exclude-levels options
 pub struct LevelFilterStage {
     levels: Vec<String>,
@@ -1773,5 +1834,95 @@ mod tests {
 
         let result = stage.apply(event_no_ts, &mut ctx);
         matches!(result, ScriptResult::Emit(_));
+    }
+
+    // ---- Raw-line level pre-filter -----------------------------------------
+
+    fn needles(levels: &[&str]) -> Vec<Vec<u8>> {
+        level_prefilter_needles(&levels.iter().map(|s| s.to_string()).collect::<Vec<_>>())
+    }
+
+    fn matches(line: &str, levels: &[&str]) -> bool {
+        raw_line_matches_level_needles(line.as_bytes(), &needles(levels))
+    }
+
+    #[test]
+    fn needles_are_lowercased_and_drop_empties() {
+        let n = level_prefilter_needles(&["ERROR".to_string(), "".to_string(), "Warn".to_string()]);
+        assert_eq!(n, vec![b"error".to_vec(), b"warn".to_vec()]);
+    }
+
+    #[test]
+    fn scan_is_case_insensitive_in_both_directions() {
+        // Mixed-case level tokens in the data all survive the (lowercased) needle.
+        for lit in ["error", "Error", "ERROR", "eRrOr"] {
+            let line = format!(r#"{{"level":"{lit}","msg":"x"}}"#);
+            assert!(
+                matches(&line, &["error"]),
+                "should match data literal {lit}"
+            );
+        }
+        // A mixed-case needle also matches lowercase data (needle is lowercased).
+        assert!(matches(r#"{"level":"error"}"#, &["ERROR"]));
+    }
+
+    #[test]
+    fn scan_finds_token_anywhere_including_message_body() {
+        // False-positive path: the token appears only in the message, not the
+        // level field. The pre-filter must KEEP the line (no false negative);
+        // LevelFilterStage then drops it after parsing.
+        assert!(matches(
+            r#"{"level":"info","msg":"an error occurred"}"#,
+            &["error"]
+        ));
+    }
+
+    #[test]
+    fn scan_drops_lines_without_any_needle() {
+        assert!(!matches(r#"{"level":"info","msg":"all good"}"#, &["error"]));
+        assert!(!matches("level=debug msg=quiet", &["error", "warn"]));
+    }
+
+    #[test]
+    fn scan_matches_any_of_multiple_needles() {
+        assert!(matches("level=warn x=1", &["error", "warn"]));
+        assert!(matches("level=error x=1", &["error", "warn"]));
+        assert!(!matches("level=info x=1", &["error", "warn"]));
+    }
+
+    #[test]
+    fn substring_needle_keeps_superset_levels_as_false_positives() {
+        // There is no aliasing today: `--levels warn` matches only the exact
+        // value "warn" in LevelFilterStage. But "warn" is a substring of
+        // "warning", so a warning line is a pre-filter false positive: kept by
+        // the scan, then correctly rejected by the stage. This is safe (no false
+        // negative) and mirrors the "extra tokens only cost false positives"
+        // guarantee.
+        assert!(matches(r#"{"level":"warning"}"#, &["warn"]));
+
+        let stage = LevelFilterStage::new(vec!["warn".to_string()], vec![]);
+        let mut warning = crate::event::Event::default();
+        warning
+            .fields
+            .insert("level".to_string(), Dynamic::from("warning".to_string()));
+        // The stage rejects "warning" under `--levels warn` (exact match).
+        assert!(!stage.evaluate_level_filter(&warning));
+        let mut warn = crate::event::Event::default();
+        warn.fields
+            .insert("level".to_string(), Dynamic::from("warn".to_string()));
+        assert!(stage.evaluate_level_filter(&warn));
+    }
+
+    #[test]
+    fn scan_handles_boundaries_and_non_ascii() {
+        // Needle at the very start and very end of the line.
+        assert!(matches("error at start", &["error"]));
+        assert!(matches("ends with error", &["error"]));
+        // Shorter-than-needle line never matches.
+        assert!(!matches("err", &["error"]));
+        // Non-ASCII bytes in the line don't spuriously match an ASCII needle and
+        // don't break the scan.
+        assert!(matches("héllo error wörld", &["error"]));
+        assert!(!matches("héllo wörld", &["error"]));
     }
 }

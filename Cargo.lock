@@ -1028,6 +1028,7 @@ dependencies = [
  "ipnet",
  "is-terminal",
  "lru",
+ "memchr",
  "mimalloc",
  "nom",
  "num_cpus",
