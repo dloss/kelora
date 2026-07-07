@@ -138,6 +138,13 @@ impl LogfmtParser {
 }
 
 impl EventParser for LogfmtParser {
+    // The level is the raw text of a `level=...` value, so it appears verbatim
+    // in the line (a quoted value like `level="error"` still contains the token
+    // as a substring).
+    fn level_appears_verbatim(&self) -> bool {
+        true
+    }
+
     fn parse(&self, line: &str) -> Result<Event> {
         let line = line.trim_end_matches('\n').trim_end_matches('\r');
         let pairs = self

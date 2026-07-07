@@ -56,6 +56,18 @@ impl EventParser for CascadingParser {
         Err(last_err
             .unwrap_or_else(|| anyhow::anyhow!("cascade parser has no inner parsers configured")))
     }
+
+    // Any member of the cascade may be the one that parses a given line, so the
+    // level appears verbatim only if *every* member guarantees it. A single
+    // non-verbatim member (e.g. syslog) could produce a derived level, so the
+    // whole cascade must be treated as non-verbatim (spec §4.3).
+    fn level_appears_verbatim(&self) -> bool {
+        !self.parsers.is_empty()
+            && self
+                .parsers
+                .iter()
+                .all(|(_, parser)| parser.level_appears_verbatim())
+    }
 }
 
 #[cfg(test)]

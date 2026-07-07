@@ -38,6 +38,12 @@ impl EventParser for TimestampConfiguredParser {
         event.extract_timestamp_with_config(None, &self.ts_config);
         Ok(event)
     }
+
+    // This wrapper only reconfigures timestamps; the level still comes from the
+    // inner parser, so verbatim-ness is whatever the inner parser reports.
+    fn level_appears_verbatim(&self) -> bool {
+        self.inner.level_appears_verbatim()
+    }
 }
 
 use super::{
@@ -177,6 +183,11 @@ pub struct PipelineBuilder {
     strict: bool,
     state_available: bool,
     csv_type_map: Option<TypeMap>,
+    /// Whether the output mode permits the raw-line level pre-filter. False when
+    /// `--stats` or `--discover` is active: those surface per-event counts and
+    /// discovered fields that a pre-parse drop would change. Other conditions
+    /// (parser, stage order, context, span, window) are checked in `build`.
+    output_allows_prefilter: bool,
 }
 
 impl PipelineBuilder {
@@ -398,6 +409,73 @@ impl PipelineBuilder {
         self.build_parser_internal()
     }
 
+    /// Compute the raw-line level pre-filter needles, or an empty vec when the
+    /// safety gate forbids the optimization (spec §4). Empty means the pre-filter
+    /// is inert and behavior is bit-identical to today.
+    ///
+    /// The gate requires, in addition to the output-mode check
+    /// (`output_allows_prefilter`, set from `--stats`/`--discover`):
+    ///  - a parser that extracts the level verbatim from the line text,
+    ///  - no context (`-A`/`-B`/`-C`), span, or window feature (each observes
+    ///    lines a pre-parse drop would skip),
+    ///  - and an **include-only level filter as the first script stage**, so no
+    ///    `--filter`/`--exec`/`--assert` or exclude-only filter runs first and
+    ///    could observe or keep a line the pre-filter would drop.
+    fn compute_level_prefilter_needles(
+        &self,
+        stages: &[crate::config::ScriptStageType],
+        parser: &dyn EventParser,
+    ) -> Vec<Vec<u8>> {
+        use crate::config::ScriptStageType;
+
+        if !self.output_allows_prefilter
+            || self.context_config.is_active()
+            || self.span.is_some()
+            || self.window_size > 0
+            || !parser.level_appears_verbatim()
+        {
+            return Vec::new();
+        }
+
+        // Find the first stage that would actually be built, and require it to be
+        // an include-only level filter.
+        let mut include: Option<&[String]> = None;
+        let mut decided = false;
+        for stage in stages {
+            match stage {
+                ScriptStageType::Filter { .. }
+                | ScriptStageType::Exec(_)
+                | ScriptStageType::Assert(_) => {
+                    decided = true; // a non-level stage runs first -> gate closed
+                    break;
+                }
+                ScriptStageType::LevelFilter {
+                    include: inc,
+                    exclude: exc,
+                } => {
+                    if inc.is_empty() && exc.is_empty() {
+                        continue; // inactive filter is not added; keep scanning
+                    }
+                    if !inc.is_empty() && exc.is_empty() {
+                        include = Some(inc.as_slice());
+                    }
+                    decided = true;
+                    break;
+                }
+            }
+        }
+        if !decided && !self.levels.is_empty() && self.exclude_levels.is_empty() {
+            // No inline stage set the order: the appended fallback level filter
+            // (from --levels or a config default) is the first stage.
+            include = Some(self.levels.as_slice());
+        }
+
+        match include {
+            Some(tokens) => super::level_prefilter_needles(tokens),
+            None => Vec::new(),
+        }
+    }
+
     pub fn new() -> Self {
         Self {
             config: PipelineConfig {
@@ -448,6 +526,7 @@ impl PipelineBuilder {
             strict: false,
             state_available: true,
             csv_type_map: None,
+            output_allows_prefilter: true,
         }
     }
 
@@ -492,6 +571,8 @@ impl PipelineBuilder {
 
         stats_set_timestamp_override(self.ts_field.clone(), self.ts_format.clone());
         let parser = self.build_parser_internal()?;
+        let level_prefilter_needles =
+            self.compute_level_prefilter_needles(&stages, parser.as_ref());
 
         // Create formatter
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -765,6 +846,7 @@ impl PipelineBuilder {
             span_processor,
             ts_config,
             window_active,
+            level_prefilter_needles,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -841,6 +923,8 @@ impl PipelineBuilder {
 
         stats_set_timestamp_override(self.ts_field.clone(), self.ts_format.clone());
         let parser = self.build_parser_internal()?;
+        let level_prefilter_needles =
+            self.compute_level_prefilter_needles(&stages, parser.as_ref());
 
         // Create formatter (workers still need formatters for output)
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1077,6 +1161,7 @@ impl PipelineBuilder {
             span_processor: None,
             ts_config,
             window_active,
+            level_prefilter_needles,
         };
 
         Ok((pipeline, ctx))
@@ -1230,6 +1315,10 @@ pub fn create_pipeline_builder_from_config(
     builder.context_config = config.processing.context.clone();
     builder.strict = config.processing.strict;
     builder.state_available = !config.should_use_parallel();
+    // --stats and --discover surface per-event counts / discovered fields that a
+    // pre-parse drop would change, so they disable the level pre-filter.
+    builder.output_allows_prefilter =
+        config.output.stats.is_none() && config.output.discover_fields.is_none();
     builder
 }
 
