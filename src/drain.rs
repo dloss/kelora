@@ -71,7 +71,8 @@ struct TemplateMetadata {
 struct DrainState {
     config: DrainConfig,
     tree: DrainTree,
-    /// Metadata tracked per template_id
+    /// Metadata tracked per normalized template string (see `normalize_template`
+    /// — the key is behaviorally identical to the template id, minus the hash).
     metadata: HashMap<String, TemplateMetadata>,
 }
 
@@ -97,39 +98,66 @@ impl DrainState {
         }
     }
 
-    fn ingest(&mut self, text: &str, line_num: Option<usize>) -> Result<DrainResult, String> {
+    /// Per-line hot path: add `text` to the tree and update per-template
+    /// metadata, returning the raw template string, its match count, and whether
+    /// this was the template's first sighting.
+    ///
+    /// The template id (a SHA256 hash) is deliberately *not* computed here — it
+    /// is display-only and derived once per template in [`templates`]. The
+    /// metadata key is looked up borrowed, so an owned key `String` is allocated
+    /// only the first time a template is seen, not on every line.
+    fn record(
+        &mut self,
+        text: &str,
+        line_num: Option<usize>,
+    ) -> Result<(String, usize, bool), String> {
         let cluster = self
             .tree
             .add_log_line(text)
             .ok_or_else(|| "Drain failed to match or create a cluster".to_string())?;
         let count = usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX);
         let template = cluster.as_string();
-        let template_id = generate_template_id(&template);
         let is_new = count == 1;
 
-        // Update or create metadata for this template
-        let meta = self
-            .metadata
-            .entry(template_id.clone())
-            .or_insert_with(|| TemplateMetadata {
-                sample: text.to_string(),
-                first_line: line_num,
-                last_line: line_num,
-            });
-
-        // Update last_line if we have a line number
-        if let Some(ln) = line_num {
-            meta.last_line = Some(ln);
+        let key = normalize_template(&template);
+        if let Some(meta) = self.metadata.get_mut(&key) {
+            // Hit path (the common case): no allocation, just refresh last_line.
+            if let Some(ln) = line_num {
+                meta.last_line = Some(ln);
+            }
+        } else {
+            self.metadata.insert(
+                key,
+                TemplateMetadata {
+                    sample: text.to_string(),
+                    first_line: line_num,
+                    last_line: line_num,
+                },
+            );
         }
+
+        Ok((template, count, is_new))
+    }
+
+    fn ingest(&mut self, text: &str, line_num: Option<usize>) -> Result<DrainResult, String> {
+        let (template, count, is_new) = self.record(text, line_num)?;
+        let template_id = generate_template_id(&template);
+
+        // `record` guarantees the entry exists; the fallback keeps this total.
+        let (sample, first_line, last_line) =
+            match self.metadata.get(&normalize_template(&template)) {
+                Some(meta) => (meta.sample.clone(), meta.first_line, meta.last_line),
+                None => (text.to_string(), line_num, line_num),
+            };
 
         Ok(DrainResult {
             template,
             template_id,
             count,
             is_new,
-            sample: meta.sample.clone(),
-            first_line: meta.first_line,
-            last_line: meta.last_line,
+            sample,
+            first_line,
+            last_line,
         })
     }
 
@@ -141,7 +169,7 @@ impl DrainState {
             .map(|cluster| {
                 let template = cluster.as_string();
                 let template_id = generate_template_id(&template);
-                let meta = self.metadata.get(&template_id);
+                let meta = self.metadata.get(&normalize_template(&template));
                 DrainTemplate {
                     template,
                     template_id,
@@ -176,8 +204,8 @@ impl DrainState {
 /// existing saved IDs. This function's behavior must remain stable forever
 /// to support long-term template ID persistence and comparison.
 pub fn generate_template_id(template: &str) -> String {
-    // Normalize whitespace for consistent hashing across formatting variations
-    let normalized = template.split_whitespace().collect::<Vec<_>>().join(" ");
+    // Normalize whitespace for consistent hashing across formatting variations.
+    let normalized = normalize_template(template);
 
     let mut hasher = Sha256::new();
     hasher.update(normalized.as_bytes());
@@ -185,6 +213,27 @@ pub fn generate_template_id(template: &str) -> String {
 
     // v1: prefix for version identification
     format!("v1:{}", hex::encode(&result[..8]))
+}
+
+/// Collapse leading/trailing/internal whitespace runs to single spaces.
+///
+/// This is the exact normalization [`generate_template_id`] hashes, so it
+/// *defines* template identity: two template strings that normalize alike belong
+/// to one metadata entry. Keying per-template metadata on this normalized string
+/// (rather than on the SHA256 template id) preserves the id's collision behavior
+/// byte-for-byte while keeping the expensive hash off the per-line hot path — it
+/// is only needed for the displayed `template_id`, computed once per template at
+/// output time. Builds the result in a single allocation (no intermediate
+/// `Vec`); `split_whitespace` never yields empty tokens, so the join is exact.
+fn normalize_template(template: &str) -> String {
+    let mut out = String::with_capacity(template.len());
+    for token in template.split_whitespace() {
+        if !out.is_empty() {
+            out.push(' ');
+        }
+        out.push_str(token);
+    }
+    out
 }
 
 fn to_u16(value: usize) -> u16 {
@@ -271,6 +320,31 @@ pub fn reset() {
     });
 }
 
+/// Lazily initialize the thread-local drain state, validating that a
+/// caller-supplied config matches any already in effect. Shared by the two
+/// ingest entry points below.
+fn ensure_state(
+    state: &mut Option<DrainState>,
+    config: &Option<DrainConfig>,
+) -> Result<(), String> {
+    match (state.as_ref(), config) {
+        (None, Some(cfg)) => {
+            *state = Some(DrainState::new(cfg.clone()));
+        }
+        (None, None) => {
+            *state = Some(DrainState::new(DrainConfig::default()));
+        }
+        (Some(existing), Some(cfg)) => {
+            let sanitized = cfg.sanitized();
+            if existing.config != sanitized {
+                return Err("Drain config already initialized with different options".into());
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
 pub fn drain_template(
     text: &str,
     config: Option<DrainConfig>,
@@ -278,26 +352,30 @@ pub fn drain_template(
 ) -> Result<DrainResult, String> {
     DRAIN_STATE.with(|state| {
         let mut state = state.borrow_mut();
-        match (state.as_ref(), &config) {
-            (None, Some(cfg)) => {
-                *state = Some(DrainState::new(cfg.clone()));
-            }
-            (None, None) => {
-                *state = Some(DrainState::new(DrainConfig::default()));
-            }
-            (Some(existing), Some(cfg)) => {
-                let sanitized = cfg.sanitized();
-                if existing.config != sanitized {
-                    return Err("Drain config already initialized with different options".into());
-                }
-            }
-            _ => {}
-        }
-
+        ensure_state(&mut state, &config)?;
         let drain = state
             .as_mut()
             .ok_or_else(|| "Drain state not initialized".to_string())?;
         drain.ingest(text, line_num)
+    })
+}
+
+/// Ingest a line for the `--drain` CLI pipeline, which only needs the model
+/// updated and does not consume the per-line [`DrainResult`]. Skips building the
+/// result (template id hash, sample clone) entirely — templates and their
+/// metadata are emitted once at the end via [`drain_templates`].
+pub fn drain_record(
+    text: &str,
+    config: Option<DrainConfig>,
+    line_num: Option<usize>,
+) -> Result<(), String> {
+    DRAIN_STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        ensure_state(&mut state, &config)?;
+        let drain = state
+            .as_mut()
+            .ok_or_else(|| "Drain state not initialized".to_string())?;
+        drain.record(text, line_num).map(|_| ())
     })
 }
 
@@ -434,6 +512,60 @@ mod tests {
         assert_eq!(b.template, "failed to connect to <ipv4>");
         assert_eq!(a.template_id, b.template_id);
         assert_eq!(b.count, 2);
+    }
+
+    #[test]
+    fn normalize_template_collapses_whitespace() {
+        assert_eq!(normalize_template("a b"), "a b");
+        assert_eq!(normalize_template("a  b"), "a b");
+        assert_eq!(normalize_template("  a   b  "), "a b");
+        assert_eq!(normalize_template(""), "");
+        assert_eq!(normalize_template("   "), "");
+        assert_eq!(normalize_template("solo"), "solo");
+        // Must agree exactly with the normalization generate_template_id hashes:
+        // equal normalized forms => equal ids.
+        assert_eq!(
+            generate_template_id("a  b"),
+            generate_template_id(normalize_template("a  b").as_str())
+        );
+    }
+
+    #[test]
+    fn whitespace_variant_templates_share_metadata() {
+        // Two messages whose Drain templates differ only by internal whitespace
+        // hash to the same template_id, so they share one metadata entry. Keying
+        // metadata on the normalized template (instead of the id) must preserve
+        // this collision behavior: first-seen sample and first_line win.
+        let mut drain = DrainState::new(DrainConfig::default());
+        let a = drain.ingest("alpha  bravo", Some(1)).expect("first ingest");
+        let b = drain.ingest("alpha bravo", Some(2)).expect("second ingest");
+
+        assert_eq!(a.template_id, b.template_id, "ids collide via normalization");
+        // Shared entry: the second sighting reports the first's sample/first_line.
+        assert_eq!(b.sample, "alpha  bravo");
+        assert_eq!(b.first_line, Some(1));
+        assert_eq!(b.last_line, Some(2));
+    }
+
+    #[test]
+    fn record_updates_model_without_building_result() {
+        // The CLI --drain path uses `record`; it must feed the same tree/metadata
+        // that `templates()` reads, so counts and samples match the `ingest` path.
+        let mut drain = DrainState::new(DrainConfig::default());
+        drain
+            .record("connect to 10.0.0.1", Some(1))
+            .expect("first record");
+        drain
+            .record("connect to 10.0.0.2", Some(4))
+            .expect("second record");
+
+        let templates = drain.templates();
+        assert_eq!(templates.len(), 1);
+        assert_eq!(templates[0].template, "connect to <ipv4>");
+        assert_eq!(templates[0].count, 2);
+        assert_eq!(templates[0].sample, "connect to 10.0.0.1");
+        assert_eq!(templates[0].first_line, Some(1));
+        assert_eq!(templates[0].last_line, Some(4));
     }
 
     #[test]
