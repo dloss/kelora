@@ -43,7 +43,17 @@ mod bench_alloc {
 
     /// Print the allocation tally to stderr, once, at end of run. `lines_read`
     /// lets bench/ compute allocs/line without post-processing.
+    ///
+    /// Gated on the `KELORA_BENCH_ALLOC` env var so it fires only during explicit
+    /// benchmarking. A `--features bench-alloc` build otherwise writes to stderr
+    /// on every run — which `cargo test --all-features` builds do — breaking the
+    /// many tests that assert a clean stderr (including data-only modes like
+    /// `--discover` and `--silent` runs). Set the env var when measuring:
+    /// `KELORA_BENCH_ALLOC=1 kelora … 2>alloc.txt`.
     pub fn report(lines_read: usize) {
+        if std::env::var_os("KELORA_BENCH_ALLOC").is_none() {
+            return;
+        }
         let allocs = ALLOC_COUNT.load(Ordering::Relaxed);
         let per_line = if lines_read > 0 {
             allocs as f64 / lines_read as f64
