@@ -13,6 +13,45 @@ pub struct TimestampFieldStat {
     pub parsed: usize,
 }
 
+/// Minimal abstraction over the two count-map types used for grouping counters
+/// (`std::HashMap` and `IndexMap`), so [`bump`] can serve both without a macro.
+trait CountMap {
+    fn get_count_mut(&mut self, key: &str) -> Option<&mut usize>;
+    fn insert_count(&mut self, key: String, value: usize);
+}
+
+impl CountMap for HashMap<String, usize> {
+    fn get_count_mut(&mut self, key: &str) -> Option<&mut usize> {
+        self.get_mut(key)
+    }
+    fn insert_count(&mut self, key: String, value: usize) {
+        self.insert(key, value);
+    }
+}
+
+impl CountMap for IndexMap<String, usize> {
+    fn get_count_mut(&mut self, key: &str) -> Option<&mut usize> {
+        self.get_mut(key)
+    }
+    fn insert_count(&mut self, key: String, value: usize) {
+        self.insert(key, value);
+    }
+}
+
+/// Increment the counter for `key`, allocating an owned key only on the miss
+/// path. Replaces the `entry(key.to_string()).or_insert(0) += 1` pattern, which
+/// allocated a fresh `String` on every call regardless of whether the key was
+/// already present. Group keys here are drawn from tiny closed vocabularies
+/// (formats, assertion expressions), so the hit path is overwhelmingly common
+/// and now costs a borrowed hash lookup rather than an allocation.
+fn bump<M: CountMap>(map: &mut M, key: &str) {
+    if let Some(count) = map.get_count_mut(key) {
+        *count += 1;
+    } else {
+        map.insert_count(key.to_string(), 1);
+    }
+}
+
 /// Statistics collected during log processing
 #[derive(Debug, Clone, Default)]
 pub struct ProcessingStats {
@@ -312,10 +351,7 @@ pub fn stats_add_cascade_format_hit(format: &str) {
     }
     THREAD_STATS.with(|stats| {
         let mut stats = stats.borrow_mut();
-        *stats
-            .cascade_format_counts
-            .entry(format.to_string())
-            .or_insert(0) += 1;
+        bump(&mut stats.cascade_format_counts, format);
     });
 }
 
@@ -334,10 +370,7 @@ pub fn stats_add_detected_format_hit(format: &str) {
     }
     THREAD_STATS.with(|stats| {
         let mut stats = stats.borrow_mut();
-        *stats
-            .detected_format_counts
-            .entry(format.to_string())
-            .or_insert(0) += 1;
+        bump(&mut stats.detected_format_counts, format);
     });
 }
 
@@ -428,10 +461,7 @@ pub fn stats_add_assertion_failure(expression: &str) {
     THREAD_STATS.with(|stats| {
         let mut stats = stats.borrow_mut();
         stats.assertion_failures += 1;
-        *stats
-            .assertion_failures_by_expr
-            .entry(expression.to_string())
-            .or_insert(0) += 1;
+        bump(&mut stats.assertion_failures_by_expr, expression);
     });
 }
 
@@ -503,7 +533,6 @@ pub fn stats_record_timestamp_detection(field_name: &str, _raw_value: &str, pars
     if !stats_enabled() {
         return;
     }
-    let field = field_name.to_string();
     THREAD_STATS.with(|stats| {
         let mut stats = stats.borrow_mut();
         stats.timestamp_detected_events += 1;
@@ -512,7 +541,18 @@ pub fn stats_record_timestamp_detection(field_name: &str, _raw_value: &str, pars
             stats.timestamp_parsed_events += 1;
         }
 
-        let entry = stats.timestamp_fields.entry(field).or_default();
+        // Hot path: this fires once per event that carries a timestamp field, and
+        // the field name is drawn from a tiny vocabulary. Look up by index first
+        // (borrowed, no alloc) and only allocate an owned key the first time a new
+        // field name is seen. `get_index_of` sidesteps the borrow-checker conflict
+        // that a `get_mut`-else-`entry` chain would hit.
+        let entry = match stats.timestamp_fields.get_index_of(field_name) {
+            Some(idx) => &mut stats.timestamp_fields[idx],
+            None => stats
+                .timestamp_fields
+                .entry(field_name.to_string())
+                .or_default(),
+        };
         entry.detected += 1;
         if parsed {
             entry.parsed += 1;

@@ -1129,28 +1129,27 @@ impl ScriptStage for KeyFilterStage {
             return ScriptResult::Emit(event);
         }
 
-        // Get available keys from the event
-        let available_keys: Vec<String> = event.fields.keys().cloned().collect();
-
-        // Calculate effective keys preserving the order specified by self.keys
-        let effective_keys = {
-            let mut result_keys = if self.keys.is_empty() {
-                // If no keys specified, start with all available keys
-                available_keys
-            } else {
-                // If keys specified, iterate through self.keys and only include those that exist in the event
-                // This preserves the order specified in self.keys rather than the original event order
-                self.keys
-                    .iter()
-                    .filter(|key| available_keys.contains(key))
-                    .cloned()
-                    .collect()
-            };
-
-            // Apply exclusions (higher priority)
-            result_keys.retain(|key| !self.exclude_keys.contains(key));
-
-            result_keys
+        // Calculate effective keys, cloning only the key names we actually keep
+        // (borrow the event's keys for membership tests rather than cloning the
+        // whole set up front). Exclusions apply in both branches.
+        let effective_keys: Vec<String> = if self.keys.is_empty() {
+            // No --keys: keep all present keys in event order, minus exclusions.
+            event
+                .fields
+                .keys()
+                .filter(|key| !self.exclude_keys.iter().any(|ex| ex == *key))
+                .cloned()
+                .collect()
+        } else {
+            // --keys given: keep requested keys that exist in the event, in the
+            // requested order, minus exclusions.
+            self.keys
+                .iter()
+                .filter(|key| {
+                    event.fields.contains_key(key.as_str()) && !self.exclude_keys.contains(key)
+                })
+                .cloned()
+                .collect()
         };
 
         // Apply the filtering
@@ -1190,7 +1189,10 @@ impl ScriptStage for DrainStage {
             };
 
             if !text.is_empty() {
-                if let Err(err) = crate::drain::drain_template(&text, None, event.line_num) {
+                // The CLI drain pipeline discards the per-line result, so use the
+                // lighter `drain_record` entry point (no template-id hash or
+                // sample clone per line) — templates are emitted at the end.
+                if let Err(err) = crate::drain::drain_record(&text, None, event.line_num) {
                     return ScriptResult::Error(err);
                 }
             }
