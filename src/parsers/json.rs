@@ -50,7 +50,11 @@ impl<'de> Visitor<'de> for DynVisitor {
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Dynamic, E> {
-        Ok(Dynamic::from(v.to_string()))
+        // Build the ImmutableString straight from the borrowed span: one
+        // allocation, not the String-then-ImmutableString pair of
+        // `from(v.to_string())`. serde_json calls this for string values with no
+        // escapes (the common case); escaped values go through visit_string.
+        Ok(Dynamic::from(rhai::ImmutableString::from(v)))
     }
 
     fn visit_string<E>(self, v: String) -> Result<Dynamic, E> {

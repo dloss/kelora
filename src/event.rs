@@ -462,8 +462,8 @@ impl Event {
         }
     }
 
-    pub fn set_field(&mut self, key: String, value: Dynamic) {
-        self.fields.insert(key, value);
+    pub fn set_field(&mut self, key: impl Into<String>, value: Dynamic) {
+        self.fields.insert(key.into(), value);
     }
 
     pub fn set_metadata(&mut self, line_num: usize, filename: Option<String>) {
