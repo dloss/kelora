@@ -15,6 +15,7 @@ pub mod parallel;
 pub mod parsers;
 pub mod pipeline;
 pub mod platform;
+pub mod projection;
 pub mod readers;
 pub mod rhai_functions;
 pub mod stats;

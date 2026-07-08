@@ -235,6 +235,32 @@ pub struct MetaData {
 pub trait EventParser: Send + Sync {
     fn parse(&self, line: &str) -> Result<Event>;
 
+    /// Parse a line, materializing only the fields the projection asks for.
+    ///
+    /// The default ignores the projection and materializes every field, which
+    /// is always correct (a downstream `KeyFilterStage` drops the extras). A
+    /// parser that can cheaply skip building `Dynamic` values for unwanted keys
+    /// overrides this *and* [`EventParser::supports_projection`]. Callers must
+    /// only pass a non-`All` projection to a parser that reports support; the
+    /// pipeline builder enforces this via the safety gate.
+    fn parse_projected(
+        &self,
+        line: &str,
+        _projection: &crate::projection::Projection,
+    ) -> Result<Event> {
+        self.parse(line)
+    }
+
+    /// Whether this parser honors a non-`All` [`crate::projection::Projection`]
+    /// in [`EventParser::parse_projected`]. Defaults to `false` (fail safe): an
+    /// unsupported parser forces the whole pipeline to `Projection::All`, so
+    /// projection can never silently change results for a parser that ignores
+    /// it. A parser (or wrapper) that overrides `parse_projected` must report
+    /// `true` here — wrappers delegate to their inner parser.
+    fn supports_projection(&self) -> bool {
+        false
+    }
+
     /// Whether this parser extracts the log level as text that appears
     /// *verbatim* in the raw line. When true, a line whose level field will
     /// match `--levels` is guaranteed to contain that level token as a
@@ -279,6 +305,18 @@ pub trait ScriptStage: Send {
     /// window maintenance entirely when no stage observes it.
     fn uses_window(&self) -> bool {
         false
+    }
+
+    /// The event fields this stage may observe, used to compute projection
+    /// pushdown at pipeline construction (see [`crate::projection`]).
+    ///
+    /// Defaults to [`crate::projection::Demand::All`] so that a stage added
+    /// without considering projection fails safe: it forces the whole pipeline
+    /// to materialize every field, exactly as before projection existed. A
+    /// stage that observes a bounded, statically known set of fields overrides
+    /// this to return [`crate::projection::Demand::Fields`] (or `Nothing`).
+    fn field_demands(&self) -> crate::projection::Demand {
+        crate::projection::Demand::All
     }
 }
 
@@ -329,6 +367,11 @@ pub struct Pipeline {
     /// Empty means the pre-filter is inert — one branch per line, no behavior
     /// change.
     pub level_prefilter_needles: Vec<Vec<u8>>,
+    /// Which fields the parser must materialize (see [`crate::projection`]).
+    /// [`crate::projection::Projection::All`] unless the safety gate at build
+    /// time proved a bounded field set suffices, in which case the parser skips
+    /// building `Dynamic` values for fields nothing downstream can observe.
+    pub projection: crate::projection::Projection,
 }
 
 impl Pipeline {
@@ -574,7 +617,7 @@ impl Pipeline {
         let mut results = Vec::new();
 
         // Parse stage
-        let mut event = match self.parser.parse(&chunk) {
+        let mut event = match self.parser.parse_projected(&chunk, &self.projection) {
             Ok(mut e) => {
                 // Event was successfully created from chunk
                 crate::stats::stats_add_event_created();

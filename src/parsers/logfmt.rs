@@ -1,6 +1,7 @@
 use crate::event::Event;
 use crate::parsers::type_conversion::looks_like_json_number;
 use crate::pipeline::EventParser;
+use crate::projection::Projection;
 use anyhow::Result;
 use rhai::Dynamic;
 use std::borrow::Cow;
@@ -31,11 +32,26 @@ impl LogfmtParser {
     /// per-line `Vec<(String, String)>` of the old parser is gone, and unquoted
     /// and escape-free quoted values never allocate an intermediate `String`.
     ///
+    /// When `projection` is `Some(Only(..))`, the value span of a key the
+    /// projection does not want is still scanned (so quoting/escapes advance the
+    /// cursor correctly and every key-level error is identical) but never
+    /// unescaped, coerced, or allocated: a cheap `Dynamic::UNIT` placeholder is
+    /// inserted under the real key instead. Keeping the *name* leaves the
+    /// field-name set — and the always-on typo-hint discovery that reads it —
+    /// byte-identical to a full parse; `KeyFilterStage` drops the placeholders
+    /// before output. This is the "nearly free in the span parser" projection
+    /// the spec anticipated.
+    ///
     /// Semantics mirror the previous char-by-char parser exactly (verified by the
     /// unit tests and the differential matrix): key errors, `""`/`\x` escape
     /// handling, unterminated quotes running to end of line, and numeric/boolean
     /// coercion are all preserved.
-    fn parse_into_event(&self, line: &str, event: &mut Event) -> Result<(), String> {
+    fn parse_into_event(
+        &self,
+        line: &str,
+        event: &mut Event,
+        projection: Option<&Projection>,
+    ) -> Result<(), String> {
         let bytes = line.as_bytes();
         let len = bytes.len();
         let mut i = 0;
@@ -69,8 +85,13 @@ impl LogfmtParser {
             }
             i += 1; // consume '='
 
+            // Whether this key's value must be materialized. Unwanted values are
+            // still scanned (the cursor must advance past them correctly) but not
+            // unescaped/coerced/allocated.
+            let keep = projection.is_none_or(|p| p.wants(key));
+
             // Value.
-            let value: Cow<str> = if i < len && bytes[i] == b'"' {
+            if i < len && bytes[i] == b'"' {
                 i += 1; // opening quote
                 let content_start = i;
                 let mut needs_unescape = false;
@@ -99,10 +120,15 @@ impl LogfmtParser {
                 if i < len {
                     i += 1; // consume closing quote
                 }
-                if needs_unescape {
-                    Cow::Owned(unescape_quoted_value(raw))
+                if keep {
+                    let value = if needs_unescape {
+                        Cow::Owned(unescape_quoted_value(raw))
+                    } else {
+                        Cow::Borrowed(raw)
+                    };
+                    event.set_field(key, self.parse_value_to_dynamic(value));
                 } else {
-                    Cow::Borrowed(raw)
+                    event.set_field(key, Dynamic::UNIT);
                 }
             } else {
                 // Unquoted value: read until whitespace or end of line.
@@ -110,10 +136,15 @@ impl LogfmtParser {
                 while i < len && bytes[i] != b' ' && bytes[i] != b'\t' {
                     i += 1;
                 }
-                Cow::Borrowed(&line[value_start..i])
-            };
-
-            event.set_field(key, self.parse_value_to_dynamic(value));
+                if keep {
+                    event.set_field(
+                        key,
+                        self.parse_value_to_dynamic(Cow::Borrowed(&line[value_start..i])),
+                    );
+                } else {
+                    event.set_field(key, Dynamic::UNIT);
+                }
+            }
         }
 
         Ok(())
@@ -197,6 +228,10 @@ impl EventParser for LogfmtParser {
         true
     }
 
+    fn supports_projection(&self) -> bool {
+        true
+    }
+
     fn parse(&self, line: &str) -> Result<Event> {
         let line = line.trim_end_matches('\n').trim_end_matches('\r');
         let content = line.trim();
@@ -208,10 +243,31 @@ impl EventParser for LogfmtParser {
         let capacity = memchr::memchr_iter(b'=', content.as_bytes()).count();
         let mut event = Event::with_capacity(line.to_string(), capacity);
 
-        self.parse_into_event(content, &mut event)
+        self.parse_into_event(content, &mut event, None)
             .map_err(|e| anyhow::anyhow!("{}", e))?;
 
         // Extract timestamp from the parsed data
+        if self.auto_timestamp {
+            event.extract_timestamp();
+        }
+        Ok(event)
+    }
+
+    fn parse_projected(&self, line: &str, projection: &Projection) -> Result<Event> {
+        if projection.is_all() {
+            return self.parse(line);
+        }
+        let line = line.trim_end_matches('\n').trim_end_matches('\r');
+        let content = line.trim();
+
+        let capacity = memchr::memchr_iter(b'=', content.as_bytes()).count();
+        let mut event = Event::with_capacity(line.to_string(), capacity);
+
+        // Wanted keys get their real (parsed) value; unwanted keys keep only
+        // their name with a `UNIT` placeholder (see `parse_into_event`).
+        self.parse_into_event(content, &mut event, Some(projection))
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+
         if self.auto_timestamp {
             event.extract_timestamp();
         }
@@ -223,6 +279,73 @@ impl EventParser for LogfmtParser {
 mod tests {
     use super::*;
     use crate::pipeline::EventParser;
+    use crate::projection::Projection;
+
+    fn only(fields: &[&str]) -> Projection {
+        Projection::Only(fields.iter().map(|s| s.to_string()).collect())
+    }
+
+    #[test]
+    fn projected_materializes_wanted_and_placeholders_unwanted() {
+        let parser = LogfmtParser::new();
+        let line = r#"level=error msg="boom bang" count=42 flag=true q="a=b c""#;
+        let ev = parser
+            .parse_projected(line, &only(&["level", "count"]))
+            .unwrap();
+
+        assert_eq!(
+            ev.fields
+                .get("level")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "error"
+        );
+        // Wanted numeric value is still type-coerced.
+        assert_eq!(ev.fields.get("count").unwrap().as_int().unwrap(), 42);
+        // Unwanted keys keep their name but collapse to UNIT (quoted value with
+        // embedded '=' is skipped correctly, so parse position is preserved).
+        for k in ["msg", "flag", "q"] {
+            assert!(ev.fields.contains_key(k), "name {k} preserved");
+            assert!(ev.fields.get(k).unwrap().is_unit(), "{k} must be UNIT");
+        }
+        // Same field-name set (and order) as a full parse.
+        let full = parser.parse(line).unwrap();
+        assert_eq!(
+            ev.fields.keys().collect::<Vec<_>>(),
+            full.fields.keys().collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn projected_key_errors_match_plain() {
+        let parser = LogfmtParser::new();
+        for bad in ["key value", "=value", "key with spaces=value"] {
+            let projected = parser.parse_projected(bad, &only(&["key"]));
+            let plain = parser.parse(bad);
+            assert_eq!(projected.is_err(), plain.is_err(), "input: {bad}");
+        }
+    }
+
+    #[test]
+    fn projected_unwanted_quoted_with_escapes_advances_correctly() {
+        // A skipped quoted value containing escapes and an embedded '=' must not
+        // desync the cursor; the following wanted key must still parse.
+        let parser = LogfmtParser::new();
+        let line = r#"skip="a=\"b\" c" level=warn"#;
+        let ev = parser.parse_projected(line, &only(&["level"])).unwrap();
+        assert!(ev.fields.get("skip").unwrap().is_unit());
+        assert_eq!(
+            ev.fields
+                .get("level")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "warn"
+        );
+    }
 
     #[test]
     fn test_logfmt_parser_basic() {

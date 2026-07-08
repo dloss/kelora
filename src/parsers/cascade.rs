@@ -57,6 +57,41 @@ impl EventParser for CascadingParser {
             .unwrap_or_else(|| anyhow::anyhow!("cascade parser has no inner parsers configured")))
     }
 
+    // Projection is honored only when *every* member supports it (spec §4): the
+    // winning member is not known until parse time, so a single unsupported
+    // member would silently ignore the projection for the lines it handles.
+    fn supports_projection(&self) -> bool {
+        !self.parsers.is_empty()
+            && self
+                .parsers
+                .iter()
+                .all(|(_, parser)| parser.supports_projection())
+    }
+
+    fn parse_projected(
+        &self,
+        line: &str,
+        projection: &crate::projection::Projection,
+    ) -> Result<Event> {
+        let mut last_err: Option<anyhow::Error> = None;
+        for (name, parser) in &self.parsers {
+            match parser.parse_projected(line, projection) {
+                Ok(mut event) => {
+                    // `_format` is appended after parsing, so it is unaffected by
+                    // the projection dropping the member's own fields.
+                    event.set_field(FORMAT_FIELD.to_string(), Dynamic::from(name.clone()));
+                    crate::stats::stats_add_cascade_format_hit(name);
+                    return Ok(event);
+                }
+                Err(e) => {
+                    last_err = Some(e);
+                }
+            }
+        }
+        Err(last_err
+            .unwrap_or_else(|| anyhow::anyhow!("cascade parser has no inner parsers configured")))
+    }
+
     // Any member of the cascade may be the one that parses a given line, so the
     // level appears verbatim only if *every* member guarantees it. A single
     // non-verbatim member (e.g. syslog) could produce a derived level, so the

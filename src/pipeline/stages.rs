@@ -1087,6 +1087,18 @@ impl LevelFilterStage {
 }
 
 impl ScriptStage for LevelFilterStage {
+    // Inspects the event's level via `LEVEL_FIELD_NAMES` (first present wins).
+    // Those field names must survive projection so the stage sees the same
+    // level it would without pushdown.
+    fn field_demands(&self) -> crate::projection::Demand {
+        crate::projection::Demand::Fields(
+            crate::event::LEVEL_FIELD_NAMES
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+        )
+    }
+
     fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
         if !self.is_active() {
             return ScriptResult::Emit(event);
@@ -1124,6 +1136,18 @@ impl KeyFilterStage {
 }
 
 impl ScriptStage for KeyFilterStage {
+    // With an explicit `--keys` list, only those fields can reach the output
+    // (this stage drops the rest), so they bound the projection. `--exclude-keys`
+    // alone still requires every field to be present to decide what to remove,
+    // so an exclude-only filter demands `All`.
+    fn field_demands(&self) -> crate::projection::Demand {
+        if self.keys.is_empty() {
+            crate::projection::Demand::All
+        } else {
+            crate::projection::Demand::Fields(self.keys.clone())
+        }
+    }
+
     fn apply(&mut self, mut event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
         if !self.is_active() {
             return ScriptResult::Emit(event);
@@ -1180,6 +1204,11 @@ impl DrainStage {
 }
 
 impl ScriptStage for DrainStage {
+    // Mines templates from a single field's text.
+    fn field_demands(&self) -> crate::projection::Demand {
+        crate::projection::Demand::Fields(vec![self.field_name.clone()])
+    }
+
     fn apply(&mut self, event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
         if let Some(value) = event.fields.get(&self.field_name) {
             let text = if value.is_string() {
@@ -1214,6 +1243,18 @@ impl TimestampFilterStage {
 }
 
 impl ScriptStage for TimestampFilterStage {
+    // Filters on `parsed_ts`, which the parser derives from the timestamp
+    // candidate fields (plus any custom `--ts-field`, contributed by the
+    // builder). Keep those names so `parsed_ts` is identical under projection.
+    fn field_demands(&self) -> crate::projection::Demand {
+        crate::projection::Demand::Fields(
+            crate::event::TIMESTAMP_FIELD_NAMES
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+        )
+    }
+
     fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
         // Get the parsed timestamp from the event
         let event_timestamp = match event.parsed_ts {
@@ -1284,6 +1325,18 @@ impl TimestampConversionStage {
 }
 
 impl ScriptStage for TimestampConversionStage {
+    // Reads and rewrites the timestamp field, found among the timestamp
+    // candidate fields (plus any custom `--ts-field`, contributed by the
+    // builder). Those names must survive projection.
+    fn field_demands(&self) -> crate::projection::Demand {
+        crate::projection::Demand::Fields(
+            crate::event::TIMESTAMP_FIELD_NAMES
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+        )
+    }
+
     fn apply(&mut self, mut event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
         event.extract_timestamp_with_config(None, &self.ts_config);
 
