@@ -97,6 +97,12 @@ ipnet = "2.9"  # IP address and network parsing/matching exposed to Rhai scripts
 drain-rs = "0.3.0"
 grok = "1.2"
 
+[features]
+# Wrap the global allocator in a counting shim that reports total allocations
+# (alloc + realloc) at end of run. Dev/benchmarking only — never enable in
+# release binaries. Used by bench/ to measure allocs/line before/after a change.
+bench-alloc = []
+
 [dev-dependencies]
 criterion = { version = "0.7", features = ["html_reports"] }  # Benchmarking framework with statistical analysis
 tempfile = "3.8"  # Temporary file/directory creation for integration tests

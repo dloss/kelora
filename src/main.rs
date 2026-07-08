@@ -4,8 +4,62 @@ use std::collections::BTreeSet;
 
 // Fast allocator: the streaming hot path is allocation-bound (per-event IndexMap
 // inserts, Dynamic/Event clones). mimalloc cuts that churn versus the system malloc.
+#[cfg(not(feature = "bench-alloc"))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
+// Allocation-counting harness (dev/benchmarking only, `--features bench-alloc`).
+// Wraps mimalloc in a shim that tallies alloc + realloc calls so bench/ can
+// report allocs/line before and after an allocation-focused change. The counter
+// is process-global and lock-free; the report is printed once at end of run.
+#[cfg(feature = "bench-alloc")]
+mod bench_alloc {
+    use std::alloc::{GlobalAlloc, Layout};
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    pub static ALLOC_COUNT: AtomicU64 = AtomicU64::new(0);
+
+    pub struct CountingAlloc(pub mimalloc::MiMalloc);
+
+    // Only `alloc`/`realloc` bump the counter (they are what "an allocation"
+    // means for allocs/line); `dealloc` is pass-through.
+    unsafe impl GlobalAlloc for CountingAlloc {
+        unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+            ALLOC_COUNT.fetch_add(1, Ordering::Relaxed);
+            self.0.alloc(layout)
+        }
+        unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+            self.0.dealloc(ptr, layout)
+        }
+        unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+            ALLOC_COUNT.fetch_add(1, Ordering::Relaxed);
+            self.0.alloc_zeroed(layout)
+        }
+        unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+            ALLOC_COUNT.fetch_add(1, Ordering::Relaxed);
+            self.0.realloc(ptr, layout, new_size)
+        }
+    }
+
+    /// Print the allocation tally to stderr, once, at end of run. `lines_read`
+    /// lets bench/ compute allocs/line without post-processing.
+    pub fn report(lines_read: usize) {
+        let allocs = ALLOC_COUNT.load(Ordering::Relaxed);
+        let per_line = if lines_read > 0 {
+            allocs as f64 / lines_read as f64
+        } else {
+            0.0
+        };
+        eprintln!(
+            "bench-alloc: allocs={} lines={} allocs_per_line={:.3}",
+            allocs, lines_read, per_line
+        );
+    }
+}
+
+#[cfg(feature = "bench-alloc")]
+#[global_allocator]
+static GLOBAL: bench_alloc::CountingAlloc = bench_alloc::CountingAlloc(mimalloc::MiMalloc);
 use std::io::IsTerminal;
 use std::sync::atomic::Ordering;
 
@@ -513,6 +567,9 @@ fn main() -> Result<()> {
             eprintln!("{}", config.format_error_message(&failure_text));
         }
     }
+
+    #[cfg(feature = "bench-alloc")]
+    bench_alloc::report(final_stats.as_ref().map(|s| s.lines_read).unwrap_or(0));
 
     if had_errors {
         ExitCode::GeneralError.exit();
