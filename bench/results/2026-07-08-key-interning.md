@@ -10,7 +10,10 @@ A/B: baseline and candidate binaries run back-to-back, 8 rounds (3 for the slow
 noisy — the baseline drifts ±2–3% between sessions — so only the interleaved
 min/median gap is load-bearing. Allocs come from the `--features bench-alloc`
 counting allocator (`alloc`+`realloc`+`alloc_zeroed`), `÷1_000_000` (the harness
-prints `lines=0` in pass-through since `lines_read` is only set under `-s`).
+prints `lines=0` in pass-through since `lines_read` is only set under `-s`). The
+report is gated on `KELORA_BENCH_ALLOC=1` so a `--features bench-alloc` build
+stays silent on normal/`cargo test --all-features` runs; set the env var when
+measuring.
 
 ## Outcome
 
