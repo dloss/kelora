@@ -138,6 +138,18 @@ pub(crate) enum LineMessage {
         line: String,
         filename: Option<String>,
     },
+    /// A batch of physical lines delivered in one channel send. `data` holds the
+    /// decoded, trailing-whitespace-trimmed lines concatenated with no
+    /// separators; `ranges` gives one byte range per physical line (empty ranges
+    /// for blank lines) so the batcher can slice each line as `&data[range]`.
+    /// This is the plain (stdin/single-reader) path's replacement for a
+    /// `Line`-per-line stream: one allocation and one send per ~256 KiB chunk
+    /// instead of per line. Filenames are always `None` on this path, so none is
+    /// carried.
+    Chunk {
+        data: String,
+        ranges: Vec<std::ops::Range<usize>>,
+    },
     Error {
         error: std::io::Error,
         filename: Option<String>,
