@@ -540,7 +540,10 @@ mod tests {
         let a = drain.ingest("alpha  bravo", Some(1)).expect("first ingest");
         let b = drain.ingest("alpha bravo", Some(2)).expect("second ingest");
 
-        assert_eq!(a.template_id, b.template_id, "ids collide via normalization");
+        assert_eq!(
+            a.template_id, b.template_id,
+            "ids collide via normalization"
+        );
         // Shared entry: the second sighting reports the first's sample/first_line.
         assert_eq!(b.sample, "alpha  bravo");
         assert_eq!(b.first_line, Some(1));
