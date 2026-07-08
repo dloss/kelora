@@ -3,6 +3,7 @@ use crate::parsers::type_conversion::looks_like_json_number;
 use crate::pipeline::EventParser;
 use anyhow::Result;
 use rhai::Dynamic;
+use std::borrow::Cow;
 
 pub struct LogfmtParser {
     auto_timestamp: bool,
@@ -21,120 +22,171 @@ impl LogfmtParser {
         }
     }
 
-    /// Parse logfmt line: key1=value1 key2="value with spaces" key3=value3
-    /// Adapted from Stelp but converted to work with Kelora's Dynamic system
-    fn parse_logfmt_pairs(&self, line: &str) -> Result<Vec<(String, String)>, String> {
-        let mut pairs = Vec::new();
-        let mut chars = line.chars().peekable();
+    /// Parse a logfmt line directly into `event`, borrowing key and value spans
+    /// from `line`. Scans bytes over ASCII delimiters (`=`, space, tab, `"`,
+    /// `\`), which never occur inside a multi-byte UTF-8 sequence, so the spans
+    /// are always valid `&str`. The only allocations are the owned key, the one
+    /// `ImmutableString`/`String` backing each string value, and — for a quoted
+    /// value containing escapes — a single unescape buffer. In particular the
+    /// per-line `Vec<(String, String)>` of the old parser is gone, and unquoted
+    /// and escape-free quoted values never allocate an intermediate `String`.
+    ///
+    /// Semantics mirror the previous char-by-char parser exactly (verified by the
+    /// unit tests and the differential matrix): key errors, `""`/`\x` escape
+    /// handling, unterminated quotes running to end of line, and numeric/boolean
+    /// coercion are all preserved.
+    fn parse_into_event(&self, line: &str, event: &mut Event) -> Result<(), String> {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
 
-        while chars.peek().is_some() {
-            // Skip whitespace
-            while chars.peek() == Some(&' ') || chars.peek() == Some(&'\t') {
-                chars.next();
+        while i < len {
+            // Skip inter-pair whitespace.
+            while i < len && (bytes[i] == b' ' || bytes[i] == b'\t') {
+                i += 1;
             }
-
-            if chars.peek().is_none() {
+            if i >= len {
                 break;
             }
 
-            // Parse key
-            let mut key = String::new();
-            while let Some(&ch) = chars.peek() {
-                if ch == '=' {
-                    break;
-                } else if ch == ' ' || ch == '\t' {
-                    return Err("Key cannot contain spaces".to_string());
-                } else {
-                    key.push(chars.next().unwrap());
+            // Key: bytes up to '='. A space/tab before '=' is an error, matching
+            // the original parser.
+            let key_start = i;
+            while i < len {
+                match bytes[i] {
+                    b'=' => break,
+                    b' ' | b'\t' => return Err("Key cannot contain spaces".to_string()),
+                    _ => i += 1,
                 }
             }
-
-            if key.is_empty() {
+            if i == key_start {
                 return Err("Empty key found".to_string());
             }
+            let key = &line[key_start..i];
 
-            // Expect '='
-            if chars.next() != Some('=') {
+            if i >= len || bytes[i] != b'=' {
                 return Err(format!("Expected '=' after key '{}'", key));
             }
+            i += 1; // consume '='
 
-            // Parse value
-            let mut value = String::new();
-            if chars.peek() == Some(&'"') {
-                // Quoted value
-                chars.next(); // consume opening quote
-                while let Some(ch) = chars.next() {
-                    if ch == '"' {
-                        // Check for escaped quote
-                        if chars.peek() == Some(&'"') {
-                            chars.next(); // consume escaped quote
-                            value.push('"');
-                        } else {
-                            break; // end of quoted value
-                        }
-                    } else if ch == '\\' {
-                        // Handle escape sequences
-                        if let Some(escaped_ch) = chars.next() {
-                            match escaped_ch {
-                                'n' => value.push('\n'),
-                                't' => value.push('\t'),
-                                'r' => value.push('\r'),
-                                '\\' => value.push('\\'),
-                                '"' => value.push('"'),
-                                _ => {
-                                    value.push('\\');
-                                    value.push(escaped_ch);
-                                }
+            // Value.
+            let value: Cow<str> = if i < len && bytes[i] == b'"' {
+                i += 1; // opening quote
+                let content_start = i;
+                let mut needs_unescape = false;
+                loop {
+                    if i >= len {
+                        break; // unterminated quote: value runs to end of line
+                    }
+                    match bytes[i] {
+                        // A `""` pair is an escaped quote; a lone `"` closes.
+                        b'"' => {
+                            if i + 1 < len && bytes[i + 1] == b'"' {
+                                needs_unescape = true;
+                                i += 2;
+                            } else {
+                                break;
                             }
                         }
-                    } else {
-                        value.push(ch);
+                        b'\\' => {
+                            needs_unescape = true;
+                            i += 2; // skip the escaped byte (clamped below)
+                        }
+                        _ => i += 1,
                     }
+                }
+                let raw = &line[content_start..i.min(len)];
+                if i < len {
+                    i += 1; // consume closing quote
+                }
+                if needs_unescape {
+                    Cow::Owned(unescape_quoted_value(raw))
+                } else {
+                    Cow::Borrowed(raw)
                 }
             } else {
-                // Unquoted value - read until space or end
-                while let Some(&ch) = chars.peek() {
-                    if ch == ' ' || ch == '\t' {
-                        break;
-                    } else {
-                        value.push(chars.next().unwrap());
-                    }
+                // Unquoted value: read until whitespace or end of line.
+                let value_start = i;
+                while i < len && bytes[i] != b' ' && bytes[i] != b'\t' {
+                    i += 1;
                 }
-            }
+                Cow::Borrowed(&line[value_start..i])
+            };
 
-            pairs.push((key, value));
+            event.set_field(key, self.parse_value_to_dynamic(value));
         }
 
-        Ok(pairs)
+        Ok(())
     }
 
-    /// Try to convert string to a numeric Dynamic value, falling back to string
-    fn parse_value_to_dynamic(&self, value: String) -> Dynamic {
+    /// Coerce a logfmt value into a Dynamic, borrowing where possible.
+    fn parse_value_to_dynamic(&self, value: Cow<str>) -> Dynamic {
+        let v: &str = value.as_ref();
         // Only coerce values that are syntactically valid JSON numbers. This
         // keeps zero-padded IDs ("007"), signed values ("+1555..."), and
         // inf/nan as strings rather than silently rewriting them.
-        if looks_like_json_number(&value) {
+        if looks_like_json_number(v) {
             // Try integer first
-            if let Ok(i) = value.parse::<i64>() {
+            if let Ok(i) = v.parse::<i64>() {
                 return Dynamic::from(i);
             }
-
             // Try float (e.g. fractional, exponent, or integers beyond i64)
-            if let Ok(f) = value.parse::<f64>() {
+            if let Ok(f) = v.parse::<f64>() {
                 return Dynamic::from(f);
             }
         }
 
-        // Try boolean
-        match value.to_lowercase().as_str() {
-            "true" => return Dynamic::from(true),
-            "false" => return Dynamic::from(false),
-            _ => {}
+        // Booleans, case-insensitive. Only ASCII case variants can lower-case to
+        // "true"/"false", so this matches the original `to_lowercase()` compare
+        // without allocating.
+        if v.eq_ignore_ascii_case("true") {
+            return Dynamic::from(true);
+        }
+        if v.eq_ignore_ascii_case("false") {
+            return Dynamic::from(false);
         }
 
-        // Default to string
-        Dynamic::from(value)
+        // String value: reuse an owned (already-unescaped) buffer, or build one
+        // ImmutableString from the borrowed span. A single allocation either way,
+        // never the String-then-ImmutableString double allocation of before.
+        match value {
+            Cow::Owned(s) => Dynamic::from(s),
+            Cow::Borrowed(s) => Dynamic::from(rhai::ImmutableString::from(s)),
+        }
     }
+}
+
+/// Un-escape the raw content of a quoted logfmt value — the bytes between the
+/// surrounding quotes, still containing `\x` escapes and `""` quote pairs.
+/// Mirrors the original char-by-char decoder exactly, including a trailing lone
+/// backslash decoding to nothing.
+fn unescape_quoted_value(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    let mut chars = raw.chars();
+    while let Some(ch) = chars.next() {
+        match ch {
+            // Every `"` in `raw` is the first half of a `""` pair: drop the
+            // second half and emit one quote.
+            '"' => {
+                let _ = chars.next();
+                out.push('"');
+            }
+            '\\' => match chars.next() {
+                Some('n') => out.push('\n'),
+                Some('t') => out.push('\t'),
+                Some('r') => out.push('\r'),
+                Some('\\') => out.push('\\'),
+                Some('"') => out.push('"'),
+                Some(other) => {
+                    out.push('\\');
+                    out.push(other);
+                }
+                None => {} // trailing backslash emits nothing
+            },
+            other => out.push(other),
+        }
+    }
+    out
 }
 
 impl EventParser for LogfmtParser {
@@ -147,18 +199,17 @@ impl EventParser for LogfmtParser {
 
     fn parse(&self, line: &str) -> Result<Event> {
         let line = line.trim_end_matches('\n').trim_end_matches('\r');
-        let pairs = self
-            .parse_logfmt_pairs(line.trim())
+        let content = line.trim();
+
+        // Pre-size the field map by counting '=' delimiters (a cheap SIMD scan).
+        // A '=' inside a quoted value slightly over-counts, which only over-
+        // reserves capacity — it never forces a re-hash mid-parse, and it avoids
+        // the per-line map growth that inserting into an unsized map would cause.
+        let capacity = memchr::memchr_iter(b'=', content.as_bytes()).count();
+        let mut event = Event::with_capacity(line.to_string(), capacity);
+
+        self.parse_into_event(content, &mut event)
             .map_err(|e| anyhow::anyhow!("{}", e))?;
-
-        // Pre-allocate Event with capacity based on number of pairs
-        let mut event = Event::with_capacity(line.to_string(), pairs.len());
-
-        for (key, value) in pairs {
-            // Convert string values to appropriate Dynamic types
-            let dynamic_value = self.parse_value_to_dynamic(value);
-            event.set_field(key, dynamic_value);
-        }
 
         // Extract timestamp from the parsed data
         if self.auto_timestamp {
