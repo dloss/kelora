@@ -44,6 +44,23 @@ impl EventParser for TimestampConfiguredParser {
     fn level_appears_verbatim(&self) -> bool {
         self.inner.level_appears_verbatim()
     }
+
+    // Projection support is whatever the inner parser reports. The custom
+    // timestamp field (if any) is added to the projection by the builder so
+    // `identify_timestamp_field` still finds it after pushdown.
+    fn supports_projection(&self) -> bool {
+        self.inner.supports_projection()
+    }
+
+    fn parse_projected(
+        &self,
+        line: &str,
+        projection: &crate::projection::Projection,
+    ) -> Result<crate::event::Event> {
+        let mut event = self.inner.parse_projected(line, projection)?;
+        event.extract_timestamp_with_config(None, &self.ts_config);
+        Ok(event)
+    }
 }
 
 use super::{
@@ -476,6 +493,86 @@ impl PipelineBuilder {
         }
     }
 
+    /// Compute the field [`Projection`] for the assembled pipeline (spec §3–4).
+    ///
+    /// Returns [`Projection::All`] — i.e. pushdown off, behavior byte-identical
+    /// to before — unless a single setup-time check proves a bounded field set
+    /// suffices. The gate is closed by any observer that can read arbitrary
+    /// fields:
+    ///  - no explicit `--keys` (default output prints every field; also covers
+    ///    exclude-only `--exclude-keys`, whose `KeyFilterStage` demands `All`),
+    ///  - a Rhai stage (`--filter`/`--exec`/`--assert`, default `Demand::All`)
+    ///    or `--begin`/`--end` (which may run scripts touching events),
+    ///  - `--stats` or `--discover` (they observe every field by design),
+    ///  - `--span` or `--extract-prefix` (parser wrappers/observers not modeled
+    ///    field-by-field in v1),
+    ///  - a parser (or any cascade member) that does not support projection.
+    ///
+    /// Otherwise the needed set is the union of every stage's declared
+    /// [`Demand::Fields`], plus the timestamp candidate fields (so `parsed_ts`,
+    /// `_ts` output, and the `--stats` result-time span are unchanged) and any
+    /// custom `--ts-field`.
+    fn compute_projection(
+        &self,
+        script_stages: &[Box<dyn ScriptStage>],
+        parser: &dyn EventParser,
+    ) -> crate::projection::Projection {
+        use crate::projection::{Demand, Projection};
+
+        // Internal escape hatch: force projection off. Undocumented; exists so
+        // the differential test harness can compare pushdown-on vs pushdown-off
+        // on byte-identical commands, and as an operational safety valve.
+        if std::env::var_os("KELORA_NO_PROJECTION").is_some() {
+            return Projection::All;
+        }
+
+        // `output_allows_prefilter` is set from `--stats`/`--discover` being
+        // absent — exactly the data-summary modes that observe all fields.
+        let gate_open = !self.keys.is_empty()
+            && self.begin.is_none()
+            && self.end.is_none()
+            && self.span.is_none()
+            && self.extract_prefix.is_none()
+            && self.output_allows_prefilter
+            && parser.supports_projection();
+
+        if !gate_open {
+            return Projection::All;
+        }
+
+        let mut needed = crate::projection::FieldNameSet::default();
+        for stage in script_stages {
+            match stage.field_demands() {
+                Demand::All => return Projection::All,
+                Demand::Fields(fields) => needed.extend(fields),
+                Demand::Nothing => {}
+            }
+        }
+
+        // The parser derives `parsed_ts` from the timestamp candidate fields
+        // (json/logfmt always attempt this, whether via auto-detection or the
+        // TimestampConfiguredParser wrapper). Keeping them makes `parsed_ts`
+        // — and everything that reads it — identical under projection.
+        for name in crate::event::TIMESTAMP_FIELD_NAMES {
+            needed.insert((*name).to_string());
+        }
+        if let Some(ref ts_field) = self.ts_field {
+            needed.insert(ts_field.clone());
+        }
+
+        // Always keep the level-field *values*. The always-on stats collection
+        // (active whenever diagnostics are not suppressed, not just under
+        // `--stats`) records the discovered level by stringifying the first
+        // present `LEVEL_FIELD_NAMES` value; a `UNIT` placeholder there would
+        // drop it from that set. Names of unwanted fields are preserved by the
+        // parser's placeholder, so `discovered_keys` needs no special handling.
+        for name in crate::event::LEVEL_FIELD_NAMES {
+            needed.insert((*name).to_string());
+        }
+
+        Projection::Only(needed)
+    }
+
     pub fn new() -> Self {
         Self {
             config: PipelineConfig {
@@ -730,7 +827,7 @@ impl PipelineBuilder {
         }
 
         // Add timestamp filtering stage (runs after script stages, before level filtering)
-        if let Some(timestamp_filter_config) = self.timestamp_filter {
+        if let Some(timestamp_filter_config) = self.timestamp_filter.clone() {
             let timestamp_filter_stage = TimestampFilterStage::new(timestamp_filter_config);
             script_stages.push(Box::new(timestamp_filter_stage));
         }
@@ -767,6 +864,11 @@ impl PipelineBuilder {
         } else {
             None
         };
+
+        // Projection pushdown: decide which fields the parser must materialize
+        // now that every stage (and its field demands) is known. Computed before
+        // `self` is partially moved into the pipeline context below.
+        let projection = self.compute_projection(&script_stages, parser.as_ref());
 
         // Create begin and end stages
         let begin_stage = BeginStage::new(self.begin, &mut rhai_engine)?;
@@ -847,6 +949,7 @@ impl PipelineBuilder {
             ts_config,
             window_active,
             level_prefilter_needles,
+            projection,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -1086,7 +1189,7 @@ impl PipelineBuilder {
         }
 
         // Add timestamp filtering stage (runs after script stages, before level filtering)
-        if let Some(timestamp_filter_config) = self.timestamp_filter {
+        if let Some(timestamp_filter_config) = self.timestamp_filter.clone() {
             let timestamp_filter_stage = TimestampFilterStage::new(timestamp_filter_config);
             script_stages.push(Box::new(timestamp_filter_stage));
         }
@@ -1098,6 +1201,10 @@ impl PipelineBuilder {
         }
 
         // Context processing is now handled within FilterStage
+
+        // Projection pushdown: computed before `self` is partially moved into
+        // the pipeline context below.
+        let projection = self.compute_projection(&script_stages, parser.as_ref());
 
         // No limiter for parallel workers (limiting happens at the result sink level)
         let limiter: Option<Box<dyn EventLimiter>> = None;
@@ -1162,6 +1269,7 @@ impl PipelineBuilder {
             ts_config,
             window_active,
             level_prefilter_needles,
+            projection,
         };
 
         Ok((pipeline, ctx))
@@ -1386,4 +1494,132 @@ pub fn sort_files(files: &[String], order: &crate::config::FileOrder) -> Result<
     }
 
     Ok(sorted_files)
+}
+
+#[cfg(test)]
+mod projection_tests {
+    use super::*;
+    use crate::event::Event;
+    use crate::pipeline::{ScriptResult, ScriptStage};
+    use crate::projection::{Demand, Projection};
+
+    /// A stage that deliberately does NOT override `field_demands`, so it
+    /// inherits the fail-safe `Demand::All`. Its presence must collapse the
+    /// projection to `All` (spec §6 tripwire): a future stage added without
+    /// considering projection can never silently narrow the field set.
+    struct MockStageNoDemands;
+    impl ScriptStage for MockStageNoDemands {
+        fn apply(&mut self, event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
+            ScriptResult::Emit(event)
+        }
+    }
+
+    fn builder_with_keys(keys: &[&str]) -> PipelineBuilder {
+        let mut b = PipelineBuilder::new();
+        b.keys = keys.iter().map(|s| s.to_string()).collect();
+        b
+    }
+
+    fn json_parser() -> Box<dyn EventParser> {
+        Box::new(crate::parsers::JsonlParser::new())
+    }
+
+    #[test]
+    fn tripwire_unknown_stage_forces_all() {
+        let builder = builder_with_keys(&["msg"]);
+        let stages: Vec<Box<dyn ScriptStage>> = vec![
+            Box::new(MockStageNoDemands),
+            Box::new(KeyFilterStage::new(vec!["msg".to_string()], vec![])),
+        ];
+        let projection = builder.compute_projection(&stages, json_parser().as_ref());
+        assert!(
+            projection.is_all(),
+            "a stage without an explicit field_demands must fail safe to All"
+        );
+    }
+
+    #[test]
+    fn keys_yield_only_projection_with_ts_and_level() {
+        let builder = builder_with_keys(&["msg"]);
+        let stages: Vec<Box<dyn ScriptStage>> = vec![Box::new(KeyFilterStage::new(
+            vec!["msg".to_string()],
+            vec![],
+        ))];
+        let projection = builder.compute_projection(&stages, json_parser().as_ref());
+        match projection {
+            Projection::Only(set) => {
+                assert!(set.contains("msg"), "the -k field must be kept");
+                // parsed_ts + discovered-level completeness rely on these.
+                for name in crate::event::TIMESTAMP_FIELD_NAMES {
+                    assert!(set.contains(*name), "ts candidate {name} must be kept");
+                }
+                for name in crate::event::LEVEL_FIELD_NAMES {
+                    assert!(set.contains(*name), "level candidate {name} must be kept");
+                }
+            }
+            Projection::All => panic!("expected a bounded projection for -k msg"),
+        }
+    }
+
+    #[test]
+    fn no_keys_forces_all() {
+        let builder = PipelineBuilder::new(); // keys empty -> default output prints all
+        let stages: Vec<Box<dyn ScriptStage>> = vec![];
+        assert!(builder
+            .compute_projection(&stages, json_parser().as_ref())
+            .is_all());
+    }
+
+    #[test]
+    fn exclude_only_key_filter_forces_all() {
+        // --exclude-keys with no -k: KeyFilterStage demands All (it must see
+        // every field to decide what to drop).
+        let stage = KeyFilterStage::new(vec![], vec!["secret".to_string()]);
+        assert!(matches!(stage.field_demands(), Demand::All));
+    }
+
+    #[test]
+    fn rhai_stage_demand_defaults_to_all() {
+        let mut engine = crate::engine::RhaiEngine::new();
+        let filter = FilterStage::new("true".to_string(), vec![], &mut engine).unwrap();
+        assert!(
+            matches!(filter.field_demands(), Demand::All),
+            "Rhai stages can read arbitrary fields and must demand All"
+        );
+    }
+
+    #[test]
+    fn unsupported_parser_forces_all() {
+        // The line parser does not support projection; even with -k the gate
+        // must stay closed.
+        let builder = builder_with_keys(&["line"]);
+        let stages: Vec<Box<dyn ScriptStage>> = vec![Box::new(KeyFilterStage::new(
+            vec!["line".to_string()],
+            vec![],
+        ))];
+        let parser: Box<dyn EventParser> = Box::new(crate::parsers::LineParser::new());
+        assert!(builder
+            .compute_projection(&stages, parser.as_ref())
+            .is_all());
+    }
+
+    #[test]
+    fn begin_end_span_prefix_force_all() {
+        let stages: Vec<Box<dyn ScriptStage>> = vec![Box::new(KeyFilterStage::new(
+            vec!["msg".to_string()],
+            vec![],
+        ))];
+
+        let mut b = builder_with_keys(&["msg"]);
+        b.begin = Some("x = 1".to_string());
+        assert!(b
+            .compute_projection(&stages, json_parser().as_ref())
+            .is_all());
+
+        let mut b = builder_with_keys(&["msg"]);
+        b.extract_prefix = Some("app".to_string());
+        assert!(b
+            .compute_projection(&stages, json_parser().as_ref())
+            .is_all());
+    }
 }

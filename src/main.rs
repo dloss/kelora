@@ -95,6 +95,7 @@ mod parallel;
 mod parsers;
 mod pipeline;
 mod platform;
+mod projection;
 mod readers;
 mod rhai_functions;
 mod runner;
