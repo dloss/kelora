@@ -476,6 +476,48 @@ impl PipelineBuilder {
         }
     }
 
+    /// Compute the timestamp fast-path pre-filter range, or `None` when the
+    /// safety gate (spec §4) forbids the optimization. `None` means the fast
+    /// path is inert and behavior is bit-identical to today.
+    ///
+    /// The gate requires all of:
+    ///  - an active `--since`/`--until` range (otherwise nothing to pre-filter),
+    ///  - a parser whose `extract_ts_only` is provably consistent with its full
+    ///    parse under the default timestamp config (`supports_ts_fast_path`) —
+    ///    which is `false` when `--ts-field`/`--ts-format`/`--default-timezone`
+    ///    wraps the parser, so those overrides disable the fast path (§3.1),
+    ///  - resilient mode (v1 disables the fast path under `--strict` so a
+    ///    missing/invalid timestamp still produces the identical strict error
+    ///    via the full parse, §3.3),
+    ///  - the output-mode check (`output_allows_prefilter`, shared with the
+    ///    level pre-filter: `--stats`/`--discover` surface per-event counts and
+    ///    discovered fields that a pre-parse drop would change),
+    ///  - no context (`-A`/`-B`/`-C`), span, or window feature, each of which
+    ///    observes lines a pre-parse drop would skip.
+    ///
+    /// One boolean decision at setup, not per line.
+    fn compute_ts_prefilter(&self, parser: &dyn EventParser) -> Option<super::TsPrefilterRange> {
+        if self.strict || self.config.strict {
+            return None;
+        }
+        if !self.output_allows_prefilter
+            || self.context_config.is_active()
+            || self.span.is_some()
+            || self.window_size > 0
+            || !parser.supports_ts_fast_path()
+        {
+            return None;
+        }
+        let filter = self.timestamp_filter.as_ref()?;
+        if filter.since.is_none() && filter.until.is_none() {
+            return None;
+        }
+        Some(super::TsPrefilterRange {
+            since: filter.since,
+            until: filter.until,
+        })
+    }
+
     pub fn new() -> Self {
         Self {
             config: PipelineConfig {
@@ -573,6 +615,7 @@ impl PipelineBuilder {
         let parser = self.build_parser_internal()?;
         let level_prefilter_needles =
             self.compute_level_prefilter_needles(&stages, parser.as_ref());
+        let ts_prefilter = self.compute_ts_prefilter(parser.as_ref());
 
         // Create formatter
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -847,6 +890,7 @@ impl PipelineBuilder {
             ts_config,
             window_active,
             level_prefilter_needles,
+            ts_prefilter,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -925,6 +969,7 @@ impl PipelineBuilder {
         let parser = self.build_parser_internal()?;
         let level_prefilter_needles =
             self.compute_level_prefilter_needles(&stages, parser.as_ref());
+        let ts_prefilter = self.compute_ts_prefilter(parser.as_ref());
 
         // Create formatter (workers still need formatters for output)
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1162,6 +1207,7 @@ impl PipelineBuilder {
             ts_config,
             window_active,
             level_prefilter_needles,
+            ts_prefilter,
         };
 
         Ok((pipeline, ctx))

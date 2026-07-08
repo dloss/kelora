@@ -22,6 +22,30 @@ before/after A/B benchmarking and a byte-identical differential correctness gate
 - `results/` — committed result write-ups (raw hyperfine exports go under
   `results/raw/`, which is gitignored).
 
+### Timestamp fast-path pre-filter (`--since`/`--until`)
+
+A separate harness for the `extract_ts_only` timestamp pre-filter (see that
+spec). Timestamps are spread uniformly at random and written in UNSORTED order,
+so a `--until` early-exit cannot help — the measured effect is the pre-filter's
+alone.
+
+- `gen_ts_corpus.py` — deterministic generator of matched logfmt/JSON corpora
+  (~15 fields/record) with random unsorted timestamps across a 24h window.
+  Prints the `--since` thresholds (90% mark ≈ 10% kept; 0% mark = all kept).
+- `diff_ts_check.sh` — byte-identical differential matrix for the timestamp
+  fast path: pre-filter-active cases (logfmt/json, `--since`/`--until`,
+  sequential + `--parallel`), mixed shapes (no-ts / nested-ts / numeric-ts /
+  dup-ts), timezone-bearing and naive timestamps, and gate-off cases
+  (`--strict`, `--ts-field`, context, `--stats`, cascade).
+- `bench_ts.py` — pure-stdlib wall-clock A/B over the 1M corpora for scenarios
+  A–E (§5 of the spec).
+
+```bash
+python3 bench/gen_ts_corpus.py --lines 1000000 --outdir bench/corpus
+bench/diff_ts_check.sh bench/bin/kelora-baseline bench/bin/kelora-candidate
+python3 bench/bench_ts.py bench/bin/kelora-baseline bench/bin/kelora-candidate bench/corpus
+```
+
 ## Usage
 
 ```bash

@@ -522,7 +522,7 @@ pub fn identify_timestamp_field<S: std::hash::BuildHasher>(
 
 /// Convert a Rhai Dynamic value to a timestamp string representation
 /// Handles integers, floats, and strings
-fn dynamic_to_timestamp_string(value: &rhai::Dynamic) -> Option<String> {
+pub(crate) fn dynamic_to_timestamp_string(value: &rhai::Dynamic) -> Option<String> {
     // Try integer first (Unix timestamps are often integers in JSON)
     if let Ok(int_val) = value.as_int() {
         return Some(int_val.to_string());

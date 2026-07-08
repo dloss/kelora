@@ -251,6 +251,37 @@ pub trait EventParser: Send + Sync {
     fn level_appears_verbatim(&self) -> bool {
         false
     }
+
+    /// If cheaply possible, parse only the event timestamp from the raw line,
+    /// without building the full [`Event`]. Used by the `--since`/`--until`
+    /// timestamp fast-path pre-filter (see `Pipeline::ts_prefilter`) to drop
+    /// out-of-range lines before the expensive full parse.
+    ///
+    /// Returning `None` means "unknown — do the full parse"; it is always the
+    /// safe answer. The one hard invariant: this must **never** return
+    /// `Some(ts)` where `ts` differs from the `parsed_ts` the full [`parse`]
+    /// would produce for the same line. Implementations therefore call the
+    /// exact same timestamp-parsing path (`src/timestamp.rs`) with the same
+    /// config the full parse uses, and bail to `None` on anything ambiguous.
+    ///
+    /// [`parse`]: EventParser::parse
+    fn extract_ts_only(&self, _line: &str) -> Option<DateTime<Utc>> {
+        None
+    }
+
+    /// Whether this parser implements a non-trivial [`extract_ts_only`] that is
+    /// provably consistent with its full parse under the *default* timestamp
+    /// config. The safety gate uses this to decide whether the timestamp
+    /// pre-filter may be enabled (see `PipelineBuilder::compute_ts_prefilter`).
+    ///
+    /// Defaults to `false`. A parser wrapped in a custom-timestamp
+    /// configuration (`--ts-field`/`--ts-format`/`--default-timezone`) reports
+    /// `false`, disabling the fast path rather than guessing (spec §3.1/§4).
+    ///
+    /// [`extract_ts_only`]: EventParser::extract_ts_only
+    fn supports_ts_fast_path(&self) -> bool {
+        false
+    }
 }
 
 /// Optional line-level filtering before parsing
@@ -329,6 +360,44 @@ pub struct Pipeline {
     /// Empty means the pre-filter is inert — one branch per line, no behavior
     /// change.
     pub level_prefilter_needles: Vec<Vec<u8>>,
+    /// Timestamp fast-path pre-filter range, or `None` when the safety gate
+    /// (see `PipelineBuilder::compute_ts_prefilter`) forbids it. When `Some`,
+    /// an assembled chunk whose timestamp the parser can cheaply extract
+    /// (`EventParser::extract_ts_only`) and that falls outside this range is
+    /// dropped before the full parse — the `TimestampFilterStage` remains in
+    /// the pipeline as the unchanged correctness backstop for every line the
+    /// fast path does not positively drop. `None` means the fast path is inert:
+    /// one branch per line, no behavior change.
+    pub ts_prefilter: Option<TsPrefilterRange>,
+}
+
+/// The resolved `--since`/`--until` range for the timestamp fast-path
+/// pre-filter. Mirrors exactly the comparison `TimestampFilterStage` applies,
+/// so a line the fast path drops is one the stage would have dropped too.
+#[derive(Debug, Clone, Copy)]
+pub struct TsPrefilterRange {
+    pub since: Option<DateTime<Utc>>,
+    pub until: Option<DateTime<Utc>>,
+}
+
+impl TsPrefilterRange {
+    /// True if `ts` is outside `[since, until]` — the same predicate
+    /// `TimestampFilterStage` uses to `Skip` an event (`ts < since` or
+    /// `ts > until`).
+    #[inline]
+    fn excludes(&self, ts: DateTime<Utc>) -> bool {
+        if let Some(since) = self.since {
+            if ts < since {
+                return true;
+            }
+        }
+        if let Some(until) = self.until {
+            if ts > until {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 impl Pipeline {
@@ -569,6 +638,25 @@ impl Pipeline {
             )
         {
             return Ok(Vec::new());
+        }
+
+        // Timestamp fast-path pre-filter. Runs after the level scan (cheaper
+        // first, spec §3.2) and before parsing. When the parser can cheaply
+        // extract just the timestamp and it falls outside the `--since`/`--until`
+        // range, the line is dropped without the full parse + FieldMap
+        // allocation cost. `extract_ts_only` returning `None` ("unknown") falls
+        // through to the full parse, where `TimestampFilterStage` — still in the
+        // pipeline — is the correctness backstop. Inert (None) unless the safety
+        // gate enabled it at build time. A dropped line is skipped exactly like
+        // the level pre-filter: no event is created, so it does not count toward
+        // event/parse stats — the gate guarantees those counters are
+        // unobservable when the fast path is active.
+        if let Some(range) = self.ts_prefilter {
+            if let Some(ts) = self.parser.extract_ts_only(&chunk) {
+                if range.excludes(ts) {
+                    return Ok(Vec::new());
+                }
+            }
         }
 
         let mut results = Vec::new();

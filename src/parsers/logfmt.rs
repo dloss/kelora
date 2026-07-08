@@ -137,12 +137,156 @@ impl LogfmtParser {
     }
 }
 
+/// Convert a raw (unquoted) logfmt value into the exact timestamp string the
+/// full path would hand to the parser, without allocating for the common
+/// string case. This inlines `LogfmtParser::parse_value_to_dynamic` followed by
+/// `timestamp::dynamic_to_timestamp_string`:
+///  - a JSON-number-shaped value becomes its `i64`/`f64` rendering (as the full
+///    path's numeric `Dynamic` would stringify),
+///  - a case-insensitive `true`/`false` becomes a bool, which is *not*
+///    convertible to a timestamp string (`None` → fall through to next field),
+///  - everything else is a string whose timestamp form is itself (borrowed).
+fn logfmt_value_to_ts_str(value: &str) -> Option<std::borrow::Cow<'_, str>> {
+    use std::borrow::Cow;
+    if looks_like_json_number(value) {
+        if let Ok(i) = value.parse::<i64>() {
+            return Some(Cow::Owned(i.to_string()));
+        }
+        if let Ok(f) = value.parse::<f64>() {
+            return Some(Cow::Owned(format!("{:.9}", f)));
+        }
+    }
+    if value.eq_ignore_ascii_case("true") || value.eq_ignore_ascii_case("false") {
+        return None; // bool value -> not convertible to a timestamp
+    }
+    Some(Cow::Borrowed(value))
+}
+
 impl EventParser for LogfmtParser {
     // The level is the raw text of a `level=...` value, so it appears verbatim
     // in the line (a quoted value like `level="error"` still contains the token
     // as a substring).
     fn level_appears_verbatim(&self) -> bool {
         true
+    }
+
+    // The fast path is provably consistent with the full parse only when this
+    // parser auto-extracts the timestamp with the default config. When
+    // `--ts-field`/`--ts-format`/`--default-timezone` is set the parser is
+    // built without auto-timestamp and wrapped in `TimestampConfiguredParser`,
+    // which does not enable the fast path (spec §3.1/§4).
+    fn supports_ts_fast_path(&self) -> bool {
+        self.auto_timestamp
+    }
+
+    // Extract only the timestamp with an allocation-free scan of the same
+    // key=value structure the full parse tokenizes, then run the winning field
+    // through the *identical* conversion + parsing path
+    // (`parse_value_to_dynamic` → `dynamic_to_timestamp_string` → the
+    // thread-local adaptive parser with the default config). This mirrors
+    // `Event::extract_timestamp` / `identify_timestamp_field` exactly: the first
+    // timestamp field name (in `TIMESTAMP_FIELD_NAMES` precedence) that is
+    // present and convertible wins, and its parse result — `Some` or `None` —
+    // is returned verbatim. Only the single winning value is ever allocated.
+    //
+    // Bails to `None` (deferring to the full parse) on: any structure the full
+    // tokenizer would reject as malformed (so the full parse reproduces the
+    // identical error), or a *quoted* timestamp value (whose decoded form can
+    // differ from its raw bytes) — quoted timestamps are rare and defer safely.
+    fn extract_ts_only(&self, line: &str) -> Option<chrono::DateTime<chrono::Utc>> {
+        if !self.auto_timestamp {
+            return None;
+        }
+        let line = line.trim_end_matches('\n').trim_end_matches('\r');
+        let bytes = line.trim().as_bytes();
+        let len = bytes.len();
+        let mut i = 0usize;
+
+        // Unquoted value slices of the timestamp fields we saw, indexed by
+        // precedence in TIMESTAMP_FIELD_NAMES (last write wins). A stack array
+        // of `Option<&str>` — no heap allocation.
+        const N: usize = crate::event::TIMESTAMP_FIELD_NAMES.len();
+        let mut hits: [Option<&str>; N] = [None; N];
+
+        while i < len {
+            // Skip inter-pair whitespace.
+            while i < len && (bytes[i] == b' ' || bytes[i] == b'\t') {
+                i += 1;
+            }
+            if i >= len {
+                break;
+            }
+
+            // Key: up to '='. A space/tab in the key or a missing '=' is a
+            // tokenizer error in the full parse, so bail.
+            let key_start = i;
+            while i < len && bytes[i] != b'=' {
+                if bytes[i] == b' ' || bytes[i] == b'\t' {
+                    return None;
+                }
+                i += 1;
+            }
+            if i >= len {
+                return None; // no '=' after key
+            }
+            let key = &bytes[key_start..i];
+            if key.is_empty() {
+                return None; // empty key
+            }
+            i += 1; // consume '='
+            let ts_idx = crate::event::TIMESTAMP_FIELD_NAMES
+                .iter()
+                .position(|name| name.as_bytes() == key);
+
+            // Value.
+            if i < len && bytes[i] == b'"' {
+                // Quoted: find the closing quote honoring `\x` and `""` escapes
+                // exactly as the full tokenizer does, so non-ts pairs are skipped
+                // correctly. A quoted *timestamp* value bails (see above).
+                i += 1;
+                loop {
+                    if i >= len {
+                        break; // unterminated quote: full parser takes to EOL
+                    }
+                    match bytes[i] {
+                        b'"' => {
+                            if i + 1 < len && bytes[i + 1] == b'"' {
+                                i += 2;
+                            } else {
+                                i += 1;
+                                break;
+                            }
+                        }
+                        b'\\' => i += 2,
+                        _ => i += 1,
+                    }
+                }
+                if ts_idx.is_some() {
+                    return None; // quoted timestamp value -> defer to full parse
+                }
+            } else {
+                // Unquoted: read until whitespace or end.
+                let value_start = i;
+                while i < len && bytes[i] != b' ' && bytes[i] != b'\t' {
+                    i += 1;
+                }
+                if let Some(idx) = ts_idx {
+                    hits[idx] = Some(std::str::from_utf8(&bytes[value_start..i]).ok()?);
+                }
+            }
+        }
+
+        // Resolve by field-name precedence, replicating `identify_timestamp_field`
+        // (first present + convertible field wins; its parse result is returned).
+        for value in hits.iter().flatten() {
+            if let Some(ts_str) = logfmt_value_to_ts_str(value) {
+                return crate::timestamp::with_thread_local_parser(|parser| {
+                    parser.parse_ts_with_config(&ts_str, None, None)
+                });
+            }
+            // Present but not convertible: fall through to the next field.
+        }
+        None
     }
 
     fn parse(&self, line: &str) -> Result<Event> {
