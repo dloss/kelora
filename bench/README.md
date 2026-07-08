@@ -12,6 +12,13 @@ before/after A/B benchmarking and a byte-identical differential correctness gate
   candidate binary in one invocation per scenario. Exports JSON + Markdown.
 - `diff_check.sh` — runs both binaries across a flag matrix and asserts stdout,
   stderr, and exit code are byte-identical. Exits non-zero on any difference.
+- `diff_stdin.sh` — differential gate for the batched (chunked) plain reader:
+  pipes a broad corpus matrix in via STDIN with `--parallel` (the only path that
+  uses `plain_io_reader_thread`) and asserts byte-identical stdout/stderr/exit.
+- `bench_stdin.py` — pure-stdlib wall-clock A/B for the plain reader over STDIN
+  (`run.sh` passes file *arguments*, which route through the untouched
+  file-aware reader; the chunked reader is only exercised via STDIN). Reports
+  median + min over repeated runs; used when `hyperfine` is unavailable.
 - `results/` — committed result write-ups (raw hyperfine exports go under
   `results/raw/`, which is gitignored).
 

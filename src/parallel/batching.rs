@@ -21,50 +21,102 @@ fn line_flips_quote(line: &str) -> bool {
     line.bytes().filter(|&b| b == b'"').count() % 2 == 1
 }
 
-/// Plain IO reader thread - reads from stdin or a single reader
+/// Size at which the plain reader flushes its accumulated chunk to the batcher.
+/// The reader decodes lines into one contiguous buffer and sends them as a
+/// single `LineMessage::Chunk` (one channel send, one buffer allocation)
+/// instead of one `Line` send + one `String` allocation per line. 256 KiB
+/// amortizes the per-send cost across thousands of lines while keeping the
+/// per-chunk memory footprint small and the shutdown-check interval short. On
+/// slow/interactive input the reader flushes early whenever its buffer drains
+/// (see `plain_io_reader_thread`), so streaming latency is unaffected.
+const READER_CHUNK_BYTES: usize = 256 * 1024;
+
+/// Plain IO reader thread - reads from stdin or a single reader.
+///
+/// Reads via [`crate::readers::read_line_lossy`] (preserving its lossy-UTF-8,
+/// `--strict-utf8`, and `--max-line-bytes` truncation semantics byte-for-byte)
+/// but accumulates the decoded, `trim_end`-ed lines into one contiguous buffer
+/// and delivers them in chunks. This removes the per-line heap allocation and
+/// the per-line channel send that made the reader the bottleneck on large
+/// inputs; the batcher still sees the exact same physical-line sequence.
 pub(crate) fn plain_io_reader_thread<R: std::io::BufRead>(
-    mut reader: R,
+    reader: R,
     line_sender: Sender<LineMessage>,
     ctrl_rx: Receiver<Ctrl>,
 ) -> Result<()> {
-    let mut buffer = String::new();
+    // Wrap in a `BufReader` we own so `buffer()` reveals when the currently
+    // available bytes are drained — the point just before the next read would
+    // block on the OS. We flush there so interactive / `tail -f` input is never
+    // held back waiting for a full chunk (streaming-latency requirement).
+    let mut reader = std::io::BufReader::with_capacity(READER_CHUNK_BYTES, reader);
+
+    let mut data = String::new();
+    let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
+
+    // Send the accumulated chunk, if any, and reset the buffers. Returns `false`
+    // if the receiver has hung up (caller should stop).
+    macro_rules! flush {
+        () => {{
+            if ranges.is_empty() {
+                true
+            } else {
+                let msg = LineMessage::Chunk {
+                    data: std::mem::take(&mut data),
+                    ranges: std::mem::take(&mut ranges),
+                };
+                line_sender.send(msg).is_ok()
+            }
+        }};
+    }
+
     loop {
         if let Ok(Ctrl::Shutdown { immediate }) = ctrl_rx.try_recv() {
-            let _ = line_sender.send(LineMessage::Eof);
-            if immediate {
-                return Ok(());
+            // Graceful shutdown still delivers already-read lines; an immediate
+            // shutdown drops them (matching the batcher, which does not flush its
+            // current batch on `immediate`).
+            if !immediate {
+                let _ = flush!();
             }
-            break;
+            let _ = line_sender.send(LineMessage::Eof);
+            return Ok(());
         }
 
-        buffer.clear();
-        match crate::readers::read_line_lossy(&mut reader, &mut buffer) {
+        // Before a read that may block (owned buffer empty → next read hits the
+        // OS), emit what we have so slow producers see per-arrival latency.
+        if reader.buffer().is_empty() && !flush!() {
+            return Ok(());
+        }
+
+        let start = data.len();
+        match crate::readers::read_line_lossy(&mut reader, &mut data) {
             Ok(0) => {
+                let _ = flush!();
                 let _ = line_sender.send(LineMessage::Eof);
-                break;
+                return Ok(());
             }
             Ok(_) => {
-                let line = buffer.trim_end().to_string();
-                if line_sender
-                    .send(LineMessage::Line {
-                        line,
-                        filename: None,
-                    })
-                    .is_err()
-                {
-                    break;
+                // Reproduce the former `buffer.trim_end().to_string()` exactly:
+                // drop the just-appended line's trailing whitespace (incl. the
+                // `\n` / `\r\n`) and record the trimmed slice as this line's
+                // range. Blank lines yield an empty range, preserved as a line.
+                let trimmed_len = data[start..].trim_end().len();
+                data.truncate(start + trimmed_len);
+                ranges.push(start..start + trimmed_len);
+
+                if data.len() >= READER_CHUNK_BYTES && !flush!() {
+                    return Ok(());
                 }
             }
             Err(e) => {
+                let _ = flush!();
                 let _ = line_sender.send(LineMessage::Error {
                     error: e,
                     filename: None,
                 });
-                break;
+                return Ok(());
             }
         }
     }
-    Ok(())
 }
 
 /// File-aware IO reader thread - reads from multiple files with filename tracking
@@ -131,8 +183,11 @@ pub(crate) fn batcher_thread(
     let mut skipped_lines_count = 0usize;
     let mut filtered_lines = 0usize;
     let mut csv_quote_open = false;
+    // Clone so `config` stays fully owned and borrowable by `feed_plain_line`
+    // (which takes `&BatcherThreadConfig`); the selector needs its own copy.
     let mut section_selector = config
         .section_config
+        .clone()
         .map(crate::pipeline::SectionSelector::new);
 
     let ctrl_rx = ctrl_rx;
@@ -193,41 +248,37 @@ pub(crate) fn batcher_thread(
                 recv(line_receiver) -> msg => {
                     match msg {
                         Ok(LineMessage::Line { line, .. }) => {
-                            handle_plain_line(
-                                line,
-                                PlainLineContext {
-                                    batch_sender: &config.batch_sender,
-                                    current_batch: &mut current_batch,
-                                    batch_size: config.batch_size,
-                                    batch_timeout: config.batch_timeout,
-                                    batch_id: &mut batch_id,
-                                    batch_start_line: &mut batch_start_line,
-                                    line_num: &mut line_num,
-                                    skipped_lines_count: &mut skipped_lines_count,
-                                    filtered_lines: &mut filtered_lines,
-                                    skip_lines: config.skip_lines,
-                                    head_lines: config.head_lines,
-                                    section_selector: &mut section_selector,
-                                    input_format: &config.input_format,
-                                    ignore_lines: &config.ignore_lines,
-                                    keep_lines: &config.keep_lines,
-                                    pending_deadline: &mut pending_deadline,
-                                    csv_quote_open: &mut csv_quote_open,
-                                },
-                            )?;
-
-                            // Check if we've reached the head limit after processing this line
-                            if let Some(head_limit) = config.head_lines {
-                                if line_num >= head_limit {
-                                    // Flush remaining batch and stop
-                                    if !current_batch.is_empty() {
-                                        send_batch(
-                                            &config.batch_sender,
-                                            &mut current_batch,
-                                            batch_id,
-                                            batch_start_line,
-                                        )?;
-                                    }
+                            if feed_plain_line(
+                                &line,
+                                &config,
+                                &mut current_batch,
+                                &mut batch_id,
+                                &mut batch_start_line,
+                                &mut line_num,
+                                &mut skipped_lines_count,
+                                &mut filtered_lines,
+                                &mut section_selector,
+                                &mut pending_deadline,
+                                &mut csv_quote_open,
+                            )? {
+                                break 'outer;
+                            }
+                        }
+                        Ok(LineMessage::Chunk { data, ranges }) => {
+                            for range in ranges {
+                                if feed_plain_line(
+                                    &data[range],
+                                    &config,
+                                    &mut current_batch,
+                                    &mut batch_id,
+                                    &mut batch_start_line,
+                                    &mut line_num,
+                                    &mut skipped_lines_count,
+                                    &mut filtered_lines,
+                                    &mut section_selector,
+                                    &mut pending_deadline,
+                                    &mut csv_quote_open,
+                                )? {
                                     break 'outer;
                                 }
                             }
@@ -313,41 +364,37 @@ pub(crate) fn batcher_thread(
                 recv(line_receiver) -> msg => {
                     match msg {
                         Ok(LineMessage::Line { line, .. }) => {
-                            handle_plain_line(
-                                line,
-                                PlainLineContext {
-                                    batch_sender: &config.batch_sender,
-                                    current_batch: &mut current_batch,
-                                    batch_size: config.batch_size,
-                                    batch_timeout: config.batch_timeout,
-                                    batch_id: &mut batch_id,
-                                    batch_start_line: &mut batch_start_line,
-                                    line_num: &mut line_num,
-                                    skipped_lines_count: &mut skipped_lines_count,
-                                    filtered_lines: &mut filtered_lines,
-                                    skip_lines: config.skip_lines,
-                                    head_lines: config.head_lines,
-                                    section_selector: &mut section_selector,
-                                    input_format: &config.input_format,
-                                    ignore_lines: &config.ignore_lines,
-                                    keep_lines: &config.keep_lines,
-                                    pending_deadline: &mut pending_deadline,
-                                    csv_quote_open: &mut csv_quote_open,
-                                },
-                            )?;
-
-                            // Check if we've reached the head limit after processing this line
-                            if let Some(head_limit) = config.head_lines {
-                                if line_num >= head_limit {
-                                    // Flush remaining batch and stop
-                                    if !current_batch.is_empty() {
-                                        send_batch(
-                                            &config.batch_sender,
-                                            &mut current_batch,
-                                            batch_id,
-                                            batch_start_line,
-                                        )?;
-                                    }
+                            if feed_plain_line(
+                                &line,
+                                &config,
+                                &mut current_batch,
+                                &mut batch_id,
+                                &mut batch_start_line,
+                                &mut line_num,
+                                &mut skipped_lines_count,
+                                &mut filtered_lines,
+                                &mut section_selector,
+                                &mut pending_deadline,
+                                &mut csv_quote_open,
+                            )? {
+                                break 'outer;
+                            }
+                        }
+                        Ok(LineMessage::Chunk { data, ranges }) => {
+                            for range in ranges {
+                                if feed_plain_line(
+                                    &data[range],
+                                    &config,
+                                    &mut current_batch,
+                                    &mut batch_id,
+                                    &mut batch_start_line,
+                                    &mut line_num,
+                                    &mut skipped_lines_count,
+                                    &mut filtered_lines,
+                                    &mut section_selector,
+                                    &mut pending_deadline,
+                                    &mut csv_quote_open,
+                                )? {
                                     break 'outer;
                                 }
                             }
@@ -536,6 +583,12 @@ pub(crate) fn file_aware_batcher_thread(
                                 }
                             }
                         }
+                        // The file-aware reader emits `Line` (with per-line
+                        // filenames), never `Chunk` — chunked delivery is the
+                        // plain path's optimization. See `plain_io_reader_thread`.
+                        Ok(LineMessage::Chunk { .. }) => {
+                            unreachable!("file-aware reader never emits Chunk")
+                        }
                         Ok(LineMessage::Error { error, filename }) => {
                             let context = filename
                                 .as_deref()
@@ -677,6 +730,11 @@ pub(crate) fn file_aware_batcher_thread(
                                 }
                             }
                         }
+                        // See the deadline branch above: `Chunk` is plain-path
+                        // only; the file-aware reader emits `Line`.
+                        Ok(LineMessage::Chunk { .. }) => {
+                            unreachable!("file-aware reader never emits Chunk")
+                        }
                     Ok(LineMessage::Error { error, filename }) => {
                         let context = filename
                             .as_deref()
@@ -724,8 +782,72 @@ pub(crate) fn file_aware_batcher_thread(
     Ok(())
 }
 
-/// Handle a plain line (no filename tracking)
-pub(crate) fn handle_plain_line(line: String, ctx: PlainLineContext<'_>) -> Result<()> {
+/// Feed one plain line into the batcher and apply the post-line head-limit
+/// check. Returns `Ok(true)` when the head limit has been reached and the caller
+/// should flush the final batch and stop. Shared by the `Line` and `Chunk`
+/// receive arms so both paths behave identically.
+#[allow(clippy::too_many_arguments)]
+fn feed_plain_line(
+    line: &str,
+    config: &BatcherThreadConfig,
+    current_batch: &mut Vec<String>,
+    batch_id: &mut u64,
+    batch_start_line: &mut usize,
+    line_num: &mut usize,
+    skipped_lines_count: &mut usize,
+    filtered_lines: &mut usize,
+    section_selector: &mut Option<crate::pipeline::SectionSelector>,
+    pending_deadline: &mut Option<Instant>,
+    csv_quote_open: &mut bool,
+) -> Result<bool> {
+    handle_plain_line(
+        line,
+        PlainLineContext {
+            batch_sender: &config.batch_sender,
+            current_batch,
+            batch_size: config.batch_size,
+            batch_timeout: config.batch_timeout,
+            batch_id,
+            batch_start_line,
+            line_num,
+            skipped_lines_count,
+            filtered_lines,
+            skip_lines: config.skip_lines,
+            head_lines: config.head_lines,
+            section_selector,
+            input_format: &config.input_format,
+            ignore_lines: &config.ignore_lines,
+            keep_lines: &config.keep_lines,
+            pending_deadline,
+            csv_quote_open,
+        },
+    )?;
+
+    // Check if we've reached the head limit after processing this line.
+    if let Some(head_limit) = config.head_lines {
+        if *line_num >= head_limit {
+            // Flush remaining batch and signal stop.
+            if !current_batch.is_empty() {
+                send_batch(
+                    &config.batch_sender,
+                    current_batch,
+                    *batch_id,
+                    *batch_start_line,
+                )?;
+            }
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+/// Handle a plain line (no filename tracking).
+///
+/// Takes the line by reference and only allocates an owned `String` when the
+/// line actually survives filtering and is pushed into the batch, so filtered
+/// lines (e.g. `--levels`, `--keep-lines`) cost no allocation.
+pub(crate) fn handle_plain_line(line: &str, ctx: PlainLineContext<'_>) -> Result<()> {
     *ctx.line_num += 1;
 
     // Check if we've hit the head limit (stops processing early)
@@ -760,7 +882,7 @@ pub(crate) fn handle_plain_line(line: String, ctx: PlainLineContext<'_>) -> Resu
 
         // Apply section selection if configured
         if let Some(selector) = ctx.section_selector {
-            if !selector.should_include_line(&line) {
+            if !selector.should_include_line(line) {
                 *ctx.filtered_lines += 1;
                 return Ok(());
             }
@@ -771,14 +893,14 @@ pub(crate) fn handle_plain_line(line: String, ctx: PlainLineContext<'_>) -> Resu
         }
 
         if let Some(keep_regex) = ctx.keep_lines.as_ref() {
-            if !keep_regex.is_match(&line) {
+            if !keep_regex.is_match(line) {
                 *ctx.filtered_lines += 1;
                 return Ok(());
             }
         }
 
         if let Some(ignore_regex) = ctx.ignore_lines.as_ref() {
-            if ignore_regex.is_match(&line) {
+            if ignore_regex.is_match(line) {
                 *ctx.filtered_lines += 1;
                 return Ok(());
             }
@@ -788,11 +910,11 @@ pub(crate) fn handle_plain_line(line: String, ctx: PlainLineContext<'_>) -> Resu
     // Track quoted-field parity for csv-like input so a record with an embedded
     // newline is never split across a batch boundary. A batch may only be cut on
     // size/unbuffered while no quoted field is open.
-    if is_csv_like && line_flips_quote(&line) {
+    if is_csv_like && line_flips_quote(line) {
         *ctx.csv_quote_open = !*ctx.csv_quote_open;
     }
 
-    ctx.current_batch.push(line);
+    ctx.current_batch.push(line.to_string());
 
     let record_complete = !*ctx.csv_quote_open;
     if record_complete && (ctx.current_batch.len() >= ctx.batch_size || ctx.batch_timeout.is_zero())
