@@ -328,6 +328,10 @@ jobs:
           copyback: true
           release: ${{ matrix.freebsd_release }}
           prepare: |
+            # The pkg repo is built for the latest patch release of each branch,
+            # which can be newer than the VM's userland (e.g. 14.4 packages on a
+            # 14.3 VM). Tolerate the skew instead of failing the OS-version check.
+            export IGNORE_OSVERSION=yes
             pkg update -f
             pkg install -y rust
           run: |
