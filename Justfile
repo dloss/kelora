@@ -53,9 +53,16 @@ coverage *args:
         CARGO_TARGET_DIR=target cargo llvm-cov --workspace --all-features "$@"
     fi
 
-# Run cargo audit
+# Run cargo audit (offline: uses the already-fetched advisory DB, keeps `check` fast)
 audit:
     cargo audit --no-fetch
+
+# Pulls the latest RustSec advisories (network) so a release can't be tagged
+# against a stale local DB, unlike offline `audit`. Needs cargo-audit >= 0.22 to
+# parse CVSS 4.0 advisories: RUSTFLAGS="" cargo install cargo-audit --locked
+# Run cargo audit against a freshly-fetched advisory DB (matches CI, needs network)
+audit-fresh:
+    cargo audit
 
 # Run cargo deny checks
 deny:
@@ -252,6 +259,9 @@ release-prepare:
     CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
     TARGET_BRANCH="${RELEASE_BRANCH:-$CURRENT_BRANCH}"
     REMOTE="${RELEASE_REMOTE:-origin}"
+
+    echo "==> Auditing against the latest advisory database..."
+    "{{just_executable()}}" audit-fresh
 
     echo "==> Running documentation build..."
     "{{just_executable()}}" docs-build
