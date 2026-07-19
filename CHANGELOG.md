@@ -4,6 +4,24 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.1] - 2026-07-19
+
+A maintenance release: one fix for following live streams, plus faster parsing and aggregation across the board. Output is unchanged from 2.0.0 — no new options and nothing to migrate.
+
+### Fixed
+
+- **`--metrics`, `--drain`, and `--discover` now print their results when you stop a live stream with Ctrl-C** - These modes normally show their summary once the input ends. When following an endless stream — for example `tail -f app.log | kelora -m …` — that end only comes when you press Ctrl-C, and until now doing so threw away everything collected so far, printing nothing. Pressing Ctrl-C once now prints the metrics table, drain templates, or discover table you'd built up. (Press Ctrl-C a second time to quit immediately; `--silent` still prints nothing.)
+
+### Performance
+
+Kelora is faster on this release, with the biggest gains on large files. How much depends on what you're doing — filtering by level is the standout, and everyday parsing and field selection are meaningfully quicker too. The improvements are internal only; results are identical to 2.0.0.
+
+- **Filtering by level (`--levels`) is dramatically faster when few lines match** - kelora now does a quick scan of each raw line and skips parsing lines that can't possibly match the levels you asked for. On a file where only ~1% of lines are the level you want, filtering runs **around 8× faster** (e.g. 4.8s → 0.6s over a large log); the win shrinks as more lines match, and files where most lines match are unchanged.
+- **Faster field selection with `-k`** - When you keep only a few fields (`-k time,level,msg`) from records with many fields, kelora skips building the fields you didn't ask for — up to **~30% faster** on wide JSON records, ~20% on wide logfmt.
+- **Faster logfmt and JSON parsing** - The logfmt parser was rewritten to do far less work per line, and JSON string handling was streamlined — roughly **10–13% faster** on logfmt-heavy workloads.
+- **Faster reading from a pipe under `--parallel`** - Lines from standard input are now handed to the worker threads in batches instead of one at a time, so the reader is no longer the bottleneck when a filter is doing most of the discarding.
+- **Faster `--stats` and `--drain` grouping** - The grouping behind these aggregations does less work per line, about **7% faster** on large inputs.
+
 ## [2.0.0] - 2026-06-18
 
 The **2.0** line. The headline changes are a redesigned tracking-function family, a set of built-in application-log formats, composable parser cascades, and a much more capable `--discover` mode. Breaking changes are flagged below — most affect tracking scripts and a few error/validation behaviors. See [What's New in 2.0](docs/whats-new-2.0.md) for migration guidance with old → new examples.
@@ -821,7 +839,9 @@ _Initial release (yanked)._
 
 ---
 
-[Unreleased]: https://github.com/dloss/kelora/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/dloss/kelora/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/dloss/kelora/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/dloss/kelora/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/dloss/kelora/compare/v1.4.10...v1.5.0
 [1.4.10]: https://github.com/dloss/kelora/compare/v1.4.3...v1.4.10
 [1.4.3]: https://github.com/dloss/kelora/compare/v1.4.2...v1.4.3
