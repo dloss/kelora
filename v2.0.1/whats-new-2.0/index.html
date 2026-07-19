@@ -1,0 +1,3199 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Scriptable log processor with embedded Rhai scripting">
+      
+      
+      
+        <link rel="canonical" href="https://dloss.github.io/kelora/v2.0.1/whats-new-2.0/">
+      
+      
+        <link rel="prev" href="../quickstart/">
+      
+      
+        <link rel="next" href="../tutorials/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../kelora-logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>What's New in 2.0 - Kelora</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_markdown_exec_pyodide.css">
+    
+      <link rel="stylesheet" href="../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../stylesheets/ansi-colors.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#whats-new-in-kelora-20" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Kelora" class="md-header__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../kelora-logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Kelora
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              What's New in 2.0
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../how-to/" class="md-tabs__link">
+          
+  
+  
+  How-To Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Kelora" class="md-nav__button md-logo" aria-label="Kelora" data-md-component="logo">
+      
+  <img src="../kelora-logo.svg" alt="logo">
+
+    </a>
+    Kelora
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dloss/kelora" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dloss/kelora
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's New in 2.0
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What's New in 2.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#highlights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Highlights
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Highlights">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in application-log formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composable-parser-cascades-with-repeatable-f" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composable parser cascades with repeatable -f
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-d-shortcut-and-a-richer-discover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -d shortcut and a richer --discover
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-driven-legends-for-map-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data-driven legends for map outputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-script-aggregation-shortcuts-freq-describe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No-script aggregation shortcuts: --freq, --describe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smaller-niceties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smaller niceties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#breaking-changes-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking changes &amp; migration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Breaking changes &amp; migration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-the-tracking-functions-were-redesigned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: the tracking functions were redesigned
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-a-simpler-record-aware-exit-code-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: a simpler, record-aware exit-code model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-config-files-are-validated-strictly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: config files are validated strictly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-invalid-input-tz-is-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: invalid --input-tz is rejected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-failed-type-annotations-yield-instead-of-a-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: failed type annotations yield () instead of a string
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-ragged-csvtsv-rows-are-kept-and-strict-rejects-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: ragged CSV/TSV rows are kept, and --strict rejects them
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: logfmt/CEF stop mangling zero-padded and signed values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-default-format-word-wrapping-is-now-tty-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: default-format word-wrapping is now TTY-aware
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-input-lines-are-capped-at-64-mib-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: input lines are capped at 64 MiB by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/intro-to-rhai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction to Rhai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/working-with-time/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Time
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/metrics-and-tracking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics and Tracking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/begin-end-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Begin and End Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/advanced-scripting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Scripting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/parsing-custom-formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parsing Custom Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/span-aggregation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Span Aggregation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/configuration-and-reusability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration and Reusability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/composed-pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composed Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/incident-response-playbooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Incident Response Playbooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/debug-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Debug Issues Systematically
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/find-errors-in-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triage Production Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/analyze-web-traffic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyze Web Traffic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/monitor-application-health/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Service Health Snapshot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/parse-syslog-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Investigate Syslog Sources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/handle-multiline-stacktraces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose a Multiline Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/extract-and-mask-sensitive-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sanitize Logs Before Sharing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/pseudonymize-identifiers-for-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pseudonymize Identifiers for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/process-csv-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare CSV Exports for Analytics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/fan-out-nested-structures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flatten Nested JSON for Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/build-streaming-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Streaming Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/batch-process-archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process Archives at Scale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/merge-timestamp-sorted-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merge Timestamp-Sorted Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/span-aggregation-cookbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roll Up Logs with Span Windows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/integrate-external-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrate Kelora with External Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/power-user-techniques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Power-User Techniques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/stateful-processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cross-Event Logic with state
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/pipeline-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Processing Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/events-and-fields/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events and Fields
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/scripting-stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripting Stages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/multiline-strategies/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multiline Strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/performance-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/performance-comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance Comparisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/benchmark-results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/configuration-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/common-errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Format Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/time-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Time Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Function Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/script-variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Script Variables Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/rhai-cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rhai Cheatsheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/exit-codes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exit Codes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#highlights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Highlights
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Highlights">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#built-in-application-log-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Built-in application-log formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composable-parser-cascades-with-repeatable-f" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Composable parser cascades with repeatable -f
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-d-shortcut-and-a-richer-discover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -d shortcut and a richer --discover
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-driven-legends-for-map-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data-driven legends for map outputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-script-aggregation-shortcuts-freq-describe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No-script aggregation shortcuts: --freq, --describe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#smaller-niceties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smaller niceties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#breaking-changes-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking changes &amp; migration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Breaking changes &amp; migration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-the-tracking-functions-were-redesigned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: the tracking functions were redesigned
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-a-simpler-record-aware-exit-code-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: a simpler, record-aware exit-code model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-config-files-are-validated-strictly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: config files are validated strictly
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-invalid-input-tz-is-rejected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: invalid --input-tz is rejected
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-failed-type-annotations-yield-instead-of-a-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: failed type annotations yield () instead of a string
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-ragged-csvtsv-rows-are-kept-and-strict-rejects-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: ragged CSV/TSV rows are kept, and --strict rejects them
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: logfmt/CEF stop mangling zero-padded and signed values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-default-format-word-wrapping-is-now-tty-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: default-format word-wrapping is now TTY-aware
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-input-lines-are-capped-at-64-mib-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking: input lines are capped at 64 MiB by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="whats-new-in-kelora-20">What's New in Kelora 2.0<a class="headerlink" href="#whats-new-in-kelora-20" title="Permanent link">&para;</a></h1>
+<p>Kelora 2.0 is a feature release with <strong>breaking changes</strong>. The headline additions
+are a redesigned tracking-function family, a curated set of named
+application-log formats, composable parser cascades, and a much more capable
+<code>--discover</code> mode.</p>
+<p>This page is the migration front door: it leads with what's new, then walks
+through every breaking change with <strong>old → new</strong> examples and an upgrade
+checklist. For the exhaustive, change-by-change record (including every bug fix
+and minor flag), see the <a href="https://github.com/dloss/kelora/blob/main/CHANGELOG.md">full changelog</a>.</p>
+<div class="admonition tip">
+<p class="admonition-title">In a hurry?</p>
+<p>Jump to the <a href="#upgrade-checklist">Upgrade checklist</a>. If your scripts use
+<code>track_count</code>, <code>track_bucket</code>, <code>track_top</code>, or <code>track_bottom</code>, start with
+<a href="#breaking-the-tracking-functions-were-redesigned">the tracking redesign</a> —
+that's the change most likely to affect you.</p>
+</div>
+<h2 id="highlights">Highlights<a class="headerlink" href="#highlights" title="Permanent link">&para;</a></h2>
+<h3 id="built-in-application-log-formats">Built-in application-log formats<a class="headerlink" href="#built-in-application-log-formats" title="Permanent link">&para;</a></h3>
+<p>A curated set of common application-log layouts now parse into structured
+fields out of the box: <code>glog</code> (Go/klog), <code>nginx-error</code>, <code>apache-error</code>,
+<code>log4j</code>/Java, <code>python-logging</code>, <code>postgres</code> (PostgreSQL server log), <code>redis</code>,
+<code>s3</code> (AWS S3 access log), <code>haproxy</code> (http/tcp), and <code>iso8601-level</code>. Select them
+with <code>-f &lt;name&gt;</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>log4j<span class="w"> </span>app.log<span class="w"> </span>-k<span class="w"> </span>ts,level,msg
+</code></pre></div>
+<p>They're first-class: usable inside cascades, shown by name in the auto-detect
+notice and <code>--stats</code>, and documented in <code>--help-formats</code>. During
+auto-detection they're tried only as the last step before the <code>line</code> fallback,
+so nothing Kelora already detected changes. (The definitions are adapted from
+<a href="https://lnav.org">lnav</a>, BSD-3-Clause — see <code>THIRD_PARTY_LICENSES.md</code>.)</p>
+<p><code>postgres</code> matches the default <code>log_line_prefix = '%m [%p] '</code> and extracts <code>ts</code>,
+<code>log_tz</code>, <code>pid</code>, <code>level</code>, and <code>msg</code>. A PostgreSQL error often spans several
+lines — an <code>ERROR:</code>/<code>STATEMENT:</code> record followed by tab-indented query
+continuation — so pair it with <code>-M indent</code>, which folds the indented lines into
+the preceding record before parsing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>postgres<span class="w"> </span>-M<span class="w"> </span>indent<span class="w"> </span>postgresql.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+</code></pre></div>
+<p>A Kelora-original <code>cri</code> format covers Kubernetes container logs — the
+CRI/containerd on-disk layout <code>&lt;RFC3339Nano&gt; &lt;stream&gt; &lt;tag&gt; &lt;message&gt;</code> that
+<code>/var/log/pods/*/*.log</code>, <code>kubectl logs --timestamps</code>, and log shippers emit. It
+parses <code>ts</code>, <code>stream</code> (stdout/stderr), <code>tag</code> (<code>F</code> full / <code>P</code> partial), and
+<code>msg</code>. Because a CRI message is often itself JSON or logfmt, <code>cri</code> is the one
+built-in format detected <em>early</em> (before the logfmt/CSV steps) so auto-detection
+works regardless of the payload; fan a JSON message back into fields with a
+second-stage <code>--exec 'e.absorb_json("msg")'</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.stream == &quot;stderr&quot;&#39;</span><span class="w"> </span>-k<span class="w"> </span>ts,msg
+</code></pre></div>
+<h3 id="composable-parser-cascades-with-repeatable-f">Composable parser cascades with repeatable <code>-f</code><a class="headerlink" href="#composable-parser-cascades-with-repeatable-f" title="Permanent link">&para;</a></h3>
+<p><code>-f</code> is now repeatable, building a cascade from each spec in order. This is the
+only way to put spec-based parsers (<code>cols:</code>, <code>regex:</code>) into a cascade, since a
+regex pattern may itself contain commas:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log
+</code></pre></div>
+<p>This closes the common "JSON lines mixed with custom <code>timestamp LEVEL message</code>
+plain text in one file" case. Catch-alls (<code>line</code>, <code>raw</code>, <code>cols:</code>) must come
+last; a selective <code>regex:</code> may sit earlier and fall through to a later
+catch-all. A single <code>-f</code> (including a comma list) behaves exactly as before.</p>
+<h3 id="-d-shortcut-and-a-richer-discover"><code>-d</code> shortcut and a richer <code>--discover</code><a class="headerlink" href="#-d-shortcut-and-a-richer-discover" title="Permanent link">&para;</a></h3>
+<p>Field discovery — the recommended starting point for an unknown file — gets a
+short flag and an expanded footer that now reports the primary timestamp field,
+the input parser/format, and scanned counts:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-d<span class="w">           </span><span class="c1"># human-readable profile</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-d<span class="o">=</span>json<span class="w">      </span><span class="c1"># machine-readable</span>
+</code></pre></div>
+<p><code>--discover-depth=0</code> now fully flattens deeply nested JSON (the old 3-level cap
+is gone).</p>
+<h3 id="data-driven-legends-for-map-outputs">Data-driven legends for map outputs<a class="headerlink" href="#data-driven-legends-for-map-outputs" title="Permanent link">&para;</a></h3>
+<p><code>levelmap</code> and <code>keymap</code> now append a one-line legend decoding their glyphs,
+built from the data actually seen (e.g. <code>E = ERROR | I = INFO | W = WARN</code>). New
+<code>--legend</code> / <code>--no-legend</code> flags control all three map formats; by default the
+legend shows only on an interactive terminal, so piped output stays clean.</p>
+<h3 id="no-script-aggregation-shortcuts-freq-describe">No-script aggregation shortcuts: <code>--freq</code>, <code>--describe</code><a class="headerlink" href="#no-script-aggregation-shortcuts-freq-describe" title="Permanent link">&para;</a></h3>
+<p>The two most common aggregations are now plain flags, so you don't have to drop
+into Rhai. <code>--freq FIELD</code> is a frequency table (<code>track_freq</code>) and
+<code>--describe FIELD</code> is a numeric summary (<code>track_stats</code> — count/min/max/avg/
+p50/p95/p99). Both run after all filters/transforms and imply <code>-m</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>level
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--describe<span class="w"> </span>duration_ms
+</code></pre></div>
+<p>There's deliberately no <code>--top</code>/<code>--bottom</code> flag. <code>--freq</code> already sorts by
+count descending, and — like the new pipe-aware wrapping — metrics output
+auto-selects its format: the human table on a terminal, a tab-separated record
+stream when piped or redirected. So ranking is left to the shell, which
+composes far more flexibly than baked-in selectors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>url<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w">     </span><span class="c1"># top-N</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>url<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w">     </span><span class="c1"># bottom-N</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>url<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">&#39;\t&#39;</span><span class="w"> </span><span class="s1">&#39;$3 &gt;= 100&#39;</span>
+</code></pre></div>
+<p><code>--metrics=full</code> forces the table through a pipe; <code>--metrics=tsv</code> forces the
+stream even to a terminal; <code>--metrics=json</code> is unchanged. (Note: <code>kelora -m … &gt;
+file</code> now writes the <code>tsv</code> records rather than the table — add <code>--metrics=full</code>
+for the old rendering.)</p>
+<h3 id="smaller-niceties">Smaller niceties<a class="headerlink" href="#smaller-niceties" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>e.get()</code> map accessor</strong> — <code>e.get("key")</code> and <code>e.get("key", default)</code>,
+  mirroring <code>get_path</code> for top-level keys.</li>
+<li><strong>Keyword search in <code>--help-functions</code></strong> — <code>kelora --help-functions ip</code>
+  filters the 150+ function catalogue instead of forcing a scroll.</li>
+<li><strong>Intent-based hints for unknown flags</strong> — habit flags from other tools point
+  at the Kelora idiom (<code>--where</code>/<code>--grep</code> → <code>--filter</code>; <code>--sort</code>/<code>--rank</code> →
+  <code>track_top_by</code>; <code>--count</code>/<code>--group-by</code>/<code>--uniq</code> → <code>--freq</code> / <code>track_freq</code>).
+  These stay unknown (exit 2), so no namespace is reserved.</li>
+<li><strong><code>-P</code> short flag for <code>--parallel</code></strong>, following the <code>xargs</code>/GNU <code>parallel</code>
+  convention.</li>
+<li><strong><code>-l/--levels</code> vocabulary-mismatch warning</strong> — when <code>-l</code> drops every event
+  because the stream uses a different level dialect (glog logs <code>I/W/E/F</code>), Kelora
+  now lists the levels present instead of returning a silent empty result.</li>
+<li><strong>"No input" hint</strong> — a bare <code>kelora</code> reading from an empty non-TTY source
+  now prints a one-line stderr hint instead of exiting silently.</li>
+</ul>
+<h2 id="breaking-changes-migration">Breaking changes &amp; migration<a class="headerlink" href="#breaking-changes-migration" title="Permanent link">&para;</a></h2>
+<h3 id="breaking-the-tracking-functions-were-redesigned">Breaking: the tracking functions were redesigned<a class="headerlink" href="#breaking-the-tracking-functions-were-redesigned" title="Permanent link">&para;</a></h3>
+<p>The tracking family is consolidated around one convention:
+<code>track_fn(name, args...)</code>. This is the change most likely to require edits.</p>
+<p><strong>Frequency tables</strong> — <code>track_freq(name, value)</code> counts occurrences of each
+distinct value, replacing both the old one-argument <code>track_count(value)</code> and
+<code>track_bucket(key, bucket)</code> (which were the same operation under two names).
+Counts now land in separate per-name sub-maps, so different metrics can no
+longer collide. Values are stringified automatically.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Old (1.x)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status&quot;, e.status)&#39;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># New (2.0)</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;level&quot;, e.level)&#39;</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;status&quot;, e.status)&#39;</span><span class="w">   </span><span class="c1"># no to_string() needed</span>
+</code></pre></div>
+<p>The name is "freq" rather than "count" because <em>count</em> was ambiguous — it read
+equally as a per-value frequency table and as a single scalar counter. For a
+plain counter, use the dedicated <code>track_inc("errors")</code> (or <code>track_sum("errors", 1)</code>).</p>
+<p><strong>Score-based ranking</strong> — the 4-argument <code>track_top(key, item, n, value)</code> moves
+to <code>track_top_by(name, item, score [, n])</code> (and likewise
+<code>track_bottom_by</code>). <code>n</code> now defaults to 10 in all four ranking functions.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Old (1.x)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;slow&quot;, e.url, 5, e.ms)&#39;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># New (2.0)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_top_by(&quot;slow&quot;, e.url, e.ms, 5)&#39;</span>
+</code></pre></div>
+<p>The old forms error with a migration hint, so you won't silently get wrong
+results. Other notes:</p>
+<ul>
+<li><strong>Missing fields are skipped, not errored.</strong> All <code>track_*</code> functions now skip
+  Unit <code>()</code> values instead of failing the event. Skips are counted per metric
+  and reported via <code>--diagnostics</code>, so typos stay detectable.</li>
+<li><strong>Name reuse across functions is a call-time error.</strong> Mixing
+  <code>track_sum("x", …)</code> and <code>track_min("x", …)</code> used to silently blend into
+  garbage under parallel merging; it now errors.</li>
+<li><strong>Float value labels are preserved</strong> (<code>200.0</code> → <code>"200"</code>), so JSON
+  consumers keyed on the old <code>track_bucket</code> names keep working.</li>
+<li><strong>Ranking is now exact.</strong> <code>track_top_by</code>/<code>track_bottom_by</code> (and the legacy
+  <code>track_top</code>/<code>track_bottom</code>) retain every distinct item and rank only when
+  metrics are emitted, so a frequent item first seen after the top-N slots
+  filled is no longer evicted at count 1 — the 1.x behavior could silently
+  return the first N distinct items rather than the most frequent.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Old (1.x)</th>
+<th>New (2.0)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>track_count(value)</code></td>
+<td><code>track_freq("name", value)</code></td>
+</tr>
+<tr>
+<td><code>track_bucket(key, bucket)</code></td>
+<td><code>track_freq(key, bucket)</code></td>
+</tr>
+<tr>
+<td><code>track_top(name, item, n, value)</code></td>
+<td><code>track_top_by(name, item, score, n)</code></td>
+</tr>
+<tr>
+<td><code>track_bottom(name, item, n, value)</code></td>
+<td><code>track_bottom_by(name, item, score, n)</code></td>
+</tr>
+<tr>
+<td>plain counter via <code>track_count</code></td>
+<td><code>track_inc("name")</code> (or <code>track_sum("name", 1)</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="breaking-a-simpler-record-aware-exit-code-model">Breaking: a simpler, record-aware exit-code model<a class="headerlink" href="#breaking-a-simpler-record-aware-exit-code-model" title="Permanent link">&para;</a></h3>
+<p>The exit code now follows one rule:</p>
+<blockquote>
+<p><strong>Kelora exits non-zero when it couldn't do the job you asked — not because the data was messy.</strong></p>
+</blockquote>
+<p>The model turns on <strong>gates vs. transforms</strong>:</p>
+<ul>
+<li><strong>Gates — parse and each <code>--filter</code> stage — must work.</strong> If a gate never once
+  succeeds (no line parses, or a filter errors on <em>every</em> event it sees and so
+  selects nothing), the output is empty or meaningless, so the run exits <code>1</code>.
+  Each filter is gated individually, so a working first filter cannot mask a
+  completely broken second one.</li>
+<li><strong>Transforms — exec — are best-effort.</strong> A failing <code>--exec</code> rolls back to the
+  original event and emits it, so exec errors are reported but never fail the run
+  on their own. Use <code>--strict</code>/<code>--assert</code> to enforce.</li>
+</ul>
+<p>Structural failures (a named input that can't be opened) and <code>--assert</code>
+violations still fail in any mode; <code>--strict</code> still escalates any single
+parse/filter/exec error.</p>
+<p>Two behaviors change from 1.x:</p>
+<ul>
+<li><strong>A <code>--filter</code> that errors on <em>every</em> event it sees now exits <code>1</code></strong> (it was <code>0</code>). A
+  totally broken filter — e.g. the <code>status &gt;= 500</code> typo for <code>e.status &gt;= 500</code> —
+  used to return success with empty output, which silently passed monitoring
+  checks (<a href="https://github.com/dloss/kelora/issues/241">#241</a>). It's now treated
+  as the operator error it is. A filter erroring on only <em>some</em> events, and any
+  <code>--exec</code> error (best-effort), are still recovered (exit <code>0</code>).</li>
+<li><strong>A <em>partial</em> parse failure now exits <code>0</code></strong> (it was <code>1</code>). A few unparseable
+  lines among good ones are data noise for a log tool, so the run succeeds with a
+  diagnostic. Only an input where <strong>no</strong> line parses (wrong format) still exits
+  <code>1</code>. Add <code>--strict</code> to fail on the first bad line as before.</li>
+</ul>
+<p>The signal is computed independently of output collection, so the exit code is
+now consistent across <code>--metrics</code>, <code>--drain</code>, <code>-q</code>, and <code>--no-diagnostics</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--strict<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;…&#39;</span><span class="w">   </span><span class="c1"># fail on the first runtime/parse error</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--assert<span class="w"> </span><span class="s1">&#39;…&#39;</span><span class="w">          </span><span class="c1"># fail on explicit data-quality rules</span>
+</code></pre></div>
+<p><strong>Action:</strong> if a script relied on a nonzero exit for a broken <code>--exec</code>, add
+<code>--strict</code> (exec is now best-effort). If a pipeline relied on exit <code>1</code> for <em>any</em>
+parse error, add <code>--strict</code>. The full model — with a scenario table — is in
+<a href="../concepts/error-handling/#exit-codes-the-model">Error Handling</a>.</p>
+<h3 id="breaking-config-files-are-validated-strictly">Breaking: config files are validated strictly<a class="headerlink" href="#breaking-config-files-are-validated-strictly" title="Permanent link">&para;</a></h3>
+<p><code>.kelora.ini</code> (and <code>--config-file</code>) now reject unknown root keys, unknown
+sections, and malformed lines, naming the file and line. Previously a typo such
+as <code>defualts =</code> or <code>[alias]</code> was silently ignored. Only <code>defaults</code> (root) and
+the <code>[aliases]</code> section are recognized. <strong>Action:</strong> check that your config keys
+are exactly <code>defaults</code> and <code>[aliases]</code>.</p>
+<h3 id="breaking-invalid-input-tz-is-rejected">Breaking: invalid <code>--input-tz</code> is rejected<a class="headerlink" href="#breaking-invalid-input-tz-is-rejected" title="Permanent link">&para;</a></h3>
+<p>An unrecognized <code>--input-tz</code> (e.g. <code>Europe/Berln</code>) now fails fast with exit code
+2 instead of silently falling back to local time — which could shift every
+timestamp. Use <code>local</code>, <code>UTC</code>, or a valid IANA timezone name.</p>
+<h3 id="breaking-failed-type-annotations-yield-instead-of-a-string">Breaking: failed type annotations yield <code>()</code> instead of a string<a class="headerlink" href="#breaking-failed-type-annotations-yield-instead-of-a-string" title="Permanent link">&para;</a></h3>
+<p>For <code>:int</code>/<code>:float</code>/<code>:bool</code> annotations in csv/tsv/cols/regex, a value that
+can't satisfy the declared type now becomes <code>()</code> (explicitly absent) in
+resilient mode, instead of silently keeping the original string. <code>--strict</code>
+still aborts. For tolerant coercion with a chosen fallback, drop the annotation
+and coerce in a script stage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.status = to_int_or(e.status, 0)&#39;</span>
+</code></pre></div>
+<h3 id="breaking-ragged-csvtsv-rows-are-kept-and-strict-rejects-them">Breaking: ragged CSV/TSV rows are kept, and <code>--strict</code> rejects them<a class="headerlink" href="#breaking-ragged-csvtsv-rows-are-kept-and-strict-rejects-them" title="Permanent link">&para;</a></h3>
+<p>Rows with more columns than the header used to lose the extra fields silently.
+Overflow columns are now kept under positional names (<code>c5</code>, <code>c6</code>, …), short rows
+keep trailing fields absent, and both cases are counted in <code>--stats</code>. <code>--strict</code>
+now treats a ragged row as a parse error. <strong>Action:</strong> if you were relying on
+silent truncation, expect new <code>c&lt;N&gt;</code> fields; add <code>--strict</code> to reject ragged
+rows instead.</p>
+<h3 id="breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values">Breaking: logfmt/CEF stop mangling zero-padded and signed values<a class="headerlink" href="#breaking-logfmtcef-stop-mangling-zero-padded-and-signed-values" title="Permanent link">&para;</a></h3>
+<p>The type-inferring parsers (<code>logfmt</code>, <code>cef</code>) used to coerce <em>any</em> token that
+Rust's number parser accepted, which silently rewrote data: leading zeros were
+dropped (<code>zip=02134</code> → <code>2134</code>, <code>id=007</code> → <code>7</code>, <code>ver=01</code> → <code>1</code>), a leading <code>+</code>
+was stripped (<code>phone=+15551234</code> → <code>15551234</code>), and the Rust-only float spellings
+<code>inf</code>/<code>nan</code>/<code>Infinity</code> became floats (then <code>null</code> on JSON output). Worse, csv/tsv
+kept these as strings, so the <em>same</em> token got a different type depending on the
+format — a real hazard in mixed-format cascades.</p>
+<p>A value is now coerced only when it is a valid JSON number (no leading zeros, no
+leading <code>+</code>, no <code>inf</code>/<code>nan</code>); everything else stays a string.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Old (1.x): leading zero silently lost</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;zip=02134&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># zip=2134</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># New (2.0): preserved as a string</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;zip=02134&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># zip=02134</span>
+</code></pre></div>
+<p>Genuine numbers still infer exactly as before (<code>status=500</code>, <code>dur=1.5</code>, <code>n=-5</code>,
+<code>big=123456789012345678</code>, <code>sci=1e3</code>), so the numeric filters and stats these
+formats are built around keep working. The win is that the same token now
+resolves to the same type whether it arrives via JSON (where leading-zero numbers
+are illegal anyway) or a logfmt/CEF field, logfmt round-trips IDs faithfully, and
+<code>--discover</code> no longer shows already-corrupted sample values. csv/tsv/cols/regex
+are unchanged — they remain string-by-default with opt-in <code>:int</code>/<code>:float</code>
+annotations.</p>
+<p><strong>Action:</strong> if a script compared a now-string field numerically (e.g. <code>code=007</code>
+matched with <code>== 7</code>), either compare as a string (<code>== "007"</code>) or coerce in a
+script stage:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = to_int_or(e.code, 0)&#39;</span>
+</code></pre></div>
+<h3 id="breaking-default-format-word-wrapping-is-now-tty-aware">Breaking: default-format word-wrapping is now TTY-aware<a class="headerlink" href="#breaking-default-format-word-wrapping-is-now-tty-aware" title="Permanent link">&para;</a></h3>
+<p>The default output format no longer wraps wide events onto continuation lines
+when piped or redirected — wrapping is now <strong>auto</strong> (on for a terminal, off for
+a pipe), matching color and emoji. This fixes over-counting by <code>wc -l</code>,
+<code>head -n</code>, and other line-oriented consumers. To keep the old behavior when
+paging to <code>less</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--wrap<span class="w">          </span><span class="c1"># force wrapping through a pipe</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># or in .kelora.ini:</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nv">defaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>--wrap
+</code></pre></div>
+<p><code>--no-wrap</code> disables it everywhere.</p>
+<h3 id="breaking-input-lines-are-capped-at-64-mib-by-default">Breaking: input lines are capped at 64 MiB by default<a class="headerlink" href="#breaking-input-lines-are-capped-at-64-mib-by-default" title="Permanent link">&para;</a></h3>
+<p>Kelora now caps the memory a single input line may use at <strong>64 MiB</strong> by default,
+a safety circuit breaker against runaway RAM. The motivating case is a
+newline-free stream — for example a tiny gzip/zstd payload that decompresses
+into one enormous line — which would otherwise grow the read buffer until the
+process is killed. Reading is streamed, so large <em>multi-line</em> files (compressed
+or not) are unaffected; only a single over-long line trips the cap.</p>
+<p>No real log line approaches 64 MiB (Docker and Kubernetes/CRI split lines at
+16 KB; even fat JSON with embedded stack traces tops out in the low single-digit
+MB), so normal use sees no change. When a line does exceed the cap it is
+truncated to the cap and a warning reports how many lines were clipped — the run
+still succeeds (exit 0). Under <code>--strict</code> an over-limit line is a hard error
+(exit 1) instead.</p>
+<p>If you genuinely process single lines larger than 64 MiB, raise or disable it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>big.log<span class="w"> </span>--max-line-bytes<span class="w"> </span>256MiB<span class="w">   </span><span class="c1"># raise the cap</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>big.log<span class="w"> </span>--max-line-bytes<span class="w"> </span><span class="m">0</span><span class="w">        </span><span class="c1"># disable (1.x behavior)</span>
+</code></pre></div>
+<p>For untrusted input you can tighten it instead (<code>--max-line-bytes 1MiB</code>).
+Recursive ZIP bombs such as <code>42.zip</code> were never a risk — kelora rejects ZIP
+input and supports only gzip/zstd.</p>
+<h2 id="upgrade-checklist">Upgrade checklist<a class="headerlink" href="#upgrade-checklist" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Migrate tracking scripts.</strong> Replace <code>track_count(value)</code> and
+   <code>track_bucket(key, bucket)</code> → <code>track_freq("name", value)</code>, plain counters →
+   <code>track_inc("name")</code> (or <code>track_sum("name", 1)</code>), and
+   <code>track_top</code>/<code>track_bottom</code> → <code>track_top_by</code>/<code>track_bottom_by</code> (score before
+   <code>n</code>). The old forms error with a hint, so a dry run surfaces every site.</li>
+<li><strong>Re-check exit-code expectations.</strong> The exit code now tracks "did the job
+   get done", not "were there any errors". Gates must work: a <code>--filter</code> that
+   errors on <em>every</em> event now exits <code>1</code> (was <code>0</code>), and a <em>partial</em> parse failure
+   now exits <code>0</code> (was <code>1</code>; only all-lines-fail still exits <code>1</code>). Transforms are
+   best-effort: any <code>--exec</code> error — even on every event — is recovered (exit
+   <code>0</code>). Add <code>--strict</code> to fail on the first parse/filter/exec error, or
+   <code>--assert</code> for explicit data-quality gates.</li>
+<li><strong>Validate your config.</strong> Run any command with your <code>.kelora.ini</code> present;
+   a typo'd key or section now errors instead of being ignored.</li>
+<li><strong>Verify <code>--input-tz</code> values</strong> are <code>local</code>, <code>UTC</code>, or valid IANA names.</li>
+<li><strong>Review typed parsers.</strong> Expect <code>()</code> (not the raw string) on failed
+   <code>:int</code>/<code>:float</code>/<code>:bool</code> conversions; switch to <code>to_int_or</code>-style coercion
+   where you want a fallback.</li>
+<li><strong>Check CSV/TSV consumers</strong> for new <code>c&lt;N&gt;</code> overflow fields, or add <code>--strict</code>
+   to reject ragged rows.</li>
+<li><strong>Re-check logfmt/CEF numeric fields.</strong> Zero-padded IDs, <code>+</code>-prefixed values,
+   and <code>inf</code>/<code>nan</code> now stay strings instead of being coerced. If you compared
+   such a field numerically, compare as a string or coerce with
+   <code>to_int_or(...)</code>.</li>
+<li><strong>Check line-oriented pipelines.</strong> If you piped default-format output into
+   <code>wc -l</code>/<code>head</code>/<code>sed</code>, wrapping is now off by pipe default — add <code>--wrap</code> only
+   if you actually want continuation lines.</li>
+<li><strong>Check for very long lines.</strong> If any workflow processes single lines larger
+   than 64 MiB, raise (<code>--max-line-bytes 256MiB</code>) or disable
+   (<code>--max-line-bytes 0</code>) the new per-line cap; otherwise such lines are
+   truncated with a warning.</li>
+</ol>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/dloss/kelora/blob/main/CHANGELOG.md">Full changelog</a> — the complete, change-by-change record.</li>
+<li><a href="../tutorials/metrics-and-tracking/">Metrics and Tracking tutorial</a> — the redesigned tracking functions in depth.</li>
+<li><a href="../reference/formats/">Format Reference</a> — the built-in application-log formats and cascades.</li>
+<li><a href="../concepts/error-handling/">Error Handling</a> — resilient vs. <code>--strict</code> vs. <code>--assert</code>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dloss/kelora" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../assets/_markdown_exec_pyodide.js"></script>
+      
+    
+  </body>
+</html>
