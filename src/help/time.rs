@@ -98,6 +98,10 @@ Timestamp filtering with --since and --until:
   kelora --since -2h --until since+1h app.log     # 1-hour window starting 2 hours ago
   kelora --since now-15m app.log                  # the last 15 minutes
 
+Splitting a log for template diffing with --cut (same formats as --since):
+  kelora --drain-diff --cut 14:00 incident.log -k msg   # before 14:00 = baseline,
+                                                        # at/after = target
+
   Only one bound may anchor to the other: --since and --until cannot both
   reference each other (e.g., --since until-1h --until since+1h is rejected).
 

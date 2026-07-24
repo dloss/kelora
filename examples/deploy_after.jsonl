@@ -1,0 +1,120 @@
+{"ts": "2025-01-20T14:00:00Z", "level": "INFO", "msg": "client 10.0.0.10 authenticated ok"}
+{"ts": "2025-01-20T14:00:20Z", "level": "INFO", "msg": "client 10.0.1.11 authenticated ok"}
+{"ts": "2025-01-20T14:00:40Z", "level": "INFO", "msg": "client 10.0.2.12 authenticated ok"}
+{"ts": "2025-01-20T14:01:00Z", "level": "INFO", "msg": "client 10.0.3.13 authenticated ok"}
+{"ts": "2025-01-20T14:01:20Z", "level": "INFO", "msg": "client 10.0.0.14 authenticated ok"}
+{"ts": "2025-01-20T14:01:40Z", "level": "INFO", "msg": "client 10.0.1.15 authenticated ok"}
+{"ts": "2025-01-20T14:02:00Z", "level": "INFO", "msg": "client 10.0.2.16 authenticated ok"}
+{"ts": "2025-01-20T14:02:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T14:02:20Z", "level": "INFO", "msg": "client 10.0.3.17 authenticated ok"}
+{"ts": "2025-01-20T14:02:40Z", "level": "INFO", "msg": "client 10.0.0.18 authenticated ok"}
+{"ts": "2025-01-20T14:02:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T14:03:00Z", "level": "INFO", "msg": "client 10.0.1.19 authenticated ok"}
+{"ts": "2025-01-20T14:03:20Z", "level": "INFO", "msg": "client 10.0.2.20 authenticated ok"}
+{"ts": "2025-01-20T14:03:40Z", "level": "INFO", "msg": "client 10.0.3.21 authenticated ok"}
+{"ts": "2025-01-20T14:03:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T14:04:00Z", "level": "INFO", "msg": "client 10.0.0.22 authenticated ok"}
+{"ts": "2025-01-20T14:04:20Z", "level": "INFO", "msg": "client 10.0.1.23 authenticated ok"}
+{"ts": "2025-01-20T14:04:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T14:04:40Z", "level": "INFO", "msg": "client 10.0.2.24 authenticated ok"}
+{"ts": "2025-01-20T14:05:00Z", "level": "INFO", "msg": "client 10.0.3.25 authenticated ok"}
+{"ts": "2025-01-20T14:05:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b0c4d-5e6f-4a1b-9c8d-7e6f5a4b3c0d"}
+{"ts": "2025-01-20T14:05:20Z", "level": "INFO", "msg": "client 10.0.0.26 authenticated ok"}
+{"ts": "2025-01-20T14:05:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T14:05:40Z", "level": "INFO", "msg": "client 10.0.1.27 authenticated ok"}
+{"ts": "2025-01-20T14:05:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b1c4d-5e6f-4a1b-9c8d-7e6f5a4b3c1d"}
+{"ts": "2025-01-20T14:06:00Z", "level": "INFO", "msg": "client 10.0.2.28 authenticated ok"}
+{"ts": "2025-01-20T14:06:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T14:06:20Z", "level": "INFO", "msg": "client 10.0.3.29 authenticated ok"}
+{"ts": "2025-01-20T14:06:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b2c4d-5e6f-4a1b-9c8d-7e6f5a4b3c2d"}
+{"ts": "2025-01-20T14:06:40Z", "level": "INFO", "msg": "client 10.0.0.30 authenticated ok"}
+{"ts": "2025-01-20T14:07:00Z", "level": "INFO", "msg": "client 10.0.1.31 authenticated ok"}
+{"ts": "2025-01-20T14:07:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T14:07:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b3c4d-5e6f-4a1b-9c8d-7e6f5a4b3c3d"}
+{"ts": "2025-01-20T14:07:20Z", "level": "INFO", "msg": "client 10.0.2.32 authenticated ok"}
+{"ts": "2025-01-20T14:07:40Z", "level": "INFO", "msg": "client 10.0.3.33 authenticated ok"}
+{"ts": "2025-01-20T14:07:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b4c4d-5e6f-4a1b-9c8d-7e6f5a4b3c4d"}
+{"ts": "2025-01-20T14:07:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T14:08:00Z", "level": "INFO", "msg": "client 10.0.0.34 authenticated ok"}
+{"ts": "2025-01-20T14:08:20Z", "level": "INFO", "msg": "client 10.0.1.35 authenticated ok"}
+{"ts": "2025-01-20T14:08:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b5c4d-5e6f-4a1b-9c8d-7e6f5a4b3c5d"}
+{"ts": "2025-01-20T14:08:40Z", "level": "INFO", "msg": "client 10.0.2.36 authenticated ok"}
+{"ts": "2025-01-20T14:08:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T14:09:00Z", "level": "INFO", "msg": "client 10.0.3.37 authenticated ok"}
+{"ts": "2025-01-20T14:09:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b6c4d-5e6f-4a1b-9c8d-7e6f5a4b3c6d"}
+{"ts": "2025-01-20T14:09:20Z", "level": "INFO", "msg": "client 10.0.0.38 authenticated ok"}
+{"ts": "2025-01-20T14:09:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T14:09:40Z", "level": "INFO", "msg": "client 10.0.1.39 authenticated ok"}
+{"ts": "2025-01-20T14:09:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b7c4d-5e6f-4a1b-9c8d-7e6f5a4b3c7d"}
+{"ts": "2025-01-20T14:10:00Z", "level": "INFO", "msg": "client 10.0.2.40 authenticated ok"}
+{"ts": "2025-01-20T14:10:20Z", "level": "INFO", "msg": "client 10.0.3.41 authenticated ok"}
+{"ts": "2025-01-20T14:10:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T14:10:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b8c4d-5e6f-4a1b-9c8d-7e6f5a4b3c8d"}
+{"ts": "2025-01-20T14:10:40Z", "level": "INFO", "msg": "client 10.0.0.42 authenticated ok"}
+{"ts": "2025-01-20T14:11:00Z", "level": "INFO", "msg": "client 10.0.1.43 authenticated ok"}
+{"ts": "2025-01-20T14:11:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b9c4d-5e6f-4a1b-9c8d-7e6f5a4b3c9d"}
+{"ts": "2025-01-20T14:11:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T14:11:20Z", "level": "INFO", "msg": "client 10.0.2.44 authenticated ok"}
+{"ts": "2025-01-20T14:11:40Z", "level": "INFO", "msg": "client 10.0.3.45 authenticated ok"}
+{"ts": "2025-01-20T14:11:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b0c4d-5e6f-4a1b-9c8d-7e6f5a4b3c0d"}
+{"ts": "2025-01-20T14:12:00Z", "level": "INFO", "msg": "client 10.0.0.46 authenticated ok"}
+{"ts": "2025-01-20T14:12:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T14:12:00Z", "level": "WARN", "msg": "config reloaded with 3 stale keys"}
+{"ts": "2025-01-20T14:12:20Z", "level": "INFO", "msg": "client 10.0.1.47 authenticated ok"}
+{"ts": "2025-01-20T14:12:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b1c4d-5e6f-4a1b-9c8d-7e6f5a4b3c1d"}
+{"ts": "2025-01-20T14:12:40Z", "level": "INFO", "msg": "client 10.0.2.48 authenticated ok"}
+{"ts": "2025-01-20T14:12:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T14:13:00Z", "level": "INFO", "msg": "client 10.0.3.49 authenticated ok"}
+{"ts": "2025-01-20T14:13:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b2c4d-5e6f-4a1b-9c8d-7e6f5a4b3c2d"}
+{"ts": "2025-01-20T14:13:00Z", "level": "WARN", "msg": "config reloaded with 4 stale keys"}
+{"ts": "2025-01-20T14:13:20Z", "level": "INFO", "msg": "client 10.0.0.10 authenticated ok"}
+{"ts": "2025-01-20T14:13:40Z", "level": "INFO", "msg": "client 10.0.1.11 authenticated ok"}
+{"ts": "2025-01-20T14:13:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T14:13:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b3c4d-5e6f-4a1b-9c8d-7e6f5a4b3c3d"}
+{"ts": "2025-01-20T14:14:00Z", "level": "INFO", "msg": "client 10.0.2.12 authenticated ok"}
+{"ts": "2025-01-20T14:14:00Z", "level": "WARN", "msg": "config reloaded with 5 stale keys"}
+{"ts": "2025-01-20T14:14:20Z", "level": "INFO", "msg": "client 10.0.3.13 authenticated ok"}
+{"ts": "2025-01-20T14:14:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b4c4d-5e6f-4a1b-9c8d-7e6f5a4b3c4d"}
+{"ts": "2025-01-20T14:14:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T14:14:40Z", "level": "INFO", "msg": "client 10.0.0.14 authenticated ok"}
+{"ts": "2025-01-20T14:15:00Z", "level": "INFO", "msg": "client 10.0.1.15 authenticated ok"}
+{"ts": "2025-01-20T14:15:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b5c4d-5e6f-4a1b-9c8d-7e6f5a4b3c5d"}
+{"ts": "2025-01-20T14:15:20Z", "level": "INFO", "msg": "client 10.0.2.16 authenticated ok"}
+{"ts": "2025-01-20T14:15:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T14:15:40Z", "level": "INFO", "msg": "client 10.0.3.17 authenticated ok"}
+{"ts": "2025-01-20T14:15:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b6c4d-5e6f-4a1b-9c8d-7e6f5a4b3c6d"}
+{"ts": "2025-01-20T14:16:00Z", "level": "INFO", "msg": "client 10.0.0.18 authenticated ok"}
+{"ts": "2025-01-20T14:16:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T14:16:20Z", "level": "INFO", "msg": "client 10.0.1.19 authenticated ok"}
+{"ts": "2025-01-20T14:16:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b7c4d-5e6f-4a1b-9c8d-7e6f5a4b3c7d"}
+{"ts": "2025-01-20T14:16:40Z", "level": "INFO", "msg": "client 10.0.2.20 authenticated ok"}
+{"ts": "2025-01-20T14:17:00Z", "level": "INFO", "msg": "client 10.0.3.21 authenticated ok"}
+{"ts": "2025-01-20T14:17:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T14:17:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b8c4d-5e6f-4a1b-9c8d-7e6f5a4b3c8d"}
+{"ts": "2025-01-20T14:17:20Z", "level": "INFO", "msg": "client 10.0.0.22 authenticated ok"}
+{"ts": "2025-01-20T14:17:40Z", "level": "INFO", "msg": "client 10.0.1.23 authenticated ok"}
+{"ts": "2025-01-20T14:17:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b9c4d-5e6f-4a1b-9c8d-7e6f5a4b3c9d"}
+{"ts": "2025-01-20T14:17:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T14:18:00Z", "level": "INFO", "msg": "client 10.0.2.24 authenticated ok"}
+{"ts": "2025-01-20T14:18:20Z", "level": "INFO", "msg": "client 10.0.3.25 authenticated ok"}
+{"ts": "2025-01-20T14:18:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b0c4d-5e6f-4a1b-9c8d-7e6f5a4b3c0d"}
+{"ts": "2025-01-20T14:18:40Z", "level": "INFO", "msg": "client 10.0.0.26 authenticated ok"}
+{"ts": "2025-01-20T14:18:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T14:19:00Z", "level": "INFO", "msg": "client 10.0.1.27 authenticated ok"}
+{"ts": "2025-01-20T14:19:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b1c4d-5e6f-4a1b-9c8d-7e6f5a4b3c1d"}
+{"ts": "2025-01-20T14:19:20Z", "level": "INFO", "msg": "client 10.0.2.28 authenticated ok"}
+{"ts": "2025-01-20T14:19:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T14:19:40Z", "level": "INFO", "msg": "client 10.0.3.29 authenticated ok"}
+{"ts": "2025-01-20T14:19:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b2c4d-5e6f-4a1b-9c8d-7e6f5a4b3c2d"}
+{"ts": "2025-01-20T14:20:00Z", "level": "ERROR", "msg": "worker 7 restarted after heartbeat timeout 30s"}
+{"ts": "2025-01-20T14:20:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T14:20:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b3c4d-5e6f-4a1b-9c8d-7e6f5a4b3c3d"}
+{"ts": "2025-01-20T14:21:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b4c4d-5e6f-4a1b-9c8d-7e6f5a4b3c4d"}
+{"ts": "2025-01-20T14:21:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T14:21:30Z", "level": "ERROR", "msg": "worker 8 restarted after heartbeat timeout 30s"}
+{"ts": "2025-01-20T14:21:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b5c4d-5e6f-4a1b-9c8d-7e6f5a4b3c5d"}
+{"ts": "2025-01-20T14:22:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T14:22:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b6c4d-5e6f-4a1b-9c8d-7e6f5a4b3c6d"}
+{"ts": "2025-01-20T14:23:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b7c4d-5e6f-4a1b-9c8d-7e6f5a4b3c7d"}
+{"ts": "2025-01-20T14:23:40Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b8c4d-5e6f-4a1b-9c8d-7e6f5a4b3c8d"}
+{"ts": "2025-01-20T14:24:20Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 1a2b9c4d-5e6f-4a1b-9c8d-7e6f5a4b3c9d"}
