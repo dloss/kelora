@@ -1231,6 +1231,83 @@ impl ScriptStage for DrainStage {
     }
 }
 
+/// Drain template diff stage (`--drain-diff`, sequential-only, summary-driven).
+///
+/// Pass 1 of the diff: feeds every event's mined field into the joint drain
+/// tree (learning mode) and counts unique field values per side in
+/// `crate::drain_diff`. Pass 2 (frozen matching) runs at end of input when the
+/// report is finalized.
+pub struct DrainDiffStage {
+    field_name: String,
+    rule: crate::config::DrainDiffRule,
+}
+
+impl DrainDiffStage {
+    pub fn new(field_name: String, rule: crate::config::DrainDiffRule) -> Self {
+        Self { field_name, rule }
+    }
+}
+
+impl ScriptStage for DrainDiffStage {
+    // Mines templates from a single field's text. In --cut mode the side is
+    // decided by `parsed_ts`, which the parser derives from the timestamp
+    // candidate fields — keep those names so projection pushdown does not
+    // strip them.
+    fn field_demands(&self) -> crate::projection::Demand {
+        let mut fields = vec![self.field_name.clone()];
+        if matches!(self.rule, crate::config::DrainDiffRule::ByCut { .. }) {
+            fields.extend(
+                crate::event::TIMESTAMP_FIELD_NAMES
+                    .iter()
+                    .map(|s| s.to_string()),
+            );
+        }
+        crate::projection::Demand::Fields(fields)
+    }
+
+    fn apply(&mut self, event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
+        let side = match &self.rule {
+            crate::config::DrainDiffRule::ByFile { baseline } => {
+                if event.filename.as_deref() == Some(baseline.as_str()) {
+                    crate::drain_diff::DiffSide::Baseline
+                } else {
+                    crate::drain_diff::DiffSide::Target
+                }
+            }
+            crate::config::DrainDiffRule::ByCut { cut } => match event.parsed_ts {
+                Some(ts) if ts < *cut => crate::drain_diff::DiffSide::Baseline,
+                Some(_) => crate::drain_diff::DiffSide::Target,
+                None => {
+                    // No parseable timestamp: this event cannot be assigned a
+                    // side, so it is excluded from the comparison and counted
+                    // for the end-of-run warning.
+                    crate::drain_diff::record_excluded_no_timestamp();
+                    return ScriptResult::Emit(event);
+                }
+            },
+        };
+
+        if let Some(value) = event.fields.get(&self.field_name) {
+            let text = if value.is_string() {
+                value.clone().into_string().unwrap_or_default()
+            } else {
+                value.to_string()
+            };
+
+            if !text.is_empty() {
+                // Joint mining (learning) plus per-side unique-value counting;
+                // the diff report is computed at end of input.
+                if let Err(err) = crate::drain::drain_record(&text, None, event.line_num) {
+                    return ScriptResult::Error(err);
+                }
+                crate::drain_diff::record(&text, side);
+            }
+        }
+
+        ScriptResult::Emit(event)
+    }
+}
+
 /// Timestamp filter stage for --since and --until filtering
 pub struct TimestampFilterStage {
     config: TimestampFilterConfig,

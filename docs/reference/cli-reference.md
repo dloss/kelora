@@ -1177,6 +1177,85 @@ kelora -j app.log --drain=id -k message
 kelora -j app.log --drain=json -k message
 ```
 
+#### `--drain-diff[=FORMAT]`
+
+Compare template frequencies between a **baseline** and a **target** log — which
+templates are new, which vanished, and which shifted in volume. The first
+question in every incident and deploy verification: *what changed?*
+
+Requires `--keys` with exactly one field (the field to mine, same semantics as
+`--drain`). Summary-only; sequential mode only (not supported with `--parallel`).
+
+Two ways to define baseline and target:
+
+```bash
+# Two inputs: first is baseline, second is target
+kelora --drain-diff old.log new.log -k msg
+
+# One input, split by time: everything before the cut is baseline
+kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
+```
+
+**Formats:**
+
+- `table` (default) - Three sections (NEW / VANISHED / VOLUME SHIFTS) plus a totals line
+- `json` - One JSON object with `new`, `vanished`, `shifted`, `unchanged_count`, and per-side totals
+
+**How it works.** Both sides are mined through a single shared drain instance
+(so the template set is joint), then every distinct field value is re-matched
+against the *frozen* final template set and counted per side. Because raw
+counts mislead when the sides differ in size (10 minutes of incident vs. 24
+hours of baseline), all comparisons use **share** — count divided by that
+side's total events — and volume shifts are reported in percentage points of
+share (Δpp).
+
+There are no threshold flags by design. Volume shifts are reported at
+|Δ share| ≥ 1.0pp, templates with a combined count below 2 are ignored, and
+NEW templates are exempt from that floor — a template appearing even once only
+after the deploy is exactly what you are looking for. Output is sorted (counts
+descending for new/vanished, |Δ share| descending for shifts) so your eye does
+the thresholding; anyone needing different cutoffs uses `--drain-diff=json`
+and filters downstream — including with kelora itself.
+
+`--drain-diff` composes with the normal pipeline: `--filter`/`--exec` run
+before the comparison, so you can diff only errors, or normalize a field first:
+
+```bash
+# Diff only error-level events
+kelora --drain-diff old.log new.log -k msg --filter 'e.level == "ERROR"'
+
+# Normalize custom tokens the built-in masking doesn't know, then diff
+kelora --drain-diff old.log new.log -k msg --exec 'e.msg = e.msg.replace(e.order_id, "<order>")'
+```
+
+**Memory.** Pass 2 buffers each *distinct* mined field value (not full events),
+capped at 1,000,000 unique values; logs are repetitive so legitimate inputs sit
+far below this. Exceeding the cap aborts the report with guidance — a field
+that unique cannot be templated meaningfully anyway. This design also makes
+stdin a first-class input (nothing is re-read).
+
+**Known limitations** (documented, not solved):
+
+- *Rewording blindness.* A reworded message ("timeout after 5s" → "timed out
+  after 5s") reports as one vanished plus one new template. Technically
+  correct, semantically noisy.
+- *Template quality = drain quality.* Custom tokens the built-in masking does
+  not recognize (order IDs, SKUs) can split one logical template into several,
+  inflating the diff. Remedy: normalize the field with `--exec` upstream.
+- *No sequence awareness.* The diff compares template frequencies, not
+  orderings or burst timing.
+
+#### `--cut <TIME>`
+
+Timestamp splitting a single `--drain-diff` input into baseline (before the
+cut) and target (at/after). Accepts the same timestamp formats as
+`--since`/`--until` (see `--help-time`). Events without a parseable timestamp
+are excluded from the comparison and surfaced in a warning.
+
+```bash
+kelora --drain-diff --cut '2026-07-24 14:00' incident.log -k msg
+```
+
 ### Field Discovery
 
 #### `--discover[=FORMAT]`

@@ -50,6 +50,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
     ctrl_rx: &Receiver<Ctrl>,
 ) -> Result<PipelineResult> {
     crate::drain::reset();
+    crate::drain_diff::reset();
     // Clear per-run gate-success flags on this thread (sequential processing runs
     // here; parallel workers reset their own). Without this, an interactive REPL
     // reusing the thread would skip recording a new run's first success.
@@ -71,6 +72,7 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
         || (!config.processing.silent
             && (config.output.metrics.is_some()
                 || config.output.drain.is_some()
+                || config.output.drain_diff.is_some()
                 || !config.diagnostics_suppressed()));
     set_collect_stats(collect_stats);
 
@@ -97,6 +99,12 @@ pub fn run_pipeline_with_kelora_config<W: Write + Send + 'static>(
     if use_parallel && config.output.drain.is_some() {
         return Err(anyhow::anyhow!(
             "--drain summary is not supported with --parallel or thread overrides. Rerun without --parallel to use Drain template mining."
+        ));
+    }
+
+    if use_parallel && config.output.drain_diff.is_some() {
+        return Err(anyhow::anyhow!(
+            "--drain-diff is not supported with --parallel or thread overrides. Rerun without --parallel."
         ));
     }
 

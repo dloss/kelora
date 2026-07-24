@@ -386,6 +386,161 @@ pub fn drain_templates() -> Vec<DrainTemplate> {
     })
 }
 
+/// One template of a [`FrozenTemplateSet`], parsed back into drain's token
+/// representation ("<*>" is the wildcard, everything else is a literal token).
+#[derive(Debug, Clone, PartialEq)]
+enum FrozenToken {
+    WildCard,
+    Val(String),
+}
+
+struct FrozenEntry {
+    tokens: Vec<FrozenToken>,
+    template: String,
+}
+
+/// A read-only snapshot of a mined template set that can match text against it
+/// without touching (or trusting) the live drain tree.
+///
+/// This is the frozen-matching primitive behind `--drain-diff` pass 2, and is
+/// deliberately a self-contained type so a future "match against a saved
+/// template set" mode can reuse it.
+///
+/// Why not `DrainTree::log_group` (the crate's inference mode)? Its lookup is
+/// asymmetric with insertion: `add_log_line` converts any path token
+/// containing a digit into a wildcard tree key, while `log_group` walks the
+/// tree with the raw token — so a line whose masked token *name* contains a
+/// digit (e.g. `<ipv4>`, `<sha256>`) within the branch prefix never finds its
+/// own cluster. Instead, this matcher scores a line against every template
+/// with the same token count using drain's own similarity function (exact
+/// matches first, then wildcard coverage) and returns the best. Skipping the
+/// tree routing searches a superset of the leaf drain would have picked from,
+/// so a line always finds at least the cluster it was mined into.
+pub struct FrozenTemplateSet {
+    by_len: HashMap<usize, Vec<FrozenEntry>>,
+    patterns: Vec<grok::Pattern>,
+}
+
+impl FrozenTemplateSet {
+    fn new(templates: Vec<String>, filters: &[String]) -> Self {
+        let mut grok = build_grok();
+        let filter_strs: Vec<&str> = if filters.is_empty() {
+            default_filter_patterns()
+        } else {
+            filters.iter().map(|s| s.as_str()).collect()
+        };
+        // Mirror DrainTree::build_patterns exactly: named captures only,
+        // patterns that fail to compile are skipped.
+        let patterns: Vec<grok::Pattern> = filter_strs
+            .iter()
+            .filter_map(|p| grok.compile(p, true).ok())
+            .collect();
+
+        let mut by_len: HashMap<usize, Vec<FrozenEntry>> = HashMap::new();
+        for template in templates {
+            // as_string() joins tokens with single spaces, so split(' ')
+            // round-trips them (including empty tokens from blank runs).
+            let tokens: Vec<FrozenToken> = template
+                .split(' ')
+                .map(|t| {
+                    if t == "<*>" {
+                        FrozenToken::WildCard
+                    } else {
+                        FrozenToken::Val(t.to_string())
+                    }
+                })
+                .collect();
+            by_len
+                .entry(tokens.len())
+                .or_default()
+                .push(FrozenEntry { tokens, template });
+        }
+        // log_groups() iterates HashMaps, so its order varies between runs;
+        // sort so similarity ties resolve deterministically.
+        for entries in by_len.values_mut() {
+            entries.sort_by(|a, b| a.template.cmp(&b.template));
+        }
+
+        Self { by_len, patterns }
+    }
+
+    /// Tokenize and mask a line exactly like `DrainTree::process`: split on
+    /// single spaces, trim each token, first matching grok pattern wins and
+    /// replaces the token with `<name>`.
+    fn mask(&self, line: &str) -> Vec<FrozenToken> {
+        line.split(' ')
+            .map(|t| t.trim())
+            .map(|t| {
+                match self
+                    .patterns
+                    .iter()
+                    .map(|p| p.match_against(t))
+                    .find(|o| o.is_some())
+                {
+                    Some(Some(matches)) => match matches.iter().next() {
+                        Some((name, _)) => FrozenToken::Val(format!("<{}>", name)),
+                        None => FrozenToken::WildCard,
+                    },
+                    _ => FrozenToken::Val(t.to_string()),
+                }
+            })
+            .collect()
+    }
+
+    /// Match `text` against the frozen set, returning the best template with
+    /// the same token count (drain's similarity ordering: fraction of exact
+    /// token matches first, wildcard coverage as the tie-breaker). Returns
+    /// None only when no template has that token count.
+    pub fn match_text(&self, text: &str) -> Option<&str> {
+        let tokens = self.mask(text);
+        let candidates = self.by_len.get(&tokens.len())?;
+        let len = tokens.len() as f32;
+        let mut best: Option<(f32, u32, &FrozenEntry)> = None;
+        for entry in candidates {
+            let mut exact = 0f32;
+            let mut approximate = 0u32;
+            for (pattern, token) in entry.tokens.iter().zip(tokens.iter()) {
+                if pattern == token {
+                    exact += 1.0;
+                } else if matches!(pattern, FrozenToken::WildCard) {
+                    approximate += 1;
+                }
+            }
+            let exact = exact / len;
+            let better = match &best {
+                None => true,
+                Some((best_exact, best_approx, _)) => {
+                    exact > *best_exact || (exact == *best_exact && approximate > *best_approx)
+                }
+            };
+            if better {
+                best = Some((exact, approximate, entry));
+            }
+        }
+        best.map(|(_, _, entry)| entry.template.as_str())
+    }
+}
+
+/// Snapshot the current thread's mined templates into a [`FrozenTemplateSet`].
+/// Empty (matches nothing) when no drain state exists.
+pub fn frozen_template_set() -> FrozenTemplateSet {
+    DRAIN_STATE.with(|state| {
+        let state = state.borrow();
+        match state.as_ref() {
+            Some(drain) => {
+                let templates = drain
+                    .tree
+                    .log_groups()
+                    .into_iter()
+                    .map(|cluster| cluster.as_string())
+                    .collect();
+                FrozenTemplateSet::new(templates, &drain.config.filters)
+            }
+            None => FrozenTemplateSet::new(Vec::new(), &[]),
+        }
+    })
+}
+
 /// Format templates for table output
 /// Format determines output detail level:
 /// - Table: clean output with count + template only
