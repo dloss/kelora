@@ -4,6 +4,12 @@ All notable changes to Kelora will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- **`--drain-diff` — template-level log comparison** - Answer "what changed?" between a baseline and a target log: which message templates are NEW in the target, which VANISHED from it, and which shifted in volume. Two ways to define the sides: two inputs (`kelora --drain-diff old.log new.log -k msg`, first is baseline) or one input split by time (`--drain-diff --cut 14:00 incident.log -k msg`, everything before the cut is baseline). Both sides are mined jointly, then counted against the frozen final template set, so results are deterministic and swapping the inputs only flips the sign of the deltas. Comparisons use per-side *shares* rather than raw counts, so a 10-minute incident capture diffs fairly against a 24-hour baseline; volume shifts are reported in percentage points of share. There are deliberately no threshold flags — output is sorted so the eye does the thresholding, NEW templates are reported down to a single occurrence, and `--drain-diff=json` emits one object (`new`/`vanished`/`shifted`/`unchanged_count`/totals) for downstream filtering. Composes with the pipeline: `--filter`/`--exec` run before the comparison (diff only errors, or normalize custom tokens first). Requires `--keys` with exactly one field, like `--drain`; sequential mode only.
+
 ## [2.0.1] - 2026-07-19
 
 A maintenance release: one fix for following live streams, plus faster parsing and aggregation across the board. Output is unchanged from 2.0.0 — no new options and nothing to migrate.

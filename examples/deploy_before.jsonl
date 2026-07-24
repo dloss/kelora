@@ -1,0 +1,110 @@
+{"ts": "2025-01-20T13:30:00Z", "level": "INFO", "msg": "client 10.0.0.10 authenticated ok"}
+{"ts": "2025-01-20T13:30:20Z", "level": "INFO", "msg": "client 10.0.1.11 authenticated ok"}
+{"ts": "2025-01-20T13:30:40Z", "level": "INFO", "msg": "client 10.0.2.12 authenticated ok"}
+{"ts": "2025-01-20T13:31:00Z", "level": "INFO", "msg": "client 10.0.3.13 authenticated ok"}
+{"ts": "2025-01-20T13:31:20Z", "level": "INFO", "msg": "client 10.0.0.14 authenticated ok"}
+{"ts": "2025-01-20T13:31:40Z", "level": "INFO", "msg": "client 10.0.1.15 authenticated ok"}
+{"ts": "2025-01-20T13:32:00Z", "level": "INFO", "msg": "client 10.0.2.16 authenticated ok"}
+{"ts": "2025-01-20T13:32:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T13:32:20Z", "level": "INFO", "msg": "client 10.0.3.17 authenticated ok"}
+{"ts": "2025-01-20T13:32:40Z", "level": "INFO", "msg": "client 10.0.0.18 authenticated ok"}
+{"ts": "2025-01-20T13:32:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T13:33:00Z", "level": "INFO", "msg": "client 10.0.1.19 authenticated ok"}
+{"ts": "2025-01-20T13:33:20Z", "level": "INFO", "msg": "client 10.0.2.20 authenticated ok"}
+{"ts": "2025-01-20T13:33:40Z", "level": "INFO", "msg": "client 10.0.3.21 authenticated ok"}
+{"ts": "2025-01-20T13:33:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T13:34:00Z", "level": "INFO", "msg": "client 10.0.0.22 authenticated ok"}
+{"ts": "2025-01-20T13:34:20Z", "level": "INFO", "msg": "client 10.0.1.23 authenticated ok"}
+{"ts": "2025-01-20T13:34:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T13:34:40Z", "level": "INFO", "msg": "client 10.0.2.24 authenticated ok"}
+{"ts": "2025-01-20T13:35:00Z", "level": "INFO", "msg": "client 10.0.3.25 authenticated ok"}
+{"ts": "2025-01-20T13:35:00Z", "level": "INFO", "msg": "connection pool recycled for db-01.prod.internal"}
+{"ts": "2025-01-20T13:35:20Z", "level": "INFO", "msg": "client 10.0.0.26 authenticated ok"}
+{"ts": "2025-01-20T13:35:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T13:35:40Z", "level": "INFO", "msg": "client 10.0.1.27 authenticated ok"}
+{"ts": "2025-01-20T13:36:00Z", "level": "INFO", "msg": "client 10.0.2.28 authenticated ok"}
+{"ts": "2025-01-20T13:36:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T13:36:20Z", "level": "INFO", "msg": "client 10.0.3.29 authenticated ok"}
+{"ts": "2025-01-20T13:36:40Z", "level": "INFO", "msg": "client 10.0.0.30 authenticated ok"}
+{"ts": "2025-01-20T13:37:00Z", "level": "INFO", "msg": "client 10.0.1.31 authenticated ok"}
+{"ts": "2025-01-20T13:37:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T13:37:20Z", "level": "INFO", "msg": "client 10.0.2.32 authenticated ok"}
+{"ts": "2025-01-20T13:37:40Z", "level": "INFO", "msg": "client 10.0.3.33 authenticated ok"}
+{"ts": "2025-01-20T13:37:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T13:37:50Z", "level": "INFO", "msg": "connection pool recycled for db-02.prod.internal"}
+{"ts": "2025-01-20T13:38:00Z", "level": "INFO", "msg": "client 10.0.0.34 authenticated ok"}
+{"ts": "2025-01-20T13:38:20Z", "level": "INFO", "msg": "client 10.0.1.35 authenticated ok"}
+{"ts": "2025-01-20T13:38:40Z", "level": "INFO", "msg": "client 10.0.2.36 authenticated ok"}
+{"ts": "2025-01-20T13:38:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T13:39:00Z", "level": "INFO", "msg": "client 10.0.3.37 authenticated ok"}
+{"ts": "2025-01-20T13:39:20Z", "level": "INFO", "msg": "client 10.0.0.38 authenticated ok"}
+{"ts": "2025-01-20T13:39:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T13:39:40Z", "level": "INFO", "msg": "client 10.0.1.39 authenticated ok"}
+{"ts": "2025-01-20T13:40:00Z", "level": "INFO", "msg": "client 10.0.2.40 authenticated ok"}
+{"ts": "2025-01-20T13:40:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 9f8a0d2e-1c3b-4a5f-8e7d-0b1c2d3e4f50"}
+{"ts": "2025-01-20T13:40:20Z", "level": "INFO", "msg": "client 10.0.3.41 authenticated ok"}
+{"ts": "2025-01-20T13:40:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T13:40:40Z", "level": "INFO", "msg": "client 10.0.0.42 authenticated ok"}
+{"ts": "2025-01-20T13:40:40Z", "level": "INFO", "msg": "connection pool recycled for db-01.prod.internal"}
+{"ts": "2025-01-20T13:41:00Z", "level": "INFO", "msg": "client 10.0.1.43 authenticated ok"}
+{"ts": "2025-01-20T13:41:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T13:41:20Z", "level": "INFO", "msg": "client 10.0.2.44 authenticated ok"}
+{"ts": "2025-01-20T13:41:40Z", "level": "INFO", "msg": "client 10.0.3.45 authenticated ok"}
+{"ts": "2025-01-20T13:42:00Z", "level": "INFO", "msg": "client 10.0.0.46 authenticated ok"}
+{"ts": "2025-01-20T13:42:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T13:42:20Z", "level": "INFO", "msg": "client 10.0.1.47 authenticated ok"}
+{"ts": "2025-01-20T13:42:40Z", "level": "INFO", "msg": "client 10.0.2.48 authenticated ok"}
+{"ts": "2025-01-20T13:42:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T13:43:00Z", "level": "INFO", "msg": "client 10.0.3.49 authenticated ok"}
+{"ts": "2025-01-20T13:43:20Z", "level": "INFO", "msg": "client 10.0.0.10 authenticated ok"}
+{"ts": "2025-01-20T13:43:30Z", "level": "INFO", "msg": "connection pool recycled for db-02.prod.internal"}
+{"ts": "2025-01-20T13:43:40Z", "level": "INFO", "msg": "client 10.0.1.11 authenticated ok"}
+{"ts": "2025-01-20T13:43:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T13:44:00Z", "level": "INFO", "msg": "client 10.0.2.12 authenticated ok"}
+{"ts": "2025-01-20T13:44:20Z", "level": "INFO", "msg": "client 10.0.3.13 authenticated ok"}
+{"ts": "2025-01-20T13:44:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T13:44:40Z", "level": "INFO", "msg": "client 10.0.0.14 authenticated ok"}
+{"ts": "2025-01-20T13:45:00Z", "level": "INFO", "msg": "client 10.0.1.15 authenticated ok"}
+{"ts": "2025-01-20T13:45:00Z", "level": "ERROR", "msg": "upstream payments.svc.cluster.local returned 503 for request 9f8a1d2e-1c3b-4a5f-8e7d-0b1c2d3e4f51"}
+{"ts": "2025-01-20T13:45:20Z", "level": "INFO", "msg": "client 10.0.2.16 authenticated ok"}
+{"ts": "2025-01-20T13:45:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T13:45:40Z", "level": "INFO", "msg": "client 10.0.3.17 authenticated ok"}
+{"ts": "2025-01-20T13:46:00Z", "level": "INFO", "msg": "client 10.0.0.18 authenticated ok"}
+{"ts": "2025-01-20T13:46:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T13:46:20Z", "level": "INFO", "msg": "client 10.0.1.19 authenticated ok"}
+{"ts": "2025-01-20T13:46:20Z", "level": "INFO", "msg": "connection pool recycled for db-01.prod.internal"}
+{"ts": "2025-01-20T13:46:40Z", "level": "INFO", "msg": "client 10.0.2.20 authenticated ok"}
+{"ts": "2025-01-20T13:47:00Z", "level": "INFO", "msg": "client 10.0.3.21 authenticated ok"}
+{"ts": "2025-01-20T13:47:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T13:47:20Z", "level": "INFO", "msg": "client 10.0.0.22 authenticated ok"}
+{"ts": "2025-01-20T13:47:40Z", "level": "INFO", "msg": "client 10.0.1.23 authenticated ok"}
+{"ts": "2025-01-20T13:47:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T13:48:00Z", "level": "INFO", "msg": "client 10.0.2.24 authenticated ok"}
+{"ts": "2025-01-20T13:48:20Z", "level": "INFO", "msg": "client 10.0.3.25 authenticated ok"}
+{"ts": "2025-01-20T13:48:40Z", "level": "INFO", "msg": "client 10.0.0.26 authenticated ok"}
+{"ts": "2025-01-20T13:48:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T13:49:00Z", "level": "INFO", "msg": "client 10.0.1.27 authenticated ok"}
+{"ts": "2025-01-20T13:49:10Z", "level": "INFO", "msg": "connection pool recycled for db-02.prod.internal"}
+{"ts": "2025-01-20T13:49:20Z", "level": "INFO", "msg": "client 10.0.2.28 authenticated ok"}
+{"ts": "2025-01-20T13:49:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T13:49:40Z", "level": "INFO", "msg": "client 10.0.3.29 authenticated ok"}
+{"ts": "2025-01-20T13:50:00Z", "level": "INFO", "msg": "client 10.0.0.30 authenticated ok"}
+{"ts": "2025-01-20T13:50:20Z", "level": "INFO", "msg": "client 10.0.1.31 authenticated ok"}
+{"ts": "2025-01-20T13:50:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T13:50:40Z", "level": "INFO", "msg": "client 10.0.2.32 authenticated ok"}
+{"ts": "2025-01-20T13:51:00Z", "level": "INFO", "msg": "client 10.0.3.33 authenticated ok"}
+{"ts": "2025-01-20T13:51:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}
+{"ts": "2025-01-20T13:51:20Z", "level": "INFO", "msg": "client 10.0.0.34 authenticated ok"}
+{"ts": "2025-01-20T13:51:40Z", "level": "INFO", "msg": "client 10.0.1.35 authenticated ok"}
+{"ts": "2025-01-20T13:52:00Z", "level": "INFO", "msg": "client 10.0.2.36 authenticated ok"}
+{"ts": "2025-01-20T13:52:00Z", "level": "INFO", "msg": "session refresh for user alice@example.com"}
+{"ts": "2025-01-20T13:52:00Z", "level": "INFO", "msg": "connection pool recycled for db-01.prod.internal"}
+{"ts": "2025-01-20T13:52:20Z", "level": "INFO", "msg": "client 10.0.3.37 authenticated ok"}
+{"ts": "2025-01-20T13:52:40Z", "level": "INFO", "msg": "client 10.0.0.38 authenticated ok"}
+{"ts": "2025-01-20T13:52:50Z", "level": "INFO", "msg": "session refresh for user bob@example.com"}
+{"ts": "2025-01-20T13:53:00Z", "level": "INFO", "msg": "client 10.0.1.39 authenticated ok"}
+{"ts": "2025-01-20T13:53:40Z", "level": "INFO", "msg": "session refresh for user carol@example.com"}
+{"ts": "2025-01-20T13:54:30Z", "level": "INFO", "msg": "session refresh for user dave@example.com"}
+{"ts": "2025-01-20T13:54:50Z", "level": "INFO", "msg": "connection pool recycled for db-02.prod.internal"}
+{"ts": "2025-01-20T13:55:20Z", "level": "INFO", "msg": "session refresh for user erin@example.com"}
+{"ts": "2025-01-20T13:56:10Z", "level": "INFO", "msg": "session refresh for user frank@example.com"}

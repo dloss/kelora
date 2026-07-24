@@ -68,6 +68,52 @@ The `--drain=full` format adds context:
 
 Use drain to quickly understand log patterns before writing filters or building dashboards.
 
+## What Changed? Template Diffing with --drain-diff
+
+Compare template frequencies between a baseline and a target log — the first
+question in every incident and deploy verification. `deploy_before.jsonl` and
+`deploy_after.jsonl` capture the same service before and after a deploy:
+
+```bash
+# Two inputs: first is baseline, second is target
+kelora --drain-diff examples/deploy_before.jsonl examples/deploy_after.jsonl -k msg
+
+# One input, split by time: everything before the cut is baseline
+cat examples/deploy_before.jsonl examples/deploy_after.jsonl | \
+  kelora --drain-diff --cut 2025-01-20T14:00Z -k msg
+
+# JSON for scripting; --filter runs before the comparison
+kelora --drain-diff=json examples/deploy_before.jsonl examples/deploy_after.jsonl \
+  -k msg --filter 'e.level == "ERROR"'
+```
+
+**Example output:**
+```
+NEW in target (2 templates):
+  3  config reloaded with <num> stale keys
+  2  worker <num> restarted after heartbeat timeout <duration>
+
+VANISHED from target (1 template):
+  8  connection pool recycled for <fqdn>          (baseline count)
+
+VOLUME SHIFTS (3 templates):
+  upstream <fqdn> returned <num> for request <uuid>
+    baseline: 2 (1.8%)  →  target: 30 (25.0%)   Δ +23.2pp
+  client <ipv4> authenticated ok
+    baseline: 70 (63.6%)  →  target: 60 (50.0%)   Δ -13.6pp
+  session refresh for user <email>
+    baseline: 30 (27.3%)  →  target: 25 (20.8%)   Δ -6.4pp
+
+totals: baseline 110 events, target 120 events, 0 shared templates unchanged
+```
+
+The story reads straight off the report: the deploy introduced two new
+templates, retired the pool recycler, and upstream 503s exploded from 1.8% to
+25% of traffic. Comparisons use per-side shares (count / side total), so sides
+of very different sizes diff fairly, and NEW templates are reported down to a
+single occurrence — a message appearing 3 times only after the deploy is
+exactly what you're looking for.
+
 ## Filter Patterns (Boolean Logic)
 
 ```bash
