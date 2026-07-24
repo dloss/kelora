@@ -38,6 +38,23 @@ kelora -j examples/app_monitoring.jsonl --drain -k message
 Formats: `--drain` (table), `=full` (line ranges + samples), `=id` (stable
 IDs for diffs), `=json` (programmatic). → [`--drain` reference](../reference/cli-reference.md).
 
+## What changed? Template diffing — `--drain-diff` {#template-diffing}
+
+The first question in every incident: which templates are new, which vanished,
+which shifted in volume. `--drain-diff` answers it directly — baseline first,
+target second, or one file split by time with `--cut`:
+
+```bash
+kelora --drain-diff before.log after.log -k msg
+kelora --drain-diff --cut '14:00' incident.log -k msg
+```
+
+Comparisons use per-side *shares*, so a 10-minute incident capture diffs
+fairly against a 24-hour baseline. `--filter`/`--exec` run before the
+comparison (diff only errors, or normalize custom tokens first). Use
+`--drain-diff=json` for scripting.
+→ [`--drain-diff` reference](../reference/cli-reference.md).
+
 ## Deterministic sampling — `bucket()` {#deterministic-sampling-with-bucket}
 
 `--head`, `sample_prob()`, and `rand()` give different rows every run.

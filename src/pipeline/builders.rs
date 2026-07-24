@@ -64,10 +64,10 @@ impl EventParser for TimestampConfiguredParser {
 }
 
 use super::{
-    create_multiline_chunker, AssertStage, BeginStage, CsvChunker, DrainStage, EndStage,
-    EventLimiter, EventParser, ExecStage, FilterStage, Formatter, KeyFilterStage, LevelFilterStage,
-    MetaData, Pipeline, PipelineConfig, PipelineContext, ScriptStage, SimpleChunker,
-    SimpleWindowManager, SlidingWindowManager, StdoutWriter, TakeNLimiter,
+    create_multiline_chunker, AssertStage, BeginStage, CsvChunker, DrainDiffStage, DrainStage,
+    EndStage, EventLimiter, EventParser, ExecStage, FilterStage, Formatter, KeyFilterStage,
+    LevelFilterStage, MetaData, Pipeline, PipelineConfig, PipelineContext, ScriptStage,
+    SimpleChunker, SimpleWindowManager, SlidingWindowManager, StdoutWriter, TakeNLimiter,
     TimestampConversionStage, TimestampFilterStage,
 };
 use crate::engine::{DebugConfig, RhaiEngine};
@@ -188,6 +188,8 @@ pub struct PipelineBuilder {
     normalize_timestamps: bool,
     drain_enabled: bool,
     drain_field: Option<String>,
+    drain_diff_field: Option<String>,
+    drain_diff_rule: Option<crate::config::DrainDiffRule>,
     ts_field: Option<String>,
     ts_format: Option<String>,
     default_timezone: Option<String>,
@@ -611,6 +613,8 @@ impl PipelineBuilder {
             normalize_timestamps: false,
             drain_enabled: false,
             drain_field: None,
+            drain_diff_field: None,
+            drain_diff_rule: None,
             ts_field: None,
             ts_format: None,
             default_timezone: None,
@@ -850,6 +854,15 @@ impl PipelineBuilder {
             script_stages.push(Box::new(DrainStage::new(field)));
         }
 
+        if let Some(rule) = self.drain_diff_rule.clone() {
+            let field = self.drain_diff_field.clone().ok_or_else(|| {
+                anyhow::anyhow!(
+                    "--drain-diff requires exactly one effective field in --keys after exclusions, e.g. --keys msg. Use -s to inspect available fields."
+                )
+            })?;
+            script_stages.push(Box::new(DrainDiffStage::new(field, rule)));
+        }
+
         // Add key filtering stage (runs after level filtering, before context processing)
         let key_filter_stage = KeyFilterStage::new(self.keys.clone(), self.exclude_keys.clone());
         if key_filter_stage.is_active() {
@@ -981,6 +994,16 @@ impl PipelineBuilder {
         self
     }
 
+    pub fn with_drain_diff(
+        mut self,
+        field: Option<String>,
+        rule: Option<crate::config::DrainDiffRule>,
+    ) -> Self {
+        self.drain_diff_field = field;
+        self.drain_diff_rule = rule;
+        self
+    }
+
     pub fn with_take_limit(mut self, limit: Option<usize>) -> Self {
         self.take_limit = limit;
         self
@@ -994,6 +1017,11 @@ impl PipelineBuilder {
         if self.drain_enabled {
             return Err(anyhow::anyhow!(
                 "--drain summary is not supported with --parallel. Rerun without --parallel to use Drain template mining."
+            ));
+        }
+        if self.drain_diff_rule.is_some() {
+            return Err(anyhow::anyhow!(
+                "--drain-diff is not supported with --parallel. Rerun without --parallel."
             ));
         }
         let mut rhai_engine = RhaiEngine::new();
@@ -1377,21 +1405,30 @@ pub fn create_pipeline_builder_from_config(
         other => (other.clone(), None),
     };
 
-    let drain_enabled = config.output.drain.is_some();
-    let drain_field = if drain_enabled {
-        // Calculate effective keys after applying exclusions
-        let effective_keys: Vec<String> = config
+    // --drain and --drain-diff mine the same single effective key.
+    let single_effective_key = || -> Option<String> {
+        let effective_keys: Vec<&String> = config
             .output
             .keys
             .iter()
             .filter(|key| !config.output.exclude_keys.contains(key))
-            .cloned()
             .collect();
         if effective_keys.len() == 1 {
             Some(effective_keys[0].clone())
         } else {
             None
         }
+    };
+
+    let drain_enabled = config.output.drain.is_some();
+    let drain_field = if drain_enabled {
+        single_effective_key()
+    } else {
+        None
+    };
+    let drain_diff_rule = config.processing.drain_diff_rule.clone();
+    let drain_diff_field = if drain_diff_rule.is_some() {
+        single_effective_key()
     } else {
         None
     };
@@ -1403,6 +1440,7 @@ pub fn create_pipeline_builder_from_config(
         .with_input_format(input_format)
         .with_output_format(config.output.format.clone().into())
         .with_drain(drain_enabled, drain_field)
+        .with_drain_diff(drain_diff_field, drain_diff_rule)
         .with_cols_spec(cols_spec)
         .with_cols_sep(config.input.cols_sep.clone());
     builder.keys = config.output.get_effective_keys();

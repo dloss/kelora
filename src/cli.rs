@@ -84,6 +84,13 @@ pub enum DrainFormat {
     Json,
 }
 
+#[derive(clap::ValueEnum, Clone, Debug, Default)]
+pub enum DrainDiffFormat {
+    #[default]
+    Table,
+    Json,
+}
+
 #[derive(clap::ValueEnum, Clone, Copy, Debug)]
 pub enum ShellCompletion {
     Bash,
@@ -834,6 +841,28 @@ pub struct Cli {
         help = "Summarize log templates using Drain (summary-only; requires --keys with exactly one field; sequential mode only).\n\nFormats:\n  table (default)  Clean output: count + template\n  full             Detailed: adds line ranges + sample + template ID\n  id               Stable output: template_id + template (sorted by ID)\n  json             JSON with all metadata\n\nExamples:\n  --drain          Clean table (count + template)\n  --drain=full     With line numbers, samples, and IDs\n  --drain=id       Stable ID list for diffs\n  --drain=json     JSON output for scripting"
     )]
     pub drain: Option<DrainFormat>,
+
+    /// Compare template frequencies between a baseline and a target log (requires --keys with exactly one field).
+    #[arg(
+        long = "drain-diff",
+        value_enum,
+        value_name = "FORMAT",
+        require_equals = true,
+        num_args = 0..=1,
+        default_missing_value = "table",
+        help_heading = "Template Discovery",
+        help = "Compare template frequencies between a baseline and a target log (summary-only; requires --keys with exactly one field; sequential mode only).\n\nTwo ways to define baseline and target:\n  kelora --drain-diff old.log new.log -k msg      First input is baseline, second is target\n  kelora --drain-diff --cut 14:00 incident.log -k msg   One input split by time (before the cut = baseline)\n\nReports templates that are NEW in the target, VANISHED from it, and VOLUME\nSHIFTS (share of side's events moved >= 1 percentage point). All comparisons\nuse per-side shares, so sides of very different sizes compare fairly.\nComposes with the pipeline: --filter/--exec run before diffing.\n\nFormats:\n  table (default)  Three sections + totals line\n  json             One JSON object (new/vanished/shifted/unchanged_count/totals)\n\nExamples:\n  --drain-diff old.log new.log -k msg\n  --drain-diff=json before.log after.log -k msg\n  --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg"
+    )]
+    pub drain_diff: Option<DrainDiffFormat>,
+
+    /// Timestamp splitting a single --drain-diff input into baseline (before) and target (at/after).
+    #[arg(
+        long = "cut",
+        value_name = "TIME",
+        help_heading = "Template Discovery",
+        help = "Timestamp splitting one --drain-diff input into baseline (before the cut) and target (at/after).\n\nAccepts the same timestamp formats as --since/--until (e.g., 2026-07-24T14:00:00Z, '2026-07-24 14:00', '1h', 'yesterday'). See --help-time.\nEvents without a parseable timestamp are excluded from the comparison and counted in a warning.\n\nExample:\n  --drain-diff --cut 14:00 incident.log -k msg"
+    )]
+    pub cut: Option<String>,
 
     /// Discover field names, types, and cardinality from the log stream.
     #[arg(

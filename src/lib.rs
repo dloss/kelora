@@ -7,6 +7,7 @@ pub mod config;
 pub mod config_file;
 pub mod decompression;
 pub mod drain;
+pub mod drain_diff;
 pub mod engine;
 pub mod event;
 pub mod field_discovery;

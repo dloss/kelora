@@ -74,6 +74,7 @@ pub struct OutputConfig {
     pub metrics_with_events: bool,
     pub metrics_file: Option<String>,
     pub drain: Option<crate::cli::DrainFormat>,
+    pub drain_diff: Option<crate::cli::DrainDiffFormat>,
     pub discover_fields: Option<crate::cli::DiscoverFieldsFormat>,
     pub discover_final: bool,
     pub discover_depth: usize,
@@ -167,6 +168,9 @@ pub struct ProcessingConfig {
     pub window_size: usize,
     /// Timestamp filtering configuration
     pub timestamp_filter: Option<TimestampFilterConfig>,
+    /// How --drain-diff assigns events to baseline vs. target (set in main()
+    /// after CLI parsing; None when --drain-diff is off)
+    pub drain_diff_rule: Option<DrainDiffRule>,
     /// Normalize the primary timestamp field to RFC3339 output
     pub normalize_timestamps: bool,
     /// Limit output to the first N events (None = no limit)
@@ -204,6 +208,18 @@ pub struct ProcessingConfig {
     pub context: ContextConfig,
     /// Allow Rhai scripts to create directories and write files on disk
     pub allow_fs_writes: bool,
+}
+
+/// How --drain-diff decides which side of the comparison an event belongs to.
+#[derive(Debug, Clone)]
+pub enum DrainDiffRule {
+    /// Two-input mode: events from `baseline` (matched on the event's
+    /// filename) are the baseline, everything else is the target.
+    ByFile { baseline: String },
+    /// One-input mode: events with a timestamp before `cut` are the baseline,
+    /// events at/after it are the target. Events without a parseable
+    /// timestamp are excluded and counted.
+    ByCut { cut: chrono::DateTime<chrono::Utc> },
 }
 
 /// Performance configuration
@@ -1076,7 +1092,7 @@ impl KeloraConfig {
         };
         let metrics_with_events = cli.with_metrics;
         let suppress_events_for_metrics = metrics_format.is_some() && !metrics_with_events;
-        let suppress_events_for_drain = cli.drain.is_some();
+        let suppress_events_for_drain = cli.drain.is_some() || cli.drain_diff.is_some();
         let discover_fields = cli
             .discover_fields
             .clone()
@@ -1195,6 +1211,7 @@ impl KeloraConfig {
                 metrics_with_events,
                 metrics_file,
                 drain: cli.drain.clone(),
+                drain_diff: cli.drain_diff.clone(),
                 discover_fields,
                 discover_final: cli.discover_final_fields.is_some(),
                 discover_depth: cli
@@ -1213,6 +1230,7 @@ impl KeloraConfig {
                 span: parse_span_config(cli)?,
                 window_size: cli.window_size.unwrap_or(0),
                 timestamp_filter: None, // Will be set in main() after parsing since/until
+                drain_diff_rule: None,  // Will be set in main() after CLI parsing
                 normalize_timestamps: cli.normalize_ts,
                 take_limit: cli.take,
                 strict: cli.strict,
@@ -1317,6 +1335,7 @@ impl Default for KeloraConfig {
                 metrics_with_events: false,
                 metrics_file: None,
                 drain: None,
+                drain_diff: None,
                 discover_fields: None,
                 discover_final: false,
                 discover_depth: crate::field_discovery::DEFAULT_FLATTEN_DEPTH,
@@ -1335,6 +1354,7 @@ impl Default for KeloraConfig {
                 exclude_levels: Vec::new(),
                 window_size: 0,
                 timestamp_filter: None,
+                drain_diff_rule: None,
                 normalize_timestamps: false,
                 take_limit: None,
                 strict: false,

@@ -127,6 +127,89 @@ pub fn validate_cli_args(cli: &Cli) -> Result<()> {
         }
     }
 
+    validate_drain_diff_args(cli, implies_parallel)?;
+
+    Ok(())
+}
+
+/// Validate the --drain-diff flag family: input arity (two inputs, or one plus
+/// --cut), the single-field key requirement shared with --drain, and mode
+/// conflicts.
+fn validate_drain_diff_args(cli: &Cli, implies_parallel: bool) -> Result<()> {
+    if cli.cut.is_some() && cli.drain_diff.is_none() {
+        return Err(anyhow::anyhow!(
+            "--cut requires --drain-diff. Use --since/--until to filter events by time."
+        ));
+    }
+
+    if cli.drain_diff.is_none() {
+        return Ok(());
+    }
+
+    if implies_parallel {
+        return Err(anyhow::anyhow!(
+            "--drain-diff is not supported with --parallel or thread overrides. Rerun without --parallel."
+        ));
+    }
+
+    if cli.drain.is_some() {
+        return Err(anyhow::anyhow!(
+            "--drain and --drain-diff cannot be combined; pick one summary mode."
+        ));
+    }
+
+    if cli.merge_ts {
+        return Err(anyhow::anyhow!(
+            "--drain-diff is not supported with --merge-sorted: merging interleaves the inputs, but the diff needs them apart. In two-input mode the first input is the baseline; with --cut the timestamp does the splitting."
+        ));
+    }
+
+    if cli.no_input {
+        return Err(anyhow::anyhow!(
+            "--drain-diff needs input events to compare. Remove --no-input."
+        ));
+    }
+
+    let effective_keys: Vec<String> = cli
+        .keys
+        .iter()
+        .filter(|key| !cli.exclude_keys.contains(key))
+        .cloned()
+        .collect();
+    if effective_keys.len() != 1 {
+        return Err(anyhow::anyhow!(
+            "--drain-diff requires exactly one effective field in --keys after exclusions, e.g. --keys msg. Use -s to inspect available fields."
+        ));
+    }
+
+    if cli.cut.is_some() {
+        if cli.files.len() > 1 {
+            return Err(anyhow::anyhow!(
+                "--drain-diff with --cut takes a single input (the cut timestamp splits it into baseline and target); got {} inputs. Drop --cut to compare two files.",
+                cli.files.len()
+            ));
+        }
+    } else {
+        if cli.files.len() != 2 {
+            return Err(anyhow::anyhow!(
+                "--drain-diff requires exactly 2 inputs (baseline first, then target); got {}. For a single input, split it by time with --cut <timestamp>.",
+                cli.files.len()
+            ));
+        }
+        // The two sides are told apart by filename, so the same file twice (or
+        // two paths to one file) cannot be distinguished. Canonicalize when
+        // possible; "-" (stdin) is already limited to one occurrence above.
+        let canonical = |path: &String| {
+            std::fs::canonicalize(path).unwrap_or_else(|_| std::path::PathBuf::from(path))
+        };
+        if canonical(&cli.files[0]) == canonical(&cli.files[1]) {
+            return Err(anyhow::anyhow!(
+                "--drain-diff baseline and target are the same file ('{}'); a self-diff is empty by construction. Compare two different files, or split one file by time with --cut.",
+                cli.files[0]
+            ));
+        }
+    }
+
     Ok(())
 }
 

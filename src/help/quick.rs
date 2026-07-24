@@ -40,6 +40,7 @@ Common Options:
   -s, --stats                   Show only the statistics, with discovered fields
   -m, --metrics                 Show only the tracked metrics
   --drain                       Summarize log templates (requires -k/--keys, sequential only)
+  --drain-diff                  Diff templates between a baseline and a target log (2 inputs, or 1 + --cut)
   --merge-sorted                Merge already-sorted files by timestamp; aborts on missing timestamps, parse failures, or disorder (sequential only)
   -P, --parallel                Process in parallel for high-throughput batch analysis (sequential by default)
 

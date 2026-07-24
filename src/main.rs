@@ -85,6 +85,7 @@ mod config_file;
 mod decompression;
 mod detection;
 mod drain;
+mod drain_diff;
 mod engine;
 mod event;
 mod field_discovery;
@@ -263,6 +264,52 @@ fn main() -> Result<()> {
         };
 
         config.processing.timestamp_filter = Some(TimestampFilterConfig { since, until });
+    }
+
+    // Resolve the --drain-diff side rule: a --cut timestamp (parsed with the
+    // same machinery as --since), or the first input file as the baseline.
+    if config.output.drain_diff.is_some() {
+        let rule = if let Some(cut_str) = &cli.cut {
+            let cli_timezone = config.input.default_timezone.as_deref();
+            match crate::timestamp::resolve_time_range(Some(cut_str), None, cli_timezone) {
+                Ok((Some(cut), _)) => config::DrainDiffRule::ByCut { cut },
+                Ok((None, _)) => {
+                    stderr
+                        .writeln(&config.format_error_message(&format!(
+                            "--cut: could not resolve '{}' to a timestamp. See --help-time for accepted formats.",
+                            cut_str
+                        )))
+                        .unwrap_or(());
+                    ExitCode::InvalidUsage.exit();
+                }
+                Err(e) => {
+                    stderr
+                        .writeln(&config.format_error_message(&format!("--cut: {}", e)))
+                        .unwrap_or(());
+                    ExitCode::InvalidUsage.exit();
+                }
+            }
+        } else {
+            // Two-input mode: the baseline is the first input after --file-order
+            // sorting (CLI order by default), matching the order events arrive.
+            let sorted =
+                pipeline::builders::sort_files(&config.input.files, &config.input.file_order)
+                    .unwrap_or_else(|_| config.input.files.clone());
+            match sorted.first() {
+                Some(baseline) => config::DrainDiffRule::ByFile {
+                    baseline: baseline.clone(),
+                },
+                None => {
+                    stderr
+                        .writeln(&config.format_error_message(
+                            "--drain-diff requires exactly 2 inputs (baseline first, then target), or 1 input plus --cut.",
+                        ))
+                        .unwrap_or(());
+                    ExitCode::InvalidUsage.exit();
+                }
+            }
+        };
+        config.processing.drain_diff_rule = Some(rule);
     }
 
     // Compile ignore-lines regex if provided
@@ -1344,6 +1391,52 @@ fn handle_pipeline_success(
             };
             if !output.is_empty() && output != "No templates found" {
                 stdout.writeln(&output).unwrap_or(());
+            }
+        }
+    }
+
+    // --drain-diff runs pass 2 (frozen matching) here, at end of input, and
+    // emits the three-section report. Like --drain, it also flushes on signal
+    // termination so a Ctrl-C'd run still yields its summary.
+    if let Some(diff_format) = config.output.drain_diff.clone() {
+        if terminal_allowed {
+            match crate::drain_diff::finalize() {
+                Ok(report) => {
+                    if config.warnings_allowed() {
+                        if report.excluded_no_timestamp > 0 {
+                            stderr
+                                .writeln(&crate::config::format_warning_message_auto(&format!(
+                                    "--drain-diff --cut excluded {} event(s) without a parseable timestamp from the comparison. Check --ts-field / --ts-format if your timestamps use a non-default field.",
+                                    report.excluded_no_timestamp
+                                )))
+                                .unwrap_or(());
+                        }
+                        if report.unmatched_events > 0 {
+                            stderr
+                                .writeln(&crate::config::format_warning_message_auto(&format!(
+                                    "--drain-diff: {} event(s) matched no frozen template in pass 2; counts may be incomplete. This should not happen — please report it.",
+                                    report.unmatched_events
+                                )))
+                                .unwrap_or(());
+                        }
+                    }
+                    let use_colors = crate::tty::should_use_colors_with_mode(&config.output.color);
+                    let output = match diff_format {
+                        crate::cli::DrainDiffFormat::Table => {
+                            crate::drain_diff::format_report_text(&report, use_colors)
+                        }
+                        crate::cli::DrainDiffFormat::Json => {
+                            crate::drain_diff::format_report_json(&report)
+                        }
+                    };
+                    stdout.writeln(&output).unwrap_or(());
+                }
+                Err(e) => {
+                    stderr
+                        .writeln(&config.format_error_message(&e))
+                        .unwrap_or(());
+                    std::process::exit(ExitCode::GeneralError as i32);
+                }
             }
         }
     }
