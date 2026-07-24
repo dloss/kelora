@@ -71,7 +71,7 @@ templates (4 items):
    23: Payment gateway <fqdn> rejected transaction <uuid> insufficient_funds
 ```
 
-`-k msg` tells `--drain` which field to mine — here the syslog message — and it groups near-identical lines by inferring where the values varied, so 742 noisy lines collapse into the four patterns causing the noise. And when the question is *what changed since the deploy*, `--drain-diff before.log after.log -k msg` compares two logs at the template level: which patterns are new, which vanished, and which shifted in volume.
+`-k msg` tells `--drain` which field to mine — here the syslog message — and it groups near-identical lines by inferring where the values varied, so 742 noisy lines collapse into the four patterns causing the noise.
 
 One tool: understand an unknown file, tame mixed formats, and surface what matters — no temp files, no intermediate scripts, no manual regex.
 
