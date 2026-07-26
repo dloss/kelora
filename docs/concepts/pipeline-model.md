@@ -282,6 +282,29 @@ kelora -j app.log \
     -k status
 ```
 
+### Filtering on a timestamp you compute yourself
+
+`--since`/`--until` can only use the timestamp the parser resolved, and `--ts-field`/`--ts-format` only help when that value sits verbatim in one field. When the timestamp has to be **assembled** — split date and time columns, an unusual epoch unit, a timestamp buried inside a message — derive it in `--exec` and narrow with `--filter` instead of `--since`. Because `--filter` is a user stage, you place it after the derivation, and aggregates stay consistent with the printed events:
+
+```bash
+# Log has separate `date` and `time` columns; --since cannot see either.
+kelora -f json app.log \
+    --exec 'e.derived = to_datetime(e.date + "T" + e.time + "Z")' \
+    --filter 'e.derived >= to_datetime("2024-05-01T00:00:00Z")' \
+    --freq id
+```
+
+### Events a script creates
+
+`emit_each` builds events inside a script stage, so they have no parser timestamp and the window — which already ran — does not apply to them. Emitted events are products of the selection rather than members of the input: they pass through unwindowed, whatever their own timestamp field says. To narrow them by time, put a `--filter` after the `emit_each` stage:
+
+```bash
+kelora -f json app.log \
+    --since 2024-05-01 \
+    --exec 'emit_each(e.rows)' \
+    --filter 'to_datetime(e.ts) >= to_datetime("2024-05-01T00:00:00Z")'
+```
+
 ### Span Processing
 
 Groups events into spans for aggregation:

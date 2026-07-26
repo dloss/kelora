@@ -6,6 +6,10 @@ See also: [v2 behavior notes](v2-behavior-notes.md) for candidate breaking
 changes around resiliency, parser strictness, config validation, and scored
 auto-format detection.
 
+See also: [v3 behavior notes](v3-behavior-notes.md) for candidate breaking
+changes deferred to the next major — currently positioning `--since`/`--until`
+by command-line order like the other user stages.
+
 See also: [named formats](named-formats.md) for the built-in named log-format
 catalogue (state, limitations, and roadmap — auto-detect split, scored
 detection, user-loadable format files).
