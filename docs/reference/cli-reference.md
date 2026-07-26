@@ -1206,39 +1206,42 @@ kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
 against the *frozen* final template set and counted per side. Because raw
 counts mislead when the sides differ in size (10 minutes of incident vs. 24
 hours of baseline), all comparisons use **share** — count divided by that
-side's total events — and volume shifts are reported in percentage points of
-share (Δpp).
+side's total events.
+
+`Δpp` on a shift line is simply the gap between the two percentages printed
+next to it: `baseline: 2 (1.8%) → target: 30 (25.0%)` is `Δ +23.2pp`, meaning
+this template went from 1.8% of the log's lines to 25% of them — it took over
+23 more points of the traffic. It is written in *points* rather than percent
+because saying "up 1300%" for the same move would be true of the count and
+useless for the share.
 
 There are no threshold flags by design. Templates with a combined count below
 2 are ignored, and NEW templates are exempt from that floor — a template
 appearing even once only after the deploy is exactly what you are looking for.
 
-A volume shift is reported when the move is **bigger than sampling noise** for
-the number of events on each side, **and** big enough to act on: either it
-shifted at least 0.5 percentage points of that side's traffic, or the
-template's rate changed by at least 1.5× in either direction. Both bars are
-needed. Scaling with sample size is what keeps a single event on a 20-event
-side — several points of share, but one event — out of the report, while
-letting a sub-percent move through when thousands of events back it. The
-effect-size bar then drops the moves that are technically real but not worth a
-row: at 50,000 events per side, a 0.06pp wobble already counts as significant.
-The `||` between the two effect-size conditions covers opposite ends of the
-share range — a dominant template matters in absolute pp (60% → 50% is a tenth
-of your traffic), a rare one as a multiple (5 → 500 occurrences in a 100k log
-is under 0.5pp but a 100-fold explosion).
+A volume shift is reported when the move is too big to be chance at those event
+counts, **and** big enough to matter: at least 0.5 points of that side's
+traffic, or a 1.5× change in the template's rate. Both bars are needed — the
+first keeps one event on a 20-event side out of the report, the second keeps
+out moves that are real but too small to act on.
 
-Templates whose move did not clear those bars are counted on the totals line
-as *within noise* — not "unchanged", because some of them did move. When one of
-them moved by at least a full percentage point, the report adds a line saying
-how many and at what sample size, so a suppressed drop never looks like an
-omission.
+Everything else is counted as *within noise* on the totals line — not
+"unchanged", because some of those did move, just not by enough to call. If one
+of them moved by a point of traffic or more, the report says so rather than
+leaving you to wonder where it went:
+
+```
+VOLUME SHIFTS (1 template):
+  upstream <fqdn> returned <num> for request <uuid>
+    baseline: 2 (1.8%)  →  target: 30 (25.0%)   Δ +23.2pp
+  2 more templates moved, but 110/120 events is too few to be sure they're real
+```
 
 Output is sorted (counts descending for new/vanished, |Δ share| descending for
-shifts — magnitude, not significance, since the gate has already removed what
-was only noise) so your eye does the thresholding. `--drain-diff=json` carries
-each shifted template's `z_score`, signed to match the direction of the move,
-for anyone who wants a different bar — filter downstream, including with
-kelora itself.
+shifts) so your eye does the thresholding. `--drain-diff=json` carries each
+shifted template's `z_score` — the test statistic behind the first bar, signed
+to match the direction of the move — for anyone who wants a different cutoff:
+filter downstream, including with kelora itself.
 
 `--drain-diff` composes with the normal pipeline: `--filter`/`--exec` run
 before the comparison, so you can diff only errors, or normalize a field first:
@@ -1286,14 +1289,13 @@ stdin a first-class input (nothing is re-read).
   inflating the diff. Remedy: normalize the field with `--exec` upstream.
 - *No sequence awareness.* The diff compares template frequencies, not
   orderings or burst timing.
-- *Shares are compositional.* Each template is tested against the noise bar on
-  its own, but shares sum to 100% per side, so a large rise in one template
-  mechanically depresses every other. Read a cluster of same-direction moves as
-  one event, not several.
-- *No multiple-comparison correction.* Each template gets its own test at ~95%
-  confidence, so a log with hundreds of templates can turn up a chance shift.
-  The effect-size bar filters the ones small enough to be pure chance; a
-  borderline row on a very high-template log is still worth a second look.
+- *One big change makes everything else look like it moved.* Shares are slices
+  of the same pie, so when one template jumps to a quarter of the traffic, every
+  other slice shrinks even if its own rate held steady. Read a cluster of
+  same-direction moves as one event, not several.
+- *Each template is judged on its own.* On a log with hundreds of templates,
+  one can clear the bar by luck. The size bar filters most of those out, but a
+  borderline row on a very template-heavy log is worth a second look.
 
 #### `--cut <TIME>`
 

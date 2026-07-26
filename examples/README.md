@@ -99,7 +99,7 @@ VANISHED from target (1 template):
 VOLUME SHIFTS (1 template):
   upstream <fqdn> returned <num> for request <uuid>
     baseline: 2 (1.8%)  →  target: 30 (25.0%)   Δ +23.2pp
-  2 more templates moved but not beyond sampling noise at 110/120 events
+  2 more templates moved, but 110/120 events is too few to be sure they're real
 
 totals: baseline 110 events, target 120 events, 2 shared templates within noise
 ```
@@ -113,11 +113,11 @@ exactly what you're looking for.
 
 The two templates held back are the flip side of that same rise: with 503s
 taking a quarter of the traffic, the healthy patterns have to give up share.
-At 110 and 120 events per side those drops are not yet distinguishable from
-sampling noise, so they get one summary line instead of rows of their own —
-and the note says so rather than quietly filing them under "unchanged".
-`--drain-diff=json` carries each reported shift's `z_score` if you want to
-apply your own bar.
+At 110 and 120 events per side those drops could still be luck of the draw, so
+they get one summary line instead of rows of their own — and the report says so
+rather than quietly filing them under "unchanged". Feed it a bigger capture and
+they show up. `Δ +23.2pp` reads off the two percentages beside it: this
+template went from 1.8% of the lines to 25% of them.
 
 ## Filter Patterns (Boolean Logic)
 
