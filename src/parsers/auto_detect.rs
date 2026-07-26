@@ -12,7 +12,8 @@ use anyhow::Result;
 /// 3. Syslog - matches RFC5424 or RFC3164 patterns
 /// 4. Combined - contains common Apache/Nginx log patterns
 /// 5. Logfmt - contains key=value pairs
-/// 6. CSV/TSV - contains delimiters with reasonable structure
+/// 6. CSV/TSV - contains delimiters with reasonable structure, and (for the
+///    with-header variants) a first line that reads as a header row
 /// 7. Named application-log formats adapted from lnav (regex-based)
 /// 8. Line - fallback for everything else
 pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
@@ -148,7 +149,9 @@ fn detect_csv_variants(line: &str) -> Option<ConfigInputFormat> {
             if first_field.chars().any(|c| c.is_ascii_alphabetic())
                 && !first_field.chars().all(|c| c.is_ascii_digit())
             {
-                return Some(ConfigInputFormat::Tsv(None));
+                if plausible_header_row(line, '\t') {
+                    return Some(ConfigInputFormat::Tsv(None));
+                }
             } else {
                 return Some(ConfigInputFormat::Tsvnh);
             }
@@ -162,7 +165,9 @@ fn detect_csv_variants(line: &str) -> Option<ConfigInputFormat> {
             if trimmed_field.chars().any(|c| c.is_ascii_alphabetic())
                 && !trimmed_field.chars().all(|c| c.is_ascii_digit())
             {
-                return Some(ConfigInputFormat::Csv(None));
+                if plausible_header_row(line, ',') {
+                    return Some(ConfigInputFormat::Csv(None));
+                }
             } else {
                 return Some(ConfigInputFormat::Csvnh);
             }
@@ -170,6 +175,139 @@ fn detect_csv_variants(line: &str) -> Option<ConfigInputFormat> {
     }
 
     None
+}
+
+/// Could `line` be a CSV/TSV *header* row, or is it an application log line that
+/// merely contains delimiters?
+///
+/// Only consulted when auto-detection is about to pick the with-header variant
+/// (`csv`/`tsv`). That branch is the damaging one: the first line is consumed as
+/// the header, so a log line there turns every field name into a fragment of a
+/// log message and silently mislabels the whole stream (exit 0, no diagnostic).
+/// Commas are common in log messages — JVM list rendering (`[TERM,HUP,INT]`),
+/// `acls to: a,b`, comma-separated paths — so this fires often in practice.
+///
+/// Returning false makes detection fall through to the application-log formats
+/// and finally `line`, which is the honest outcome and comes with the existing
+/// "No input format detected" hint.
+///
+/// The headerless variants (`csvnh`/`tsvnh`) are deliberately not checked: their
+/// field names are positional, so there is no header to corrupt, and a genuine
+/// CSV export of log records (`2024-01-02 10:00:00,INFO,started`) must keep
+/// detecting as `csvnh`. An explicit `-f csv` never reaches here either — that
+/// stays maximally permissive.
+fn plausible_header_row(line: &str, delimiter: char) -> bool {
+    line.split(delimiter)
+        .map(|field| field.trim().trim_matches('"').trim())
+        .all(plausible_header_name)
+}
+
+/// Reject header names that carry the fingerprints of a log line.
+///
+/// The discriminator is *company*, not vocabulary. A log line carries its level
+/// and timestamp alongside the rest of the message in the same field
+/// (`17/06/09 20:10:40 INFO executor.Backend: …`), whereas a header field that
+/// happens to be a level or a date is that field's entire contents. So a bare
+/// `INFO` or `2024-01-01` only counts as evidence when the field holds other
+/// words too — which keeps two shapes of real CSV working that an
+/// anywhere-in-the-field test would wrongly reject:
+///
+/// - all-caps SQL/warehouse exports: `TIMESTAMP,ERROR_COUNT,WARN_COUNT`
+/// - wide time-series columns:       `region,2024-01-01,2024-01-02`
+///
+/// Vocabulary is never consulted: `timestamp,level,message` is fine, because
+/// these test for digit-shaped values and upper-case severity words.
+fn plausible_header_name(field: &str) -> bool {
+    if is_prose_like(field) {
+        return false;
+    }
+    // A full date+time in one token is a timestamp wherever it appears — no
+    // column is named `2024-01-02T10:00:00Z`.
+    if field.split_whitespace().any(is_iso_datetime) {
+        return false;
+    }
+    let multi_word = field.split_whitespace().count() >= 2;
+    !(multi_word && (contains_level_token(field) || contains_timestamp_token(field)))
+}
+
+/// A bare, standalone severity word — the classic middle column of an app log
+/// line. Tokenised on *whitespace* (then stripped of edge punctuation, so
+/// `[INFO]` and `INFO:` still match), which is what keeps `ERROR_COUNT` and
+/// `info.hits` from reading as levels. Upper case only, so a header named
+/// `error` or `Warnings` is untouched.
+fn contains_level_token(field: &str) -> bool {
+    const LEVELS: &[&str] = &[
+        "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "WARNING", "ERROR", "SEVERE", "CRIT",
+        "CRITICAL", "FATAL", "PANIC", "ALERT", "EMERG",
+    ];
+    field
+        .split_whitespace()
+        .map(|token| token.trim_matches(|c: char| !c.is_ascii_alphanumeric()))
+        .any(|token| LEVELS.contains(&token))
+}
+
+/// A date- or clock-shaped token: `2024-01-02`, `17/06/09`, `01/02/2024`,
+/// `2024.01.02`, or `20:10:40`. Digit-shaped, so `date`/`time`/`created_at`
+/// header names don't trip it.
+fn contains_timestamp_token(field: &str) -> bool {
+    field
+        .split_whitespace()
+        .any(|token| looks_like_date(token) || looks_like_clock(token))
+}
+
+/// A single token holding both halves of a timestamp, ISO-style:
+/// `2024-01-02T10:00:00Z`, `2024-01-02T10:00:00.123+02:00`. Only the `HH:MM`
+/// prefix of the time part is checked, so any trailing zone spelling is
+/// tolerated without trying to parse it.
+fn is_iso_datetime(token: &str) -> bool {
+    let Some((date, time)) = token.split_once('T') else {
+        return false;
+    };
+    if !looks_like_date(date) {
+        return false;
+    }
+    matches!(time.as_bytes(),
+        [h1, h2, b':', m1, m2, ..]
+            if h1.is_ascii_digit() && h2.is_ascii_digit()
+                && m1.is_ascii_digit() && m2.is_ascii_digit())
+}
+
+/// `N+SEP N+SEP N+` where SEP is `-`, `/`, or `.` — the separator repeated, so a
+/// lone `2024-01` or a version like `1.2` doesn't match.
+fn looks_like_date(token: &str) -> bool {
+    ['-', '/', '.'].iter().any(|&sep| {
+        let parts: Vec<&str> = token.trim_end_matches([',', ';', ':']).split(sep).collect();
+        parts.len() == 3
+            && parts
+                .iter()
+                .all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_digit()))
+    })
+}
+
+/// `HH:MM:SS`, optionally with fractional seconds (`20:10:40.123`).
+fn looks_like_clock(token: &str) -> bool {
+    let parts: Vec<&str> = token.trim_end_matches([',', ';']).split(':').collect();
+    if parts.len() != 3 {
+        return false;
+    }
+    let (last, head) = parts.split_last().expect("checked len == 3");
+    let seconds = last.split_once('.').map_or(*last, |(secs, _)| secs);
+    head.iter()
+        .chain(std::iter::once(&seconds))
+        .all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_digit()))
+}
+
+/// A run of prose rather than a column name — the backstop for log lines that
+/// carry neither a level nor a timestamp. Both bounds must be exceeded: real
+/// headers get long (`total_amount_due_usd`) and do contain spaces (`First
+/// Name`), but a column name of six or more words is essentially unheard of.
+///
+/// The thresholds lean towards rejecting, because the two failure directions are
+/// not symmetric: a wrongly rejected CSV degrades to `line` and says so via the
+/// "No input format detected" hint, whereas a wrongly accepted log line is
+/// silent — nonsense field names, exit 0.
+fn is_prose_like(field: &str) -> bool {
+    field.chars().count() > 30 && field.split_whitespace().count() >= 6
 }
 
 #[cfg(test)]
@@ -266,6 +404,87 @@ mod tests {
             ConfigInputFormat::Tsvnh
         ));
         // All numeric, no headers
+    }
+
+    #[test]
+    fn test_app_log_lines_are_not_claimed_as_csv() {
+        // A log line containing a comma must not have its first line eaten as a
+        // CSV header row. Falling through to `line` (or a named app-log format)
+        // is the honest outcome; the with-header CSV guess silently turns every
+        // field name into a fragment of a log message.
+        for line in [
+            // Spark: comma from JVM list rendering. Timestamp + level + prose.
+            "17/06/09 20:10:40 INFO executor.Backend: Registered signal handlers for [TERM,HUP,INT]",
+            // Comma from a comma-separated value in the message text.
+            "17/06/09 20:10:41 INFO spark.SecurityManager: Changing view acls to: yarn,curi",
+            // Comma inside a path.
+            "17/06/09 20:10:42 INFO storage.DiskBlockManager: Created local dir at /a/b,c",
+            // Level but no timestamp.
+            "INFO Registered signal handlers for [TERM,HUP,INT]",
+            // Timestamp but no level.
+            "2024-01-02 15:04:05 shutting down workers a,b,c",
+            // Neither: caught by the prose backstop.
+            "the quick brown fox jumped over the lazy dog, the cat, and the mouse",
+            // A full ISO datetime is a timestamp even alone in its field — no
+            // column is named `2024-01-02T10:00:00Z`.
+            "2024-01-02T10:00:00Z,ERROR,connection refused",
+            "2024-01-02T10:00:00.123+02:00,a,b",
+        ] {
+            assert!(
+                !matches!(
+                    detect_format(line).unwrap(),
+                    ConfigInputFormat::Csv(_) | ConfigInputFormat::Tsv(_)
+                ),
+                "log line was claimed as with-header CSV/TSV: {line}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_header_guard_keeps_real_csv_headers() {
+        // Short identifier headers, headers with spaces, and headers whose names
+        // are timestamp/level *vocabulary* (as opposed to timestamp/level-shaped
+        // values) must all still detect as csv/tsv.
+        for line in [
+            "name,age,city",
+            "First Name,Last Name,Email",
+            "timestamp,level,message",
+            "date,time,created_at,errors,warnings",
+            "total_amount_due_usd,customer_lifetime_value,churn_probability",
+            "\"name\",\"age\",\"city\"",
+            // All-caps warehouse/SQL export. `ERROR_COUNT` must not read as a
+            // bare `ERROR`, and a column named exactly `ERROR` is still a name.
+            "TIMESTAMP,ERROR_COUNT,WARN_COUNT",
+            "DATE,ERROR,WARNING",
+            // Wide time-series: the column names are dates. Legitimate, and a
+            // date-anywhere test would wrongly reject it.
+            "region,2024-01-01,2024-01-02",
+            // Same shape with clock-valued columns.
+            "host,09:00:00,10:00:00",
+        ] {
+            assert!(
+                matches!(detect_format(line).unwrap(), ConfigInputFormat::Csv(_)),
+                "real CSV header no longer detected: {line}"
+            );
+        }
+        assert!(matches!(
+            detect_format("timestamp\tlevel\tmessage").unwrap(),
+            ConfigInputFormat::Tsv(_)
+        ));
+    }
+
+    #[test]
+    fn test_header_guard_does_not_touch_headerless_variants() {
+        // csvnh/tsvnh name fields positionally, so there is no header to corrupt
+        // — a genuine CSV export of log records must keep working.
+        assert!(matches!(
+            detect_format("2024-01-02 10:00:00,INFO,started").unwrap(),
+            ConfigInputFormat::Csvnh
+        ));
+        assert!(matches!(
+            detect_format("2024-01-02 10:00:00\tINFO\tstarted").unwrap(),
+            ConfigInputFormat::Tsvnh
+        ));
     }
 
     #[test]
