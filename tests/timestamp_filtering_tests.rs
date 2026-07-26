@@ -1570,3 +1570,80 @@ fn test_time_window_applies_before_script_stages() {
         "in-window events must still reach script stages: {stdout}"
     );
 }
+
+/// Events a script *creates* carry no parser timestamp, so the time window —
+/// which has already run by the time they exist — does not apply to them at
+/// all. This is a consequence of the window running ahead of the user stages:
+/// while it ran on the way *out*, it saw `parsed_ts == None` on every emitted
+/// event and skipped it in resilient mode, so `--since`/`--until` silently
+/// destroyed every `emit_each` event, including in-window ones.
+#[test]
+fn test_emitted_events_are_not_subject_to_the_time_window() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--since",
+            "2024-05-01",
+            "--exec",
+            "emit_each([#{ts: \"2020-01-01T00:00:00Z\", id: \"synth\"}])",
+            "-k",
+            "id",
+        ],
+        MATRIX_INPUT,
+    );
+    assert_eq!(code, 0, "run failed: {stderr}");
+
+    let synth = stdout.lines().filter(|l| l.contains("synth")).count();
+    assert_eq!(
+        synth, 2,
+        "the two in-window events each emit one synthetic event, and an emitted \
+         event survives the window regardless of its own timestamp: {stdout}"
+    );
+    assert!(
+        !stdout.contains("id='a'") && !stdout.contains("id='d'"),
+        "out-of-window input events must not reach the emitting stage: {stdout}"
+    );
+}
+
+/// The recourse for narrowing emitted events by time: a `--filter` placed after
+/// the emitting stage, which — unlike the window — is a user stage and so runs
+/// where it is written.
+#[test]
+fn test_filter_after_emit_narrows_emitted_events_by_time() {
+    let args = |threshold: &'static str| {
+        vec![
+            "-f",
+            "json",
+            "--since",
+            "2024-05-01",
+            "--exec",
+            "emit_each([#{ts: \"2020-01-01T00:00:00Z\", id: \"synth\"}])",
+            "--filter",
+            threshold,
+            "-k",
+            "id",
+        ]
+    };
+
+    let (dropped, stderr, code) = run_kelora_with_input(
+        &args("to_datetime(e.ts) >= to_datetime(\"2024-05-01T00:00:00Z\")"),
+        MATRIX_INPUT,
+    );
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        !dropped.contains("synth"),
+        "a filter after the emit stage must drop out-of-window emitted events: {dropped}"
+    );
+
+    let (kept, stderr, code) = run_kelora_with_input(
+        &args("to_datetime(e.ts) >= to_datetime(\"2019-01-01T00:00:00Z\")"),
+        MATRIX_INPUT,
+    );
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert_eq!(
+        kept.lines().filter(|l| l.contains("synth")).count(),
+        2,
+        "a threshold the emitted events satisfy must keep them: {kept}"
+    );
+}
