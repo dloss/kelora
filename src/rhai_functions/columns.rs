@@ -331,7 +331,7 @@ pub fn register_functions(engine: &mut Engine) {
 pub fn parse_cols_whitespace(line: &str, spec: &str) -> Result<Map, Box<rhai::EvalAltResult>> {
     // Strip trailing newlines for consistency with other structured formats
     let line = line.trim_end_matches('\n').trim_end_matches('\r');
-    let plan = parse_spec(spec)?;
+    let plan = parse_spec(spec).map_err(rhai_error)?;
     let (columns, byte_starts) = split_whitespace_columns(line);
     apply_spec(
         &plan,
@@ -354,7 +354,7 @@ pub fn parse_cols_with_sep(
 
     // Strip trailing newlines for consistency with other structured formats
     let line = line.trim_end_matches('\n').trim_end_matches('\r');
-    let plan = parse_spec(spec)?;
+    let plan = parse_spec(spec).map_err(rhai_error)?;
     let (columns, byte_starts) = split_with_separator(line, sep);
     apply_spec(
         &plan,
@@ -367,7 +367,7 @@ pub fn parse_cols_with_sep(
 }
 
 fn parse_cols_array(values: Array, spec: &str) -> Result<Map, Box<rhai::EvalAltResult>> {
-    let plan = parse_spec(spec)?;
+    let plan = parse_spec(spec).map_err(rhai_error)?;
 
     let mut owned: Vec<String> = Vec::with_capacity(values.len());
     for value in values.into_iter() {
@@ -401,7 +401,7 @@ fn parse_cols_array_with_sep(
     spec: &str,
     sep: &str,
 ) -> Result<Map, Box<rhai::EvalAltResult>> {
-    let plan = parse_spec(spec)?;
+    let plan = parse_spec(spec).map_err(rhai_error)?;
 
     let mut owned: Vec<String> = Vec::with_capacity(values.len());
     for value in values.into_iter() {
@@ -588,7 +588,34 @@ fn split_with_separator<'a>(line: &'a str, sep: &str) -> (Vec<&'a str>, Vec<usiz
     (columns, starts)
 }
 
-fn parse_spec(spec: &str) -> Result<SpecPlan, Box<rhai::EvalAltResult>> {
+fn rhai_error(message: String) -> Box<rhai::EvalAltResult> {
+    message.into()
+}
+
+/// Validate a `cols:` spec without parsing a line.
+///
+/// Called from CLI/config validation so a malformed spec fails once at startup
+/// (as a usage error) instead of once per input line at runtime. The returned
+/// message is phrased for a CLI user, not for the Rhai runtime.
+pub fn validate_cols_spec(spec: &str) -> Result<(), String> {
+    // Commas are the cascade separator for `-f` itself (`-f json,line`), so a
+    // comma-separated cols spec is the most likely first guess. Say so plainly
+    // rather than reporting the whole list as one bad field name.
+    if let Some(token) = spec.split_whitespace().find(|t| t.contains(',')) {
+        return Err(format!(
+            "'{}' contains a comma. cols fields are separated by spaces, not commas \
+             — did you mean 'cols:{}'?",
+            token,
+            spec.replace(',', " ")
+        ));
+    }
+
+    parse_spec(spec)
+        .map(|_| ())
+        .map_err(|e| e.strip_prefix("parse_cols: ").unwrap_or(&e).to_string())
+}
+
+fn parse_spec(spec: &str) -> Result<SpecPlan, String> {
     let mut tokens = Vec::new();
     let mut seen_rest = false;
     let mut min_required = 0usize;
@@ -600,13 +627,13 @@ fn parse_spec(spec: &str) -> Result<SpecPlan, Box<rhai::EvalAltResult>> {
 
         if let Some(name) = raw_token.strip_prefix('*') {
             if seen_rest {
-                return Err("parse_cols: *field may appear only once and must be last".into());
+                return Err("parse_cols: *field may appear only once and must be last".to_string());
             }
             if name.is_empty() {
-                return Err("parse_cols: *field requires a name".into());
+                return Err("parse_cols: *field requires a name".to_string());
             }
             if !is_valid_field_name(name) {
-                return Err(format!("parse_cols: invalid field name '{}'", name).into());
+                return Err(invalid_field_name_message(name));
             }
 
             tokens.push(SpecToken::Rest {
@@ -617,7 +644,7 @@ fn parse_spec(spec: &str) -> Result<SpecPlan, Box<rhai::EvalAltResult>> {
         }
 
         if seen_rest {
-            return Err("parse_cols: *field must be the final token".into());
+            return Err("parse_cols: *field must be the final token".to_string());
         }
 
         if raw_token == "-" {
@@ -639,12 +666,12 @@ fn parse_spec(spec: &str) -> Result<SpecPlan, Box<rhai::EvalAltResult>> {
     }
 
     if tokens.is_empty() {
-        return Err("parse_cols: spec must contain at least one token".into());
+        return Err("parse_cols: spec must contain at least one token".to_string());
     }
 
     let has_rest = matches!(tokens.last(), Some(SpecToken::Rest { .. }));
     if seen_rest && !has_rest {
-        return Err("parse_cols: *field must be the final token".into());
+        return Err("parse_cols: *field must be the final token".to_string());
     }
 
     Ok(SpecPlan {
@@ -654,39 +681,50 @@ fn parse_spec(spec: &str) -> Result<SpecPlan, Box<rhai::EvalAltResult>> {
     })
 }
 
-fn parse_field_token(token: &str) -> Result<(String, usize), Box<rhai::EvalAltResult>> {
+fn parse_field_token(token: &str) -> Result<(String, usize), String> {
     if let Some(open) = token.find('(') {
         if !token.ends_with(')') {
-            return Err(format!("parse_cols: invalid field token '{}'", token).into());
+            return Err(format!("parse_cols: invalid field token '{}'", token));
         }
 
         let name = &token[..open];
         let count_str = &token[open + 1..token.len() - 1];
 
         if name.is_empty() || !is_valid_field_name(name) {
-            return Err(format!("parse_cols: invalid field name '{}'", name).into());
+            return Err(invalid_field_name_message(name));
         }
 
         let count = parse_count(count_str, "field")?;
         Ok((name.to_string(), count))
     } else {
         if !is_valid_field_name(token) {
-            return Err(format!("parse_cols: invalid field name '{}'", token).into());
+            return Err(invalid_field_name_message(token));
         }
         Ok((token.to_string(), 1))
     }
 }
 
-fn parse_count(value: &str, kind: &str) -> Result<usize, Box<rhai::EvalAltResult>> {
+fn parse_count(value: &str, kind: &str) -> Result<usize, String> {
     if value.is_empty() || !value.chars().all(|c| c.is_ascii_digit()) {
-        return Err(format!("parse_cols: invalid {} count '{}'", kind, value).into());
+        return Err(format!("parse_cols: invalid {} count '{}'", kind, value));
     }
 
     let count = value.parse::<usize>().unwrap_or(0);
     if count < 1 {
-        return Err(format!("parse_cols: {} count must be >= 1 (got {})", kind, count).into());
+        return Err(format!(
+            "parse_cols: {} count must be >= 1 (got {})",
+            kind, count
+        ));
     }
     Ok(count)
+}
+
+fn invalid_field_name_message(name: &str) -> String {
+    format!(
+        "parse_cols: invalid field name '{}' (field names may contain letters, digits and \
+         underscores, and may not start with a digit)",
+        name
+    )
 }
 
 fn is_valid_field_name(name: &str) -> bool {
@@ -910,6 +948,44 @@ mod parse_cols_tests {
         set_parse_cols_strict(false);
         let err = parse_cols_whitespace("hello", "field(0)").unwrap_err();
         assert!(err.to_string().contains("count"));
+    }
+
+    #[test]
+    fn validate_cols_spec_accepts_valid_specs() {
+        assert!(validate_cols_spec("ts level *msg").is_ok());
+        assert!(validate_cols_spec("ts(2) level *msg").is_ok());
+        assert!(validate_cols_spec("ts(2) - -(3) level *msg").is_ok());
+        assert!(validate_cols_spec("single").is_ok());
+    }
+
+    #[test]
+    fn validate_cols_spec_suggests_spaces_for_comma_lists() {
+        let err = validate_cols_spec("ts,level,msg").unwrap_err();
+        assert!(err.contains("separated by spaces, not commas"), "{}", err);
+        assert!(err.contains("cols:ts level msg"), "{}", err);
+    }
+
+    #[test]
+    fn validate_cols_spec_reports_bad_field_names_and_counts() {
+        let err = validate_cols_spec("ts 9bad").unwrap_err();
+        assert!(err.contains("9bad"), "{}", err);
+        assert!(err.contains("may not start with a digit"), "{}", err);
+
+        let err = validate_cols_spec("ts(0)").unwrap_err();
+        assert!(err.contains("count"), "{}", err);
+    }
+
+    #[test]
+    fn validate_cols_spec_rejects_misplaced_rest_token() {
+        let err = validate_cols_spec("*msg level").unwrap_err();
+        assert!(err.contains("final token"), "{}", err);
+    }
+
+    #[test]
+    fn validate_cols_spec_messages_are_cli_phrased() {
+        // The Rhai-facing prefix is stripped for CLI consumption.
+        let err = validate_cols_spec("ts 9bad").unwrap_err();
+        assert!(!err.starts_with("parse_cols:"), "{}", err);
     }
 }
 

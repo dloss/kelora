@@ -1513,6 +1513,10 @@ pub(crate) fn parse_input_format_spec(spec: &str) -> anyhow::Result<InputFormat>
                 "cols format requires a specification, e.g., 'cols:ts level *msg'"
             ));
         }
+        // Fail fast on a malformed spec (also covers specs coming from a config
+        // file, which bypass the clap value parser).
+        crate::parsers::cols::validate_spec(cols_spec)
+            .map_err(|e| anyhow::anyhow!("invalid cols spec: {}", e))?;
         return Ok(InputFormat::Cols(cols_spec.to_string()));
     }
 

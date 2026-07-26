@@ -16,6 +16,7 @@ Quick Examples:
   kelora web_access_large.log.gz --stats
   kelora simple_json.jsonl --filter 'e.service == "database"' --exec 'e.duration_s = e.get_path("duration_ms", 0) / 1000' -k timestamp,message,duration_s
   kelora simple_json.jsonl --since 2024-01-15T10:01:00Z --until now -l warn,error --stats
+  kelora audit.jsonl --freq action                # quick frequency table for one field
   kelora audit.jsonl --exec 'track_freq("action", e.action)' --metrics
   kelora app_monitoring.jsonl --drain -k message
   kelora -f json --merge-sorted app-*.jsonl
@@ -38,6 +39,7 @@ Common Options:
   -q, --quiet                   Suppress event output (-s/--stats and -m/--metrics imply this)
   -n, --take <N>                Limit output to first N events
   -s, --stats                   Show only the statistics, with discovered fields
+  --freq <FIELD>                Frequency table: count events per distinct value of FIELD
   -m, --metrics                 Show only the tracked metrics
   --drain                       Summarize log templates (requires -k/--keys, sequential only)
   --drain-diff                  Diff templates between a baseline and a target log (2 inputs, or 1 + --cut)

@@ -1441,6 +1441,10 @@ fn parse_format_value(s: &str) -> Result<String, String> {
                 "cols format requires a specification, e.g., 'cols:ts level *msg'".to_string(),
             );
         }
+        // Validate the spec here so a typo fails once as a usage error rather
+        // than raising the same runtime error on every input line.
+        crate::parsers::cols::validate_spec(spec)
+            .map_err(|e| format!("invalid cols spec: {}", e))?;
         return Ok(s.to_string());
     }
 

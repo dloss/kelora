@@ -267,7 +267,10 @@ fn try_parse_with_format(
 
     // Try timezone-aware parsing first
     if let Ok(dt) = DateTime::parse_from_str(&processed_ts_str, &processed_format) {
-        return Some(dt.with_timezone(&Utc));
+        let dt = dt.with_timezone(&Utc);
+        if year_is_plausible(&dt) {
+            return Some(dt);
+        }
     }
 
     // Special handling for year-less timestamps (syslog, custom formats, etc.)
@@ -319,6 +322,9 @@ fn try_parse_with_format(
         chrono::NaiveDateTime::parse_from_str(&processed_ts_str, &processed_format)
     {
         if let Some(dt) = apply_timezone_to_naive(naive_dt, default_timezone) {
+            if !year_is_plausible(&dt) {
+                return None;
+            }
             // The input carried no zone offset and was resolved with the default
             // timezone; record it so #287 can warn once when that default is the
             // silent UTC assumption (the explicit/default gate is applied later).
@@ -329,6 +335,20 @@ fn try_parse_with_format(
     }
 
     None
+}
+
+/// Reject timestamps whose year is implausibly small.
+///
+/// chrono's `%Y` accepts a 2-digit year, so a Spark/log4j line like
+/// `17/06/09 20:10:40` matched against `%Y/%m/%d %H:%M:%S` yields year 17 — a
+/// two-millennium error reported as a successful parse. No real log line carries
+/// a year below 1000, so treating such a match as a non-match lets a better
+/// candidate format (the `%y` variant) claim the line instead. Note this is a
+/// guard on auto-detected candidates; an explicit `--ts-format` with `%Y` is the
+/// user's stated intent and a sub-1000 year there still fails rather than being
+/// silently rewritten.
+fn year_is_plausible(dt: &DateTime<Utc>) -> bool {
+    dt.year() >= 1000
 }
 
 /// Check if a string looks like a Unix timestamp (integer or float)
@@ -468,10 +488,15 @@ fn get_initial_timestamp_formats() -> Vec<String> {
         "%d/%b/%Y:%H:%M:%S %z".to_string(), // Apache log format
         // Application-specific formats
         "%Y-%m-%d %H:%M:%S,%f".to_string(), // Python logging format
-        "%Y/%m/%d %H:%M:%S".to_string(),    // Nginx error log format
-        "%m/%d/%Y %H:%M:%S".to_string(),    // US slash format with time
-        "%d.%m.%Y %H:%M:%S".to_string(),    // German format
-        "%y%m%d %H:%M:%S".to_string(),      // MySQL legacy format
+        // Spark / log4j default layout (yy/MM/dd). Must precede the %Y variant so
+        // a 2-digit year is claimed by %y (17 -> 2017) instead of being read by
+        // %Y as year 17. "2017/06/09" still falls through to %Y, because %y
+        // consumes "20" and then fails on the following "17".
+        "%y/%m/%d %H:%M:%S".to_string(), // Spark/log4j 2-digit-year slash format
+        "%Y/%m/%d %H:%M:%S".to_string(), // Nginx error log format
+        "%m/%d/%Y %H:%M:%S".to_string(), // US slash format with time
+        "%d.%m.%Y %H:%M:%S".to_string(), // German format
+        "%y%m%d %H:%M:%S".to_string(),   // MySQL legacy format
         // Less common but valid formats
         "%d %b %Y, %H:%M".to_string(),         // "12 Feb 2006, 19:17"
         "%a %b %d %H:%M:%S %Y".to_string(),    // Classic Unix timestamp
