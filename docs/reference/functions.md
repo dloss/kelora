@@ -1577,6 +1577,12 @@ e.template = r.template;
 Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
 md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
 timestamp, date, time, num.
+`timestamp` also covers calendar dates that span several tokens — ctime/asctime
+(`Mon Jun 13 03:55:15 2005`, with or without the year) and the bare syslog form
+(`Jun 13 03:55:15`) — so one message doesn't split into a template per weekday.
+In a `key=value` token only the value is masked (`uid=<num>`), keeping the key.
+An explicit `filters` list masks exactly those patterns, without the multi-token
+calendar dates.
 For lightweight normalization without Drain, use `normalized()` on the field instead.
 
 Optional `options` map keys:

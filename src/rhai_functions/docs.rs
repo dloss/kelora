@@ -265,6 +265,10 @@ drain_templates()                    Return array of templates with same fields 
                                      Default filters: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid,
                                      mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
                                      hexnum, duration, timestamp, date, time, num
+                                     timestamp also covers multi-token calendar dates (ctime/asctime
+                                     "Mon Jun 13 03:55:15 2005", syslog "Jun 13 03:55:15")
+                                     In a key=value token only the value masks, so the key is kept (uid=<num>)
+                                     An explicit filters: list masks exactly those patterns (no calendar dates)
                                      For PII (credit_card/ssn/phone), pre-mask with normalized() before drain_template()
                                      Options: depth, max_children, similarity, filters, line_num
 
