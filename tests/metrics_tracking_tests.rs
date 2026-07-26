@@ -2424,3 +2424,200 @@ fn test_partial_field_skip_does_not_hint() {
         "a partially-present field records a value and must not be flagged: {stderr}"
     );
 }
+
+#[test]
+fn test_track_freq_buckets_timestamps_without_to_iso() {
+    // Time bucketing is the flagship derived-value tally: a rounded timestamp
+    // must be usable as a category directly. Requiring `.to_iso()` produced a
+    // runtime error on every event instead of a table.
+    let input = "{\"ts\":\"2026-07-26T10:01:00Z\",\"lvl\":\"ERROR\"}\n\
+                 {\"ts\":\"2026-07-26T10:44:00Z\",\"lvl\":\"ERROR\"}\n\
+                 {\"ts\":\"2026-07-26T11:05:00Z\",\"lvl\":\"ERROR\"}\n";
+
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-m",
+            "--exec",
+            "track_freq(\"hour\", meta.parsed_ts.round_to(\"1h\"))",
+        ],
+        input,
+    );
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        !stderr.contains("must be a string, number, bool, or timestamp"),
+        "a timestamp category must be accepted: {stderr}"
+    );
+    assert!(
+        stdout.contains("2026-07-26T10:00:00+00:00\t2"),
+        "the 10:00 bucket should hold both events: {stdout}"
+    );
+    assert!(
+        stdout.contains("2026-07-26T11:00:00+00:00\t1"),
+        "the 11:00 bucket should hold one event: {stdout}"
+    );
+}
+
+#[test]
+fn test_timestamp_category_matches_explicit_to_iso() {
+    // The coerced key must be byte-identical to the `.to_iso()` spelling, or
+    // mixing the two in one run would silently split a bucket in two.
+    let input = "{\"ts\":\"2026-07-26T10:01:00Z\"}\n";
+
+    let (bare, bare_err, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-m",
+            "--exec",
+            "track_freq(\"h\", meta.parsed_ts.round_to(\"1h\"))",
+        ],
+        input,
+    );
+    assert_eq!(code, 0, "{bare_err}");
+
+    let (explicit, explicit_err, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-m",
+            "--exec",
+            "track_freq(\"h\", meta.parsed_ts.round_to(\"1h\").to_iso())",
+        ],
+        input,
+    );
+    assert_eq!(code, 0, "{explicit_err}");
+    assert_eq!(bare, explicit, "coerced and explicit keys must agree");
+}
+
+#[test]
+fn test_timestamp_category_accepted_across_tracking_family() {
+    // track_unique / track_cardinality / track_top share the categorical
+    // contract with track_freq, so a timestamp must work in all of them.
+    let input = "{\"ts\":\"2026-07-26T10:01:00Z\"}\n{\"ts\":\"2026-07-26T11:05:00Z\"}\n";
+
+    // track_unique and track_top key by the value, so the bucket shows up
+    // verbatim; track_cardinality only ever reports an estimate, so the
+    // assertion there is that it counted the two hours rather than skipping
+    // them.
+    for (func, expected) in [
+        (
+            "track_unique(\"h\", meta.parsed_ts.round_to(\"1h\"))",
+            "2026-07-26T10:00:00+00:00",
+        ),
+        (
+            "track_top(\"h\", meta.parsed_ts.round_to(\"1h\"))",
+            "2026-07-26T11:00:00+00:00",
+        ),
+        (
+            "track_cardinality(\"h\", meta.parsed_ts.round_to(\"1h\"))",
+            "2",
+        ),
+    ] {
+        let (stdout, stderr, code) =
+            run_kelora_with_input(&["-f", "json", "-m", "--exec", func], input);
+        assert_eq!(code, 0, "{func}: {stderr}");
+        assert!(
+            !stderr.contains("must be a string, number, bool, or timestamp"),
+            "{func} should accept a timestamp: {stderr}"
+        );
+        assert!(
+            !stderr.contains("skipped events with missing values"),
+            "{func} should record the timestamp, not skip it: {stderr}"
+        );
+        assert!(
+            stdout.contains(expected),
+            "{func} should report {expected}: {stdout}"
+        );
+    }
+}
+
+#[test]
+fn test_expression_in_freq_slot_points_at_track_freq() {
+    // --freq takes a FIELD name; an expression there matches nothing. The hint
+    // must name the mechanism that does take an expression rather than blaming
+    // a misspelling.
+    let input = "{\"status\":200}\n{\"status\":404}\n";
+
+    let (_stdout, stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--freq", "e.status / 100"], input);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        stderr.contains("take a field name, not an expression"),
+        "an expression in a FIELD slot should be named as such: {stderr}"
+    );
+    assert!(
+        stderr.contains("track_freq"),
+        "the hint should point at the tracking function: {stderr}"
+    );
+    assert!(
+        !stderr.contains("likely a field-name typo"),
+        "an expression is not a typo, so the typo hint must not fire: {stderr}"
+    );
+}
+
+#[test]
+fn test_plain_typo_in_freq_slot_still_gets_typo_hint() {
+    // The expression hint must not swallow the common case.
+    let input = "{\"status\":200}\n{\"status\":404}\n";
+
+    let (_stdout, stderr, code) = run_kelora_with_input(&["-f", "json", "--freq", "stauts"], input);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        stderr.contains("likely a field-name typo"),
+        "a misspelled field is still a typo: {stderr}"
+    );
+    assert!(
+        !stderr.contains("not an expression"),
+        "a bare name is not expression-shaped: {stderr}"
+    );
+}
+
+#[test]
+fn test_user_track_call_is_not_lectured_about_freq() {
+    // The hint is scoped to the sugar flags. A user's own track_* call names its
+    // metric freely — a space in that name is a label, not a mistake — so it
+    // must keep the generic hint.
+    let input = "{\"status\":200}\n{\"status\":404}\n";
+
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-m",
+            "--exec",
+            "track_freq(\"my count\", e.nope)",
+        ],
+        input,
+    );
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        !stderr.contains("not an expression"),
+        "a user-chosen metric name must not be second-guessed: {stderr}"
+    );
+    assert!(
+        stderr.contains("likely a field-name typo"),
+        "the generic hint still applies: {stderr}"
+    );
+}
+
+#[test]
+fn test_expression_hint_obeys_explicit_no_diagnostics() {
+    let input = "{\"status\":200}\n{\"status\":404}\n";
+
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--freq", "e.status / 100", "--no-diagnostics"],
+        input,
+    );
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        !stderr.contains("not an expression"),
+        "explicit --no-diagnostics must suppress the hint: {stderr}"
+    );
+}
