@@ -482,6 +482,9 @@ The following names cannot be used: `original_line`, `parsed_ts`, `fields`
 **Notes:**
 
 - Detects once, applies to all lines
+- With multiple files, detection uses the first non-empty line across the inputs
+  in order — leading files that are empty or contain only blank lines are
+  skipped, so a freshly rotated (empty) log doesn't force everything to `line`
 - Not suitable for mixed-format files — use **cascade mode** instead
 
 ### Auto-Detection Per File

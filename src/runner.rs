@@ -7,7 +7,6 @@ use anyhow::Result;
 use crossbeam_channel::{bounded, select, Receiver, Sender};
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
-use std::fs;
 use std::io::{self, BufRead, BufReader, Write};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -496,76 +495,8 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
             return Ok((config::InputFormat::Line, false));
         }
 
-        let mut failed_opens: Vec<(String, String)> = Vec::new();
-        let mut failed_dirs: Vec<String> = Vec::new();
-        let mut detected_format: Option<DetectedFormat> = None;
-        for file_path in &sorted_files {
-            if let Ok(metadata) = fs::metadata(file_path) {
-                if metadata.is_dir() {
-                    if config.processing.strict {
-                        return Err(anyhow::anyhow!(
-                            "Input path '{}' is a directory; only files are supported",
-                            file_path
-                        ));
-                    }
-                    failed_dirs.push(file_path.clone());
-                    continue;
-                }
-            }
-
-            match decompression::DecompressionReader::new(file_path) {
-                Ok(decompressed) => {
-                    let mut peekable_reader = readers::PeekableLineReader::new(decompressed);
-                    detected_format = Some(detection::detect_format_from_peekable_reader(
-                        &mut peekable_reader,
-                    )?);
-                    break;
-                }
-                Err(e) => {
-                    if config.processing.strict {
-                        return Err(anyhow::anyhow!(config::format_input_open_error(
-                            file_path,
-                            &e.to_string()
-                        )));
-                    }
-                    failed_opens.push((file_path.clone(), e.to_string()));
-                }
-            }
-        }
-
-        let detected_format = match detected_format {
-            Some(detected) => detected,
-            None => {
-                let printed_detail = !failed_dirs.is_empty() || !failed_opens.is_empty();
-                for path in failed_dirs {
-                    eprintln!(
-                        "{}",
-                        crate::config::format_error_message_auto(&format!(
-                            "Input path '{}' is a directory; skipping (input files only)",
-                            path
-                        ))
-                    );
-                    stats::stats_file_open_failed(&path);
-                }
-                for (path, err) in failed_opens {
-                    eprintln!(
-                        "{}",
-                        crate::config::format_error_message_auto(&config::format_input_open_error(
-                            &path, &err
-                        ),)
-                    );
-                    stats::stats_file_open_failed(&path);
-                }
-                // The per-file reasons above already say which inputs failed and
-                // why, so don't repeat a generic line (see AllInputsUnopenable).
-                if printed_detail {
-                    return Err(anyhow::Error::new(detection::AllInputsUnopenable));
-                }
-                return Err(anyhow::anyhow!(
-                    "Failed to open any input files for detection"
-                ));
-            }
-        };
+        let detected_format =
+            detection::detect_format_from_files(&sorted_files, config.processing.strict)?;
 
         detection::emit_detected_format_notice(config, &detected_format);
 

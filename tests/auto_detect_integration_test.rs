@@ -1,5 +1,7 @@
 mod common;
 use common::*;
+use std::fs;
+use tempfile::TempDir;
 
 /// Default input format uses auto-detect
 #[test]
@@ -366,5 +368,150 @@ fn test_auto_detect_uses_first_non_empty_line() {
         stdout.trim(),
         r#"{"msg":"json-after-blanks"}"#,
         "auto detection should skip leading blanks for detection and still parse JSON"
+    );
+}
+
+/// Write `contents` into `dir` as `name` and return the path as a String.
+fn write_input(dir: &TempDir, name: &str, contents: &str) -> String {
+    let path = dir.path().join(name);
+    fs::write(&path, contents).expect("failed to write test input");
+    path.to_string_lossy().into_owned()
+}
+
+const JSON_INPUT: &str =
+    "{\"level\":\"ERROR\",\"msg\":\"boom\"}\n{\"level\":\"INFO\",\"msg\":\"ok\"}\n";
+
+/// A completely empty leading file must not pin detection to `line`.
+///
+/// Regression: detection stopped at the first file it could *open*, so an empty
+/// first file made every later file parse as whole lines — with no warning,
+/// since an empty file also cleared the "fell back to line" hint.
+#[test]
+fn test_auto_detect_skips_empty_leading_file() {
+    let dir = TempDir::new().expect("tempdir");
+    let empty = write_input(&dir, "empty.log", "");
+    let json = write_input(&dir, "data.json", JSON_INPUT);
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&empty, &json]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("level='ERROR'") && stdout.contains("msg='boom'"),
+        "should detect JSON from the first file with content, got: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("line='"),
+        "must not fall back to whole-line parsing, got: {}",
+        stdout
+    );
+}
+
+/// Same regression in parallel mode, which has its own detection entry point.
+#[test]
+fn test_auto_detect_skips_empty_leading_file_parallel() {
+    let dir = TempDir::new().expect("tempdir");
+    let empty = write_input(&dir, "empty.log", "");
+    let json = write_input(&dir, "data.json", JSON_INPUT);
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_files(&["-f", "auto", "--threads", "2"], &[&empty, &json]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("level='ERROR'"),
+        "parallel detection should skip the empty file too, got: {}",
+        stdout
+    );
+}
+
+/// A leading file holding only blank lines is equally undetectable, so the scan
+/// must keep going rather than settling for `line`.
+#[test]
+fn test_auto_detect_skips_blank_only_leading_file() {
+    let dir = TempDir::new().expect("tempdir");
+    let blank = write_input(&dir, "blank.log", "\n\n\n");
+    let json = write_input(&dir, "data.json", JSON_INPUT);
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&blank, &json]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("level='ERROR'"),
+        "should detect JSON past the blank-only file, got: {}",
+        stdout
+    );
+}
+
+/// Detection stops at the first file that *has* content, so a later file in a
+/// different format is still parsed with the earlier file's format. This pins
+/// the "first non-empty line" contract the skip-empty behavior extends.
+#[test]
+fn test_auto_detect_stops_at_first_file_with_content() {
+    let dir = TempDir::new().expect("tempdir");
+    let json = write_input(&dir, "a.json", "{\"msg\":\"first\"}\n");
+    let plain = write_input(&dir, "b.log", "not json at all\n");
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&json, &plain]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("msg='first'"),
+        "should detect JSON from the first file with content, got: {}",
+        stdout
+    );
+}
+
+/// All inputs empty: nothing to detect, so `line` is the right answer and the
+/// run must stay silent and successful rather than erroring.
+#[test]
+fn test_auto_detect_all_empty_files_is_not_an_error() {
+    let dir = TempDir::new().expect("tempdir");
+    let a = write_input(&dir, "a.log", "");
+    let b = write_input(&dir, "b.log", "");
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&a, &b]);
+
+    assert_eq!(exit_code, 0, "empty inputs are not an error: {}", stderr);
+    assert!(stdout.is_empty(), "no events expected, got: {}", stdout);
+    assert!(
+        !stderr.contains("hint"),
+        "no input at all should not trigger the fell-back-to-line hint: {}",
+        stderr
+    );
+}
+
+/// Blank-lines-only input still counts as "we read something", so the
+/// fell-back-to-line hint must survive the skip-empty change.
+#[test]
+fn test_auto_detect_blank_only_input_still_hints() {
+    let dir = TempDir::new().expect("tempdir");
+    let blank = write_input(&dir, "blank.log", "\n\n");
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto", "--hints"], &[&blank]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stderr.contains("No input format detected"),
+        "blank-only input should still hint about the line fallback: {}",
+        stderr
+    );
+}
+
+/// An unopenable file ahead of an empty one must not be swallowed: detection
+/// falls through to `line`, but the open failure is still reported non-zero.
+#[test]
+fn test_auto_detect_reports_open_failure_alongside_empty_file() {
+    let dir = TempDir::new().expect("tempdir");
+    let missing = dir.path().join("nope.log").to_string_lossy().into_owned();
+    let empty = write_input(&dir, "empty.log", "");
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&missing, &empty]);
+
+    assert_ne!(exit_code, 0, "missing input must still fail the run");
+    assert!(
+        stderr.contains("nope.log"),
+        "the unopenable file must be named on stderr: {}",
+        stderr
     );
 }

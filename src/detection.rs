@@ -38,7 +38,12 @@ impl std::error::Error for AllInputsUnopenable {}
 #[derive(Debug, Clone)]
 pub struct DetectedFormat {
     pub format: config::InputFormat,
+    /// The reader produced at least one line — including a blank one.
     pub had_input: bool,
+    /// Detection was based on a real non-empty line, rather than falling back to
+    /// `line` because the input ran out. Multi-file detection uses this to keep
+    /// scanning past inputs that hold nothing to detect from.
+    pub saw_content: bool,
 }
 
 impl DetectedFormat {
@@ -62,6 +67,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
         None => Ok(DetectedFormat {
             format: config::InputFormat::Line,
             had_input: reader.saw_any_input(),
+            saw_content: false,
         }),
         Some(line) => {
             // Remove newline for detection
@@ -70,9 +76,107 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             Ok(DetectedFormat {
                 format: detected,
                 had_input: true,
+                saw_content: true,
             })
         }
     }
+}
+
+/// Detect the input format by scanning `sorted_files` in order, using the first
+/// file that actually contains a non-empty line.
+///
+/// A file that opens but holds nothing to detect from — completely empty, or
+/// blank lines only — does *not* end the scan. `-f auto` is documented as
+/// detecting "from the first non-empty line", so a leading empty file (a
+/// freshly rotated log, say) must not pin every later file to `line`: that
+/// silently reduced whole JSON files to `line='{"…"}'` with no diagnostic.
+///
+/// If no file has content the scan falls back to `line`, carrying `had_input`
+/// forward from the files it did read so the "fell back to line" hint still
+/// fires for blank-lines-only input.
+///
+/// Open failures and directories are collected and only reported if *no* file
+/// could be read at all; otherwise the regular readers reopen those paths and
+/// report them, and reporting here too would duplicate the message.
+pub fn detect_format_from_files(sorted_files: &[String], strict: bool) -> Result<DetectedFormat> {
+    let mut failed_opens: Vec<(String, String)> = Vec::new();
+    let mut failed_dirs: Vec<String> = Vec::new();
+    let mut detected: Option<DetectedFormat> = None;
+    let mut empty_fallback: Option<DetectedFormat> = None;
+
+    for file_path in sorted_files {
+        if let Ok(metadata) = fs::metadata(file_path) {
+            if metadata.is_dir() {
+                if strict {
+                    return Err(anyhow::anyhow!(
+                        "Input path '{}' is a directory; only files are supported",
+                        file_path
+                    ));
+                }
+                failed_dirs.push(file_path.clone());
+                continue;
+            }
+        }
+
+        match decompression::DecompressionReader::new(file_path) {
+            Ok(decompressed) => {
+                let mut peekable_reader = readers::PeekableLineReader::new(decompressed);
+                let candidate = detect_format_from_peekable_reader(&mut peekable_reader)?;
+                if candidate.saw_content {
+                    detected = Some(candidate);
+                    break;
+                }
+                // Nothing to detect from here — keep scanning, but remember that
+                // we did read something so the hint stays accurate.
+                match &mut empty_fallback {
+                    Some(fallback) => fallback.had_input |= candidate.had_input,
+                    None => empty_fallback = Some(candidate),
+                }
+            }
+            Err(e) => {
+                if strict {
+                    return Err(anyhow::anyhow!(config::format_input_open_error(
+                        file_path,
+                        &e.to_string()
+                    )));
+                }
+                failed_opens.push((file_path.clone(), e.to_string()));
+            }
+        }
+    }
+
+    if let Some(detected) = detected.or(empty_fallback) {
+        return Ok(detected);
+    }
+
+    let printed_detail = !failed_dirs.is_empty() || !failed_opens.is_empty();
+    for path in failed_dirs {
+        eprintln!(
+            "{}",
+            config::format_error_message_auto(&format!(
+                "Input path '{}' is a directory; skipping (input files only)",
+                path
+            ))
+        );
+        stats::stats_file_open_failed(&path);
+    }
+    for (path, err) in failed_opens {
+        eprintln!(
+            "{}",
+            config::format_error_message_auto(&config::format_input_open_error(&path, &err))
+        );
+        stats::stats_file_open_failed(&path);
+    }
+    // The per-file reasons above already say which inputs failed and why, so
+    // don't repeat a generic line. Fall back to the explicit message only if
+    // nothing was printed (shouldn't happen — the loop routes every path to one
+    // of the lists above).
+    if printed_detail {
+        return Err(anyhow::Error::new(AllInputsUnopenable));
+    }
+    Err(anyhow::anyhow!(
+        "Failed to open any input files for detection"
+    ))
 }
 
 /// Detect format for parallel mode processing
@@ -90,6 +194,7 @@ pub fn detect_format_for_parallel_mode(
             DetectedFormat {
                 format: config::InputFormat::Line,
                 had_input: false,
+                saw_content: false,
             },
             None,
         ));
@@ -107,80 +212,9 @@ pub fn detect_format_for_parallel_mode(
         // Reuse the peekable reader so we don't consume stdin twice
         Ok((detected, Some(Box::new(peekable_reader))))
     } else {
-        // For files, read first line from first file
+        // For files, detect from the first file that actually has content.
         let sorted_files = pipeline::builders::sort_files(files, &config::FileOrder::Cli)?;
-
-        let mut failed_opens: Vec<(String, String)> = Vec::new();
-        let mut failed_dirs: Vec<String> = Vec::new();
-        let mut detected: Option<DetectedFormat> = None;
-
-        for file_path in &sorted_files {
-            if let Ok(metadata) = fs::metadata(file_path) {
-                if metadata.is_dir() {
-                    if strict {
-                        return Err(anyhow::anyhow!(
-                            "Input path '{}' is a directory; only files are supported",
-                            file_path
-                        ));
-                    }
-                    failed_dirs.push(file_path.clone());
-                    continue;
-                }
-            }
-
-            match decompression::DecompressionReader::new(file_path) {
-                Ok(decompressed) => {
-                    let mut peekable_reader = readers::PeekableLineReader::new(decompressed);
-                    detected = Some(detect_format_from_peekable_reader(&mut peekable_reader)?);
-                    break;
-                }
-                Err(e) => {
-                    if strict {
-                        return Err(anyhow::anyhow!(config::format_input_open_error(
-                            file_path,
-                            &e.to_string()
-                        )));
-                    }
-                    failed_opens.push((file_path.clone(), e.to_string()));
-                }
-            }
-        }
-
-        let detected = match detected {
-            Some(detected) => detected,
-            None => {
-                let printed_detail = !failed_dirs.is_empty() || !failed_opens.is_empty();
-                for path in failed_dirs {
-                    eprintln!(
-                        "{}",
-                        config::format_error_message_auto(&format!(
-                            "Input path '{}' is a directory; skipping (input files only)",
-                            path
-                        ))
-                    );
-                    stats::stats_file_open_failed(&path);
-                }
-                for (path, err) in failed_opens {
-                    eprintln!(
-                        "{}",
-                        config::format_error_message_auto(&config::format_input_open_error(
-                            &path, &err
-                        ))
-                    );
-                    stats::stats_file_open_failed(&path);
-                }
-                // The per-file reasons above already say which inputs failed and
-                // why, so don't repeat a generic line. Fall back to the explicit
-                // message only if nothing was printed (shouldn't happen — the
-                // loop routes every path to one of the lists above).
-                if printed_detail {
-                    return Err(anyhow::Error::new(AllInputsUnopenable));
-                }
-                return Err(anyhow::anyhow!(
-                    "Failed to open any input files for detection"
-                ));
-            }
-        };
+        let detected = detect_format_from_files(&sorted_files, strict)?;
 
         // For files we can reopen them later, so we don't need to keep this reader
         Ok((detected, None))
@@ -340,11 +374,79 @@ mod tests {
         cfg
     }
 
+    fn write_input(dir: &tempfile::TempDir, name: &str, contents: &str) -> String {
+        let path = dir.path().join(name);
+        std::fs::write(&path, contents).expect("failed to write test input");
+        path.to_string_lossy().into_owned()
+    }
+
+    #[test]
+    fn multi_file_detection_skips_files_without_content() {
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let empty = write_input(&dir, "empty.log", "");
+        let blank = write_input(&dir, "blank.log", "\n\n");
+        let json = write_input(&dir, "data.json", "{\"a\":1}\n");
+
+        let detected = detect_format_from_files(&[empty, blank, json], false).expect("detection");
+
+        assert!(
+            matches!(detected.format, config::InputFormat::Json),
+            "should detect from the first file with content, got {:?}",
+            detected.format
+        );
+        assert!(detected.saw_content);
+    }
+
+    #[test]
+    fn multi_file_detection_falls_back_to_line_when_all_files_are_empty() {
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let a = write_input(&dir, "a.log", "");
+        let b = write_input(&dir, "b.log", "");
+
+        let detected = detect_format_from_files(&[a, b], false).expect("detection");
+
+        assert!(matches!(detected.format, config::InputFormat::Line));
+        assert!(!detected.saw_content);
+        // No bytes at all, so the fell-back-to-line hint must stay quiet.
+        assert!(!detected.had_input);
+        assert!(!detected.fell_back_to_line());
+    }
+
+    #[test]
+    fn multi_file_detection_keeps_had_input_from_skipped_blank_files() {
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        // First file has nothing at all, second holds only blank lines: the scan
+        // skips both but must remember that input *was* read, so the
+        // fell-back-to-line hint still fires.
+        let empty = write_input(&dir, "empty.log", "");
+        let blank = write_input(&dir, "blank.log", "\n\n");
+
+        let detected = detect_format_from_files(&[empty, blank], false).expect("detection");
+
+        assert!(matches!(detected.format, config::InputFormat::Line));
+        assert!(detected.had_input);
+        assert!(detected.fell_back_to_line());
+    }
+
+    #[test]
+    fn multi_file_detection_errors_when_nothing_opens() {
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let missing = dir.path().join("nope.log").to_string_lossy().into_owned();
+
+        let err = detect_format_from_files(&[missing], false).expect_err("expected failure");
+
+        assert!(
+            err.downcast_ref::<AllInputsUnopenable>().is_some(),
+            "expected AllInputsUnopenable, got: {err}"
+        );
+    }
+
     #[test]
     fn detected_format_notice_is_verbose_only() {
         let detected = DetectedFormat {
             format: config::InputFormat::Json,
             had_input: true,
+            saw_content: true,
         };
 
         // A confident auto-detection is silent on a normal run...
