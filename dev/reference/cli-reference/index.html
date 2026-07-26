@@ -7244,7 +7244,7 @@ question in every incident and deploy verification: <em>what changed?</em></p>
 <p><strong>Formats:</strong></p>
 <ul>
 <li><code>table</code> (default) - Three sections (NEW / VANISHED / VOLUME SHIFTS) plus a totals line</li>
-<li><code>json</code> - One JSON object with <code>new</code>, <code>vanished</code>, <code>shifted</code>, <code>unchanged_count</code>, and per-side totals</li>
+<li><code>json</code> - One JSON object with <code>new</code>, <code>vanished</code>, <code>shifted</code>, <code>unchanged_count</code>, per-side totals, and the exclusion counts (<code>excluded_no_field</code>, <code>excluded_no_timestamp</code>)</li>
 </ul>
 <p><strong>How it works.</strong> Both sides are mined through a single shared drain instance
 (so the template set is joint), then every distinct field value is re-matched
@@ -7273,6 +7273,24 @@ before the comparison, so you can diff only errors, or normalize a field first:<
 <a id="__codelineno-82-4" name="__codelineno-82-4" href="#__codelineno-82-4"></a><span class="c1"># Normalize custom tokens the built-in masking doesn&#39;t know, then diff</span>
 <a id="__codelineno-82-5" name="__codelineno-82-5" href="#__codelineno-82-5"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>old.log<span class="w"> </span>new.log<span class="w"> </span>-k<span class="w"> </span>msg<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.msg = e.msg.replace(e.order_id, &quot;&lt;order&gt;&quot;)&#39;</span>
 </code></pre></div>
+<p><strong>Empty comparisons are refused, not reported.</strong> An all-empty report ("no new
+templates / no volume shifts", 0 events) reads as a confident <em>nothing changed</em>,
+so <code>--drain-diff</code> refuses to print one when the mined field never yielded a
+value: if every event lacked the field named by <code>-k</code> — a typo, or a field that
+only exists in a different log — the run fails with exit <code>1</code> and names the
+nearest field it did see, instead of certifying a log as unchanged that was never
+examined. Related, quieter cases stay non-fatal:</p>
+<ul>
+<li>Some events carry the field and some don't (normal in heterogeneous logs): a
+  warning reports how many events were excluded and how many were actually
+  compared. <code>--drain-diff=json</code> carries the same count in <code>excluded_no_field</code>.</li>
+<li>No events reached the comparison at all (empty input, or everything removed by
+  <code>--filter</code>/<code>--since</code>/<code>--levels</code>): the report still prints, with a warning that
+  it reflects missing data rather than an unchanged log.</li>
+</ul>
+<p>Under <code>--silent</code> the report and both warnings are suppressed as usual, but the
+refusal still prints its one fatal line and exits <code>1</code> — with nothing else left,
+the exit code must not read as a clean comparison.</p>
 <p><strong>Memory.</strong> Pass 2 buffers each <em>distinct</em> mined field value (not full events),
 capped at 1,000,000 unique values; logs are repetitive so legitimate inputs sit
 far below this. Exceeding the cap aborts the report with guidance — a field
