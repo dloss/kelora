@@ -68,6 +68,9 @@ struct DiffState {
     cap_exceeded: bool,
     /// Events excluded in --cut mode because they carry no parseable timestamp.
     excluded_no_timestamp: u64,
+    /// Events excluded because the mined field carried no text (absent, or
+    /// present but empty).
+    excluded_no_field: u64,
 }
 
 thread_local! {
@@ -106,6 +109,17 @@ pub fn record(text: &str, side: DiffSide) {
 pub fn record_excluded_no_timestamp() {
     DIFF_STATE.with(|state| {
         state.borrow_mut().excluded_no_timestamp += 1;
+    });
+}
+
+/// Record an event dropped from the comparison because the mined field carried
+/// no text — absent from the event, or present with an empty value. A partial
+/// count is a warning (heterogeneous logs are normal); *every* event excluded
+/// this way means the field name never matched anything, which the caller turns
+/// into an error rather than a diff over zero events.
+pub fn record_excluded_no_field() {
+    DIFF_STATE.with(|state| {
+        state.borrow_mut().excluded_no_field += 1;
     });
 }
 
@@ -159,6 +173,18 @@ pub struct DiffReport {
     /// nonzero count guards against future drain behavior changes.
     pub unmatched_events: u64,
     pub excluded_no_timestamp: u64,
+    /// Events excluded because the mined field carried no text. See
+    /// `record_excluded_no_field`.
+    pub excluded_no_field: u64,
+}
+
+impl DiffReport {
+    /// Events that actually contributed to the comparison. Zero means the
+    /// report says nothing about change whatever its sections claim, so callers
+    /// must not present it as "nothing changed".
+    pub fn compared_events(&self) -> u64 {
+        self.baseline_total + self.target_total
+    }
 }
 
 /// Pass 2: freeze the jointly-mined template set, match every unique field
@@ -277,6 +303,7 @@ pub fn finalize() -> Result<DiffReport, String> {
             target_total,
             unmatched_events: unmatched,
             excluded_no_timestamp: state.excluded_no_timestamp,
+            excluded_no_field: state.excluded_no_field,
         })
     })
 }
@@ -456,6 +483,7 @@ pub fn format_report_json(report: &DiffReport) -> String {
         "target_events": report.target_total,
         "unmatched_events": report.unmatched_events,
         "excluded_no_timestamp": report.excluded_no_timestamp,
+        "excluded_no_field": report.excluded_no_field,
     });
     serde_json::to_string_pretty(&json).unwrap_or_else(|_| "{}".to_string())
 }
@@ -697,6 +725,34 @@ mod tests {
     }
 
     #[test]
+    fn excluded_no_field_is_carried_into_the_report() {
+        // Every event the stage could not mine is counted, so the caller can
+        // tell "no templates differ" from "nothing was ever compared".
+        reset_all();
+        mine_and_record("worker started", DiffSide::Baseline);
+        mine_and_record("worker started", DiffSide::Target);
+        record_excluded_no_field();
+        record_excluded_no_field();
+        let report = finalize().expect("finalize");
+        assert_eq!(report.excluded_no_field, 2);
+        assert_eq!(report.compared_events(), 2);
+    }
+
+    #[test]
+    fn compared_events_is_zero_when_every_event_lacked_the_field() {
+        reset_all();
+        for _ in 0..5 {
+            record_excluded_no_field();
+        }
+        let report = finalize().expect("finalize");
+        assert_eq!(report.compared_events(), 0, "nothing was comparable");
+        assert_eq!(report.excluded_no_field, 5);
+        // The sections read as "no change" — which is exactly why the caller
+        // must refuse this report rather than print it.
+        assert!(report.new.is_empty() && report.vanished.is_empty() && report.shifted.is_empty());
+    }
+
+    #[test]
     fn cap_exceeded_refuses_report() {
         reset_all();
         DIFF_STATE.with(|state| state.borrow_mut().cap_exceeded = true);
@@ -733,6 +789,7 @@ mod tests {
             target_total: 14903,
             unmatched_events: 0,
             excluded_no_timestamp: 0,
+            excluded_no_field: 0,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target (1 template):"));
@@ -757,6 +814,7 @@ mod tests {
             target_total: 100,
             unmatched_events: 0,
             excluded_no_timestamp: 0,
+            excluded_no_field: 0,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target: no new templates"));
@@ -775,6 +833,7 @@ mod tests {
             target_total: 20,
             unmatched_events: 0,
             excluded_no_timestamp: 2,
+            excluded_no_field: 0,
         };
         let json: serde_json::Value =
             serde_json::from_str(&format_report_json(&report)).expect("valid JSON");

@@ -1363,6 +1363,23 @@ impl Default for PipelineBuilder {
     }
 }
 
+/// The single field `--drain` and `--drain-diff` mine: the only key left in
+/// `--keys` after `--exclude-keys`. `None` when the request does not resolve to
+/// exactly one field, which both modes reject as a usage error before the
+/// pipeline is built.
+pub fn single_effective_key(config: &crate::config::KeloraConfig) -> Option<String> {
+    let mut effective = config
+        .output
+        .keys
+        .iter()
+        .filter(|key| !config.output.exclude_keys.contains(key));
+    let first = effective.next()?;
+    match effective.next() {
+        None => Some(first.clone()),
+        Some(_) => None,
+    }
+}
+
 /// Create a pipeline from configuration
 pub fn create_pipeline_from_config(
     config: &crate::config::KeloraConfig,
@@ -1406,29 +1423,15 @@ pub fn create_pipeline_builder_from_config(
     };
 
     // --drain and --drain-diff mine the same single effective key.
-    let single_effective_key = || -> Option<String> {
-        let effective_keys: Vec<&String> = config
-            .output
-            .keys
-            .iter()
-            .filter(|key| !config.output.exclude_keys.contains(key))
-            .collect();
-        if effective_keys.len() == 1 {
-            Some(effective_keys[0].clone())
-        } else {
-            None
-        }
-    };
-
     let drain_enabled = config.output.drain.is_some();
     let drain_field = if drain_enabled {
-        single_effective_key()
+        single_effective_key(config)
     } else {
         None
     };
     let drain_diff_rule = config.processing.drain_diff_rule.clone();
     let drain_diff_field = if drain_diff_rule.is_some() {
-        single_effective_key()
+        single_effective_key(config)
     } else {
         None
     };

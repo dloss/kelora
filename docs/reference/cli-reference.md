@@ -1199,7 +1199,7 @@ kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
 **Formats:**
 
 - `table` (default) - Three sections (NEW / VANISHED / VOLUME SHIFTS) plus a totals line
-- `json` - One JSON object with `new`, `vanished`, `shifted`, `unchanged_count`, and per-side totals
+- `json` - One JSON object with `new`, `vanished`, `shifted`, `unchanged_count`, per-side totals, and the exclusion counts (`excluded_no_field`, `excluded_no_timestamp`)
 
 **How it works.** Both sides are mined through a single shared drain instance
 (so the template set is joint), then every distinct field value is re-matched
@@ -1232,6 +1232,25 @@ kelora --drain-diff old.log new.log -k msg --filter 'e.level == "ERROR"'
 # Normalize custom tokens the built-in masking doesn't know, then diff
 kelora --drain-diff old.log new.log -k msg --exec 'e.msg = e.msg.replace(e.order_id, "<order>")'
 ```
+
+**Empty comparisons are refused, not reported.** An all-empty report ("no new
+templates / no volume shifts", 0 events) reads as a confident *nothing changed*,
+so `--drain-diff` refuses to print one when the mined field never yielded a
+value: if every event lacked the field named by `-k` — a typo, or a field that
+only exists in a different log — the run fails with exit `1` and names the
+nearest field it did see, instead of certifying a log as unchanged that was never
+examined. Related, quieter cases stay non-fatal:
+
+- Some events carry the field and some don't (normal in heterogeneous logs): a
+  warning reports how many events were excluded and how many were actually
+  compared. `--drain-diff=json` carries the same count in `excluded_no_field`.
+- No events reached the comparison at all (empty input, or everything removed by
+  `--filter`/`--since`/`--levels`): the report still prints, with a warning that
+  it reflects missing data rather than an unchanged log.
+
+Under `--silent` the report and both warnings are suppressed as usual, but the
+refusal still prints its one fatal line and exits `1` — with nothing else left,
+the exit code must not read as a clean comparison.
 
 **Memory.** Pass 2 buffers each *distinct* mined field value (not full events),
 capped at 1,000,000 unique values; logs are repetitive so legitimate inputs sit
