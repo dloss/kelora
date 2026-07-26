@@ -94,8 +94,9 @@ Built-in application-log formats
   the 'line' fallback, so they never override a format detected earlier; when
   one matches, it emits 'ts' (timestamp), 'level', 'msg', and format-specific
   extras (thread, logger, pid, ...).
-  Notes: glog/redis omit the year, so 'ts' assumes the current year (like
-  syslog). haproxy lines are syslog-wrapped, so under -f auto they are detected
+  Notes: glog/redis omit the year, so 'ts' is dated near the current year (like
+  syslog); pass --input-year YYYY for an archived log. haproxy lines are
+  syslog-wrapped, so under -f auto they are detected
   as 'syslog' — pass -f haproxy to extract the structured fields. The access-log
   formats ('s3', 'haproxy') keep only a curated set of useful fields and may
   drop a long, version-dependent tail; the full raw line is still available in

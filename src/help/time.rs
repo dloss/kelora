@@ -6,6 +6,7 @@ Time Format Reference for --ts-format:
 Use with:
   --ts-format <FMT>     Describe how timestamps are parsed
   --input-tz <TZ>       Supply a timezone for inputs without offsets (e.g., --input-tz UTC)
+  --input-year <YEAR>   Supply the year for inputs without one (e.g., --input-year 2005)
   --multiline timestamp:format=FMT  Use the same chrono format for header detection
 
 Basic date/time components:
@@ -63,6 +64,24 @@ Timezone policy (how the zone is decided):
   When timestamps are naive and no zone was chosen, kelora prints a one-time
   stderr hint if a time filter, --span, or --normalize-ts relies on the
   assumption (suppress with --no-diagnostics / --silent).
+
+Year policy (how the year is decided when the format has none):
+  - Year-less layouts (syslog's "Jan 15 14:30:45", glog, redis, ...) carry no
+    year at all, so kelora picks between last year, this year and next year and
+    keeps the candidate nearest the current clock. That is right for recent logs
+    and for logs crossing New Year's Eve, and wrong for archives: a 2005 capture
+    is dated this year, and so are --since/--until, --span boundaries and
+    --merge-sorted ordering. kelora warns whenever it guessed.
+  - --input-year YYYY states the year instead of guessing it. Every year-less
+    timestamp resolves into that year and the warning goes quiet.
+  - --input-year auto is the default (useful to override an .kelora.ini default).
+  Because the year is stated per run and not tracked per line, an input that
+  crosses a year boundary needs the heuristic: with --input-year 2005, a
+  December-to-January log dates its January lines to January 2005, not 2006.
+  Split such files, or leave the year on auto.
+
+Year-less timestamp example:
+  kelora Linux_2k.log --input-year 2005 --since 2005-06-01 --until 2005-07-01
 
 Naive timestamp + timezone example:
   kelora app.log --ts-format "%Y-%m-%d %H:%M:%S" --input-tz Europe/Berlin

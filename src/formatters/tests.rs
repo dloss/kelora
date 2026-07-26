@@ -212,6 +212,7 @@ fn test_default_formatter_uses_ts_format_hint() {
             format_as_utc: true,
             parse_format_hint: Some("%Y/%m/%d %H.%M.%S,%f".to_string()),
             parse_timezone_hint: Some("UTC".to_string()),
+            parse_year_hint: None,
         },
         false,
         false,

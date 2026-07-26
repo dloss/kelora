@@ -363,6 +363,33 @@ kelora --input-tz local app.log
 kelora --input-tz Europe/Berlin app.log
 ```
 
+#### `--input-year <YEAR>`
+
+Year for year-less input timestamps (syslog's `Jan 15 14:30:45`, glog, redis, …).
+Default: `auto`.
+
+**Values:**
+
+- `YYYY` - a 4-digit year (1000-9999); every year-less timestamp resolves into it
+- `auto` - guess between last year, this year and next year, keeping the candidate
+  nearest the current clock (the default; also accepted explicitly, so a CLI run
+  can override an `.kelora.ini` default)
+
+Without this option kelora guesses, warns that it guessed, and dates an archived
+log to the current year — which shifts `--since`/`--until`, `--span` boundaries
+and `--merge-sorted` ordering along with it. Supplying the year silences the
+warning because nothing was inferred.
+
+```bash
+kelora --input-year 2005 Linux_2k.log
+kelora --input-year 2005 --since 2005-06-01 --until 2005-07-01 Linux_2k.log
+```
+
+The year is stated once per run, not tracked per line, so an input that crosses a
+year boundary still needs `auto`: with `--input-year 2005`, a December-to-January
+log dates its January lines to January 2005 rather than 2006. `--merge-sorted`
+rejects the result as unsorted rather than merging it silently.
+
 ### Multi-line Events
 
 #### `-M, --multiline <STRATEGY>`

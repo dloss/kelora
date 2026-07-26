@@ -1087,7 +1087,9 @@ mod tests {
             extract_error_summary_from_tracking(&snapshot, 0, Some(&stats), None).unwrap();
 
         assert!(summary.contains("Year-less timestamps detected"));
-        assert!(summary.contains("5 parse"));
+        assert!(summary.contains("5 timestamps"));
+        // The warning has to name the way out of it (#341).
+        assert!(summary.contains("--input-year"));
     }
 
     #[test]

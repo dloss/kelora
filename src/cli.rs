@@ -265,6 +265,16 @@ pub struct Cli {
     #[arg(long = "input-tz", value_name = "TZ", help_heading = "Input Options")]
     pub input_tz: Option<String>,
 
+    /// Supply the year for year-less timestamps (syslog, glog, ...) instead of
+    /// guessing it from the wall clock. Use 'auto' for the ±1yr heuristic
+    /// (default). Examples: '2005', 'auto'.
+    #[arg(
+        long = "input-year",
+        value_name = "YEAR",
+        help_heading = "Input Options"
+    )]
+    pub input_year: Option<String>,
+
     /// Multi-line event detection strategy. Supply values like `timestamp`,
     /// `timestamp:format=%Y-%m-%d %H-%M-%S`, `regex:match=^START`, or
     /// `regex:match=^START:end=^END$`. See `kelora --help-multiline` for details.
