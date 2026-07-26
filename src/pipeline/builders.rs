@@ -785,6 +785,16 @@ impl PipelineBuilder {
             None
         };
 
+        // Time-window selection runs FIRST, ahead of every user stage. `--since`/`--until`
+        // narrow which events exist for the rest of the run, so metrics accumulated in
+        // script stages (`track_freq`, and the `--freq`/`--describe`/`--card` sugar that
+        // compiles to it) must never see events outside the window. Filtering afterwards
+        // produced whole-file aggregates alongside a correctly windowed event stream.
+        if let Some(timestamp_filter_config) = self.timestamp_filter.clone() {
+            let timestamp_filter_stage = TimestampFilterStage::new(timestamp_filter_config);
+            script_stages.push(Box::new(timestamp_filter_stage));
+        }
+
         for stage in stages {
             match stage {
                 crate::config::ScriptStageType::Filter { script, includes } => {
@@ -828,12 +838,6 @@ impl PipelineBuilder {
                 }
                 script_stages.push(Box::new(level_stage));
             }
-        }
-
-        // Add timestamp filtering stage (runs after script stages, before level filtering)
-        if let Some(timestamp_filter_config) = self.timestamp_filter.clone() {
-            let timestamp_filter_stage = TimestampFilterStage::new(timestamp_filter_config);
-            script_stages.push(Box::new(timestamp_filter_stage));
         }
 
         if self.normalize_timestamps {
@@ -1171,6 +1175,13 @@ impl PipelineBuilder {
             None
         };
 
+        // Same ordering as the sequential builder: the time window is applied before
+        // any user stage so worker-local metrics only ever see in-window events.
+        if let Some(timestamp_filter_config) = self.timestamp_filter.clone() {
+            let timestamp_filter_stage = TimestampFilterStage::new(timestamp_filter_config);
+            script_stages.push(Box::new(timestamp_filter_stage));
+        }
+
         for stage in stages {
             match stage {
                 crate::config::ScriptStageType::Filter { script, includes } => {
@@ -1214,12 +1225,6 @@ impl PipelineBuilder {
                 }
                 script_stages.push(Box::new(level_stage));
             }
-        }
-
-        // Add timestamp filtering stage (runs after script stages, before level filtering)
-        if let Some(timestamp_filter_config) = self.timestamp_filter.clone() {
-            let timestamp_filter_stage = TimestampFilterStage::new(timestamp_filter_config);
-            script_stages.push(Box::new(timestamp_filter_stage));
         }
 
         // Add key filtering stage (runs after level filtering, before context processing)

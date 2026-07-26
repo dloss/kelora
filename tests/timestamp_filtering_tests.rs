@@ -1348,3 +1348,225 @@ fn test_naive_ts_hint_suppressed_by_no_diagnostics() {
         "--no-diagnostics must suppress the naive-timestamp hint: {stderr}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Prefilter/aggregate agreement matrix
+//
+// Every way of narrowing the event set must narrow the aggregates too. The
+// invariant is a whole-pipeline one, so it is asserted as a matrix rather than
+// as a single case: `--since`/`--until` used to be applied after the script
+// stages, so metrics accumulated in a script stage counted events the time
+// filter went on to discard, and a windowed run reported whole-file numbers.
+// ---------------------------------------------------------------------------
+
+/// Four events straddling two months, so a time window, a level filter and a
+/// take limit each select a different, non-trivial subset.
+const MATRIX_INPUT: &str = concat!(
+    r#"{"t":"2024-01-01T00:00:00Z","id":"a","level":"error"}"#,
+    "\n",
+    r#"{"t":"2024-06-01T00:00:00Z","id":"b","level":"info"}"#,
+    "\n",
+    r#"{"t":"2024-06-02T00:00:00Z","id":"c","level":"error"}"#,
+    "\n",
+    r#"{"t":"2024-02-01T00:00:00Z","id":"d","level":"error"}"#,
+    "\n",
+);
+
+/// Every prefilter kelora offers, as CLI fragments.
+fn prefilters() -> Vec<(&'static str, Vec<&'static str>)> {
+    vec![
+        ("--filter", vec!["--filter", "e.level == \"error\""]),
+        ("--levels", vec!["-l", "error"]),
+        ("--take", vec!["-n", "2"]),
+        ("--since", vec!["--since", "2024-05-01"]),
+        ("--until", vec!["--until", "2024-02-15"]),
+        (
+            "--since+--until",
+            vec!["--since", "2024-01-15", "--until", "2024-06-01T12:00:00Z"],
+        ),
+    ]
+}
+
+/// Tally a field from the emitted event stream: the ground truth every
+/// aggregate is measured against.
+fn stream_counts(prefilter: &[&str], field: &str, extra: &[&str]) -> Vec<(String, usize)> {
+    let mut args = vec!["-f", "json"];
+    args.extend_from_slice(prefilter);
+    args.extend_from_slice(extra);
+    args.extend_from_slice(&["-k", field, "-F", "csvnh"]);
+
+    let (stdout, stderr, code) = run_kelora_with_input(&args, MATRIX_INPUT);
+    assert_eq!(code, 0, "event stream run failed: {stderr}");
+
+    let mut counts: std::collections::BTreeMap<String, usize> = Default::default();
+    for line in stdout.lines().map(str::trim).filter(|l| !l.is_empty()) {
+        *counts.entry(line.to_string()).or_default() += 1;
+    }
+    counts.into_iter().collect()
+}
+
+/// Read a `track_freq` table back out of the tsv metrics stream
+/// (`metric<TAB>key<TAB>count`).
+fn freq_counts(prefilter: &[&str], field: &str, extra: &[&str]) -> Vec<(String, usize)> {
+    let mut args = vec!["-f", "json"];
+    args.extend_from_slice(prefilter);
+    args.extend_from_slice(extra);
+    args.extend_from_slice(&["--freq", field, "--metrics=tsv"]);
+
+    let (stdout, stderr, code) = run_kelora_with_input(&args, MATRIX_INPUT);
+    assert_eq!(code, 0, "--freq run failed: {stderr}");
+
+    let mut counts: std::collections::BTreeMap<String, usize> = Default::default();
+    for line in stdout.lines().filter(|l| !l.trim().is_empty()) {
+        let cols: Vec<&str> = line.split('\t').collect();
+        assert_eq!(cols.len(), 3, "unexpected tsv metrics row: {line:?}");
+        assert_eq!(cols[0], field, "unexpected metric name: {line:?}");
+        let count: usize = cols[2].parse().expect("metric count should be an integer");
+        *counts.entry(cols[1].to_string()).or_default() += count;
+    }
+    counts.into_iter().collect()
+}
+
+#[test]
+fn test_every_prefilter_agrees_with_freq() {
+    for (name, prefilter) in prefilters() {
+        let stream = stream_counts(&prefilter, "level", &[]);
+        let freq = freq_counts(&prefilter, "level", &[]);
+        assert_eq!(
+            freq, stream,
+            "{name}: --freq must count exactly the events that reach the output \
+             (`kelora --freq F` == `kelora -k F | sort | uniq -c`)"
+        );
+        assert!(
+            !stream.is_empty(),
+            "{name}: fixture should leave events for a meaningful comparison"
+        );
+    }
+}
+
+#[test]
+fn test_every_prefilter_agrees_with_track_freq_in_exec() {
+    // --freq is sugar for track_freq; an explicit script stage must agree too.
+    for (name, prefilter) in prefilters() {
+        let stream = stream_counts(&prefilter, "level", &[]);
+
+        let mut args = vec!["-f", "json"];
+        args.extend_from_slice(&prefilter);
+        args.extend_from_slice(&[
+            "--exec",
+            "track_freq(\"level\", e.level)",
+            "-m",
+            "--metrics=tsv",
+        ]);
+        let (stdout, stderr, code) = run_kelora_with_input(&args, MATRIX_INPUT);
+        assert_eq!(code, 0, "{name}: track_freq run failed: {stderr}");
+
+        let mut counts: std::collections::BTreeMap<String, usize> = Default::default();
+        for line in stdout.lines().filter(|l| !l.trim().is_empty()) {
+            let cols: Vec<&str> = line.split('\t').collect();
+            assert_eq!(cols.len(), 3, "{name}: unexpected tsv row: {line:?}");
+            *counts.entry(cols[1].to_string()).or_default() +=
+                cols[2].parse::<usize>().expect("integer count");
+        }
+        let tracked: Vec<(String, usize)> = counts.into_iter().collect();
+        assert_eq!(
+            tracked, stream,
+            "{name}: track_freq in --exec must only see events that survive the prefilters"
+        );
+    }
+}
+
+#[test]
+fn test_every_prefilter_agrees_with_drain_and_stats() {
+    for (name, prefilter) in prefilters() {
+        let expected: usize = stream_counts(&prefilter, "level", &[])
+            .iter()
+            .map(|(_, n)| n)
+            .sum();
+
+        // --drain: template counts must sum to the surviving event count.
+        let mut drain_args = vec!["-f", "json"];
+        drain_args.extend_from_slice(&prefilter);
+        drain_args.extend_from_slice(&["--drain", "-k", "level"]);
+        let (stdout, stderr, code) = run_kelora_with_input(&drain_args, MATRIX_INPUT);
+        assert_eq!(code, 0, "{name}: --drain run failed: {stderr}");
+        let drained: usize = stdout
+            .lines()
+            .filter_map(|l| l.trim().split(':').next()?.trim().parse::<usize>().ok())
+            .sum();
+        assert_eq!(
+            drained, expected,
+            "{name}: --drain template counts must sum to the surviving event count"
+        );
+
+        // --stats: the "output" figure must match too.
+        let mut stats_args = vec!["-f", "json"];
+        stats_args.extend_from_slice(&prefilter);
+        stats_args.extend_from_slice(&["-k", "level", "-s"]);
+        let (stdout, stderr, code) = run_kelora_with_input(&stats_args, MATRIX_INPUT);
+        assert_eq!(code, 0, "{name}: --stats run failed: {stderr}");
+        // `-s` is a data-only summary mode: the report goes to stdout.
+        let events_line = stdout
+            .lines()
+            .map(str::trim)
+            .find(|l| l.contains("Events created"))
+            .unwrap_or_else(|| panic!("{name}: missing Events line in stats: {stdout}"));
+        assert!(
+            events_line.contains(&format!("{expected} output")),
+            "{name}: --stats should report {expected} output, got: {events_line}"
+        );
+    }
+}
+
+#[test]
+fn test_time_window_narrows_aggregates_in_parallel_mode() {
+    // The parallel worker builds its own stage list; it must order the window
+    // the same way, or -P would silently disagree with sequential mode.
+    let stream = stream_counts(
+        &["--since", "2024-05-01"],
+        "level",
+        &["-P", "--threads", "2"],
+    );
+    let freq = freq_counts(
+        &["--since", "2024-05-01"],
+        "level",
+        &["-P", "--threads", "2"],
+    );
+    assert_eq!(
+        freq, stream,
+        "--freq under --parallel must respect the --since window"
+    );
+    assert_eq!(
+        freq,
+        vec![("error".to_string(), 1), ("info".to_string(), 1)],
+        "only the two June events are in the window"
+    );
+}
+
+#[test]
+fn test_time_window_applies_before_script_stages() {
+    // Direct statement of the ordering: an --exec side effect must not fire for
+    // an event the time window excludes.
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--since",
+            "2024-05-01",
+            "--exec",
+            "print(\"saw \" + e.id)",
+            "-k",
+            "id",
+        ],
+        MATRIX_INPUT,
+    );
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        !stdout.contains("saw a") && !stdout.contains("saw d"),
+        "out-of-window events must not reach script stages: {stdout}"
+    );
+    assert!(
+        stdout.contains("saw b") && stdout.contains("saw c"),
+        "in-window events must still reach script stages: {stdout}"
+    );
+}
