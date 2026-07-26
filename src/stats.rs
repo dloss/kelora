@@ -136,6 +136,11 @@ static FIRST_PARSE_ERROR_SAMPLE: OnceLock<Mutex<Option<String>>> = OnceLock::new
 // Cap the stored sample so a pathological long line can't bloat memory or the
 // emitted warning.
 const MAX_PARSE_ERROR_SAMPLE_LEN: usize = 1024;
+// A reported time span wider than this (~10 years) is treated as a symptom
+// rather than a fact: real log files rarely span a decade, but a single
+// mis-parsed timestamp format (e.g. a 2-digit year read as year 17) stretches
+// the range by centuries.
+const IMPLAUSIBLE_SPAN_DAYS: i64 = 3653;
 // Lines decoded with U+FFFD substitution (invalid UTF-8). Atomic + OnceLock
 // because lossy decoding happens on reader/worker threads, like file failures.
 static DECODE_WARNINGS: AtomicUsize = AtomicUsize::new(0);
@@ -1167,6 +1172,18 @@ impl ProcessingStats {
                     last.to_rfc3339(),
                     duration_wrapper
                 ));
+
+                // A span this wide is almost never real log data; it usually means
+                // some lines parsed under the wrong timestamp format. Say so rather
+                // than reporting "100% parsed" beside an implausible range.
+                if duration > chrono::Duration::days(IMPLAUSIBLE_SPAN_DAYS) {
+                    output.push_str(&crate::config::format_warning_message_auto(&format!(
+                        "Time span covers {} — check for mixed timestamp formats, \
+                         two-digit years, or clock skew across sources",
+                        duration_wrapper
+                    )));
+                    output.push('\n');
+                }
             }
 
             // Show result time span only when different

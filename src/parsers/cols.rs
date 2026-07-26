@@ -26,7 +26,7 @@ impl ColsParser {
 
     /// Parse the spec string to extract type annotations and build the clean spec
     /// Returns (clean_spec, type_map)
-    fn extract_type_annotations(spec: &str) -> (String, TypeMap) {
+    pub(crate) fn extract_type_annotations(spec: &str) -> (String, TypeMap) {
         let mut clean_tokens = Vec::new();
         let mut type_map = TypeMap::new();
 
@@ -96,6 +96,31 @@ impl ColsParser {
         self.strict = strict;
         self
     }
+}
+
+/// Validate a `cols:` spec, including its optional `field:type` annotations.
+///
+/// Used by CLI and config validation so a malformed spec is reported once, as a
+/// usage error, instead of raising the same runtime error on every input line.
+/// Annotations are stripped with the parser's own routine so validation cannot
+/// drift from what parsing actually accepts.
+pub fn validate_spec(spec: &str) -> Result<(), String> {
+    let (clean_spec, _types) = ColsParser::extract_type_annotations(spec);
+
+    // A colon surviving annotation-stripping means the suffix was not a known
+    // type name. Say which types exist rather than reporting the whole token as
+    // an invalid field name.
+    for token in clean_spec.split_whitespace() {
+        if let Some((base, suffix)) = token.rsplit_once(':') {
+            return Err(format!(
+                "unknown type annotation ':{}' on '{}' — valid types are int, float, bool, string",
+                suffix,
+                base.trim_start_matches('*')
+            ));
+        }
+    }
+
+    crate::rhai_functions::columns::validate_cols_spec(&clean_spec)
 }
 
 impl EventParser for ColsParser {

@@ -35,6 +35,10 @@ fn test_quick_help_flag() {
         stdout.contains("levelmap/keymap/tailmap"),
         "Quick help should list tailmap in output formats"
     );
+    assert!(
+        stdout.contains("--freq"),
+        "Quick help should mention --freq, the shortest path to a frequency table"
+    );
 }
 
 #[test]
