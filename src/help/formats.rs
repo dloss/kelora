@@ -134,12 +134,20 @@ auto (default)
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
   Note: Detects once and applies to all lines
+  Note: The csv/tsv step only claims the input if the first line reads as a
+        header row, so a comma in a log message can't turn field names into
+        message fragments. A field reads as data if it holds prose, a full ISO
+        datetime, or — next to other words in the same field — a bare level
+        (INFO/WARN/…) or a date/clock-shaped token. Column names that simply
+        *are* one (TIMESTAMP,ERROR_COUNT / region,2024-01-01) still work, and an
+        explicit -f csv skips the check entirely.
 
 auto-per-file
   Auto-detect format separately for each input file
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
   Note: Detects once per file and applies to that file's lines
+  Note: The same csv/tsv header-plausibility check as 'auto' applies per file
   stdin: behaves like 'auto' (single input stream)
 
 <fmt1>,<fmt2>[,...]   (cascade mode)
