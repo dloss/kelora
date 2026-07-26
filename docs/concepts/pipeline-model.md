@@ -247,19 +247,38 @@ Each stage processes the output of the previous stage sequentially.
 
 ### Complete Stage Ordering
 
+**Time window** (runs first, before every user stage):
+
+1. **Timestamp filtering** – `--since`, `--until`
+
 **User-controlled stages** (run in the order you specify them on the CLI):
 
-1. `--filter`, `--levels`, `--exclude-levels`, `--exec`, `--exec-file`, `--assert`
+2. `--filter`, `--levels`, `--exclude-levels`, `--exec`, `--exec-file`, `--assert`
 
 **Fixed-position event stages** (always run after user-controlled stages, regardless of CLI order):
 
-2. **Timestamp filtering** – `--since`, `--until`
 3. **Timestamp conversion** – `--normalize-ts`
 4. **Drain summary** – `--drain` (sequential only)
 5. **Key filtering** – `--keys`, `--exclude-keys`
 6. **Take limit** – `--take`
 
 Place `--levels` before heavy transforms to prune work early, or add another `--levels` after a script if you synthesise a level field there.
+
+### Why the time window runs first
+
+`--since`/`--until` define **which events exist** for the rest of the run, so they are applied before any script stage rather than at a position in the CLI order. An out-of-window event never reaches your `--filter`, `--exec`, or `--assert` at all. This is what keeps aggregates honest: metrics accumulated in a script stage — `track_freq` and friends, including the `--freq`/`--describe`/`--card` shorthands — count only events inside the window, so `--freq FIELD` always agrees with the event stream that `--keys FIELD` prints.
+
+The window is evaluated against the timestamp the **parser** produced. Scripts cannot move an event in or out of it: assigning to a timestamp field in `--exec` does not change which window the event falls in. To resolve timestamps differently, use `--ts-field`/`--ts-format`/`--input-tz`, which act at parse time.
+
+If you specifically want metrics over a wider span than the events you print, express the narrowing as a filter placed *after* the tracking stage instead of as a window:
+
+```bash
+# Counts every event; prints only May onward.
+kelora -j app.log \
+    --exec 'track_freq("status", e.status)' \
+    --filter 'meta.parsed_ts >= to_datetime("2024-05-01T00:00:00Z")' \
+    -k status
+```
 
 ### Span Processing
 
@@ -564,10 +583,11 @@ kelora -j app.log --strict
 ├─────────────────────────────────────────┤
 │  • Parser → Event map                   │
 │  • Span preparation (assign span_id)    │
+│  • Time window (--since/--until)        │
 │  • User stages in CLI order             │
 │    - --filter/--levels/--exec/--assert  │
 │  • Fixed event stages                   │
-│    - --since/--until, --keys, etc.      │
+│    - --normalize-ts, --keys, etc.       │
 │  • Take limiter (--take)                │
 │  • Span close hooks (--span-close)      │
 │  • Output formatting                    │
