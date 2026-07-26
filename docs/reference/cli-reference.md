@@ -1199,7 +1199,7 @@ kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
 **Formats:**
 
 - `table` (default) - Three sections (NEW / VANISHED / VOLUME SHIFTS) plus a totals line
-- `json` - One JSON object with `new`, `vanished`, `shifted`, `unchanged_count`, per-side totals, and the exclusion counts (`excluded_no_field`, `excluded_no_timestamp`)
+- `json` - One JSON object with `new`, `vanished`, `shifted`, `unchanged_count` (the within-noise tally), per-side totals, and the exclusion counts (`excluded_no_field`, `excluded_no_timestamp`)
 
 **How it works.** Both sides are mined through a single shared drain instance
 (so the template set is joint), then every distinct field value is re-matched
@@ -1211,16 +1211,34 @@ share (Δpp).
 
 There are no threshold flags by design. Templates with a combined count below
 2 are ignored, and NEW templates are exempt from that floor — a template
-appearing even once only after the deploy is exactly what you are looking
-for. Volume shifts are gated by a two-proportion significance test rather
-than a fixed percentage-point cutoff, so the bar scales with sample size: a
-single event moving a 20-event side's share by several points is noise and
-stays out of the report, while the same-sized share move is reported when
-it's backed by thousands of events on each side. `--drain-diff=json` includes
-each shifted template's `z_score` for downstream filtering. Output is sorted
-(counts descending for new/vanished, |Δ share| descending for shifts) so your
-eye does the thresholding; anyone needing different cutoffs uses
-`--drain-diff=json` and filters downstream — including with kelora itself.
+appearing even once only after the deploy is exactly what you are looking for.
+
+A volume shift is reported when the move is **bigger than sampling noise** for
+the number of events on each side, **and** big enough to act on: either it
+shifted at least 0.5 percentage points of that side's traffic, or the
+template's rate changed by at least 1.5× in either direction. Both bars are
+needed. Scaling with sample size is what keeps a single event on a 20-event
+side — several points of share, but one event — out of the report, while
+letting a sub-percent move through when thousands of events back it. The
+effect-size bar then drops the moves that are technically real but not worth a
+row: at 50,000 events per side, a 0.06pp wobble already counts as significant.
+The `||` between the two effect-size conditions covers opposite ends of the
+share range — a dominant template matters in absolute pp (60% → 50% is a tenth
+of your traffic), a rare one as a multiple (5 → 500 occurrences in a 100k log
+is under 0.5pp but a 100-fold explosion).
+
+Templates whose move did not clear those bars are counted on the totals line
+as *within noise* — not "unchanged", because some of them did move. When one of
+them moved by at least a full percentage point, the report adds a line saying
+how many and at what sample size, so a suppressed drop never looks like an
+omission.
+
+Output is sorted (counts descending for new/vanished, |Δ share| descending for
+shifts — magnitude, not significance, since the gate has already removed what
+was only noise) so your eye does the thresholding. `--drain-diff=json` carries
+each shifted template's `z_score`, signed to match the direction of the move,
+for anyone who wants a different bar — filter downstream, including with
+kelora itself.
 
 `--drain-diff` composes with the normal pipeline: `--filter`/`--exec` run
 before the comparison, so you can diff only errors, or normalize a field first:
@@ -1268,6 +1286,14 @@ stdin a first-class input (nothing is re-read).
   inflating the diff. Remedy: normalize the field with `--exec` upstream.
 - *No sequence awareness.* The diff compares template frequencies, not
   orderings or burst timing.
+- *Shares are compositional.* Each template is tested against the noise bar on
+  its own, but shares sum to 100% per side, so a large rise in one template
+  mechanically depresses every other. Read a cluster of same-direction moves as
+  one event, not several.
+- *No multiple-comparison correction.* Each template gets its own test at ~95%
+  confidence, so a log with hundreds of templates can turn up a chance shift.
+  The effect-size bar filters the ones small enough to be pure chance; a
+  borderline row on a very high-template log is still worth a second look.
 
 #### `--cut <TIME>`
 
