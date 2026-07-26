@@ -511,9 +511,8 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
     }
 
     // Without this, a report can look self-contradictory: a template that moved
-    // more than the smallest shift shown (or a lot, with nothing shown at all)
-    // would silently sit in the totals line as if it had not moved. Only fires
-    // in that case, so ordinary reports stay quiet.
+    // by a visible amount would silently sit in the totals line as if it had
+    // not moved. Only fires in that case, so ordinary reports stay quiet.
     if let Some(note) = within_noise_note(report) {
         out.push_str(&format!("  {}{}{}\n", gray, note, reset));
     }
@@ -530,9 +529,10 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
     out
 }
 
-/// The plain-language explanation for suppressed moves, in event counts rather
-/// than statistics. `None` — the common case — when nothing held back moved by
-/// enough for its absence to read as an omission.
+/// The explanation for suppressed moves, phrased for someone who did not come
+/// here for statistics: event counts, and the implied fix (collect more).
+/// `None` — the common case — when nothing held back moved by enough for its
+/// absence to read as an omission.
 fn within_noise_note(report: &DiffReport) -> Option<String> {
     /// A suppressed move this large registers on the report's own scale (a full
     /// point of the side's traffic), so leaving it unexplained invites "where
@@ -544,7 +544,7 @@ fn within_noise_note(report: &DiffReport) -> Option<String> {
     }
     let n = report.within_noise_moved;
     Some(format!(
-        "{} {}{} moved but not beyond sampling noise at {}/{} events",
+        "{} {}{} moved, but {}/{} events is too few to be sure {} real",
         n,
         // "2 more templates" reads wrong when no shifts were listed above it.
         if report.shifted.is_empty() {
@@ -555,6 +555,7 @@ fn within_noise_note(report: &DiffReport) -> Option<String> {
         if n == 1 { "template" } else { "templates" },
         report.baseline_total,
         report.target_total,
+        if n == 1 { "it's" } else { "they're" },
     ))
 }
 
@@ -936,7 +937,9 @@ mod tests {
         };
         let text = format_report_text(&report, false);
         assert!(
-            text.contains("2 more templates moved but not beyond sampling noise at 110/120 events"),
+            text.contains(
+                "2 more templates moved, but 110/120 events is too few to be sure they're real"
+            ),
             "text: {}",
             text
         );
@@ -946,7 +949,7 @@ mod tests {
             within_noise_max_delta_pp: 0.6,
             ..report.clone()
         };
-        assert!(!format_report_text(&quiet, false).contains("sampling noise at"));
+        assert!(!format_report_text(&quiet, false).contains("too few to be sure"));
 
         // Same with no shifts shown at all — the note is not a zero-match nag.
         let quiet = DiffReport {
@@ -954,7 +957,7 @@ mod tests {
             within_noise_max_delta_pp: 0.9,
             ..report.clone()
         };
-        assert!(!format_report_text(&quiet, false).contains("sampling noise at"));
+        assert!(!format_report_text(&quiet, false).contains("too few to be sure"));
 
         // Nothing reported and a large move held back: "more" would be wrong.
         let lone = DiffReport {
@@ -965,7 +968,7 @@ mod tests {
         };
         let text = format_report_text(&lone, false);
         assert!(
-            text.contains("1 template moved but not beyond sampling noise at 110/120 events"),
+            text.contains("1 template moved, but 110/120 events is too few to be sure it's real"),
             "text: {}",
             text
         );
@@ -1062,7 +1065,7 @@ mod tests {
             "totals: baseline 9014 events, target 14903 events, 41 shared templates within noise"
         ));
         // Nothing suppressed moved, so the explanatory note stays out.
-        assert!(!text.contains("sampling noise at"));
+        assert!(!text.contains("too few to be sure"));
     }
 
     #[test]
