@@ -7215,7 +7215,11 @@ For manual or lightweight bucketing, <code>normalized()</code> can pre-normalize
 </ul>
 <p>Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
 md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
-timestamp, date, time, num.</p>
+timestamp, date, time, num.
+<code>timestamp</code> also covers calendar dates spanning several tokens — ctime/asctime
+(<code>Mon Jun 13 03:55:15 2005</code>, with or without the year) and the bare syslog form
+(<code>Jun 13 03:55:15</code>) — so one message doesn't split into a template per weekday.
+In a <code>key=value</code> token only the value is masked (<code>uid=&lt;num&gt;</code>), keeping the key.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a><span class="c1"># Default table format</span>
 <a id="__codelineno-80-2" name="__codelineno-80-2" href="#__codelineno-80-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
 <a id="__codelineno-80-3" name="__codelineno-80-3" href="#__codelineno-80-3"></a>
