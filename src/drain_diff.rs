@@ -18,12 +18,23 @@
 //! Memory is bounded by `MAX_UNIQUE_VALUES`; exceeding it refuses the report
 //! rather than emitting a diff computed from a truncated corpus.
 //!
-//! Thresholds are hardcoded by design (the spec's zero-config stance): volume
-//! shifts are reported at |Δ share| ≥ 1.0 percentage points, templates with a
-//! combined count below 2 are ignored, and NEW templates are exempt from the
-//! floor — a template appearing even once only in the target is exactly the
-//! incident signal the mode exists for. Anyone needing different cutoffs uses
-//! `--drain-diff=json` and filters downstream.
+//! Thresholds are hardcoded by design (the spec's zero-config stance):
+//! templates with a combined count below 2 are ignored, and NEW templates are
+//! exempt from the floor — a template appearing even once only in the target
+//! is exactly the incident signal the mode exists for. Anyone needing
+//! different cutoffs uses `--drain-diff=json` and filters downstream.
+//!
+//! Volume shifts (templates present on both sides) are gated by a
+//! sample-size-aware significance test rather than a fixed percentage-point
+//! cutoff: a two-proportion z-test with continuity correction, at
+//! `Z_CRITICAL`. A fixed pp threshold either misfires as noise on small
+//! samples (a single event moving a 20-event side by several points of share)
+//! or under-reports on huge ones (a real multi-point shift can be
+//! statistically overwhelming even when it looks small in isolation). The
+//! z-test scales the bar with `baseline_total`/`target_total` automatically.
+//! This gate applies only to the shifted category — NEW's floor exemption
+//! and VANISHED's fixed floor are untouched, since scaling those away would
+//! risk silencing rare-but-real incident signals the mode exists to surface.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -35,8 +46,10 @@ pub enum DiffSide {
     Target,
 }
 
-/// Volume shifts are reported at |Δ share| ≥ this many percentage points.
-const SHIFT_THRESHOLD_PP: f64 = 1.0;
+/// Two-proportion z-test critical value gating volume shifts (~95%
+/// two-sided confidence). Applied only to templates present on both sides;
+/// NEW/VANISHED classification is unaffected.
+const Z_CRITICAL: f64 = 1.96;
 
 /// Templates with baseline+target count below this are ignored (NEW exempt).
 const NOISE_FLOOR_COMBINED: u64 = 2;
@@ -108,6 +121,27 @@ pub struct DiffEntry {
     pub baseline_share: f64,
     pub target_share: f64,
     pub delta_pp: f64,
+    /// Two-proportion z-test statistic for templates present on both sides
+    /// (the `shifted` category); `None` for NEW/VANISHED, which are gated by
+    /// the fixed noise floor instead. See `Z_CRITICAL`.
+    pub z_score: Option<f64>,
+}
+
+/// Two-proportion z-test with continuity correction. Callers must ensure
+/// `baseline_total > 0 && target_total > 0` (guaranteed in the `finalize`
+/// branch that calls this, since `b > 0` and `t > 0` there imply both side
+/// totals are positive).
+fn two_proportion_z(b: u64, t: u64, baseline_total: u64, target_total: u64) -> f64 {
+    let (b, t) = (b as f64, t as f64);
+    let (n1, n2) = (baseline_total as f64, target_total as f64);
+    let p_pool = (b + t) / (n1 + n2);
+    let se = (p_pool * (1.0 - p_pool) * (1.0 / n1 + 1.0 / n2)).sqrt();
+    if se == 0.0 {
+        return 0.0;
+    }
+    let diff = (t / n2 - b / n1).abs();
+    let cc = 0.5 * (1.0 / n1 + 1.0 / n2);
+    (diff - cc).max(0.0) / se
 }
 
 #[derive(Debug, Clone)]
@@ -181,6 +215,11 @@ pub fn finalize() -> Result<DiffReport, String> {
 
         for (_, (template, counts)) in per_template {
             let (b, t) = (counts[0], counts[1]);
+            let z_score = if b > 0 && t > 0 {
+                Some(two_proportion_z(b, t, baseline_total, target_total))
+            } else {
+                None
+            };
             let entry = DiffEntry {
                 template_id: crate::drain::generate_template_id(&template),
                 template,
@@ -189,6 +228,7 @@ pub fn finalize() -> Result<DiffReport, String> {
                 baseline_share: share(b, baseline_total),
                 target_share: share(t, target_total),
                 delta_pp: (share(t, target_total) - share(b, baseline_total)) * 100.0,
+                z_score,
             };
             if b == 0 && t > 0 {
                 // NEW templates bypass the noise floor down to count 1.
@@ -199,7 +239,7 @@ pub fn finalize() -> Result<DiffReport, String> {
                 }
                 // A baseline singleton that vanished is below the noise floor.
             } else if b > 0 && t > 0 {
-                if entry.delta_pp.abs() >= SHIFT_THRESHOLD_PP {
+                if z_score.expect("computed above for b > 0 && t > 0") >= Z_CRITICAL {
                     shifted.push(entry);
                 } else {
                     unchanged_count += 1;
@@ -407,6 +447,7 @@ pub fn format_report_json(report: &DiffReport) -> String {
                     "baseline_pct": e.baseline_share * 100.0,
                     "target_pct": e.target_share * 100.0,
                     "delta_pp": e.delta_pp,
+                    "z_score": e.z_score,
                 })
             })
             .collect::<Vec<_>>(),
@@ -434,6 +475,11 @@ mod tests {
         } else {
             t as f64 / t_total as f64
         };
+        let z_score = if b > 0 && t > 0 {
+            Some(two_proportion_z(b, t, b_total, t_total))
+        } else {
+            None
+        };
         DiffEntry {
             template: template.to_string(),
             template_id: crate::drain::generate_template_id(template),
@@ -442,6 +488,7 @@ mod tests {
             baseline_share: bs,
             target_share: ts,
             delta_pp: (ts - bs) * 100.0,
+            z_score,
         }
     }
 
@@ -578,6 +625,67 @@ mod tests {
     }
 
     #[test]
+    fn small_sample_single_count_wobble_is_not_a_shift() {
+        // Mirrors a real small log (~20 events/side): several templates each
+        // move by exactly one occurrence, which used to clear the old fixed
+        // 1.0pp threshold on every single one of them. None of these should
+        // be statistically distinguishable from noise at this sample size.
+        reset_all();
+        for _ in 0..2 {
+            mine_and_record(
+                "GET /api/x completed in 12ms with status 200",
+                DiffSide::Baseline,
+            );
+        }
+        for _ in 0..2 {
+            mine_and_record(
+                "GET /api/x completed in 12ms with status 200",
+                DiffSide::Target,
+            );
+        }
+        for _ in 0..21 {
+            mine_and_record("heartbeat ok", DiffSide::Baseline);
+        }
+        for _ in 0..16 {
+            mine_and_record("heartbeat ok", DiffSide::Target);
+        }
+        let report = finalize().expect("finalize");
+        assert!(
+            report.shifted.is_empty(),
+            "single-occurrence wobble on ~20-event sides must not read as a shift: {:?}",
+            report.shifted
+        );
+        assert_eq!(report.unchanged_count, 2);
+    }
+
+    #[test]
+    fn large_sample_shift_still_fires_under_z_test() {
+        // Mirrors the deploy_before/after.jsonl example: baseline 1.8% share
+        // growing to 25% in the target. Overwhelmingly significant, and must
+        // still be reported under the z-test gate, not just the old pp one.
+        reset_all();
+        for _ in 0..2 {
+            mine_and_record("upstream payments returned 503", DiffSide::Baseline);
+        }
+        for _ in 0..108 {
+            mine_and_record("client connected ok", DiffSide::Baseline);
+        }
+        for _ in 0..30 {
+            mine_and_record("upstream payments returned 503", DiffSide::Target);
+        }
+        for _ in 0..90 {
+            mine_and_record("client connected ok", DiffSide::Target);
+        }
+        let report = finalize().expect("finalize");
+        let up = report
+            .shifted
+            .iter()
+            .find(|e| e.template.contains("upstream"))
+            .expect("large, real shift must be reported");
+        assert!(up.z_score.expect("z_score set for shifted entries") > Z_CRITICAL);
+    }
+
+    #[test]
     fn empty_sides_do_not_divide_by_zero() {
         reset_all();
         mine_and_record("only baseline has data", DiffSide::Baseline);
@@ -679,5 +787,6 @@ mod tests {
         assert_eq!(json["excluded_no_timestamp"], 2);
         // share_pct and delta_pp share units (percent).
         assert!((json["new"][0]["share_pct"].as_f64().unwrap() - 35.0).abs() < 0.01);
+        assert!(json["shifted"][0]["z_score"].is_number());
     }
 }

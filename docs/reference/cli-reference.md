@@ -1209,13 +1209,18 @@ hours of baseline), all comparisons use **share** — count divided by that
 side's total events — and volume shifts are reported in percentage points of
 share (Δpp).
 
-There are no threshold flags by design. Volume shifts are reported at
-|Δ share| ≥ 1.0pp, templates with a combined count below 2 are ignored, and
-NEW templates are exempt from that floor — a template appearing even once only
-after the deploy is exactly what you are looking for. Output is sorted (counts
-descending for new/vanished, |Δ share| descending for shifts) so your eye does
-the thresholding; anyone needing different cutoffs uses `--drain-diff=json`
-and filters downstream — including with kelora itself.
+There are no threshold flags by design. Templates with a combined count below
+2 are ignored, and NEW templates are exempt from that floor — a template
+appearing even once only after the deploy is exactly what you are looking
+for. Volume shifts are gated by a two-proportion significance test rather
+than a fixed percentage-point cutoff, so the bar scales with sample size: a
+single event moving a 20-event side's share by several points is noise and
+stays out of the report, while the same-sized share move is reported when
+it's backed by thousands of events on each side. `--drain-diff=json` includes
+each shifted template's `z_score` for downstream filtering. Output is sorted
+(counts descending for new/vanished, |Δ share| descending for shifts) so your
+eye does the thresholding; anyone needing different cutoffs uses
+`--drain-diff=json` and filters downstream — including with kelora itself.
 
 `--drain-diff` composes with the normal pipeline: `--filter`/`--exec` run
 before the comparison, so you can diff only errors, or normalize a field first:
