@@ -266,7 +266,9 @@ Place `--levels` before heavy transforms to prune work early, or add another `--
 
 ### Why the time window runs first
 
-`--since`/`--until` define **which events exist** for the rest of the run, so they are applied before any script stage rather than at a position in the CLI order. An out-of-window event never reaches your `--filter`, `--exec`, or `--assert` at all. This is what keeps aggregates honest: metrics accumulated in a script stage — `track_freq` and friends, including the `--freq`/`--describe`/`--card` shorthands — count only events inside the window, so `--freq FIELD` always agrees with the event stream that `--keys FIELD` prints.
+`--since`/`--until` define **which events exist** for the rest of the run, so they are applied before any script stage rather than at a position in the CLI order. An out-of-window event never reaches your `--filter`, `--exec`, or `--assert` at all — the window is a selection, like `--levels`, not a late trim of the output.
+
+This is what keeps aggregates honest: metrics accumulated in a script stage — `track_freq` and friends, including the `--freq`/`--describe`/`--card` shorthands — count only events inside the window, so `--freq FIELD` always agrees with the event stream that `--keys FIELD` prints. It also means an `--assert` asserts over the window you asked for, not over the whole file.
 
 The window is evaluated against the timestamp the **parser** produced. Scripts cannot move an event in or out of it: assigning to a timestamp field in `--exec` does not change which window the event falls in. To resolve timestamps differently, use `--ts-field`/`--ts-format`/`--input-tz`, which act at parse time.
 
