@@ -3466,6 +3466,9 @@ e.g. <code>--input-tz Europe/Berlin</code>.</p>
 <p><strong>Notes:</strong></p>
 <ul>
 <li>Detects once, applies to all lines</li>
+<li>With multiple files, detection uses the first non-empty line across the inputs
+  in order — leading files that are empty or contain only blank lines are
+  skipped, so a freshly rotated (empty) log doesn't force everything to <code>line</code></li>
 <li>Not suitable for mixed-format files — use <strong>cascade mode</strong> instead</li>
 </ul>
 <h3 id="auto-detection-per-file">Auto-Detection Per File<a class="headerlink" href="#auto-detection-per-file" title="Permanent link">&para;</a></h3>
