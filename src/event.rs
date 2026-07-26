@@ -515,21 +515,28 @@ impl Event {
                 crate::timestamp::identify_timestamp_field(&self.fields, ts_config)
             {
                 let mut parsed = false;
+                // Cleared before the parse so the flag can only describe this
+                // parse; the event layer is what turns it into a statistic, once
+                // per event (see `clear_year_inference_flag`).
+                crate::timestamp::clear_year_inference_flag();
                 let parsed_ts = if let Some(parser) = parser {
-                    parser.parse_ts_with_config(
+                    parser.parse_ts_with_year(
                         &ts_str,
                         ts_config.custom_format.as_deref(),
                         ts_config.default_timezone.as_deref(),
+                        ts_config.input_year,
                     )
                 } else {
                     crate::timestamp::with_thread_local_parser(|default_parser| {
-                        default_parser.parse_ts_with_config(
+                        default_parser.parse_ts_with_year(
                             &ts_str,
                             ts_config.custom_format.as_deref(),
                             ts_config.default_timezone.as_deref(),
+                            ts_config.input_year,
                         )
                     })
                 };
+                let year_was_inferred = crate::timestamp::take_year_inference_flag();
 
                 if let Some(ts) = parsed_ts {
                     self.parsed_ts = Some(ts);
@@ -538,6 +545,9 @@ impl Event {
 
                 if !self.timestamp_stats_recorded {
                     crate::stats::stats_record_timestamp_detection(&field_name, &ts_str, parsed);
+                    if year_was_inferred {
+                        crate::stats::stats_add_yearless_timestamp();
+                    }
                     self.timestamp_stats_recorded = true;
                 }
             } else if !self.timestamp_stats_recorded {
@@ -720,6 +730,7 @@ mod tests {
             custom_field: Some("custom_ts".to_string()),
             custom_format: None,
             default_timezone: None,
+            input_year: None,
         };
 
         event.extract_timestamp_with_config(None, &config);
@@ -742,6 +753,7 @@ mod tests {
             custom_field: Some("custom_ts".to_string()),
             custom_format: None,
             default_timezone: None,
+            input_year: None,
         };
 
         event.extract_timestamp_with_config(None, &config);
@@ -766,6 +778,7 @@ mod tests {
             custom_field: Some("custom_ts".to_string()),
             custom_format: None,
             default_timezone: None,
+            input_year: None,
         };
 
         event.extract_timestamp_with_config(None, &config);

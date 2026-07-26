@@ -358,6 +358,7 @@ struct MergedFileReader {
     ts_field: Option<String>,
     ts_format: Option<String>,
     default_timezone: Option<String>,
+    input_year: Option<i32>,
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -436,6 +437,7 @@ fn run_pipeline_sequential<W: Write>(
                 ts_field: config.input.ts_field.clone(),
                 ts_format: config.input.ts_format.clone(),
                 default_timezone: config.input.default_timezone.clone(),
+                input_year: config.input.input_year,
             })
         } else {
             SequentialInput::Files(sorted_files)
@@ -518,6 +520,7 @@ fn run_pipeline_sequential_with_auto_detection<W: Write>(
                 ts_field: final_config.input.ts_field.clone(),
                 ts_format: final_config.input.ts_format.clone(),
                 default_timezone: final_config.input.default_timezone.clone(),
+                input_year: final_config.input.input_year,
             })
         } else {
             SequentialInput::Files(sorted_files)
@@ -903,6 +906,7 @@ fn spawn_merged_file_reader(
             custom_field: reader.ts_field.clone(),
             custom_format: reader.ts_format.clone(),
             default_timezone: reader.default_timezone.clone(),
+            input_year: reader.input_year,
         };
         let extract_prefix = reader.extract_prefix.as_deref();
 

@@ -1388,12 +1388,14 @@ impl TimestampConversionStage {
         ts_field: Option<String>,
         ts_format: Option<String>,
         default_timezone: Option<String>,
+        input_year: Option<i32>,
     ) -> Self {
         Self {
             ts_config: crate::timestamp::TsConfig {
                 custom_field: ts_field,
                 custom_format: ts_format,
                 default_timezone,
+                input_year,
             },
         }
     }

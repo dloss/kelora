@@ -621,7 +621,7 @@ pub fn extract_error_summary_from_tracking(
     if let Some(stats) = stats {
         if stats.yearless_timestamps > 0 {
             let warning_msg = format!(
-                "Year-less timestamps detected ({} parse{}): year guessed via ±1yr heuristic, >18mo old may be wrong",
+                "Year-less timestamps detected ({} timestamp{}): year guessed via ±1yr heuristic, >18mo old may be wrong. Override with --input-year YYYY.",
                 stats.yearless_timestamps,
                 if stats.yearless_timestamps == 1 {
                     ""

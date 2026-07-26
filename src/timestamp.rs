@@ -16,17 +16,37 @@ impl AdaptiveTsParser {
     }
 
     /// Parse timestamp with full configuration support
+    ///
+    /// Year-less timestamps are resolved with the ±1yr heuristic. Use
+    /// [`Self::parse_ts_with_year`] to supply the year instead (`--input-year`).
     pub fn parse_ts_with_config(
         &mut self,
         ts_str: &str,
         custom_format: Option<&str>,
         default_timezone: Option<&str>,
     ) -> Option<DateTime<Utc>> {
+        self.parse_ts_with_year(ts_str, custom_format, default_timezone, None)
+    }
+
+    /// Parse timestamp with full configuration support and an explicit year for
+    /// year-less inputs.
+    ///
+    /// `input_year` is `--input-year`: `None` keeps the ±1yr heuristic, `Some(y)`
+    /// resolves every year-less timestamp into year `y`.
+    pub fn parse_ts_with_year(
+        &mut self,
+        ts_str: &str,
+        custom_format: Option<&str>,
+        default_timezone: Option<&str>,
+        input_year: Option<i32>,
+    ) -> Option<DateTime<Utc>> {
         let ts_str = ts_str.trim();
 
         // Try custom format first if provided
         if let Some(format) = custom_format {
-            if let Some(parsed) = try_parse_with_format(ts_str, format, default_timezone) {
+            if let Some(parsed) =
+                try_parse_with_format(ts_str, format, default_timezone, input_year)
+            {
                 return Some(parsed);
             }
         }
@@ -88,7 +108,7 @@ impl AdaptiveTsParser {
         }
 
         // Try format list with adaptive reordering
-        self.try_formats_with_reordering(ts_str, default_timezone)
+        self.try_formats_with_reordering(ts_str, default_timezone, input_year)
     }
 
     /// Try formats with timezone configuration and move successful ones to front
@@ -96,9 +116,12 @@ impl AdaptiveTsParser {
         &mut self,
         ts_str: &str,
         default_timezone: Option<&str>,
+        input_year: Option<i32>,
     ) -> Option<DateTime<Utc>> {
         for (index, format) in self.formats.iter().enumerate() {
-            if let Some(parsed) = try_parse_with_format(ts_str, format, default_timezone) {
+            if let Some(parsed) =
+                try_parse_with_format(ts_str, format, default_timezone, input_year)
+            {
                 // Move successful format to front if it's not already there
                 if index > 0 {
                     let successful_format = self.formats.remove(index);
@@ -121,6 +144,36 @@ thread_local! {
 /// format table on every event.
 pub fn with_thread_local_parser<R>(f: impl FnOnce(&mut AdaptiveTsParser) -> R) -> R {
     THREAD_TS_PARSER.with(|parser| f(&mut parser.borrow_mut()))
+}
+
+thread_local! {
+    /// Set when the last parse resolved a year-less timestamp via the ±1yr
+    /// heuristic.
+    ///
+    /// The counter behind the warning has to be per *timestamp*, not per parse
+    /// attempt: the same event is parsed more than once per run (once by the
+    /// parser, once when `parsed_ts` is refreshed after the script stages), and
+    /// formatter/argument paths parse timestamp-shaped strings too. Counting at
+    /// the parse site reported roughly twice the number of affected lines. So
+    /// the parse site only raises this flag and the event layer decides once per
+    /// event whether to count it.
+    static YEAR_WAS_INFERRED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Record that the current parse guessed the year (±1yr heuristic).
+fn flag_year_inference() {
+    YEAR_WAS_INFERRED.with(|flag| flag.set(true));
+}
+
+/// Clear the year-inference flag before a parse whose result will be inspected
+/// with [`take_year_inference_flag`].
+pub fn clear_year_inference_flag() {
+    YEAR_WAS_INFERRED.with(|flag| flag.set(false));
+}
+
+/// Read and clear the year-inference flag.
+pub fn take_year_inference_flag() -> bool {
+    YEAR_WAS_INFERRED.with(|flag| flag.replace(false))
 }
 
 #[cfg(test)]
@@ -212,11 +265,14 @@ fn choose_best_timestamp(candidates: &[DateTime<Utc>], now: DateTime<Utc>) -> Da
         .expect("candidates should not be empty")
 }
 
-/// Try to parse a timestamp with a specific format and timezone configuration
+/// Try to parse a timestamp with a specific format, timezone configuration and
+/// an explicit year for year-less inputs (`--input-year`; `None` keeps the ±1yr
+/// heuristic).
 fn try_parse_with_format(
     ts_str: &str,
     format: &str,
     default_timezone: Option<&str>,
+    input_year: Option<i32>,
 ) -> Option<DateTime<Utc>> {
     // Strip brackets if present (common in Apache/Nginx logs)
     let ts_str = ts_str.trim();
@@ -285,15 +341,23 @@ fn try_parse_with_format(
 
     if has_month && has_day && !has_year {
         let now = chrono::Utc::now();
-        let current_year = now.year();
         let format_with_year = format!("%Y {}", processed_format);
+
+        // `--input-year YYYY` states the year outright, so there is exactly one
+        // candidate and nothing to choose between. Without it, try the previous,
+        // current and next year and pick the most plausible — which is what keeps
+        // a log crossing New Year's Eve dated correctly.
+        let candidate_years: Vec<i32> = match input_year {
+            Some(year) => vec![year],
+            None => {
+                let current_year = now.year();
+                vec![current_year - 1, current_year, current_year + 1]
+            }
+        };
 
         let mut candidates = Vec::new();
 
-        // Try current year, previous year, and next year
-        // This handles edge cases around year boundaries
-        for year_offset in [-1, 0, 1] {
-            let year = current_year + year_offset;
+        for year in candidate_years {
             let ts_with_year = format!("{} {}", year, processed_ts_str);
 
             if let Ok(naive_dt) =
@@ -308,8 +372,12 @@ fn try_parse_with_format(
         // If we have multiple valid candidates, choose the most reasonable one
         // Prefer timestamps in the past and closest to now
         if !candidates.is_empty() {
-            // Track that we used year inference for statistics
-            crate::stats::stats_add_yearless_timestamp();
+            // Only flag the year as *guessed* when it actually was: with an
+            // explicit --input-year the year is stated, so the ±1yr warning
+            // (and the `yearless_inferred` stat behind it) must stay quiet.
+            if input_year.is_none() {
+                flag_year_inference();
+            }
             // Yearless timestamps are also naive (no zone offset); record the
             // default-timezone assumption so #287 can surface it once per run.
             crate::stats::stats_add_naive_timestamp();
@@ -514,6 +582,8 @@ pub struct TsConfig {
     pub custom_format: Option<String>,
     /// Default timezone for naive timestamps (None = local time)
     pub default_timezone: Option<String>,
+    /// Year for year-less timestamps (None = ±1yr heuristic, i.e. `--input-year auto`)
+    pub input_year: Option<i32>,
 }
 
 /// Identify and extract timestamp from event fields
@@ -1072,6 +1142,7 @@ mod tests {
             custom_field: Some("custom_time".to_string()),
             custom_format: None,
             default_timezone: None,
+            input_year: None,
         };
 
         let result = identify_timestamp_field(&fields, &config);
@@ -1094,6 +1165,7 @@ mod tests {
             custom_field: Some("custom_time".to_string()),
             custom_format: None,
             default_timezone: None,
+            input_year: None,
         };
 
         let result = identify_timestamp_field(&fields, &config);
@@ -1169,6 +1241,7 @@ mod tests {
             custom_field: Some("custom_time".to_string()),
             custom_format: None,
             default_timezone: None,
+            input_year: None,
         };
 
         let result = identify_timestamp_field(&fields, &config);
@@ -1918,6 +1991,116 @@ mod tests {
         let dt = result.unwrap();
         assert_eq!(dt.month(), 1);
         assert_eq!(dt.day(), 1);
+    }
+
+    // ============================================================================
+    // --input-year: stating the year for year-less timestamps (#341)
+    // ============================================================================
+
+    #[test]
+    fn input_year_resolves_yearless_timestamp_into_the_stated_year() {
+        let mut parser = AdaptiveTsParser::new();
+
+        let dt = parser
+            .parse_ts_with_year("Jun 14 15:16:01", None, Some("UTC"), Some(2005))
+            .expect("syslog timestamp should parse");
+
+        assert_eq!(dt.year(), 2005);
+        assert_eq!(dt.month(), 6);
+        assert_eq!(dt.day(), 14);
+        assert_eq!(dt.hour(), 15);
+    }
+
+    #[test]
+    fn input_year_applies_to_a_custom_yearless_format() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // glog-style MMDD, supplied explicitly rather than auto-detected.
+        let dt = parser
+            .parse_ts_with_year(
+                "0614 15:16:01",
+                Some("%m%d %H:%M:%S"),
+                Some("UTC"),
+                Some(2005),
+            )
+            .expect("custom year-less format should parse");
+
+        assert_eq!(dt.year(), 2005);
+        assert_eq!(dt.month(), 6);
+        assert_eq!(dt.day(), 14);
+    }
+
+    #[test]
+    fn input_year_leaves_timestamps_that_carry_a_year_alone() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // The year is in the input, so --input-year must not override it.
+        let dt = parser
+            .parse_ts_with_year("2023-07-04 12:00:00", None, Some("UTC"), Some(2005))
+            .expect("full timestamp should parse");
+
+        assert_eq!(dt.year(), 2023);
+    }
+
+    #[test]
+    fn input_year_none_keeps_the_wall_clock_heuristic() {
+        let mut parser = AdaptiveTsParser::new();
+
+        let dt = parser
+            .parse_ts_with_year("Jun 14 15:16:01", None, Some("UTC"), None)
+            .expect("syslog timestamp should parse");
+
+        // Without a stated year the candidate nearest the clock wins, which is
+        // always within a year of now.
+        let now_year = Utc::now().year();
+        assert!(
+            (dt.year() - now_year).abs() <= 1,
+            "expected a year near {}, got {}",
+            now_year,
+            dt.year()
+        );
+    }
+
+    #[test]
+    fn input_year_does_not_flag_the_year_as_guessed() {
+        let mut parser = AdaptiveTsParser::new();
+
+        clear_year_inference_flag();
+        parser
+            .parse_ts_with_year("Jun 14 15:16:01", None, Some("UTC"), Some(2005))
+            .expect("syslog timestamp should parse");
+        assert!(
+            !take_year_inference_flag(),
+            "a stated year is not an inferred year, so the ±1yr warning must stay quiet"
+        );
+
+        clear_year_inference_flag();
+        parser
+            .parse_ts_with_year("Jun 14 15:16:01", None, Some("UTC"), None)
+            .expect("syslog timestamp should parse");
+        assert!(
+            take_year_inference_flag(),
+            "without --input-year the year is guessed and must be flagged"
+        );
+    }
+
+    #[test]
+    fn input_year_rejects_a_date_that_does_not_exist_in_that_year() {
+        let mut parser = AdaptiveTsParser::new();
+
+        // 2005 was not a leap year. Rather than silently sliding to Mar 1 or
+        // falling back to a guessed year, the parse fails and the timestamp is
+        // reported as unparsed.
+        let result = parser.parse_ts_with_year("Feb 29 12:00:00", None, Some("UTC"), Some(2005));
+        assert!(result.is_none());
+
+        // ... and the same input resolves fine in a leap year.
+        let dt = parser
+            .parse_ts_with_year("Feb 29 12:00:00", None, Some("UTC"), Some(2004))
+            .expect("Feb 29 2004 exists");
+        assert_eq!(dt.year(), 2004);
+        assert_eq!(dt.month(), 2);
+        assert_eq!(dt.day(), 29);
     }
 
     // ============================================================================

@@ -231,6 +231,9 @@ impl DefaultFormatter {
 
         let format_hint = self.timestamp_formatting.parse_format_hint.as_deref();
         let timezone_hint = self.timestamp_formatting.parse_timezone_hint.as_deref();
+        // Year-less values must be displayed with the same year the pipeline
+        // parsed them with, or -z/-Z would show a year --since never saw.
+        let year_hint = self.timestamp_formatting.parse_year_hint;
 
         // First, try if it's already a DateTime value
         if let Some(dt) = value.clone().try_cast::<DateTime<Utc>>() {
@@ -241,7 +244,7 @@ impl DefaultFormatter {
         if let Ok(timestamp_num) = value.as_int() {
             let timestamp_str = timestamp_num.to_string();
             if let Some(parsed_dt) = crate::timestamp::with_thread_local_parser(|parser| {
-                parser.parse_ts_with_config(&timestamp_str, format_hint, timezone_hint)
+                parser.parse_ts_with_year(&timestamp_str, format_hint, timezone_hint, year_hint)
             }) {
                 return Some(self.format_timestamp_output(parsed_dt));
             }
@@ -285,7 +288,7 @@ impl DefaultFormatter {
         // Otherwise, try to parse it as a string timestamp
         if let Ok(ts_str) = value.clone().into_string() {
             if let Some(parsed_dt) = crate::timestamp::with_thread_local_parser(|parser| {
-                parser.parse_ts_with_config(&ts_str, format_hint, timezone_hint)
+                parser.parse_ts_with_year(&ts_str, format_hint, timezone_hint, year_hint)
             }) {
                 return Some(self.format_timestamp_output(parsed_dt));
             }

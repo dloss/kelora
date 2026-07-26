@@ -19,6 +19,7 @@ impl TimestampConfiguredParser {
         ts_field: Option<String>,
         ts_format: Option<String>,
         default_timezone: Option<String>,
+        input_year: Option<i32>,
     ) -> Self {
         Self {
             inner,
@@ -26,6 +27,7 @@ impl TimestampConfiguredParser {
                 custom_field: ts_field,
                 custom_format: ts_format,
                 default_timezone,
+                input_year,
             },
         }
     }
@@ -193,6 +195,7 @@ pub struct PipelineBuilder {
     ts_field: Option<String>,
     ts_format: Option<String>,
     default_timezone: Option<String>,
+    input_year: Option<i32>,
     extract_prefix: Option<String>,
     prefix_sep: String,
     cols_spec: Option<String>,
@@ -224,7 +227,8 @@ impl PipelineBuilder {
 
         let custom_ts_config = self.ts_field.is_some()
             || effective_ts_format.is_some()
-            || self.default_timezone.is_some();
+            || self.default_timezone.is_some()
+            || self.input_year.is_some();
 
         let base_parser: Box<dyn EventParser> = match self.input_format {
             crate::config::InputFormat::Auto => {
@@ -415,6 +419,7 @@ impl PipelineBuilder {
                 self.ts_field.clone(),
                 effective_ts_format,
                 self.default_timezone.clone(),
+                self.input_year,
             ))
         } else {
             parser_with_prefix
@@ -618,6 +623,7 @@ impl PipelineBuilder {
             ts_field: None,
             ts_format: None,
             default_timezone: None,
+            input_year: None,
             extract_prefix: None,
             prefix_sep: "|".to_string(),
             cols_spec: None,
@@ -845,6 +851,7 @@ impl PipelineBuilder {
                 self.ts_field.clone(),
                 self.ts_format.clone(),
                 self.default_timezone.clone(),
+                self.input_year,
             );
             script_stages.push(Box::new(conversion_stage));
         }
@@ -946,6 +953,7 @@ impl PipelineBuilder {
             custom_field: self.ts_field.clone(),
             custom_format: self.ts_format.clone(),
             default_timezone: self.default_timezone.clone(),
+            input_year: self.input_year,
         };
 
         // Window maintenance is only needed if --window was set or a stage
@@ -1284,6 +1292,7 @@ impl PipelineBuilder {
             custom_field: self.ts_field.clone(),
             custom_format: self.ts_format.clone(),
             default_timezone: self.default_timezone.clone(),
+            input_year: self.input_year,
         };
 
         let window_active = self.window_size > 0 || script_stages.iter().any(|s| s.uses_window());
@@ -1462,6 +1471,7 @@ pub fn create_pipeline_builder_from_config(
     builder.ts_field = config.input.ts_field.clone();
     builder.ts_format = config.input.ts_format.clone();
     builder.default_timezone = config.input.default_timezone.clone();
+    builder.input_year = config.input.input_year;
     builder.extract_prefix = config.input.extract_prefix.clone();
     builder.prefix_sep = config.input.prefix_sep.clone();
     builder.take_limit = config.processing.take_limit;

@@ -32,6 +32,9 @@ pub struct InputConfig {
     pub ts_format: Option<String>,
     /// Default timezone for naive timestamps (None = local time)
     pub default_timezone: Option<String>,
+    /// Year to use for year-less timestamps (`--input-year YYYY`). `None` means
+    /// `auto`: keep the ±1yr heuristic that guesses from the wall clock.
+    pub input_year: Option<i32>,
     /// True when the UTC default for naive timestamps is a *silent* assumption:
     /// neither `--input-tz` nor a non-empty `TZ` was provided. Gates the #287
     /// naive-timestamp diagnostic so it never fires when the user chose a zone.
@@ -460,6 +463,9 @@ pub struct TimestampFormatConfig {
     pub parse_format_hint: Option<String>,
     /// Default timezone hint reused when parsing timestamps for display
     pub parse_timezone_hint: Option<String>,
+    /// Year hint (`--input-year`) reused when parsing year-less timestamps for
+    /// display, so `-z`/`-Z` show the same year the pipeline filtered on.
+    pub parse_year_hint: Option<i32>,
 }
 
 /// Multi-line event detection configuration
@@ -994,6 +1000,7 @@ impl KeloraConfig {
         };
 
         let default_timezone = determine_default_timezone(cli)?;
+        let input_year = determine_input_year(cli)?;
         // The naive-timestamp diagnostic (#287) must only fire when the UTC
         // default was assumed silently. Mirror determine_default_timezone's
         // precedence: an explicit --input-tz or a non-empty TZ means the user
@@ -1182,6 +1189,7 @@ impl KeloraConfig {
                 ts_field: cli.ts_field.clone(),
                 ts_format: cli.ts_format.clone(),
                 default_timezone: default_timezone.clone(),
+                input_year,
                 timezone_assumed,
                 extract_prefix: cli.extract_prefix.clone(),
                 prefix_sep: cli.prefix_sep.clone(),
@@ -1224,7 +1232,11 @@ impl KeloraConfig {
                     .discover_depth
                     .unwrap_or(crate::field_discovery::DEFAULT_FLATTEN_DEPTH),
                 mark_gaps: None,
-                timestamp_formatting: create_timestamp_format_config(cli, default_timezone.clone()),
+                timestamp_formatting: create_timestamp_format_config(
+                    cli,
+                    default_timezone.clone(),
+                    input_year,
+                ),
             },
             processing: ProcessingConfig {
                 begin: cli.begin.clone(),
@@ -1325,6 +1337,7 @@ impl Default for KeloraConfig {
                 ts_field: None,
                 ts_format: None,
                 default_timezone: None,
+                input_year: None,
                 timezone_assumed: false,
                 extract_prefix: None,
                 prefix_sep: "|".to_string(),
@@ -1648,6 +1661,7 @@ fn parse_cascade_spec(spec: &str) -> anyhow::Result<InputFormat> {
 fn create_timestamp_format_config(
     cli: &crate::Cli,
     default_timezone: Option<String>,
+    input_year: Option<i32>,
 ) -> TimestampFormatConfig {
     let auto_format_all = cli.format_timestamps_local || cli.format_timestamps_utc;
 
@@ -1668,6 +1682,7 @@ fn create_timestamp_format_config(
         format_as_utc,
         parse_format_hint: cli.ts_format.clone(),
         parse_timezone_hint: default_timezone,
+        parse_year_hint: input_year,
     }
 }
 
@@ -1743,6 +1758,43 @@ fn determine_default_timezone(cli: &crate::Cli) -> anyhow::Result<Option<String>
 
     // DEFAULT: UTC (per spec, --input-tz defaults to UTC)
     Ok(Some("UTC".to_string()))
+}
+
+/// Resolve `--input-year` into the year that year-less timestamps should use.
+///
+/// `None` (the default, also spelled `--input-year auto`) keeps the ±1yr
+/// heuristic that picks the candidate year nearest the wall clock. `auto` is
+/// accepted explicitly so a project `.kelora.ini` default can be overridden on
+/// a single run, the same way `--input-tz local` overrides an inherited zone.
+fn determine_input_year(cli: &crate::Cli) -> anyhow::Result<Option<i32>> {
+    let Some(spec) = cli.input_year.as_deref().map(str::trim) else {
+        return Ok(None);
+    };
+
+    if spec.eq_ignore_ascii_case("auto") {
+        return Ok(None);
+    }
+
+    // A typo must fail fast: silently falling back to the heuristic would shift
+    // every year-less timestamp (and thus --since/--until, --span boundaries and
+    // --merge-sorted ordering) with no visible error.
+    let year: i32 = spec.parse().map_err(|_| {
+        anyhow::anyhow!(
+            "Invalid --input-year '{}': expected a 4-digit year (e.g. 2005) or 'auto'",
+            spec
+        )
+    })?;
+
+    // Match the lower bound of `year_is_plausible`: no real log line carries a
+    // year below 1000, and chrono cannot format years past 9999.
+    if !(1000..=9999).contains(&year) {
+        anyhow::bail!(
+            "Invalid --input-year '{}': expected a 4-digit year between 1000 and 9999, or 'auto'",
+            spec
+        );
+    }
+
+    Ok(Some(year))
 }
 
 fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
@@ -2067,6 +2119,54 @@ mod tests {
                 msg
             );
         });
+    }
+
+    #[test]
+    fn determine_input_year_defaults_to_the_heuristic() {
+        let cli = Cli::parse_from(["kelora"]);
+        assert_eq!(super::determine_input_year(&cli).unwrap(), None);
+    }
+
+    #[test]
+    fn determine_input_year_accepts_a_four_digit_year() {
+        let cli = Cli::parse_from(["kelora", "--input-year", "2005"]);
+        assert_eq!(super::determine_input_year(&cli).unwrap(), Some(2005));
+    }
+
+    #[test]
+    fn determine_input_year_accepts_auto_as_the_heuristic() {
+        // Spelling the default explicitly is what lets a CLI run override an
+        // --input-year inherited from .kelora.ini.
+        for spelling in ["auto", "AUTO", " auto "] {
+            let cli = Cli::parse_from(["kelora", "--input-year", spelling]);
+            assert_eq!(
+                super::determine_input_year(&cli).unwrap(),
+                None,
+                "'{}' should mean auto",
+                spelling
+            );
+        }
+    }
+
+    #[test]
+    fn determine_input_year_rejects_non_years() {
+        for bad in ["twentyfive", "205", "0", "20055", "-2005", "2005.0", ""] {
+            // `=` form so a leading '-' reaches the parser as a value, not a flag.
+            let cli = Cli::parse_from(["kelora", &format!("--input-year={}", bad)]);
+            let result = super::determine_input_year(&cli);
+            assert!(
+                result.is_err(),
+                "--input-year '{}' should be rejected, got: {:?}",
+                bad,
+                result
+            );
+            let msg = result.unwrap_err().to_string();
+            assert!(
+                msg.contains("Invalid --input-year"),
+                "Error should name the option, got: {}",
+                msg
+            );
+        }
     }
 
     #[test]
