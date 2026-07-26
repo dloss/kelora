@@ -1045,6 +1045,51 @@ fn unseen_key_suggestion(key: &str, discovered: &BTreeSet<String>) -> String {
     present_fields_hint(discovered)
 }
 
+/// Error text for a `--drain-diff` run whose mined field carried no value on a
+/// single event: every event that reached the comparison was excluded, so the
+/// report would claim "no new templates / no volume shifts" over zero events.
+/// The `-k` typo that causes this is invisible in that report, so the run fails
+/// instead — reusing the same suggestion machinery as the `-k` typo hint, which
+/// this mode's implicit hint suppression would otherwise swallow.
+fn drain_diff_dead_field_message(
+    field: Option<&str>,
+    excluded: u64,
+    stats: Option<&stats::ProcessingStats>,
+) -> String {
+    // Same "exists" definition as maybe_print_key_typo_hint: seen in the input
+    // or produced by a script stage. Without stats (nothing to compare against)
+    // the suggestion degrades to pointing at --discover.
+    let known: BTreeSet<String> = stats
+        .map(|s| {
+            s.discovered_keys
+                .iter()
+                .chain(s.discovered_keys_output.iter())
+                .cloned()
+                .collect()
+        })
+        .unwrap_or_default();
+
+    // `field` is None only if --keys stopped resolving to exactly one key after
+    // validation accepted it; keep a usable message rather than asserting.
+    let Some(field) = field else {
+        return format!(
+            "--drain-diff found no value to mine on any of the {excluded} event(s) it read, so there is nothing to compare. Check the field named by -k/--keys. {}",
+            present_fields_hint(&known)
+        );
+    };
+
+    if known.contains(field) {
+        format!(
+            "--drain-diff: -k/--keys names field '{field}', which was empty on all {excluded} event(s), so there is nothing to compare."
+        )
+    } else {
+        format!(
+            "--drain-diff: -k/--keys names field '{field}', which was never present in the input, so all {excluded} event(s) were excluded and there is nothing to compare. {}",
+            unseen_key_suggestion(field, &known)
+        )
+    }
+}
+
 /// When an unseen key looks like a flattened nested path — it contains a `.` or
 /// ends with `[]`, the way `--discover` prints nested fields (`api.queries`,
 /// `tags[]`) — and its leading segment *is* a present top-level field, the user
@@ -1399,10 +1444,65 @@ fn handle_pipeline_success(
     // emits the three-section report. Like --drain, it also flushes on signal
     // termination so a Ctrl-C'd run still yields its summary.
     if let Some(diff_format) = config.output.drain_diff.clone() {
-        if terminal_allowed {
-            match crate::drain_diff::finalize() {
-                Ok(report) => {
+        // The mined field, for the messages that name it. Validation guaranteed
+        // exactly one effective key before the pipeline was built.
+        let mined_field = crate::pipeline::builders::single_effective_key(config);
+        // Note the gating: a refusal is fatal, so it must reach the user (and
+        // the exit code) even under --silent, which allows the fatal line
+        // through. Only the report and its advisory tiers are silenced.
+        match crate::drain_diff::finalize() {
+            Ok(report) => {
+                // Refuse the report when every event that reached the
+                // comparison was excluded for lacking the mined field: the
+                // three sections would each read "no change" over zero
+                // events, which a typo'd -k turns into a confident lie the
+                // user cannot spot. Errors, unlike the hint tier, survive
+                // this mode's implicit diagnostics suppression and make the
+                // exit code nonzero.
+                if report.compared_events() == 0 && report.excluded_no_field > 0 {
+                    let message = drain_diff_dead_field_message(
+                        mined_field.as_deref(),
+                        report.excluded_no_field,
+                        pipeline_result.stats.as_ref(),
+                    );
+                    stderr
+                        .writeln(&config.format_error_message(&message))
+                        .unwrap_or(());
+                    std::process::exit(ExitCode::GeneralError as i32);
+                }
+                if terminal_allowed {
                     if config.warnings_allowed() {
+                        // Partial exclusions are normal in heterogeneous logs,
+                        // but they shrink the corpus invisibly — the totals line
+                        // reports what was compared, never what was dropped.
+                        if report.excluded_no_field > 0 {
+                            stderr
+                                .writeln(&crate::config::format_warning_message_auto(&format!(
+                                    "--drain-diff excluded {} event(s) with no '{}' value from the comparison; the diff covers only the {} event(s) that had one.",
+                                    report.excluded_no_field,
+                                    mined_field.as_deref().unwrap_or("?"),
+                                    report.compared_events(),
+                                )))
+                                .unwrap_or(());
+                        }
+                        // A diff over no events at all is vacuous rather than
+                        // reassuring; say so, since the sections below cannot.
+                        // Reaching here with zero compared events means the
+                        // field was never the problem (that path exited above),
+                        // so the only concrete cause left to defer to is the
+                        // --cut timestamp exclusion warned about below.
+                        if report.compared_events() == 0 {
+                            stderr
+                                .writeln(&crate::config::format_warning_message_auto(&format!(
+                                    "--drain-diff compared 0 events, so the report below reflects missing data, not an unchanged log.{}",
+                                    if report.excluded_no_timestamp > 0 {
+                                        ""
+                                    } else {
+                                        " Check the input and any --filter / --since / --level narrowing."
+                                    }
+                                )))
+                                .unwrap_or(());
+                        }
                         if report.excluded_no_timestamp > 0 {
                             stderr
                                 .writeln(&crate::config::format_warning_message_auto(&format!(
@@ -1431,12 +1531,12 @@ fn handle_pipeline_success(
                     };
                     stdout.writeln(&output).unwrap_or(());
                 }
-                Err(e) => {
-                    stderr
-                        .writeln(&config.format_error_message(&e))
-                        .unwrap_or(());
-                    std::process::exit(ExitCode::GeneralError as i32);
-                }
+            }
+            Err(e) => {
+                stderr
+                    .writeln(&config.format_error_message(&e))
+                    .unwrap_or(());
+                std::process::exit(ExitCode::GeneralError as i32);
             }
         }
     }

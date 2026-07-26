@@ -443,6 +443,206 @@ fn test_residue_guard_is_zero_on_example_corpus() {
 }
 
 #[test]
+fn test_typoed_key_fails_instead_of_reporting_no_change() {
+    // A field name that matches nothing excludes every event, which used to
+    // print an all-empty report ("no new templates", 0 events) and exit 0 — a
+    // typo reading as a confident "nothing changed".
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "nosuchfield",
+    ]);
+    assert_eq!(code, 1, "stdout: {} stderr: {}", stdout, stderr);
+    assert!(
+        !stdout.contains("NEW in target") && !stdout.contains("no volume shifts"),
+        "no report may be printed: {}",
+        stdout
+    );
+    assert!(
+        stderr.contains("never present in the input") && stderr.contains("nosuchfield"),
+        "stderr: {}",
+        stderr
+    );
+    // The run's real field names are surfaced so the fix is obvious.
+    assert!(stderr.contains("msg"), "stderr: {}", stderr);
+}
+
+#[test]
+fn test_typoed_key_suggests_the_nearest_field() {
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "mesg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(stderr.contains("Did you mean 'msg'?"), "stderr: {}", stderr);
+}
+
+#[test]
+fn test_typoed_key_fails_in_json_mode_too() {
+    // The JSON consumer is exactly who would act on a fabricated empty diff.
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=json",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "nosuchfield",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(stdout.trim().is_empty(), "stdout: {}", stdout);
+}
+
+#[test]
+fn test_typoed_key_still_fails_under_silent() {
+    // --silent suppresses the report and both advisory tiers, but the refusal is
+    // fatal: the exit code is the only signal a scripted run has left, so it
+    // must not read as success.
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "nosuchfield",
+        "--silent",
+    ]);
+    assert_eq!(code, 1, "stdout: {} stderr: {}", stdout, stderr);
+    assert!(stdout.trim().is_empty(), "stdout: {}", stdout);
+    assert!(stderr.contains("nosuchfield"), "stderr: {}", stderr);
+}
+
+#[test]
+fn test_silent_valid_run_stays_quiet_and_succeeds() {
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+        "--silent",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(stdout.trim().is_empty(), "stdout: {}", stdout);
+    assert!(stderr.trim().is_empty(), "stderr: {}", stderr);
+}
+
+#[test]
+fn test_field_empty_on_every_event_fails() {
+    // The field exists, so it is not a typo — but an always-empty value yields
+    // no templates either, and the report would be equally vacuous.
+    let baseline = temp_log("{\"msg\": \"\"}\n{\"msg\": \"\"}\n");
+    let target = temp_log("{\"msg\": \"\"}\n");
+
+    let (stdout, stderr, code) = run_diff(&[
+        "-f",
+        "json",
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stdout: {} stderr: {}", stdout, stderr);
+    assert!(
+        stderr.contains("which was empty on all 3 event(s)"),
+        "stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_partially_missing_field_warns_but_still_reports() {
+    // Heterogeneous logs legitimately carry the field on only some events; the
+    // diff is still meaningful, but the shrunken corpus must not be silent.
+    let baseline = temp_log(
+        "{\"msg\": \"alpha connect 1\"}\n{\"other\": \"x\"}\n{\"msg\": \"alpha connect 2\"}\n",
+    );
+    let target = temp_log(
+        "{\"msg\": \"alpha connect 3\"}\n{\"other\": \"y\"}\n{\"msg\": \"alpha connect 4\"}\n",
+    );
+
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("excluded 2 event(s) with no 'msg' value"),
+        "stderr: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("only the 4 event(s) that had one"),
+        "stderr: {}",
+        stderr
+    );
+    assert!(stdout.contains("totals: baseline 2 events, target 2 events"));
+}
+
+#[test]
+fn test_zero_compared_events_warns_that_the_report_is_vacuous() {
+    // Nothing typo'd: the filter removed every event. The report is still
+    // all-empty, so it must not read as "nothing changed".
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+        "--filter",
+        "false",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("compared 0 events") && stderr.contains("missing data"),
+        "stderr: {}",
+        stderr
+    );
+    assert!(stdout.contains("no new templates"), "stdout: {}", stdout);
+}
+
+#[test]
+fn test_json_reports_field_exclusion_count() {
+    let baseline = temp_log("{\"msg\": \"alpha connect 1\"}\n{\"other\": \"x\"}\n");
+    let target = temp_log("{\"msg\": \"alpha connect 2\"}\n");
+
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=json",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("valid JSON");
+    assert_eq!(json["excluded_no_field"], 1);
+}
+
+#[test]
 fn test_events_are_suppressed_in_diff_mode() {
     let baseline = temp_log(&baseline_content());
     let target = temp_log(&target_content());
