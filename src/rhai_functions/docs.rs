@@ -288,8 +288,10 @@ state += map                         Merge map into state (operator form)
 TRACKING/METRICS FUNCTIONS (requires --metrics):
 All track_* functions skip Unit () values (missing fields); skips are counted
 and surfaced via --diagnostics. Categorical arguments (category, item) accept
-strings, numbers, and bools (stringified). One metric name = one track function
-(mixing functions on the same name is an error).
+strings, numbers, bools, and timestamps (stringified; a timestamp keys as ISO
+8601, exactly as .to_iso() renders it, so time bucketing needs no explicit
+conversion). One metric name = one track function (mixing functions on the same
+name is an error).
 track_avg(name, value)                Track average of numeric values
 track_bottom(name, item [,n])         Track bottom N least frequent items (default n=10)
 track_bottom_by(name, item, score [,n]) Track bottom N distinct items by their lowest score (default n=10)
@@ -618,9 +620,13 @@ kelora -j duration_logs.jsonl --exec '
 # Group events by time buckets for histogram
 # The auto-detected timestamp is already parsed for you as meta.parsed_ts
 # (UTC, or () if missing) — no need to re-parse the string field yourself.
+# A timestamp is a valid category, so .to_iso() is optional here.
 kelora -j api_logs.jsonl -m \
-  --exec 'track_freq("time_buckets", meta.parsed_ts.round_to("5m").to_iso())'
+  --exec 'track_freq("time_buckets", meta.parsed_ts.round_to("5m"))'
 # Use to_datetime() when you need to parse a *different* string field instead.
+# This is also the answer for any other derived tally — --freq takes a field
+# name, track_freq takes any expression:
+kelora -j api_logs.jsonl -m --exec 'track_freq("class", e.status / 100)'
 
 # round_to / ceil_to for explicit bucket edges
 kelora -j api_logs.jsonl --exec '

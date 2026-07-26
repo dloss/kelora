@@ -1603,19 +1603,58 @@ fn handle_pipeline_success(
             .collect();
         if !skips.is_empty() {
             skips.sort();
-            let detail = skips
-                .iter()
-                .map(|(name, count)| format!("{} ({})", name, count))
-                .collect::<Vec<_>>()
-                .join(", ");
-            let mut hint = config.format_hint_message(&format!(
-                "Tracking skipped events with missing values: {}. These metrics never recorded a value — likely a field-name typo.",
-                detail
-            ));
-            if !events_were_output {
-                hint = hint.trim_start_matches('\n').to_string();
+
+            // A `--freq`/`--describe`/`--card` argument that matched nothing and
+            // cannot be a field name in the first place is a different mistake
+            // from a typo: an expression was typed into a FIELD slot. Those flags
+            // are deliberately Rhai-free — the general mechanism is to call the
+            // tracking function in an `--exec` stage — so name that instead of
+            // sending the user hunting for a misspelling.
+            //
+            // Shape test only, never a dispatch decision: a field name really can
+            // contain a space or parens (`{"cpu (%)": 12}`), so this is safe to
+            // consult only *after* the lookup is known to have failed on every
+            // event.
+            let looks_like_expression = |name: &str| {
+                name.chars()
+                    .any(|c| c.is_whitespace() || matches!(c, '(' | ')' | '"' | '\''))
+            };
+            let (exprs, typos): (Vec<_>, Vec<_>) = skips.iter().partition(|(name, _)| {
+                config.processing.metric_sugar_fields.contains(name) && looks_like_expression(name)
+            });
+
+            let detail = |group: &[&(String, i64)]| {
+                group
+                    .iter()
+                    .map(|(name, count)| format!("{} ({})", name, count))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            };
+
+            let mut messages = Vec::new();
+            if !typos.is_empty() {
+                messages.push(format!(
+                    "Tracking skipped events with missing values: {}. These metrics never recorded a value — likely a field-name typo.",
+                    detail(&typos)
+                ));
             }
-            stderr.writeln(&hint).unwrap_or(());
+            if !exprs.is_empty() {
+                messages.push(format!(
+                    "--freq/--describe/--card take a field name, not an expression: {}. \
+                     No field by that name exists, so nothing was counted. For a derived \
+                     value, call the tracking function directly in a script stage:\n    \
+                     kelora -m --exec 'track_freq(\"hour\", meta.parsed_ts.round_to(\"1h\"))' app.log",
+                    detail(&exprs)
+                ));
+            }
+
+            for (index, message) in messages.iter().enumerate() {
+                let mut hint = config.format_hint_message(message);
+                if !events_were_output && index == 0 {
+                    hint = hint.trim_start_matches('\n').to_string();
+                }
+                stderr.writeln(&hint).unwrap_or(());
+            }
         }
     }
 

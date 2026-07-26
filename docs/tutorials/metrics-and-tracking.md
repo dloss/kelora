@@ -78,8 +78,32 @@ deliberately retired as a tracking name because it was ambiguous between a
 running total and a per-value tally. Typing `--count FIELD` prints a hint
 pointing here.)
 
-Reach for the `track_*` functions directly when you need anything beyond these
-common cases.
+### They take a field name, not an expression
+
+The `FIELD` in the table above is literal: these flags are deliberately
+Rhai-free, so `--freq 'e.status / 100'` looks for a field *named*
+`e.status / 100`, finds none, and counts nothing (kelora hints when that
+happens). To tally a **derived** value, call the tracking function itself in a
+script stage. It takes any expression, names the metric itself, and needs no
+throwaway field:
+
+```bash
+# Events per hour — the auto-detected timestamp is already parsed as
+# meta.parsed_ts, and a timestamp is a valid category, so no .to_iso() needed.
+kelora -j examples/api_logs.jsonl -m \
+  --exec 'track_freq("hour", meta.parsed_ts.round_to("1h"))'
+
+# Any other derived tally works the same way
+kelora -j examples/api_logs.jsonl -m \
+  --exec 'track_freq("path", e.path.split("?")[0])'
+kelora -j examples/api_logs.jsonl --filter 'e.status != ()' -m \
+  --exec 'track_freq("class", e.status / 100)'
+```
+
+That is the general mechanism the shortcuts are sugar for; reach for it
+whenever you need anything beyond a bare field. For time buckets with a
+per-window hook — a report per window rather than one combined tally — see
+[`--span`/`--span-close`](span-aggregation.md) instead.
 
 ## Step 1 – Quick Counts with `track_freq()`
 

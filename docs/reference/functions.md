@@ -1875,7 +1875,7 @@ All tracking functions require the `--metrics` flag.
 Shared conventions across the `track_*()` family:
 
 - **Unit values are skipped.** Missing fields and failed conversions produce Unit `()`, which every `track_*()` function skips instead of erroring. Skips are counted per metric and surfaced via `--diagnostics`, so a field-name typo is detectable.
-- **Categorical arguments accept any scalar.** Category and item arguments take strings, numbers, and bools; non-string values are stringified (`track_freq("status", e.status)` just works).
+- **Categorical arguments accept any scalar.** Category and item arguments take strings, numbers, bools, and timestamps; non-string values are stringified (`track_freq("status", e.status)` just works). A timestamp keys as ISO 8601 — byte-identical to `.to_iso()` — so time bucketing needs no explicit conversion: `track_freq("hour", meta.parsed_ts.round_to("1h"))`.
 - **One metric name, one function.** Using the same metric name with two different `track_*()` functions is an error — the aggregation strategies are incompatible. In `--parallel` runs a conflict between `--begin` and the event stages is reported as a warning at merge time instead of a per-call error. Known limitation: the check is per *aggregation*, so a `track_stats("lat", ...)` suffix key (`lat_min`, `lat_sum`, ...) can silently share a name with a standalone call of the matching function (e.g. `track_min("lat_min", ...)`) — keep `track_stats` base names distinct.
 - **`__kelora_*` and `__op_*` metric names are reserved.** Kelora uses these prefixes for internal bookkeeping and hides them from all metrics output.
 

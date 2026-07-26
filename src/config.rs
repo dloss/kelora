@@ -198,6 +198,12 @@ pub struct ProcessingConfig {
     /// typo hint) survive the implicit suppression but still honor this explicit
     /// request.
     pub hints_user_suppressed: bool,
+    /// Metric names created by the `--freq`/`--describe`/`--card` sugar, in the
+    /// exact spelling the user typed. Those flags take a FIELD name, so when one
+    /// of them records no value the hint can tell an ordinary typo from an
+    /// expression typed into a field slot — advice a user's own `track_*` call
+    /// must not receive, since it names its metric freely.
+    pub metric_sugar_fields: Vec<String>,
     /// Suppress pipeline stdout/stderr emitters except the single fatal line (--silent)
     pub silent: bool,
     /// Suppress Rhai print/eprint and side-effect warnings (--no-script-output, data-only modes)
@@ -1240,6 +1246,13 @@ impl KeloraConfig {
                 suppress_warnings,
                 suppress_hints,
                 hints_user_suppressed,
+                metric_sugar_fields: cli
+                    .freq
+                    .iter()
+                    .chain(cli.describe.iter())
+                    .chain(cli.card.iter())
+                    .cloned()
+                    .collect(),
                 silent,
                 suppress_script_output,
                 quiet_level,
@@ -1364,6 +1377,7 @@ impl Default for KeloraConfig {
                 suppress_warnings: false,
                 suppress_hints: false,
                 hints_user_suppressed: false,
+                metric_sugar_fields: Vec::new(),
                 silent: false,
                 suppress_script_output: false,
                 quiet_level: 0,

@@ -43,6 +43,22 @@ pub use state::{
 /// Default N for track_top / track_bottom / track_top_by / track_bottom_by.
 const DEFAULT_RANK_N: i64 = 10;
 
+/// Render a timestamp used as a category key. Deliberately identical to
+/// `dt.to_iso()` (both are RFC 3339), so `track_freq("hour", ts)` and
+/// `track_freq("hour", ts.to_iso())` tally into the same key rather than
+/// splitting one bucket in two.
+///
+/// Bucketing by a rounded timestamp — `track_freq("hour",
+/// meta.parsed_ts.round_to("1h"))` — is the common shape, and rejecting it
+/// only ever produced a runtime error on every event, never a useful
+/// diagnostic. Returns `None` for anything that is not a timestamp.
+fn datetime_category(value: &Dynamic) -> Option<String> {
+    value
+        .clone()
+        .try_cast::<super::datetime::DateTimeWrapper>()
+        .map(|dt| dt.to_string())
+}
+
 /// Convert a categorical argument (track_freq value, track_top/track_bottom
 /// item, track_unique bool value) to the string form used as a map key.
 /// Unit `()` means "missing field" and yields `None` so callers can skip the
@@ -58,6 +74,9 @@ fn categorical_to_string(
     if let Ok(s) = value.clone().into_string() {
         return Ok(Some(s));
     }
+    if let Some(ts) = datetime_category(value) {
+        return Ok(Some(ts));
+    }
     // Floats use Rust's Display (200.0 → "200"), matching the labels 1.x
     // track_bucket produced; Rhai's Dynamic Display would render "200.0",
     // silently changing every float category key across the 2.0 migration.
@@ -71,7 +90,7 @@ fn categorical_to_string(
         return Ok(Some(value.to_string()));
     }
     Err(format!(
-        "{} {} must be a string, number, or bool; got {}",
+        "{} {} must be a string, number, bool, or timestamp; got {}",
         fn_name,
         arg_name,
         value.type_name()
@@ -231,8 +250,11 @@ fn track_cardinality_dispatch(
         let s = if b { "true" } else { "false" }.to_string();
         return insert(key, &s, error_rate);
     }
+    if let Some(ts) = datetime_category(value) {
+        return insert(key, &ts, error_rate);
+    }
     Err(format!(
-        "track_cardinality value must be a string, number, or bool; got {}",
+        "track_cardinality value must be a string, number, bool, or timestamp; got {}",
         value.type_name()
     )
     .into())
@@ -245,8 +267,10 @@ pub fn register_functions(engine: &mut Engine) {
     // metric name cannot be shared by different track functions.
     //
     // Common conventions across the family:
-    // - Categorical arguments (category, item) accept strings, numbers, and
-    //   bools; they are stringified into map keys.
+    // - Categorical arguments (category, item) accept strings, numbers, bools,
+    //   and timestamps; they are stringified into map keys. A timestamp keys as
+    //   RFC 3339, the same text `.to_iso()` returns, so time bucketing by
+    //   `meta.parsed_ts.round_to("1h")` needs no explicit conversion.
     // - Unit `()` values (missing fields) are skipped, and the skip is counted
     //   for `--diagnostics`.
 
@@ -511,8 +535,11 @@ pub fn register_functions(engine: &mut Engine) {
             if let Some(b) = value.clone().try_cast::<bool>() {
                 return track_unique_string_impl(key, if b { "true" } else { "false" });
             }
+            if let Some(ts) = datetime_category(&value) {
+                return track_unique_string_impl(key, &ts);
+            }
             Err(format!(
-                "track_unique value must be a string, number, or bool; got {}",
+                "track_unique value must be a string, number, bool, or timestamp; got {}",
                 value.type_name()
             )
             .into())
@@ -2281,6 +2308,62 @@ mod tests {
     }
 
     #[test]
+    fn test_categorical_timestamp_keys_match_to_iso() {
+        use chrono::TimeZone;
+        let dt = chrono_tz::Tz::UTC
+            .with_ymd_and_hms(2026, 7, 26, 10, 0, 0)
+            .unwrap();
+        let value = Dynamic::from(super::super::datetime::DateTimeWrapper::new(dt));
+
+        // A timestamp category keys as RFC 3339 — byte-identical to what
+        // `.to_iso()` produces, so both spellings tally into one bucket.
+        assert_eq!(
+            categorical_to_string("track_freq", "value", &value).unwrap(),
+            Some(dt.to_rfc3339())
+        );
+    }
+
+    #[test]
+    fn test_track_freq_accepts_timestamp_without_to_iso() {
+        use chrono::TimeZone;
+        clear_tracking_state();
+        let mut engine = rhai::Engine::new();
+        register_functions(&mut engine);
+        crate::rhai_functions::datetime::register_functions(&mut engine);
+
+        let dt = chrono_tz::Tz::UTC
+            .with_ymd_and_hms(2026, 7, 26, 10, 0, 0)
+            .unwrap();
+        let mut scope = rhai::Scope::new();
+        scope.push("ts", super::super::datetime::DateTimeWrapper::new(dt));
+
+        // Both spellings must land on the same key: two events, one bucket.
+        engine
+            .eval_with_scope::<()>(&mut scope, r#"track_freq("hour", ts)"#)
+            .unwrap();
+        engine
+            .eval_with_scope::<()>(&mut scope, r#"track_freq("hour", ts.to_iso())"#)
+            .unwrap();
+
+        let hour = get_thread_tracking_state()
+            .get("hour")
+            .unwrap()
+            .clone()
+            .try_cast::<rhai::Map>()
+            .unwrap();
+        assert_eq!(hour.len(), 1, "one bucket, not two: {:?}", hour);
+        assert_eq!(
+            hour.get(dt.to_rfc3339().as_str())
+                .unwrap()
+                .as_int()
+                .unwrap(),
+            2
+        );
+
+        clear_tracking_state();
+    }
+
+    #[test]
     fn test_track_freq_skips_unit_and_records_skip() {
         clear_tracking_state();
 
@@ -2332,7 +2415,7 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(
-            err.contains("value must be a string, number, or bool"),
+            err.contains("value must be a string, number, bool, or timestamp"),
             "got: {}",
             err
         );
