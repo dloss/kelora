@@ -7253,13 +7253,18 @@ counts mislead when the sides differ in size (10 minutes of incident vs. 24
 hours of baseline), all comparisons use <strong>share</strong> — count divided by that
 side's total events — and volume shifts are reported in percentage points of
 share (Δpp).</p>
-<p>There are no threshold flags by design. Volume shifts are reported at
-|Δ share| ≥ 1.0pp, templates with a combined count below 2 are ignored, and
-NEW templates are exempt from that floor — a template appearing even once only
-after the deploy is exactly what you are looking for. Output is sorted (counts
-descending for new/vanished, |Δ share| descending for shifts) so your eye does
-the thresholding; anyone needing different cutoffs uses <code>--drain-diff=json</code>
-and filters downstream — including with kelora itself.</p>
+<p>There are no threshold flags by design. Templates with a combined count below
+2 are ignored, and NEW templates are exempt from that floor — a template
+appearing even once only after the deploy is exactly what you are looking
+for. Volume shifts are gated by a two-proportion significance test rather
+than a fixed percentage-point cutoff, so the bar scales with sample size: a
+single event moving a 20-event side's share by several points is noise and
+stays out of the report, while the same-sized share move is reported when
+it's backed by thousands of events on each side. <code>--drain-diff=json</code> includes
+each shifted template's <code>z_score</code> for downstream filtering. Output is sorted
+(counts descending for new/vanished, |Δ share| descending for shifts) so your
+eye does the thresholding; anyone needing different cutoffs uses
+<code>--drain-diff=json</code> and filters downstream — including with kelora itself.</p>
 <p><code>--drain-diff</code> composes with the normal pipeline: <code>--filter</code>/<code>--exec</code> run
 before the comparison, so you can diff only errors, or normalize a field first:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a><span class="c1"># Diff only error-level events</span>
