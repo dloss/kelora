@@ -1208,12 +1208,12 @@ counts mislead when the sides differ in size (10 minutes of incident vs. 24
 hours of baseline), all comparisons use **share** — count divided by that
 side's total events.
 
-`Δpp` on a shift line is simply the gap between the two percentages printed
-next to it: `baseline: 2 (1.8%) → target: 30 (25.0%)` is `Δ +23.2pp`, meaning
-this template went from 1.8% of the log's lines to 25% of them — it took over
-23 more points of the traffic. It is written in *points* rather than percent
-because saying "up 1300%" for the same move would be true of the count and
-useless for the share.
+Each shift line ends with that change as a plain multiple —
+`baseline: 2 (1.8%) → target: 30 (25.0%)   14× more frequent`. The multiple is
+computed from the shares, not the raw counts (30/2 would say 15× here, but the
+target side is bigger, so its lines are cheaper), and it is the number the two
+percentages don't already give you: subtracting 1.8% from 25.0% is something
+your eye does for free, dividing them is not.
 
 There are no threshold flags by design. Templates with a combined count below
 2 are ignored, and NEW templates are exempt from that floor — a template
@@ -1233,15 +1233,19 @@ leaving you to wonder where it went:
 ```
 VOLUME SHIFTS (1 template):
   upstream <fqdn> returned <num> for request <uuid>
-    baseline: 2 (1.8%)  →  target: 30 (25.0%)   Δ +23.2pp
+    baseline: 2 (1.8%)  →  target: 30 (25.0%)   14× more frequent
   2 more templates moved, but 110/120 events is too few to be sure they're real
 ```
 
-Output is sorted (counts descending for new/vanished, |Δ share| descending for
-shifts) so your eye does the thresholding. `--drain-diff=json` carries each
-shifted template's `z_score` — the test statistic behind the first bar, signed
-to match the direction of the move — for anyone who wants a different cutoff:
-filter downstream, including with kelora itself.
+Output is sorted so your eye does the thresholding: counts descending for
+new/vanished, and shifts by how much of the side's traffic moved — visible in
+the percentages, not in the multiple, so a template that tripled from 0.01% to
+0.03% sorts below one that took over a quarter of the log.
+
+`--drain-diff=json` reports both views per shift — `delta_pp` for the share move
+and `z_score` for the test behind the first bar (signed to match the direction)
+— for anyone who wants a different cutoff: filter downstream, including with
+kelora itself.
 
 `--drain-diff` composes with the normal pipeline: `--filter`/`--exec` run
 before the comparison, so you can diff only errors, or normalize a field first:

@@ -98,7 +98,7 @@ VANISHED from target (1 template):
 
 VOLUME SHIFTS (1 template):
   upstream <fqdn> returned <num> for request <uuid>
-    baseline: 2 (1.8%)  →  target: 30 (25.0%)   Δ +23.2pp
+    baseline: 2 (1.8%)  →  target: 30 (25.0%)   14× more frequent
   2 more templates moved, but 110/120 events is too few to be sure they're real
 
 totals: baseline 110 events, target 120 events, 2 shared templates within noise
@@ -116,8 +116,10 @@ taking a quarter of the traffic, the healthy patterns have to give up share.
 At 110 and 120 events per side those drops could still be luck of the draw, so
 they get one summary line instead of rows of their own — and the report says so
 rather than quietly filing them under "unchanged". Feed it a bigger capture and
-they show up. `Δ +23.2pp` reads off the two percentages beside it: this
-template went from 1.8% of the lines to 25% of them.
+they show up. The `14× more frequent` at the end of a shift line is the rate
+change the two percentages don't hand you directly — computed from shares, so
+it stays honest when the two sides are different sizes (raw counts, 30 vs 2,
+would have claimed 15×).
 
 ## Filter Patterns (Boolean Logic)
 

@@ -410,6 +410,34 @@ fn signed_pp(delta: f64) -> String {
     )
 }
 
+/// How much more (or less) of the log this template is, as a plain multiple:
+/// `14× more frequent`. Computed from *shares*, not raw counts, so sides of
+/// different sizes compare fairly — the same quantity `MIN_RATE_RATIO` gates.
+///
+/// This is what the shift line shows instead of the change in percentage
+/// points, because the two shares printed beside it already carry that: the eye
+/// subtracts 1.8% from 25.0% for free, but it does not divide.
+fn rate_multiple(entry: &DiffEntry) -> String {
+    // Everything in the shifted list has counts on both sides, so both shares
+    // are positive. Defensive fallback only, in case that ever changes.
+    if entry.baseline_share <= 0.0 || entry.target_share <= 0.0 {
+        return signed_pp(entry.delta_pp);
+    }
+    let ratio = entry.target_share / entry.baseline_share;
+    let (factor, direction) = if ratio >= 1.0 {
+        (ratio, "more")
+    } else {
+        (1.0 / ratio, "less")
+    };
+    // A tenth matters near the 1.5x bar, where "1.5x" and "2x" are different
+    // claims; past 10x it is noise, and "14x" reads better than "13.8x".
+    if factor >= 10.0 {
+        format!("{:.0}\u{d7} {} frequent", factor, direction)
+    } else {
+        format!("{:.1}\u{d7} {} frequent", factor, direction)
+    }
+}
+
 /// Format the report as the three-section human-readable table. Sections with
 /// zero entries print a single line rather than disappearing — absence of
 /// change is information.
@@ -498,13 +526,13 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
             let delta_color = if entry.delta_pp >= 0.0 { red } else { green };
             out.push_str(&format!("  {}\n", entry.template));
             out.push_str(&format!(
-                "    baseline: {} ({})  \u{2192}  target: {} ({})   \u{0394} {}{}{}\n",
+                "    baseline: {} ({})  \u{2192}  target: {} ({})   {}{}{}\n",
                 entry.baseline_count,
                 pct(entry.baseline_share),
                 entry.target_count,
                 pct(entry.target_share),
                 delta_color,
-                signed_pp(entry.delta_pp),
+                rate_multiple(entry),
                 reset,
             ));
         }
@@ -975,6 +1003,32 @@ mod tests {
     }
 
     #[test]
+    fn rate_multiple_reads_as_a_plain_factor() {
+        // 1.8% -> 25.0% of the side's lines. Past 10x the tenth is noise.
+        assert_eq!(
+            rate_multiple(&entry("t <num>", 2, 30, 110, 120)),
+            "14\u{d7} more frequent"
+        );
+        // Declines invert the ratio rather than printing a fraction.
+        assert_eq!(
+            rate_multiple(&entry("t <num>", 30, 2, 120, 110)),
+            "14\u{d7} less frequent"
+        );
+        // Near the MIN_RATE_RATIO bar the tenth is the whole claim.
+        assert_eq!(
+            rate_multiple(&entry("t <num>", 100, 160, 1000, 1000)),
+            "1.6\u{d7} more frequent"
+        );
+        // Raw counts would say 2x here; shares say the rate held steady.
+        assert_eq!(
+            rate_multiple(&entry("t <num>", 100, 200, 1000, 2000)),
+            "1.0\u{d7} more frequent"
+        );
+        // Defensive fallback for a degenerate entry (not reachable via finalize).
+        assert_eq!(rate_multiple(&entry("t <num>", 0, 30, 110, 120)), "+25.0pp");
+    }
+
+    #[test]
     fn empty_sides_do_not_divide_by_zero() {
         reset_all();
         mine_and_record("only baseline has data", DiffSide::Baseline);
@@ -1060,7 +1114,8 @@ mod tests {
         assert!(text.contains("VANISHED from target (1 template):"));
         assert!(text.contains("(baseline count)"));
         assert!(text.contains("VOLUME SHIFTS (1 template):"));
-        assert!(text.contains("\u{0394} +12.7pp"));
+        // 2.1% of the baseline's lines -> 14.8% of the target's: 7.1x the rate.
+        assert!(text.contains("7.1\u{d7} more frequent"), "text: {}", text);
         assert!(text.contains(
             "totals: baseline 9014 events, target 14903 events, 41 shared templates within noise"
         ));
