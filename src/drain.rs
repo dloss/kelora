@@ -1,9 +1,12 @@
 use drain_rs::DrainTree;
 use grok::Grok;
+use regex::Regex;
 use sha2::{Digest, Sha256};
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::sync::LazyLock;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DrainConfig {
@@ -71,6 +74,8 @@ struct TemplateMetadata {
 struct DrainState {
     config: DrainConfig,
     tree: DrainTree,
+    /// Masks every line before the tree sees it (see [`Masker`]).
+    masker: Masker,
     /// Metadata tracked per normalized template string (see `normalize_template`
     /// — the key is behaviorally identical to the template id, minus the hash).
     metadata: HashMap<String, TemplateMetadata>,
@@ -79,21 +84,23 @@ struct DrainState {
 impl DrainState {
     fn new(config: DrainConfig) -> Self {
         let config = config.sanitized();
+        // Masking lives in kelora's Masker, which sees whole lines and so can
+        // do what drain's per-token pass cannot; the tree therefore gets no
+        // filter patterns of its own. Handing drain the patterns as well would
+        // mask the placeholders a second time — every name containing a digit
+        // (`<ipv4>`, `<sha256>`) re-matches the num pattern.
         let mut grok = build_grok();
-        let filter_patterns = if config.filters.is_empty() {
-            default_filter_patterns()
-        } else {
-            config.filters.iter().map(|s| s.as_str()).collect()
-        };
         let tree = DrainTree::new()
             .max_depth(to_u16(config.depth))
             .max_children(to_u16(config.max_children))
             .min_similarity(config.similarity as f32)
-            .filter_patterns(filter_patterns)
+            .filter_patterns(Vec::new())
             .build_patterns(&mut grok);
+        let masker = Masker::new(&config.filters);
         Self {
             config,
             tree,
+            masker,
             metadata: HashMap::new(),
         }
     }
@@ -111,9 +118,11 @@ impl DrainState {
         text: &str,
         line_num: Option<usize>,
     ) -> Result<(String, usize, bool), String> {
+        // The tree sees the masked line; `text` stays the stored sample.
+        let masked = self.masker.mask_line(text);
         let cluster = self
             .tree
-            .add_log_line(text)
+            .add_log_line(&masked)
             .ok_or_else(|| "Drain failed to match or create a cluster".to_string())?;
         let count = usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX);
         let template = cluster.as_string();
@@ -310,6 +319,173 @@ fn default_filter_patterns() -> Vec<&'static str> {
     ]
 }
 
+/// Calendar timestamps that span several space-separated tokens, which drain's
+/// per-token masking can never see: `ctime(3)`/`asctime` (`Mon Jun 13 03:55:15
+/// 2005`), the same form without the year, and the bare syslog `%b %e %H:%M:%S`
+/// prefix. Left alone, the numeric parts mask but the weekday/month names stay
+/// literal, so one logical message splits across a template per weekday/month —
+/// and each surviving template is *labelled* with one weekday/month while
+/// covering events that had others.
+///
+/// Day-of-month is `\d{1,2}` with `\x20+` separators so `Jul  1` (asctime pads
+/// to width 2) collapses like `Jun 13`; that padding otherwise yields an empty
+/// token and a different token count, which alone is enough to split a cluster.
+static CALENDAR_TS_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(?x)
+        \b
+        (?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\x20+)?           # optional ctime weekday
+        (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\x20+
+        \d{1,2}\x20+                                        # day of month
+        \d{1,2}:\d{2}:\d{2}(?:\.\d+)?                       # time of day
+        (?:\x20+\d{4})?                                     # optional year
+        \b",
+    )
+    .expect("failed to compile calendar timestamp regex")
+});
+
+/// One token after masking: either a placeholder/literal, or drain's wildcard
+/// (`<*>`, which a stored template also spells that way).
+#[derive(Debug, Clone, PartialEq)]
+enum MaskedToken {
+    WildCard,
+    Val(String),
+}
+
+impl MaskedToken {
+    fn as_str(&self) -> &str {
+        match self {
+            MaskedToken::WildCard => "<*>",
+            MaskedToken::Val(v) => v.as_str(),
+        }
+    }
+}
+
+/// kelora's masking pass, run before a line reaches the drain tree.
+///
+/// It is the only masking pass: the tree is built with **no** filter patterns
+/// (see [`DrainState::new`]), so drain tokenizes what comes out of here
+/// verbatim. That is deliberate — `drain_rs::DrainTree::process` masks one
+/// space-separated token at a time and replaces the *whole* token as soon as a
+/// pattern matches anywhere inside it, which loses information this pass keeps:
+///
+/// 1. A pattern cannot span a space, so multi-token calendar timestamps never
+///    mask (see [`CALENDAR_TS_RE`]).
+/// 2. Because a match consumes the whole token, `uid=0` masks to `<num>` — key
+///    and all — so a template no longer records which number was which, while
+///    `tty=ssh` keeps its key simply because nothing matched. Here the value is
+///    masked on its own (`uid=<num>`), which keeps the discriminating part and
+///    makes the two cases consistent.
+///
+/// Leaving drain a second pass would also undo the result: placeholder names
+/// containing a digit re-match the num pattern, so `rhost=<ipv4>` would collapse
+/// to `<num>` on the "4".
+///
+/// Per-token masking otherwise mirrors `DrainTree::process` exactly — same
+/// patterns in the same order, first match wins, token trimmed — so templates
+/// are unchanged apart from the two cases above.
+#[derive(Debug)]
+struct Masker {
+    /// Compiled filter patterns, in the same order and built the same way as
+    /// `DrainTree::build_patterns` (named captures only, uncompilable patterns
+    /// skipped).
+    patterns: Vec<grok::Pattern>,
+    /// Only the default filter set implies the calendar-timestamp collapse.
+    /// An explicit `filters:` list means "mask exactly these", so a caller who
+    /// overrides it gets their patterns and nothing else.
+    collapse_calendar_ts: bool,
+}
+
+impl Masker {
+    fn new(filters: &[String]) -> Self {
+        let mut grok = build_grok();
+        let filter_strs: Vec<&str> = if filters.is_empty() {
+            default_filter_patterns()
+        } else {
+            filters.iter().map(|s| s.as_str()).collect()
+        };
+        let patterns: Vec<grok::Pattern> = filter_strs
+            .iter()
+            .filter_map(|p| grok.compile(p, true).ok())
+            .collect();
+        Self {
+            patterns,
+            collapse_calendar_ts: filters.is_empty(),
+        }
+    }
+
+    /// Mask `line` into the tokens drain should cluster on.
+    fn mask_tokens(&self, line: &str) -> Vec<MaskedToken> {
+        let line = if self.collapse_calendar_ts {
+            CALENDAR_TS_RE.replace_all(line, "<timestamp>")
+        } else {
+            Cow::Borrowed(line)
+        };
+        // split(' ') (not split_whitespace) keeps drain's token count, including
+        // the empty tokens a run of spaces produces.
+        line.split(' ').map(|t| self.mask_token(t.trim())).collect()
+    }
+
+    /// The masked line drain ingests: [`Self::mask_tokens`] joined back with
+    /// single spaces, which is how drain itself renders a template.
+    fn mask_line(&self, line: &str) -> String {
+        let tokens = self.mask_tokens(line);
+        let mut out = String::with_capacity(line.len());
+        for (i, token) in tokens.iter().enumerate() {
+            if i > 0 {
+                out.push(' ');
+            }
+            out.push_str(token.as_str());
+        }
+        out
+    }
+
+    fn mask_token(&self, token: &str) -> MaskedToken {
+        if let Some(masked) = self.mask_kv_token(token) {
+            return MaskedToken::Val(masked);
+        }
+        match self.first_match(token) {
+            Some(Some(name)) => MaskedToken::Val(format!("<{}>", name)),
+            Some(None) => MaskedToken::WildCard,
+            None => MaskedToken::Val(token.to_string()),
+        }
+    }
+
+    /// `uid=0` -> `uid=<num>`: the same first-match-wins rule, applied to the
+    /// value alone so the key survives. `None` falls back to whole-token masking
+    /// — the token isn't a `key=value` pair, or its value matched nothing.
+    fn mask_kv_token(&self, token: &str) -> Option<String> {
+        let (key, value) = token.split_once('=')?;
+        if value.is_empty() || !is_bare_key(key) {
+            return None;
+        }
+        let name = self.first_match(value)??;
+        Some(format!("{}=<{}>", key, name))
+    }
+
+    /// Resolve `text` the way `DrainTree::process` does: the first filter
+    /// pattern that matches anywhere in it wins. `None` means no pattern
+    /// matched; `Some(None)` means one did but exposed no named capture (drain's
+    /// wildcard).
+    fn first_match(&self, text: &str) -> Option<Option<String>> {
+        self.patterns.iter().find_map(|p| {
+            let matches = p.match_against(text)?;
+            Some(matches.iter().next().map(|(name, _)| name.to_string()))
+        })
+    }
+}
+
+/// A `key` in `key=value` worth keeping in a template: a plain identifier, so
+/// `a=b=c` fragments, prose (`x -= 1`), or an already-masked token
+/// (`<num>=...`) fall back to whole-token masking.
+fn is_bare_key(key: &str) -> bool {
+    !key.is_empty()
+        && key.starts_with(|c: char| c.is_ascii_alphabetic() || c == '_')
+        && key
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'))
+}
+
 thread_local! {
     static DRAIN_STATE: RefCell<Option<DrainState>> = const { RefCell::new(None) };
 }
@@ -386,16 +562,10 @@ pub fn drain_templates() -> Vec<DrainTemplate> {
     })
 }
 
-/// One template of a [`FrozenTemplateSet`], parsed back into drain's token
-/// representation ("<*>" is the wildcard, everything else is a literal token).
-#[derive(Debug, Clone, PartialEq)]
-enum FrozenToken {
-    WildCard,
-    Val(String),
-}
-
+/// One template of a [`FrozenTemplateSet`], parsed back into the same token
+/// representation a masked line has ([`MaskedToken`]).
 struct FrozenEntry {
-    tokens: Vec<FrozenToken>,
+    tokens: Vec<MaskedToken>,
     template: String,
 }
 
@@ -418,35 +588,22 @@ struct FrozenEntry {
 /// so a line always finds at least the cluster it was mined into.
 pub struct FrozenTemplateSet {
     by_len: HashMap<usize, Vec<FrozenEntry>>,
-    patterns: Vec<grok::Pattern>,
+    masker: Masker,
 }
 
 impl FrozenTemplateSet {
     fn new(templates: Vec<String>, filters: &[String]) -> Self {
-        let mut grok = build_grok();
-        let filter_strs: Vec<&str> = if filters.is_empty() {
-            default_filter_patterns()
-        } else {
-            filters.iter().map(|s| s.as_str()).collect()
-        };
-        // Mirror DrainTree::build_patterns exactly: named captures only,
-        // patterns that fail to compile are skipped.
-        let patterns: Vec<grok::Pattern> = filter_strs
-            .iter()
-            .filter_map(|p| grok.compile(p, true).ok())
-            .collect();
-
         let mut by_len: HashMap<usize, Vec<FrozenEntry>> = HashMap::new();
         for template in templates {
             // as_string() joins tokens with single spaces, so split(' ')
             // round-trips them (including empty tokens from blank runs).
-            let tokens: Vec<FrozenToken> = template
+            let tokens: Vec<MaskedToken> = template
                 .split(' ')
                 .map(|t| {
                     if t == "<*>" {
-                        FrozenToken::WildCard
+                        MaskedToken::WildCard
                     } else {
-                        FrozenToken::Val(t.to_string())
+                        MaskedToken::Val(t.to_string())
                     }
                 })
                 .collect();
@@ -461,30 +618,10 @@ impl FrozenTemplateSet {
             entries.sort_by(|a, b| a.template.cmp(&b.template));
         }
 
-        Self { by_len, patterns }
-    }
-
-    /// Tokenize and mask a line exactly like `DrainTree::process`: split on
-    /// single spaces, trim each token, first matching grok pattern wins and
-    /// replaces the token with `<name>`.
-    fn mask(&self, line: &str) -> Vec<FrozenToken> {
-        line.split(' ')
-            .map(|t| t.trim())
-            .map(|t| {
-                match self
-                    .patterns
-                    .iter()
-                    .map(|p| p.match_against(t))
-                    .find(|o| o.is_some())
-                {
-                    Some(Some(matches)) => match matches.iter().next() {
-                        Some((name, _)) => FrozenToken::Val(format!("<{}>", name)),
-                        None => FrozenToken::WildCard,
-                    },
-                    _ => FrozenToken::Val(t.to_string()),
-                }
-            })
-            .collect()
+        Self {
+            by_len,
+            masker: Masker::new(filters),
+        }
     }
 
     /// Match `text` against the frozen set, returning the best template with
@@ -492,7 +629,9 @@ impl FrozenTemplateSet {
     /// token matches first, wildcard coverage as the tie-breaker). Returns
     /// None only when no template has that token count.
     pub fn match_text(&self, text: &str) -> Option<&str> {
-        let tokens = self.mask(text);
+        // Masked the same way the ingest path masks, so a line's tokens are
+        // comparable with the templates mined from it.
+        let tokens = self.masker.mask_tokens(text);
         let candidates = self.by_len.get(&tokens.len())?;
         let len = tokens.len() as f32;
         let mut best: Option<(f32, u32, &FrozenEntry)> = None;
@@ -502,7 +641,7 @@ impl FrozenTemplateSet {
             for (pattern, token) in entry.tokens.iter().zip(tokens.iter()) {
                 if pattern == token {
                     exact += 1.0;
-                } else if matches!(pattern, FrozenToken::WildCard) {
+                } else if matches!(pattern, MaskedToken::WildCard) {
                     approximate += 1;
                 }
             }
@@ -667,6 +806,124 @@ mod tests {
         assert_eq!(b.template, "failed to connect to <ipv4>");
         assert_eq!(a.template_id, b.template_id);
         assert_eq!(b.count, 2);
+    }
+
+    #[test]
+    fn masks_ctime_dates_as_one_timestamp_token() {
+        // ctime(3) dates span five tokens, so drain's per-token masking leaves
+        // the weekday and month literal: one message splits into a template per
+        // weekday/month, each labeled with a weekday it does not own. All three
+        // lines below are the same message.
+        let mut drain = DrainState::new(DrainConfig::default());
+        for (line, at) in [
+            (1, "Mon Jun 13 03:55:15 2005"),
+            (2, "Fri Jul  1 04:11:02 2005"), // asctime pads the day to width 2
+            (3, "Sun Jul 10 05:00:00 2005"),
+        ] {
+            drain
+                .record(
+                    &format!("connection from 10.0.0.{} at {}", line, at),
+                    Some(line),
+                )
+                .expect("record");
+        }
+
+        let templates = drain.templates();
+        assert_eq!(templates.len(), 1, "got {:?}", templates);
+        assert_eq!(
+            templates[0].template,
+            "connection from <ipv4> at <timestamp>"
+        );
+        assert_eq!(templates[0].count, 3);
+    }
+
+    #[test]
+    fn masks_syslog_and_asctime_calendar_forms() {
+        // Same shape without the weekday (asctime minus %a) and without the
+        // year (the syslog prefix, which reaches drain whenever the whole line
+        // is the drained field).
+        let masker = Masker::new(&[]);
+        assert_eq!(
+            masker.mask_line("at Jun 13 03:55:15 2005"),
+            "at <timestamp>"
+        );
+        assert_eq!(
+            masker.mask_line("Jun 14 15:16:01 combo"),
+            "<timestamp> combo"
+        );
+        // A date with no time of day is not a calendar timestamp: only the day
+        // number masks, as before.
+        assert_eq!(masker.mask_line("expires Jun 13"), "expires Jun <num>");
+    }
+
+    #[test]
+    fn masks_only_the_value_of_a_key_value_token() {
+        let masker = Masker::new(&[]);
+        // The key is the discriminating part; masking the whole token loses it.
+        assert_eq!(
+            masker.mask_line("logname= uid=0 euid=500 tty=ssh"),
+            "logname= uid=<num> euid=<num> tty=ssh"
+        );
+        // Placeholder names containing digits must survive: a second masking
+        // pass would collapse `rhost=<ipv4>` to `<num>` on the "4".
+        assert_eq!(masker.mask_line("rhost=10.0.0.1"), "rhost=<ipv4>");
+        assert_eq!(masker.mask_line("dir=/var/log/messages"), "dir=<path>");
+        // Nothing that looks like a key: whole-token masking, exactly as before.
+        assert_eq!(masker.mask_line("connect 10.0.0.1"), "connect <ipv4>");
+        assert_eq!(masker.mask_line("count -= 1"), "count -= <num>");
+        assert_eq!(masker.mask_line("=42"), "<num>");
+    }
+
+    #[test]
+    fn key_value_masking_keeps_unmatched_values_verbatim() {
+        // `tty=ssh` already kept its key (nothing matched the value); the fix
+        // makes `uid=0` behave the same way rather than the other way round.
+        let masker = Masker::new(&[]);
+        assert_eq!(masker.mask_line("tty=ssh"), "tty=ssh");
+        assert_eq!(masker.mask_line("ruser="), "ruser=");
+    }
+
+    #[test]
+    fn explicit_filters_opt_out_of_the_calendar_collapse() {
+        // An explicit filter list means "mask exactly these", so the added
+        // multi-token timestamp handling stays off and only ipv4 masks.
+        let filters = vec!["%{IPV4:ipv4}".to_string()];
+        let masker = Masker::new(&filters);
+        assert_eq!(
+            masker.mask_line("from 10.0.0.1 at Mon Jun 13 03:55:15 2005"),
+            "from <ipv4> at Mon Jun 13 03:55:15 2005"
+        );
+        // Value-only masking is structural, so it applies to custom filters too.
+        assert_eq!(masker.mask_line("rhost=10.0.0.1"), "rhost=<ipv4>");
+    }
+
+    #[test]
+    fn frozen_set_matches_the_template_a_line_was_mined_into() {
+        // --drain-diff pass 2 masks lines with the frozen set, so its masking
+        // must stay identical to the ingest path's.
+        let mut drain = DrainState::new(DrainConfig::default());
+        for line in 1..=3 {
+            drain
+                .record(
+                    &format!(
+                        "connection from 10.0.0.{} at Mon Jun 13 03:55:1{} 2005 uid=0",
+                        line, line
+                    ),
+                    Some(line),
+                )
+                .expect("record");
+        }
+        let templates = drain.templates();
+        assert_eq!(templates.len(), 1, "got {:?}", templates);
+
+        let frozen = FrozenTemplateSet::new(
+            templates.iter().map(|t| t.template.clone()).collect(),
+            &drain.config.filters,
+        );
+        assert_eq!(
+            frozen.match_text("connection from 10.0.0.9 at Sun Jul 10 05:00:00 2005 uid=500"),
+            Some(templates[0].template.as_str())
+        );
     }
 
     #[test]
