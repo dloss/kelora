@@ -96,15 +96,12 @@ NEW in target (2 templates):
 VANISHED from target (1 template):
   8  connection pool recycled for <fqdn>          (baseline count)
 
-VOLUME SHIFTS (3 templates):
+VOLUME SHIFTS (1 template):
   upstream <fqdn> returned <num> for request <uuid>
     baseline: 2 (1.8%)  →  target: 30 (25.0%)   Δ +23.2pp
-  client <ipv4> authenticated ok
-    baseline: 70 (63.6%)  →  target: 60 (50.0%)   Δ -13.6pp
-  session refresh for user <email>
-    baseline: 30 (27.3%)  →  target: 25 (20.8%)   Δ -6.4pp
+  2 more templates moved but not beyond sampling noise at 110/120 events
 
-totals: baseline 110 events, target 120 events, 0 shared templates unchanged
+totals: baseline 110 events, target 120 events, 2 shared templates within noise
 ```
 
 The story reads straight off the report: the deploy introduced two new
@@ -113,6 +110,14 @@ templates, retired the pool recycler, and upstream 503s exploded from 1.8% to
 of very different sizes diff fairly, and NEW templates are reported down to a
 single occurrence — a message appearing 3 times only after the deploy is
 exactly what you're looking for.
+
+The two templates held back are the flip side of that same rise: with 503s
+taking a quarter of the traffic, the healthy patterns have to give up share.
+At 110 and 120 events per side those drops are not yet distinguishable from
+sampling noise, so they get one summary line instead of rows of their own —
+and the note says so rather than quietly filing them under "unchanged".
+`--drain-diff=json` carries each reported shift's `z_score` if you want to
+apply your own bar.
 
 ## Filter Patterns (Boolean Logic)
 

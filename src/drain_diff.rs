@@ -24,14 +24,30 @@
 //! is exactly the incident signal the mode exists for. Anyone needing
 //! different cutoffs uses `--drain-diff=json` and filters downstream.
 //!
-//! Volume shifts (templates present on both sides) are gated by a
-//! sample-size-aware significance test rather than a fixed percentage-point
-//! cutoff: a two-proportion z-test with continuity correction, at
-//! `Z_CRITICAL`. A fixed pp threshold either misfires as noise on small
-//! samples (a single event moving a 20-event side by several points of share)
-//! or under-reports on huge ones (a real multi-point shift can be
-//! statistically overwhelming even when it looks small in isolation). The
-//! z-test scales the bar with `baseline_total`/`target_total` automatically.
+//! Volume shifts (templates present on both sides) must clear two bars: the
+//! move has to be **bigger than sampling noise** for the number of events on
+//! each side (a two-proportion z-test with continuity correction, at
+//! `Z_CRITICAL`), *and* it has to be **big enough to act on** — either
+//! `MIN_DELTA_PP` percentage points of share, or a `MIN_RATE_RATIO`-fold
+//! change in rate.
+//!
+//! Significance alone is not enough. A fixed pp threshold misfires as noise on
+//! small samples (a single event moving a 20-event side by several points of
+//! share), which the z-test fixes; but the z-test alone reports operationally
+//! meaningless rows on huge samples, because with 50k events per side a 0.06pp
+//! wobble is already "significant". Per-template testing has no multiplicity
+//! control either, so on a log with hundreds of templates a handful of such
+//! rows appear by chance. The effect-size bar filters exactly those (they are
+//! false precisely because they are tiny) without making one template's
+//! verdict depend on how many *other* templates happened to be mined, the way
+//! a Bonferroni-style correction would.
+//!
+//! The two effect-size conditions are an OR because they cover opposite ends
+//! of the share range: a dominant template matters in absolute pp (60% → 50%
+//! is 10pp of traffic), while a rare one matters as a multiple (5 → 500
+//! occurrences in a 100k log is under 0.5pp but a 100-fold explosion — the
+//! same incident signal NEW's floor exemption exists to protect).
+//!
 //! This gate applies only to the shifted category — NEW's floor exemption
 //! and VANISHED's fixed floor are untouched, since scaling those away would
 //! risk silencing rare-but-real incident signals the mode exists to surface.
@@ -47,9 +63,22 @@ pub enum DiffSide {
 }
 
 /// Two-proportion z-test critical value gating volume shifts (~95%
-/// two-sided confidence). Applied only to templates present on both sides;
-/// NEW/VANISHED classification is unaffected.
+/// two-sided confidence; compared against |z|). Applied only to templates
+/// present on both sides; NEW/VANISHED classification is unaffected.
 const Z_CRITICAL: f64 = 1.96;
+
+/// Effect-size floor #1: absolute share move, in percentage points. Catches
+/// shifts in high-share templates, where a modest multiple is a lot of traffic.
+const MIN_DELTA_PP: f64 = 0.5;
+
+/// Effect-size floor #2: fold change in rate (share ratio, either direction).
+/// Catches shifts in low-share templates, where a large multiple is still a
+/// small slice of the whole.
+const MIN_RATE_RATIO: f64 = 1.5;
+
+/// A |Δpp| below this rounds to `0.0pp` in the report, so a template moving
+/// less than this is not described as having "moved" in the within-noise note.
+const DISPLAY_EPSILON_PP: f64 = 0.05;
 
 /// Templates with baseline+target count below this are ignored (NEW exempt).
 const NOISE_FLOOR_COMBINED: u64 = 2;
@@ -135,13 +164,16 @@ pub struct DiffEntry {
     pub baseline_share: f64,
     pub target_share: f64,
     pub delta_pp: f64,
-    /// Two-proportion z-test statistic for templates present on both sides
-    /// (the `shifted` category); `None` for NEW/VANISHED, which are gated by
-    /// the fixed noise floor instead. See `Z_CRITICAL`.
+    /// Signed two-proportion z-test statistic for templates present on both
+    /// sides (the `shifted` category), positive when the target share is the
+    /// larger one; `None` for NEW/VANISHED, which are gated by the fixed noise
+    /// floor instead. See `Z_CRITICAL`.
     pub z_score: Option<f64>,
 }
 
-/// Two-proportion z-test with continuity correction. Callers must ensure
+/// Two-proportion z-test with continuity correction, signed to match the
+/// direction of the move (positive = grew in the target) so JSON consumers get
+/// direction and magnitude from one field. Callers must ensure
 /// `baseline_total > 0 && target_total > 0` (guaranteed in the `finalize`
 /// branch that calls this, since `b > 0` and `t > 0` there imply both side
 /// totals are positive).
@@ -153,9 +185,36 @@ fn two_proportion_z(b: u64, t: u64, baseline_total: u64, target_total: u64) -> f
     if se == 0.0 {
         return 0.0;
     }
-    let diff = (t / n2 - b / n1).abs();
+    let diff = t / n2 - b / n1;
     let cc = 0.5 * (1.0 / n1 + 1.0 / n2);
-    (diff - cc).max(0.0) / se
+    let magnitude = (diff.abs() - cc).max(0.0) / se;
+    // Guard the sign flip on zero so the report never prints `-0.0`.
+    if diff < 0.0 && magnitude > 0.0 {
+        -magnitude
+    } else {
+        magnitude
+    }
+}
+
+/// Whether a both-sides template's move is worth a row: bigger than sampling
+/// noise *and* big enough to act on. See the module docs for why both bars are
+/// needed and why the effect-size test is an OR.
+fn is_reportable_shift(
+    z_score: f64,
+    delta_pp: f64,
+    baseline_share: f64,
+    target_share: f64,
+) -> bool {
+    if z_score.abs() < Z_CRITICAL {
+        return false;
+    }
+    if delta_pp.abs() >= MIN_DELTA_PP {
+        return true;
+    }
+    // Both shares are positive here (the caller's branch has b > 0 && t > 0,
+    // which also makes both side totals positive), so the ratio is finite.
+    let ratio = target_share / baseline_share;
+    ratio >= MIN_RATE_RATIO || ratio <= 1.0 / MIN_RATE_RATIO
 }
 
 #[derive(Debug, Clone)]
@@ -163,9 +222,17 @@ pub struct DiffReport {
     pub new: Vec<DiffEntry>,
     pub vanished: Vec<DiffEntry>,
     pub shifted: Vec<DiffEntry>,
-    /// Templates present on both sides whose share moved less than the
-    /// reporting threshold.
+    /// Templates present on both sides whose move did not clear the reporting
+    /// bars — either indistinguishable from sampling noise or too small to act
+    /// on. "Within noise", not literally unchanged.
     pub unchanged_count: usize,
+    /// How many of those were rejected as noise (not as too-small an effect)
+    /// while moving by a visible amount — a |Δpp| that does not round to zero
+    /// in the report. Drives the explanatory note, so a suppressed move never
+    /// reads as a contradiction.
+    pub within_noise_moved: usize,
+    /// Largest |Δpp| among those, 0.0 when none moved.
+    pub within_noise_max_delta_pp: f64,
     pub baseline_total: u64,
     pub target_total: u64,
     /// Events whose field value matched no frozen template in pass 2. Should
@@ -238,6 +305,8 @@ pub fn finalize() -> Result<DiffReport, String> {
         let mut vanished = Vec::new();
         let mut shifted = Vec::new();
         let mut unchanged_count = 0usize;
+        let mut within_noise_moved = 0usize;
+        let mut within_noise_max_delta_pp = 0.0f64;
 
         for (_, (template, counts)) in per_template {
             let (b, t) = (counts[0], counts[1]);
@@ -265,17 +334,29 @@ pub fn finalize() -> Result<DiffReport, String> {
                 }
                 // A baseline singleton that vanished is below the noise floor.
             } else if b > 0 && t > 0 {
-                if z_score.expect("computed above for b > 0 && t > 0") >= Z_CRITICAL {
+                let z = z_score.expect("computed above for b > 0 && t > 0");
+                if is_reportable_shift(z, entry.delta_pp, entry.baseline_share, entry.target_share) {
                     shifted.push(entry);
                 } else {
                     unchanged_count += 1;
+                    let moved = entry.delta_pp.abs();
+                    // Only noise rejections feed the note, so its wording stays
+                    // literally true. An effect-size rejection is by definition
+                    // below MIN_DELTA_PP, so it can never be the conspicuously
+                    // bigger move a reader would notice going missing.
+                    if moved >= DISPLAY_EPSILON_PP && z.abs() < Z_CRITICAL {
+                        within_noise_moved += 1;
+                        within_noise_max_delta_pp = within_noise_max_delta_pp.max(moved);
+                    }
                 }
             }
         }
 
         // Sorting replaces threshold flags: counts descending for new/vanished,
         // |Δ share| descending for shifts; template string breaks ties so the
-        // output is deterministic across runs.
+        // output is deterministic across runs. Shifts sort by magnitude rather
+        // than by z because magnitude is what an operator acts on — the gate
+        // has already removed everything that is only noise.
         new.sort_by(|a, b| {
             b.target_count
                 .cmp(&a.target_count)
@@ -299,6 +380,8 @@ pub fn finalize() -> Result<DiffReport, String> {
             vanished,
             shifted,
             unchanged_count,
+            within_noise_moved,
+            within_noise_max_delta_pp,
             baseline_total,
             target_total,
             unmatched_events: unmatched,
@@ -426,10 +509,18 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
             ));
         }
     }
+
+    // Without this, a report can look self-contradictory: a template that moved
+    // more than the smallest shift shown (or a lot, with nothing shown at all)
+    // would silently sit in the totals line as if it had not moved. Only fires
+    // in that case, so ordinary reports stay quiet.
+    if let Some(note) = within_noise_note(report) {
+        out.push_str(&format!("  {}{}{}\n", gray, note, reset));
+    }
     out.push('\n');
 
     out.push_str(&format!(
-        "totals: baseline {} events, target {} events, {} shared {} unchanged",
+        "totals: baseline {} events, target {} events, {} shared {} within noise",
         report.baseline_total,
         report.target_total,
         report.unchanged_count,
@@ -437,6 +528,34 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
     ));
 
     out
+}
+
+/// The plain-language explanation for suppressed moves, in event counts rather
+/// than statistics. `None` — the common case — when nothing held back moved by
+/// enough for its absence to read as an omission.
+fn within_noise_note(report: &DiffReport) -> Option<String> {
+    /// A suppressed move this large registers on the report's own scale (a full
+    /// point of the side's traffic), so leaving it unexplained invites "where
+    /// did my drop go?". Below it, nobody is counting.
+    const NOTE_FLOOR_PP: f64 = 1.0;
+
+    if report.within_noise_moved == 0 || report.within_noise_max_delta_pp < NOTE_FLOOR_PP {
+        return None;
+    }
+    let n = report.within_noise_moved;
+    Some(format!(
+        "{} {}{} moved but not beyond sampling noise at {}/{} events",
+        n,
+        // "2 more templates" reads wrong when no shifts were listed above it.
+        if report.shifted.is_empty() {
+            ""
+        } else {
+            "more "
+        },
+        if n == 1 { "template" } else { "templates" },
+        report.baseline_total,
+        report.target_total,
+    ))
 }
 
 /// Format the report as one JSON object for scripting and agent use. Shares
@@ -713,6 +832,145 @@ mod tests {
         assert!(up.z_score.expect("z_score set for shifted entries") > Z_CRITICAL);
     }
 
+    /// Convenience for the effect-size table below: classify a both-sides
+    /// template straight from counts, the way `finalize` does.
+    fn classify(b: u64, t: u64, n1: u64, n2: u64) -> (f64, bool) {
+        let e = entry("t <num>", b, t, n1, n2);
+        let z = e.z_score.expect("both sides present");
+        (
+            z,
+            is_reportable_shift(z, e.delta_pp, e.baseline_share, e.target_share),
+        )
+    }
+
+    #[test]
+    fn significant_but_trivial_move_is_not_a_shift() {
+        // Two 50k-event logs drawn from the same distribution: with samples
+        // this large, pure sampling wobble clears the z-test (there is no
+        // multiplicity control across templates), so the effect-size bar is
+        // what keeps 0.06pp rows out of the report.
+        let (z, reported) = classify(106, 138, 50_000, 50_000);
+        assert!(z.abs() >= Z_CRITICAL, "significant by z alone: {}", z);
+        assert!(!reported, "0.06pp is not worth a row at any sample size");
+
+        let (z, reported) = classify(109, 79, 50_000, 50_000);
+        assert!(z.abs() >= Z_CRITICAL, "significant by z alone: {}", z);
+        assert!(!reported);
+    }
+
+    #[test]
+    fn rare_template_multiplying_is_reported_below_the_pp_floor() {
+        // 5 -> 500 occurrences in a 100k log is +0.495pp — under MIN_DELTA_PP,
+        // but a 100-fold explosion. Exactly the incident signal NEW's floor
+        // exemption exists to protect, so the rate ratio has to catch it.
+        let e = entry("t <num>", 5, 500, 100_000, 100_000);
+        assert!(e.delta_pp.abs() < MIN_DELTA_PP, "below the pp floor");
+        let (_, reported) = classify(5, 500, 100_000, 100_000);
+        assert!(reported, "a 100x rate change must be reported");
+    }
+
+    #[test]
+    fn high_share_drift_is_reported_below_the_rate_floor() {
+        // 10% -> 10.9% at 10k events per side: only a 1.09x rate change, but
+        // +0.86pp of traffic, and statistically solid. The pp floor catches it.
+        let e = entry("t <num>", 1000, 1090, 10_000, 10_000);
+        let ratio = e.target_share / e.baseline_share;
+        assert!(ratio < MIN_RATE_RATIO, "below the rate floor: {}", ratio);
+        let (_, reported) = classify(1000, 1090, 10_000, 10_000);
+        assert!(reported, "+0.86pp of traffic must be reported");
+    }
+
+    #[test]
+    fn z_score_is_signed_and_zero_when_variance_vanishes() {
+        let (grew, _) = classify(2, 30, 110, 120);
+        assert!(grew > 0.0, "growth is positive: {}", grew);
+        let (shrank, _) = classify(30, 2, 120, 110);
+        assert!(shrank < 0.0, "decline is negative: {}", shrank);
+        assert!(
+            (grew + shrank).abs() < 1e-9,
+            "swapping the sides only flips the sign"
+        );
+        // A log with a single template: every event is that template on both
+        // sides, so the pooled proportion is 1 and there is no variance left.
+        assert_eq!(two_proportion_z(40, 60, 40, 60), 0.0);
+    }
+
+    #[test]
+    fn new_and_vanished_carry_no_z_score() {
+        reset_all();
+        for _ in 0..40 {
+            mine_and_record("steady state ok", DiffSide::Baseline);
+            mine_and_record("steady state ok", DiffSide::Target);
+        }
+        for _ in 0..5 {
+            mine_and_record("cache warmed in 12ms", DiffSide::Baseline);
+            mine_and_record("OOM killer invoked for process 4242", DiffSide::Target);
+        }
+        let report = finalize().expect("finalize");
+        assert!(report.new.iter().all(|e| e.z_score.is_none()));
+        assert!(report.vanished.iter().all(|e| e.z_score.is_none()));
+        let json: serde_json::Value =
+            serde_json::from_str(&format_report_json(&report)).expect("valid JSON");
+        // The z-less categories omit the key rather than emitting null.
+        assert!(json["new"][0].get("z_score").is_none());
+        assert!(json["vanished"][0].get("z_score").is_none());
+    }
+
+    #[test]
+    fn within_noise_note_explains_a_suppressed_bigger_move() {
+        // The deploy example: a +23.2pp rise reported, and its complementary
+        // -13.6pp drop just under the bar. Without the note the report would
+        // look self-contradictory.
+        let report = DiffReport {
+            new: vec![],
+            vanished: vec![],
+            shifted: vec![entry("upstream <fqdn> returned <num>", 2, 30, 110, 120)],
+            unchanged_count: 2,
+            within_noise_moved: 2,
+            within_noise_max_delta_pp: 13.6,
+            baseline_total: 110,
+            target_total: 120,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+        };
+        let text = format_report_text(&report, false);
+        assert!(
+            text.contains("2 more templates moved but not beyond sampling noise at 110/120 events"),
+            "text: {}",
+            text
+        );
+
+        // Nothing held back moved by a full point of traffic: nothing to explain.
+        let quiet = DiffReport {
+            within_noise_max_delta_pp: 0.6,
+            ..report.clone()
+        };
+        assert!(!format_report_text(&quiet, false).contains("sampling noise at"));
+
+        // Same with no shifts shown at all — the note is not a zero-match nag.
+        let quiet = DiffReport {
+            shifted: vec![],
+            within_noise_max_delta_pp: 0.9,
+            ..report.clone()
+        };
+        assert!(!format_report_text(&quiet, false).contains("sampling noise at"));
+
+        // Nothing reported and a large move held back: "more" would be wrong.
+        let lone = DiffReport {
+            shifted: vec![],
+            within_noise_moved: 1,
+            within_noise_max_delta_pp: 4.0,
+            ..report
+        };
+        let text = format_report_text(&lone, false);
+        assert!(
+            text.contains("1 template moved but not beyond sampling noise at 110/120 events"),
+            "text: {}",
+            text
+        );
+    }
+
     #[test]
     fn empty_sides_do_not_divide_by_zero() {
         reset_all();
@@ -785,6 +1043,8 @@ mod tests {
                 14903,
             )],
             unchanged_count: 41,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
             baseline_total: 9014,
             target_total: 14903,
             unmatched_events: 0,
@@ -799,8 +1059,10 @@ mod tests {
         assert!(text.contains("VOLUME SHIFTS (1 template):"));
         assert!(text.contains("\u{0394} +12.7pp"));
         assert!(text.contains(
-            "totals: baseline 9014 events, target 14903 events, 41 shared templates unchanged"
+            "totals: baseline 9014 events, target 14903 events, 41 shared templates within noise"
         ));
+        // Nothing suppressed moved, so the explanatory note stays out.
+        assert!(!text.contains("sampling noise at"));
     }
 
     #[test]
@@ -810,6 +1072,8 @@ mod tests {
             vanished: vec![],
             shifted: vec![],
             unchanged_count: 5,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
             baseline_total: 100,
             target_total: 100,
             unmatched_events: 0,
@@ -829,6 +1093,8 @@ mod tests {
             vanished: vec![entry("an old <num>", 5, 0, 10, 20)],
             shifted: vec![entry("a shared <num>", 5, 13, 10, 20)],
             unchanged_count: 3,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
             baseline_total: 10,
             target_total: 20,
             unmatched_events: 0,
