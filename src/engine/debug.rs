@@ -1,7 +1,23 @@
 use rhai::{EvalAltResult, Map, Scope};
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use super::RhaiEngine;
+
+thread_local! {
+    /// Answers for function-not-found signatures already seen on this thread.
+    ///
+    /// A script bug fails on *every* event, and the answer depends only on the
+    /// signature, so without this the catalogue is rescanned hundreds of thousands
+    /// of times to produce one line of output the user sees once.
+    static FUNCTION_HINTS: RefCell<HashMap<String, Option<String>>> =
+        RefCell::new(HashMap::new());
+}
+
+/// Distinct signatures worth remembering per thread. A run has a handful of
+/// genuinely different failures; the cap only bounds a pathological script.
+const FUNCTION_HINT_CACHE_LIMIT: usize = 64;
 
 #[derive(Debug, Clone)]
 pub struct DebugConfig {
@@ -415,6 +431,21 @@ impl ErrorEnhancer {
     }
 
     fn suggest_function_alternatives(&self, func_sig: &str) -> Option<String> {
+        if let Some(cached) = FUNCTION_HINTS.with(|hints| hints.borrow().get(func_sig).cloned()) {
+            return cached;
+        }
+        let hint = self.compute_function_alternatives(func_sig);
+        FUNCTION_HINTS.with(|hints| {
+            let mut hints = hints.borrow_mut();
+            if hints.len() < FUNCTION_HINT_CACHE_LIMIT {
+                hints.insert(func_sig.to_string(), hint.clone());
+            }
+        });
+        hint
+    }
+
+    /// Depends only on `func_sig`, which is what makes the cache above sound.
+    fn compute_function_alternatives(&self, func_sig: &str) -> Option<String> {
         if func_sig.contains("()") {
             let func_name = func_sig.split('(').next().unwrap_or("").trim();
 
@@ -803,6 +834,26 @@ mod tests {
         assert!(
             with_args.contains("meta.parsed_ts.format(...)"),
             "a method taking arguments should show them; got: {with_args}"
+        );
+    }
+
+    #[test]
+    fn repeated_lookups_return_the_cached_answer() {
+        // The same failure recurs on every event, so the second lookup comes from the
+        // cache; it must be the same answer, keyed on the signature and nothing else.
+        let enhancer = ErrorEnhancer::new(DebugConfig::new(0));
+        let first = enhancer.suggest_function_alternatives("regex_extract (string, string)");
+        let second = enhancer.suggest_function_alternatives("regex_extract (string, string)");
+        assert_eq!(first, second);
+        assert!(first
+            .expect("expected a suggestion")
+            .contains("extract_regex"));
+
+        // A different signature must not collide with the cached one.
+        let other = enhancer.suggest_function_alternatives("hour (&str | ImmutableString)");
+        assert!(
+            other.expect("expected a hint").contains("datetime method"),
+            "each signature must get its own answer"
         );
     }
 
