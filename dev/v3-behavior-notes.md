@@ -70,3 +70,52 @@ a bug fix, so it should wait for a major version.
 stage builders hoist `TimestampFilterStage`), `src/config` stage ordering,
 `docs/concepts/pipeline-model.md` ("Why the time window runs first" would be
 rewritten).
+
+### Return `()` Instead of `""` When a String Function Finds Nothing
+
+**What:** Have the extraction and slicing functions report "nothing there" as
+`()` (explicitly absent) instead of `""`, so a non-matching extraction removes
+the field rather than leaving an empty one.
+
+Current behavior (2.x): `extract_regex`, `extract_ip`/`extract_url`/
+`extract_email`/`extract_domain`/`extract_json`, and the slicing family
+(`before`, `after`, `between`, `starting_with`, `ending_with`) all return `""`
+when there is no match or no delimiter; the plural forms return an empty array.
+`or_empty()` exists to convert that to `()`, and `??` supplies a placeholder.
+
+Why revisit it ([#342](https://github.com/dloss/kelora/issues/342)): the empty
+string is a value, so a non-matching extraction is indistinguishable from a real
+empty capture. It survives `!= ()`, and in `--freq` the non-matching events
+collect into the largest bucket under an empty label — the one number a reader is
+most likely to misread:
+
+```
+$ kelora Linux_2k.log --exec 'e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1)' --freq ip
+ip                            1503     <- events with no rhost= at all
+ip   150.183.249.110            80
+```
+
+**Design questions to settle first:**
+
+1. Is `""` really the wrong answer, or just the wrong *default*? These are string
+   functions whose results are routinely concatenated and re-sliced; under `()`,
+   `e.msg.extract_regex(p, 1).lower()` becomes a runtime error instead of `""`,
+   and every chained call needs a `?? ""` or a guard. The parser type-annotation
+   convention (`()` for a value that cannot satisfy its type) applies where
+   nothing downstream chains off the value.
+2. Scope: the whole family, or `extract_regex` alone? Alone is the smaller
+   change but trades one inconsistency for another — `after()` and `between()`
+   have exactly the same "not found" case.
+3. Do the plural forms move too? An empty array is already falsy-ish and
+   iterates zero times, so `()` mostly costs `for x in e.codes` its safety.
+4. Would a narrower fix cover the reported case — `--freq` labelling an empty
+   bucket distinctly, or a hint when a tracked field is empty on most events?
+   That addresses the misread number without touching any return type.
+
+**Not urgent.** `or_empty()` and `??` both express the intended behavior today,
+and 2.x now documents the `""` return in `--help-functions`, `--help-rhai`, and
+the function reference. This is a consistency question, not a defect.
+
+**Affected:** `src/rhai_functions/strings/regex_ops.rs`,
+`src/rhai_functions/extractors.rs`, `src/rhai_functions/strings/ops.rs` (the
+slicing family), plus every doc example that chains off an extraction.
