@@ -354,6 +354,11 @@ pub struct Pipeline {
     pub window_manager: Box<dyn WindowManager>,
     pub span_processor: Option<SpanProcessor>,
     pub ts_config: crate::timestamp::TsConfig,
+    /// The `--since`/`--until` bounds, kept alongside the stage that enforces
+    /// them so the emit path can tell when a printed event's final timestamp
+    /// lies outside the window the user asked for (#345). `None` when no time
+    /// window is set, which is also when the check is skipped entirely.
+    pub timestamp_window: Option<crate::config::TimestampFilterConfig>,
     /// Whether per-event window maintenance is needed: true if `--window` was
     /// set or any script stage reads the `window` variable. When false, the
     /// window manager is never touched, avoiding two event clones per line.
@@ -555,6 +560,28 @@ impl Pipeline {
                 event.extract_timestamp_with_config(None, &self.ts_config);
                 if let Some(result_ts) = event.parsed_ts {
                     crate::stats::stats_update_result_timestamp(result_ts);
+                    // The window ran before the script stages and judged the
+                    // *parser's* timestamp. This refreshed value is the one
+                    // being printed, so when the two disagree the output
+                    // carries a timestamp the user's window excluded — either a
+                    // script rewrote the field, or the event was created after
+                    // the window had already run. Count it here (free: the
+                    // reparse above happens either way) and let the run report
+                    // it once at the end (#345).
+                    //
+                    // Scope follows the claim the warning makes: this is about
+                    // the timestamp kelora prints. An event whose timestamp
+                    // field `--keys`/`--exclude-keys` already removed reparses
+                    // to None and is not counted — there is no printed
+                    // timestamp left to contradict the window, and the value
+                    // the script wrote is gone by this point.
+                    if let Some(window) = &self.timestamp_window {
+                        let escaped = window.since.is_some_and(|since| result_ts < since)
+                            || window.until.is_some_and(|until| result_ts > until);
+                        if escaped {
+                            crate::stats::stats_add_window_escaped_event();
+                        }
+                    }
                 }
 
                 if let Some(span) = self.span_processor.as_mut() {

@@ -866,17 +866,78 @@ fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
     ))
 }
 
-/// Hint when `--since/--until` dropped every event because no timestamp could
-/// be parsed anywhere in the input. If at least one timestamp parsed, the empty
-/// result is a legitimate out-of-range miss and gets no structural hint.
+/// Name of a timestamp-candidate field a script stage assigns to, if any
+/// (`e.ts = …`, `e["@timestamp"] = …`). Only assignment matters: reading
+/// `e.ts` in a filter is unrelated to the window, and `==` must not be mistaken
+/// for `=`.
+///
+/// Text matching is enough here. The alternative — asking the engine which
+/// fields a stage writes — would mean evaluating the script, and this only
+/// feeds a hint that has already been triggered by an empty result.
+fn script_assigned_timestamp_field(config: &KeloraConfig) -> Option<String> {
+    let dotted = regex::Regex::new(r#"\be\.([A-Za-z_][A-Za-z0-9_]*)\s*=(?:[^=]|$)"#)
+        .expect("valid timestamp assignment regex");
+    // Index form, which is the only way to write the non-identifier candidates
+    // (`@timestamp`, `@t`).
+    let indexed = regex::Regex::new(r#"\be\[\s*"([^"]+)"\s*\]\s*=(?:[^=]|$)"#)
+        .expect("valid indexed timestamp assignment regex");
+
+    for stage in &config.processing.stages {
+        let script = match stage {
+            ScriptStageType::Exec(script) => script,
+            ScriptStageType::Filter { script, .. } => script,
+            ScriptStageType::Assert(_) | ScriptStageType::LevelFilter { .. } => continue,
+        };
+        for captures in dotted
+            .captures_iter(script)
+            .chain(indexed.captures_iter(script))
+        {
+            let field = captures.get(1)?.as_str();
+            if crate::event::TIMESTAMP_FIELD_NAMES.contains(&field) {
+                return Some(field.to_string());
+            }
+        }
+    }
+
+    None
+}
+
+/// Hint when `--since/--until` dropped every event. Two shapes, both about
+/// *which* timestamp the window judged (#345):
+///
+/// 1. Nothing parsed at all. `--ts-field`/`--ts-format` is the right answer
+///    when the timestamp sits verbatim in a field of the input — but a dead end
+///    when a script stage builds one instead, since the window runs before
+///    every script stage and no assignment can move an event into it. Name the
+///    assignment and the route that does work.
+/// 2. Timestamps parsed, but every event fell outside the window while a script
+///    stage assigns a timestamp field. Normally an empty result here is a
+///    legitimate out-of-range miss and gets no hint; the assignment is what
+///    makes it worth a word, because the natural reading — that the value the
+///    script writes is what the window compares — is wrong.
 fn timestamp_filter_zero_hint(
     config: &KeloraConfig,
     stats: &stats::ProcessingStats,
 ) -> Option<String> {
     config.processing.timestamp_filter.as_ref()?;
+    let assigned = script_assigned_timestamp_field(config);
+
     if stats.timestamp_parsed_events > 0 {
-        return None;
+        // Hedged: the window may simply have excluded everything, which is a
+        // correct answer. Say what the window compared, not what went wrong.
+        let field = assigned?;
+        return Some(format!(
+            "0 events matched. --since/--until judged the timestamp the parser produced, before the script stage that assigns e.{field} — the window runs first, so that assignment cannot move an event into it. If the assigned value is the one to window on, resolve it at parse time with --ts-field/--ts-format, or narrow with a --filter placed after the assignment instead. See --help-time."
+        ));
     }
+
+    if let Some(field) = assigned {
+        return Some(format!(
+            "0 events matched. --since/--until is set, but no timestamps were parsed ({}/{} events). A script stage assigns e.{field}, which the time window never sees: it runs before every script stage and reads the timestamp the parser produced. Either resolve the timestamp at parse time with --ts-field/--ts-format, or drop --since/--until and narrow with a --filter placed after the assignment, e.g. --filter 'to_datetime(e.{field}) >= to_datetime(\"2024-05-01T00:00:00Z\")'. See --help-time.",
+            stats.timestamp_parsed_events, stats.events_created
+        ));
+    }
+
     Some(format!(
         "0 events matched. --since/--until is set, but no timestamps were parsed ({}/{} events). Set --ts-field/--ts-format; see --help-time.",
         stats.timestamp_parsed_events, stats.events_created
@@ -1821,6 +1882,14 @@ fn handle_pipeline_success(
                 // Circuit-breaker truncations are a recovery, not a failure
                 // (exit stays 0); surface them the same way as decode warnings.
                 if let Some(message) = s.format_line_truncation_warning() {
+                    let formatted = config.format_warning_message(&message);
+                    stderr.writeln(&formatted).unwrap_or(());
+                }
+                // Events printed with a timestamp the --since/--until window
+                // excludes. Exit stays 0 — the events are real — but the output
+                // contradicts the window that was asked for, so it must not be
+                // silent (#345).
+                if let Some(message) = s.format_window_escape_warning() {
                     let formatted = config.format_warning_message(&message);
                     stderr.writeln(&formatted).unwrap_or(());
                 }

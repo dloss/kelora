@@ -1647,3 +1647,321 @@ fn test_filter_after_emit_narrows_emitted_events_by_time() {
         "a threshold the emitted events satisfy must keep them: {kept}"
     );
 }
+
+// --- Timestamps a script builds or rewrites (#345) --------------------------
+//
+// `--since`/`--until` select on the timestamp the parser produced, and the
+// window runs before every script stage, so a script can move an event neither
+// into it nor out of it. Both halves of that gap used to be silent: a built
+// timestamp dropped the whole stream while the hint blamed the input, and a
+// rewritten one printed events the window had excluded. Neither behavior
+// changes here — both are now said out loud.
+
+/// Input whose timestamp is not where the parser looks: `when` is not a
+/// timestamp candidate, so nothing parses until a script copies it to `ts`.
+const DERIVED_TS_INPUT: &str = concat!(
+    r#"{"when":"2024-06-01T00:00:00Z","id":"a"}"#,
+    "\n",
+    r#"{"when":"2024-01-01T00:00:00Z","id":"b"}"#,
+    "\n",
+);
+
+#[test]
+fn test_zero_match_hint_names_the_script_assigned_timestamp() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e.ts = e.when",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id",
+        ],
+        DERIVED_TS_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stdout.trim().is_empty(),
+        "window drops everything: {stdout}"
+    );
+    assert!(
+        stderr.contains("A script stage assigns e.ts"),
+        "the hint must name the assignment rather than blaming the input: {stderr}"
+    );
+    assert!(
+        stderr.contains("--filter 'to_datetime(e.ts) >="),
+        "the hint must show the route that works: {stderr}"
+    );
+}
+
+/// The unwidened hint is still the right answer when no script is involved:
+/// there the timestamp really is missing from the input.
+#[test]
+fn test_zero_match_hint_without_a_script_stays_generic() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--since", "2024-05-01", "-k", "id"],
+        DERIVED_TS_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stderr.contains("Set --ts-field/--ts-format"),
+        "expected the parse-time advice: {stderr}"
+    );
+    assert!(
+        !stderr.contains("A script stage assigns"),
+        "no script stage ran, so nothing may be attributed to one: {stderr}"
+    );
+}
+
+/// Reading a timestamp field in a filter is not assigning to one, and `==` is
+/// not `=`. Neither may be mistaken for a script that builds a timestamp.
+#[test]
+fn test_zero_match_hint_ignores_reads_and_comparisons() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.ts == \"2024-06-01T00:00:00Z\"",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id",
+        ],
+        DERIVED_TS_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        !stderr.contains("A script stage assigns"),
+        "a comparison is not an assignment: {stderr}"
+    );
+}
+
+const IN_WINDOW_INPUT: &str = concat!(r#"{"ts":"2024-06-01T00:00:00Z","id":"x"}"#, "\n");
+
+#[test]
+fn test_script_rewriting_a_timestamp_out_of_the_window_warns() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e.ts = \"2023-01-01T00:00:00Z\"",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id,ts",
+        ],
+        IN_WINDOW_INPUT,
+    );
+
+    assert_eq!(code, 0, "a rewritten timestamp is not an error: {stderr}");
+    assert!(
+        stdout.contains("id='x'"),
+        "the event is still printed — the window's verdict is fixed: {stdout}"
+    );
+    assert!(
+        stderr.contains("carries a timestamp outside --since/--until"),
+        "printing an out-of-window timestamp must not be silent: {stderr}"
+    );
+}
+
+/// The warning is taken from the timestamp actually printed, not from the
+/// presence of an assignment, so a rewrite that lands inside the window is
+/// nothing to report.
+#[test]
+fn test_script_rewriting_a_timestamp_inside_the_window_is_silent() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e.ts = \"2024-07-01T00:00:00Z\"",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id,ts",
+        ],
+        IN_WINDOW_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(stdout.contains("id='x'"), "event must survive: {stdout}");
+    assert!(
+        !stderr.contains("outside --since/--until"),
+        "an in-window rewrite is not an anomaly: {stderr}"
+    );
+}
+
+#[test]
+fn test_windowed_run_without_a_script_never_warns() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--since", "2024-05-01", "-k", "id"],
+        MATRIX_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stdout.contains("id='b'"),
+        "in-window events print: {stdout}"
+    );
+    assert!(
+        !stderr.contains("outside --since/--until"),
+        "the ordinary windowed run must stay silent: {stderr}"
+    );
+}
+
+#[test]
+fn test_window_escape_warning_obeys_no_warnings() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e.ts = \"2023-01-01T00:00:00Z\"",
+            "--since",
+            "2024-05-01",
+            "--no-warnings",
+            "-k",
+            "id",
+        ],
+        IN_WINDOW_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        !stderr.contains("outside --since/--until"),
+        "--no-warnings must suppress it like any other warning: {stderr}"
+    );
+}
+
+/// Emitted events bypass the window entirely (it ran before they existed), so
+/// an out-of-window synthetic event reaches the output. That asymmetry is
+/// deliberate, and the same warning is what makes it visible.
+#[test]
+fn test_emitted_out_of_window_events_warn() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--since",
+            "2024-05-01",
+            "--exec",
+            "emit_each([#{ts: \"2020-01-01T00:00:00Z\", id: \"synth\"}])",
+            "-k",
+            "id,ts",
+        ],
+        IN_WINDOW_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(stdout.contains("synth"), "emitted event survives: {stdout}");
+    assert!(
+        stderr.contains("carries a timestamp outside --since/--until"),
+        "an unwindowed synthetic event must be visible: {stderr}"
+    );
+}
+
+/// Worker-local counts are merged, so `--parallel` reports the same anomaly.
+#[test]
+fn test_window_escape_warning_in_parallel_mode() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--parallel",
+            "--exec",
+            "e.ts = \"2023-01-01T00:00:00Z\"",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id,ts",
+        ],
+        IN_WINDOW_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stderr.contains("carries a timestamp outside --since/--until"),
+        "parallel mode must report it too: {stderr}"
+    );
+}
+
+/// The warning is scoped to the timestamp kelora *prints*: dropping the
+/// timestamp field with `-k` leaves nothing in the output to contradict the
+/// window, and the value the script wrote is gone by the time the emit path
+/// re-reads the event. Pinned so the boundary is a decision rather than a
+/// surprise.
+#[test]
+fn test_window_escape_warning_needs_a_printed_timestamp() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e.ts = \"2023-01-01T00:00:00Z\"",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id",
+        ],
+        IN_WINDOW_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(stdout.contains("id='x'"), "event still prints: {stdout}");
+    assert!(
+        !stderr.contains("outside --since/--until"),
+        "no timestamp survives to the output, so there is nothing to report: {stderr}"
+    );
+}
+
+/// The mirror case: the parser's timestamp is outside the window, so the event
+/// is dropped before the `--exec` that would have moved it in ever runs. The
+/// empty result is correct, and a hint says which timestamp was compared rather
+/// than leaving the user to assume it was theirs.
+#[test]
+fn test_zero_match_hint_when_the_window_ran_before_the_assignment() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            "e.ts = \"2024-07-01T00:00:00Z\"",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id,ts",
+        ],
+        concat!(r#"{"ts":"2024-01-01T00:00:00Z","id":"x"}"#, "\n"),
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(stdout.trim().is_empty(), "event stays dropped: {stdout}");
+    assert!(
+        stderr.contains("the window runs first, so that assignment cannot move an event into it"),
+        "expected the ordering to be spelled out: {stderr}"
+    );
+}
+
+/// Without a timestamp assignment, an out-of-range window is just an empty
+/// result — the case the Rule of Silence deliberately leaves alone.
+#[test]
+fn test_out_of_range_window_alone_stays_silent() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--since", "2030-01-01", "-k", "id"],
+        MATRIX_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(stdout.trim().is_empty(), "nothing is in window: {stdout}");
+    assert!(
+        !stderr.contains("0 events matched"),
+        "an ordinary empty window needs no hint: {stderr}"
+    );
+}
