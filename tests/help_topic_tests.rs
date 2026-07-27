@@ -139,6 +139,94 @@ fn test_help_functions_keyword_matches_multiline_entry() {
 }
 
 #[test]
+fn test_help_functions_lists_parsed_ts_with_the_datetime_functions() {
+    // A user looking for "the timestamp" opens --help-functions, not --help-rhai.
+    // meta.parsed_ts has to be reachable from every word they would type there,
+    // or they end up re-parsing the raw field with to_datetime(e.ts).
+    for keyword in ["parsed_ts", "parsed", "timestamp", "hour", "meta"] {
+        let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions", keyword]);
+        assert_eq!(exit_code, 0, "--help-functions {keyword} should exit 0");
+        assert!(
+            stdout.contains("meta.parsed_ts"),
+            "--help-functions {keyword} should surface meta.parsed_ts:\n{stdout}"
+        );
+    }
+
+    // And it is listed in the DATETIME block of the full catalogue, next to the
+    // datetime methods that operate on it.
+    let (full, _stderr, _exit) = run_kelora(&["--help-functions"]);
+    let datetime_block = full
+        .split("DATETIME FUNCTIONS:")
+        .nth(1)
+        .expect("catalogue should have a DATETIME FUNCTIONS section")
+        .split("\n\n")
+        .next()
+        .unwrap();
+    assert!(
+        datetime_block.contains("meta.parsed_ts"),
+        "DATETIME FUNCTIONS should lead with meta.parsed_ts:\n{datetime_block}"
+    );
+}
+
+#[test]
+fn test_help_functions_indexes_meta_fields() {
+    // `meta` is a documented top-level binding, so searching for it must not
+    // answer "No functions matching" just because it is a map and not a function.
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions", "meta"]);
+    assert_eq!(exit_code, 0, "--help-functions meta should exit 0");
+    assert!(
+        !stdout.contains("No functions matching"),
+        "meta is documented and must be findable:\n{stdout}"
+    );
+    assert!(stdout.contains("EVENT METADATA"));
+    for field in ["meta.parsed_ts", "meta.line_num", "meta.filename"] {
+        assert!(
+            stdout.contains(field),
+            "--help-functions meta should list {field}:\n{stdout}"
+        );
+    }
+
+    // The individual field names are indexed too, not just the `meta` prefix.
+    let (by_field, _stderr, _exit) = run_kelora(&["--help-functions", "line_num"]);
+    assert!(
+        by_field.contains("meta.line_num"),
+        "searching a metadata field by name should find it:\n{by_field}"
+    );
+}
+
+#[test]
+fn test_help_functions_keyword_aliases_reach_timestamp_parsing() {
+    // Names from other tools (strptime) and names users assume kelora uses
+    // (parse_ts) resolve to both answers: parse a string with to_datetime(),
+    // or read the timestamp kelora already parsed.
+    for keyword in ["parse_ts", "parse_time", "parse_date", "strptime"] {
+        let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions", keyword]);
+        assert_eq!(exit_code, 0, "--help-functions {keyword} should exit 0");
+        assert!(
+            stdout.contains("to_datetime"),
+            "--help-functions {keyword} should surface to_datetime:\n{stdout}"
+        );
+        assert!(
+            stdout.contains("meta.parsed_ts"),
+            "--help-functions {keyword} should surface meta.parsed_ts:\n{stdout}"
+        );
+    }
+}
+
+#[test]
+fn test_help_time_documents_parsed_ts() {
+    // --help-time is the page named after timestamps; the parsed value belongs
+    // on it, along with the reason not to re-parse the raw field.
+    let (stdout, _stderr, exit_code) = run_kelora(&["--help-time"]);
+    assert_eq!(exit_code, 0, "--help-time should exit successfully");
+    assert!(
+        stdout.contains("meta.parsed_ts"),
+        "--help-time should document meta.parsed_ts:\n{stdout}"
+    );
+    assert!(stdout.contains("to_datetime"));
+}
+
+#[test]
 fn test_help_functions_keyword_no_match() {
     let (stdout, _stderr, exit_code) = run_kelora(&["--help-functions", "nonexistentxyz"]);
     assert_eq!(

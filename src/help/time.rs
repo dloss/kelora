@@ -131,6 +131,21 @@ Splitting a log for template diffing with --cut (same formats as --since):
   Use --strict to abort processing on missing/invalid timestamps
   Use --verbose to see detailed timestamp parsing errors
 
+Reading the parsed timestamp in scripts (meta.parsed_ts):
+  Whatever kelora detects and parses is handed to --filter/--exec as
+  meta.parsed_ts, a UTC datetime (or () when the event has no usable timestamp).
+  It is the parsed value, so datetime methods work on it directly and there is no
+  need to re-parse the raw field with to_datetime():
+
+    kelora syslog.log -m --exec 'track_freq("hour", meta.parsed_ts.round_to("1h"))'
+    kelora app.log --filter 'meta.parsed_ts.hour() >= 9 && meta.parsed_ts.hour() < 17'
+    kelora app.log --exec 'e.day = meta.parsed_ts.format("%Y-%m-%d")'
+
+  e.ts (or whichever field was detected) still holds the raw string exactly as it
+  appeared in the input. Reach for to_datetime(e.some_field) when you need to parse
+  a different field, or when you want to state a format or timezone explicitly.
+  Full datetime method list: kelora --help-functions parsed_ts
+
 For the full chrono format reference, see:
 https://docs.rs/chrono/latest/chrono/format/strftime/index.html
 

@@ -155,8 +155,15 @@ map.to_syslog()                      Convert map to syslog format string
 map.unflatten([separator])           Reconstruct nested object from flat keys
   
 DATETIME FUNCTIONS:
+meta.parsed_ts                       Parsed timestamp of the current event (DateTimeWrapper, UTC;
+                                     () when the event has none). The auto-detected timestamp field
+                                     is already parsed for you — no to_datetime() needed:
+                                     meta.parsed_ts.hour(), meta.parsed_ts.round_to("1h")
+                                     See EVENT METADATA below and --help-time.
 now()                                Current UTC timestamp (DateTimeWrapper)
 to_datetime(text [,fmt [,tz]])       Convert string into DateTimeWrapper with optional hints
+                                     (for a *different* string field, or to state format/timezone;
+                                     the auto-detected timestamp is already in meta.parsed_ts)
 to_duration("1h30m")                 Convert duration string into DurationWrapper
 duration_from_<unit>(n)              Create duration from seconds/minutes/hours/days/ms/ns
 humanize_duration(ms)                Convert milliseconds to human-readable format (e.g., "1h 30m")
@@ -329,6 +336,17 @@ span.metrics                         Per-window metrics from additive track_* ca
                                      omitted with a warning; iterate span.events to compute them
                                      per window.
 
+EVENT METADATA (the `meta` map, available in --filter/--exec):
+meta.parsed_ts                       Parsed timestamp of the event as a UTC datetime, or () if the
+                                     event has no usable timestamp. Already parsed — reach for this
+                                     before to_datetime(e.ts). See DATETIME FUNCTIONS above.
+meta.line                            Original raw input line (always available)
+meta.line_num                        Line number, 1-based (available when reading files)
+meta.filename                        Source filename (() for stdin)
+meta.span_id                         Current span identifier (with --span)
+meta.span_status                     "included", "late", "unassigned", or "filtered" (with --span)
+meta.span_start, meta.span_end       Span boundaries as datetimes (time spans only)
+
 EVENT MANIPULATION:
 emit_each(array [,base_map])         Fan out array elements as separate events (returns emitted count)
                                      Per-event stages only (-e/--exec, --filter); errors in --begin/--end
@@ -348,6 +366,23 @@ For other help topics: kelora -h
 "#
 }
 
+/// Extra needles for keywords that name a concept kelora spells differently.
+///
+/// The catalogue is searched by substring, so a user who types the name their
+/// previous tool used ("strptime") or the name they assume kelora uses
+/// ("parse_ts") finds nothing, even though the answer is right there under
+/// another spelling. Each alias maps to the entries that actually answer the
+/// question — for timestamp parsing that is both `to_datetime` (parse a string)
+/// and `meta.parsed_ts` (the timestamp kelora already parsed).
+fn alias_needles(keyword: &str) -> &'static [&'static str] {
+    match keyword {
+        "parse_ts" | "parse_time" | "parse_date" | "parse_timestamp" | "parse_datetime"
+        | "strptime" => &["to_datetime", "parsed_ts"],
+        "strftime" => &["dt.format(", "dt.to_iso("],
+        _ => &[],
+    }
+}
+
 /// Filter the function catalogue by a keyword using smartcase matching.
 ///
 /// Matching is case-insensitive when `keyword` is all lowercase, and
@@ -361,6 +396,9 @@ For other help topics: kelora -h
 /// keyword appears in the section header (so e.g. "string" lists the whole
 /// STRING FUNCTIONS section). Section headers are preserved above their
 /// matching entries so the output keeps its context.
+///
+/// A handful of keywords also match through [`alias_needles`], so searching for
+/// a name kelora does not use still lands on the entry that answers it.
 pub fn filter_help_text(keyword: &str) -> String {
     let full = generate_help_text();
     // Smartcase: a lowercase keyword matches any case; an uppercase letter
@@ -371,12 +409,17 @@ pub fn filter_help_text(keyword: &str) -> String {
     } else {
         keyword.to_lowercase()
     };
+    // Aliases are matched case-insensitively regardless of smartcase: they are
+    // spellings kelora never prints, so there is no casing to be precise about.
+    let aliases = alias_needles(&keyword.to_lowercase());
     let contains = |haystack: &str| -> bool {
-        if case_sensitive {
+        let lowered = haystack.to_lowercase();
+        let primary = if case_sensitive {
             haystack.contains(&needle)
         } else {
-            haystack.to_lowercase().contains(&needle)
-        }
+            lowered.contains(&needle)
+        };
+        primary || aliases.iter().any(|a| lowered.contains(a))
     };
     let lines: Vec<&str> = full.lines().collect();
 
@@ -793,6 +836,29 @@ mod tests {
             out.to_lowercase().contains("json"),
             "expected lowercase 'json' to match JSON content"
         );
+    }
+
+    #[test]
+    fn aliases_resolve_to_the_entries_that_answer_them() {
+        // A name kelora never prints still has to land on the right entry.
+        for keyword in ["parse_ts", "parse_time", "parse_date", "strptime"] {
+            let out = filter_help_text(keyword);
+            assert!(
+                out.contains("to_datetime"),
+                "'{keyword}' should reach to_datetime, got:\n{out}"
+            );
+            assert!(
+                out.contains("meta.parsed_ts"),
+                "'{keyword}' should reach meta.parsed_ts, got:\n{out}"
+            );
+        }
+
+        // An alias is matched case-insensitively even though it contains no
+        // uppercase letter to trip the smartcase switch on the other side.
+        assert!(filter_help_text("STRPTIME").contains("to_datetime"));
+
+        // Aliasing is additive: a keyword without one behaves exactly as before.
+        assert!(filter_help_text("nonexistentxyz").trim().is_empty());
     }
 
     #[test]
