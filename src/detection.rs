@@ -6,6 +6,7 @@
 use anyhow::Result;
 use std::fs;
 use std::io::BufRead;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::config::{self, KeloraConfig};
 use crate::decompression;
@@ -245,8 +246,9 @@ pub fn format_detected_format_notice(
         // Advisory hint (💡): obeys --no-hints / --silent like every other hint,
         // and surfaces even when stderr is redirected (no terminal gate) — the
         // "I fell back to whole-line parsing" notice is exactly what someone
-        // exploring an unknown file in a pipe wants to see.
-        if !config.hints_allowed() {
+        // exploring an unknown file in a pipe wants to see. `--discover` does
+        // not hush it (#343); see `format_fallback_hint_allowed`.
+        if !config.format_fallback_hint_allowed() {
             return None;
         }
         let message = config.format_hint_message(
@@ -258,9 +260,21 @@ pub fn format_detected_format_notice(
     }
 }
 
+/// Tracks whether the "no input format detected" hint already went out this run.
+///
+/// Detection is per-file in `auto-per-file` mode, so a run over N unstructured
+/// files used to print N copies of the same paragraph. The advice is identical
+/// every time and does not name the file, so once is enough. Only the hint is
+/// deduplicated — the `-v` "Auto-detected format: X" status is per-file *by
+/// design* (it says what each file was read as, which differs between files).
+static FALLBACK_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
+
 /// Emit a notice about detected format to stderr
 pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFormat) {
     if let Some(message) = format_detected_format_notice(config, detected) {
+        if detected.fell_back_to_line() && FALLBACK_HINT_EMITTED.swap(true, Ordering::Relaxed) {
+            return;
+        }
         eprintln!("{}", message);
     }
 }

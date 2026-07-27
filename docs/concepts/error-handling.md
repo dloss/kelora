@@ -288,6 +288,15 @@ Two consequences worth knowing:
 - **Warnings and hints are anomaly-triggered and reach redirected stderr** (CI,
   `2>file`), so a stuck user still sees them. Silence them with the flags above.
 
+Data-only modes (`-m`, `--drain`, `--discover`) hush hints so machine-readable
+output stays uncluttered; warnings still surface, and `--hints`/`--diagnostics`
+brings hints back. One hint is exempt: the `No input format detected` fallback
+still fires under `--discover`, because `--discover` is the mode for asking
+"what *is* this file?" — the hint is the actionable half of the footer's
+`format: line (auto-detected)`. An explicit `--no-hints`, `--no-diagnostics`,
+`--silent`, or `KELORA_NO_HINTS` still hides it. It is printed at most once per
+run, even when `-f auto-per-file` detects a format for each of many files.
+
 ## Quiet/Silent Controls
 
 Each channel can be silenced independently; these flags compose for automation:

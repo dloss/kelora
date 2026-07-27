@@ -685,6 +685,23 @@ impl KeloraConfig {
         !self.processing.silent && !self.processing.suppress_hints
     }
 
+    /// Whether the "no input format detected" fallback hint may be emitted.
+    ///
+    /// Same rules as [`hints_allowed`](Self::hints_allowed), except that
+    /// `--discover` does *not* hush it (#343). Every other data-only mode still
+    /// does: under `-m` you already know parsing worked, and under `--drain`
+    /// whole-line events are usually the point, so the advice is noise there.
+    /// Under `--discover` it is the actionable half of the footer's
+    /// `format: line (auto-detected)` — and `-h` points users at `-d` as the
+    /// first command to run on an unknown file, so it is exactly the mode that
+    /// must not withhold it. An explicit `--no-hints`/`--silent` still wins.
+    pub fn format_fallback_hint_allowed(&self) -> bool {
+        if self.processing.silent || self.processing.hints_user_suppressed {
+            return false;
+        }
+        self.hints_allowed() || self.output.discover_fields.is_some()
+    }
+
     /// Whether *all* advisory output (both warnings and hints) is suppressed —
     /// the legacy `--no-diagnostics` umbrella. Used to gate informational output
     /// (config expansion) and per-line verbose error detail.
