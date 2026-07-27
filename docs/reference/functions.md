@@ -62,13 +62,28 @@ e.codes = e.message.extract_regexes(#"ERR-(\d+)"#, 1).or_empty()  // () when non
 ```
 
 #### `text.extract_regex_maps(pattern, field)`
-Extract regex matches as array of maps for fan-out with `emit_each()`.
+Extract regex matches as an array of maps for fan-out with `emit_each()`. Each match
+becomes a **single-field** map, named by `field` and holding capture group 1 (or the
+whole match if the pattern captures nothing). Named groups are not turned into fields
+— the name is only documentation for the reader.
 
 ```rhai
-// Extract all error codes with context
-let errors = e.log.extract_regex_maps(#"(?P<code>ERR-\d+): (?P<msg>[^\n]+)"#, "error");
-emit_each(errors)  // Each match becomes an event with 'code' and 'msg' fields
+// One event per error code found in the message
+let errors = e.log.extract_regex_maps(#"(ERR-\d+)"#, "error_code");
+emit_each(errors)  // → {"error_code": "ERR-404"}, {"error_code": "ERR-500"}, …
 ```
+
+For several fields per match, take the groups as an array and build the map yourself —
+`extract_regexes()` with no group argument returns one array of capture groups per
+match:
+
+```rhai
+emit_each(e.log.extract_regexes(#"(ERR-\d+): ([^\n]+)"#).map(|g| #{code: g[0], msg: g[1]}))
+// → {"code": "ERR-404", "msg": "not found"}, …
+```
+
+To promote named groups into fields of the *current* event rather than fanning out,
+use [`absorb_regex()`](#eabsorb_regexfield-pattern-options).
 
 #### `text.extract_ip([nth])`
 Extract IP address from text (nth: 1=first, -1=last).
