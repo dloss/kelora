@@ -4042,6 +4042,14 @@ event data goes to <strong>stderr</strong>, so a pipeline's stdout stays clean.<
 <li><strong>Warnings and hints are anomaly-triggered and reach redirected stderr</strong> (CI,
   <code>2&gt;file</code>), so a stuck user still sees them. Silence them with the flags above.</li>
 </ul>
+<p>Data-only modes (<code>-m</code>, <code>--drain</code>, <code>--discover</code>) hush hints so machine-readable
+output stays uncluttered; warnings still surface, and <code>--hints</code>/<code>--diagnostics</code>
+brings hints back. One hint is exempt: the <code>No input format detected</code> fallback
+still fires under <code>--discover</code>, because <code>--discover</code> is the mode for asking
+"what <em>is</em> this file?" — the hint is the actionable half of the footer's
+<code>format: line (auto-detected)</code>. An explicit <code>--no-hints</code>, <code>--no-diagnostics</code>,
+<code>--silent</code>, or <code>KELORA_NO_HINTS</code> still hides it. It is printed at most once per
+run, even when <code>-f auto-per-file</code> detects a format for each of many files.</p>
 <h2 id="quietsilent-controls">Quiet/Silent Controls<a class="headerlink" href="#quietsilent-controls" title="Permanent link">&para;</a></h2>
 <p>Each channel can be silenced independently; these flags compose for automation:</p>
 <table>
