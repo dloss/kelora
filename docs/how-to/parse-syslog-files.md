@@ -46,7 +46,7 @@ Investigate authentication flows or infrastructure components.
 ```bash
 kelora -f syslog /var/log/auth.log \
   --filter 'e.process == "sshd" && e.message.contains("Failed password")' \
-  -e 'e.username = e.message.extract_regex(r"for ([^ ]+)", 1)' \
+  -e 'e.username = e.message.extract_regex(#"for ([^ ]+)"#, 1)' \
   -k timestamp,hostname,username,message
 ```
 
@@ -96,7 +96,7 @@ kelora -f syslog app-5424.log \
   ```bash
   kelora -f syslog firewall.log \
     --filter 'e.facility == 4' \
-    -e 'e.src_ip = e.message.extract_regex(r"SRC=([^ ]+)", 1)' \
+    -e 'e.src_ip = e.message.extract_regex(#"SRC=([^ ]+)"#, 1)' \
     -e 'track_freq("src_ip", e.src_ip)' \
     --metrics
   ```

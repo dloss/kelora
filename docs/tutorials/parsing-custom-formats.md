@@ -194,7 +194,7 @@ But the timestamp is wrapped in brackets. We need to clean it up.
 
 ```bash
 kelora -f 'cols:raw_ts level service *message' app.log \
-    -e 'e.timestamp = e.raw_ts.extract_regex(r"\[(.*?)\]", 1)' \
+    -e 'e.timestamp = e.raw_ts.extract_regex(#"\[(.*?)\]"#, 1)' \
     -e 'e.raw_ts = ()' \
     --ts-field timestamp \
     -k timestamp,level,service,message
@@ -215,7 +215,7 @@ Parse a custom format and add computed fields:
 cat app.log | \
     kelora -f 'cols:timestamp level service *message' \
     --ts-field timestamp \
-    -e 'if e.message.contains("ms") { e.duration = e.message.extract_regex(r"(\d+)ms", 1).to_int() }' \
+    -e 'if e.message.contains("ms") { e.duration = e.message.extract_regex(#"(\d+)ms"#, 1).to_int() }' \
     --filter 'e.has_path("duration") && e.duration > 1000' \
     -k timestamp,service,duration,message
 ```
@@ -263,7 +263,7 @@ Let's parse a complex custom format with everything we've learned:
 **Parse specification:**
 ```bash
 kelora -f 'cols:raw_ts status:int service bytes:int latency:float *message' custom_app.log \
-    -e 'e.timestamp = e.raw_ts.extract_regex(r"\[(.*?)\]", 1)' \
+    -e 'e.timestamp = e.raw_ts.extract_regex(#"\[(.*?)\]"#, 1)' \
     -e 'e.raw_ts = ()' \
     --ts-field timestamp \
     -e 'e.is_error = e.status >= 400' \

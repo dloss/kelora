@@ -243,17 +243,17 @@ Use `to_datetime()` to parse timestamps in Rhai scripts:
 # Parse timestamp from string
 echo '{"log": "Event at 2024-01-15T10:30:00Z completed"}' | \
     kelora -j \
-    -e 'e.event_time = to_datetime(e.log.extract_regex(r"at (\S+)", 1))'
+    -e 'e.event_time = to_datetime(e.log.extract_regex(#"at (\S+)"#, 1))'
 
 # Parse with custom format
 echo '{"log": "Event at 15/Jan/2024:10:30:45"}' | \
     kelora -j \
-    -e 'e.event_time = to_datetime(e.log.extract_regex(r"at (\S+)", 1), "%d/%b/%Y:%H:%M:%S")'
+    -e 'e.event_time = to_datetime(e.log.extract_regex(#"at (\S+)"#, 1), "%d/%b/%Y:%H:%M:%S")'
 
 # Parse with timezone hint
 echo '{"log": "Event at 2024-01-15 10:30:00"}' | \
     kelora -j \
-    -e 'e.event_time = to_datetime(e.log.extract_regex(r"at (.+)$", 1), "%Y-%m-%d %H:%M:%S", "Europe/Berlin")'
+    -e 'e.event_time = to_datetime(e.log.extract_regex(#"at (.+)$"#, 1), "%Y-%m-%d %H:%M:%S", "Europe/Berlin")'
 ```
 
 ## Step 8: Using Pre-Parsed Timestamps with `meta.parsed_ts`

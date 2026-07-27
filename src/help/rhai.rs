@@ -9,6 +9,8 @@ For Rhai language details: https://rhai.rs
 VARIABLES & TYPES:
   let x = 42;                          Variable declaration (required for new vars)
   let name = "alice";                  String (double quotes only)
+  let re = #"\d+"#;                    Raw string, no escape processing — best for regexes
+                                       (Rust/Python style r"..." is not Rhai)
   let active = true;                   Boolean (true/false)
   let tags = [1, 2, 3];                Array (dynamic, mixed types ok)
   let user = #{name: "bob", age: 30};  Map/object literal

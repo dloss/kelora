@@ -582,7 +582,7 @@ kelora -j fan_out_batches.jsonl --exec 'emit_each(e.items)' --filter 'e.status =
 kelora -f line incident_story.log --exec 'e.absorb_kv("line", #{ keep_source: true })'
 
 # Extract fields using regex named captures
-kelora -f line app.log --exec 'e.absorb_regex("line", r"User (?P<user>\w+) from (?P<ip>[\d.]+)")'
+kelora -f line app.log --exec 'e.absorb_regex("line", #"User (?P<user>\w+) from (?P<ip>[\d.]+)"#)'
 
 OUTPUT FORMATS & CLI OPTIONS:
 # Output as JSON (from any input format)
