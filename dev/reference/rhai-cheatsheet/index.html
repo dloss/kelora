@@ -2917,18 +2917,20 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>let x = 42;                          // Integer (i64)
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>let price = 19.99;                   // Float (f64)
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>let name = &quot;alice&quot;;                  // String (double quotes only!)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>let active = true;                   // Boolean (true/false)
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>let tags = [1, &quot;two&quot;, 3.0];          // Array (mixed types ok)
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>let user = #{name: &quot;bob&quot;, age: 30};  // Map/object literal
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>let empty = ();                      // Unit type (Rhai&#39;s &quot;nothing&quot;)
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>type_of(x)                           // Returns: &quot;i64&quot;, &quot;string&quot;, &quot;array&quot;, &quot;map&quot;, &quot;()&quot;
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>x = &quot;hello&quot;;                         // Dynamic typing: can change type
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>let re = #&quot;\d+&quot;#;                    // Raw string, no escape processing (best for regexes)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>let active = true;                   // Boolean (true/false)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>let tags = [1, &quot;two&quot;, 3.0];          // Array (mixed types ok)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>let user = #{name: &quot;bob&quot;, age: 30};  // Map/object literal
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>let empty = ();                      // Unit type (Rhai&#39;s &quot;nothing&quot;)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>type_of(x)                           // Returns: &quot;i64&quot;, &quot;string&quot;, &quot;array&quot;, &quot;map&quot;, &quot;()&quot;
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>x = &quot;hello&quot;;                         // Dynamic typing: can change type
 </code></pre></div>
 <p><strong>Key Points:</strong></p>
 <ul>
 <li><code>let</code> required for new variables (no implicit declaration)</li>
 <li>Double quotes only for strings (<code>"text"</code> not <code>'text'</code>)</li>
+<li>Raw strings are <code>#"…"#</code>, not <code>r"…"</code> — inside them backslashes need no doubling, which is what makes them worth using for regexes</li>
 <li>Unit type <code>()</code> represents "nothing" (not null/undefined)</li>
 <li>Arrays and maps are reference types (modifying copies affects original)</li>
 </ul>
@@ -3060,8 +3062,8 @@
 <h2 id="rhai-special-feature-function-as-method">Rhai Special Feature: Function-as-Method<a class="headerlink" href="#rhai-special-feature-function-as-method" title="Permanent link">&para;</a></h2>
 <p>Rhai allows calling any function as a method on its first argument:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>// These are equivalent:
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>extract_regex(e.line, r&quot;\d+&quot;)            // Function call style
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>e.line.extract_regex(r&quot;\d+&quot;)             // Method call style
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>extract_regex(e.line, #&quot;\d+&quot;#)          // Function call style
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>e.line.extract_regex(#&quot;\d+&quot;#)           // Method call style
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>// Use method style for chaining:
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>e.domain = e.url
@@ -3182,7 +3184,7 @@
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>// Parse and extract from structured text
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>e.error_line = e.stack_trace
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    .extract_regex(r&quot;line (\d+)&quot;, 1)
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    .extract_regex(#&quot;line (\d+)&quot;#, 1)
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    .to_int_or(0);
 </code></pre></div>
 <h3 id="array-processing">Array Processing<a class="headerlink" href="#array-processing" title="Permanent link">&para;</a></h3>
@@ -3328,7 +3330,7 @@
 <a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>e.text.to_upper()                     // Uppercase
 <a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>e.text.strip()                        // Trim whitespace
 <a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>e.text.contains(&quot;word&quot;)               // Substring check
-<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>e.text.extract_regex(r&quot;(\d+)&quot;, 1)        // Regex extraction
+<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>e.text.extract_regex(#&quot;(\d+)&quot;#, 1)    // Regex extraction
 <a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a>
 <a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>// Environment &amp; Context
 <a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var

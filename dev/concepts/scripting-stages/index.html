@@ -4633,8 +4633,8 @@
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level.to_upper() == &quot;ERROR&quot;&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="regex-matching">Regex Matching<a class="headerlink" href="#regex-matching" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.matches(r&quot;\d{3}-\d{3}-\d{4}&quot;)&#39;</span><span class="w"> </span>app.log
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.ip.matches(r&quot;^192\.168\.&quot;)&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.message.matches(#&quot;\d{3}-\d{3}-\d{4}&quot;#)&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.ip.matches(#&quot;^192\.168\.&quot;#)&#39;</span><span class="w"> </span>app.log
 </code></pre></div>
 <h4 id="existence-checks">Existence Checks<a class="headerlink" href="#existence-checks" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.contains(&quot;error&quot;)&#39;</span><span class="w"> </span>app.log<span class="w">       </span><span class="c1"># Has &#39;error&#39; field</span>

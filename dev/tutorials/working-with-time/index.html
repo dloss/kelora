@@ -3292,7 +3292,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: json
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 3 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 3 total, 3 output, 0 filtered (0.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 1591 lines/s in 1ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 2602 lines/s in 1ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: ts, timestamp, time (auto-detected) - 3/3 parsed (100.0%) — access via meta.parsed_ts.
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Time span: 2024-01-15T10:30:00+00:00 to 2024-01-15T10:32:00+00:00 (2m)
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Keys seen: message,time,timestamp,ts
@@ -3469,17 +3469,17 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Parse timestamp from string</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;log&quot;: &quot;Event at 2024-01-15T10:30:00Z completed&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.event_time = to_datetime(e.log.extract_regex(r&quot;at (\S+)&quot;, 1))&#39;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.event_time = to_datetime(e.log.extract_regex(#&quot;at (\S+)&quot;#, 1))&#39;</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># Parse with custom format</span>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;log&quot;: &quot;Event at 15/Jan/2024:10:30:45&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.event_time = to_datetime(e.log.extract_regex(r&quot;at (\S+)&quot;, 1), &quot;%d/%b/%Y:%H:%M:%S&quot;)&#39;</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.event_time = to_datetime(e.log.extract_regex(#&quot;at (\S+)&quot;#, 1), &quot;%d/%b/%Y:%H:%M:%S&quot;)&#39;</span>
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
 <a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># Parse with timezone hint</span>
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;log&quot;: &quot;Event at 2024-01-15 10:30:00&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span>kelora<span class="w"> </span>-j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.event_time = to_datetime(e.log.extract_regex(r&quot;at (.+)$&quot;, 1), &quot;%Y-%m-%d %H:%M:%S&quot;, &quot;Europe/Berlin&quot;)&#39;</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;e.event_time = to_datetime(e.log.extract_regex(#&quot;at (.+)$&quot;#, 1), &quot;%Y-%m-%d %H:%M:%S&quot;, &quot;Europe/Berlin&quot;)&#39;</span>
 </code></pre></div>
 <h2 id="step-8-using-pre-parsed-timestamps-with-metaparsed_ts">Step 8: Using Pre-Parsed Timestamps with <code>meta.parsed_ts</code><a class="headerlink" href="#step-8-using-pre-parsed-timestamps-with-metaparsed_ts" title="Permanent link">&para;</a></h2>
 <p>Kelora automatically parses timestamps during ingestion and exposes them via <code>meta.parsed_ts</code> as a DateTime object. This is more efficient than calling <code>to_datetime()</code> repeatedly:</p>
