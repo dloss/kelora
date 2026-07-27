@@ -820,6 +820,13 @@ impl ProcessingStats {
             summary.push_str(&format!("; {} missing", self.timestamp_absent_events));
         }
 
+        // The moment a user learns a timestamp was parsed is the moment they want
+        // to know how to reach it — otherwise they re-parse the raw field with
+        // to_datetime(). Only worth saying when something actually parsed.
+        if parsed > 0 {
+            summary.push_str(" — access via meta.parsed_ts");
+        }
+
         summary.push('.');
 
         if let Some(hint_text) = hint {

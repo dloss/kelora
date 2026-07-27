@@ -533,6 +533,40 @@ fn test_timestamp_filtering_with_other_filters() {
 }
 
 #[test]
+fn test_stats_timestamp_line_points_at_parsed_ts() {
+    // The line announcing a successful parse is exactly where a user learns the
+    // timestamp exists, so it is where they should learn how to reach it.
+    let input = r#"{"timestamp":"2024-01-15T10:00:00Z","message":"event"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(&["-f", "json", "-s"], input);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stdout);
+    assert!(
+        stdout.contains(
+            "Timestamp: timestamp (auto-detected) - 1/1 parsed (100.0%) — access via meta.parsed_ts."
+        ),
+        "Stats should point at meta.parsed_ts once something parsed.\nSTDOUT:\n{}",
+        stdout
+    );
+}
+
+#[test]
+fn test_stats_timestamp_line_omits_parsed_ts_when_nothing_parsed() {
+    // With no parsed timestamp there is nothing to reach, so the pointer would
+    // only be noise on top of the hint that already tells the user what to fix.
+    let input = r#"{"message":"no timestamp here"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(&["-f", "json", "-s"], input);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stdout);
+    assert!(
+        !stdout.contains("meta.parsed_ts"),
+        "Stats should stay quiet about meta.parsed_ts when nothing parsed.\nSTDOUT:\n{}",
+        stdout
+    );
+}
+
+#[test]
 fn test_stats_report_custom_ts_field_failures() {
     let input = r#"{"timestamp":"2024-01-15T10:00:00Z","service":"api","message":"event"}"#;
 
