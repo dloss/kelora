@@ -62,9 +62,9 @@ Sanitise values embedded in log messages using extraction and replacement.
 kelora -j examples/security_audit.jsonl \
   -e 'if e.message.extract_email() != "" {
         e.email_domain = e.message.extract_email().after("@");
-        e.message = e.message.replace(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "[EMAIL]")
+        e.message = e.message.replace_regex(#"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"#, "[EMAIL]")
       }' \
-  -e 'e.message = e.message.replace(r"(?i)api[_-]?key=\\w+", "api_key=[REDACTED]")' \
+  -e 'e.message = e.message.replace_regex(#"(?i)api[_-]?key=\w+"#, "api_key=[REDACTED]")' \
   -F json
 ```
 

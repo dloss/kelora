@@ -277,7 +277,7 @@ Use `.or_empty()` to conditionally assign fields based on empty values. It works
 e.user = e.message.after("User:").or_empty()
 // If "User:" not found → empty string → Unit → field removed
 
-e.code = e.error.extract_regex(r"ERR-(\d+)", 1).or_empty()
+e.code = e.error.extract_regex(#"ERR-(\d+)"#, 1).or_empty()
 // If regex doesn't match → empty string → Unit → field removed
 ```
 
@@ -544,7 +544,7 @@ kelora -f json app.log \
 # Extract and track only when pattern exists
 kelora -f json app.log \
     --exec 'e.user = e.message.after("User:").or_empty()' \
-    --exec 'e.code = e.message.extract_regex(r"ERR-(\d+)", 1).or_empty()' \
+    --exec 'e.code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty()' \
     --exec 'track_unique("users", e.user)' \
     --exec 'track_unique("error_codes", e.code)' \
     --metrics

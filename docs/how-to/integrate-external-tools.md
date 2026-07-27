@@ -484,7 +484,7 @@ kelora -f logfmt logs/mixed.log -J | \
 
 # Kelora equivalent using extract_regex() or absorb_kv()
 kelora -f logfmt logs/mixed.log \
-  -e 'e.user = e.message.extract_regex(r"user_id=(\S+)", 1)' \
+  -e 'e.user = e.message.extract_regex(#"user_id=(\S+)"#, 1)' \
   -e 'track_freq("user", e.user)' -m
 
 # For mixed prose + key=value tails, absorb them in-place

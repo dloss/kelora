@@ -47,8 +47,8 @@ Extract first regex match or capture group. Returns `""` if the pattern does not
 match, or if the requested group did not participate in the match.
 
 ```rhai
-e.error_code = e.message.extract_regex(r"ERR-(\d+)", 1)  // "ERR-404" → "404"
-e.full_match = e.line.extract_regex(r"\d{3}")            // First 3-digit number
+e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1)       // "ERR-404" → "404"
+e.full_match = e.line.extract_regex(#"\d{3}"#)                 // First 3-digit number
 e.code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty()  // absent when no match
 ```
 
@@ -56,8 +56,8 @@ e.code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty()  // absent when no
 Extract all regex matches as array. Returns an empty array if nothing matches.
 
 ```rhai
-e.numbers = e.line.extract_regexes(r"\d+")             // All numbers
-e.codes = e.message.extract_regexes(r"ERR-(\d+)", 1)   // All error codes
+e.numbers = e.line.extract_regexes(#"\d+"#)                       // All numbers
+e.codes = e.message.extract_regexes(#"ERR-(\d+)"#, 1)             // All error codes
 e.codes = e.message.extract_regexes(#"ERR-(\d+)"#, 1).or_empty()  // () when none
 ```
 
@@ -66,7 +66,7 @@ Extract regex matches as array of maps for fan-out with `emit_each()`.
 
 ```rhai
 // Extract all error codes with context
-let errors = e.log.extract_regex_maps(r"(?P<code>ERR-\d+): (?P<msg>[^\n]+)", "error");
+let errors = e.log.extract_regex_maps(#"(?P<code>ERR-\d+): (?P<msg>[^\n]+)"#, "error");
 emit_each(errors)  // Each match becomes an event with 'code' and 'msg' fields
 ```
 
@@ -536,7 +536,7 @@ Split string into array.
 
 ```rhai
 e.parts = e.path.split("/")
-e.tokens = e.line.split_regex(r"\s+")                 // Split on whitespace
+e.tokens = e.line.split_regex(#"\s+"#)               // Split on whitespace
 ```
 
 ### String Testing
@@ -572,7 +572,7 @@ if e.message.ilike("*straße*") {
 Regex search with cached compilation. Invalid patterns raise errors.
 
 ```rhai
-if e.path.matches(r"^/api/[^/]+/details$") {
+if e.path.matches(#"^/api/[^/]+/details$"#) {
     e.route = "details"
 }
 ```
@@ -2347,7 +2347,7 @@ let apache_pattern = r#"(?P<ip>\S+) \S+ \S+ \[(?P<timestamp>[^\]]+)\] "(?P<metho
 e.absorb_regex("line", apache_pattern);
 
 // Keep source for debugging
-e.absorb_regex("raw_message", r"ERROR: (?P<error_code>\d+) - (?P<error_msg>.+)",
+e.absorb_regex("raw_message", #"ERROR: (?P<error_code>\d+) - (?P<error_msg>.+)"#,
                #{ keep_source: true });
 ```
 
@@ -2404,7 +2404,7 @@ print(span.id + ": " + ratio.to_string() + "% failure rate");
 
 **Error Extraction:**
 ```rhai
-e.error_code = e.message.extract_regex(r"ERR-(\d+)", 1)
+e.error_code = e.message.extract_regex(#"ERR-(\d+)"#, 1)
 ```
 
 **IP Anonymization:**

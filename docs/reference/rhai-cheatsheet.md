@@ -8,6 +8,7 @@ Quick reference for Rhai scripting in Kelora. For detailed tutorials, see [Advan
 let x = 42;                          // Integer (i64)
 let price = 19.99;                   // Float (f64)
 let name = "alice";                  // String (double quotes only!)
+let re = #"\d+"#;                    // Raw string, no escape processing (best for regexes)
 let active = true;                   // Boolean (true/false)
 let tags = [1, "two", 3.0];          // Array (mixed types ok)
 let user = #{name: "bob", age: 30};  // Map/object literal
@@ -21,6 +22,7 @@ x = "hello";                         // Dynamic typing: can change type
 
 - `let` required for new variables (no implicit declaration)
 - Double quotes only for strings (`"text"` not `'text'`)
+- Raw strings are `#"…"#`, not `r"…"` — inside them backslashes need no doubling, which is what makes them worth using for regexes
 - Unit type `()` represents "nothing" (not null/undefined)
 - Arrays and maps are reference types (modifying copies affects original)
 
@@ -179,8 +181,8 @@ Rhai allows calling any function as a method on its first argument:
 
 ```rhai
 // These are equivalent:
-extract_regex(e.line, r"\d+")            // Function call style
-e.line.extract_regex(r"\d+")             // Method call style
+extract_regex(e.line, #"\d+"#)          // Function call style
+e.line.extract_regex(#"\d+"#)           // Method call style
 
 // Use method style for chaining:
 e.domain = e.url
@@ -322,7 +324,7 @@ e.domain = e.url
 
 // Parse and extract from structured text
 e.error_line = e.stack_trace
-    .extract_regex(r"line (\d+)", 1)
+    .extract_regex(#"line (\d+)"#, 1)
     .to_int_or(0);
 ```
 
@@ -469,7 +471,7 @@ e.text.to_lower()                     // Lowercase
 e.text.to_upper()                     // Uppercase
 e.text.strip()                        // Trim whitespace
 e.text.contains("word")               // Substring check
-e.text.extract_regex(r"(\d+)", 1)        // Regex extraction
+e.text.extract_regex(#"(\d+)"#, 1)    // Regex extraction
 
 // Environment & Context
 get_env("VAR", "default")             // Get env var

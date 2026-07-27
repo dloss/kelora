@@ -668,11 +668,11 @@ Metrics → GlobalTracker → Merged stats
 # Good: Cheap filters first
 kelora -j app.log \
     --levels error \
-    --filter 'e.message.matches(r"expensive.*regex")'
+    --filter 'e.message.matches(#"expensive.*regex"#)'
 
 # Less efficient: Expensive filter on all events
 kelora -j app.log \
-    --filter 'e.message.matches(r"expensive.*regex")' \
+    --filter 'e.message.matches(#"expensive.*regex"#)' \
     --levels error
 ```
 
