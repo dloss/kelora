@@ -7,6 +7,7 @@
 //   - errors → hidden only by --silent
 //   - explicit --hints / --warnings / --diagnostics override an env/config default
 //   - data-only modes (--metrics) hush hints but still surface warnings to stderr
+//   - exception: --discover does not hush the format-fallback hint (#343)
 
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -263,6 +264,86 @@ fn fallback_hint_surfaces_piped_and_obeys_only_the_hint_tier() {
     assert!(
         has_hint(&s3),
         "--no-warnings must not hide the fallback hint: {s3}"
+    );
+}
+
+// --- #343: --discover is the one data-only mode that must NOT hush the
+// format-fallback hint. `-h` advertises `-d` as the first command to run on an
+// unknown file, and the hint is the actionable half of the footer's
+// `format: line (auto-detected)` — withholding it there sends the user to
+// --help-formats to rediscover the `cols:` syntax the hint already names. ---
+
+#[test]
+fn fallback_hint_survives_the_discover_hush() {
+    let mut d = FALLBACK_ARGS.to_vec();
+    d.push("-d");
+    let (_o, s, _c) = run(&d, FALLBACK_INPUT);
+    assert!(
+        has_hint(&s),
+        "--discover must not hush the format-fallback hint: {s}"
+    );
+
+    // An *explicit* suppression still wins over the exemption.
+    for flag in ["--no-hints", "--no-diagnostics", "--silent"] {
+        let mut args = d.clone();
+        args.push(flag);
+        let (_o, s2, _c) = run(&args, FALLBACK_INPUT);
+        assert!(!has_hint(&s2), "{flag} must still hide the hint: {s2}");
+    }
+
+    let (_o, s3, _c) = run_env(&d, FALLBACK_INPUT, &[("KELORA_NO_HINTS", "1")]);
+    assert!(!has_hint(&s3), "KELORA_NO_HINTS must still apply: {s3}");
+}
+
+#[test]
+fn fallback_hint_stays_hushed_in_the_other_data_only_modes() {
+    // The exemption is scoped to --discover on purpose: under -m you already
+    // know parsing worked, so the advice is noise. --hints still re-enables it.
+    let mut m = FALLBACK_ARGS.to_vec();
+    m.push("-m");
+    let (_o, s, _c) = run(&m, FALLBACK_INPUT);
+    assert!(!has_hint(&s), "-m must still hush the fallback hint: {s}");
+
+    let mut mh = m.clone();
+    mh.push("--hints");
+    let (_o, s2, _c) = run(&mh, FALLBACK_INPUT);
+    assert!(has_hint(&s2), "--hints re-enables it under -m: {s2}");
+}
+
+#[test]
+fn discover_keeps_the_hint_off_the_stdout_data_channel() {
+    // The hint is stderr-only, so `-d=json` stays machine-readable.
+    let (stdout, stderr, _c) = run(&["--no-emoji", "-d=json"], FALLBACK_INPUT);
+    assert!(has_hint(&stderr), "hint belongs on stderr: {stderr}");
+    assert!(
+        !stdout.contains("kelora hint:"),
+        "hint must not pollute discover stdout: {stdout}"
+    );
+    serde_json::from_str::<serde_json::Value>(stdout.trim())
+        .expect("discover json output must stay parseable");
+}
+
+#[test]
+fn fallback_hint_is_emitted_at_most_once_per_run() {
+    // auto-per-file detects per file, so N unstructured files used to print N
+    // copies of the same paragraph. The advice names no file — once is enough.
+    let dir = tempfile::TempDir::new().expect("tempdir");
+    let paths: Vec<String> = (0..3)
+        .map(|i| {
+            let p = dir.path().join(format!("plain{i}.log"));
+            std::fs::write(&p, FALLBACK_INPUT).expect("write input");
+            p.to_string_lossy().into_owned()
+        })
+        .collect();
+
+    let mut args = vec!["--no-emoji", "-f", "auto-per-file", "-d"];
+    args.extend(paths.iter().map(|p| p.as_str()));
+    let (_o, stderr, _c) = run(&args, "");
+
+    let count = stderr.matches("kelora hint:").count();
+    assert_eq!(
+        count, 1,
+        "expected exactly one fallback hint, got: {stderr}"
     );
 }
 
