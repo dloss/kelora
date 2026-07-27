@@ -163,6 +163,17 @@ MISSING FIELDS:
   
   has/get work on top-level keys; has_path/get_path also walk dotted paths.
 
+  String functions report "nothing found" as "" — not () — so a non-matching
+  extraction lands as an empty field rather than an absent one:
+
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1)             ip='' if no match
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty()  no ip field
+
+  or_empty() turns ""/[]/#{} into (), so 'e.ip != ()' and --freq ip skip the
+  events that had no match; use ?? when you want a placeholder instead:
+
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty() ?? "unknown"
+
 EVENT METADATA:
   meta                                 Event metadata (global variable in --filter/--exec)
   meta.line                            Original raw line from input (always available)

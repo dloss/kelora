@@ -4,6 +4,11 @@ pub fn generate_help_text() -> &'static str {
 Available Rhai Functions:
 
 STRING FUNCTIONS:
+When there is nothing to return — no match, no delimiter — these return "" (or an
+empty array for the plural forms), not (). Chain .or_empty() to get the absent
+convention instead: it turns "" into (), which removes the field on assignment, so
+'!= ()' and --freq skip the event rather than counting an empty value.
+
 text.after(delimiter [,nth])         Text after occurrence of delimiter (nth: 1=first, -1=last)
 text.before(delimiter [,nth])        Text before occurrence of delimiter (nth: 1=first, -1=last)
 text.between(start, end [,nth])      Text between start and end delimiters (nth: 1=first, -1=last)
@@ -26,7 +31,7 @@ text.encode_url()                    URL-encode text (percent encoding)
 text.ending_with(suffix [,nth])      Return substring from start to end of suffix (nth: 1=first, -1=last)
 text.escape_html()                   Escape HTML special characters (&, <, >, ", ')
 text.escape_json()                   Escape JSON special characters
-text.extract_regexes(pattern [,group]) Extract all regex matches as array
+text.extract_regexes(pattern [,group]) Extract all regex matches as array (empty array if none match)
 text.extract_domain()                Extract domain from URL or email address
 text.extract_email([nth])            Extract email address from text (nth: 1=first, -1=last)
 text.extract_emails()                Extract all email addresses as array
@@ -36,7 +41,8 @@ text.extract_json([nth])             Extract JSON object/array from text (nth: 1
 text.extract_jsons()                 Extract all JSON objects/arrays from text as array of strings
 text.extract_regex_maps(pattern, field) Extract regex matches as array of maps for fan-out
 text.extract_re_maps(pattern, field)    Deprecated alias for extract_regex_maps
-text.extract_regex(pattern [,group])    Extract regex match or capture group
+text.extract_regex(pattern [,group])    Extract regex match or capture group ("" if no match;
+                                     add .or_empty() to get () instead)
 text.extract_url([nth])              Extract URL from text (nth: 1=first, -1=last)
 text.matches(pattern)                Regex search (cached; invalid pattern raises error)
 text.hash([algo])                    Hash with algorithm (default: sha256, also: xxh3); redact/anonymize a value

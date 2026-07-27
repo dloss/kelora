@@ -26,20 +26,39 @@ Complete reference for all 150+ built-in Rhai functions available in Kelora. Fun
 
 ### Extraction and Searching
 
+!!! note "Nothing found is `""`, not `()`"
+    Every function in this section returns an empty string when there is no match
+    (an empty array for the plural forms) — it does **not** return `()`. That is the
+    opposite of the parser [type annotations](formats.md#regex-format), where a value
+    that cannot satisfy its declared type becomes `()`.
+
+    Chain [`or_empty()`](#valueor_empty) when you want the absent convention: it
+    turns `""` into `()`, which removes the field on assignment, so `!= ()` filters
+    and `--freq` skip those events instead of counting an empty value.
+
+    ```rhai
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1)             // ip = "" if no match
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty()  // no ip field at all
+    e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty() ?? "unknown"
+    ```
+
 #### `text.extract_regex(pattern [, group])`
-Extract first regex match or capture group.
+Extract first regex match or capture group. Returns `""` if the pattern does not
+match, or if the requested group did not participate in the match.
 
 ```rhai
 e.error_code = e.message.extract_regex(r"ERR-(\d+)", 1)  // "ERR-404" → "404"
 e.full_match = e.line.extract_regex(r"\d{3}")            // First 3-digit number
+e.code = e.message.extract_regex(#"ERR-(\d+)"#, 1).or_empty()  // absent when no match
 ```
 
 #### `text.extract_regexes(pattern [, group])`
-Extract all regex matches as array.
+Extract all regex matches as array. Returns an empty array if nothing matches.
 
 ```rhai
 e.numbers = e.line.extract_regexes(r"\d+")             // All numbers
 e.codes = e.message.extract_regexes(r"ERR-(\d+)", 1)   // All error codes
+e.codes = e.message.extract_regexes(#"ERR-(\d+)"#, 1).or_empty()  // () when none
 ```
 
 #### `text.extract_regex_maps(pattern, field)`
@@ -1490,6 +1509,9 @@ Converts conceptually "empty" values to Unit, which:
 ```rhai
 // Extract only when prefix exists, otherwise remove field
 e.name = e.message.after("prefix:").or_empty()
+
+// Same for regex extraction: no match → no field, so --freq and != () skip it
+e.ip = e.msg.extract_regex(#"rhost=(\S+)"#, 1).or_empty()
 
 // Track only non-empty values
 track_unique("names", e.extracted.or_empty())

@@ -685,3 +685,111 @@ fn test_extract_jsons_with_emit_each() {
         assert_eq!(parsed["raw"].as_str().unwrap(), expected);
     }
 }
+
+/// A non-matching `extract_regex` yields `""` — a value, not `()` — so the empty
+/// result stays in the event and survives `!= ()`. Locks the documented return so
+/// the `or_empty()` idiom below keeps being the way to spell absence (issue #342).
+#[test]
+fn test_extract_regex_no_match_returns_empty_string() {
+    let input = r#"{"msg": "login rhost=10.0.0.1"}
+{"msg": "nothing here"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            r#"e.ip = e.msg.extract_regex("rhost=(\\S+)", 1)"#,
+            "-k",
+            "ip",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(
+        lines,
+        vec![r#"{"ip":"10.0.0.1"}"#, r#"{"ip":""}"#],
+        "no match should leave an empty ip field, not drop it"
+    );
+}
+
+/// `or_empty()` turns that `""` into `()`, which removes the field — so `!= ()`
+/// and `--freq` skip the events that had no match (issue #342).
+#[test]
+fn test_extract_regex_or_empty_makes_no_match_absent() {
+    let input = r#"{"msg": "login rhost=10.0.0.1"}
+{"msg": "nothing here"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            r#"e.ip = e.msg.extract_regex("rhost=(\\S+)", 1).or_empty()"#,
+            "--filter",
+            "e.ip != ()",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(lines.len(), 1, "only the matching event should survive");
+    let parsed: serde_json::Value = serde_json::from_str(lines[0]).expect("Should be valid JSON");
+    assert_eq!(parsed["ip"].as_str().unwrap(), "10.0.0.1");
+
+    // And no empty-labelled bucket in the frequency table.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--exec",
+            r#"e.ip = e.msg.extract_regex("rhost=(\\S+)", 1).or_empty()"#,
+            "--freq",
+            "ip",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+    assert!(
+        stdout.contains("10.0.0.1"),
+        "frequency table should count the match: {stdout}"
+    );
+    assert!(
+        !stdout.lines().any(|line| line.trim_end() == "ip"),
+        "no bucket for the events that had no match: {stdout}"
+    );
+}
+
+/// The plural form reports "nothing matched" as an empty array, which `or_empty()`
+/// also converts to `()` (issue #342).
+#[test]
+fn test_extract_regexes_no_match_returns_empty_array() {
+    let input = r#"{"msg": "nothing here"}"#;
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--exec",
+            r#"e.codes = e.msg.extract_regexes("ERR-(\\d+)", 1); e.trimmed = e.codes.or_empty()"#,
+            "-k",
+            "codes,trimmed",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "kelora should exit successfully");
+    assert_eq!(
+        stdout.trim(),
+        r#"{"codes":[]}"#,
+        "empty array stays until or_empty() removes it"
+    );
+}
