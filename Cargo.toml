@@ -104,6 +104,11 @@ grok = "1.2"
 bench-alloc = []
 
 [dev-dependencies]
+# Same rhai as above plus "metadata", which exposes Engine::gen_fn_signatures() so
+# tests can check the suggestion catalogue against the functions actually registered.
+# Dev-only on purpose: metadata adds ~1.9 MB to the release binary, and under
+# resolver v2 (edition 2021) dev-dependency features do not reach normal builds.
+rhai = { version = "1.25", features = ["sync", "debugging", "internals", "metadata"] }
 criterion = { version = "0.7", features = ["html_reports"] }  # Benchmarking framework with statistical analysis
 tempfile = "3.8"  # Temporary file/directory creation for integration tests
 proptest = "1.5"  # Property-based testing for fuzzing parser edge cases

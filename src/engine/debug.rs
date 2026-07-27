@@ -326,6 +326,94 @@ impl ErrorEnhancer {
         byte.is_ascii_alphanumeric() || byte == b'_'
     }
 
+    /// Methods that only exist on a datetime, so seeing one called on a string is
+    /// unambiguous: the user has the raw timestamp text, not the parsed value.
+    ///
+    /// Derived from the engine and checked by `datetime_only_methods_are_exhaustive`.
+    /// Names shared with strings (`to_string`, `to_debug`) are deliberately absent —
+    /// they succeed on a string, so they never reach this path.
+    const DATETIME_ONLY_METHODS: &'static [&'static str] = &[
+        "ceil_to",
+        "day",
+        "format",
+        "hour",
+        "minute",
+        "month",
+        "round_to",
+        "second",
+        "timezone_name",
+        "to_iso",
+        "to_local",
+        "to_timezone",
+        "to_utc",
+        "ts_nanos",
+        "year",
+    ];
+
+    /// `_`-separated tokens, sorted, so names that differ only in word order
+    /// compare equal: `regex_extract` against kelora's `extract_regex`. Worth
+    /// special-casing because the rest of the ecosystem spells it noun-first
+    /// (`regexp_extract` in Spark/Hive, `REGEXP_EXTRACT` in BigQuery), and edit
+    /// distance scores that transposition as almost unrelated.
+    fn sorted_tokens(name: &str) -> Vec<&str> {
+        let mut tokens: Vec<&str> = name.split('_').filter(|t| !t.is_empty()).collect();
+        tokens.sort_unstable();
+        tokens
+    }
+
+    /// True when the first argument of a failed call was string-typed. Rhai renders
+    /// the receiver as the first argument, e.g.
+    /// `format (&str | ImmutableString | String, &str | ImmutableString | String)`.
+    fn first_arg_is_string(func_sig: &str) -> bool {
+        let Some(args_start) = func_sig.find('(') else {
+            return false;
+        };
+        let args = &func_sig[args_start + 1..];
+        let first = args.split(',').next().unwrap_or("").trim();
+        first.contains("ImmutableString") || first.contains("&str") || first == "String"
+    }
+
+    /// Number of arguments in a rendered signature, receiver included. Rhai lists
+    /// each argument's accepted types separated by `|`, never by a comma, so counting
+    /// top-level commas is enough.
+    fn arg_count(func_sig: &str) -> usize {
+        let Some(open) = func_sig.find('(') else {
+            return 0;
+        };
+        let args = func_sig[open + 1..].trim_end_matches(')').trim();
+        if args.is_empty() {
+            0
+        } else {
+            args.split(',').count()
+        }
+    }
+
+    /// Replace the generic not-found text for a datetime method called on a string.
+    ///
+    /// The type half is always true. The pointer to `meta.parsed_ts` is hedged on
+    /// purpose: it is only the answer when the string *is* the event's timestamp —
+    /// `meta.parsed_ts` is `()` when no timestamp was detected, and irrelevant when
+    /// the receiver was some other string field.
+    fn suggest_datetime_receiver(func_name: &str, func_sig: &str) -> Option<String> {
+        if !Self::DATETIME_ONLY_METHODS.contains(&func_name) || !Self::first_arg_is_string(func_sig)
+        {
+            return None;
+        }
+        // Show the call the way the user would type it: the receiver counts as the
+        // first argument, so a single-argument signature takes no arguments at all.
+        let args = if Self::arg_count(func_sig) > 1 {
+            "..."
+        } else {
+            ""
+        };
+        Some(format!(
+            "{func_name}() is a datetime method, but it was called on a string. \
+             If that string is the event's timestamp, use the already-parsed value: \
+             meta.parsed_ts.{func_name}({args}). Otherwise parse it first: \
+             text.to_datetime().{func_name}({args})."
+        ))
+    }
+
     fn suggest_function_alternatives(&self, func_sig: &str) -> Option<String> {
         if func_sig.contains("()") {
             let func_name = func_sig.split('(').next().unwrap_or("").trim();
@@ -367,12 +455,30 @@ impl ErrorEnhancer {
 
         let func_name = func_sig.split('(').next().unwrap_or(func_sig).trim();
 
+        // A datetime method reached for on a string is a type error, not a typo:
+        // the name exists, it just lives on a datetime. Say so instead of letting
+        // edit distance offer an unrelated name.
+        if let Some(hint) = Self::suggest_datetime_receiver(func_name, func_sig) {
+            return Some(hint);
+        }
+
+        let called = func_name.to_lowercase();
+        let called_tokens = Self::sorted_tokens(&called);
+
         let mut best: Vec<(String, f64)> = RhaiEngine::function_catalog()
-            .into_iter()
+            .iter()
             .map(|candidate| {
-                let sim =
-                    self.calculate_similarity(&func_name.to_lowercase(), &candidate.to_lowercase());
-                (candidate, sim)
+                let candidate_lower = candidate.to_lowercase();
+                // Treat a pure token transposition as an exact hit so it outranks
+                // any edit-distance neighbour.
+                let sim = if called_tokens.len() > 1
+                    && Self::sorted_tokens(&candidate_lower) == called_tokens
+                {
+                    1.0
+                } else {
+                    self.calculate_similarity(&called, &candidate_lower)
+                };
+                (candidate.to_string(), sim)
             })
             .filter(|(_, sim)| *sim > 0.45)
             .collect();
@@ -602,5 +708,113 @@ impl ErrorEnhancer {
         }
 
         help
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::BTreeSet;
+
+    /// Function name and the type of its first parameter, e.g.
+    /// `format(_: &mut ...DateTimeWrapper, _: string)` -> `("format", "&mut ...DateTimeWrapper")`.
+    /// Only the first parameter is read, and no input type contains a comma, so
+    /// splitting on the first `,`/`)` is enough. Returns `None` for operator entries.
+    fn name_and_receiver(sig: &str) -> Option<(&str, &str)> {
+        let open = sig.find('(')?;
+        let name = &sig[..open];
+        if name.is_empty()
+            || !name
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+        {
+            return None;
+        }
+        let rest = &sig[open + 1..];
+        let end = rest.find([',', ')'])?;
+        let first = rest[..end].trim();
+        // Rendered as `name: type`; the parameter name carries no information here.
+        let ty = first.split_once(':').map_or(first, |(_, t)| t.trim());
+        Some((name, ty))
+    }
+
+    #[test]
+    fn datetime_only_methods_are_exhaustive() {
+        let mut engine = rhai::Engine::new();
+        crate::rhai_functions::register_all_functions(&mut engine);
+        // Standard packages included on purpose: `to_string`/`to_debug` accept a
+        // string only via Rhai's stdlib, and omitting it would wrongly classify
+        // them as datetime-only and hijack errors that have nothing to do with time.
+        let sigs = engine.gen_fn_signatures(true);
+
+        let mut on_datetime: BTreeSet<&str> = BTreeSet::new();
+        let mut on_string: BTreeSet<&str> = BTreeSet::new();
+        for sig in &sigs {
+            let Some((name, receiver)) = name_and_receiver(sig) else {
+                continue;
+            };
+            if receiver.contains("datetime::DateTimeWrapper") {
+                on_datetime.insert(name);
+            }
+            if matches!(
+                receiver,
+                "string" | "ImmutableString" | "&str" | "&mut string" | "Dynamic" | "&mut Dynamic"
+            ) {
+                on_string.insert(name);
+            }
+        }
+
+        let derived: BTreeSet<&str> = on_datetime.difference(&on_string).copied().collect();
+        let declared: BTreeSet<&str> = ErrorEnhancer::DATETIME_ONLY_METHODS
+            .iter()
+            .copied()
+            .collect();
+
+        assert_eq!(
+            derived, declared,
+            "DATETIME_ONLY_METHODS is out of sync with the engine; it must list exactly \
+             the methods that exist on a datetime and not on a string"
+        );
+    }
+
+    #[test]
+    fn datetime_hint_ignores_non_string_receivers() {
+        // A datetime method failing on some other type is a different mistake, so the
+        // string-specific advice must not fire.
+        assert!(ErrorEnhancer::suggest_datetime_receiver("format", "format (i64, i64)").is_none());
+        assert!(ErrorEnhancer::suggest_datetime_receiver("year", "year (map)").is_none());
+    }
+
+    #[test]
+    fn datetime_hint_matches_the_method_arity() {
+        let no_args =
+            ErrorEnhancer::suggest_datetime_receiver("hour", "hour (&str | ImmutableString)")
+                .expect("hour on a string should be recognised");
+        assert!(
+            no_args.contains("meta.parsed_ts.hour()"),
+            "a no-argument method should not be shown taking arguments; got: {no_args}"
+        );
+
+        let with_args = ErrorEnhancer::suggest_datetime_receiver(
+            "format",
+            "format (&str | ImmutableString, &str | ImmutableString)",
+        )
+        .expect("format on a string should be recognised");
+        assert!(
+            with_args.contains("meta.parsed_ts.format(...)"),
+            "a method taking arguments should show them; got: {with_args}"
+        );
+    }
+
+    #[test]
+    fn token_transposition_compares_equal() {
+        assert_eq!(
+            ErrorEnhancer::sorted_tokens("regex_extract"),
+            ErrorEnhancer::sorted_tokens("extract_regex")
+        );
+        assert_ne!(
+            ErrorEnhancer::sorted_tokens("extract_ip"),
+            ErrorEnhancer::sorted_tokens("extract_url")
+        );
     }
 }

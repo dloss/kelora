@@ -1220,245 +1220,256 @@ impl RhaiEngine {
         rhai_functions::tracking::get_thread_internal_state()
     }
 
-    fn format_function_not_found_error(
-        func_signature: String,
-        script_name: &str,
-        pos: rhai::Position,
-    ) -> String {
-        // Extract function name from signature (before the first '(' or space)
-        let func_name = if let Some(paren_pos) = func_signature.find('(') {
-            &func_signature[..paren_pos]
-        } else if let Some(space_pos) = func_signature.find(' ') {
-            &func_signature[..space_pos]
-        } else {
-            &func_signature
-        }
-        .trim();
-
-        // Check if this looks like a type mismatch rather than a missing function
-        let called_types = Self::extract_called_types(&func_signature);
-        if Self::is_likely_type_mismatch(&func_signature, func_name) {
-            let expected_types = Self::get_expected_function_signature(func_name);
-            if !expected_types.is_empty() {
-                return format!(
-                    "Wrong argument types for '{}' in {} at {}: got {}, expected {}. Note: x.{}() = {}(x)",
-                    func_name,
-                    script_name,
-                    pos,
-                    called_types,
-                    expected_types,
-                    func_name,
-                    func_name
-                );
-            }
-        }
-
-        // Fall back to "function not found" with suggestions
-        let base_msg = format!(
-            "Function '{}' not found in {} at {}",
-            func_signature, script_name, pos
-        );
-        let suggestions = Self::get_function_suggestions(func_name);
-        let mut notes = Vec::new();
-
-        if called_types != "unknown types" {
-            notes.push(format!("Called with: {}", called_types));
-        }
-
-        if Self::signature_has_unit(&called_types) {
-            notes.push(
-                "One of the arguments is '()' (missing field?). Use e.has(\"field\") or e.get(\"field\", default) before chaining."
-                    .to_string(),
-            );
-        }
-
-        if suggestions.is_empty() {
-            notes.push(format!(
-                "Note: method calls are sugar—x.{}(y) == {}(x, y)",
-                func_name, func_name
-            ));
-            format!("{}. {}", base_msg, notes.join(" "))
-        } else {
-            let mut msg = format!("{}. Did you mean: {}", base_msg, suggestions.join(", "));
-            if !notes.is_empty() {
-                msg.push_str(&format!(" {}", notes.join(" ")));
-            }
-            msg
-        }
-    }
-
-    fn is_likely_type_mismatch(func_signature: &str, func_name: &str) -> bool {
-        !Self::get_expected_function_signature(func_name).is_empty() && func_signature.contains('(')
-    }
-
-    fn extract_called_types(func_signature: &str) -> String {
-        if let Some(start) = func_signature.find('(') {
-            if let Some(end) = func_signature.rfind(')') {
-                return func_signature[start + 1..end].to_string();
-            }
-        }
-        "unknown types".to_string()
-    }
-
-    fn signature_has_unit(called_types: &str) -> bool {
-        called_types.contains("()")
-    }
-
-    fn get_expected_function_signature(func_name: &str) -> String {
-        match func_name {
-            "extract_regex" => "string, regex_pattern, optional_group_index".to_string(),
-            "extract_regexes" => "string, regex_pattern, optional_group_index".to_string(),
-            "extract_regex_maps" | "extract_re_maps" => "string, regex_pattern, field".to_string(),
-            "split_regex" | "split_re" => "string, regex_pattern".to_string(),
-            "replace_regex" | "replace_re" => "string, regex_pattern, replacement".to_string(),
-            "before" | "after" => "string, delimiter".to_string(),
-            "between" => "string, start_delimiter, end_delimiter".to_string(),
-            "starting_with" | "ending_with" => "string, prefix_or_suffix".to_string(),
-            "strip" => "string, optional_characters_to_strip".to_string(),
-            "join" => "string_separator, array OR array, string_separator".to_string(),
-            "extract_ip" | "extract_ips" | "extract_url" | "extract_domain" => "string".to_string(),
-            "mask_ip" => "string, optional_octets_to_mask".to_string(),
-            "is_private_ip" | "is_digit" => "string".to_string(),
-            "parse_json" => "json_string".to_string(),
-            "parse_kv" => "string, optional_separator, optional_kv_separator".to_string(),
-            "col" => "string, column_selector".to_string(),
-            "cols" => "string, column_selectors...".to_string(),
-            "status_class" => "status_code_number".to_string(),
-            "track_freq" => "name, value".to_string(),
-            "track_inc" => "name".to_string(),
-            "track_sum" | "track_min" | "track_max" | "track_avg" => "key, value".to_string(),
-            "track_unique" => "key, value".to_string(),
-            "count" => "string, substring".to_string(),
-            // Common string functions that expect strings
-            "len" | "trim" => "string".to_string(),
-            "contains" | "starts_with" | "ends_with" => "string, substring".to_string(),
-            "split" | "replace" => "string, delimiter_or_pattern, optional_replacement".to_string(),
-            _ => "".to_string(),
-        }
-    }
-
-    fn function_catalog() -> Vec<String> {
-        // List of common Rhai built-in functions and our custom functions
-        vec![
-            // String functions
-            "lower".to_string(),
-            "upper".to_string(),
-            "trim".to_string(),
-            "len".to_string(),
-            "contains".to_string(),
-            "starts_with".to_string(),
-            "ends_with".to_string(),
-            "split".to_string(),
-            "replace".to_string(),
-            "substring".to_string(),
-            "to_string".to_string(),
-            "parse".to_string(),
-            // Our custom string functions
-            "extract_regex".to_string(),
-            "extract_regexes".to_string(),
-            "extract_regex_maps".to_string(),
-            "split_regex".to_string(),
-            "replace_regex".to_string(),
-            "count".to_string(),
-            "strip".to_string(),
-            "before".to_string(),
-            "after".to_string(),
-            "between".to_string(),
-            "starting_with".to_string(),
-            "ending_with".to_string(),
-            "is_digit".to_string(),
-            "join".to_string(),
-            "extract_ip".to_string(),
-            "extract_ips".to_string(),
-            "mask_ip".to_string(),
-            "is_private_ip".to_string(),
-            "extract_url".to_string(),
-            "extract_domain".to_string(),
-            // Math functions
-            "abs".to_string(),
-            "floor".to_string(),
-            "ceil".to_string(),
-            "round".to_string(),
-            "min".to_string(),
-            "max".to_string(),
-            "pow".to_string(),
-            "sqrt".to_string(),
-            // Array functions
-            "push".to_string(),
-            "pop".to_string(),
-            "shift".to_string(),
-            "unshift".to_string(),
-            "reverse".to_string(),
-            "sort".to_string(),
-            "clear".to_string(),
-            // Map functions
-            "keys".to_string(),
-            "values".to_string(),
-            "remove".to_string(),
-            "contains".to_string(),
-            // Our custom functions
-            "parse_json".to_string(),
-            "parse_kv".to_string(),
-            "col".to_string(),
-            "cols".to_string(),
-            "status_class".to_string(),
-            "track_freq".to_string(),
-            "track_inc".to_string(),
-            "track_sum".to_string(),
-            "track_min".to_string(),
-            "track_max".to_string(),
-            "track_avg".to_string(),
-            "track_unique".to_string(),
-            "track_percentiles".to_string(),
-            "track_stats".to_string(),
-            "track_cardinality".to_string(),
-            "track_top".to_string(),
-            "track_top_by".to_string(),
-            "track_bottom".to_string(),
-            "track_bottom_by".to_string(),
-            // Utility functions
-            "print".to_string(),
-            "debug".to_string(),
-            "type_of".to_string(),
-            "is_def_fn".to_string(),
+    /// Candidate names for the "did you mean" suggester: every function kelora
+    /// registers, plus the Rhai built-ins and language functions users reach for.
+    ///
+    /// Two rules, both enforced by tests in this module rather than by review:
+    /// every registered kelora function must appear here (otherwise a real
+    /// function looks unknown and gets fuzzy-matched to something unrelated), and
+    /// nothing here may be absent from the engine (suggesting a function that
+    /// does not exist is worse than suggesting nothing at all).
+    fn function_catalog() -> &'static [&'static str] {
+        &[
+            "abs",
+            "absorb_json",
+            "absorb_jwt",
+            "absorb_kv",
+            "absorb_logfmt",
+            "absorb_regex",
+            "after",
+            "append_file",
+            "as_days",
+            "as_hours",
+            "as_milliseconds",
+            "as_minutes",
+            "as_nanoseconds",
+            "as_seconds",
+            "bar",
+            "before",
+            "between",
+            "blue",
+            "bold",
+            "bucket",
+            "ceil_to",
+            "ceiling",
+            "center",
+            "clamp",
+            "clear",
+            "clip",
+            "col",
+            "cols",
+            "contains",
+            "contains_any",
+            "count",
+            "cyan",
+            "day",
+            "debug",
+            "decode_b64",
+            "decode_hex",
+            "decode_url",
+            "dim",
+            "drain_template",
+            "drain_template_id",
+            "drain_templates",
+            "drop",
+            "duration_from_days",
+            "duration_from_hours",
+            "duration_from_milliseconds",
+            "duration_from_minutes",
+            "duration_from_nanoseconds",
+            "duration_from_seconds",
+            "edit_distance",
+            "emit_each",
+            "encode_b64",
+            "encode_hex",
+            "encode_url",
+            "ending_with",
+            "ends_with",
+            "enrich",
+            "eprint",
+            "escape_html",
+            "escape_json",
+            "exit",
+            "extract_domain",
+            "extract_email",
+            "extract_emails",
+            "extract_ip",
+            "extract_ips",
+            "extract_json",
+            "extract_jsons",
+            "extract_regex",
+            "extract_regex_maps",
+            "extract_regexes",
+            "extract_url",
+            "extract_urls",
+            "fill_with",
+            "flatten_field",
+            "flattened",
+            "floor",
+            "format",
+            "format_decimals",
+            "format_percent",
+            "get",
+            "get_env",
+            "get_path",
+            "green",
+            "has",
+            "has_path",
+            "hash",
+            "hour",
+            "human_bytes",
+            "human_bytes_si",
+            "humanize_duration",
+            "ilike",
+            "insert",
+            "is_def_fn",
+            "is_digit",
+            "is_empty",
+            "is_in_cidr",
+            "is_ipv4",
+            "is_ipv6",
+            "is_private_ip",
+            "join",
+            "keep",
+            "keys",
+            "lclip",
+            "len",
+            "like",
+            "ljust",
+            "lower",
+            "lstrip",
+            "magenta",
+            "mask_ip",
+            "matches",
+            "max",
+            "mean",
+            "merge",
+            "min",
+            "minute",
+            "mixin",
+            "mkdir",
+            "mod",
+            "month",
+            "normalized",
+            "now",
+            "or_empty",
+            "parse_cef",
+            "parse_cols",
+            "parse_combined",
+            "parse_content_disposition",
+            "parse_email",
+            "parse_float",
+            "parse_int",
+            "parse_json",
+            "parse_jwt",
+            "parse_kv",
+            "parse_logfmt",
+            "parse_media_type",
+            "parse_path",
+            "parse_query_params",
+            "parse_syslog",
+            "parse_url",
+            "parse_user_agent",
+            "path_equals",
+            "percentile",
+            "pluck",
+            "pluck_as_nums",
+            "pop",
+            "print",
+            "pseudonym",
+            "push",
+            "rand",
+            "rand_int",
+            "rclip",
+            "read_file",
+            "read_lines",
+            "red",
+            "remove",
+            "rename_field",
+            "replace",
+            "replace_regex",
+            "reverse",
+            "reversed",
+            "rjust",
+            "round",
+            "round_to",
+            "rstrip",
+            "sample_every",
+            "sample_prob",
+            "second",
+            "set",
+            "shift",
+            "shorten",
+            "shorten_middle",
+            "skip",
+            "sleep",
+            "slice",
+            "sort",
+            "sorted",
+            "sorted_by",
+            "sparkline",
+            "split",
+            "split_regex",
+            "sqrt",
+            "starting_with",
+            "starts_with",
+            "starts_with_any",
+            "status_class",
+            "stddev",
+            "strip",
+            "sum",
+            "timezone_name",
+            "to_bool",
+            "to_bool_or",
+            "to_cef",
+            "to_combined",
+            "to_datetime",
+            "to_debug",
+            "to_duration",
+            "to_float",
+            "to_float_or",
+            "to_int",
+            "to_int_or",
+            "to_iso",
+            "to_json",
+            "to_kv",
+            "to_local",
+            "to_logfmt",
+            "to_map",
+            "to_string",
+            "to_syslog",
+            "to_timezone",
+            "to_utc",
+            "track_avg",
+            "track_bottom",
+            "track_bottom_by",
+            "track_bucket",
+            "track_cardinality",
+            "track_count",
+            "track_freq",
+            "track_inc",
+            "track_max",
+            "track_min",
+            "track_percentiles",
+            "track_stats",
+            "track_sum",
+            "track_top",
+            "track_top_by",
+            "track_unique",
+            "trim",
+            "truncate_file",
+            "ts_nanos",
+            "type_of",
+            "unescape_html",
+            "unescape_json",
+            "unflatten",
+            "unique",
+            "upper",
+            "values",
+            "variance",
+            "year",
+            "yellow",
         ]
-    }
-
-    fn get_function_suggestions(func_name: &str) -> Vec<String> {
-        let available_functions = Self::function_catalog();
-
-        // Find functions that are similar to the requested one
-        let suggestions: Vec<String> = available_functions
-            .iter()
-            .filter(|&f| {
-                // Check for starts with or contains
-                f.starts_with(func_name) || (func_name.len() > 1 && f.contains(func_name))
-            })
-            .take(3) // Limit to 3 suggestions
-            .map(|s| s.to_string())
-            .collect();
-
-        // For debugging: always include at least one suggestion if the function name contains common patterns
-        if suggestions.is_empty() && func_name.len() > 2 {
-            if func_name.contains("extract") {
-                return vec![
-                    "extract_regex".to_string(),
-                    "extract_ip".to_string(),
-                    "extract_url".to_string(),
-                ];
-            } else if func_name.contains("track") {
-                return vec![
-                    "track_freq".to_string(),
-                    "track_inc".to_string(),
-                    "track_sum".to_string(),
-                    "track_unique".to_string(),
-                ];
-            } else if func_name.contains("pars") {
-                return vec!["parse_json".to_string(), "parse_kv".to_string()];
-            }
-        }
-
-        suggestions
     }
 
     pub fn new() -> Self {
@@ -3415,15 +3426,137 @@ mod tests {
 
     #[test]
     fn unit_arg_suggestion_points_to_missing_field() {
-        let msg = RhaiEngine::format_function_not_found_error(
-            "foo((), string)".to_string(),
-            "script",
+        // Exercised through the path that actually reaches users: every surface
+        // (aggregated warning, --verbose, --strict) renders this hint.
+        let enhancer = ErrorEnhancer::new(DebugConfig::new(0));
+        let scope = Scope::new();
+        let err =
+            EvalAltResult::ErrorFunctionNotFound("foo((), string)".into(), rhai::Position::NONE);
+        let msg = enhancer
+            .generate_suggestions(&err, &scope, None)
+            .expect("a unit argument should produce a missing-field hint");
+        assert!(
+            msg.contains("missing") && msg.contains("e.has"),
+            "unit arg hint should point at missing-field guards; got: {msg}"
+        );
+    }
+
+    #[test]
+    fn catalog_covers_every_registered_function() {
+        // Ground truth, not a hand-check: a function registered without a catalogue
+        // entry looks unknown to the suggester, which then fuzzy-matches it to
+        // something unrelated (issue #339: `.format()` on a string suggested `sort`).
+        let mut engine = Engine::new();
+        crate::rhai_functions::register_all_functions(&mut engine);
+        let catalog: std::collections::BTreeSet<&str> =
+            RhaiEngine::function_catalog().iter().copied().collect();
+
+        let mut missing: Vec<String> = engine
+            .gen_fn_signatures(false)
+            .iter()
+            .filter_map(|sig| sig.split('(').next().map(str::trim))
+            .filter(|name| is_plain_function_name(name))
+            .filter(|name| !catalog.contains(name))
+            .map(String::from)
+            .collect();
+        missing.sort();
+        missing.dedup();
+
+        assert!(
+            missing.is_empty(),
+            "these registered functions are missing from function_catalog(), so the \
+             suggester cannot offer them — add them there: {missing:?}"
+        );
+    }
+
+    #[test]
+    fn catalog_contains_no_phantom_functions() {
+        // Real and callable, but implemented in the language rather than registered,
+        // so they never appear in engine metadata.
+        const LANGUAGE_BUILTINS: &[&str] = &["type_of", "is_def_fn"];
+
+        let mut engine = Engine::new();
+        crate::rhai_functions::register_all_functions(&mut engine);
+        // `true` includes Rhai's standard packages: the catalogue lists common
+        // built-ins (`sort`, `trim`, `parse_json`) alongside kelora's own functions.
+        let real: std::collections::BTreeSet<String> = engine
+            .gen_fn_signatures(true)
+            .iter()
+            .filter_map(|sig| sig.split('(').next().map(str::trim))
+            .filter(|name| is_plain_function_name(name))
+            .map(String::from)
+            .collect();
+
+        let phantom: Vec<&str> = RhaiEngine::function_catalog()
+            .iter()
+            .copied()
+            .filter(|name| !real.contains(*name) && !LANGUAGE_BUILTINS.contains(name))
+            .collect();
+
+        assert!(
+            phantom.is_empty(),
+            "function_catalog() lists names the engine does not provide, so the \
+             suggester would recommend calls that cannot work: {phantom:?}"
+        );
+    }
+
+    #[test]
+    fn transposed_regex_name_suggests_the_real_one() {
+        // `regex_extract` is the spelling used by Spark/Hive/BigQuery; edit distance
+        // alone scores it as almost unrelated to kelora's `extract_regex`.
+        let enhancer = ErrorEnhancer::new(DebugConfig::new(0));
+        let scope = Scope::new();
+        let err = EvalAltResult::ErrorFunctionNotFound(
+            "regex_extract (&str | ImmutableString | String, &str | ImmutableString | String)"
+                .into(),
             rhai::Position::NONE,
         );
-        assert!(
-            (msg.contains("missing field") || msg.contains("e.has")) && msg.contains("Called with"),
-            "unit arg hint should mention missing field guards and show called types; got: {msg}"
+        let hint = enhancer
+            .generate_suggestions(&err, &scope, None)
+            .expect("a transposed function name should produce a suggestion");
+        let first = hint
+            .trim_start_matches("Did you mean: ")
+            .split(',')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .trim_end_matches('?');
+        assert_eq!(
+            first, "extract_regex",
+            "extract_regex should be the top suggestion; got: {hint}"
         );
+    }
+
+    #[test]
+    fn datetime_method_on_string_explains_the_type_error() {
+        let enhancer = ErrorEnhancer::new(DebugConfig::new(0));
+        let scope = Scope::new();
+        let err = EvalAltResult::ErrorFunctionNotFound(
+            "format (&str | ImmutableString | String, &str | ImmutableString | String)".into(),
+            rhai::Position::NONE,
+        );
+        let hint = enhancer
+            .generate_suggestions(&err, &scope, None)
+            .expect("a datetime method on a string should produce a hint");
+        assert!(
+            hint.contains("datetime method")
+                && hint.contains("meta.parsed_ts")
+                && hint.contains("to_datetime"),
+            "hint should name the type error and both remedies; got: {hint}"
+        );
+        assert!(
+            !hint.contains("sort"),
+            "the unrelated edit-distance guess must be gone; got: {hint}"
+        );
+    }
+
+    /// Skips Rhai's operator entries (`+`, `==`) so only identifier-named functions
+    /// are compared against the catalogue.
+    fn is_plain_function_name(name: &str) -> bool {
+        !name.is_empty()
+            && name
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
     }
 
     #[test]
