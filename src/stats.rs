@@ -92,6 +92,12 @@ pub struct ProcessingStats {
     /// timezone. Drives the #287 diagnostic that surfaces the silent UTC
     /// assumption; the explicit-vs-default gate is applied at emit time.
     pub naive_timestamps: usize,
+    /// Count of printed events whose timestamp, re-read after the script
+    /// stages, falls outside the `--since`/`--until` window. The window runs
+    /// before the script stages and reads the parser's timestamp, so a script
+    /// can neither move an event into the window nor out of it; this counts the
+    /// events where that gap became visible in the output (#345).
+    pub window_escaped_events: usize,
     pub detected_format: Option<String>, // Format detected for this processing session
     pub detected_format_counts: IndexMap<String, usize>, // Per-file detected format counts
     /// Per-format event counts when running in cascade mode. Empty otherwise.
@@ -394,6 +400,17 @@ pub fn stats_add_yearless_timestamp() {
     }
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().yearless_timestamps += 1;
+    });
+}
+
+/// Record a printed event whose final timestamp falls outside `--since`/
+/// `--until` (see [`ProcessingStats::window_escaped_events`]).
+pub fn stats_add_window_escaped_event() {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().window_escaped_events += 1;
     });
 }
 
@@ -907,6 +924,7 @@ impl ProcessingStats {
                 "parsed": self.timestamp_parsed_events,
                 "absent": self.timestamp_absent_events,
                 "yearless_inferred": self.yearless_timestamps,
+                "outside_window": self.window_escaped_events,
             }),
         );
 
@@ -1136,6 +1154,11 @@ impl ProcessingStats {
             output.push('\n');
         }
 
+        if let Some(message) = self.format_window_escape_warning() {
+            output.push_str(&crate::config::format_warning_message_auto(&message));
+            output.push('\n');
+        }
+
         // Time span: show generic label when identical, specific labels when different
         let has_original = self.first_timestamp.is_some() && self.last_timestamp.is_some();
         let has_result =
@@ -1331,6 +1354,37 @@ impl ProcessingStats {
             message.push_str(&format!(" (first: {})", sample));
         }
         Some(message)
+    }
+
+    /// Warning for printed events whose timestamp lies outside `--since`/
+    /// `--until`. Returns `None` when every printed event stayed inside the
+    /// window, which is every run that does not build or rewrite a timestamp in
+    /// a script stage.
+    ///
+    /// The window is a selection over the parser's timestamp and runs before
+    /// the script stages (see `docs/concepts/pipeline-model.md`), so a script
+    /// assignment cannot be enforced by it in either direction. Rather than
+    /// guess from the script text, this reports the case that actually
+    /// occurred: the timestamp kelora ends up printing is not one the window
+    /// would have admitted (#345).
+    pub fn format_window_escape_warning(&self) -> Option<String> {
+        if self.window_escaped_events == 0 {
+            return None;
+        }
+        Some(format!(
+            "{} printed event{} carr{} a timestamp outside --since/--until: the time window reads the timestamp the parser produced, and runs before every script stage. A timestamp a script writes or builds is not filtered by it — narrow those with a --filter after the stage that sets them. See --help-time.",
+            self.window_escaped_events,
+            if self.window_escaped_events == 1 {
+                ""
+            } else {
+                "s"
+            },
+            if self.window_escaped_events == 1 {
+                "ies"
+            } else {
+                "y"
+            },
+        ))
     }
 
     /// Warning for lines clipped by the `--max-line-bytes` circuit breaker.

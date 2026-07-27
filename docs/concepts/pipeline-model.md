@@ -272,6 +272,15 @@ This is what keeps aggregates honest: metrics accumulated in a script stage — 
 
 The window is evaluated against the timestamp the **parser** produced. Scripts cannot move an event in or out of it: assigning to a timestamp field in `--exec` does not change which window the event falls in. To resolve timestamps differently, use `--ts-field`/`--ts-format`/`--input-tz`, which act at parse time.
 
+Because of that, a script *can* leave the printed output disagreeing with the window it was given — a rewritten timestamp, or an event the script created after the window ran. kelora does not filter those out (the window's verdict is fixed by then), but it does not hide them either:
+
+```
+kelora warning: 1 printed event carries a timestamp outside --since/--until: the time
+window reads the timestamp the parser produced, and runs before every script stage. …
+```
+
+The warning is about the timestamp that reaches the output, so a run that drops the timestamp field with `--keys`/`--exclude-keys` has nothing left to flag.
+
 If you specifically want metrics over a wider span than the events you print, express the narrowing as a filter placed *after* the tracking stage instead of as a window:
 
 ```bash

@@ -124,6 +124,21 @@ Splitting a log for template diffing with --cut (same formats as --since):
   Only one bound may anchor to the other: --since and --until cannot both
   reference each other (e.g., --since until-1h --until since+1h is rejected).
 
+  Which timestamp the window reads:
+    --since/--until select on the timestamp the *parser* produced, and run
+    before every script stage. Assigning to a timestamp field in --exec cannot
+    move an event into the window or out of it — the window has already run,
+    and kelora warns if a printed event ends up outside it.
+    - Timestamp sits verbatim in a field: point the parser at it with
+      --ts-field/--ts-format (plus --input-tz/--input-year), and --since works.
+    - Timestamp has to be built (split date/time columns, an odd epoch unit, a
+      time buried in a message): derive it in --exec and narrow with a --filter
+      placed after that stage, instead of --since:
+
+      kelora -f json app.log \
+        --exec 'e.derived = to_datetime(e.date + "T" + e.time + "Z")' \
+        --filter 'e.derived >= to_datetime("2024-05-01T00:00:00Z")'
+
   Common timestamp field names are auto-detected:
     ts, _ts, timestamp, at, time, @timestamp, log_timestamp, event_time,
     datetime, date_time, created_at, logged_at, _t, @t, t
