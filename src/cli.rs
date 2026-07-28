@@ -41,6 +41,18 @@ pub enum OutputFormat {
     Tsvnh,
 }
 
+impl OutputFormat {
+    /// The compact "map" formats: one glyph per event, prefixed by the
+    /// timestamp of the event that opened the line.
+    ///
+    /// These share `compact_map_utils::extract_timestamp` and never print
+    /// fields, so retaining a timestamp field for them costs nothing in
+    /// output (see `PipelineBuilder::key_filter_keys`).
+    pub fn is_compact_map(&self) -> bool {
+        matches!(self, Self::Levelmap | Self::Keymap | Self::Tailmap)
+    }
+}
+
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum FileOrder {
     Cli,

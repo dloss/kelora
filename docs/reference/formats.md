@@ -651,6 +651,16 @@ so piped or redirected output stays clean. Override with:
 - `--legend` — always append the legend (even when piped)
 - `--no-legend` — never append the legend
 
+**Map timestamps:**
+
+All three map formats prefix each line with the timestamp of the event that
+opened it. The timestamp is kept even when `--keys` selects a different field —
+`keymap` and `tailmap` require `--keys`, so otherwise they could never show one.
+Two cases fall back to `line N` instead:
+
+- the input has no detectable timestamp at all
+- `--exclude-keys` explicitly removes the timestamp field
+
 **Keymap Format:**
 
 The `keymap` format works similarly to `levelmap` but displays the first character of any specified field instead of being limited to log levels. This is useful for visualizing patterns in custom fields like HTTP methods, status codes, user types, etc.
