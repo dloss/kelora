@@ -105,11 +105,26 @@ pub(super) fn track_max_impl(
     track_extreme_impl(key, stored, value_f64, false)
 }
 
+/// Count one value fed to a cardinality metric, in the same map and the same
+/// closure as the sketch update so the two stay in lockstep. Registering the
+/// count key's operation as `count` is what makes parallel workers' partial
+/// counts add up instead of overwriting each other.
+fn bump_cardinality_count(state: &mut std::collections::HashMap<String, Dynamic>, key: &str) {
+    let count_key = super::card_count_key(key);
+    let seen = state
+        .get(&count_key)
+        .and_then(|v| v.as_int().ok())
+        .unwrap_or(0)
+        .saturating_add(1);
+    state.insert(count_key, Dynamic::from(seen));
+}
+
 pub(super) fn track_cardinality_impl<V: std::hash::Hash>(
     key: &str,
     value: &V,
 ) -> Result<(), Box<rhai::EvalAltResult>> {
     ensure_operation_metadata(key, "cardinality")?;
+    ensure_operation_metadata(&super::card_count_key(key), "count")?;
     with_user_tracking(|state| {
         let mut hll = if let Some(existing) = state.get(key) {
             if let Ok(bytes) = existing.clone().into_blob() {
@@ -125,6 +140,7 @@ pub(super) fn track_cardinality_impl<V: std::hash::Hash>(
 
         let bytes = serialize_hll(&hll);
         state.insert(key.to_string(), Dynamic::from_blob(bytes));
+        bump_cardinality_count(state, key);
     });
 
     Ok(())
@@ -136,6 +152,7 @@ pub(super) fn track_cardinality_with_error_impl<V: std::hash::Hash>(
     error_rate: f64,
 ) -> Result<(), Box<rhai::EvalAltResult>> {
     ensure_operation_metadata(key, "cardinality")?;
+    ensure_operation_metadata(&super::card_count_key(key), "count")?;
     let error_rate = error_rate.clamp(0.001, 0.26);
 
     with_user_tracking(|state| {
@@ -153,6 +170,7 @@ pub(super) fn track_cardinality_with_error_impl<V: std::hash::Hash>(
 
         let bytes = serialize_hll(&hll);
         state.insert(key.to_string(), Dynamic::from_blob(bytes));
+        bump_cardinality_count(state, key);
     });
 
     Ok(())

@@ -1,5 +1,5 @@
 use super::merge::{deserialize_hll, deserialize_tdigest, is_hll_blob};
-use super::{metric_operation, metric_top_n};
+use super::{metric_card_count, metric_operation, metric_top_n};
 use rhai::Dynamic;
 use std::collections::{HashMap, HashSet};
 
@@ -175,7 +175,10 @@ pub fn format_metrics_output(
         if let Ok(blob) = value.clone().into_blob() {
             if is_hll_blob(&blob) {
                 if let Some(hll) = deserialize_hll(&blob) {
-                    output.push_str(&format!("{:<12} ≈ {}\n", key, hll.len()));
+                    // `≈` already marks the estimate in this view, so the number
+                    // itself is the plain whole count.
+                    let distinct = cardinality_estimate(hll.len(), metric_card_count(metrics, key));
+                    output.push_str(&format!("{:<12} ≈ {}\n", key, distinct));
                     continue;
                 }
             }
@@ -258,7 +261,7 @@ pub fn format_metrics_tsv(
         // avg maps finalize to a scalar, like the text/json views.
         if metric_operation(ops, key).as_deref() == Some("avg") {
             if let Some(avg) = average_value(value) {
-                push_tsv_scalar(&mut output, key, &avg.to_string());
+                push_tsv_scalar(&mut output, key, &format_metric_float(avg));
                 continue;
             }
         }
@@ -266,7 +269,10 @@ pub fn format_metrics_tsv(
         if let Ok(blob) = value.clone().into_blob() {
             if is_hll_blob(&blob) {
                 if let Some(hll) = deserialize_hll(&blob) {
-                    push_tsv_scalar(&mut output, key, &hll.len().to_string());
+                    // A bare whole number: a `~` marker would make the value
+                    // column unparseable for the tools this view exists for.
+                    let distinct = cardinality_estimate(hll.len(), metric_card_count(metrics, key));
+                    push_tsv_scalar(&mut output, key, &distinct.to_string());
                     continue;
                 }
             }
@@ -274,7 +280,7 @@ pub fn format_metrics_tsv(
                 if let Some(p_pos) = key.rfind("_p") {
                     if let Ok(percentile) = key[p_pos + 2..].parse::<f64>() {
                         let v = digest.estimate_quantile(percentile / 100.0);
-                        push_tsv_scalar(&mut output, key, &v.to_string());
+                        push_tsv_scalar(&mut output, key, &format_metric_float(v));
                         continue;
                     }
                 }
@@ -344,13 +350,13 @@ fn tsv_sanitize(s: &str) -> String {
     }
 }
 
-/// Full-precision scalar text for a TSV value (Rust `f64` Display is the
-/// shortest round-tripping form: `200.0` -> `200`, `0.5` -> `0.5`).
+/// Scalar text for a TSV value. Floats are rounded exactly as the human table
+/// rounds them, so the two views of one run report the same numbers (#372).
 fn dynamic_to_tsv(value: &Dynamic) -> String {
     if value.is_int() {
         value.as_int().unwrap_or(0).to_string()
     } else if value.is_float() {
-        format!("{}", value.as_float().unwrap_or(0.0))
+        format_metric_float(value.as_float().unwrap_or(0.0))
     } else {
         value.to_string()
     }
@@ -537,34 +543,84 @@ fn ranked_row(item: &Dynamic, field_name: &str) -> Option<(String, String)> {
     Some((key_str, num))
 }
 
-/// Round a float to a fixed number of significant figures for the human-readable
-/// `--metrics` text view, trimming trailing zeros (e.g. `146.6142714694471` →
-/// `146.614`, `914.090` → `914.09`, `0.0004123` → `0.0004123`).
+/// Significant figures every `--metrics` view rounds floats to.
 ///
-/// Display-only: the stored value and the JSON / `--metrics-file` output keep
-/// full precision. Significant figures (rather than fixed decimals) keep
-/// sub-1 values from collapsing to `0.00`.
-fn format_metric_float(value: f64) -> String {
-    const SIG_FIGS: i32 = 6;
+/// An approximate aggregator's `f64` carries noise orders of magnitude below its
+/// own error bar: t-digest interpolates between centroids, so `190.04999999999998`
+/// and `190.05` describe the same estimate against a documented ~1% error, and an
+/// accumulated sum lands on `0.30000000000000004`. Those digits are not precision
+/// — they are the shortest round-trippable spelling of an artifact — so `tsv` and
+/// `json` round exactly like the human table rather than carrying the noise into
+/// dashboards, alert thresholds and `awk` (#372).
+const METRIC_SIG_FIGS: i32 = 6;
 
-    if !value.is_finite() {
-        return format!("{value}");
-    }
-    if value == 0.0 {
-        return "0".to_string();
+/// Round to [`METRIC_SIG_FIGS`] significant figures, never coarser than a whole
+/// number so large values keep every integer digit (`12345678.9` → `12345679`,
+/// not `12345700`).
+fn round_metric_float(value: f64) -> f64 {
+    if !value.is_finite() || value == 0.0 {
+        return value;
     }
 
     let magnitude = value.abs().log10().floor() as i32;
-    let decimals = (SIG_FIGS - 1 - magnitude).max(0) as usize;
-    let formatted = format!("{value:.decimals$}");
+    let decimals = (METRIC_SIG_FIGS - 1 - magnitude).max(0);
+    let factor = 10f64.powi(decimals);
+    (value * factor).round() / factor
+}
 
-    if formatted.contains('.') {
-        formatted
-            .trim_end_matches('0')
-            .trim_end_matches('.')
-            .to_string()
+/// Render a metric float for a text view: rounded to [`METRIC_SIG_FIGS`]
+/// significant figures, then in its shortest round-tripping form (`146.6142714694471`
+/// → `146.614`, `190.04999999999998` → `190.05`, `2.0` → `2`).
+fn format_metric_float(value: f64) -> String {
+    if !value.is_finite() {
+        return format!("{value}");
+    }
+
+    let rounded = round_metric_float(value);
+    if rounded == 0.0 {
+        // Also normalizes `-0` and values that round away entirely.
+        return "0".to_string();
+    }
+
+    format!("{rounded}")
+}
+
+/// A metric float as a JSON number: rounded like every other view, and written
+/// as an integer when it lands on one, so an integer-valued `p50` is `71` in
+/// JSON as it already was in TSV rather than `71.0` (#372). Stays a JSON number
+/// either way — the fix is to the precision, not to the type.
+fn metric_json_number(value: f64) -> serde_json::Value {
+    let rounded = round_metric_float(value);
+
+    if rounded.fract() == 0.0 && rounded.abs() < 9e15 {
+        return serde_json::Value::Number(serde_json::Number::from(rounded as i64));
+    }
+
+    match serde_json::Number::from_f64(rounded) {
+        Some(num) => serde_json::Value::Number(num),
+        None => serde_json::Value::Null,
+    }
+}
+
+/// Finalized distinct-value count for a cardinality metric.
+///
+/// `HyperLogLog::len` is a biased `f64` estimate, and surfacing it raw made
+/// `--card` report a fractional count of things (`2.001955671862574` distinct
+/// values) — and, worse, more distinct values than there were values, which is
+/// arithmetically impossible and was visible in a two-line file (#367). Two
+/// corrections, both free: a count of distinct things is a whole number, and
+/// `distinct <= total` holds by definition, so the estimate is clamped to the
+/// number of values actually fed in when that count is known.
+pub(crate) fn cardinality_estimate(hll_len: f64, values_seen: Option<i64>) -> i64 {
+    let rounded = if hll_len.is_finite() {
+        hll_len.round().clamp(0.0, i64::MAX as f64) as i64
     } else {
-        formatted
+        0
+    };
+
+    match values_seen {
+        Some(seen) if seen >= 0 => rounded.min(seen),
+        _ => rounded,
     }
 }
 
@@ -620,9 +676,7 @@ pub(crate) fn dynamic_to_json(value: Dynamic) -> serde_json::Value {
     }
 
     if value.is_float() {
-        if let Some(num) = serde_json::Number::from_f64(value.as_float().unwrap_or_default()) {
-            return serde_json::Value::Number(num);
-        }
+        return metric_json_number(value.as_float().unwrap_or_default());
     }
 
     if let Some(boolean) = value.clone().try_cast::<bool>() {
@@ -656,11 +710,7 @@ pub fn format_metrics_json(
 
         if metric_operation(ops, key).as_deref() == Some("avg") {
             if let Some(avg) = average_value(value) {
-                if let Some(num) = serde_json::Number::from_f64(avg) {
-                    json_obj.insert(key.clone(), serde_json::Value::Number(num));
-                } else {
-                    json_obj.insert(key.clone(), serde_json::Value::Null);
-                }
+                json_obj.insert(key.clone(), metric_json_number(avg));
                 continue;
             }
         }
@@ -668,7 +718,8 @@ pub fn format_metrics_json(
         if let Ok(blob) = value.clone().into_blob() {
             if is_hll_blob(&blob) {
                 if let Some(hll) = deserialize_hll(&blob) {
-                    let cardinality = hll.len() as i64;
+                    let cardinality =
+                        cardinality_estimate(hll.len(), metric_card_count(metrics, key));
                     json_obj.insert(
                         key.clone(),
                         serde_json::Value::Number(serde_json::Number::from(cardinality)),
@@ -682,11 +733,7 @@ pub fn format_metrics_json(
                     if let Ok(percentile) = key[p_pos + 2..].parse::<f64>() {
                         let quantile = percentile / 100.0;
                         let percentile_value = digest.estimate_quantile(quantile);
-                        if let Some(num) = serde_json::Number::from_f64(percentile_value) {
-                            json_obj.insert(key.clone(), serde_json::Value::Number(num));
-                        } else {
-                            json_obj.insert(key.clone(), serde_json::Value::Null);
-                        }
+                        json_obj.insert(key.clone(), metric_json_number(percentile_value));
                         continue;
                     }
                 }
@@ -796,6 +843,52 @@ mod tests {
         // Zero and non-finite values have sane fallbacks.
         assert_eq!(format_metric_float(0.0), "0");
         assert_eq!(format_metric_float(f64::INFINITY), "inf");
+    }
+
+    #[test]
+    fn test_round_metric_float_drops_artifacts_keeps_magnitude() {
+        // The t-digest artifacts from #372, as f64 rather than text.
+        assert_eq!(round_metric_float(190.04999999999998), 190.05);
+        assert_eq!(round_metric_float(198.01000000000002), 198.01);
+        assert_eq!(round_metric_float(0.1 + 0.2), 0.3);
+        // Never coarser than a whole number: integer digits are not rounded away.
+        assert_eq!(round_metric_float(12345678.9), 12345679.0);
+        // Sub-1 values keep six significant figures rather than collapsing.
+        assert_eq!(round_metric_float(0.000012345678), 0.0000123457);
+        // Degenerate inputs pass through untouched.
+        assert_eq!(round_metric_float(0.0), 0.0);
+        assert!(round_metric_float(f64::NAN).is_nan());
+    }
+
+    #[test]
+    fn test_metric_json_number_is_a_rounded_number() {
+        // Rounded, and still a JSON number rather than a string (#372).
+        assert_eq!(metric_json_number(190.04999999999998).to_string(), "190.05");
+        // An integer-valued percentile reads as `71`, matching the TSV view,
+        // instead of `71.0`.
+        assert_eq!(metric_json_number(71.0).to_string(), "71");
+        // Non-finite values cannot be JSON numbers at all.
+        assert_eq!(metric_json_number(f64::NAN).to_string(), "null");
+    }
+
+    #[test]
+    fn test_cardinality_estimate_rounds_and_clamps() {
+        // The HLL's small-input bias reported more distinct values than there
+        // were values; distinct <= total is enforced (#367).
+        assert_eq!(cardinality_estimate(2.001955671862574, Some(2)), 2);
+        assert_eq!(cardinality_estimate(8.0314137200905, Some(120)), 8);
+        assert_eq!(
+            cardinality_estimate(179825.24214183845, Some(176825)),
+            176825
+        );
+        // A large-enough bound never interferes with the estimate.
+        assert_eq!(
+            cardinality_estimate(179825.24214183845, Some(500000)),
+            179825
+        );
+        // Without a count the estimate is only rounded, never clamped to zero.
+        assert_eq!(cardinality_estimate(42.7, None), 43);
+        assert_eq!(cardinality_estimate(f64::NAN, None), 0);
     }
 
     fn avg_op(key: &str) -> HashMap<String, Dynamic> {
