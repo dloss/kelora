@@ -1344,6 +1344,7 @@ impl RhaiEngine {
             "max",
             "mean",
             "merge",
+            "metric",
             "min",
             "minute",
             "mixin",

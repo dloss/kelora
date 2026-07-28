@@ -926,6 +926,7 @@ impl PipelineBuilder {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         // Create chunker based on multiline configuration. An explicit --multiline
@@ -1266,6 +1267,7 @@ impl PipelineBuilder {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         // Create chunker based on multiline configuration. Mirrors `build`: an

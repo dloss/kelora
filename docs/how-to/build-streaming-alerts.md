@@ -52,7 +52,7 @@ tail -f /var/log/app.log | kelora -j -q \
   -m \
   --end '
     let total = metrics.get_path("total", 0);
-    let errors = metrics.get_path("level|ERROR", 0);
+    let errors = metrics.get_path("level.ERROR", 0);
     if total > 0 && errors * 100 / total > 5 {
       eprint(`ALERT: error rate ${errors}/${total}`);
       exit(1);

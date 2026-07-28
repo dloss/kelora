@@ -63,6 +63,22 @@ pub enum MetricsFormat {
     Auto,
 }
 
+/// Output shape for `--span-summary` rollup rows.
+#[derive(clap::ValueEnum, Clone, Debug, PartialEq)]
+pub enum SpanSummaryFormat {
+    /// One `key=value` line per span; nested metrics flatten with a dot.
+    Text,
+    /// Long/tidy `label<TAB>metric<TAB>key<TAB>value` records, one per value.
+    Tsv,
+    /// One JSON object per span, preserving nested metrics.
+    Json,
+    /// Resolve at config time: `text` on a terminal, `tsv` when piped or
+    /// redirected. The default for a bare `--span-summary`. Hidden because it is
+    /// the implicit default rather than something to type.
+    #[value(hide = true)]
+    Auto,
+}
+
 #[derive(clap::ValueEnum, Clone, Debug)]
 pub enum StatsFormat {
     Table,
@@ -404,9 +420,21 @@ pub struct Cli {
         long = "span-close",
         value_name = "EXPR",
         help_heading = "Processing Options",
-        help = "Run a Rhai snippet when each span closes. Within the hook, read span.start, span.end, span.id, span.events, span.size, and span.metrics for span context. span.metrics carries per-window values only for additive aggregators (count, sum, avg, unique, bucket); non-additive ones (min, max, percentiles, cardinality, top, bottom) are omitted with a warning, so use span.events for those."
+        help = "Run a Rhai snippet when each span closes. For a plain per-window rollup, use --span-summary instead — no script, and its rows survive -m/--freq (a hook's print does not).\n\nWithin the hook, read span.start, span.end, span.id, span.label, span.events, span.size, and span.metrics for span context. span.metric(\"name\") returns one metric's per-window value or 0 when the window produced none, and takes a dotted path (span.metric(\"level.ERROR\")); prefer it over indexing span.metrics, which yields () for an omitted zero delta. span.label is span.start as RFC3339 when the mode has one, else span.id, so a hook need not branch on the span mode.\n\nspan.metrics carries per-window values only for additive aggregators (count, sum, avg, unique, bucket); non-additive ones (min, max, percentiles, cardinality, top, bottom) are omitted with a warning, so use span.events for those. Events are only retained for span.events when this hook is present."
     )]
     pub span_close: Option<String>,
+
+    /// Emit one rollup row per closed span, with no script.
+    #[arg(
+        long = "span-summary",
+        value_name = "FORMAT",
+        num_args = 0..=1,
+        require_equals = true,
+        default_missing_value = "auto",
+        help_heading = "Processing Options",
+        help = "One rollup row per closed span (implies -q/--quiet). Requires --span or --span-idle.\n\nEach row carries the span label, the event count, and every per-window metric\nfrom additive track_* calls (including those synthesized by --freq/--describe).\n\nFormats: text (key=value lines), tsv (label<TAB>metric<TAB>key<TAB>value records),\njson (one object per line). Bare --span-summary auto-selects: text on a terminal,\ntsv when piped or redirected (like -m).\n\nRows are data on stdout, so --no-script-output and -m do not suppress them.\nOnly windows containing events produce a row — empty windows are skipped rather\nthan emitted as zeroes.\n\nExamples:\n  --span 1m --span-summary               Events per minute\n  -l error --span 5m --span-summary      Errors per 5 minutes\n  --span 1m --freq level --span-summary  Per-minute level breakdown\n  --span-idle 5m --span-summary          Session sizes\n  --span 1m --span-summary=tsv | duckdb  Time series out\n\nNote the '=': --span-summary=tsv (a space is read as a filename)."
+    )]
+    pub span_summary: Option<SpanSummaryFormat>,
 
     /// Exit on first error (fail-fast behavior). Use --no-strict to force resilient mode, overriding a config default.
     #[arg(long = "strict", help_heading = "Error Handling")]

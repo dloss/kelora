@@ -73,6 +73,20 @@ templates (4 items):
 
 `-k msg` tells `--drain` which field to mine — here the syslog message — and it groups near-identical lines by inferring where the values varied, so 742 noisy lines collapse into the four patterns causing the noise.
 
+**And when the question is "when did this happen", group events into windows and get one row each:**
+
+```bash
+kelora examples/simple_json.jsonl --span 1m --freq level --span-summary
+```
+
+```
+2024-01-15T10:00:00Z  events=3  level.DEBUG=1 level.INFO=2
+2024-01-15T10:01:00Z  events=2  level.ERROR=1 level.WARN=1
+2024-01-15T10:02:00Z  events=3  level.DEBUG=1 level.INFO=2
+```
+
+`--span` picks the grouping from the value's shape — `1m` for time windows, `500` for every N events, `request_id` for a field, or `--span-idle 5m` for inactivity gaps — and `--span-summary` turns each closed window into a row. Pipe it and the rows switch to tab-separated records for DuckDB or gnuplot.
+
 One tool: understand an unknown file, tame mixed formats, and surface what matters — no temp files, no intermediate scripts, no manual regex.
 
 Kelora also handles live streams: `tail -f app.log | kelora -j -l error,warn`.

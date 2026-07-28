@@ -18,6 +18,7 @@ Quick Examples:
   kelora simple_json.jsonl --since 2024-01-15T10:01:00Z --until now -l warn,error --stats
   kelora audit.jsonl --freq action                # quick frequency table for one field
   kelora audit.jsonl --exec 'track_freq("action", e.action)' --metrics
+  kelora simple_json.jsonl --span 1m --span-summary   # events per minute (--freq for a breakdown)
   kelora app_monitoring.jsonl --drain -k message
   kelora -f json --merge-sorted app-*.jsonl
   kelora payments_latency.jsonl --parallel --filter 'e.duration_ms > 500' -k order_id,duration_ms,status
@@ -41,6 +42,8 @@ Common Options:
   -s, --stats                   Show only the statistics, with discovered fields
   --freq <FIELD>                Frequency table: count events per distinct value of FIELD
   -m, --metrics                 Show only the tracked metrics
+  --span <N|DURATION|FIELD>     Group events into windows (count, time, or field-change; sequential only)
+  --span-summary                One rollup row per window; needs --span/--span-idle (implies -q)
   --drain                       Summarize log templates (requires -k/--keys, sequential only)
   --drain-diff                  Diff templates between a baseline and a target log (2 inputs, or 1 + --cut)
   --merge-sorted                Merge already-sorted files by timestamp; aborts on missing timestamps, parse failures, or disorder (sequential only)

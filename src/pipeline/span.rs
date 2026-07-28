@@ -4,9 +4,11 @@ use anyhow::{anyhow, Result};
 use chrono::{DateTime, TimeZone, Utc};
 use rhai::Dynamic;
 
+use crate::cli::SpanSummaryFormat;
 use crate::config::{SpanConfig, SpanMode};
 use crate::engine::CompiledExpression;
 use crate::event::{Event, SpanInfo, SpanStatus};
+use crate::pipeline::span_summary as summary;
 use crate::pipeline::PipelineContext;
 use crate::platform::{self, SafeStderr};
 use crate::rhai_functions::span as span_functions;
@@ -102,16 +104,42 @@ struct ActiveSpan {
     events_seen: usize,
     included_count: usize,
     baseline_user: HashMap<String, Dynamic>,
-    collect_details: bool,
+    detail: SpanDetail,
+}
+
+/// What a closing span needs to have accumulated.
+///
+/// These two costs are independent and must not be gated together. Snapshotting
+/// the tracker is O(number of tracked metrics) and is required by anything that
+/// reports per-window values. Cloning every included event is O(events in the
+/// window) in both time and memory — measured at ~27x peak RSS on a 300k-event
+/// window — and is required only by `span.events`, which a summary row never
+/// reads. Gating the clone on `--span-summary` would turn the cheap default path
+/// into an unbounded buffer on a streaming tool.
+#[derive(Clone, Copy)]
+struct SpanDetail {
+    /// Retain each included event for `span.events` (only a hook can read it).
+    collect_events: bool,
+    /// Snapshot the tracker so `span.metrics` can be diffed per window.
+    need_baseline: bool,
+}
+
+impl SpanDetail {
+    fn new(has_hook: bool, has_summary: bool) -> Self {
+        Self {
+            collect_events: has_hook,
+            need_baseline: has_hook || has_summary,
+        }
+    }
+
+    /// Whether a closing span has anything to report at all.
+    fn active(&self) -> bool {
+        self.collect_events || self.need_baseline
+    }
 }
 
 impl ActiveSpan {
-    fn new_count(
-        sequence: u64,
-        index: usize,
-        ctx: &PipelineContext,
-        collect_details: bool,
-    ) -> Self {
+    fn new_count(sequence: u64, index: usize, ctx: &PipelineContext, detail: SpanDetail) -> Self {
         let span_id = format!("#{}", index);
         Self {
             sequence,
@@ -122,12 +150,12 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if collect_details {
+            baseline_user: if detail.need_baseline {
                 ctx.tracker.clone()
             } else {
                 HashMap::new()
             },
-            collect_details,
+            detail,
         }
     }
 
@@ -135,7 +163,7 @@ impl ActiveSpan {
         sequence: u64,
         window: TimeWindow,
         ctx: &PipelineContext,
-        collect_details: bool,
+        detail: SpanDetail,
     ) -> Self {
         let start = ms_to_datetime(window.start_ms);
         let end = ms_to_datetime(window.end_ms);
@@ -154,12 +182,12 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if collect_details {
+            baseline_user: if detail.need_baseline {
                 ctx.tracker.clone()
             } else {
                 HashMap::new()
             },
-            collect_details,
+            detail,
         }
     }
 
@@ -167,7 +195,7 @@ impl ActiveSpan {
         sequence: u64,
         field_value: String,
         ctx: &PipelineContext,
-        collect_details: bool,
+        detail: SpanDetail,
     ) -> Self {
         Self {
             sequence,
@@ -178,12 +206,12 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if collect_details {
+            baseline_user: if detail.need_baseline {
                 ctx.tracker.clone()
             } else {
                 HashMap::new()
             },
-            collect_details,
+            detail,
         }
     }
 
@@ -191,7 +219,7 @@ impl ActiveSpan {
         sequence: u64,
         start_ts: DateTime<Utc>,
         ctx: &PipelineContext,
-        collect_details: bool,
+        detail: SpanDetail,
     ) -> Self {
         Self {
             sequence,
@@ -202,12 +230,12 @@ impl ActiveSpan {
             events: Vec::new(),
             events_seen: 0,
             included_count: 0,
-            baseline_user: if collect_details {
+            baseline_user: if detail.need_baseline {
                 ctx.tracker.clone()
             } else {
                 HashMap::new()
             },
-            collect_details,
+            detail,
         }
     }
 
@@ -216,7 +244,7 @@ impl ActiveSpan {
     }
 
     fn add_event(&mut self, event: &Event) {
-        if self.collect_details {
+        if self.detail.collect_events {
             self.events.push(event.clone());
         }
         self.included_count += 1;
@@ -226,7 +254,8 @@ impl ActiveSpan {
 pub struct SpanProcessor {
     mode: SpanMode,
     compiled_close: Option<CompiledExpression>,
-    collect_details: bool,
+    summary: Option<SpanSummaryFormat>,
+    detail: SpanDetail,
     active_span: Option<ActiveSpan>,
     anchor_start_ms: Option<i64>,
     next_count_index: usize,
@@ -236,16 +265,36 @@ pub struct SpanProcessor {
     /// Metric keys for which a "no per-window value" warning has already been
     /// emitted, so non-additive aggregators warn once rather than per span.
     warned_non_additive: HashSet<String>,
+    /// Set once the collapsed `--span-summary` variant of the non-additive
+    /// warning has been emitted, so the run reports the whole set once instead
+    /// of one line per omitted key.
+    warned_non_additive_collapsed: bool,
+    /// Events whose window had already closed (`SpanStatus::Late`). They belong
+    /// to no span, so every summary row under-counts by this much; a nonzero
+    /// tally is reported once at the end of the run.
+    late_events: usize,
+    /// Span labels already emitted, used only to detect the interleaved-field
+    /// case where one field value yields many spans. Populated for field spans
+    /// with a summary, where it is bounded by the number of rows the user is
+    /// already reading; left empty otherwise.
+    seen_labels: HashSet<String>,
+    warned_repeated_label: bool,
+    warned_shadowed_events: bool,
+    /// Events a time or idle span could not place because they carry no usable
+    /// timestamp. They belong to no span, so a run where every event lands here
+    /// produces no rows at all — silence that needs explaining.
+    unassigned_events: usize,
 }
 
 impl SpanProcessor {
     pub fn new(span: SpanConfig, compiled_close: Option<CompiledExpression>) -> Self {
-        let SpanConfig { mode, .. } = span;
-        let collect_details = compiled_close.is_some();
+        let SpanConfig { mode, summary, .. } = span;
+        let detail = SpanDetail::new(compiled_close.is_some(), summary.is_some());
         Self {
             mode,
             compiled_close,
-            collect_details,
+            summary,
+            detail,
             active_span: None,
             anchor_start_ms: None,
             next_count_index: 0,
@@ -253,6 +302,12 @@ impl SpanProcessor {
             pending: None,
             signal_notice_shown: false,
             warned_non_additive: HashSet::new(),
+            warned_non_additive_collapsed: false,
+            late_events: 0,
+            seen_labels: HashSet::new(),
+            warned_repeated_label: false,
+            warned_shadowed_events: false,
+            unassigned_events: 0,
         }
     }
 
@@ -322,6 +377,8 @@ impl SpanProcessor {
         if self.active_span.is_some() {
             self.close_current_span(ctx)?;
         }
+        self.warn_late_events(ctx);
+        self.warn_unassigned_events(ctx);
         Ok(())
     }
 
@@ -362,6 +419,7 @@ impl SpanProcessor {
                 let assignment = SpanAssignment::new(SpanStatus::Unassigned);
                 self.apply_assignment(event, ctx, &assignment);
                 self.pending = Some(PendingEvent::new(assignment));
+                self.unassigned_events += 1;
                 return Ok(());
             }
         };
@@ -388,6 +446,10 @@ impl SpanProcessor {
                 self.apply_assignment(event, ctx, &assignment);
                 self.pending = Some(PendingEvent::new(assignment));
                 stats::stats_add_late_event();
+                // Counted locally as well: stats_add_late_event is inert unless
+                // --stats is collecting, but a summary row's under-count needs
+                // reporting on every run.
+                self.late_events += 1;
                 return Ok(());
             }
 
@@ -489,6 +551,7 @@ impl SpanProcessor {
                 let assignment = SpanAssignment::new(SpanStatus::Unassigned);
                 self.apply_assignment(event, ctx, &assignment);
                 self.pending = Some(PendingEvent::new(assignment));
+                self.unassigned_events += 1;
                 return Ok(());
             }
         };
@@ -559,12 +622,7 @@ impl SpanProcessor {
         self.next_span_sequence += 1;
         let index = self.next_count_index;
         self.next_count_index += 1;
-        self.active_span = Some(ActiveSpan::new_count(
-            sequence,
-            index,
-            ctx,
-            self.collect_details,
-        ));
+        self.active_span = Some(ActiveSpan::new_count(sequence, index, ctx, self.detail));
     }
 
     fn open_field_span(&mut self, ctx: &PipelineContext, field_value: String) {
@@ -574,30 +632,20 @@ impl SpanProcessor {
             sequence,
             field_value,
             ctx,
-            self.collect_details,
+            self.detail,
         ));
     }
 
     fn open_time_span(&mut self, ctx: &PipelineContext, window: TimeWindow) {
         let sequence = self.next_span_sequence;
         self.next_span_sequence += 1;
-        self.active_span = Some(ActiveSpan::new_time(
-            sequence,
-            window,
-            ctx,
-            self.collect_details,
-        ));
+        self.active_span = Some(ActiveSpan::new_time(sequence, window, ctx, self.detail));
     }
 
     fn open_idle_span(&mut self, ctx: &PipelineContext, start_ts: DateTime<Utc>) {
         let sequence = self.next_span_sequence;
         self.next_span_sequence += 1;
-        self.active_span = Some(ActiveSpan::new_idle(
-            sequence,
-            start_ts,
-            ctx,
-            self.collect_details,
-        ));
+        self.active_span = Some(ActiveSpan::new_idle(sequence, start_ts, ctx, self.detail));
     }
 
     fn close_current_span(&mut self, ctx: &mut PipelineContext) -> Result<()> {
@@ -605,13 +653,17 @@ impl SpanProcessor {
             if span.span_end.is_none() {
                 span.span_end = span.last_event_timestamp;
             }
-            self.run_close_hook(span, ctx)?;
+            self.report_closed_span(span, ctx)?;
         }
         Ok(())
     }
 
-    fn run_close_hook(&mut self, span: ActiveSpan, ctx: &mut PipelineContext) -> Result<()> {
-        if self.compiled_close.is_none() {
+    /// Report a closing span: run the `--span-close` hook, then queue the
+    /// `--span-summary` row. Both read the same metrics delta, so it is computed
+    /// once. The hook runs first so a row reflects any `track_*` call the hook
+    /// makes on the *next* window rather than reordering this one.
+    fn report_closed_span(&mut self, span: ActiveSpan, ctx: &mut PipelineContext) -> Result<()> {
+        if !self.detail.active() {
             return Ok(());
         }
 
@@ -619,38 +671,163 @@ impl SpanProcessor {
             compute_span_metrics(&span, &ctx.tracker, &ctx.internal_tracker);
         self.warn_non_additive(&non_additive, ctx);
 
-        let compiled = self
-            .compiled_close
-            .as_ref()
-            .expect("compiled_close presence checked above");
-        let span_binding = span_functions::SpanBinding::new(
-            span.span_id.clone(),
-            span.span_start,
-            span.span_end,
-            &span.events,
-            metrics_delta,
-        );
-
-        let result = ctx.rhai.execute_compiled_span_close(
-            compiled,
-            &mut ctx.tracker,
-            &mut ctx.internal_tracker,
-            span_binding,
-        );
-
-        result?;
-
-        if platform::SHOULD_TERMINATE.load(std::sync::atomic::Ordering::Relaxed)
-            && !self.signal_notice_shown
-        {
-            let message = crate::config::format_error_message_auto(
-                "Received signal, waiting for span close... (Ctrl+C again to force quit)",
+        if let Some(compiled) = self.compiled_close.clone() {
+            let span_binding = span_functions::SpanBinding::new(
+                span.span_id.clone(),
+                span.span_start,
+                span.span_end,
+                &span.events,
+                span.included_count as i64,
+                metrics_delta.clone(),
             );
-            let _ = SafeStderr::new().writeln(&message);
-            self.signal_notice_shown = true;
+
+            ctx.rhai.execute_compiled_span_close(
+                &compiled,
+                &mut ctx.tracker,
+                &mut ctx.internal_tracker,
+                span_binding,
+            )?;
+
+            if platform::SHOULD_TERMINATE.load(std::sync::atomic::Ordering::Relaxed)
+                && !self.signal_notice_shown
+            {
+                let message = crate::config::format_error_message_auto(
+                    "Received signal, waiting for span close... (Ctrl+C again to force quit)",
+                );
+                let _ = SafeStderr::new().writeln(&message);
+                self.signal_notice_shown = true;
+            }
+        }
+
+        // Rows are stdout data, so only --silent removes them; the script-output
+        // and metrics suppressions deliberately do not. Checked before building
+        // the row so a silent run does no formatting work at all.
+        if let Some(format) = self.summary.clone().filter(|_| !ctx.config.silent) {
+            let label = summary::span_label(&span.span_id, span.span_start);
+            self.warn_repeated_label(&label, ctx);
+            self.warn_shadowed_events_column(&metrics_delta, &format, ctx);
+            ctx.pending_span_rows.push(summary::format_row(
+                &format,
+                &label,
+                span.span_start,
+                span.span_end,
+                &span.span_id,
+                span.included_count as i64,
+                &metrics_delta,
+            ));
         }
 
         Ok(())
+    }
+
+    /// Warn once when a field span's label repeats.
+    ///
+    /// Only one span is active at a time, so interleaved values of the `--span
+    /// FIELD` field each open and close a fresh span. The rollup then shows one
+    /// row per contiguous run rather than one row per distinct value, which looks
+    /// like a per-value report but is not one.
+    fn warn_repeated_label(&mut self, label: &str, ctx: &PipelineContext) {
+        if !matches!(self.mode, SpanMode::Field { .. }) || self.warned_repeated_label {
+            return;
+        }
+        if self.seen_labels.insert(label.to_string()) {
+            return;
+        }
+        self.warned_repeated_label = true;
+        if ctx.config.suppress_warnings || ctx.config.silent {
+            return;
+        }
+        let message = crate::config::format_warning_message_auto(&format!(
+            "--span-summary emitted more than one row for '{}': only one span is open at a \
+             time, so interleaved values of this field split into a row per contiguous run, \
+             not a row per distinct value. Sort the input by the field first, or aggregate \
+             with --freq instead.",
+            label
+        ));
+        let _ = SafeStderr::new().writeln(&message);
+    }
+
+    /// Warn once when a user metric is also called `events`.
+    ///
+    /// The built-in count owns that name. `json` keeps the two apart
+    /// structurally (top-level `events` versus `metrics.events`), but the flat
+    /// formats would show two entries with the same key and no way to tell which
+    /// is which.
+    fn warn_shadowed_events_column(
+        &mut self,
+        metrics: &rhai::Map,
+        format: &SpanSummaryFormat,
+        ctx: &PipelineContext,
+    ) {
+        if self.warned_shadowed_events || matches!(format, SpanSummaryFormat::Json) {
+            return;
+        }
+        if !summary::shadows_events_column(metrics) {
+            return;
+        }
+        self.warned_shadowed_events = true;
+        if ctx.config.suppress_warnings || ctx.config.silent {
+            return;
+        }
+        let message = crate::config::format_warning_message_auto(&format!(
+            "a tracked metric is named '{key}', which is also the built-in event-count column \
+             in --span-summary={fmt}: rows carry two '{key}' entries. Rename the metric, or use \
+             --span-summary=json, where the two stay separate ('{key}' vs 'metrics.{key}').",
+            key = summary::EVENTS_KEY,
+            fmt = match format {
+                SpanSummaryFormat::Tsv => "tsv",
+                _ => "text",
+            }
+        ));
+        let _ = SafeStderr::new().writeln(&message);
+    }
+
+    /// Explain an empty rollup caused by unusable timestamps.
+    ///
+    /// A time or idle span can only place an event that has a timestamp. When
+    /// none of them do, every event is unassigned and `--span-summary` prints
+    /// nothing at all — indistinguishable from "the filters matched nothing"
+    /// unless the reason is stated.
+    fn warn_unassigned_events(&self, ctx: &PipelineContext) {
+        if self.summary.is_none() || self.unassigned_events == 0 {
+            return;
+        }
+        if ctx.config.suppress_warnings || ctx.config.silent {
+            return;
+        }
+        let flag = match self.mode {
+            SpanMode::Idle { .. } => "--span-idle",
+            _ => "--span",
+        };
+        let message = crate::config::format_warning_message_auto(&format!(
+            "{} event(s) had no usable timestamp and could not be placed in a window, so they \
+             are in no --span-summary row. {} needs a parsed timestamp on every event — check \
+             the detected timestamp field with --stats, or group by count (--span N) or field \
+             (--span FIELD) instead.",
+            self.unassigned_events, flag
+        ));
+        let _ = SafeStderr::new().writeln(&message);
+    }
+
+    /// Report events that arrived after their window had already closed.
+    ///
+    /// A late event belongs to no span, so it is counted in no row: the totals a
+    /// reader sums from the rollup are short by exactly this many. Emitted once
+    /// at the end of the run, when the tally is final.
+    fn warn_late_events(&self, ctx: &PipelineContext) {
+        if self.summary.is_none() || self.late_events == 0 {
+            return;
+        }
+        if ctx.config.suppress_warnings || ctx.config.silent {
+            return;
+        }
+        let message = crate::config::format_warning_message_auto(&format!(
+            "{} event(s) arrived after their window had closed and are counted in no \
+             --span-summary row, so the rows under-count by that much. Sort the input by \
+             timestamp to place every event in its own window.",
+            self.late_events
+        ));
+        let _ = SafeStderr::new().writeln(&message);
     }
 
     /// Emit a one-time diagnostic for each non-additive metric that cannot be
@@ -659,9 +836,34 @@ impl SpanProcessor {
     /// global extremes (min/max), giving wrong-or-missing per-window stats with
     /// no indication anything was lost.
     fn warn_non_additive(&mut self, dropped: &[(String, String)], ctx: &PipelineContext) {
-        if ctx.config.suppress_warnings || ctx.config.silent {
+        if ctx.config.suppress_warnings || ctx.config.silent || dropped.is_empty() {
             return;
         }
+
+        // Under --span-summary the omitted keys arrive in bulk — `--describe
+        // latency` alone contributes five — and there is no hook to rewrite, so
+        // one line per key is noise where one line naming the set is the whole
+        // message. A hook author still gets the per-key form, which tells them
+        // exactly which lookup to replace with a span.events loop.
+        if self.summary.is_some() {
+            if self.warned_non_additive_collapsed {
+                return;
+            }
+            self.warned_non_additive_collapsed = true;
+            let mut keys: Vec<&str> = dropped.iter().map(|(key, _)| key.as_str()).collect();
+            keys.sort_unstable();
+            let message = crate::config::format_warning_message_auto(&format!(
+                "--span-summary omits {} non-additive metric(s) ({}): min/max/percentiles/\
+                 cardinality/ranking have no per-window value, so each row carries only the \
+                 additive ones (count, sum, avg, unique, bucket). Add -m for the cumulative \
+                 table, or --span-close with a span.events loop for per-window extremes.",
+                keys.len(),
+                keys.join(", ")
+            ));
+            let _ = SafeStderr::new().writeln(&message);
+            return;
+        }
+
         for (key, op) in dropped {
             if !self.warned_non_additive.insert(key.clone()) {
                 continue;

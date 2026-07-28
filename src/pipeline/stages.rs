@@ -1490,6 +1490,7 @@ mod tests {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         }
     }
 
@@ -1558,6 +1559,7 @@ mod tests {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         let methods = ["POST", "HEAD", "HEAD", "GET"];
@@ -1673,6 +1675,7 @@ mod tests {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         let methods = ["GET", "DELETE", "PUT", "DELETE"];
@@ -1756,6 +1759,7 @@ mod tests {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         let make_event = |level: &str, msg: &str| {
@@ -1842,6 +1846,7 @@ mod tests {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         // Test event before since time (should be skipped)
@@ -1905,6 +1910,7 @@ mod tests {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         // Test event before until time (should be emitted)
@@ -1967,6 +1973,7 @@ mod tests {
             discovered_keys: std::collections::HashSet::new(),
             discovered_levels_output: std::collections::HashSet::new(),
             discovered_keys_output: std::collections::HashSet::new(),
+            pending_span_rows: Vec::new(),
         };
 
         // Test event without timestamp (should be emitted - pass through behavior)

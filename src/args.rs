@@ -61,6 +61,12 @@ pub fn validate_cli_args(cli: &Cli) -> Result<()> {
         ));
     }
 
+    if cli.span_summary.is_some() && cli.span.is_none() && cli.span_idle.is_none() {
+        return Err(anyhow::anyhow!(
+            "--span-summary requires --span or --span-idle. Use --span 1m for per-minute rollups, --span N for fixed-size spans, or --span-idle 30s for inactivity-based spans."
+        ));
+    }
+
     if cli.multiline.is_none() && cli.multiline_join != MultilineJoin::Space {
         return Err(anyhow::anyhow!(
             "--multiline-join requires --multiline. Start with --multiline indent, --multiline blank, or see --help-multiline for regex/timestamp strategies."

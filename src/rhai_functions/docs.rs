@@ -334,6 +334,9 @@ SPAN CONTEXT (available inside --span-close):
 span.id                              Span identifier ('#index' for count, 'ISO/DURATION' for time)
 span.start                           Span start as DateTime (time spans) or () for count spans
 span.end                             Span end as DateTime (time spans) or () for count spans
+span.label                           span.start as RFC3339 seconds when present, else span.id — the
+                                     label --span-summary uses, so a hook need not branch on the
+                                     span mode.
 span.size                            Number of events that survived the span
 span.events                          Array of event maps for the span in arrival order
 span.metrics                         Per-window metrics from additive track_* calls: track_freq,
@@ -342,6 +345,11 @@ span.metrics                         Per-window metrics from additive track_* ca
                                      top/bottom, top_by/bottom_by) have no per-window value and are
                                      omitted with a warning; iterate span.events to compute them
                                      per window.
+span.metric(name)                    One metric's per-window value, or 0 when the window produced
+                                     none. Takes a dotted path: span.metric("level.ERROR"). Prefer
+                                     this over span.metrics.get_path(name, 0) — zero deltas are
+                                     omitted from the map, so a bare lookup returns () and
+                                     arithmetic on it fails.
 
 EVENT METADATA (the `meta` map, available in --filter/--exec):
 meta.parsed_ts                       Parsed timestamp of the event as a UTC datetime, or () if the
@@ -691,6 +699,30 @@ kelora -j api_logs.jsonl --exec '
 
 # Show local timestamps
 kelora -j api_logs.jsonl -z --since yesterday
+
+WINDOWED ROLLUPS (--span):
+# Events per minute — one row per window, no script needed
+kelora -j api_logs.jsonl --span 1m --span-summary
+
+# Errors per 5 minutes
+kelora -j api_logs.jsonl -l error --span 5m --span-summary
+
+# Per-minute breakdown by level. Note --span-summary is required: on its own,
+# --freq aggregates the whole run and the window does nothing to it.
+kelora -j api_logs.jsonl --span 1m --freq level --span-summary
+
+# Session sizes from inactivity gaps, and per-request rollups
+kelora -j api_logs.jsonl --span-idle 5m --span-summary
+kelora -j api_logs.jsonl --span request_id --span-summary
+
+# Time series out (tsv is automatic when piped; rows are sparse, so empty
+# windows are absent rather than zero)
+kelora -j api_logs.jsonl --span 1m --span-summary=tsv | duckdb
+
+# Custom shape: --span-close for anything the row model does not cover
+kelora -j api_logs.jsonl -q --span 1m \
+  --exec 'track_avg("lat", e.duration_ms)' \
+  --span-close 'print(`${span.label} p_avg=${span.metric("lat")}`)'
 
 METRICS & AGGREGATION:
 # Count errors by type with metrics

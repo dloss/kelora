@@ -255,6 +255,10 @@ pub enum SpanMode {
 pub struct SpanConfig {
     pub mode: SpanMode,
     pub close_script: Option<String>,
+    /// Emit one rollup row per closed span (`--span-summary`). Never holds
+    /// `SpanSummaryFormat::Auto`: the terminal-vs-pipe choice is resolved once
+    /// here, since rows stream and cannot be re-decided per row.
+    pub summary: Option<crate::cli::SpanSummaryFormat>,
 }
 
 /// Input format enumeration
@@ -702,6 +706,23 @@ impl KeloraConfig {
         self.hints_allowed() || self.output.discover_fields.is_some()
     }
 
+    /// Whether the `--span` composition hints may be emitted.
+    ///
+    /// Same rules as [`hints_allowed`](Self::hints_allowed), except that a
+    /// data-only mode does *not* hush them, following the `--discover`
+    /// precedent in [`format_fallback_hint_allowed`](Self::format_fallback_hint_allowed).
+    /// Two of the three hints exist precisely to flag that `-m`/`--freq`/
+    /// `--describe`/`--card` has quietly discarded the span's output, so letting
+    /// that mode suppress them would make them unreachable by construction. They
+    /// go to stderr and never touch the stdout data channel. An explicit
+    /// `--no-hints`/`--silent` still wins.
+    pub fn span_hints_allowed(&self) -> bool {
+        if self.processing.silent || self.processing.hints_user_suppressed {
+            return false;
+        }
+        true
+    }
+
     /// Whether *all* advisory output (both warnings and hints) is suppressed —
     /// the legacy `--no-diagnostics` umbrella. Used to gate informational output
     /// (config expansion) and per-line verbose error detail.
@@ -1106,13 +1127,19 @@ impl KeloraConfig {
         // Check no_metrics first to handle flag conflicts
         let has_metric_sugar =
             !cli.freq.is_empty() || !cli.describe.is_empty() || !cli.card.is_empty();
+        // --span-summary is the caller asking for per-window values, so the
+        // cumulative table that --freq/--describe/--card would otherwise imply
+        // yields to it and stdout carries only span rows. An *explicit*
+        // -m/--metrics=FMT still wins, per the house rule that an explicit flag
+        // beats an implied default.
+        let span_summary_owns_stdout = cli.span_summary.is_some();
         let metrics_format = if cli.no_metrics {
             None
         } else if cli.metrics.is_some() {
             cli.metrics.clone()
         } else if cli.with_metrics {
             Some(crate::cli::MetricsFormat::Auto)
-        } else if has_metric_sugar {
+        } else if has_metric_sugar && !span_summary_owns_stdout {
             // --freq/--describe synthesize tracking; default to the auto view
             // (human table on a TTY, tsv when piped) unless an explicit format /
             // --no-metrics says otherwise.
@@ -1128,12 +1155,15 @@ impl KeloraConfig {
             .clone()
             .or(cli.discover_final_fields.clone());
         let suppress_events_for_discover = discover_fields.is_some();
+        // --span-summary makes the rollup the data, exactly like --freq/--drain.
+        let suppress_events_for_span_summary = cli.span_summary.is_some();
 
         // Combine suppressions from stats/metrics data-only modes
         if suppress_events_for_stats
             || suppress_events_for_metrics
             || suppress_events_for_drain
             || suppress_events_for_discover
+            || suppress_events_for_span_summary
         {
             quiet_events = true;
         }
@@ -1162,6 +1192,14 @@ impl KeloraConfig {
                 suppress_hints = true;
             }
             suppress_script_output = true;
+        }
+        // --span-summary hushes hints like the other data-only modes, but must
+        // NOT suppress script output: a `--span-close` hook alongside it is a
+        // documented combination, and swallowing its print/eprint is the very
+        // failure --span-summary exists to route around. Rows themselves are
+        // data, not script output, so they are unaffected either way.
+        if suppress_events_for_span_summary && !force_show_hints {
+            suppress_hints = true;
         }
 
         if silent {
@@ -1864,6 +1902,7 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
         return Ok(Some(SpanConfig {
             mode: SpanMode::Idle { timeout_ms },
             close_script: cli.span_close.clone(),
+            summary: resolve_span_summary(cli),
         }));
     }
 
@@ -1881,6 +1920,7 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
                 events_per_span: count,
             },
             close_script: cli.span_close.clone(),
+            summary: resolve_span_summary(cli),
         }));
     }
 
@@ -1897,6 +1937,7 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
         return Ok(Some(SpanConfig {
             mode: SpanMode::Time { duration_ms },
             close_script: cli.span_close.clone(),
+            summary: resolve_span_summary(cli),
         }));
     }
 
@@ -1912,7 +1953,106 @@ fn parse_span_config(cli: &crate::Cli) -> anyhow::Result<Option<SpanConfig>> {
             field_name: span_spec.to_string(),
         },
         close_script: cli.span_close.clone(),
+        summary: resolve_span_summary(cli),
     }))
+}
+
+/// Point out the three ways a span mode ends up producing nothing useful.
+///
+/// Each fires only on a concrete footgun, per the rule that a hint names a
+/// likely mistake rather than nagging about an empty result. Returns the hint
+/// text so the caller owns the stderr write.
+pub fn span_hints(config: &KeloraConfig, cli: &crate::Cli) -> Vec<String> {
+    let Some(span) = config.processing.span.as_ref() else {
+        return Vec::new();
+    };
+    if !config.span_hints_allowed() {
+        return Vec::new();
+    }
+
+    let mut hints = Vec::new();
+    let has_summary = span.summary.is_some();
+    let has_hook = span.close_script.is_some();
+    let sugar = if !cli.freq.is_empty() {
+        Some("--freq")
+    } else if !cli.describe.is_empty() {
+        Some("--describe")
+    } else if !cli.card.is_empty() {
+        Some("--card")
+    } else {
+        None
+    };
+
+    // (a) The span is tagging events and nothing reads the tag: no hook, no
+    // rollup, and no stage mentioning the span metadata. A stage that mentions
+    // `meta.span_` some other way just keeps this quiet, which is the safe
+    // direction for a substring test.
+    let reads_span_meta = config.processing.stages.iter().any(|stage| match stage {
+        ScriptStageType::Filter { script, includes } => {
+            script.contains("meta.span_")
+                || includes
+                    .iter()
+                    .any(|include| include.content.contains("meta.span_"))
+        }
+        ScriptStageType::Exec(script) | ScriptStageType::Assert(script) => {
+            script.contains("meta.span_")
+        }
+        ScriptStageType::LevelFilter { .. } => false,
+    });
+    // Skipped when the metrics sugar is in play: (b) says the same thing about
+    // the same command, and names the flag that is actually ignoring the window.
+    if !has_summary && !has_hook && !reads_span_meta && sugar.is_none() {
+        hints.push(
+            "--span is only tagging events; add --span-summary for a per-window rollup."
+                .to_string(),
+        );
+    }
+
+    // (b) The metrics sugar aggregates the whole run, so the span silently does
+    // nothing to it — the combination looks windowed and is not.
+    if !has_summary {
+        if let Some(sugar) = sugar {
+            hints.push(format!(
+                "{} aggregates the whole run, not each span; add --span-summary for per-window \
+                 values.",
+                sugar
+            ));
+        }
+    }
+
+    // (c) A data-only mode has already swallowed the hook's print/eprint, so the
+    // hook runs and its output goes nowhere. Deliberately does not suggest
+    // --script-output: that flag does not currently win against a data-only
+    // mode, so it would be advice that fails.
+    if has_hook && !has_summary && config.processing.suppress_script_output {
+        hints.push(
+            "--span-close output is discarded while another mode owns stdout (-m/--freq/\
+             --describe/--card/--drain/--discover/--stats); use --span-summary for rows that \
+             survive."
+                .to_string(),
+        );
+    }
+
+    hints
+}
+
+/// Resolve `--span-summary`'s format once, up front.
+///
+/// `Auto` picks the human shape on a terminal and `tsv` when redirected, the
+/// same rule as `-m`/`--freq`. It must be settled here rather than at output
+/// time because rows stream out as spans close, so there is no single later
+/// moment that could decide it for the whole run.
+fn resolve_span_summary(cli: &crate::Cli) -> Option<crate::cli::SpanSummaryFormat> {
+    use crate::cli::SpanSummaryFormat;
+
+    match cli.span_summary.clone()? {
+        SpanSummaryFormat::Auto => Some(if crate::tty::is_stdout_tty() {
+            SpanSummaryFormat::Text
+        } else {
+            SpanSummaryFormat::Tsv
+        }),
+        explicit => Some(explicit),
+    }
 }
 
 fn is_valid_field_name(name: &str) -> bool {
