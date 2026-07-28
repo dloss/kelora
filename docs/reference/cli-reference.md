@@ -396,24 +396,36 @@ rejects the result as unsorted rather than merging it silently.
 
 Multi-line event detection strategy. Value format: `<strategy>[:key=value[:key=value...]]`. Supported strategies:
 
-- `timestamp` — optional `format=` hint (e.g., `timestamp:format=%Y-%m-%d %H-%M-%S`)  
-  *(Literal `:` characters in the format string are not supported yet.)*
+- `timestamp` — a line beginning with a timestamp starts a new event.
+  Detection locks onto the first format family it sees, so other time-like
+  prefixes on continuation lines cannot split an event. Options:
+  `format=` pins the header format exclusively
+  (e.g., `timestamp:format=%Y-%m-%d %H:%M:%S`); `loose` accepts any
+  recognizable timestamp (mixed-format files).
+- `indent` — indented and blank lines continue the current event.
+- `blank` — blank lines separate events (paragraph mode).
+- `regex` — requires `match=REGEX`, optional `end=REGEX`.
+- `all` — entire input as one event.
 
-- `indent`
-- `regex` — requires `match=REGEX`, optional `end=REGEX`
-- `all`
+Option values may contain literal colons; only `:match=` / `:end=` /
+`:format=` / `:loose` act as separators.
+
+Events never span input files, and `meta.line_num`/`meta.filename` point at
+each event's first physical line.
 
 ```bash
 kelora -M all config.json                        # Entire input as one event
 kelora -M timestamp app.log                      # Auto-detect timestamp headers
-kelora -M 'timestamp:format=%Y-%m-%d %H-%M-%S' app.log
+kelora -M 'timestamp:format=%Y-%m-%d %H:%M:%S' app.log
+kelora -M blank report.txt                       # Blank-line separated records
 kelora -M 'regex:match=^\\d{4}-' app.log         # Start pattern only
 kelora -M 'regex:match=^START:end=^END$' app.log # Start + end patterns
 ```
 
 #### `--multiline-join <MODE>`
 
-Join multiline lines with the specified separator. Default: `space`.
+Join multiline lines with the specified separator. Default: `space`
+(`newline` for `--multiline all`).
 
 **Values:**
 
@@ -424,6 +436,24 @@ Join multiline lines with the specified separator. Default: `space`.
 ```bash
 kelora -M indent --multiline-join newline app.log
 ```
+
+#### `--multiline-timeout <DURATION>`
+
+Flush a buffered partial event after this much input inactivity (e.g.
+`400ms`, `2s`; `0` = never). Default: off when every input is a regular file
+(file runs stay deterministic), `400ms` when reading a stream (stdin, FIFO)
+so `tail -f | kelora` shows events promptly. When a defaulted stream flush
+fires, kelora prints a one-time hint.
+
+```bash
+tail -f app.log | kelora -M timestamp --multiline-timeout 2s
+```
+
+#### `--multiline-max-lines <N>`
+
+Split a multiline event after N buffered lines and warn once (safety cap
+against a never-matching pattern buffering the whole input). Default:
+`10000`; `0` = unlimited. Ignored by `--multiline all`.
 
 ### Prefix Extraction
 

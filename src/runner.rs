@@ -19,7 +19,6 @@ use crate::parsers;
 use crate::parsers::type_conversion::TypeMap;
 use crate::pipeline::{
     self, create_input_reader, create_pipeline_builder_from_config, create_pipeline_from_config,
-    DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS,
 };
 use crate::platform::{Ctrl, SafeStderr};
 use crate::readers;
@@ -1104,11 +1103,8 @@ fn run_pipeline_sequential_internal<W: Write>(
         }
     };
 
-    let multiline_timeout = config
-        .input
-        .multiline
-        .as_ref()
-        .map(|_| Duration::from_millis(DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS));
+    let multiline_timeout = config.input.multiline.as_ref().and_then(|m| m.idle_timeout);
+    let mut multiline_state = MultilineSeqState::default();
 
     let mut current_csv_headers: Option<Vec<String>> = None;
     let mut current_csv_type_map: Option<TypeMap> = None;
@@ -1156,6 +1152,7 @@ fn run_pipeline_sequential_internal<W: Write>(
 
         if let Some(duration) = deadline_duration {
             if duration.is_zero() {
+                multiline_state.note_idle_flush(&pipeline, config);
                 let results = pipeline.flush(&mut ctx)?;
                 for formatted in results {
                     write_formatted_output(formatted, output, &mut gap_tracker)?;
@@ -1211,6 +1208,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     current_input_format: &mut current_input_format,
                                     gap_tracker: &mut gap_tracker,
                                     csv_quote_open: &mut csv_quote_open,
+                                    multiline_state: &mut multiline_state,
                                 },
                             )? {
                                 shutdown_requested = true;
@@ -1226,6 +1224,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                     }
                 }
                 recv(timeout) -> _ => {
+                    multiline_state.note_idle_flush(&pipeline, config);
                     let results = pipeline.flush(&mut ctx)?;
                     for formatted in results {
                         write_formatted_output(formatted, output, &mut gap_tracker)?;
@@ -1280,6 +1279,7 @@ fn run_pipeline_sequential_internal<W: Write>(
                                     current_input_format: &mut current_input_format,
                                     gap_tracker: &mut gap_tracker,
                                     csv_quote_open: &mut csv_quote_open,
+                                    multiline_state: &mut multiline_state,
                                 },
                             )? {
                                 shutdown_requested = true;
@@ -1352,6 +1352,78 @@ struct ReaderContext<'a, W: Write> {
     /// True while a quoted CSV/TSV field is open across physical lines, so the
     /// continuation lines of a multi-line record bypass per-line filtering.
     csv_quote_open: &'a mut bool,
+    multiline_state: &'a mut MultilineSeqState,
+}
+
+/// Per-run multiline bookkeeping for the sequential driver: file-boundary
+/// detection and once-per-run advisories.
+#[derive(Default)]
+struct MultilineSeqState {
+    /// Filename of the previous line fed to the chunker, for boundary flushes.
+    /// Tracked separately from the CSV `last_filename` (which is updated on
+    /// header re-init, not per line).
+    last_filename: Option<String>,
+    seen_line: bool,
+    cap_warned: bool,
+    idle_hinted: bool,
+}
+
+impl MultilineSeqState {
+    /// The current line belongs to a different file than the previous one, so
+    /// the buffered event (if any) must be flushed — events never span files.
+    fn crosses_file_boundary(&mut self, filename: &Option<String>) -> bool {
+        let crossed = self.seen_line && self.last_filename != *filename;
+        if crossed || !self.seen_line {
+            self.last_filename = filename.clone();
+        }
+        self.seen_line = true;
+        crossed
+    }
+
+    /// Called right before an idle-timeout flush. Hints once per run when the
+    /// timeout was defaulted (stream input): the user may not know a slow
+    /// writer can split events. An explicit --multiline-timeout stays quiet.
+    fn note_idle_flush(&mut self, pipeline: &pipeline::Pipeline, config: &KeloraConfig) {
+        if self.idle_hinted || !pipeline.has_pending_chunk() {
+            return;
+        }
+        self.idle_hinted = true;
+        let Some(ml) = config.input.multiline.as_ref() else {
+            return;
+        };
+        if ml.idle_timeout_explicit || !config.hints_allowed() {
+            return;
+        }
+        let timeout_ms = ml.idle_timeout.map(|d| d.as_millis()).unwrap_or(0);
+        let _ = SafeStderr::new().writeln(&config.format_hint_message(&format!(
+            "multiline: flushed a buffered event after {}ms of input inactivity; if events \
+             from a slow writer appear split, raise --multiline-timeout (0 = never flush early)",
+            timeout_ms
+        )));
+    }
+
+    /// Called after feeding a line. Warns once per run when the line cap
+    /// split an event.
+    fn note_cap_hit(&mut self, pipeline: &mut pipeline::Pipeline, config: &KeloraConfig) {
+        if !pipeline.take_multiline_cap_hit() || self.cap_warned {
+            return;
+        }
+        self.cap_warned = true;
+        if !config.warnings_allowed() {
+            return;
+        }
+        let max_lines = config
+            .input
+            .multiline
+            .as_ref()
+            .map(|m| m.max_lines)
+            .unwrap_or(0);
+        let _ = SafeStderr::new().writeln(&config.format_warning_message(&format!(
+            "multiline: an event exceeded {} lines and was split; raise --multiline-max-lines \
+             (0 = unlimited) if your events are really that large",
+            max_lines
+        )));
+    }
 }
 
 fn handle_reader_message<W: Write>(
@@ -1372,6 +1444,7 @@ fn handle_reader_message<W: Write>(
         current_input_format,
         gap_tracker,
         csv_quote_open,
+        multiline_state,
     } = ctx;
     match message {
         ReaderMessage::FormatDetected { detected } => {
@@ -1410,6 +1483,7 @@ fn handle_reader_message<W: Write>(
                 current_input_format,
                 gap_tracker,
                 csv_quote_open,
+                multiline_state,
             )? {
                 ProcessingResult::Continue => Ok(false),
                 ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
@@ -1432,6 +1506,7 @@ fn handle_reader_message<W: Write>(
                 current_input_format,
                 gap_tracker,
                 csv_quote_open,
+                multiline_state,
             )? {
                 ProcessingResult::Continue => Ok(false),
                 ProcessingResult::TakeLimitExhausted | ProcessingResult::Stop => Ok(true),
@@ -1488,6 +1563,7 @@ fn process_line_sequential<W: Write>(
     current_input_format: &mut config::InputFormat,
     gap_tracker: &mut Option<crate::formatters::GapTracker>,
     csv_quote_open: &mut bool,
+    multiline_state: &mut MultilineSeqState,
 ) -> Result<ProcessingResult> {
     let line = line_result?;
     *line_num += 1;
@@ -1572,11 +1648,15 @@ fn process_line_sequential<W: Write>(
         }
 
         if line.trim().is_empty() {
-            // Only skip empty lines for structured formats, not for line format
-            if !matches!(effective_input_format, config::InputFormat::Line) {
+            // Only skip empty lines for structured formats, not for line format.
+            // With --multiline active, blank lines are part of event-boundary
+            // semantics (continuation for indent/timestamp, separator for
+            // blank), so they must reach the chunker for every format.
+            if !matches!(effective_input_format, config::InputFormat::Line)
+                && config.input.multiline.is_none()
+            {
                 return Ok(ProcessingResult::Continue);
             }
-            // For line format, continue processing the empty line
         }
 
         // For CSV formats, detect file changes and reinitialize parser, or handle first line for stdin
@@ -1646,13 +1726,28 @@ fn process_line_sequential<W: Write>(
         *csv_quote_open = !*csv_quote_open;
     }
 
-    // Update metadata with filename tracking
-    ctx.meta.line_num = Some(*line_num);
-    ctx.meta.filename = current_filename;
+    // An event never spans input files: entering a new file flushes whatever
+    // the chunker still buffers from the previous one.
+    if config.input.multiline.is_some()
+        && multiline_state.crosses_file_boundary(&current_filename)
+        && pipeline.has_pending_chunk()
+    {
+        let results = pipeline.flush(ctx)?;
+        for formatted in results {
+            write_formatted_output(formatted, output, gap_tracker)?;
+        }
+    }
 
-    // Process line through pipeline
-    match pipeline.process_line(line, ctx) {
+    // Process line through pipeline; event metadata (line number, filename) is
+    // set per assembled chunk from the chunk's provenance.
+    let chunk_line = pipeline::ChunkLine {
+        text: line,
+        line_num: *line_num,
+        filename: current_filename,
+    };
+    match pipeline.process_line(chunk_line, ctx) {
         Ok(results) => {
+            multiline_state.note_cap_hit(pipeline, config);
             // Count output lines for stats
             if config.output.stats.is_some() && !results.is_empty() {
                 stats_add_line_output();

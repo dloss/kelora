@@ -486,13 +486,19 @@ fn worker_process_batch(
 
     for (line_idx, line) in batch.lines.iter().enumerate() {
         let current_line_num = batch.start_line_num + line_idx;
+        let line_filename = batch.filenames.get(line_idx).cloned().flatten();
         ctx.meta.line_num = Some(current_line_num);
-        ctx.meta.filename = batch.filenames.get(line_idx).cloned().flatten();
+        ctx.meta.filename = line_filename.clone();
 
         crate::rhai_functions::strings::clear_captured_prints();
         crate::rhai_functions::strings::clear_captured_eprints();
 
-        match pipeline.process_line(line.clone(), ctx) {
+        let chunk_line = pipeline::ChunkLine {
+            text: line.clone(),
+            line_num: current_line_num,
+            filename: line_filename,
+        };
+        match pipeline.process_line(chunk_line, ctx) {
             Ok(formatted_results) => {
                 if !formatted_results.is_empty() {
                     ctx.internal_stats.lines_output += 1;
@@ -643,22 +649,16 @@ fn worker_process_event_batch(
 
     let mut batch_results = Vec::with_capacity(event_batch.events.len());
 
-    for (event_idx, event_string) in event_batch.events.iter().enumerate() {
-        // Per-event start line from the chunker; the pre-multiline fallback
-        // (event index as a line offset) only applies if it is ever missing.
-        let current_line_num = event_batch
-            .line_nums
-            .get(event_idx)
-            .copied()
-            .unwrap_or(event_batch.start_line_num + event_idx);
+    for chunk in event_batch.events.iter() {
+        let current_line_num = chunk.first_line_num;
         ctx.meta.line_num = Some(current_line_num);
-        ctx.meta.filename = event_batch.filenames.get(event_idx).cloned().flatten();
+        ctx.meta.filename = chunk.filename.clone();
 
         crate::rhai_functions::strings::clear_captured_prints();
         crate::rhai_functions::strings::clear_captured_eprints();
 
         // For event batches, skip chunking and go directly to parsing
-        match pipeline.process_event_string(event_string.clone(), ctx) {
+        match pipeline.process_event_string(chunk.text.clone(), ctx) {
             Ok(formatted_results) => {
                 if !formatted_results.is_empty() {
                     ctx.internal_stats.lines_output += 1;
@@ -690,7 +690,7 @@ fn worker_process_event_batch(
                             file_ops,
                         } = formatted_result;
                         let mut dummy_event = Event::default_with_line(line);
-                        dummy_event.set_metadata(current_line_num, None);
+                        dummy_event.set_metadata(current_line_num, chunk.filename.clone());
 
                         batch_results.push(ProcessedEvent {
                             event: dummy_event,
@@ -773,37 +773,118 @@ fn worker_process_event_batch(
     Ok(true)
 }
 
-/// Chunker thread: converts line batches to event batches for multiline processing
+/// Runtime knobs for the chunker thread that come from config: the idle-flush
+/// timeout and preformatted once-per-run advisories (None when suppressed).
+pub(crate) struct ChunkerRuntime {
+    pub idle_timeout: Option<Duration>,
+    pub idle_hint: Option<String>,
+    pub cap_warning: Option<String>,
+}
+
+/// Chunker thread: converts line batches to event batches for multiline
+/// processing. Chunks carry their own provenance, so no filename/line-number
+/// juggling is needed here; a filename change flushes the buffered event so
+/// records never span input files, and (like the sequential driver) an idle
+/// timeout flushes a partial event when a stream stalls.
 pub(crate) fn chunker_thread(
     line_batch_receiver: Receiver<super::types::Batch>,
     event_batch_sender: Sender<WorkMessage>,
     multiline_config: crate::config::MultilineConfig,
-    input_format: crate::config::InputFormat,
+    runtime: ChunkerRuntime,
     ctrl_rx: Receiver<Ctrl>,
 ) -> Result<()> {
-    // Create a chunker for multiline processing
-    let mut chunker =
-        crate::pipeline::multiline::create_multiline_chunker(&multiline_config, input_format)
-            .map_err(|e| anyhow::anyhow!("Failed to create chunker: {}", e))?;
+    let mut chunker = crate::pipeline::multiline::create_multiline_chunker(&multiline_config)
+        .map_err(|e| anyhow::anyhow!("Failed to create chunker: {}", e))?;
 
-    // Track metadata required to emit accurate event batches across line boundaries
-    let mut pending_event_filename: Option<Option<String>> = None;
-    // First physical line of the event currently buffered in the chunker, so a
-    // multiline event is reported at its own start rather than at the line that
-    // flushed it (#368). Tracked exactly like `pending_event_filename`.
-    let mut pending_event_line_num: Option<usize> = None;
+    let mut chunks: Vec<crate::pipeline::Chunk> = Vec::new();
     let mut next_event_batch_id = 0u64;
-    let mut last_start_line_num: usize = 0;
+    let mut last_filename: Option<String> = None;
+    let mut seen_line = false;
+    let mut idle_hinted = false;
+    let mut cap_warned = false;
     let mut last_csv_headers: Option<Vec<String>> = None;
     let mut last_csv_type_map: Option<TypeMap> = None;
 
-    while let Ok(batch) = line_batch_receiver.recv() {
-        // Check for shutdown
-        if let Ok(Ctrl::Shutdown { .. }) = ctrl_rx.try_recv() {
-            break;
+    let send_chunks = |chunks: &mut Vec<crate::pipeline::Chunk>,
+                       next_id: &mut u64,
+                       csv_headers: Option<Vec<String>>,
+                       csv_type_map: Option<TypeMap>|
+     -> bool {
+        if chunks.is_empty() {
+            return true;
         }
+        let event_batch = EventBatch {
+            id: *next_id,
+            events: std::mem::take(chunks),
+            csv_headers,
+            csv_type_map,
+        };
+        *next_id = next_id.wrapping_add(1);
+        event_batch_sender
+            .send(WorkMessage::EventBatch(event_batch))
+            .is_ok()
+    };
 
-        last_start_line_num = batch.start_line_num;
+    'outer: loop {
+        let deadline = runtime
+            .idle_timeout
+            .filter(|_| chunker.has_pending())
+            .map(|t| Instant::now() + t);
+
+        let batch = if let Some(deadline) = deadline {
+            let wait = deadline.saturating_duration_since(Instant::now());
+            let timeout = crossbeam_channel::after(wait);
+            select! {
+                recv(ctrl_rx) -> msg => {
+                    match msg {
+                        Ok(Ctrl::Shutdown { .. }) => break 'outer,
+                        Ok(Ctrl::PrintStats) => continue 'outer,
+                        Err(_) => break 'outer,
+                    }
+                }
+                recv(line_batch_receiver) -> msg => {
+                    match msg {
+                        Ok(batch) => batch,
+                        Err(_) => break 'outer,
+                    }
+                }
+                recv(timeout) -> _ => {
+                    if !idle_hinted {
+                        idle_hinted = true;
+                        if let Some(hint) = &runtime.idle_hint {
+                            let _ = crate::platform::SafeStderr::new().writeln(hint);
+                        }
+                    }
+                    chunker.flush(&mut chunks);
+                    if !send_chunks(
+                        &mut chunks,
+                        &mut next_event_batch_id,
+                        last_csv_headers.clone(),
+                        last_csv_type_map.clone(),
+                    ) {
+                        break 'outer;
+                    }
+                    continue 'outer;
+                }
+            }
+        } else {
+            select! {
+                recv(ctrl_rx) -> msg => {
+                    match msg {
+                        Ok(Ctrl::Shutdown { .. }) => break 'outer,
+                        Ok(Ctrl::PrintStats) => continue 'outer,
+                        Err(_) => break 'outer,
+                    }
+                }
+                recv(line_batch_receiver) -> msg => {
+                    match msg {
+                        Ok(batch) => batch,
+                        Err(_) => break 'outer,
+                    }
+                }
+            }
+        };
+
         if batch.csv_headers.is_some() {
             last_csv_headers = batch.csv_headers.clone();
         }
@@ -811,79 +892,54 @@ pub(crate) fn chunker_thread(
             last_csv_type_map = batch.csv_type_map.clone();
         }
 
-        let mut events = Vec::new();
-        let mut event_filenames = Vec::new();
-        let mut event_line_nums = Vec::new();
-
-        // Process each line through chunker
         for (line_idx, line) in batch.lines.iter().enumerate() {
             let line_filename = batch.filenames.get(line_idx).cloned().flatten();
             let line_num = batch.start_line_num + line_idx;
 
-            if pending_event_filename.is_none() || !chunker.has_pending() {
-                pending_event_filename = Some(line_filename.clone());
-                pending_event_line_num = Some(line_num);
+            // An event never spans input files.
+            if seen_line && last_filename != line_filename {
+                chunker.flush(&mut chunks);
             }
+            if !seen_line || last_filename != line_filename {
+                last_filename = line_filename.clone();
+            }
+            seen_line = true;
 
-            // Feed line to chunker and collect complete events
-            if let Some(chunk) = chunker.feed_line(line.clone()) {
-                let event_filename = pending_event_filename
-                    .take()
-                    .unwrap_or_else(|| line_filename.clone());
-                let event_line_num = pending_event_line_num.take().unwrap_or(line_num);
+            chunker.feed_line(
+                crate::pipeline::ChunkLine {
+                    text: line.clone(),
+                    line_num,
+                    filename: line_filename,
+                },
+                &mut chunks,
+            );
 
-                events.push(chunk);
-                event_filenames.push(event_filename);
-                event_line_nums.push(event_line_num);
-
-                // Current line becomes the first line of the next buffered event
-                pending_event_filename = Some(line_filename.clone());
-                pending_event_line_num = Some(line_num);
+            if chunker.take_cap_hit() && !cap_warned {
+                cap_warned = true;
+                if let Some(warning) = &runtime.cap_warning {
+                    let _ = crate::platform::SafeStderr::new().writeln(warning);
+                }
             }
         }
 
-        // Send event batch to workers if we have events
-        if !events.is_empty() {
-            let event_batch = EventBatch {
-                id: next_event_batch_id,
-                events,
-                start_line_num: batch.start_line_num,
-                line_nums: event_line_nums,
-                filenames: event_filenames,
-                csv_headers: batch.csv_headers,
-                csv_type_map: batch.csv_type_map,
-            };
-
-            next_event_batch_id = next_event_batch_id.wrapping_add(1);
-
-            if event_batch_sender
-                .send(WorkMessage::EventBatch(event_batch))
-                .is_err()
-            {
-                break;
-            }
+        if !send_chunks(
+            &mut chunks,
+            &mut next_event_batch_id,
+            batch.csv_headers,
+            batch.csv_type_map,
+        ) {
+            break;
         }
     }
 
     // Flush any remaining buffered event after input closes or shutdown
-    if chunker.has_pending() {
-        if let Some(chunk) = chunker.flush() {
-            let flushed_filename = pending_event_filename.take().unwrap_or(None);
-            let flushed_line_num = pending_event_line_num.take().unwrap_or(last_start_line_num);
-
-            let event_batch = EventBatch {
-                id: next_event_batch_id,
-                events: vec![chunk],
-                start_line_num: last_start_line_num,
-                line_nums: vec![flushed_line_num],
-                filenames: vec![flushed_filename],
-                csv_headers: last_csv_headers,
-                csv_type_map: last_csv_type_map,
-            };
-
-            let _ = event_batch_sender.send(WorkMessage::EventBatch(event_batch));
-        }
-    }
+    chunker.flush(&mut chunks);
+    let _ = send_chunks(
+        &mut chunks,
+        &mut next_event_batch_id,
+        last_csv_headers,
+        last_csv_type_map,
+    );
 
     Ok(())
 }

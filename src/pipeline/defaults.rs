@@ -1,9 +1,14 @@
-use super::{Chunker, EventLimiter, OutputWriter, WindowManager};
+use super::{Chunk, ChunkLine, Chunker, EventLimiter, OutputWriter, WindowManager};
 use crate::event::Event;
 use std::collections::VecDeque;
 
-/// Default flush timeout for multiline chunkers when input is idle (milliseconds)
+/// Default idle-flush timeout for multiline chunkers reading from a stream
+/// (stdin, FIFO). Regular-file input defaults to no timeout — see
+/// `resolve_multiline_idle_timeout` in main.rs. Milliseconds.
 pub const DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS: u64 = 400;
+
+/// Default line cap for multiline events (`--multiline-max-lines`); 0 = off.
+pub const DEFAULT_MULTILINE_MAX_LINES: usize = 10_000;
 
 /// Default implementations for pipeline stages
 ///
@@ -11,16 +16,23 @@ pub const DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS: u64 = 400;
 pub struct SimpleChunker;
 
 impl Chunker for SimpleChunker {
-    fn feed_line(&mut self, line: String) -> Option<String> {
-        Some(line)
+    fn feed_line(&mut self, line: ChunkLine, out: &mut Vec<Chunk>) {
+        out.push(Chunk {
+            text: line.text,
+            first_line_num: line.line_num,
+            filename: line.filename,
+            line_count: 1,
+        });
     }
 
-    fn flush(&mut self) -> Option<String> {
-        None
-    }
+    fn flush(&mut self, _out: &mut Vec<Chunk>) {}
 
     fn has_pending(&self) -> bool {
         false
+    }
+
+    fn is_passthrough(&self) -> bool {
+        true
     }
 }
 
@@ -40,6 +52,10 @@ pub struct CsvChunker {
     buffer: String,
     /// True while inside a quoted field whose closing quote hasn't been seen yet.
     in_quoted_field: bool,
+    /// Provenance of the buffered record's first physical line.
+    first_line_num: usize,
+    filename: Option<String>,
+    line_count: usize,
 }
 
 impl CsvChunker {
@@ -49,46 +65,66 @@ impl CsvChunker {
 
     /// Re-append a line to the buffer, preserving the newline the reader stripped
     /// so the embedded newline survives into the field value.
-    fn push_line(&mut self, line: &str) {
+    fn push_line(&mut self, line: ChunkLine) {
+        if self.buffer.is_empty() {
+            self.first_line_num = line.line_num;
+            self.filename = line.filename;
+            self.line_count = 0;
+        }
         if !self.buffer.is_empty() {
             self.buffer.push('\n');
         }
-        self.buffer.push_str(line);
+        self.buffer.push_str(&line.text);
+        self.line_count += 1;
+    }
+
+    fn take_buffered(&mut self) -> Chunk {
+        Chunk {
+            text: std::mem::take(&mut self.buffer),
+            first_line_num: self.first_line_num,
+            filename: self.filename.take(),
+            line_count: std::mem::take(&mut self.line_count),
+        }
     }
 }
 
 impl Chunker for CsvChunker {
-    fn feed_line(&mut self, line: String) -> Option<String> {
-        let odd_quotes = line.bytes().filter(|&b| b == b'"').count() % 2 == 1;
+    fn feed_line(&mut self, line: ChunkLine, out: &mut Vec<Chunk>) {
+        let odd_quotes = line.text.bytes().filter(|&b| b == b'"').count() % 2 == 1;
 
         // Fast path: a self-contained record (no open field carried over and an
         // even number of quotes on this line) needs no buffering.
         if self.buffer.is_empty() && !self.in_quoted_field && !odd_quotes {
-            return Some(line);
+            out.push(Chunk {
+                text: line.text,
+                first_line_num: line.line_num,
+                filename: line.filename,
+                line_count: 1,
+            });
+            return;
         }
 
-        self.push_line(&line);
+        self.push_line(line);
         if odd_quotes {
             // An odd number of quotes flips whether we're inside a quoted field.
             self.in_quoted_field = !self.in_quoted_field;
         }
 
-        if self.in_quoted_field {
-            None // still mid-field: wait for the line that closes the quote
-        } else {
-            Some(std::mem::take(&mut self.buffer))
+        if !self.in_quoted_field {
+            let chunk = self.take_buffered();
+            out.push(chunk);
         }
+        // else: still mid-field, wait for the line that closes the quote
     }
 
-    fn flush(&mut self) -> Option<String> {
+    fn flush(&mut self, out: &mut Vec<Chunk>) {
         // At end of input, surface whatever was buffered. If a quote was still
         // open the record is malformed; the parser's completeness guard reports it
         // rather than silently corrupting the columns.
-        if self.buffer.is_empty() {
-            None
-        } else {
+        if !self.buffer.is_empty() {
             self.in_quoted_field = false;
-            Some(std::mem::take(&mut self.buffer))
+            let chunk = self.take_buffered();
+            out.push(chunk);
         }
     }
 
@@ -241,16 +277,19 @@ mod tests {
     /// re-inserts the newline between buffered continuation lines.
     fn chunk_all(input: &str) -> Vec<String> {
         let mut chunker = CsvChunker::new();
-        let mut out = Vec::new();
-        for line in input.lines() {
-            if let Some(record) = chunker.feed_line(line.to_string()) {
-                out.push(record);
-            }
+        let mut chunks = Vec::new();
+        for (idx, line) in input.lines().enumerate() {
+            chunker.feed_line(
+                ChunkLine {
+                    text: line.to_string(),
+                    line_num: idx + 1,
+                    filename: None,
+                },
+                &mut chunks,
+            );
         }
-        if let Some(record) = chunker.flush() {
-            out.push(record);
-        }
-        out
+        chunker.flush(&mut chunks);
+        chunks.into_iter().map(|c| c.text).collect()
     }
 
     #[test]
@@ -289,11 +328,23 @@ mod tests {
     #[test]
     fn unterminated_quote_at_eof_is_flushed_for_the_parser_to_reject() {
         let mut chunker = CsvChunker::new();
-        assert!(chunker.feed_line("\"oops,unclosed".to_string()).is_none());
+        let mut chunks = Vec::new();
+        chunker.feed_line(
+            ChunkLine {
+                text: "\"oops,unclosed".to_string(),
+                line_num: 7,
+                filename: Some("x.csv".to_string()),
+            },
+            &mut chunks,
+        );
+        assert!(chunks.is_empty());
         assert!(chunker.has_pending());
-        let flushed = chunker.flush().expect("buffered partial record");
-        assert_eq!(flushed, "\"oops,unclosed");
-        assert!(!crate::parsers::csv::csv_record_complete(&flushed));
+        chunker.flush(&mut chunks);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0].text, "\"oops,unclosed");
+        assert_eq!(chunks[0].first_line_num, 7);
+        assert_eq!(chunks[0].filename.as_deref(), Some("x.csv"));
+        assert!(!crate::parsers::csv::csv_record_complete(&chunks[0].text));
         assert!(!chunker.has_pending());
     }
 }

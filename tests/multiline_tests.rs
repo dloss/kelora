@@ -948,3 +948,348 @@ fn test_multiline_event_is_reported_at_its_first_line() {
         );
     }
 }
+
+// ---------------------------------------------------------------------------
+// Seam fixes (2026-07): blank-line policy, colon-safe options, file
+// boundaries, provenance metadata, lock-in, caps, timeout flag, join defaults.
+// See dev/multiline-exploration-2026-07.md.
+// ---------------------------------------------------------------------------
+
+fn json_events(stdout: &str) -> Vec<serde_json::Value> {
+    stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("valid JSON event line"))
+        .collect()
+}
+
+#[test]
+fn test_multiline_blank_line_inside_indented_block_is_continuation() {
+    let input =
+        "2024-01-01T10:00:00 ERROR boom\n  at foo\n\n  at bar\n2024-01-01T10:00:01 INFO ok\n";
+
+    // The same input must produce the same events for -f line and -f raw:
+    // the blank line stays inside the event (it used to split the event under
+    // -f line and be silently deleted under -f raw).
+    for fmt in ["line", "raw"] {
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(
+            &[
+                "-f",
+                fmt,
+                "-M",
+                "indent",
+                "--multiline-join=newline",
+                "-F",
+                "json",
+            ],
+            input,
+        );
+        assert_eq!(exit_code, 0);
+        let events = json_events(&stdout);
+        assert_eq!(events.len(), 2, "format {}: two events expected", fmt);
+        let field = if fmt == "raw" { "raw" } else { "line" };
+        let first = events[0][field].as_str().unwrap();
+        assert!(
+            first.contains("at foo") && first.contains("at bar"),
+            "format {}: blank line must not split the trace: {:?}",
+            fmt,
+            first
+        );
+        assert!(
+            first.contains("\n\n"),
+            "format {}: interior blank line must be preserved",
+            fmt
+        );
+    }
+}
+
+#[test]
+fn test_multiline_regex_pattern_may_contain_colons() {
+    let input = "10:00 first\ncont\n10:01 second\n";
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "raw", "-M", r"regex:match=^\d{2}:\d{2}", "-F", "json"],
+        input,
+    );
+    assert_eq!(exit_code, 0, "colon in regex must parse: {}", stderr);
+    assert_eq!(json_events(&stdout).len(), 2);
+}
+
+#[test]
+fn test_multiline_regex_unknown_option_still_errors() {
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "raw", "-M", "regex:match=^A:ends=^E", "-F", "json"],
+        "A\n",
+    );
+    assert_eq!(exit_code, 2, "typo'd option must fail loudly");
+    assert!(
+        stderr.contains("Unknown regex option"),
+        "stderr: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_multiline_event_never_spans_files_and_reports_provenance() {
+    use std::io::Write as _;
+    let dir = tempfile::tempdir().expect("tempdir");
+    let path_a = dir.path().join("a.log");
+    let path_b = dir.path().join("b.log");
+    std::fs::File::create(&path_a)
+        .unwrap()
+        .write_all(b"2024-01-01T10:00:00 ERROR boom\n  at foo\n  at bar\n")
+        .unwrap();
+    std::fs::File::create(&path_b)
+        .unwrap()
+        .write_all(b"  orphan continuation\n2024-01-01T10:00:05 INFO next\n")
+        .unwrap();
+
+    for extra in [&[][..], &["--parallel"][..]] {
+        let mut args = vec![
+            "-f",
+            "raw",
+            "-M",
+            "timestamp",
+            "--exec",
+            "e.file = meta.filename; e.n = meta.line_num",
+            "-F",
+            "json",
+        ];
+        args.extend_from_slice(extra);
+        args.push(path_a.to_str().unwrap());
+        args.push(path_b.to_str().unwrap());
+        let (stdout, stderr, exit_code) = {
+            let binary_path = env!("CARGO_BIN_EXE_kelora");
+            let out = std::process::Command::new(binary_path)
+                .args(&args)
+                .output()
+                .expect("run kelora");
+            (
+                String::from_utf8_lossy(&out.stdout).to_string(),
+                String::from_utf8_lossy(&out.stderr).to_string(),
+                out.status.code().unwrap_or(-1),
+            )
+        };
+        assert_eq!(exit_code, 0, "{}", stderr);
+        let events = json_events(&stdout);
+        let mode = if extra.is_empty() {
+            "sequential"
+        } else {
+            "parallel"
+        };
+        assert_eq!(events.len(), 3, "{}: file boundary must flush", mode);
+        // Event 1 belongs entirely to file a and starts at line 1.
+        assert!(events[0]["file"].as_str().unwrap().ends_with("a.log"));
+        assert_eq!(events[0]["n"].as_i64().unwrap(), 1);
+        assert!(!events[0]["raw"].as_str().unwrap().contains("orphan"));
+        // The orphan continuation is file b's own (junk) event, not part of
+        // file a's trace.
+        assert!(events[1]["file"].as_str().unwrap().ends_with("b.log"));
+        assert!(events[1]["raw"].as_str().unwrap().contains("orphan"));
+        assert!(events[2]["file"].as_str().unwrap().ends_with("b.log"));
+    }
+}
+
+#[test]
+fn test_multiline_metadata_reports_events_first_line_in_parallel() {
+    // Three 3-line events: line numbers must be 1, 4, 7 (they used to be the
+    // event's index in its batch).
+    let input = "2024-01-01T10:00:00 one\n  a\n  b\n2024-01-01T10:00:01 two\n  c\n  d\n2024-01-01T10:00:02 three\n  e\n  f\n";
+    for extra in [&[][..], &["--parallel"][..]] {
+        let mut args = vec![
+            "-f",
+            "raw",
+            "-M",
+            "timestamp",
+            "--exec",
+            "e.n = meta.line_num",
+            "-F",
+            "json",
+        ];
+        args.extend_from_slice(extra);
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(&args, input);
+        assert_eq!(exit_code, 0);
+        let ns: Vec<i64> = json_events(&stdout)
+            .iter()
+            .map(|e| e["n"].as_i64().unwrap())
+            .collect();
+        assert_eq!(ns, vec![1, 4, 7], "extra args: {:?}", extra);
+    }
+}
+
+#[test]
+fn test_multiline_blank_strategy_splits_paragraphs() {
+    let input = "a\nb\n\nc\n\n\nd\ne\n";
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "raw",
+            "-M",
+            "blank",
+            "--multiline-join=newline",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    let events = json_events(&stdout);
+    let texts: Vec<&str> = events.iter().map(|e| e["raw"].as_str().unwrap()).collect();
+    assert_eq!(texts, vec!["a\nb", "c", "d\ne"]);
+}
+
+#[test]
+fn test_multiline_timestamp_locks_format_family() {
+    let input = "2024-01-01T10:00:00 ERROR boom\nnow retrying with backoff\n1234567890 records processed\n17:03 was the incident window\n2024-01-01T10:00:01 INFO ok\n";
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "raw", "-M", "timestamp", "-F", "json"], input);
+    assert_eq!(exit_code, 0);
+    let events = json_events(&stdout);
+    assert_eq!(
+        events.len(),
+        2,
+        "prose/epoch/time-only prefixes must not split ISO-headed events: {:?}",
+        events
+    );
+
+    // loose restores unlocked detection.
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "raw", "-M", "timestamp:loose", "-F", "json"], input);
+    assert_eq!(exit_code, 0);
+    assert!(json_events(&stdout).len() > 2, "loose must not lock");
+}
+
+#[test]
+fn test_multiline_max_lines_cap_splits_and_warns() {
+    let input = "H1\n a\n b\n c\n d\nH2\n";
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "raw",
+            "-M",
+            "indent",
+            "--multiline-max-lines",
+            "3",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert_eq!(json_events(&stdout).len(), 3, "capped event splits in two");
+    assert!(
+        stderr.contains("exceeded 3 lines"),
+        "cap warning expected once: {}",
+        stderr
+    );
+    assert_eq!(
+        stderr.matches("exceeded 3 lines").count(),
+        1,
+        "warning fires once per run"
+    );
+}
+
+#[test]
+fn test_multiline_flag_validation() {
+    // The auxiliary flags require --multiline.
+    for args in [
+        &["--multiline-join=newline"][..],
+        &["--multiline-timeout", "1s"][..],
+        &["--multiline-max-lines", "5"][..],
+    ] {
+        let mut full = vec!["-f", "raw"];
+        full.extend_from_slice(args);
+        let (_stdout, stderr, exit_code) = run_kelora_with_input(&full, "x\n");
+        assert_eq!(exit_code, 2, "{:?} without -M must be rejected", args);
+        assert!(stderr.contains("requires --multiline"), "{}", stderr);
+    }
+
+    // Bad duration is invalid usage.
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "raw", "-M", "indent", "--multiline-timeout", "banana"],
+        "x\n",
+    );
+    assert_eq!(exit_code, 2);
+    assert!(stderr.contains("multiline-timeout"), "{}", stderr);
+}
+
+#[test]
+fn test_multiline_all_join_defaults_to_newline_and_honors_override() {
+    let input = "x\ny\n";
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "raw", "-M", "all", "-F", "json"], input);
+    assert_eq!(exit_code, 0);
+    assert_eq!(json_events(&stdout)[0]["raw"].as_str().unwrap(), "x\ny");
+
+    // --multiline-join used to be silently ignored under `all`.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "raw",
+            "-M",
+            "all",
+            "--multiline-join=space",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert_eq!(json_events(&stdout)[0]["raw"].as_str().unwrap(), "x y");
+}
+
+#[test]
+fn test_multiline_keep_lines_hints_about_pre_assembly_filtering() {
+    let input = "2024-01-01T10:00:00 ERROR boom\n  at foo\n";
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "raw", "-M", "timestamp", "--keep-lines", "ERROR"],
+        input,
+    );
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("before multiline"),
+        "expected pre-assembly hint: {}",
+        stderr
+    );
+}
+
+#[test]
+fn test_multiline_sequential_and_parallel_agree() {
+    // Deterministic corpus with events of varying shapes; timeout is off for
+    // file/stdin-buffered input in tests? stdin counts as a stream, so pin the
+    // timeout off explicitly to keep the comparison timing-independent.
+    let mut input = String::new();
+    for i in 0..500 {
+        input.push_str(&format!(
+            "2024-01-01T10:{:02}:{:02} event {}\n",
+            i / 60,
+            i % 60,
+            i
+        ));
+        for j in 0..(i % 4) {
+            input.push_str(&format!("  frame {}\n", j));
+        }
+        if i % 7 == 0 {
+            input.push('\n');
+        }
+    }
+
+    let args_base = [
+        "-f",
+        "raw",
+        "-M",
+        "timestamp",
+        "--multiline-timeout",
+        "0",
+        "--multiline-join=newline",
+        "-F",
+        "json",
+    ];
+    let (seq, _e1, c1) = run_kelora_with_input(&args_base, &input);
+    let mut par_args = args_base.to_vec();
+    par_args.push("--parallel");
+    let (par, _e2, c2) = run_kelora_with_input(&par_args, &input);
+    assert_eq!(c1, 0);
+    assert_eq!(c2, 0);
+    assert_eq!(seq, par, "sequential and parallel must agree byte-for-byte");
+}

@@ -292,11 +292,48 @@ pub trait LineFilter: Send {
     fn should_keep(&self, line: &str) -> bool;
 }
 
-/// Handle multi-line log records (future feature)
+/// One physical input line with its provenance, as fed to a [`Chunker`].
+#[derive(Debug, Clone)]
+pub struct ChunkLine {
+    pub text: String,
+    pub line_num: usize,
+    pub filename: Option<String>,
+}
+
+/// One assembled logical record, carrying the provenance of its *first*
+/// physical line so event metadata reports where the record started rather
+/// than where it happened to be flushed.
+#[derive(Debug, Clone)]
+pub struct Chunk {
+    pub text: String,
+    pub first_line_num: usize,
+    pub filename: Option<String>,
+    pub line_count: usize,
+}
+
+/// Group physical lines into logical records (multiline events, CSV records
+/// with embedded newlines).
+///
+/// Completed records are appended to `out`: a single fed line may complete
+/// zero, one, or several records (e.g. a line that both terminates the
+/// previous event and forms a complete event itself), and an out-parameter
+/// makes that unlosable — the previous `Option<String>` shape forced a
+/// one-slot pending buffer that silently dropped any third record.
 pub trait Chunker: Send {
-    fn feed_line(&mut self, line: String) -> Option<String>;
-    fn flush(&mut self) -> Option<String>;
+    fn feed_line(&mut self, line: ChunkLine, out: &mut Vec<Chunk>);
+    /// Flush any buffered partial record (file boundary, idle timeout, EOF).
+    fn flush(&mut self, out: &mut Vec<Chunk>);
     fn has_pending(&self) -> bool;
+    /// True once if a record was split by the line cap since the last call;
+    /// the driver turns this into a once-per-run warning.
+    fn take_cap_hit(&mut self) -> bool {
+        false
+    }
+    /// True when every fed line is exactly one record (no buffering ever).
+    /// Lets the pipeline skip the chunk-buffer machinery on the hot path.
+    fn is_passthrough(&self) -> bool {
+        false
+    }
 }
 
 /// Manage sliding window of events (future feature)
@@ -385,12 +422,12 @@ pub struct Pipeline {
     /// time proved a bounded field set suffices, in which case the parser skips
     /// building `Dynamic` values for fields nothing downstream can observe.
     pub projection: crate::projection::Projection,
-    /// First physical line of the event the chunker is currently assembling.
-    /// An event that spans lines 2–4 is flushed when line 5 arrives, so without
-    /// this its parse error was reported at line 5 — past the event it described
-    /// (#368). Equal to the current line whenever the chunker holds nothing
-    /// back, which is every line in single-line mode.
-    pub chunk_start_line: Option<usize>,
+    /// Reusable buffer for chunker output, so the per-line hot path does not
+    /// allocate a fresh Vec for every fed line.
+    pub chunk_buf: Vec<Chunk>,
+    /// Cached `chunker.is_passthrough()`: when true, `process_line` skips the
+    /// chunk-buffer machinery entirely (measured ~3% on the line hot path).
+    pub chunker_is_passthrough: bool,
 }
 
 impl Pipeline {
@@ -398,51 +435,77 @@ impl Pipeline {
     /// This is the core method used by both sequential and parallel processing
     pub fn process_line(
         &mut self,
-        line: String,
+        line: ChunkLine,
         ctx: &mut PipelineContext,
     ) -> Result<Vec<FormattedOutput>> {
         // Line filter stage
         if let Some(filter) = &self.line_filter {
-            if !filter.should_keep(&line) {
+            if !filter.should_keep(&line.text) {
                 return Ok(Vec::new());
             }
         }
 
-        // An empty chunker buffer means this line begins the next event, so it
-        // is the line the event will be reported at. Mirrors the filename
-        // tracking the parallel chunker thread does.
-        let current_line = ctx.meta.line_num;
-        if self.chunk_start_line.is_none() || !self.chunker.has_pending() {
-            self.chunk_start_line = current_line;
+        // Chunker stage (for multi-line records). Pass-through chunking is
+        // the overwhelmingly common case; hand the line straight to the
+        // parser without touching the chunk buffer.
+        if self.chunker_is_passthrough {
+            ctx.meta.line_num = Some(line.line_num);
+            ctx.meta.filename = line.filename;
+            return self.process_chunk(line.text, ctx);
         }
 
-        // Chunker stage (for multi-line records)
-        if let Some(chunk) = self.chunker.feed_line(line) {
-            let event_line = self.chunk_start_line.take().or(current_line);
-            // The line just fed begins whatever the chunker buffers next.
-            self.chunk_start_line = current_line;
-
-            ctx.meta.line_num = event_line;
-            let results = self.process_chunk(chunk, ctx);
-            ctx.meta.line_num = current_line;
-            results
-        } else {
-            Ok(Vec::new())
-        }
+        let mut chunks = std::mem::take(&mut self.chunk_buf);
+        chunks.clear();
+        self.chunker.feed_line(line, &mut chunks);
+        self.process_chunks(chunks, ctx)
     }
 
     /// Flush any remaining chunks from the chunker
     pub fn flush(&mut self, ctx: &mut PipelineContext) -> Result<Vec<FormattedOutput>> {
-        if let Some(chunk) = self.chunker.flush() {
-            // Process chunk directly, not through feed_line
-            let current_line = ctx.meta.line_num;
-            ctx.meta.line_num = self.chunk_start_line.take().or(current_line);
-            let results = self.process_chunk_directly(chunk, ctx);
-            ctx.meta.line_num = current_line;
-            results
-        } else {
-            Ok(Vec::new())
+        let mut chunks = std::mem::take(&mut self.chunk_buf);
+        chunks.clear();
+        self.chunker.flush(&mut chunks);
+        self.process_chunks(chunks, ctx)
+    }
+
+    /// Run completed chunks through the parse/script/format stages, pointing
+    /// event metadata at each chunk's first physical line. Returns the reusable
+    /// chunk buffer to `self.chunk_buf` so the hot path stays allocation-free.
+    fn process_chunks(
+        &mut self,
+        mut chunks: Vec<Chunk>,
+        ctx: &mut PipelineContext,
+    ) -> Result<Vec<FormattedOutput>> {
+        // Fast paths for the overwhelmingly common cases (pass-through
+        // chunking yields exactly one chunk per line; buffering yields zero):
+        // hand back process_chunk's Vec directly instead of copying it.
+        if chunks.is_empty() {
+            self.chunk_buf = chunks;
+            return Ok(Vec::new());
         }
+        if chunks.len() == 1 {
+            let chunk = chunks.pop().expect("len checked");
+            self.chunk_buf = chunks;
+            ctx.meta.line_num = Some(chunk.first_line_num);
+            ctx.meta.filename = chunk.filename;
+            return self.process_chunk(chunk.text, ctx);
+        }
+
+        let mut outputs = Vec::new();
+        let mut result = Ok(());
+        for chunk in chunks.drain(..) {
+            ctx.meta.line_num = Some(chunk.first_line_num);
+            ctx.meta.filename = chunk.filename;
+            match self.process_chunk(chunk.text, ctx) {
+                Ok(formatted) => outputs.extend(formatted),
+                Err(e) => {
+                    result = Err(e);
+                    break;
+                }
+            }
+        }
+        self.chunk_buf = chunks;
+        result.map(|_| outputs)
     }
 
     /// Process a complete event string (for pre-chunked multiline events)
@@ -866,5 +929,10 @@ impl Pipeline {
     /// Check if the chunker currently holds a partial chunk that hasn't been emitted yet
     pub fn has_pending_chunk(&self) -> bool {
         self.chunker.has_pending()
+    }
+
+    /// True once if the multiline line cap split an event since the last call.
+    pub fn take_multiline_cap_hit(&mut self) -> bool {
+        self.chunker.take_cap_hit()
     }
 }

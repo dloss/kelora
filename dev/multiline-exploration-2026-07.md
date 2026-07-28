@@ -295,7 +295,111 @@ substrate if it ever happens.
 
 ---
 
-## 4. What peers do (for reference)
+## 4. Stress-test verdicts (2026-07, pre-implementation)
+
+Each Tier-1 idea was pressure-tested against the actual code paths and edge
+cases before implementation. Outcomes:
+
+**T1.1 chunker reshape — GO.** Only three `Chunker` impls exist
+(`SimpleChunker`, `CsvChunker`, `MultilineChunker`). New shape: the chunker is
+fed a `ChunkLine {text, line_num, filename}` and appends completed
+`Chunk {text, first_line_num, filename, line_count}` values to a caller-owned
+`Vec` (reused across calls — no per-line allocation on the hot path). Flush
+takes the same out-param, so multiple completed events can never race for a
+single `Option` slot again; `pending_output` and its silent-drop path are
+deleted rather than fixed.
+
+**T1.2 file-boundary flush — GO.** Both drivers already see per-line
+filenames (sequential: `process_line_sequential`; parallel: batch
+`filenames`). Detect filename change → flush before feeding the new line.
+Known limitation, accepted and documented: the same file named twice
+*consecutively* (`kelora a.log a.log`) presents no filename change and is not
+split; fixing that needs reader-level file-open events, not worth it now.
+
+**T1.3 timeout flag — GO, amended.** Stress-testing found the divergence is
+worse than documented: the 400 ms idle flush exists *only in sequential
+mode* — the parallel chunker thread blocks forever on `recv()`, so
+sequential and parallel disagree on stream input by design today. Plan:
+`--multiline-timeout DUR` (`0`/`off` disables); default **off when every
+input is a regular file** (the timeout is unreachable there except via
+pathological I/O stalls, and off restores determinism), 400 ms when reading
+stdin/FIFOs/sockets; implemented in both drivers (select-with-deadline in the
+parallel chunker thread); 🔸 warning the first time an idle flush actually
+splits a buffer mid-run.
+
+**T1.4 colon parsing — GO, amended.** Split the option string only at `:`
+followed by a *known* key for the strategy (`match=`, `end=`, `format=`, …);
+other `:`-segments are re-joined into the previous value, so
+`regex:match=^\d{2}:\d{2}` works. Amendment to keep typo detection: a segment
+that *looks like* an option (`^[a-z_]+=`) but isn't a known key stays an
+error, so `regex:match=x:ends=y` still fails loudly. A regex containing a
+literal `:match=`/`:end=` remains inexpressible except via `\x3A` —
+documented, vanishingly rare.
+
+**T1.5 blank policy — GO.** When `--multiline` is active, blank lines reach
+the chunker in every format (the pre-chunk empty-line drop is gated on
+multiline being off). A blank line is a *continuation* for
+`indent`/`timestamp`; trailing blank lines are trimmed at flush (a
+buffer that is only blanks emits nothing), except under `all`, which stays
+byte-faithful. New first-class `blank` strategy (blank-line-separated
+records) — the error message in args.rs already advertised it. Checked the
+pinned integration test (`test_multiline_indent_empty_lines_between_events`,
+asserts `>= 3` events): still passes, because the non-indented line after a
+blank flushes regardless.
+
+**T1.6 filters on assembled events — CUT, reduced to a hint.** The stress
+test killed the original idea: pre-assembly `--keep-lines`/`--ignore-lines`
+is the *only* way to drop interleaved noise (heartbeat/DEBUG lines injected
+mid-trace) so that assembly can succeed — moving the filters post-assembly
+removes a capability. Post-assembly filtering, meanwhile, is already fully
+expressible as `--filter 'e.raw.contains(...)'`, so the semantic change would
+have added nothing that doesn't exist. Instead: emit a 💡 hint once when
+`--keep-lines`/`--ignore-lines` is combined with `--multiline` ("filters
+physical lines before assembly; use --filter to filter assembled events"),
+and document the ordering explicitly.
+
+**T1.7 cap — GO.** `--multiline-max-lines N`, default 10 000, `0` = off,
+exempt for `all` (whose entire point is unbounded buffering). On hit: flush
+the buffer as an event and 🔸-warn once per run. The cap-hit signal travels
+from chunker to driver via a take-flag, keeping warning formatting (emoji
+mode, suppression) in config-aware code.
+
+**T1.8 timestamp lock-in — GO, expanded.** Stress-testing found a worse
+false-positive class than `17:03`: header detection reuses the CLI-argument
+timestamp parser, so continuation lines beginning `now …`, `today …`,
+`+30m …`, or a 10-digit number (`1234567890 records processed`) all start
+bogus events — confirmed empirically. Plan: (a) a *restricted* header-parse
+mode that excludes special values (`now`/`today`/…) and relative times;
+(b) the parser core returns a format-kind token (rfc3339 / unix / time-only /
+concrete `chrono` format string / custom), and the detector locks to the
+first kind that matches, rejecting others from then on; (c) a `format=` hint
+becomes *exclusive* (today it silently falls back to adaptive detection,
+which defeats the hint); (d) `timestamp:loose` restores unlocked detection
+for genuinely mixed-format files. Accepted residual risk, documented: a
+parseable *first* line that isn't a real header locks the wrong kind — the
+remedy is `format=` or `loose`.
+
+**T1.9 sweep — GO, amended.** `--multiline-join` becomes an `Option` with a
+per-strategy default (newline for `all`, space otherwise) so an explicit join
+is honored under `all` instead of silently ignored, while bare `--multiline
+all` keeps its current output. args.rs's phantom `--multiline blank`
+suggestion becomes true (T1.5). Stale "(future feature)" trait comment,
+`--help-multiline`, and the concepts page get updated for all of the above.
+
+**T1.10 property tests — GO.** `proptest` is already a dependency. Unit-level
+invariant: for random line soup and every strategy, the concatenation of
+emitted events equals the surviving input (modulo the documented trailing-
+blank trim and `blank`-strategy separators) — no line dropped, duplicated, or
+reordered. Integration-level: sequential and parallel runs over a generated
+corpus (files, timeout off) produce byte-identical output.
+
+**Metadata correctness** (catalog §1.3) rides on T1.1: `Chunk` carries
+`first_line_num`/`filename`, `EventBatch` carries them per event, and both
+drivers set `meta` from the chunk instead of from flush-time state.
+
+---
+
+## 5. What peers do (for reference)
 
 | Tool | Model | Caps/timeout | Notable |
 |---|---|---|---|

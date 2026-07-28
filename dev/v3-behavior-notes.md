@@ -119,3 +119,84 @@ the function reference. This is a consistency question, not a defect.
 **Affected:** `src/rhai_functions/strings/regex_ops.rs`,
 `src/rhai_functions/extractors.rs`, `src/rhai_functions/strings/ops.rs` (the
 slicing family), plus every doc example that chains off an extraction.
+
+### Multiline: Unified Condition Model, Presets, and Join-as-Display
+
+Background: `dev/multiline-exploration-2026-07.md` catalogs the 2.x multiline
+failure modes and splits the fixes into a 2.x tier (seam fixes: file-boundary
+flush, correct per-event metadata, colon-safe option parsing, blank-line
+policy, `--multiline-timeout`, `--multiline-max-lines`, timestamp lock-in)
+and this v3 tier. The 2.x tier changes no strategy semantics; everything
+below does, which is what makes it v3 material.
+
+**What (three related changes):**
+
+1. **Unified condition model.** Replace the closed strategy set
+   (timestamp/indent/regex/blank/all) with one boundary engine the strategies
+   become sugar over:
+
+   ```
+   --multiline start=REGEX          # event begins at match (2.x regex:match=)
+   --multiline start=timestamp      # timestamp-as-start-detector, same engine
+   --multiline cont=indent          # line continues previous event (2.x indent)
+   --multiline cont=REGEX           # e.g. cont='^\s|^Caused by|^$'
+   --multiline cont-prev=REGEX      # continue while PREVIOUS line matches
+                                    #   (trailing-backslash logs; Vector's
+                                    #   continue_past — inexpressible in 2.x)
+   --multiline until=REGEX[,inclusive|exclusive]   # 2.x regex:end=
+   ```
+
+   Conditions compose (`start=` + `cont=`), which covers Filebeat's
+   `negate`/`match` matrix and Vector's four modes without a mode flag.
+
+2. **Language presets.** `--multiline java|python|go|rust|node|csharp`
+   mapping to tested rules in the unified model (Fluent Bit's most-loved
+   multiline feature). Each preset ships with a corpus file under `examples/`
+   and a golden test, so preset drift is caught by CI. Presets make the
+   feature match how users think — "these are Python tracebacks", not "write
+   me a boundary regex".
+
+3. **Join becomes a display concern.** Store assembled events
+   newline-joined as the single source of truth; formatters decide
+   presentation (default formatter escapes or indents continuation lines,
+   `-F json` emits `\n` as today). `--multiline-join` then only affects
+   output, and the 2.x footgun — the default `space` join silently
+   destroying stack-trace structure unless the user knows to pass
+   `--multiline-join=newline` — disappears. Every doc example currently
+   carries that flag, which is the tell that the default is wrong.
+
+**Why v3, not 2.x:** all three change observable output for existing
+commands: (1) retires the `strategy:key=value` micro-syntax (keep the old
+spellings as aliases for one release), (3) changes what `e.raw` contains for
+every multiline user who relied on space-joining. (2) is additive but only
+pays for itself on top of (1)'s condition engine.
+
+**Design questions to settle first:**
+
+1. Alias lifetime: do `timestamp|indent|blank|all` remain permanently as
+   sugar (they read better than `start=timestamp`), or are they deprecated
+   spellings? Recommendation: keep permanently; presets and sugar are the
+   primary UX, the condition model is the escape hatch.
+2. Does `start=` + `until=` + `cont=` need a conflict rule, or do they
+   compose (start opens, cont extends, until closes)? Compose seems right but
+   needs a truth table before implementation, including what a line that
+   matches both `start=` and `until=` does — the 2.x `pending_output` bug
+   lived exactly there.
+3. With join-as-display, what does `-f json` parse when a multiline JSON
+   payload was assembled — the newline-joined text (breaks `{"a": 1,\n"b"}`
+   parsers that choke on newlines? no, serde handles it) or a join the parser
+   requests? Likely a non-issue; verify with the CEF/logfmt parsers, which
+   are line-oriented.
+4. Should `--section` be re-expressed over the same boundary engine? Both
+   are stream-boundary machinery; unification is appealing but `--section`
+   selects while `--multiline` groups, and forcing them together may cost
+   more clarity than it saves. Decide after the engine exists.
+5. Preset governance: how do preset rules evolve without silently changing
+   users' event boundaries? Presets are versioned with kelora itself; a
+   changed preset is a changelog-visible behavior change, never a patch-level
+   tweak.
+
+**Affected:** `src/pipeline/multiline.rs` (engine), `src/config.rs` (option
+model), `src/main.rs`/`src/args.rs` (flag wiring), `src/help/multiline.rs`,
+`docs/concepts/multiline-strategies.md`, `examples/` (preset corpora), the
+default formatter (display-time join), CHANGELOG migration notes.

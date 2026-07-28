@@ -292,8 +292,9 @@ pub struct Cli {
     pub input_year: Option<String>,
 
     /// Multi-line event detection strategy. Supply values like `timestamp`,
-    /// `timestamp:format=%Y-%m-%d %H-%M-%S`, `regex:match=^START`, or
-    /// `regex:match=^START:end=^END$`. See `kelora --help-multiline` for details.
+    /// `timestamp:format=%Y-%m-%d %H-%M-%S`, `indent`, `blank`,
+    /// `regex:match=^START`, or `regex:match=^START:end=^END$`.
+    /// See `kelora --help-multiline` for details.
     #[arg(
         short = 'M',
         long = "multiline",
@@ -302,15 +303,34 @@ pub struct Cli {
     )]
     pub multiline: Option<String>,
 
-    /// Join multiline lines with: space (default), newline, or empty.
+    /// Join multiline lines with: space, newline, or empty.
+    /// Default: space (newline for `--multiline all`).
     #[arg(
         long = "multiline-join",
         value_enum,
         value_name = "JOIN",
-        default_value_t = MultilineJoin::Space,
         help_heading = "Input Options"
     )]
-    pub multiline_join: MultilineJoin,
+    pub multiline_join: Option<MultilineJoin>,
+
+    /// Flush a buffered multiline event after this much input inactivity
+    /// (e.g. `400ms`, `2s`; `0` = never). Default: off when reading regular
+    /// files, 400ms when reading a stream (stdin, FIFO).
+    #[arg(
+        long = "multiline-timeout",
+        value_name = "DURATION",
+        help_heading = "Input Options"
+    )]
+    pub multiline_timeout: Option<String>,
+
+    /// Split a multiline event after this many buffered lines (safety cap;
+    /// `0` = unlimited). Default: 10000. Ignored by `--multiline all`.
+    #[arg(
+        long = "multiline-max-lines",
+        value_name = "N",
+        help_heading = "Input Options"
+    )]
+    pub multiline_max_lines: Option<usize>,
 
     /// Extract text before separator to specified field (runs before parsing)
     #[arg(

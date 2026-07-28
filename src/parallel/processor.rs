@@ -8,7 +8,7 @@ use std::io::Read;
 use std::thread;
 use std::time::Duration;
 
-use crate::pipeline::{PipelineBuilder, DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS};
+use crate::pipeline::PipelineBuilder;
 use crate::platform::Ctrl;
 use crate::rhai_functions::tracking::TrackingSnapshot;
 use crate::stats::ProcessingStats;
@@ -19,7 +19,40 @@ use super::batching::{
 use super::sink::pipeline_result_sink_thread;
 use super::tracker::GlobalTracker;
 use super::types::{BatcherThreadConfig, ParallelConfig, WorkMessage};
-use super::worker::{chunker_thread, worker_thread};
+use super::worker::{chunker_thread, worker_thread, ChunkerRuntime};
+
+/// Assemble the chunker thread's runtime knobs from config: the idle-flush
+/// timeout plus preformatted once-per-run advisories (None when the relevant
+/// diagnostics tier is suppressed, or — for the idle hint — when the user set
+/// the timeout explicitly and needs no telling).
+fn build_chunker_runtime(
+    config: &crate::config::KeloraConfig,
+    multiline_config: &crate::config::MultilineConfig,
+) -> ChunkerRuntime {
+    let idle_hint = if !multiline_config.idle_timeout_explicit && config.hints_allowed() {
+        multiline_config.idle_timeout.map(|t| {
+            config.format_hint_message(&format!(
+                "multiline: flushed a buffered event after {}ms of input inactivity; if events                  from a slow writer appear split, raise --multiline-timeout (0 = never flush early)",
+                t.as_millis()
+            ))
+        })
+    } else {
+        None
+    };
+    let cap_warning = if config.warnings_allowed() {
+        Some(config.format_warning_message(&format!(
+            "multiline: an event exceeded {} lines and was split; raise --multiline-max-lines              (0 = unlimited) if your events are really that large",
+            multiline_config.max_lines
+        )))
+    } else {
+        None
+    };
+    ChunkerRuntime {
+        idle_timeout: multiline_config.idle_timeout,
+        idle_hint,
+        cap_warning,
+    }
+}
 
 /// Main parallel processor
 pub struct ParallelProcessor {
@@ -172,14 +205,14 @@ impl ParallelProcessor {
         let chunker_handle = if let Some(multiline_config) = &config.input.multiline {
             let chunker_ctrl = ctrl_rx.clone();
             let chunker_multiline_config = multiline_config.clone();
-            let chunker_input_format = config.input.format.clone();
+            let chunker_runtime = build_chunker_runtime(config, multiline_config);
 
             let handle = thread::spawn(move || {
                 chunker_thread(
                     batch_receiver,
                     work_sender,
                     chunker_multiline_config,
-                    chunker_input_format,
+                    chunker_runtime,
                     chunker_ctrl,
                 )
             });
@@ -204,11 +237,11 @@ impl ParallelProcessor {
 
         // Start worker threads
         let mut worker_handles = Vec::with_capacity(self.config.num_workers);
-        let worker_multiline_timeout = if config.input.multiline.is_some() {
-            Some(Duration::from_millis(DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS))
-        } else {
-            None
-        };
+        // In multiline mode the chunker thread owns idle flushing (workers only
+        // see pre-chunked events, so their own chunker never buffers). The CSV
+        // chunker never spans batches (the batcher only cuts on record
+        // boundaries), so no worker-side deadline is needed there either.
+        let worker_multiline_timeout: Option<Duration> = None;
 
         for worker_id in 0..self.config.num_workers {
             let work_receiver = work_receiver.clone();
@@ -378,14 +411,14 @@ impl ParallelProcessor {
         let chunker_handle = if let Some(multiline_config) = &config.input.multiline {
             let chunker_ctrl = ctrl_rx.clone();
             let chunker_multiline_config = multiline_config.clone();
-            let chunker_input_format = config.input.format.clone();
+            let chunker_runtime = build_chunker_runtime(config, multiline_config);
 
             let handle = thread::spawn(move || {
                 chunker_thread(
                     batch_receiver,
                     work_sender,
                     chunker_multiline_config,
-                    chunker_input_format,
+                    chunker_runtime,
                     chunker_ctrl,
                 )
             });
@@ -410,11 +443,11 @@ impl ParallelProcessor {
 
         // Start worker threads
         let mut worker_handles = Vec::with_capacity(self.config.num_workers);
-        let worker_multiline_timeout = if config.input.multiline.is_some() {
-            Some(Duration::from_millis(DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS))
-        } else {
-            None
-        };
+        // In multiline mode the chunker thread owns idle flushing (workers only
+        // see pre-chunked events, so their own chunker never buffers). The CSV
+        // chunker never spans batches (the batcher only cuts on record
+        // boundaries), so no worker-side deadline is needed there either.
+        let worker_multiline_timeout: Option<Duration> = None;
 
         for worker_id in 0..self.config.num_workers {
             let work_receiver = work_receiver.clone();
