@@ -477,15 +477,36 @@ pub struct TimestampFormatConfig {
 pub struct MultilineConfig {
     pub strategy: MultilineStrategy,
     pub join: MultilineJoin,
+    /// Split events that exceed this many buffered lines (safety cap against
+    /// a never-matching start pattern buffering the whole input). 0 = off.
+    /// Ignored by the `all` strategy, whose point is unbounded buffering.
+    pub max_lines: usize,
+    /// Flush a buffered partial event after this much input inactivity.
+    /// `None` = never. Resolved in main.rs: explicit `--multiline-timeout`
+    /// wins; otherwise off for regular-file input (where it could only
+    /// misfire) and 400ms for streams (stdin, FIFOs).
+    pub idle_timeout: Option<std::time::Duration>,
+    /// True when the user set `--multiline-timeout` themselves. A defaulted
+    /// stream timeout hints the first time it flushes a partial event (the
+    /// user may not know events can split); an explicit one is a choice and
+    /// stays quiet.
+    pub idle_timeout_explicit: bool,
 }
 
 /// Multi-line event detection strategies
 #[derive(Debug, Clone)]
 pub enum MultilineStrategy {
-    /// Events start when a timestamp-like prefix is detected
-    Timestamp { chrono_format: Option<String> },
-    /// Continuation lines are indented
+    /// Events start when a timestamp-like prefix is detected. `loose` disables
+    /// format lock-in (accept any recognizable timestamp as a header even
+    /// after one format has matched).
+    Timestamp {
+        chrono_format: Option<String>,
+        loose: bool,
+    },
+    /// Continuation lines are indented (blank lines also continue)
     Indent,
+    /// Blank lines separate events (paragraph mode)
+    Blank,
     /// Events start (and optionally end) with explicit regexes
     Regex { start: String, end: Option<String> },
     /// Read entire input as a single event
@@ -534,41 +555,90 @@ impl MultilineConfig {
             return Err("Empty multiline configuration".to_string());
         }
 
-        let mut segments = value.split(':');
-        let strategy_name = segments
-            .next()
-            .ok_or_else(|| "Empty multiline configuration".to_string())?;
+        let (strategy_name, rest) = match value.find(':') {
+            Some(idx) => (&value[..idx], Some(&value[idx + 1..])),
+            None => (value, None),
+        };
+
+        // Option keys that take a value (`key=...`) and bare flags, per strategy.
+        let (value_keys, flag_keys): (&[&str], &[&str]) = match strategy_name {
+            "timestamp" => (&["format"], &["loose"]),
+            "regex" => (&["match", "end"], &[]),
+            _ => (&[], &[]),
+        };
+
+        // Split the option string only at ':' boundaries that introduce a known
+        // option, so option values may contain literal colons — essential for
+        // regexes and formats matching times (regex:match=^\d{2}:\d{2}). A
+        // segment shaped like an option (`word=`) that is not a known key stays
+        // an error, so typos (`ends=^E`) fail loudly instead of silently
+        // becoming part of the previous value.
+        let mut segments: Vec<String> = Vec::new();
+        if let Some(rest) = rest {
+            for part in rest.split(':') {
+                let is_known = value_keys
+                    .iter()
+                    .any(|k| part.starts_with(k) && part.as_bytes().get(k.len()) == Some(&b'='))
+                    || flag_keys.contains(&part);
+                if is_known {
+                    segments.push(part.to_string());
+                } else if let Some(last) = segments.last_mut() {
+                    let looks_like_option = part.find('=').is_some_and(|eq| {
+                        eq > 0
+                            && part[..eq]
+                                .chars()
+                                .all(|c| c.is_ascii_lowercase() || c == '_' || c == '-')
+                    });
+                    if looks_like_option {
+                        return Err(unknown_option_error(strategy_name, part));
+                    }
+                    last.push(':');
+                    last.push_str(part);
+                } else {
+                    return Err(unknown_option_error(strategy_name, part));
+                }
+            }
+        }
 
         let strategy = match strategy_name {
             "timestamp" => {
                 let mut chrono_format: Option<String> = None;
+                let mut loose = false;
 
-                for segment in segments {
+                for segment in &segments {
                     if let Some(format) = segment.strip_prefix("format=") {
                         if chrono_format.replace(format.to_string()).is_some() {
                             return Err("timestamp:format specified more than once".to_string());
                         }
+                    } else if segment == "loose" {
+                        loose = true;
                     } else {
-                        return Err(format!(
-                            "Unknown timestamp option: {} (supported: format=...)",
-                            segment
-                        ));
+                        return Err(unknown_option_error(strategy_name, segment));
                     }
                 }
 
-                MultilineStrategy::Timestamp { chrono_format }
+                MultilineStrategy::Timestamp {
+                    chrono_format,
+                    loose,
+                }
             }
             "indent" => {
-                if segments.next().is_some() {
+                if !segments.is_empty() {
                     return Err("indent does not accept options".to_string());
                 }
                 MultilineStrategy::Indent
+            }
+            "blank" => {
+                if !segments.is_empty() {
+                    return Err("blank does not accept options".to_string());
+                }
+                MultilineStrategy::Blank
             }
             "regex" => {
                 let mut start_pattern: Option<String> = None;
                 let mut end_pattern: Option<String> = None;
 
-                for segment in segments {
+                for segment in &segments {
                     if let Some(pattern) = segment.strip_prefix("match=") {
                         if start_pattern.replace(pattern.to_string()).is_some() {
                             return Err("regex:match specified more than once".to_string());
@@ -578,10 +648,7 @@ impl MultilineConfig {
                             return Err("regex:end specified more than once".to_string());
                         }
                     } else {
-                        return Err(format!(
-                            "Unknown regex option: {} (supported: match=..., end=...)",
-                            segment
-                        ));
+                        return Err(unknown_option_error(strategy_name, segment));
                     }
                 }
 
@@ -595,24 +662,49 @@ impl MultilineConfig {
                 }
             }
             "all" => {
-                if segments.next().is_some() {
+                if !segments.is_empty() {
                     return Err("all does not accept options".to_string());
                 }
                 MultilineStrategy::All
             }
             other => {
                 return Err(format!(
-                    "Unknown multiline strategy: {} (supported: timestamp, indent, regex, all)",
+                    "Unknown multiline strategy: {} (supported: timestamp, indent, blank, regex, all)",
                     other
                 ));
             }
         };
 
+        let join = Self::default_join_for(&strategy);
         Ok(MultilineConfig {
             strategy,
-            join: MultilineJoin::Space,
+            join,
+            max_lines: crate::pipeline::DEFAULT_MULTILINE_MAX_LINES,
+            idle_timeout: None,
+            idle_timeout_explicit: false,
         })
     }
+
+    /// The join mode used when `--multiline-join` is not given: `all` preserves
+    /// the input's line structure, everything else joins with spaces.
+    pub fn default_join_for(strategy: &MultilineStrategy) -> MultilineJoin {
+        match strategy {
+            MultilineStrategy::All => MultilineJoin::Newline,
+            _ => MultilineJoin::Space,
+        }
+    }
+}
+
+fn unknown_option_error(strategy: &str, segment: &str) -> String {
+    let supported = match strategy {
+        "timestamp" => "format=..., loose",
+        "regex" => "match=..., end=...",
+        _ => "none",
+    };
+    format!(
+        "Unknown {} option: {} (supported: {})",
+        strategy, segment, supported
+    )
 }
 
 impl Default for MultilineConfig {
@@ -620,8 +712,12 @@ impl Default for MultilineConfig {
         Self {
             strategy: MultilineStrategy::Timestamp {
                 chrono_format: None,
+                loose: false,
             },
             join: MultilineJoin::Space,
+            max_lines: crate::pipeline::DEFAULT_MULTILINE_MAX_LINES,
+            idle_timeout: None,
+            idle_timeout_explicit: false,
         }
     }
 }
@@ -2466,5 +2562,75 @@ mod tests {
             msg.contains("log4j"),
             "error should list named formats: {msg}"
         );
+    }
+
+    #[test]
+    fn multiline_parse_regex_pattern_may_contain_colons() {
+        let cfg = MultilineConfig::parse(r"regex:match=^\d{2}:\d{2}").expect("parses");
+        match cfg.strategy {
+            MultilineStrategy::Regex { start, end } => {
+                assert_eq!(start, r"^\d{2}:\d{2}");
+                assert!(end.is_none());
+            }
+            other => panic!("wrong strategy: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn multiline_parse_regex_with_end_and_colons_in_both() {
+        let cfg = MultilineConfig::parse(r"regex:match=^\d{2}:\d{2}:end=^END:\d+").expect("parses");
+        match cfg.strategy {
+            MultilineStrategy::Regex { start, end } => {
+                assert_eq!(start, r"^\d{2}:\d{2}");
+                assert_eq!(end.as_deref(), Some(r"^END:\d+"));
+            }
+            other => panic!("wrong strategy: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn multiline_parse_unknown_option_shaped_segment_errors() {
+        let err = MultilineConfig::parse("regex:match=^A:ends=^E").unwrap_err();
+        assert!(err.contains("Unknown regex option"), "{err}");
+    }
+
+    #[test]
+    fn multiline_parse_timestamp_format_with_colons_and_loose() {
+        let cfg = MultilineConfig::parse("timestamp:format=%H:%M:%S:loose").expect("parses");
+        match cfg.strategy {
+            MultilineStrategy::Timestamp {
+                chrono_format,
+                loose,
+            } => {
+                assert_eq!(chrono_format.as_deref(), Some("%H:%M:%S"));
+                assert!(loose);
+            }
+            other => panic!("wrong strategy: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn multiline_parse_blank_strategy() {
+        let cfg = MultilineConfig::parse("blank").expect("parses");
+        assert!(matches!(cfg.strategy, MultilineStrategy::Blank));
+        assert!(MultilineConfig::parse("blank:x=1").is_err());
+    }
+
+    #[test]
+    fn multiline_parse_join_defaults_per_strategy() {
+        assert_eq!(
+            MultilineConfig::parse("all").unwrap().join,
+            MultilineJoin::Newline
+        );
+        assert_eq!(
+            MultilineConfig::parse("indent").unwrap().join,
+            MultilineJoin::Space
+        );
+    }
+
+    #[test]
+    fn multiline_parse_duplicate_option_errors() {
+        assert!(MultilineConfig::parse("regex:match=a:match=b").is_err());
+        assert!(MultilineConfig::parse("timestamp:format=%H:format=%M").is_err());
     }
 }

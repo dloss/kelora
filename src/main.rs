@@ -421,7 +421,30 @@ fn main() -> Result<()> {
     if let Some(multiline_str) = &cli.multiline {
         match MultilineConfig::parse(multiline_str) {
             Ok(mut multiline_config) => {
-                multiline_config.join = cli.multiline_join;
+                // An explicit --multiline-join wins; otherwise each strategy
+                // keeps its own default (newline for `all`, space elsewhere).
+                if let Some(join) = cli.multiline_join {
+                    multiline_config.join = join;
+                }
+                if let Some(max_lines) = cli.multiline_max_lines {
+                    multiline_config.max_lines = max_lines;
+                }
+                multiline_config.idle_timeout_explicit = cli.multiline_timeout.is_some();
+                multiline_config.idle_timeout = match resolve_multiline_idle_timeout(
+                    cli.multiline_timeout.as_deref(),
+                    &config.input.files,
+                ) {
+                    Ok(timeout) => timeout,
+                    Err(e) => {
+                        stderr
+                            .writeln(&config.format_error_message(&format!(
+                                "Invalid --multiline-timeout: {}",
+                                e
+                            )))
+                            .unwrap_or(());
+                        ExitCode::InvalidUsage.exit();
+                    }
+                };
                 config.input.multiline = Some(multiline_config);
             }
             Err(e) => {
@@ -433,6 +456,21 @@ fn main() -> Result<()> {
                     .unwrap_or(());
                 ExitCode::InvalidUsage.exit();
             }
+        }
+
+        // Pre-chunk line filters silently amputate continuation lines from the
+        // events multiline assembles — legitimate (dropping interleaved noise
+        // so assembly can succeed), but surprising, so say it once.
+        if (config.input.keep_lines.is_some() || config.input.ignore_lines.is_some())
+            && config.hints_allowed()
+        {
+            stderr
+                .writeln(&config.format_hint_message(
+                    "--keep-lines/--ignore-lines filter physical lines before multiline \
+                     assembly; continuation lines they drop never reach the assembled event. \
+                     To filter whole assembled events, use --filter instead.",
+                ))
+                .unwrap_or(());
         }
     }
 
@@ -639,6 +677,48 @@ fn main() -> Result<()> {
         ExitCode::GeneralError.exit();
     } else {
         ExitCode::Success.exit();
+    }
+}
+
+/// Resolve the multiline idle-flush timeout.
+///
+/// Explicit `--multiline-timeout` wins (`0`/`off` disables). Otherwise the
+/// default depends on the input: regular files deliver lines at pipeline
+/// speed, so an idle flush there could only misfire (splitting an event on an
+/// I/O stall) — it defaults to off, keeping file runs deterministic. Streams
+/// (stdin, FIFOs) can pause mid-event indefinitely, so they keep a 400ms
+/// flush for output latency.
+fn resolve_multiline_idle_timeout(
+    explicit: Option<&str>,
+    files: &[String],
+) -> Result<Option<std::time::Duration>, String> {
+    if let Some(spec) = explicit {
+        let spec = spec.trim();
+        if spec == "0" || spec.eq_ignore_ascii_case("off") {
+            return Ok(None);
+        }
+        let duration = crate::rhai_functions::datetime::to_duration(spec)
+            .map_err(|e| format!("{}: {}", spec, e))?
+            .inner
+            .to_std()
+            .map_err(|_| format!("{}: duration must not be negative", spec))?;
+        if duration.is_zero() {
+            return Ok(None);
+        }
+        return Ok(Some(duration));
+    }
+
+    let all_regular_files = !files.is_empty()
+        && files
+            .iter()
+            .all(|f| f != "-" && std::fs::metadata(f).map(|m| m.is_file()).unwrap_or(false));
+
+    if all_regular_files {
+        Ok(None)
+    } else {
+        Ok(Some(std::time::Duration::from_millis(
+            crate::pipeline::DEFAULT_MULTILINE_FLUSH_TIMEOUT_MS,
+        )))
     }
 }
 

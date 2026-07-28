@@ -934,13 +934,14 @@ impl PipelineBuilder {
         // embedded-newline records are reassembled before parsing, and everything
         // else passes through one line at a time.
         let chunker = if let Some(ref multiline_config) = self.multiline {
-            create_multiline_chunker(multiline_config, self.input_format.clone())
+            create_multiline_chunker(multiline_config)
                 .map_err(|e| anyhow::anyhow!("Failed to create multiline chunker: {}", e))?
         } else if self.input_format.is_csv_like() {
             Box::new(CsvChunker::new()) as Box<dyn super::Chunker>
         } else {
             Box::new(SimpleChunker) as Box<dyn super::Chunker>
         };
+        let chunker_is_passthrough = chunker.is_passthrough();
 
         // Create window manager based on window_size configuration
         let window_manager: Box<dyn super::WindowManager> = if self.window_size > 0 {
@@ -977,7 +978,8 @@ impl PipelineBuilder {
             window_active,
             level_prefilter_needles,
             projection,
-            chunk_start_line: None,
+            chunk_buf: Vec::new(),
+            chunker_is_passthrough,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -1276,13 +1278,14 @@ impl PipelineBuilder {
         // *within a batch* are reassembled before parsing. The batcher guarantees
         // batches never end mid-record, so the chunker never has to span batches.
         let chunker = if let Some(ref multiline_config) = self.multiline {
-            create_multiline_chunker(multiline_config, self.input_format.clone())
+            create_multiline_chunker(multiline_config)
                 .map_err(|e| anyhow::anyhow!("Failed to create multiline chunker: {}", e))?
         } else if self.input_format.is_csv_like() {
             Box::new(CsvChunker::new()) as Box<dyn super::Chunker>
         } else {
             Box::new(SimpleChunker) as Box<dyn super::Chunker>
         };
+        let chunker_is_passthrough = chunker.is_passthrough();
 
         // Create window manager based on window_size configuration
         let window_manager: Box<dyn super::WindowManager> = if self.window_size > 0 {
@@ -1317,7 +1320,8 @@ impl PipelineBuilder {
             window_active,
             level_prefilter_needles,
             projection,
-            chunk_start_line: None,
+            chunk_buf: Vec::new(),
+            chunker_is_passthrough,
         };
 
         Ok((pipeline, ctx))

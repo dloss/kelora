@@ -25,6 +25,8 @@ making it hard to correlate context.
 
 **Use `indent`** if continuation lines start with whitespace but the first line doesn't have a timestamp.
 
+**Use `blank`** for paragraph-shaped input where blank lines separate records.
+
 **Use `regex`** only when you have explicit BEGIN/END markers or need custom boundary detection.
 
 **Use `all`** rarely—only for whole-file processing where the entire input is a single logical record.
@@ -39,7 +41,21 @@ making it hard to correlate context.
    newlines.
 
 3. **Downstream pipeline** – Filters, exec scripts, and formatters see the
-   aggregated event exactly once.
+   aggregated event exactly once. `meta.line_num` and `meta.filename` point at
+   the event's *first* physical line.
+
+Boundary guarantees:
+
+- **Events never span input files.** The buffer is flushed when a new file
+  begins.
+- **Blank lines are continuations** for `timestamp`/`indent` (real stack
+  traces contain them), separators for `blank`, and ordinary lines for
+  `regex`. Trailing blank lines are trimmed from each event (`all` excepted).
+- **Line filters run before assembly.** `--keep-lines`/`--ignore-lines`
+  remove physical lines before the chunker sees them — useful for dropping
+  interleaved noise, but it means a filtered continuation line never reaches
+  the event. To filter whole assembled events, use `--filter` instead
+  (kelora prints a one-time hint when you combine them).
 
 Multiline increases per-event memory usage. When processing large files, keep an
 eye on chunk size via `--stats` and consider tuning `--batch-size`/`--batch-timeout`
@@ -57,13 +73,20 @@ block. Choose the approach that matches your log format.
 
 ## Built-in Strategies
 
-Kelora ships four strategies. Only one can be active at a time.
+Kelora ships five strategies. Only one can be active at a time.
 
 ### 1. Timestamp Headers (`--multiline timestamp`)
 
 Best for logs where each entry begins with a timestamp. Detection uses Kelora's
-adaptive timestamp parser; you can hint a specific format with
-`timestamp:format=<chrono>`.
+adaptive timestamp parser and **locks onto the first format family it sees**:
+once your headers match (say) ISO timestamps, a continuation line that merely
+starts with something time-like (`17:03 was the incident window`, an epoch
+number, `Jan 5 ...`) cannot split the event. Two options adjust this:
+
+- `timestamp:format=<chrono>` — detect *only* this format (the hint is a
+  contract, not a preference).
+- `timestamp:loose` — accept any recognizable timestamp as a header, for
+  files that genuinely mix formats.
 
 === "Command"
 
@@ -90,7 +113,9 @@ Pair this strategy with `--ts-format` if you also need chronological filtering l
 ### 2. Indentation Continuations (`--multiline indent`)
 
 Combine lines that start with leading whitespace. This matches Java stack traces
-and similar outputs where continuation lines are indented.
+and similar outputs where continuation lines are indented. Blank lines inside a
+block are continuations too, so a trace with an empty line in the middle stays
+one event.
 
 === "Command"
 
@@ -140,8 +165,20 @@ records with guard strings such as `BEGIN`/`END` or XML tags.
 
 If no `end=` is provided, a new `match=` line flushes the previous block. Regex
 patterns are Rust regular expressions—the same engine used by `--filter`.
+Patterns may contain literal colons (`regex:match=^\d{2}:\d{2}` works); only
+`:match=` / `:end=` act as option separators.
 
-### 4. Treat Everything as One Event (`--multiline all`)
+### 4. Blank-Line Separated Records (`--multiline blank`)
+
+Paragraph mode: blank lines separate records, and the separator itself belongs
+to no record. Handy for reports, `SHOW ENGINE INNODB STATUS`-style dumps, or
+any output that groups related lines into blank-delimited stanzas.
+
+```bash
+kelora -f raw report.txt --multiline blank --multiline-join=newline -F json
+```
+
+### 5. Treat Everything as One Event (`--multiline all`)
 
 This strategy buffers the entire stream and emits it as a single event. Useful
 for one-off conversions (for example piping a whole JSON array into a script).
@@ -153,7 +190,8 @@ kelora -f raw big.json --multiline all --exec 'print(e.raw.len())'
 
 ## Controlling Line Joining
 
-By default, `--multiline` joins grouped lines with spaces (`--multiline-join=space`).
+By default, `--multiline` joins grouped lines with spaces — except `all`,
+which defaults to newline so a whole buffered file keeps its structure.
 To preserve the original line structure in stack traces or other multi-line content:
 
 ```bash
@@ -181,6 +219,25 @@ with its line structure intact.
 
 - After parsing, you can still keep the original text by copying the aggregated block
   into another field inside an exec script.
+
+## Streams, Timeouts, and Safety Caps
+
+Two flags bound the buffer's behavior:
+
+- **`--multiline-timeout DURATION`** — when input goes quiet with a partial
+  event buffered, flush it after this long (e.g. `400ms`, `2s`; `0` = never).
+  The default depends on the input: **off for regular files**, where lines
+  arrive at pipeline speed and an early flush could only split an event, so
+  file runs are deterministic; **400ms for streams** (stdin, FIFOs), so
+  `tail -f | kelora` shows events promptly. When a *defaulted* stream flush
+  fires, kelora prints a one-time hint — if a slow writer's events appear
+  split, raise the timeout or set `0`.
+
+- **`--multiline-max-lines N`** — split an event after N buffered lines and
+  warn once (default: 10000, `0` = unlimited). This is the safety net for a
+  `regex:match=` that never matches again: instead of silently buffering the
+  entire input, kelora flushes and tells you. `--multiline all` is exempt —
+  buffering everything is its purpose.
 
 ## Observability and Debugging
 
@@ -216,13 +273,23 @@ with its line structure intact.
   detector did not trigger. Try `--multiline regex` with an explicit pattern, or
   switch to `timestamp` with a format hint.
 
+- **Events merge that should split**: with `timestamp`, lock-in may have
+  latched onto the wrong format if the file's first line looks time-like but
+  isn't a real header. Pin the format with `timestamp:format=...` or disable
+  locking with `timestamp:loose`.
+
+- **Events split on a live stream**: a pause longer than the idle timeout
+  flushes the buffered event. Raise `--multiline-timeout` (or `0` to never
+  flush early).
+
 - **Truncated blocks**: For JSON or YAML, remember that closing braces/brackets
   often start at column zero. Use regex boundaries that match `^}` or `^\]` to
   keep the termination line.
 
-- **Out-of-memory risk**: `--multiline all` and poorly tuned regex patterns can
-  accumulate the entire file. Run on a sample first, or set `--take`/`--stats`
-  to monitor chunk counts.
+- **Out-of-memory risk**: `--multiline all` accumulates the entire input by
+  design. For the other strategies, `--multiline-max-lines` (default 10000)
+  caps runaway buffering from a never-matching pattern and warns when it
+  splits.
 
 - **Context flags**: `-A/-B/-C` require a sliding window. If you combine context
   with multiline, increase `--window` so the context has enough buffered events.

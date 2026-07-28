@@ -8,7 +8,6 @@ use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{ArgMatches, CommandFactory, FromArgMatches, Parser};
 
 use crate::cli::{Cli, OutputFormat, ShellCompletion};
-use crate::config::MultilineJoin;
 use crate::config_file::{ConfigExpansionInfo, ConfigFile};
 use crate::help;
 use crate::platform::{ExitCode, SafeStderr};
@@ -67,10 +66,19 @@ pub fn validate_cli_args(cli: &Cli) -> Result<()> {
         ));
     }
 
-    if cli.multiline.is_none() && cli.multiline_join != MultilineJoin::Space {
-        return Err(anyhow::anyhow!(
-            "--multiline-join requires --multiline. Start with --multiline indent, --multiline blank, or see --help-multiline for regex/timestamp strategies."
-        ));
+    if cli.multiline.is_none() {
+        for (flag, set) in [
+            ("--multiline-join", cli.multiline_join.is_some()),
+            ("--multiline-timeout", cli.multiline_timeout.is_some()),
+            ("--multiline-max-lines", cli.multiline_max_lines.is_some()),
+        ] {
+            if set {
+                return Err(anyhow::anyhow!(
+                    "{} requires --multiline. Start with --multiline indent, --multiline blank, or see --help-multiline for regex/timestamp strategies.",
+                    flag
+                ));
+            }
+        }
     }
 
     // Check for --core with CSV/TSV formats (not allowed with these formats)

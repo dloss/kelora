@@ -135,6 +135,76 @@ impl AdaptiveTsParser {
     }
 }
 
+/// Which timestamp family a multiline header prefix matched, so the detector
+/// can lock onto one family and stop treating every other parseable prefix
+/// (`17:03 …`, `Jan 5 …`) as an event header.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TsMatchKind {
+    Unix,
+    Rfc3339,
+    Rfc2822,
+    DateOnly,
+    TimeOnly,
+    /// A concrete format string from the adaptive format table.
+    Format(String),
+}
+
+impl AdaptiveTsParser {
+    /// Restricted timestamp check for multiline header detection.
+    ///
+    /// Deliberately narrower than [`Self::parse_ts_with_config`], which serves
+    /// CLI arguments and therefore accepts conveniences that are prose in log
+    /// text: special values (`now`, `today`, …) and relative offsets (`+30m`).
+    /// Accepting those here turned lines like "now retrying with backoff" into
+    /// event headers. This mirrors the remaining branches of the full parser
+    /// rather than refactoring them, because the full parser is on every hot
+    /// path in the tool and its behavior must not shift as a side effect of
+    /// multiline detection; keep the two ladders in sync when adding a branch.
+    pub fn parse_header_kind(&mut self, ts_str: &str) -> Option<TsMatchKind> {
+        let ts_str = ts_str.trim();
+        if ts_str.is_empty() {
+            return None;
+        }
+
+        if looks_like_unix_timestamp(ts_str) && try_parse_unix_timestamp(ts_str).is_some() {
+            return Some(TsMatchKind::Unix);
+        }
+        if DateTime::parse_from_rfc3339(ts_str).is_ok() {
+            return Some(TsMatchKind::Rfc3339);
+        }
+        if DateTime::parse_from_rfc2822(ts_str).is_ok() {
+            return Some(TsMatchKind::Rfc2822);
+        }
+        if parse_date_only(ts_str).is_some() {
+            return Some(TsMatchKind::DateOnly);
+        }
+        if parse_time_only(ts_str).is_some() {
+            return Some(TsMatchKind::TimeOnly);
+        }
+
+        for (index, format) in self.formats.iter().enumerate() {
+            if try_parse_with_format(ts_str, format, None, None).is_some() {
+                let successful_format = if index > 0 {
+                    let f = self.formats.remove(index);
+                    self.formats.insert(0, f.clone());
+                    f
+                } else {
+                    self.formats[0].clone()
+                };
+                return Some(TsMatchKind::Format(successful_format));
+            }
+        }
+
+        None
+    }
+
+    /// Whether `ts_str` parses under exactly the given chrono format (used when
+    /// `--multiline timestamp:format=...` pins the header format).
+    pub fn matches_custom_format(ts_str: &str, format: &str) -> bool {
+        try_parse_with_format(ts_str.trim(), format, None, None).is_some()
+    }
+}
+
 thread_local! {
     static THREAD_TS_PARSER: RefCell<AdaptiveTsParser> =
         RefCell::new(AdaptiveTsParser::new());

@@ -10,6 +10,7 @@ Group multi-line events (stack traces, continuation lines, JSON blocks) into sin
 ## Decision Quick Reference
 - **Timestamp at the start of every event?** Use `--multiline timestamp`.
 - **Continuation lines start with whitespace?** Use `--multiline indent`.
+- **Blank lines between records?** Use `--multiline blank` (paragraph mode).
 - **Events start with specific keywords?** Use `--multiline 'regex:match=^PATTERN'`.
 - **Events have explicit end markers?** Use `--multiline 'regex:match=^BEGIN:end=^END'`.
 - **Single event per file?** Use `--multiline all` (rare; loads full file in memory).
@@ -80,7 +81,7 @@ kelora config.json --multiline all -J
 ## Validate the Result
 - Run `-n 3` or `--take 3` to verify event boundaries before adding filters.
 - Use `--stats` to confirm Kelora parsed the expected number of events.
-- When debugging, add `--debug-multiline` to see how patterns match (see `kelora --help-multiline`).
+- When debugging, inspect the grouped blocks directly with `-f raw -F json --take 5` (see `kelora --help-multiline` for troubleshooting tips).
 
 ## Variations
 - **Chain with format parsing**  
