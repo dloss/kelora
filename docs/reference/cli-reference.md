@@ -601,6 +601,48 @@ Close spans after a period of inactivity (no events). Requires timestamps and ca
 - Missing timestamps: tagged `unassigned` (errors with `--strict`).
 - Interleaved/out-of-order events do not close spans; only forward-time gaps are considered. Sort input if you need strict wall-clock ordering.
 
+#### `--span-summary[=text|tsv|json]`
+
+Emit one rollup row per closed span, with no script. Requires `--span` or `--span-idle` (exit code 2 otherwise). Implies `-q/--quiet`: you asked for the rollup, so the rollup is the data.
+
+Each row carries three things:
+
+| Element | Source |
+| --- | --- |
+| label | `span.start` as RFC3339 seconds (`Z`) when the mode has one, else `span.id` — `#0` for count spans, the field value for field spans |
+| `events` | Number of events that survived filters and were included |
+| metrics | Every key of `span.metrics` — additive aggregators only, including those synthesized by `--freq`/`--describe`/`--card` |
+
+Formats:
+
+- `text` — one line per span, `key=value` pairs. Nested metrics flatten with a dot, matching `get_path`'s convention: `level.INFO=2`.
+- `tsv` — long/tidy `label<TAB>metric<TAB>key<TAB>value` records, one per value, with an empty key column for scalars. This is the cumulative metrics TSV shape with the label prepended. Long form is deliberate: `span.metrics` omits zero deltas, so a wide table would jitter its columns between spans.
+- `json` — one object per line: `{"span":…,"start":…,"end":…,"events":…,"metrics":{…}}`. `start`/`end` are omitted for count and field spans, which have none.
+- Bare `--span-summary` auto-selects `text` on a terminal and `tsv` when piped or redirected, the same rule as `-m`. Note the `=`: `--span-summary=tsv` (a space is read as a filename).
+
+```bash
+kelora app.log --span 1m --span-summary                 # events per minute
+kelora app.log -l error --span 5m --span-summary        # errors per 5 minutes
+kelora app.log --span 1m --freq level --span-summary    # per-minute level breakdown
+kelora app.log --span-idle 5m --span-summary            # session sizes
+kelora app.log --span 1m --span-summary=tsv | duckdb    # time series out
+```
+
+Interactions:
+
+- **Rows are data, not script output.** `--no-script-output`, `-m`, and the implied event suppression leave them alone. Only `--silent` removes them.
+- **The implied `-m` yields.** With `--freq`/`--describe`/`--card`, their deltas land in each row and the cumulative table is suppressed. An *explicit* `-m`/`--metrics=FMT` still prints that table, after the rows — explicit beats implied.
+- **Composes with `--span-close`.** Both run: the hook first, then the row. The hook's `print` reaches stdout normally, which it does not under `-m`/`--freq`.
+- **Rows are sparse.** A window with no events produces no row; empty windows are not emitted as zeroes. When plotting a time series, fill the gaps downstream or a line chart will read flat where it was zero.
+- **Sequential only.** Like every `--span` mode, this disables parallel processing.
+
+Diagnostics, each fired only when the run is actually affected:
+
+- Events that arrived after their window closed belong to no span, so the rows under-count; the tally is reported once at the end.
+- Events with no usable timestamp cannot be placed in a time or idle window, which is why an otherwise-valid run can print nothing at all.
+- A field span whose label repeats means interleaved values split into a row per contiguous run, not a row per distinct value.
+- `--describe`'s non-additive metrics (`min`/`max`/percentiles) have no per-window value; they are named once as a set rather than one line per key.
+
 #### `--span-close <SCRIPT>`
 
 Run a Rhai snippet once whenever a span closes. Use it to emit per-span summaries, metrics, or rollups. The script runs after the event that triggered the close finishes all per-event stages (filters, execs, etc.).
@@ -609,9 +651,11 @@ Run a Rhai snippet once whenever a span closes. Use it to emit per-span summarie
 
 - `span.id` – Unique span identifier (`#0`, `2024-05-19T12:00:00Z/5m`, etc.)
 - `span.start` / `span.end` – Half-open window bounds for time-based spans (count spans return `()`)
+- `span.label` – `span.start` as RFC3339 seconds when the mode has one, else `span.id`. The same rule `--span-summary` labels rows by, so a hook need not branch on the span mode.
 - `span.size` – Number of events that survived filters and were included in this span
 - `span.events` – Array of events in arrival order (each map includes `span_status`, `span_start`, etc.)
 - `span.metrics` – Map of per-window values from additive `track_*` calls (`count`, `sum`, `avg`, `unique`, `bucket`); non-additive aggregators (`min`, `max`, `percentiles`, `cardinality`, `top`, `bottom`) are omitted with a warning — use `span.events` for those
+- `span.metric(name)` – One metric's per-window value, or `0` when the window produced none. Accepts a dotted path (`span.metric("level.ERROR")`). Prefer this over `span.metrics.get_path(name, 0)`: zero deltas are omitted from the map, so a bare lookup yields `()` and arithmetic on it fails.
 
 **Metadata added to `meta` during per-event stages:**
 

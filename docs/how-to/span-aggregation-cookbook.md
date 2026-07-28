@@ -15,7 +15,33 @@ Batch events into fixed-size or time-based windows using `--span` so you can com
 ## Step 1: Select a Window Strategy
 - **Count-based**: `--span 500` closes the window every 500 events that pass all filters.
 - **Time-based**: `--span 5m` groups events by wall-clock duration (supports `s`, `m`, `h`).
-- Optional `--span-close '...Rhai script...'` runs when the window closes. Use it for custom summaries or output.
+- Add `--span-summary` for a rollup row per window, or `--span-close '...Rhai script...'` when you need a custom shape.
+
+## Step 1b: Start With `--span-summary`
+
+Most rollups need no script at all. `--span-summary` prints one row per closed window, carrying the label, the event count, and every per-window metric:
+
+```bash
+kelora -j examples/simple_json.jsonl --span 1m --span-summary=text
+```
+
+```
+2024-01-15T10:00:00Z  events=3
+2024-01-15T10:01:00Z  events=2
+```
+
+Combine it with `--freq` to break each window down by a field. The window applies — without `--span-summary`, `--freq` reports the whole run and the span silently does nothing:
+
+```bash
+kelora -j examples/simple_json.jsonl --span 1m --freq level --span-summary=text
+```
+
+```
+2024-01-15T10:00:00Z  events=3  level.DEBUG=1 level.INFO=2
+2024-01-15T10:01:00Z  events=2  level.ERROR=1 level.WARN=1
+```
+
+The examples above pass `=text` so the shown output matches whether you run them interactively or pipe them; a bare `--span-summary` picks `text` on a terminal and `tsv` when redirected. Use `--span-summary=tsv` for a long/tidy record stream (DuckDB, pandas, gnuplot) or `--span-summary=json` to keep nested metrics intact. Reach for `--span-close` only when you need a shape the row model does not cover — the recipes below.
 
 ## Step 2: Count-Based Example
 Summarise every 200 events for quick batch metrics.
@@ -25,7 +51,7 @@ kelora -j examples/simple_json.jsonl \
   --span 200 \
   --span-close '
     let metrics = span.metrics;
-    print(`${span.id},events=${span.size},errors=${metrics.get_path("level|ERROR", 0)}`);
+    print(`${span.id},events=${span.size},errors=${metrics.get_path("level.ERROR", 0)}`);
   ' \
   --exec '
     track_sum("total", 1);
@@ -49,7 +75,7 @@ kelora -j examples/simple_json.jsonl \
   ' \
   --span-close '
     let total = span.metrics.get_path("total", 0);
-    let errors = span.metrics.get_path("level|ERROR", 0);
+    let errors = span.metrics.get_path("level.ERROR", 0);
     if total > 0 {
       let rate = (errors.to_float() / total.to_float()) * 100.0;
       print(`${span.start},total=${total},errors=${errors},error_rate=${rate}`);

@@ -1319,7 +1319,9 @@ fn run_pipeline_sequential_internal<W: Write>(
         write_formatted_output(formatted, output, &mut gap_tracker)?;
     }
 
-    pipeline.finish_spans(&mut ctx)?;
+    for formatted in pipeline.finish_spans(&mut ctx)? {
+        write_formatted_output(formatted, output, &mut gap_tracker)?;
+    }
 
     if let Some(result) = pipeline.finish_formatter() {
         write_formatted_output(result, output, &mut gap_tracker)?;

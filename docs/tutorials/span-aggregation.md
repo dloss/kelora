@@ -13,6 +13,7 @@ The diagram above illustrates the complete span aggregation pipeline, showing ho
 
 ## What You'll Learn
 
+- Get a per-window rollup with one flag, using `--span-summary`
 - Create count-based spans to batch every N events
 - Build time-aligned windows for dashboard rollups
 - Access span events and per-span metrics in `--span-close` hooks
@@ -35,6 +36,44 @@ This tutorial uses:
 - Generated data for demonstrations
 
 All commands use `markdown-exec` format, so output is live from the actual CLI.
+
+---
+
+## Step 0: The One-Flag Rollup
+
+Before writing any hook, try `--span-summary`. It prints one row per closed window — label, event count, and every per-window metric — and needs no script, no `-q`, and no interpolation:
+
+=== "Command"
+
+    ```bash
+    kelora -j examples/simple_json.jsonl --span 1m --span-summary=text
+    ```
+
+=== "Output"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora -j examples/simple_json.jsonl --span 1m --span-summary=text
+    ```
+
+Add `--freq` to break each window down by a field. The window applies here — on its own, `--freq` aggregates the whole run and the span does nothing to it:
+
+=== "Command"
+
+    ```bash
+    kelora -j examples/simple_json.jsonl --span 1m --freq level --span-summary=text
+    ```
+
+=== "Output"
+
+    ```bash exec="on" source="above" result="ansi"
+    kelora -j examples/simple_json.jsonl --span 1m --freq level --span-summary=text
+    ```
+
+These examples pass `=text` so the output above is the same whether you run them in a terminal or capture them. A bare `--span-summary` picks for you — `text` on a terminal, `tsv` when piped or redirected, like `-m`. `--span-summary=tsv` gives a long/tidy record stream for DuckDB, pandas, or gnuplot; `--span-summary=json` keeps nested metrics intact.
+
+Two things to know before plotting: rows are **sparse** (a window with no events produces no row, so fill gaps downstream rather than assuming a dense series), and `--span-summary` implies `-q` because the rollup *is* the data.
+
+The rest of this tutorial covers `--span-close`, which is what you reach for when the row model does not fit — custom formatting, comparisons against global state, or per-window work over `span.events`.
 
 ---
 
@@ -723,19 +762,21 @@ kelora -f logfmt app.log --span 5m
 kelora -j huge.log --span 1000000 --span-close 'for evt in span.events { ... }'
 # High memory usage
 ```
-**✅ Solution:** Use smaller spans, or switch to time-based spans which naturally limit buffering. If you don't need `span.events`, omit `--span-close` to avoid buffering.
+**✅ Solution:** Use smaller spans, or switch to time-based spans which naturally limit buffering. Events are only retained when a `--span-close` hook is present, since nothing else can read `span.events` — `--span-summary` alone buffers nothing, whatever the window size.
 
 ---
 
-**❌ Problem:** Forgetting to use `.get_path()` with span.metrics
+**❌ Problem:** Reading `span.metrics` directly
 ```bash
 --span-close 'let errors = span.metrics["errors"]'
-# Crashes if "errors" key doesn't exist (zero delta omitted)
+# Yields () if "errors" has no delta this window, and arithmetic on () fails
 ```
-**✅ Solution:** Always use `.get_path()` with a default:
+**✅ Solution:** Use `span.metric()`, which defaults to `0` and takes a dotted path:
 ```bash
---span-close 'let errors = span.metrics.get_path("errors", 0)'
+--span-close 'let errors = span.metric("errors")'
+--span-close 'let errors = span.metric("level.ERROR")'   # nested track_freq value
 ```
+`span.metrics.get_path("errors", 0)` also works. Note the separator is a dot, matching `get_path` everywhere else — `get_path("level|ERROR", 0)` silently returns the default.
 
 ## Tips & Best Practices
 

@@ -17,6 +17,7 @@ pub mod prefix_extractor;
 pub mod prefix_parser;
 pub mod section_selector;
 mod span;
+pub mod span_summary;
 pub mod stages;
 
 // Re-export main types for convenience
@@ -179,6 +180,13 @@ pub struct PipelineContext {
     pub discovered_keys: HashSet<String>,
     pub discovered_levels_output: HashSet<String>,
     pub discovered_keys_output: HashSet<String>,
+    /// `--span-summary` rows for spans that closed since the last drain.
+    ///
+    /// Spans close from three places, only two of which are near an `outputs`
+    /// vec, so rows queue here and are drained at the one choke point every
+    /// input path funnels through (`process_chunk`) plus once in the final
+    /// flush. Ordering therefore stays "row after the window's last event".
+    pub pending_span_rows: Vec<String>,
 }
 
 /// Pipeline configuration
@@ -454,11 +462,15 @@ impl Pipeline {
             .map(|line| FormattedOutput::new(line, None))
     }
 
-    pub fn finish_spans(&mut self, ctx: &mut PipelineContext) -> Result<()> {
+    /// Close the final open span and return any rows it produced, including
+    /// those left queued by earlier closes.
+    pub fn finish_spans(&mut self, ctx: &mut PipelineContext) -> Result<Vec<FormattedOutput>> {
         if let Some(span_processor) = self.span_processor.as_mut() {
             span_processor.finish(ctx)?;
         }
-        Ok(())
+        let mut outputs = Vec::new();
+        Self::drain_span_rows(ctx, &mut outputs);
+        Ok(outputs)
     }
 
     fn apply_script_result(
@@ -643,7 +655,32 @@ impl Pipeline {
         self.process_chunk(chunk, ctx)
     }
 
+    /// Move any queued `--span-summary` rows into the output stream.
+    ///
+    /// Rows are `FormattedOutput` data, so `quiet_events` (which only swaps in a
+    /// null *formatter*) leaves them alone, exactly like `--freq`'s table. They
+    /// carry no timestamp: `--gaps` measures distance between events, and a
+    /// rollup row is not one.
+    fn drain_span_rows(ctx: &mut PipelineContext, outputs: &mut Vec<FormattedOutput>) {
+        if ctx.pending_span_rows.is_empty() {
+            return;
+        }
+        for row in ctx.pending_span_rows.drain(..) {
+            outputs.push(FormattedOutput::new(row, None));
+        }
+    }
+
     fn process_chunk(
+        &mut self,
+        chunk: String,
+        ctx: &mut PipelineContext,
+    ) -> Result<Vec<FormattedOutput>> {
+        let mut outputs = self.process_chunk_inner(chunk, ctx)?;
+        Self::drain_span_rows(ctx, &mut outputs);
+        Ok(outputs)
+    }
+
+    fn process_chunk_inner(
         &mut self,
         chunk: String,
         ctx: &mut PipelineContext,

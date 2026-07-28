@@ -342,7 +342,10 @@ pub fn format_metrics_tsv(
 
 /// Flatten a tab/newline inside a TSV field to a space so each record stays one
 /// line with a fixed column count.
-fn tsv_sanitize(s: &str) -> String {
+///
+/// Shared with `--span-summary`, whose labels and metric keys come from the same
+/// log data and would corrupt a record the same way.
+pub fn tsv_sanitize(s: &str) -> String {
     if s.contains(['\t', '\n', '\r']) {
         s.replace(['\t', '\n', '\r'], " ")
     } else {
@@ -352,7 +355,10 @@ fn tsv_sanitize(s: &str) -> String {
 
 /// Scalar text for a TSV value. Floats are rounded exactly as the human table
 /// rounds them, so the two views of one run report the same numbers (#372).
-fn dynamic_to_tsv(value: &Dynamic) -> String {
+///
+/// Shared with `--span-summary`, so a per-window value is rounded on the same
+/// terms as the cumulative one for the same metric.
+pub fn dynamic_to_tsv(value: &Dynamic) -> String {
     if value.is_int() {
         value.as_int().unwrap_or(0).to_string()
     } else if value.is_float() {

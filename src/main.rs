@@ -461,6 +461,12 @@ fn main() -> Result<()> {
         }
     }
 
+    for hint in crate::config::span_hints(&config, &cli) {
+        stderr
+            .writeln(&config.format_hint_message(&hint))
+            .unwrap_or(());
+    }
+
     // Handle output destination and run pipeline
     let hints_allowed_runtime = config.hints_allowed();
     let terminal_allowed = !config.processing.silent;
