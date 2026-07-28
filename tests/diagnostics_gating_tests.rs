@@ -195,6 +195,57 @@ fn silent_suppresses_everything() {
     assert!(!has_warning(&wstderr), "--silent hides warnings: {wstderr}");
 }
 
+// --- Data-only modes vs script output: the modes imply --no-script-output to
+// keep the machine-readable stdout clean, but an explicit --script-output wins
+// (#379), same as --hints wins over their implied hint hush. --stats is a
+// data-only mode like the rest (#384). ---
+
+const EXEC_PRINT: &[&str] = &["-f", "logfmt", "--no-emoji", "--exec", "print(\"EXEC\")"];
+
+#[test]
+fn data_only_modes_suppress_script_output_by_default() {
+    for mode in [&["--freq", "a"][..], &["-s"][..], &["-m"][..]] {
+        let mut args = EXEC_PRINT.to_vec();
+        args.extend_from_slice(mode);
+        let (stdout, _e, code) = run(&args, INPUT);
+        assert_eq!(code, 0);
+        assert!(
+            !stdout.contains("EXEC"),
+            "{mode:?} must suppress print by default: {stdout}"
+        );
+    }
+}
+
+#[test]
+fn explicit_script_output_wins_over_data_only_modes() {
+    for mode in [&["--freq", "a"][..], &["-s"][..], &["-m"][..]] {
+        let mut args = EXEC_PRINT.to_vec();
+        args.extend_from_slice(mode);
+        args.push("--script-output");
+        let (stdout, _e, code) = run(&args, INPUT);
+        assert_eq!(code, 0);
+        assert!(
+            stdout.contains("EXEC"),
+            "--script-output must re-enable print under {mode:?}: {stdout}"
+        );
+    }
+}
+
+#[test]
+fn stats_hushes_hints_like_the_other_data_only_modes() {
+    let mut args = HINT_ARGS.to_vec();
+    args.push("-s");
+    let (_o, stderr, _c) = run(&args, INPUT);
+    assert!(!has_hint(&stderr), "-s must hush hints: {stderr}");
+
+    args.push("--hints");
+    let (_o, stderr2, _c) = run(&args, INPUT);
+    assert!(
+        has_hint(&stderr2),
+        "--hints re-enables them under -s: {stderr2}"
+    );
+}
+
 // --- Detection-notice gating: warnings/hints follow the tier flags with NO
 // terminal gate (so they reach redirected/CI stderr), while the auto-detect
 // STATUS notice is silent on success and surfaces only under -v. The test
