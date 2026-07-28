@@ -2621,3 +2621,192 @@ fn test_expression_hint_obeys_explicit_no_diagnostics() {
         "explicit --no-diagnostics must suppress the hint: {stderr}"
     );
 }
+
+/// #372: the human-readable metric formats rounded, the machine-readable ones
+/// did not, so `tsv` and `json` — the two that feed dashboards, thresholds and
+/// `awk` — were the ones carrying t-digest float noise (`190.04999999999998`
+/// against `190.05` in `full`). All four views must report the same number.
+#[test]
+fn test_metrics_percentiles_agree_across_formats() {
+    let input: String = (1..=200).map(|i| format!("{{\"d\":{i}}}\n")).collect();
+
+    let mut seen: Vec<(String, String)> = Vec::new();
+    for format in ["full", "short", "tsv", "json"] {
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(
+            &[
+                "-j",
+                "-e",
+                "track_percentiles(\"lat\", e.d)",
+                &format!("--metrics={format}"),
+            ],
+            &input,
+        );
+        assert_eq!(exit_code, 0, "format={format} should exit successfully");
+        assert!(
+            !stdout.contains("190.04999999999998") && !stdout.contains("198.01000000000002"),
+            "format={format} must not surface float artifacts: {stdout}"
+        );
+        assert!(
+            stdout.contains("190.05") && stdout.contains("198.01"),
+            "format={format} should report the rounded estimate: {stdout}"
+        );
+        seen.push((format.to_string(), stdout));
+    }
+
+    // json stays a JSON object of numbers: rounding changed the precision, not
+    // the type, and an integer-valued percentile is `100.5`/`190.05`, never a
+    // quoted string.
+    let json = &seen
+        .iter()
+        .find(|(f, _)| f == "json")
+        .expect("json output")
+        .1;
+    let parsed: serde_json::Value = serde_json::from_str(json).expect("metrics json should parse");
+    assert!(
+        parsed["lat_p95"].is_number(),
+        "percentile should stay a JSON number: {json}"
+    );
+    assert_eq!(parsed["lat_p95"].as_f64().unwrap(), 190.05);
+}
+
+/// #372: an integer-valued percentile rendered as `71.0` in json but `71` in
+/// tsv. Both are JSON numbers; the two views should agree.
+#[test]
+fn test_metrics_integer_valued_percentile_has_no_trailing_zero() {
+    let input: String = (0..50).map(|_| "{\"d\":71}\n".to_string()).collect();
+
+    let (json, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-e",
+            "track_percentiles(\"lat\", e.d)",
+            "--metrics=json",
+        ],
+        &input,
+    );
+    assert_eq!(exit_code, 0, "should exit successfully");
+    assert!(
+        json.contains("\"lat_p50\": 71,") || json.contains("\"lat_p50\": 71\n"),
+        "an integer-valued percentile should read as 71, not 71.0: {json}"
+    );
+}
+
+/// #367: `--card`/`track_cardinality` surfaced the raw HyperLogLog estimate, so
+/// a two-event file reported `2.001955671862574` distinct values — a fractional
+/// count of things, and more distinct values than there were values. The count
+/// is now a whole number and can never exceed the number of values seen, in
+/// every view and in both execution modes.
+#[test]
+fn test_metrics_cardinality_is_whole_and_bounded_by_values_seen() {
+    // Every value distinct, so the estimate sits at its bound and any bias
+    // would push it over.
+    let input: String = (0..2000).map(|i| format!("{{\"a\":\"v{i}\"}}\n")).collect();
+
+    for extra in [vec![], vec!["--parallel"]] {
+        for format in ["tsv", "json", "full"] {
+            let mut args = vec!["-j", "-e", "track_cardinality(\"distinct_a\", e.a)", "-q"];
+            let metrics_arg = format!("--metrics={format}");
+            args.push(&metrics_arg);
+            args.extend(extra.iter().copied());
+
+            let (stdout, _stderr, exit_code) = run_kelora_with_input(&args, &input);
+            assert_eq!(exit_code, 0, "args={args:?} should exit successfully");
+
+            let reported: f64 = stdout
+                .split_whitespace()
+                .filter_map(|token| {
+                    token
+                        .trim_matches(|c: char| !c.is_ascii_digit() && c != '.')
+                        .parse::<f64>()
+                        .ok()
+                })
+                .next_back()
+                .unwrap_or_else(|| panic!("args={args:?} should report a number: {stdout}"));
+
+            assert_eq!(
+                reported.fract(),
+                0.0,
+                "args={args:?} should report a whole number: {stdout}"
+            );
+            assert!(
+                reported <= 2000.0,
+                "args={args:?} must not report more distinct values than values seen: {stdout}"
+            );
+            assert!(
+                reported > 1900.0,
+                "args={args:?} should still estimate close to the true 2000: {stdout}"
+            );
+        }
+    }
+}
+
+/// #367: the two-event reproduction from the issue, exactly.
+#[test]
+fn test_metrics_cardinality_of_two_events_is_two() {
+    let input = "{\"a\":\"x=1 y=2\",\"n\":1}\n{\"a\":\"x=3 y=4\",\"n\":2}\n";
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-m",
+            "-e",
+            "track_inc(\"events\"); track_cardinality(\"distinct_a\", e.a)",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "should exit successfully");
+    assert!(
+        stdout.contains("distinct_a\t\t2\n") || stdout.contains("distinct_a\t\t2"),
+        "two events, two distinct values: {stdout}"
+    );
+    assert!(
+        !stdout.contains("2.0019"),
+        "the raw estimate must not reach the user: {stdout}"
+    );
+}
+
+/// The values-seen counter backing the clamp is bookkeeping: it must stay out of
+/// every metrics view and out of the `metrics` map handed to `--end` scripts.
+#[test]
+fn test_metrics_cardinality_bookkeeping_key_is_hidden() {
+    let input = "{\"a\":\"one\"}\n{\"a\":\"two\"}\n";
+
+    for format in ["tsv", "json", "full"] {
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(
+            &[
+                "-j",
+                "-q",
+                "-e",
+                "track_cardinality(\"c\", e.a)",
+                &format!("--metrics={format}"),
+            ],
+            input,
+        );
+        assert_eq!(exit_code, 0, "format={format} should exit successfully");
+        assert!(
+            !stdout.contains("__kelora"),
+            "format={format} must not leak bookkeeping keys: {stdout}"
+        );
+    }
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-q",
+            "-e",
+            "track_cardinality(\"c\", e.a)",
+            "--end",
+            "print(metrics)",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "should exit successfully");
+    assert!(
+        !stdout.contains("__kelora"),
+        "the script-visible metrics map must not carry bookkeeping keys: {stdout}"
+    );
+    assert!(
+        stdout.contains("\"c\": 2"),
+        "scripts should see the same whole count the table prints: {stdout}"
+    );
+}

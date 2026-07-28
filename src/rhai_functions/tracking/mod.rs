@@ -672,7 +672,12 @@ pub fn merge_thread_tracking_to_context(ctx: &mut crate::pipeline::PipelineConte
 /// user script it needs to contain plain numeric values so that scripts can
 /// render them with helpers like `format_decimals` and `bar`. This helper
 /// returns the finalized `Dynamic` for a metric key/value pair.
-fn finalize_metric_value(key: &str, value: &Dynamic, operation: Option<&str>) -> Dynamic {
+fn finalize_metric_value(
+    key: &str,
+    value: &Dynamic,
+    operation: Option<&str>,
+    values_seen: Option<i64>,
+) -> Dynamic {
     // Average tracking: {sum, count} map → mean as f64. Gated on the recorded
     // operation rather than the map's shape: a user's track_freq values
     // may legitimately be named "sum" and "count".
@@ -700,7 +705,9 @@ fn finalize_metric_value(key: &str, value: &Dynamic, operation: Option<&str>) ->
     if let Ok(blob) = value.clone().into_blob() {
         if is_hll_blob(&blob) {
             if let Some(hll) = deserialize_hll(&blob) {
-                return Dynamic::from(hll.len() as i64);
+                // Rounded and clamped exactly as the printed views do, so a
+                // script and the metrics table never disagree about a count.
+                return Dynamic::from(format::cardinality_estimate(hll.len(), values_seen));
             }
         }
         if let Some(digest) = deserialize_tdigest(&blob) {
@@ -741,6 +748,29 @@ pub(crate) fn metric_top_n(metrics: &HashMap<String, Dynamic>, key: &str) -> Opt
         .map(|n| n as usize)
 }
 
+/// Reserved user-state key prefix counting the values fed to a cardinality
+/// metric, so the HyperLogLog estimate can be clamped to a count it cannot
+/// exceed (#367). Kept in user tracking beside the sketch itself: that gives it
+/// the sketch's exact lifecycle — same per-batch delta, same additive merge
+/// across parallel workers (via `__op_` metadata recording "count") — so the two
+/// can never drift apart. Filtered from all metric output by `__kelora_`.
+pub(crate) const CARD_COUNT_PREFIX: &str = "__kelora_cardn_";
+
+/// Key under which a cardinality metric's values-seen count is stored.
+pub(crate) fn card_count_key(key: &str) -> String {
+    format!("{}{}", CARD_COUNT_PREFIX, key)
+}
+
+/// How many values were fed to a cardinality metric, read from the user
+/// tracking map. `None` for a sketch recorded before the count existed, which
+/// leaves the estimate unclamped rather than clamping it to zero.
+pub(crate) fn metric_card_count(metrics: &HashMap<String, Dynamic>, key: &str) -> Option<i64> {
+    metrics
+        .get(&card_count_key(key))
+        .and_then(|v| v.as_int().ok())
+        .filter(|n| *n >= 0)
+}
+
 /// Build a finalized `rhai::Map` suitable for exposing as the `metrics`
 /// global inside `--end` / `--span-close` / other post-processing stages.
 /// Internal bookkeeping keys (`__op_*`, `__kelora_stats_*`, `__kelora_error_*`,
@@ -757,6 +787,7 @@ pub fn finalize_metrics_for_script(
             || key.starts_with("__kelora_error_")
             || key.starts_with("__kelora_track_")
             || key.starts_with(TOPN_PREFIX)
+            || key.starts_with(CARD_COUNT_PREFIX)
         {
             continue;
         }
@@ -771,7 +802,12 @@ pub fn finalize_metrics_for_script(
                 }
                 Err(_) => value.clone(),
             },
-            None => finalize_metric_value(key, value, operation.as_deref()),
+            None => finalize_metric_value(
+                key,
+                value,
+                operation.as_deref(),
+                metric_card_count(metrics, key),
+            ),
         };
         out.insert(key.clone().into(), finalized);
     }
