@@ -113,6 +113,33 @@ pub(super) fn merge_numeric(existing: Option<Dynamic>, new_value: Dynamic) -> Dy
     }
 }
 
+/// Centroid budget for a stored t-digest.
+///
+/// `TDigest::merge` only concatenates and sorts centroid lists — it never
+/// combines them — so without an explicit `compress` the digest gains one
+/// centroid per tracked value and every subsequent event pays an O(n)
+/// deserialize/sort/serialize round trip. That made `track_percentiles`,
+/// `track_stats` and `--describe` quadratic in event count (#377).
+///
+/// 100 centroids keeps the estimator's error around 0.3% on realistic latency
+/// distributions — far inside the ~1% a t-digest promises — while bounding the
+/// stored blob at ~3KB (it is allowed to reach twice the budget between
+/// compressions; see [`compress_tdigest`]).
+pub(crate) const TDIGEST_MAX_CENTROIDS: usize = 100;
+
+/// Compress a digest back to [`TDIGEST_MAX_CENTROIDS`], but only once it has
+/// grown to twice that.
+///
+/// Compressing on every event would work, yet it re-merges the whole centroid
+/// list each time; letting the digest run to 2x and then halving it amortizes
+/// that cost over `TDIGEST_MAX_CENTROIDS` events and keeps the per-event work
+/// genuinely constant.
+pub(crate) fn compress_tdigest(digest: &mut TDigest) {
+    if digest.centroids().len() > TDIGEST_MAX_CENTROIDS * 2 {
+        digest.compress(TDIGEST_MAX_CENTROIDS);
+    }
+}
+
 /// Helper function to serialize a TDigest to bytes for storage in Dynamic
 /// We store centroids as the serialization format
 pub(super) fn serialize_tdigest(digest: &TDigest) -> Vec<u8> {
@@ -239,6 +266,51 @@ mod tests {
             Dynamic::from(2_000_000_000i64),
         );
         assert_eq!(result.as_int().unwrap(), 3_000_000_000i64);
+    }
+
+    /// #377: `TDigest::merge` never combines centroids, so a digest fed one
+    /// value at a time grew a centroid per event and made every later event
+    /// more expensive. The stored digest must stay bounded no matter how many
+    /// values it has seen.
+    #[test]
+    fn test_tdigest_centroids_stay_bounded() {
+        let mut digest = TDigest::from_values(vec![0.0]);
+        for i in 1..10_000 {
+            digest = digest.merge(&TDigest::from_values(vec![(i % 997) as f64]));
+            compress_tdigest(&mut digest);
+            assert!(
+                digest.centroids().len() <= TDIGEST_MAX_CENTROIDS * 2 + 1,
+                "digest grew to {} centroids after {} values",
+                digest.centroids().len(),
+                i + 1
+            );
+        }
+        // Serialized size follows the centroid count, so the blob rewritten on
+        // every event stays small too.
+        assert!(serialize_tdigest(&digest).len() <= 8 + 16 * (TDIGEST_MAX_CENTROIDS * 2 + 1));
+    }
+
+    /// Compressing is only worth it if the estimates survive it. Uniform
+    /// 0..=9999 has percentiles we can state exactly; a 100-centroid digest
+    /// should land within 1% of them — the error bar t-digest advertises.
+    #[test]
+    fn test_compressed_tdigest_stays_accurate() {
+        let mut digest = TDigest::from_values(vec![0.0]);
+        for i in 1..10_000 {
+            digest = digest.merge(&TDigest::from_values(vec![i as f64]));
+            compress_tdigest(&mut digest);
+        }
+
+        for (q, expected) in [(0.5, 4999.5), (0.95, 9499.05), (0.99, 9899.01)] {
+            let estimate = digest.estimate_quantile(q);
+            let error = (estimate - expected).abs() / expected;
+            assert!(
+                error < 0.01,
+                "p{} estimated {estimate}, expected ~{expected} ({:.2}% off)",
+                q * 100.0,
+                error * 100.0
+            );
+        }
     }
 
     #[test]

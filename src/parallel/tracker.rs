@@ -12,7 +12,7 @@ use std::time::Instant;
 use tdigests::TDigest;
 
 use crate::pipeline::InternalStats;
-use crate::rhai_functions::tracking::TrackingSnapshot;
+use crate::rhai_functions::tracking::{compress_tdigest, TrackingSnapshot};
 use crate::stats::ProcessingStats;
 
 /// Helper function to serialize a TDigest to bytes for storage in Dynamic
@@ -570,7 +570,11 @@ impl GlobalTracker {
         let new_digest = deserialize_tdigest(&new_blob)?;
 
         // Merge the digests using the merge method
-        let merged_digest = existing_digest.merge(&new_digest);
+        let mut merged_digest = existing_digest.merge(&new_digest);
+
+        // Concatenating two worker digests can push the result past the
+        // centroid budget; keep the merged blob bounded too (#377).
+        compress_tdigest(&mut merged_digest);
 
         // Serialize and store
         let bytes = serialize_tdigest(&merged_digest);
