@@ -4042,9 +4042,11 @@ event data goes to <strong>stderr</strong>, so a pipeline's stdout stays clean.<
 <li><strong>Warnings and hints are anomaly-triggered and reach redirected stderr</strong> (CI,
   <code>2&gt;file</code>), so a stuck user still sees them. Silence them with the flags above.</li>
 </ul>
-<p>Data-only modes (<code>-m</code>, <code>--drain</code>, <code>--discover</code>) hush hints so machine-readable
-output stays uncluttered; warnings still surface, and <code>--hints</code>/<code>--diagnostics</code>
-brings hints back. One hint is exempt: the <code>No input format detected</code> fallback
+<p>Data-only modes — <code>-s</code>/<code>--stats</code>, <code>-m</code>/<code>--freq</code>/<code>--describe</code>/<code>--card</code>,
+<code>--drain</code>, <code>--discover</code> — hush hints and Rhai <code>print</code>/<code>eprint</code> so
+machine-readable output stays uncluttered; warnings still surface, and an
+explicit positive flag brings each back (<code>--hints</code>/<code>--diagnostics</code> for hints,
+<code>--script-output</code> for script output). One hint is exempt: the <code>No input format detected</code> fallback
 still fires under <code>--discover</code>, because <code>--discover</code> is the mode for asking
 "what <em>is</em> this file?" — the hint is the actionable half of the footer's
 <code>format: line (auto-detected)</code>. An explicit <code>--no-hints</code>, <code>--no-diagnostics</code>,
@@ -4074,11 +4076,11 @@ run, even when <code>-f auto-per-file</code> detects a format for each of many f
 </tr>
 <tr>
 <td><code>--no-script-output</code></td>
-<td>Suppress Rhai <code>print</code>/<code>eprint</code> (implied by data-only modes)</td>
+<td>Suppress Rhai <code>print</code>/<code>eprint</code> (implied by data-only modes; explicit <code>--script-output</code> wins)</td>
 </tr>
 <tr>
 <td><code>-s</code> / <code>--stats=FORMAT</code></td>
-<td>Show stats only (implies <code>-q/--quiet</code>; also suppresses script output; diagnostics stay on). Format: table, json</td>
+<td>Show stats only (implies <code>-q/--quiet</code>; hushes hints and script output like the other data-only modes; warnings stay on). Format: table, json</td>
 </tr>
 <tr>
 <td><code>-m</code> / <code>--metrics=FORMAT</code></td>
