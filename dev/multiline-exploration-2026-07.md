@@ -2,7 +2,17 @@
 
 Exploration of the current `--multiline` implementation (2026-07, v2.0.1).
 Every failure mode below was reproduced against a debug build; repro commands
-are included. Verdict up front:
+are included.
+
+> **Status note:** this catalog describes the tree as explored. Two findings
+> were fixed independently on main before the Tier-1 work landed: the
+> line-number half of §1.3 and the newline-join/parser interaction (not in
+> this catalog — `--multiline-join=newline` events failing regex/syslog
+> parsing) both went in with #368 (`d3d8bfd`). The Tier-1 implementation
+> supersedes that commit's provenance plumbing with chunk-carried provenance
+> and keeps its parser-side dot-matches-newline fix and tests.
+
+Verdict up front:
 
 **Yes, significant improvements are possible before v3.0.** Most of what makes
 multiline brittle is not the strategy set — it's the *seams*: where chunking
