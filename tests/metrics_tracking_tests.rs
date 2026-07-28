@@ -2669,6 +2669,50 @@ fn test_metrics_percentiles_agree_across_formats() {
     assert_eq!(parsed["lat_p95"].as_f64().unwrap(), 190.05);
 }
 
+/// #377: percentile tracking was quadratic — the t-digest gained a centroid per
+/// event and was re-sorted and re-serialized on the next one, so 100k events
+/// took over four minutes. The digest is compressed now, which means this run
+/// finishes in seconds; if the compression is ever dropped again this test is
+/// the one that stops responding. The estimates it asserts are the other half
+/// of the bargain: compression must not cost more than t-digest's ~1% error.
+#[test]
+fn test_metrics_percentiles_scale_and_stay_accurate() {
+    // Uniform 0..=9999, repeated, so the exact percentiles are known.
+    let input: String = (0..20_000)
+        .map(|i| format!("{{\"d\":{}}}\n", i % 10_000))
+        .collect();
+
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-q",
+            "-e",
+            "track_percentiles(\"lat\", e.d)",
+            "--metrics=json",
+        ],
+        &input,
+    );
+    assert_eq!(exit_code, 0, "should exit successfully");
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(&stdout).expect("metrics json should parse");
+    for (key, expected) in [
+        ("lat_p50", 4999.5),
+        ("lat_p95", 9499.05),
+        ("lat_p99", 9899.01),
+    ] {
+        let estimate = parsed[key]
+            .as_f64()
+            .unwrap_or_else(|| panic!("{key} should be a number: {stdout}"));
+        let error = (estimate - expected).abs() / expected;
+        assert!(
+            error < 0.01,
+            "{key} estimated {estimate}, expected ~{expected} ({:.2}% off)",
+            error * 100.0
+        );
+    }
+}
+
 /// #372: an integer-valued percentile rendered as `71.0` in json but `71` in
 /// tsv. Both are JSON numbers; the two views should agree.
 #[test]

@@ -1,5 +1,6 @@
 use crate::event::Event;
 use crate::pipeline;
+use crate::rhai_functions::tracking::compress_tdigest;
 
 use super::compact_map::utils as compact_map_utils;
 
@@ -152,11 +153,15 @@ impl pipeline::Formatter for TailmapFormatter {
         if let Some(v) = value {
             if v.is_finite() {
                 let new_digest = TDigest::from_values(vec![v]);
-                state.digest = Some(if let Some(existing) = state.digest.take() {
+                let mut digest = if let Some(existing) = state.digest.take() {
                     existing.merge(&new_digest)
                 } else {
                     new_digest
-                });
+                };
+                // Same quadratic accumulation as the track_* metrics (#377):
+                // an unbounded digest makes every further line more expensive.
+                compress_tdigest(&mut digest);
+                state.digest = Some(digest);
             }
         }
 

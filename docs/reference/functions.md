@@ -2115,8 +2115,11 @@ track_percentiles("api_p95", latency)   // Skips () values
     - You need multiple percentile values (median, p95, p99)
     - Working with latency, response time, or duration metrics
 
+!!! note "Estimates, not exact percentiles"
+    The t-digest is a sketch: it keeps at most a few hundred centroids per metric, so cost and memory stay flat no matter how many events you feed it, and the reported percentiles are estimates — typically within 0.5% of the exact value, and most accurate in the tails you usually care about (p95, p99). For an exact percentile on a dataset small enough to hold, collect the values in a script and sort them.
+
 !!! note "Parallel Mode Behavior"
-    In parallel mode, each worker maintains its own t-digest. During merge, digests are combined using the t-digest merge algorithm, preserving accuracy. Final percentile values are deterministic.
+    In parallel mode, each worker maintains its own t-digest and the digests are combined with the t-digest merge algorithm at the end. Because the sketch is compressed as it grows, which values land in which worker affects the estimate slightly: parallel runs can differ from each other and from a sequential run within the error bar above. Sequential runs are reproducible — the same input always gives the same numbers.
 
 ---
 
@@ -2169,7 +2172,7 @@ track_stats("request_ms", duration)        // Skips () values
     - Minimizing memory usage (percentiles use ~4KB per metric)
 
 !!! note "Performance Considerations"
-    `track_stats()` internally calls the same logic as individual tracking functions, so it has the same performance characteristics. The main overhead is from percentile tracking (~4KB memory per metric). If you don't need percentiles, use `track_min()`, `track_max()`, and `track_avg()` instead.
+    `track_stats()` internally calls the same logic as individual tracking functions, so it has the same performance characteristics. The main overhead is from percentile tracking (~4KB memory per metric, and the `_pNN` values are estimates — see `track_percentiles()` above). If you don't need percentiles, use `track_min()`, `track_max()`, and `track_avg()` instead.
 
 !!! note "Parallel Mode Behavior"
     All generated metrics use existing merge operations (min, max, avg, count, sum, percentiles), so `track_stats()` works correctly in parallel mode with no special handling required.
