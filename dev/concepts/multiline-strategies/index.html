@@ -2816,6 +2816,11 @@ To preserve the original line structure in stack traces or other multi-line cont
 </code></pre></div>
 <p><strong>When to use <code>newline</code>:</strong> If you need to <code>split("\n")</code> the multiline block, count lines, or preserve formatting for display.</p>
 <p><strong>When to use <code>space</code>:</strong> When line breaks are not semantically important and you want a compact single-line representation.</p>
+<p>All three joins produce the same events — only the text inside the event differs.
+In the regex-based line formats (the auto-detected application-log patterns,
+<code>-f regex:...</code>) and in <code>-f syslog</code>, the trailing message capture spans the
+newlines that <code>newline</code> inserts, so a stack trace lands in the message field
+with its line structure intact.</p>
 <h2 id="choosing-the-right-parser">Choosing the Right Parser<a class="headerlink" href="#choosing-the-right-parser" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
