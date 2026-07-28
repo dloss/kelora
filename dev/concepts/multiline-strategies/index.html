@@ -1874,10 +1874,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-treat-everything-as-one-event-multiline-all" class="md-nav__link">
+  <a href="#4-blank-line-separated-records-multiline-blank" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Treat Everything as One Event (--multiline all)
+        4. Blank-Line Separated Records (--multiline blank)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-treat-everything-as-one-event-multiline-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Treat Everything as One Event (--multiline all)
       
     </span>
   </a>
@@ -1905,6 +1916,17 @@
     <span class="md-ellipsis">
       
         Choosing the Right Parser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streams-timeouts-and-safety-caps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streams, Timeouts, and Safety Caps
       
     </span>
   </a>
@@ -2566,10 +2588,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-treat-everything-as-one-event-multiline-all" class="md-nav__link">
+  <a href="#4-blank-line-separated-records-multiline-blank" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Treat Everything as One Event (--multiline all)
+        4. Blank-Line Separated Records (--multiline blank)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-treat-everything-as-one-event-multiline-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Treat Everything as One Event (--multiline all)
       
     </span>
   </a>
@@ -2597,6 +2630,17 @@
     <span class="md-ellipsis">
       
         Choosing the Right Parser
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#streams-timeouts-and-safety-caps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Streams, Timeouts, and Safety Caps
       
     </span>
   </a>
@@ -2692,6 +2736,7 @@ making it hard to correlate context.</p>
 <h2 id="choosing-a-strategy">Choosing a Strategy<a class="headerlink" href="#choosing-a-strategy" title="Permanent link">&para;</a></h2>
 <p><strong>Start with <code>timestamp</code></strong> if your logs have timestamp prefixes (works for 80% of application logs with stack traces).</p>
 <p><strong>Use <code>indent</code></strong> if continuation lines start with whitespace but the first line doesn't have a timestamp.</p>
+<p><strong>Use <code>blank</code></strong> for paragraph-shaped input where blank lines separate records.</p>
 <p><strong>Use <code>regex</code></strong> only when you have explicit BEGIN/END markers or need custom boundary detection.</p>
 <p><strong>Use <code>all</code></strong> rarely—only for whole-file processing where the entire input is a single logical record.</p>
 <h2 id="how-multiline-processing-works">How Multiline Processing Works<a class="headerlink" href="#how-multiline-processing-works" title="Permanent link">&para;</a></h2>
@@ -2707,9 +2752,23 @@ making it hard to correlate context.</p>
 </li>
 <li>
 <p><strong>Downstream pipeline</strong> – Filters, exec scripts, and formatters see the
-   aggregated event exactly once.</p>
+   aggregated event exactly once. <code>meta.line_num</code> and <code>meta.filename</code> point at
+   the event's <em>first</em> physical line.</p>
 </li>
 </ol>
+<p>Boundary guarantees:</p>
+<ul>
+<li><strong>Events never span input files.</strong> The buffer is flushed when a new file
+  begins.</li>
+<li><strong>Blank lines are continuations</strong> for <code>timestamp</code>/<code>indent</code> (real stack
+  traces contain them), separators for <code>blank</code>, and ordinary lines for
+  <code>regex</code>. Trailing blank lines are trimmed from each event (<code>all</code> excepted).</li>
+<li><strong>Line filters run before assembly.</strong> <code>--keep-lines</code>/<code>--ignore-lines</code>
+  remove physical lines before the chunker sees them — useful for dropping
+  interleaved noise, but it means a filtered continuation line never reaches
+  the event. To filter whole assembled events, use <code>--filter</code> instead
+  (kelora prints a one-time hint when you combine them).</li>
+</ul>
 <p>Multiline increases per-event memory usage. When processing large files, keep an
 eye on chunk size via <code>--stats</code> and consider tuning <code>--batch-size</code>/<code>--batch-timeout</code>
 when using <code>--parallel</code>.</p>
@@ -2721,11 +2780,19 @@ block. Choose the approach that matches your log format.</p>
 <p><img alt="Kelora multiline strategy comparison showing timestamp, indent, regex, and full-buffer approaches" src="../../images/multiline-strategies-diagram.png#only-light" />
 <img alt="Kelora multiline strategy comparison showing timestamp, indent, regex, and full-buffer approaches" src="../../images/multiline-strategies-diagram-dark.png#only-dark" /></p>
 <h2 id="built-in-strategies">Built-in Strategies<a class="headerlink" href="#built-in-strategies" title="Permanent link">&para;</a></h2>
-<p>Kelora ships four strategies. Only one can be active at a time.</p>
+<p>Kelora ships five strategies. Only one can be active at a time.</p>
 <h3 id="1-timestamp-headers-multiline-timestamp">1. Timestamp Headers (<code>--multiline timestamp</code>)<a class="headerlink" href="#1-timestamp-headers-multiline-timestamp" title="Permanent link">&para;</a></h3>
 <p>Best for logs where each entry begins with a timestamp. Detection uses Kelora's
-adaptive timestamp parser; you can hint a specific format with
-<code>timestamp:format=&lt;chrono&gt;</code>.</p>
+adaptive timestamp parser and <strong>locks onto the first format family it sees</strong>:
+once your headers match (say) ISO timestamps, a continuation line that merely
+starts with something time-like (<code>17:03 was the incident window</code>, an epoch
+number, <code>Jan 5 ...</code>) cannot split the event. Two options adjust this:</p>
+<ul>
+<li><code>timestamp:format=&lt;chrono&gt;</code> — detect <em>only</em> this format (the hint is a
+  contract, not a preference).</li>
+<li><code>timestamp:loose</code> — accept any recognizable timestamp as a header, for
+  files that genuinely mix formats.</li>
+</ul>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -2751,7 +2818,9 @@ header. Use <code>--multiline-join=newline</code> to keep the stack trace struct
 Pair this strategy with <code>--ts-format</code> if you also need chronological filtering later in the pipeline.</p>
 <h3 id="2-indentation-continuations-multiline-indent">2. Indentation Continuations (<code>--multiline indent</code>)<a class="headerlink" href="#2-indentation-continuations-multiline-indent" title="Permanent link">&para;</a></h3>
 <p>Combine lines that start with leading whitespace. This matches Java stack traces
-and similar outputs where continuation lines are indented.</p>
+and similar outputs where continuation lines are indented. Blank lines inside a
+block are continuations too, so a trace with an empty line in the middle stays
+one event.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Command</label><label for="__tabbed_2_2">Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -2800,19 +2869,28 @@ records with guard strings such as <code>BEGIN</code>/<code>END</code> or XML ta
 </div>
 </div>
 <p>If no <code>end=</code> is provided, a new <code>match=</code> line flushes the previous block. Regex
-patterns are Rust regular expressions—the same engine used by <code>--filter</code>.</p>
-<h3 id="4-treat-everything-as-one-event-multiline-all">4. Treat Everything as One Event (<code>--multiline all</code>)<a class="headerlink" href="#4-treat-everything-as-one-event-multiline-all" title="Permanent link">&para;</a></h3>
+patterns are Rust regular expressions—the same engine used by <code>--filter</code>.
+Patterns may contain literal colons (<code>regex:match=^\d{2}:\d{2}</code> works); only
+<code>:match=</code> / <code>:end=</code> act as option separators.</p>
+<h3 id="4-blank-line-separated-records-multiline-blank">4. Blank-Line Separated Records (<code>--multiline blank</code>)<a class="headerlink" href="#4-blank-line-separated-records-multiline-blank" title="Permanent link">&para;</a></h3>
+<p>Paragraph mode: blank lines separate records, and the separator itself belongs
+to no record. Handy for reports, <code>SHOW ENGINE INNODB STATUS</code>-style dumps, or
+any output that groups related lines into blank-delimited stanzas.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>report.txt<span class="w"> </span>--multiline<span class="w"> </span>blank<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>-F<span class="w"> </span>json
+</code></pre></div>
+<h3 id="5-treat-everything-as-one-event-multiline-all">5. Treat Everything as One Event (<code>--multiline all</code>)<a class="headerlink" href="#5-treat-everything-as-one-event-multiline-all" title="Permanent link">&para;</a></h3>
 <p>This strategy buffers the entire stream and emits it as a single event. Useful
 for one-off conversions (for example piping a whole JSON array into a script).
 Use with care: the entire input must fit in memory.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>big.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(e.raw.len())&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>big.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(e.raw.len())&#39;</span>
 </code></pre></div>
 <h2 id="controlling-line-joining">Controlling Line Joining<a class="headerlink" href="#controlling-line-joining" title="Permanent link">&para;</a></h2>
-<p>By default, <code>--multiline</code> joins grouped lines with spaces (<code>--multiline-join=space</code>).
+<p>By default, <code>--multiline</code> joins grouped lines with spaces — except <code>all</code>,
+which defaults to newline so a whole buffered file keeps its structure.
 To preserve the original line structure in stack traces or other multi-line content:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>--multiline-join<span class="o">=</span>newline<span class="w">   </span><span class="c1"># Preserve line breaks (use for stack traces, logs with continuations)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>--multiline-join<span class="o">=</span>space<span class="w">     </span><span class="c1"># Join with spaces (default, good for simple log continuation)</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>--multiline-join<span class="o">=</span>empty<span class="w">     </span><span class="c1"># Concatenate directly (no separator)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>--multiline-join<span class="o">=</span>newline<span class="w">   </span><span class="c1"># Preserve line breaks (use for stack traces, logs with continuations)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>--multiline-join<span class="o">=</span>space<span class="w">     </span><span class="c1"># Join with spaces (default, good for simple log continuation)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>--multiline-join<span class="o">=</span>empty<span class="w">     </span><span class="c1"># Concatenate directly (no separator)</span>
 </code></pre></div>
 <p><strong>When to use <code>newline</code>:</strong> If you need to <code>split("\n")</code> the multiline block, count lines, or preserve formatting for display.</p>
 <p><strong>When to use <code>space</code>:</strong> When line breaks are not semantically important and you want a compact single-line representation.</p>
@@ -2833,6 +2911,27 @@ with its line structure intact.</p>
 <li>
 <p>After parsing, you can still keep the original text by copying the aggregated block
   into another field inside an exec script.</p>
+</li>
+</ul>
+<h2 id="streams-timeouts-and-safety-caps">Streams, Timeouts, and Safety Caps<a class="headerlink" href="#streams-timeouts-and-safety-caps" title="Permanent link">&para;</a></h2>
+<p>Two flags bound the buffer's behavior:</p>
+<ul>
+<li>
+<p><strong><code>--multiline-timeout DURATION</code></strong> — when input goes quiet with a partial
+  event buffered, flush it after this long (e.g. <code>400ms</code>, <code>2s</code>; <code>0</code> = never).
+  The default depends on the input: <strong>off for regular files</strong>, where lines
+  arrive at pipeline speed and an early flush could only split an event, so
+  file runs are deterministic; <strong>400ms for streams</strong> (stdin, FIFOs), so
+  <code>tail -f | kelora</code> shows events promptly. When a <em>defaulted</em> stream flush
+  fires, kelora prints a one-time hint — if a slow writer's events appear
+  split, raise the timeout or set <code>0</code>.</p>
+</li>
+<li>
+<p><strong><code>--multiline-max-lines N</code></strong> — split an event after N buffered lines and
+  warn once (default: 10000, <code>0</code> = unlimited). This is the safety net for a
+  <code>regex:match=</code> that never matches again: instead of silently buffering the
+  entire input, kelora flushes and tells you. <code>--multiline all</code> is exempt —
+  buffering everything is its purpose.</p>
 </li>
 </ul>
 <h2 id="observability-and-debugging">Observability and Debugging<a class="headerlink" href="#observability-and-debugging" title="Permanent link">&para;</a></h2>
@@ -2880,14 +2979,26 @@ with its line structure intact.</p>
   switch to <code>timestamp</code> with a format hint.</p>
 </li>
 <li>
+<p><strong>Events merge that should split</strong>: with <code>timestamp</code>, lock-in may have
+  latched onto the wrong format if the file's first line looks time-like but
+  isn't a real header. Pin the format with <code>timestamp:format=...</code> or disable
+  locking with <code>timestamp:loose</code>.</p>
+</li>
+<li>
+<p><strong>Events split on a live stream</strong>: a pause longer than the idle timeout
+  flushes the buffered event. Raise <code>--multiline-timeout</code> (or <code>0</code> to never
+  flush early).</p>
+</li>
+<li>
 <p><strong>Truncated blocks</strong>: For JSON or YAML, remember that closing braces/brackets
   often start at column zero. Use regex boundaries that match <code>^}</code> or <code>^\]</code> to
   keep the termination line.</p>
 </li>
 <li>
-<p><strong>Out-of-memory risk</strong>: <code>--multiline all</code> and poorly tuned regex patterns can
-  accumulate the entire file. Run on a sample first, or set <code>--take</code>/<code>--stats</code>
-  to monitor chunk counts.</p>
+<p><strong>Out-of-memory risk</strong>: <code>--multiline all</code> accumulates the entire input by
+  design. For the other strategies, <code>--multiline-max-lines</code> (default 10000)
+  caps runaway buffering from a never-matching pattern and warns when it
+  splits.</p>
 </li>
 <li>
 <p><strong>Context flags</strong>: <code>-A/-B/-C</code> require a sliding window. If you combine context

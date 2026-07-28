@@ -2557,6 +2557,7 @@
 <ul>
 <li><strong>Timestamp at the start of every event?</strong> Use <code>--multiline timestamp</code>.</li>
 <li><strong>Continuation lines start with whitespace?</strong> Use <code>--multiline indent</code>.</li>
+<li><strong>Blank lines between records?</strong> Use <code>--multiline blank</code> (paragraph mode).</li>
 <li><strong>Events start with specific keywords?</strong> Use <code>--multiline 'regex:match=^PATTERN'</code>.</li>
 <li><strong>Events have explicit end markers?</strong> Use <code>--multiline 'regex:match=^BEGIN:end=^END'</code>.</li>
 <li><strong>Single event per file?</strong> Use <code>--multiline all</code> (rare; loads full file in memory).</li>
@@ -2615,7 +2616,7 @@
 <ul>
 <li>Run <code>-n 3</code> or <code>--take 3</code> to verify event boundaries before adding filters.</li>
 <li>Use <code>--stats</code> to confirm Kelora parsed the expected number of events.</li>
-<li>When debugging, add <code>--debug-multiline</code> to see how patterns match (see <code>kelora --help-multiline</code>).</li>
+<li>When debugging, inspect the grouped blocks directly with <code>-f raw -F json --take 5</code> (see <code>kelora --help-multiline</code> for troubleshooting tips).</li>
 </ul>
 <h2 id="variations">Variations<a class="headerlink" href="#variations" title="Permanent link">&para;</a></h2>
 <ul>
