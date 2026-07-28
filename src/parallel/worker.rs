@@ -644,7 +644,13 @@ fn worker_process_event_batch(
     let mut batch_results = Vec::with_capacity(event_batch.events.len());
 
     for (event_idx, event_string) in event_batch.events.iter().enumerate() {
-        let current_line_num = event_batch.start_line_num + event_idx;
+        // Per-event start line from the chunker; the pre-multiline fallback
+        // (event index as a line offset) only applies if it is ever missing.
+        let current_line_num = event_batch
+            .line_nums
+            .get(event_idx)
+            .copied()
+            .unwrap_or(event_batch.start_line_num + event_idx);
         ctx.meta.line_num = Some(current_line_num);
         ctx.meta.filename = event_batch.filenames.get(event_idx).cloned().flatten();
 
@@ -782,6 +788,10 @@ pub(crate) fn chunker_thread(
 
     // Track metadata required to emit accurate event batches across line boundaries
     let mut pending_event_filename: Option<Option<String>> = None;
+    // First physical line of the event currently buffered in the chunker, so a
+    // multiline event is reported at its own start rather than at the line that
+    // flushed it (#368). Tracked exactly like `pending_event_filename`.
+    let mut pending_event_line_num: Option<usize> = None;
     let mut next_event_batch_id = 0u64;
     let mut last_start_line_num: usize = 0;
     let mut last_csv_headers: Option<Vec<String>> = None;
@@ -803,13 +813,16 @@ pub(crate) fn chunker_thread(
 
         let mut events = Vec::new();
         let mut event_filenames = Vec::new();
+        let mut event_line_nums = Vec::new();
 
         // Process each line through chunker
         for (line_idx, line) in batch.lines.iter().enumerate() {
             let line_filename = batch.filenames.get(line_idx).cloned().flatten();
+            let line_num = batch.start_line_num + line_idx;
 
             if pending_event_filename.is_none() || !chunker.has_pending() {
                 pending_event_filename = Some(line_filename.clone());
+                pending_event_line_num = Some(line_num);
             }
 
             // Feed line to chunker and collect complete events
@@ -817,12 +830,15 @@ pub(crate) fn chunker_thread(
                 let event_filename = pending_event_filename
                     .take()
                     .unwrap_or_else(|| line_filename.clone());
+                let event_line_num = pending_event_line_num.take().unwrap_or(line_num);
 
                 events.push(chunk);
                 event_filenames.push(event_filename);
+                event_line_nums.push(event_line_num);
 
                 // Current line becomes the first line of the next buffered event
                 pending_event_filename = Some(line_filename.clone());
+                pending_event_line_num = Some(line_num);
             }
         }
 
@@ -832,6 +848,7 @@ pub(crate) fn chunker_thread(
                 id: next_event_batch_id,
                 events,
                 start_line_num: batch.start_line_num,
+                line_nums: event_line_nums,
                 filenames: event_filenames,
                 csv_headers: batch.csv_headers,
                 csv_type_map: batch.csv_type_map,
@@ -852,11 +869,13 @@ pub(crate) fn chunker_thread(
     if chunker.has_pending() {
         if let Some(chunk) = chunker.flush() {
             let flushed_filename = pending_event_filename.take().unwrap_or(None);
+            let flushed_line_num = pending_event_line_num.take().unwrap_or(last_start_line_num);
 
             let event_batch = EventBatch {
                 id: next_event_batch_id,
                 events: vec![chunk],
                 start_line_num: last_start_line_num,
+                line_nums: vec![flushed_line_num],
                 filenames: vec![flushed_filename],
                 csv_headers: last_csv_headers,
                 csv_type_map: last_csv_type_map,

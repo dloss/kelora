@@ -1,8 +1,16 @@
 use crate::event::Event;
 use crate::pipeline::EventParser;
 use anyhow::{Context, Result};
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 use rhai::Dynamic;
+
+/// Compile a syslog pattern whose trailing `(.*)` message must be able to span
+/// the newlines a multiline join inserts. See the call site for why.
+fn multiline_aware_regex(pattern: &str) -> Result<Regex, regex::Error> {
+    RegexBuilder::new(pattern)
+        .dot_matches_new_line(true)
+        .build()
+}
 
 pub struct SyslogParser {
     rfc5424_regex: Regex,
@@ -12,12 +20,17 @@ pub struct SyslogParser {
 
 impl SyslogParser {
     fn build(auto_timestamp: bool) -> Result<Self> {
-        let rfc5424_regex = Regex::new(
+        // `s` (dot matches newline) is on so the trailing message capture can hold
+        // a multi-line event — with `--multiline-join=newline` the joiner puts
+        // newlines inside the event, and a line-bounded `.` would reject every
+        // stack trace as "Invalid syslog format" (#368). `multi_line` stays off,
+        // so `^`/`$` still anchor to the ends of the whole event.
+        let rfc5424_regex = multiline_aware_regex(
             r"^<(\d{1,3})>(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(.*))?(?:\r?\n)?$",
         )
         .context("Failed to compile RFC5424 regex")?;
 
-        let rfc3164_regex = Regex::new(
+        let rfc3164_regex = multiline_aware_regex(
             r"^(?:<(\d{1,3})>)?(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
         ).context("Failed to compile RFC3164 regex")?;
 
@@ -304,6 +317,46 @@ mod tests {
                 .into_string()
                 .unwrap(),
             "Failed password for user"
+        );
+    }
+
+    /// A syslog event assembled by `--multiline-join=newline` carries its
+    /// continuation lines inside the message; rejecting it as "Invalid syslog
+    /// format" dropped exactly the stack traces users came for (#368).
+    #[test]
+    fn test_syslog_message_spans_joined_newlines() {
+        let parser = SyslogParser::new().unwrap();
+
+        let rfc3164 = EventParser::parse(
+            &parser,
+            "Oct 11 22:14:15 server01 app[1234]: Payment failed\njava.lang.RuntimeException: timeout\n\tat Client.charge(Client.java:88)",
+        )
+        .unwrap();
+        assert_eq!(
+            rfc3164
+                .fields
+                .get("msg")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "Payment failed\njava.lang.RuntimeException: timeout\n\tat Client.charge(Client.java:88)"
+        );
+
+        let rfc5424 = EventParser::parse(
+            &parser,
+            "<165>1 2023-10-11T22:14:15.003Z server01 app 1234 ID47 - Payment failed\n\tat Client.charge(Client.java:88)",
+        )
+        .unwrap();
+        assert_eq!(
+            rfc5424
+                .fields
+                .get("msg")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "Payment failed\n\tat Client.charge(Client.java:88)"
         );
     }
 

@@ -119,6 +119,11 @@ pub struct EventBatch {
     pub id: u64,
     pub events: Vec<String>, // Complete event strings from chunker
     pub start_line_num: usize,
+    /// First physical line of each event. A multiline event spans several lines,
+    /// so event index and line offset are not interchangeable: it is tracked per
+    /// event, like `filenames`, and points at the line the event *started* on
+    /// rather than the line whose arrival flushed it (#368).
+    pub line_nums: Vec<usize>,
     pub filenames: Vec<Option<String>>, // Filename for each event
     pub csv_headers: Option<Vec<String>>,
     pub csv_type_map: Option<TypeMap>,
