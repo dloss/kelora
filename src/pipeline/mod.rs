@@ -377,6 +377,12 @@ pub struct Pipeline {
     /// time proved a bounded field set suffices, in which case the parser skips
     /// building `Dynamic` values for fields nothing downstream can observe.
     pub projection: crate::projection::Projection,
+    /// First physical line of the event the chunker is currently assembling.
+    /// An event that spans lines 2–4 is flushed when line 5 arrives, so without
+    /// this its parse error was reported at line 5 — past the event it described
+    /// (#368). Equal to the current line whenever the chunker holds nothing
+    /// back, which is every line in single-line mode.
+    pub chunk_start_line: Option<usize>,
 }
 
 impl Pipeline {
@@ -394,9 +400,24 @@ impl Pipeline {
             }
         }
 
+        // An empty chunker buffer means this line begins the next event, so it
+        // is the line the event will be reported at. Mirrors the filename
+        // tracking the parallel chunker thread does.
+        let current_line = ctx.meta.line_num;
+        if self.chunk_start_line.is_none() || !self.chunker.has_pending() {
+            self.chunk_start_line = current_line;
+        }
+
         // Chunker stage (for multi-line records)
         if let Some(chunk) = self.chunker.feed_line(line) {
-            self.process_chunk(chunk, ctx)
+            let event_line = self.chunk_start_line.take().or(current_line);
+            // The line just fed begins whatever the chunker buffers next.
+            self.chunk_start_line = current_line;
+
+            ctx.meta.line_num = event_line;
+            let results = self.process_chunk(chunk, ctx);
+            ctx.meta.line_num = current_line;
+            results
         } else {
             Ok(Vec::new())
         }
@@ -406,7 +427,11 @@ impl Pipeline {
     pub fn flush(&mut self, ctx: &mut PipelineContext) -> Result<Vec<FormattedOutput>> {
         if let Some(chunk) = self.chunker.flush() {
             // Process chunk directly, not through feed_line
-            self.process_chunk_directly(chunk, ctx)
+            let current_line = ctx.meta.line_num;
+            ctx.meta.line_num = self.chunk_start_line.take().or(current_line);
+            let results = self.process_chunk_directly(chunk, ctx);
+            ctx.meta.line_num = current_line;
+            results
         } else {
             Ok(Vec::new())
         }

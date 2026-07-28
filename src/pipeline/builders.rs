@@ -976,6 +976,7 @@ impl PipelineBuilder {
             window_active,
             level_prefilter_needles,
             projection,
+            chunk_start_line: None,
         };
 
         Ok((pipeline, begin_stage, end_stage, ctx))
@@ -1314,6 +1315,7 @@ impl PipelineBuilder {
             window_active,
             level_prefilter_needles,
             projection,
+            chunk_start_line: None,
         };
 
         Ok((pipeline, ctx))

@@ -773,3 +773,178 @@ NORMAL again"#;
     );
     assert!(!stdout.trim().is_empty(), "Should produce some output");
 }
+
+/// #368: `--multiline-join=newline` and the regex line formats didn't compose.
+/// The trailing message capture couldn't cross a newline, so every multi-line
+/// event was dropped as a parse error — while `space` and `empty` kept it. All
+/// three joins must produce the same events; only the message text differs.
+#[test]
+fn test_multiline_join_newline_keeps_multiline_events() {
+    let input = "2026-07-26 14:05:01 INFO  Started request /v1/pay\n\
+                 2026-07-26 14:05:02 ERROR Payment failed\n\
+                 java.lang.RuntimeException: upstream timeout\n\
+                 \tat com.acme.pay.Client.charge(Client.java:88)\n\
+                 2026-07-26 14:05:03 INFO  Retrying\n";
+
+    for join in ["newline", "space", "empty"] {
+        let (stdout, stderr, exit_code) = run_kelora_with_input(
+            &["-M", "timestamp", "--multiline-join", join, "-F", "json"],
+            input,
+        );
+        assert_eq!(exit_code, 0, "join={join} should exit successfully");
+        assert!(
+            !stderr.contains("Parse errors"),
+            "join={join} should not drop events as parse errors: {stderr}"
+        );
+
+        let events: Vec<serde_json::Value> = stdout
+            .lines()
+            .filter(|line| line.trim_start().starts_with('{'))
+            .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+            .collect();
+
+        assert_eq!(events.len(), 3, "join={join} should keep all three events");
+        assert_eq!(events[1]["level"].as_str().unwrap(), "ERROR");
+        let msg = events[1]["msg"].as_str().unwrap();
+        assert!(
+            msg.contains("Payment failed") && msg.contains("Client.java:88"),
+            "join={join} should keep the trace in the message: {msg}"
+        );
+    }
+
+    // The point of `newline` is that the trace stays readable.
+    let (stdout, _stderr, _exit_code) = run_kelora_with_input(
+        &[
+            "-M",
+            "timestamp",
+            "--multiline-join",
+            "newline",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    let error_event: serde_json::Value = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .nth(1)
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .expect("second event");
+    assert!(
+        error_event["msg"].as_str().unwrap().contains('\n'),
+        "newline join should preserve the line structure inside the message"
+    );
+}
+
+/// Same defect in the syslog parser's trailing message capture (#368).
+#[test]
+fn test_multiline_join_newline_keeps_syslog_events() {
+    let input = "Jul 26 14:05:01 host app: Started\n\
+                 Jul 26 14:05:02 host app: Payment failed\n\
+                 java.lang.RuntimeException: upstream timeout\n\
+                 \tat com.acme.pay.Client.charge(Client.java:88)\n\
+                 Jul 26 14:05:03 host app: Retrying\n";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "syslog",
+            "-M",
+            "timestamp",
+            "--multiline-join",
+            "newline",
+            "-F",
+            "json",
+            "--input-year",
+            "2026",
+        ],
+        input,
+    );
+    assert_eq!(exit_code, 0, "should exit successfully");
+    assert!(
+        !stderr.contains("Parse errors"),
+        "syslog events with joined newlines should parse: {stderr}"
+    );
+
+    let events: Vec<serde_json::Value> = stdout
+        .lines()
+        .filter(|line| line.trim_start().starts_with('{'))
+        .map(|line| serde_json::from_str(line).expect("Should parse JSON line"))
+        .collect();
+    assert_eq!(events.len(), 3, "should keep all three syslog events");
+    assert!(
+        events[1]["msg"]
+            .as_str()
+            .unwrap()
+            .contains("upstream timeout"),
+        "continuation lines belong to the previous event's message"
+    );
+}
+
+/// #368: a multi-line event is flushed by the line that *follows* it, and the
+/// diagnostic used to name that line — pointing past the event it described.
+/// Both the sequential and the parallel path must report the event's own first
+/// line, and `meta.line_num` must agree between them.
+#[test]
+fn test_multiline_event_is_reported_at_its_first_line() {
+    // The middle event spans lines 2-4 and cannot be parsed; the events on
+    // lines 1 and 5 can.
+    let input = "2026-07-26 14:05:01 INFO Started\n\
+                 2026-07-26 14:05:02 no-level header\n\
+                 continuation one\n\
+                 continuation two\n\
+                 2026-07-26 14:05:03 INFO Retrying\n";
+
+    for extra_args in [vec![], vec!["--parallel"]] {
+        let mut args = vec![
+            "-M",
+            "timestamp",
+            "--multiline-join",
+            "newline",
+            "-F",
+            "json",
+        ];
+        args.extend(extra_args.iter().copied());
+        let (_stdout, stderr, exit_code) = run_kelora_with_input(&args, input);
+        assert_eq!(exit_code, 0, "args={args:?} should exit successfully");
+        // Stdin input has no filename, so errors read "line N:".
+        assert!(
+            stderr.contains("line 2:"),
+            "args={args:?} should blame the event's first line: {stderr}"
+        );
+        assert!(
+            !stderr.contains("line 5:"),
+            "args={args:?} should not blame the line that flushed the event: {stderr}"
+        );
+
+        // `meta.line_num` follows the same rule: the event's first line.
+        let mut ln_args = vec![
+            "-M",
+            "timestamp",
+            "-e",
+            "e.ln = meta.line_num",
+            "-k",
+            "ln",
+            "-F",
+            "json",
+        ];
+        ln_args.extend(extra_args.iter().copied());
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(&ln_args, input);
+        assert_eq!(exit_code, 0, "args={ln_args:?} should exit successfully");
+        let line_nums: Vec<i64> = stdout
+            .lines()
+            .filter(|line| line.trim_start().starts_with('{'))
+            .map(|line| {
+                serde_json::from_str::<serde_json::Value>(line).expect("Should parse JSON line")
+                    ["ln"]
+                    .as_i64()
+                    .expect("ln should be an integer")
+            })
+            .collect();
+        assert_eq!(
+            line_nums,
+            vec![1, 5],
+            "args={ln_args:?} should report each event's first line"
+        );
+    }
+}

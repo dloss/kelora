@@ -166,6 +166,12 @@ To preserve the original line structure in stack traces or other multi-line cont
 
 **When to use `space`:** When line breaks are not semantically important and you want a compact single-line representation.
 
+All three joins produce the same events — only the text inside the event differs.
+In the regex-based line formats (the auto-detected application-log patterns,
+`-f regex:...`) and in `-f syslog`, the trailing message capture spans the
+newlines that `newline` inserts, so a stack trace lands in the message field
+with its line structure intact.
+
 ## Choosing the Right Parser
 
 - **`-f raw`** stores the entire aggregated block in the `raw` field without further processing. Use this when you want to preserve all text exactly as grouped (combine with `--multiline-join=newline` if you need to preserve line breaks).

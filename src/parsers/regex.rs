@@ -2,7 +2,7 @@ use crate::event::Event;
 use crate::parsers::type_conversion::{convert_value_to_type, FieldType, TypeMap};
 use crate::pipeline::EventParser;
 use anyhow::{Context, Result};
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 use rhai::Dynamic;
 
 /// Parser for regex-based input with named capture groups and optional type annotations
@@ -38,7 +38,17 @@ impl RegexParser {
 
         // Add anchors once at construction time to avoid recompilation on every line
         let anchored_pattern = format!("^{}$", clean_pattern);
-        let regex = Regex::new(&anchored_pattern)
+        // `s` (dot matches newline) is on so a pattern parses a multi-line event,
+        // not just a single physical line. The trailing message capture of every
+        // built-in line format ends in `.*`, and with `--multiline-join=newline`
+        // the joiner puts newlines inside the event — without `s` every such event
+        // fails to match the format it was detected as and is dropped as a parse
+        // error (#368). Anchoring is unaffected: `multi_line` stays off, so `^`/`$`
+        // still match only at the ends of the whole event. A pattern that must
+        // keep `.` line-bounded can say so inline with `(?-s:.)`.
+        let regex = RegexBuilder::new(&anchored_pattern)
+            .dot_matches_new_line(true)
+            .build()
             .with_context(|| format!("Failed to compile regex pattern: {}", pattern))?;
 
         Ok(Self {
@@ -597,6 +607,63 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("Invalid field name"));
+    }
+
+    /// The trailing message capture of a line format must hold a whole
+    /// multi-line event: `--multiline-join=newline` puts newlines inside the
+    /// chunk the parser sees, and a line-bounded `.` dropped every stack trace
+    /// as a parse error (#368).
+    #[test]
+    fn test_trailing_capture_spans_joined_newlines() {
+        let parser = RegexParser::new(
+            r"(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(?P<level>INFO|ERROR)\s+(?P<msg>.*)",
+        )
+        .unwrap();
+
+        let event = parser
+            .parse(
+                "2026-07-26 14:05:02 ERROR Payment failed\njava.lang.RuntimeException: timeout\n\tat Client.charge(Client.java:88)",
+            )
+            .unwrap();
+
+        assert_eq!(
+            event
+                .fields
+                .get("level")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "ERROR"
+        );
+        assert_eq!(
+            event
+                .fields
+                .get("msg")
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "Payment failed\njava.lang.RuntimeException: timeout\n\tat Client.charge(Client.java:88)"
+        );
+    }
+
+    #[test]
+    fn test_anchors_still_bind_to_whole_event() {
+        // `s` must not turn into `m`: the anchors added at construction still
+        // apply to the whole event, so a pattern that matches one token cannot
+        // match by covering only the event's first line.
+        let parser = RegexParser::new(r"(?P<word>\w+)").unwrap();
+        assert!(parser.parse("first\nsecond").is_err());
+        assert!(parser.parse("first").is_ok());
+    }
+
+    #[test]
+    fn test_dot_can_be_kept_line_bounded_inline() {
+        // A pattern that needs the old, line-bounded `.` can say so inline.
+        let parser = RegexParser::new(r"(?P<msg>(?-s:.*))").unwrap();
+        assert!(parser.parse("one\ntwo").is_err());
+        assert!(parser.parse("one").is_ok());
     }
 
     #[test]

@@ -34,6 +34,12 @@ Field names:
   Must contain only letters, numbers, and underscores.
   Reserved names: original_line, parsed_ts, fields
 
+Dot matches newlines:
+  '.' matches newlines too, so a trailing (?P<msg>.*) captures a whole
+  multiline event (e.g. a stack trace assembled by --multiline-join=newline).
+  ^ and $ still anchor to the ends of the event, not to each line.
+  Need the line-bounded '.'? Write it inline: (?P<msg>(?-s:.*))
+
 EXAMPLES:
 
 Simple syslog-style log:
