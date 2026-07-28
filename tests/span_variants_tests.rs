@@ -599,9 +599,35 @@ fn hint_says_span_close_output_is_discarded_under_a_data_only_mode() {
         stderr.contains("--span-close output is discarded"),
         "{stderr}"
     );
-    // --script-output does not currently win against a data-only mode, so the
-    // hint must not send anyone there.
-    assert!(!stderr.contains("--script-output"), "{stderr}");
+    // --script-output wins against data-only modes (#379), so the hint offers
+    // it as the route that keeps the hook's own output.
+    assert!(stderr.contains("--script-output"), "{stderr}");
+}
+
+#[test]
+fn span_close_print_survives_a_data_only_mode_with_explicit_script_output() {
+    let (stdout, stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--span",
+            "1m",
+            "--freq",
+            "level",
+            "--span-close",
+            "print(\"HOOK\")",
+            "--script-output",
+        ],
+        SUMMARY_INPUT,
+    );
+
+    assert_eq!(exit_code, 0);
+    assert!(stdout.contains("HOOK"), "{stdout}");
+    // The problem the discarded-output hint flags no longer exists.
+    assert!(
+        !stderr.contains("--span-close output is discarded"),
+        "{stderr}"
+    );
 }
 
 #[test]

@@ -1270,24 +1270,26 @@ impl KeloraConfig {
             cli.output_format.clone().into()
         };
 
-        // Data-only modes (--metrics/--drain/--discover) suppress script output
-        // and hush hints (advisory noise) to keep the machine-readable stdout
-        // focused. Warnings are NOT auto-suppressed: they go to stderr (never
-        // polluting the stdout data channel) and may flag a real problem — e.g.
-        // recovered exec errors — that a stuck user needs to see (#239). Hide
-        // them explicitly with --no-warnings or --silent. An explicit
-        // --hints/--diagnostics re-enables hints even in these modes.
-        let data_only_mode = suppress_events_for_metrics
+        // Data-only modes (--stats/--metrics/--drain/--discover) suppress
+        // script output and hush hints (advisory noise) to keep the
+        // machine-readable stdout focused. Warnings are NOT auto-suppressed:
+        // they go to stderr (never polluting the stdout data channel) and may
+        // flag a real problem — e.g. recovered exec errors — that a stuck user
+        // needs to see (#239). Hide them explicitly with --no-warnings or
+        // --silent. Explicit positive flags win over the implied suppression,
+        // per the house precedence rule: --hints/--diagnostics re-enables
+        // hints, --script-output re-enables print/eprint (#379).
+        let data_only_mode = suppress_events_for_stats
+            || suppress_events_for_metrics
             || suppress_events_for_drain
             || suppress_events_for_discover;
-        if suppress_events_for_stats {
-            suppress_script_output = true;
-        }
         if data_only_mode {
             if !force_show_hints {
                 suppress_hints = true;
             }
-            suppress_script_output = true;
+            if !cli.script_output {
+                suppress_script_output = true;
+            }
         }
         // --span-summary hushes hints like the other data-only modes, but must
         // NOT suppress script output: a `--span-close` hook alongside it is a
@@ -2117,14 +2119,15 @@ pub fn span_hints(config: &KeloraConfig, cli: &crate::Cli) -> Vec<String> {
     }
 
     // (c) A data-only mode has already swallowed the hook's print/eprint, so the
-    // hook runs and its output goes nowhere. Deliberately does not suggest
-    // --script-output: that flag does not currently win against a data-only
-    // mode, so it would be advice that fails.
+    // hook runs and its output goes nowhere. Keyed off the resolved
+    // suppress_script_output flag rather than a mode list, so an explicit
+    // --script-output (which wins against data-only modes, #379) removes the
+    // problem and the hint with it.
     if has_hook && !has_summary && config.processing.suppress_script_output {
         hints.push(
             "--span-close output is discarded while another mode owns stdout (-m/--freq/\
              --describe/--card/--drain/--discover/--stats); use --span-summary for rows that \
-             survive."
+             survive, or --script-output to let the hook print anyway."
                 .to_string(),
         );
     }

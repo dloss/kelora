@@ -288,9 +288,11 @@ Two consequences worth knowing:
 - **Warnings and hints are anomaly-triggered and reach redirected stderr** (CI,
   `2>file`), so a stuck user still sees them. Silence them with the flags above.
 
-Data-only modes (`-m`, `--drain`, `--discover`) hush hints so machine-readable
-output stays uncluttered; warnings still surface, and `--hints`/`--diagnostics`
-brings hints back. One hint is exempt: the `No input format detected` fallback
+Data-only modes — `-s`/`--stats`, `-m`/`--freq`/`--describe`/`--card`,
+`--drain`, `--discover` — hush hints and Rhai `print`/`eprint` so
+machine-readable output stays uncluttered; warnings still surface, and an
+explicit positive flag brings each back (`--hints`/`--diagnostics` for hints,
+`--script-output` for script output). One hint is exempt: the `No input format detected` fallback
 still fires under `--discover`, because `--discover` is the mode for asking
 "what *is* this file?" — the hint is the actionable half of the footer's
 `format: line (auto-detected)`. An explicit `--no-hints`, `--no-diagnostics`,
@@ -306,8 +308,8 @@ Each channel can be silenced independently; these flags compose for automation:
 | `-q` / `--quiet` | Suppress events (formatter output) |
 | `--no-diagnostics` | Suppress diagnostics/summaries (fatal line still emitted) |
 | `--silent` | Suppress pipeline terminal output (events/diagnostics/stats/terminal metrics); script output allowed unless combined with `--no-script-output` or data-only modes; emit one fatal line on errors; metrics files still write |
-| `--no-script-output` | Suppress Rhai `print`/`eprint` (implied by data-only modes) |
-| `-s` / `--stats=FORMAT` | Show stats only (implies `-q/--quiet`; also suppresses script output; diagnostics stay on). Format: table, json |
+| `--no-script-output` | Suppress Rhai `print`/`eprint` (implied by data-only modes; explicit `--script-output` wins) |
+| `-s` / `--stats=FORMAT` | Show stats only (implies `-q/--quiet`; hushes hints and script output like the other data-only modes; warnings stay on). Format: table, json |
 | `-m` / `--metrics=FORMAT` | Show metrics only (implies `-q/--quiet`; suppresses diagnostics except fatal line, stats, script output). Format: short, full, tsv, json (bare `-m` auto-selects table on a terminal, tsv when piped) |
 | `--with-stats` | Show stats alongside events (rare case) |
 | `--with-metrics` | Show metrics alongside events (rare case) |
