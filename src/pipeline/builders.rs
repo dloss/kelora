@@ -580,6 +580,43 @@ impl PipelineBuilder {
         Projection::Only(needed)
     }
 
+    /// The keep-list for [`KeyFilterStage`], which is `--keys` plus — for the
+    /// compact map formats only — the timestamp candidate fields.
+    ///
+    /// The map formats prefix each line with a timestamp, which
+    /// `compact_map_utils::extract_timestamp` reads from `parsed_ts`. That
+    /// value is cleared and re-derived from the *surviving* fields immediately
+    /// before formatting (see `Pipeline::process_event`), so a timestamp field
+    /// removed by `--keys` reparses to `None` and every line falls back to
+    /// `line N`. `keymap`/`tailmap` *require* `--keys` with exactly one field,
+    /// which made that fallback unconditional for them.
+    ///
+    /// Keeping the candidates is invisible in the output — these formats render
+    /// one glyph per event and never print fields — and an explicit
+    /// `--exclude-keys ts` still wins, since exclusions apply on top of this
+    /// list.
+    fn key_filter_keys(&self) -> Vec<String> {
+        // No `--keys` means no field selection to repair: the timestamp is
+        // already present, and an exclude-only filter demands every field.
+        if self.keys.is_empty() || !self.output_format.is_compact_map() {
+            return self.keys.clone();
+        }
+
+        let mut keys = self.keys.clone();
+        let mut keep = |name: &str| {
+            if !keys.iter().any(|existing| existing == name) {
+                keys.push(name.to_string());
+            }
+        };
+        for name in crate::event::TIMESTAMP_FIELD_NAMES {
+            keep(name);
+        }
+        if let Some(ref ts_field) = self.ts_field {
+            keep(ts_field);
+        }
+        keys
+    }
+
     pub fn new() -> Self {
         Self {
             config: PipelineConfig {
@@ -875,7 +912,8 @@ impl PipelineBuilder {
         }
 
         // Add key filtering stage (runs after level filtering, before context processing)
-        let key_filter_stage = KeyFilterStage::new(self.keys.clone(), self.exclude_keys.clone());
+        let key_filter_stage =
+            KeyFilterStage::new(self.key_filter_keys(), self.exclude_keys.clone());
         if key_filter_stage.is_active() {
             script_stages.push(Box::new(key_filter_stage));
         }
@@ -1241,7 +1279,8 @@ impl PipelineBuilder {
         }
 
         // Add key filtering stage (runs after level filtering, before context processing)
-        let key_filter_stage = KeyFilterStage::new(self.keys.clone(), self.exclude_keys.clone());
+        let key_filter_stage =
+            KeyFilterStage::new(self.key_filter_keys(), self.exclude_keys.clone());
         if key_filter_stage.is_active() {
             script_stages.push(Box::new(key_filter_stage));
         }

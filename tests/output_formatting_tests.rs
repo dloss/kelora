@@ -735,6 +735,141 @@ fn test_tailmap_without_single_key_suggests_numeric_example() {
     );
 }
 
+// The map formats prefix each line with a timestamp. `keymap`/`tailmap` require
+// `--keys` with exactly one field, and the key filter used to drop the timestamp
+// field before the formatter ran, so every line fell back to `line N`. The
+// formatter unit tests missed it by driving the formatter directly — these go
+// through the real pipeline.
+const MAP_TIMESTAMP_INPUT: &str = concat!(
+    r#"{"ts": "2024-01-01T10:00:00Z", "level": "INFO", "rt": 12}"#,
+    "\n",
+    r#"{"ts": "2024-01-01T10:00:01Z", "level": "INFO", "rt": 15}"#,
+    "\n",
+    r#"{"ts": "2024-01-01T10:00:02Z", "level": "ERROR", "rt": 900}"#,
+);
+
+#[test]
+fn test_tailmap_shows_timestamp_not_line_number() {
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "-F", "tailmap", "-k", "rt"],
+        MAP_TIMESTAMP_INPUT,
+    );
+
+    assert_eq!(exit_code, 0, "tailmap run should succeed: {}", stdout);
+    assert!(
+        stdout.contains("2024-01-01T10:00:00.000Z"),
+        "tailmap should prefix the line with the timestamp: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("line 1"),
+        "tailmap should not fall back to the line number when a timestamp exists: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_keymap_shows_timestamp_not_line_number() {
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "-F", "keymap", "-k", "level"],
+        MAP_TIMESTAMP_INPUT,
+    );
+
+    assert_eq!(exit_code, 0, "keymap run should succeed: {}", stdout);
+    assert!(
+        stdout.contains("2024-01-01T10:00:00.000Z"),
+        "keymap should prefix the line with the timestamp: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("line 1"),
+        "keymap should not fall back to the line number when a timestamp exists: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_levelmap_shows_timestamp_with_explicit_keys() {
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "-F", "levelmap", "-k", "rt"],
+        MAP_TIMESTAMP_INPUT,
+    );
+
+    assert_eq!(exit_code, 0, "levelmap run should succeed: {}", stdout);
+    assert!(
+        stdout.contains("2024-01-01T10:00:00.000Z"),
+        "levelmap should keep the timestamp prefix under --keys: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_map_timestamp_prefix_does_not_leak_fields() {
+    // The retained timestamp field must stay invisible: the map formats render
+    // one glyph per event, so the only `rt` values on the line are glyphs.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "-F", "keymap", "-k", "level"],
+        MAP_TIMESTAMP_INPUT,
+    );
+
+    assert_eq!(exit_code, 0, "keymap run should succeed: {}", stdout);
+    let data_line = stdout
+        .lines()
+        .find(|line| line.contains("2024-01-01"))
+        .expect("should have a timestamped data line");
+    assert!(
+        !data_line.contains("ts="),
+        "the kept timestamp field must not be printed: {}",
+        data_line
+    );
+    assert!(
+        data_line.ends_with("IIE"),
+        "line should be the timestamp plus one glyph per event: {}",
+        data_line
+    );
+}
+
+#[test]
+fn test_map_timestamp_falls_back_to_line_number_without_timestamp() {
+    let input = concat!(r#"{"rt": 5}"#, "\n", r#"{"rt": 9}"#, "\n", r#"{"rt": 400}"#);
+
+    let (stdout, _stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-F", "tailmap", "-k", "rt"], input);
+
+    assert_eq!(exit_code, 0, "tailmap run should succeed: {}", stdout);
+    assert!(
+        stdout.contains("line 1"),
+        "input without any timestamp should still fall back to the line number: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_map_timestamp_respects_explicit_exclude_keys() {
+    // Excluding the timestamp field is an explicit opt-out: exclusions apply on
+    // top of the fields the map formats ask to keep.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "tailmap",
+            "-k",
+            "rt",
+            "--exclude-keys",
+            "ts",
+        ],
+        MAP_TIMESTAMP_INPUT,
+    );
+
+    assert_eq!(exit_code, 0, "tailmap run should succeed: {}", stdout);
+    assert!(
+        stdout.contains("line 1"),
+        "--exclude-keys ts should still suppress the timestamp prefix: {}",
+        stdout
+    );
+}
+
 #[test]
 fn test_drain_without_keys_suggests_single_field_example() {
     let input = r#"{"msg": "hello world"}"#;
