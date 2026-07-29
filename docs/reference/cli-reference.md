@@ -1509,6 +1509,20 @@ Same expression syntax as [`--filter`](#-filter-expr) (see `--help-rhai`), and
 `-I`/`--include` helpers are available. Mutually exclusive with each other and
 with `--cut-at`.
 
+**The predicate sees the event as the pipeline leaves it.** `--filter` and
+`--exec` run before the split, so a field your script creates is fair game:
+
+```bash
+kelora --drain-diff --exec 'e.marker = e.msg.normalized()' \
+  --cut-before 'e.marker == "deploy started: <version>"' incident.log -k msg
+```
+
+The flip side is that narrowing can move the boundary in a way `--cut-at` cannot:
+a `--filter` or `--levels` that removes the marker event shifts the split to the
+next match, or refuses the run if there is none. A timestamp boundary is absolute
+and unaffected. If the marker is a different severity from the events you are
+diffing, filter *after* mining instead — or widen the predicate.
+
 **Degenerate splits are refused** rather than reported (exit `1`), each with the
 diagnosis that fits:
 
