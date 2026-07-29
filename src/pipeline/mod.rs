@@ -232,6 +232,11 @@ pub struct PipelineConfig {
 pub struct MetaData {
     pub filename: Option<String>,
     pub line_num: Option<usize>,
+    /// True when the record being processed was assembled from more than one
+    /// physical line (a multiline strategy grouped it). A parse failure on such
+    /// a record under a one-record-per-line grammar points at the multiline
+    /// settings rather than at the data, and the error summary says so.
+    pub multiline_assembled: bool,
     pub span_status: Option<crate::event::SpanStatus>,
     pub span_id: Option<String>,
     pub span_start: Option<DateTime<Utc>>,
@@ -459,6 +464,7 @@ impl Pipeline {
         if self.chunker_is_passthrough {
             ctx.meta.line_num = Some(line.line_num);
             ctx.meta.filename = line.filename;
+            ctx.meta.multiline_assembled = false;
             return self.process_chunk(line.text, ctx);
         }
 
@@ -496,6 +502,7 @@ impl Pipeline {
             self.chunk_buf = chunks;
             ctx.meta.line_num = Some(chunk.first_line_num);
             ctx.meta.filename = chunk.filename;
+            ctx.meta.multiline_assembled = chunk.line_count > 1;
             return self.process_chunk(chunk.text, ctx);
         }
 
@@ -504,6 +511,7 @@ impl Pipeline {
         for chunk in chunks.drain(..) {
             ctx.meta.line_num = Some(chunk.first_line_num);
             ctx.meta.filename = chunk.filename;
+            ctx.meta.multiline_assembled = chunk.line_count > 1;
             match self.process_chunk(chunk.text, ctx) {
                 Ok(formatted) => outputs.extend(formatted),
                 Err(e) => {
@@ -827,6 +835,15 @@ impl Pipeline {
                     Some(&ctx.config),
                     ctx.config.format_name.as_deref(),
                 );
+
+                // Provenance for the multiline hint in the error summary: this
+                // record was glued together from several physical lines, so a
+                // one-record-per-line grammar was never going to parse it — and
+                // the resulting drop makes multiline grouping *lower* the event
+                // count, which is the opposite of what the user asked for.
+                if ctx.meta.multiline_assembled {
+                    crate::rhai_functions::tracking::record_multiline_parse_error();
+                }
 
                 // track_error writes only the thread-local tracker; persist into
                 // ctx so a later --filter/--exec engine call (which reinstalls

@@ -227,6 +227,32 @@ pub(crate) fn format_error_location(
     }
 }
 
+/// Tracking key counting parse errors that hit a record a multiline strategy
+/// assembled from several physical lines. Deliberately *not* an
+/// `__kelora_error_count_*` key (those are reportable error kinds and feed the
+/// exit-code gate): this is provenance for a hint, not an error of its own. The
+/// `__kelora_error_` prefix is what `persist_error_tracking` copies out of the
+/// thread-local tracker, and the `count` merge op sums it across workers.
+const MULTILINE_PARSE_ERROR_KEY: &str = "__kelora_error_multiline_parse";
+
+/// Record that a parse error landed on a multi-line assembled record.
+pub fn record_multiline_parse_error() {
+    with_internal_tracking(|state| {
+        let current = state
+            .get(MULTILINE_PARSE_ERROR_KEY)
+            .and_then(|v| v.as_int().ok())
+            .unwrap_or(0);
+        state.insert(
+            MULTILINE_PARSE_ERROR_KEY.to_string(),
+            Dynamic::from(current + 1),
+        );
+        state.insert(
+            format!("__op_{}", MULTILINE_PARSE_ERROR_KEY),
+            Dynamic::from("count"),
+        );
+    });
+}
+
 fn format_sample_location(sample: &rhai::Map) -> String {
     let line = sample
         .get("line_num")
@@ -616,6 +642,38 @@ pub fn extract_error_summary_from_tracking(
         };
 
         summary.push_str(&format!("\n  [+{} more. {}]", remaining, message));
+    }
+
+    // A parse failure on a record that `--multiline` glued together has exactly
+    // one likely cause, and it is not the user's key syntax: no joiner turns a
+    // stack frame into `key=value`. Naming the lever also surfaces the part that
+    // was silent — grouping *dropped* an event, so turning multiline on lowered
+    // the event count (#376).
+    if let Some(cfg) = config {
+        let multiline_errors = snapshot
+            .internal
+            .get(MULTILINE_PARSE_ERROR_KEY)
+            .and_then(|v| v.as_int().ok())
+            .unwrap_or(0);
+        if multiline_errors > 0 && cfg.input.multiline.is_some() && cfg.hints_allowed() {
+            let subject = if multiline_errors == 1 {
+                "1 event failed to parse after --multiline assembled it".to_string()
+            } else {
+                format!(
+                    "{} events failed to parse after --multiline assembled them",
+                    multiline_errors
+                )
+            };
+            let hint = format!(
+                "{} from several lines, and format '{}' parses one record per event — so grouping dropped {} instead of enriching {}. No --multiline-join value changes that: to keep continuation lines, use -f line, -f raw, or -f regex:'...' with a trailing capture that spans newlines.",
+                subject,
+                cfg.input.format.to_display_string(),
+                if multiline_errors == 1 { "it" } else { "them" },
+                if multiline_errors == 1 { "it" } else { "them" },
+            );
+            summary.push_str("\n  ");
+            summary.push_str(&cfg.format_hint_message(&hint).replace('\n', "\n  "));
+        }
     }
 
     if let Some(stats) = stats {
