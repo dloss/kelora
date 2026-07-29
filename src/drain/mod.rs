@@ -310,6 +310,22 @@ fn render_template(tokens: &[MaskedToken]) -> String {
 /// The version prefix allows future algorithm changes without breaking
 /// existing saved IDs. This function's behavior must remain stable forever
 /// to support long-term template ID persistence and comparison.
+///
+/// # Why the rendered template, and not something more stable
+///
+/// The promise here is that *a given template string always hashes to the same
+/// id* — not that a given log line keeps its id across kelora versions. Improving
+/// the masking filters or the clustering changes templates, and therefore ids,
+/// without breaking that promise; `--drain=id`'s documented use is comparing two
+/// runs of one binary, which such a change does not disturb.
+///
+/// Hashing something more durable was considered and rejected: an id derived from
+/// the literal tokens alone (every masked position normalized to a single
+/// placeholder) would survive filter-set tweaks, but it would also collide within
+/// a single run — `wait <duration>` and `wait <num>` are two templates that would
+/// share one id, so `--drain=id` could print the same id twice. Within-run
+/// uniqueness is worth more than cross-version stability for the way these ids are
+/// actually used.
 pub fn generate_template_id(template: &str) -> String {
     // Normalize whitespace for consistent hashing across formatting variations.
     let normalized = normalize_template(template);

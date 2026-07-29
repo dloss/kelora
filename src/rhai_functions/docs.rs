@@ -286,7 +286,10 @@ drain_templates()                    Return array of templates with same fields 
                                      A digit inside a word is part of the word, so ssh2/utf8/sha256 stay
                                      An explicit filters: list masks exactly those patterns (no calendar dates)
                                      For PII (credit_card/ssn/phone), pre-mask with normalized() before drain_template()
-                                     Options: depth, max_children, similarity, filters, line_num
+                                     Per-line template is provisional: clusters generalize, and
+                                     near-identical templates merge at end of input
+                                     Options: depth (keyed tokens, default 2), similarity (default 0.8),
+                                     max_children, filters, line_num
 
 STATE MANAGEMENT (sequential mode only; errors in --parallel mode):
 state["key"]                         Get/set state value via indexer (state["count"] = 0)
