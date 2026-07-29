@@ -1,4 +1,7 @@
+mod merge;
 mod tree;
+
+use tree::is_bare_placeholder;
 
 use grok::Grok;
 use regex::Regex;
@@ -220,7 +223,7 @@ impl DrainState {
     /// mined. Sorted for a deterministic, readable order: heaviest first, then by
     /// template.
     fn finalized(&self) -> Vec<Finalized> {
-        let mut out: Vec<Finalized> = self
+        let mined: Vec<Finalized> = self
             .tree
             .clusters()
             .map(|(id, cluster)| {
@@ -234,6 +237,9 @@ impl DrainState {
                 }
             })
             .collect();
+        // Fragmentation the streaming tree could not avoid is repaired here,
+        // where the whole template set is visible at once (see `merge`).
+        let mut out = merge::merge_variants(mined);
         out.sort_by(|a, b| {
             b.count
                 .cmp(&a.count)
