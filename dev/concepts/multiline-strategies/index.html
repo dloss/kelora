@@ -1895,6 +1895,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#6-language-stack-trace-presets-multiline-javapythongo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Language Stack-Trace Presets (--multiline java|python|go)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2609,6 +2620,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#6-language-stack-trace-presets-multiline-javapythongo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Language Stack-Trace Presets (--multiline java|python|go)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2735,6 +2757,7 @@ right strategy for your data set.</p>
 making it hard to correlate context.</p>
 <h2 id="choosing-a-strategy">Choosing a Strategy<a class="headerlink" href="#choosing-a-strategy" title="Permanent link">&para;</a></h2>
 <p><strong>Start with <code>timestamp</code></strong> if your logs have timestamp prefixes (works for 80% of application logs with stack traces).</p>
+<p><strong>Use a language preset (<code>java</code>, <code>python</code>, <code>go</code>)</strong> for stack traces in output <em>without</em> reliable timestamps — raw stderr, container stdout, CI logs. If your lines do start with timestamps, prefer <code>timestamp</code>: it also keeps non-stacktrace continuations with their events.</p>
 <p><strong>Use <code>indent</code></strong> if continuation lines start with whitespace but the first line doesn't have a timestamp.</p>
 <p><strong>Use <code>blank</code></strong> for paragraph-shaped input where blank lines separate records.</p>
 <p><strong>Use <code>regex</code></strong> only when you have explicit BEGIN/END markers or need custom boundary detection.</p>
@@ -2780,7 +2803,8 @@ block. Choose the approach that matches your log format.</p>
 <p><img alt="Kelora multiline strategy comparison showing timestamp, indent, regex, and full-buffer approaches" src="../../images/multiline-strategies-diagram.png#only-light" />
 <img alt="Kelora multiline strategy comparison showing timestamp, indent, regex, and full-buffer approaches" src="../../images/multiline-strategies-diagram-dark.png#only-dark" /></p>
 <h2 id="built-in-strategies">Built-in Strategies<a class="headerlink" href="#built-in-strategies" title="Permanent link">&para;</a></h2>
-<p>Kelora ships five strategies. Only one can be active at a time.</p>
+<p>Kelora ships five general strategies plus three language stack-trace presets.
+Only one can be active at a time.</p>
 <h3 id="1-timestamp-headers-multiline-timestamp">1. Timestamp Headers (<code>--multiline timestamp</code>)<a class="headerlink" href="#1-timestamp-headers-multiline-timestamp" title="Permanent link">&para;</a></h3>
 <p>Best for logs where each entry begins with a timestamp. Detection uses Kelora's
 adaptive timestamp parser and <strong>locks onto the first format family it sees</strong>:
@@ -2884,13 +2908,56 @@ for one-off conversions (for example piping a whole JSON array into a script).
 Use with care: the entire input must fit in memory.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>big.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;print(e.raw.len())&#39;</span>
 </code></pre></div>
+<h3 id="6-language-stack-trace-presets-multiline-javapythongo">6. Language Stack-Trace Presets (<code>--multiline java|python|go</code>)<a class="headerlink" href="#6-language-stack-trace-presets-multiline-javapythongo" title="Permanent link">&para;</a></h3>
+<p>Say what your logs contain instead of describing boundaries. Each preset is a
+small state machine over the language's real trace shape — the approach Fluent
+Bit's built-in multiline parsers use — aimed at output <strong>without reliable
+timestamps</strong>: raw stderr, container stdout, CI logs. There, no other strategy
+works: <code>timestamp</code> has nothing to lock onto, <code>indent</code> splits on the unindented
+lines every real trace pivots on (Python's final <code>ValueError: ...</code>, Java's
+<code>Caused by:</code>, Go's <code>goroutine N [running]:</code>), and <code>regex:match=</code> has the
+inverse semantics (everything between matches becomes one event).</p>
+<p>Under a preset, <strong>every line is its own event unless it is a recognized trace
+line</strong>. A trace start attaches to the line that logged it — so a
+<code>logger.exception(...)</code> header keeps its traceback — and continuations extend
+the event:</p>
+<ul>
+<li><strong><code>java</code></strong> — a dotted exception line (optionally <code>Exception in thread "..."</code>),
+  <code>at ...</code> frames, <code>Caused by:</code> / <code>Suppressed:</code> chains, <code>... N more</code>. An
+  exception class whose name lacks <code>Exception</code>/<code>Error</code>/<code>Throwable</code> is caught
+  from its first indented frame.</li>
+<li><strong><code>python</code></strong> — <code>Traceback (most recent call last):</code>, indented frames and
+  source lines, the final exception line (dotted name, bare
+  <code>KeyboardInterrupt</code> included), chained-exception bridges (<code>During handling
+  of ...</code> / <code>The above exception ...</code>), exception groups (3.11+), and
+  header-less <code>SyntaxError</code> blocks.</li>
+<li><strong><code>go</code></strong> — <code>panic:</code> / <code>fatal error:</code> / <code>http: panic serving</code>, the <code>[signal
+  ...]</code> line, goroutine headers, call/location pairs, <code>created by ...</code>, and
+  the <strong>blank lines between goroutine blocks</strong>, so a full dump stays one
+  event; standalone SIGQUIT goroutine dumps group too.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>app<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>raw<span class="w"> </span>--multiline<span class="w"> </span>python<span class="w"> </span>-F<span class="w"> </span>json
+</code></pre></div>
+<p>Presets default to <code>--multiline-join=newline</code> — their whole point is stack
+traces, which space-joining destroys.</p>
+<p><strong>On timestamped input, presets are safe but not optimal.</strong> A line starting
+with a timestamp (same lock-in as the <code>timestamp</code> strategy) always begins a
+new event, overriding any trace rule, so a preset can never bleed a trace
+across a real event boundary. But <code>timestamp</code> groups <em>any</em> continuation line
+— wrapped messages, embedded payloads — not just recognized trace shapes, so
+kelora hints once when a preset keeps meeting timestamped headers. Known
+limits, accepted by design: a multi-line exception <em>message</em> (a
+<code>str(e)</code>/<code>getMessage()</code> containing newlines) is not recognized past its first
+line, and the losslessness guarantee still holds — an unrecognized trace shape
+degrades to split events, never to dropped lines.</p>
 <h2 id="controlling-line-joining">Controlling Line Joining<a class="headerlink" href="#controlling-line-joining" title="Permanent link">&para;</a></h2>
-<p>By default, <code>--multiline</code> joins grouped lines with spaces — except <code>all</code>,
-which defaults to newline so a whole buffered file keeps its structure.
+<p>By default, <code>--multiline</code> joins grouped lines with spaces — except <code>all</code> and
+the language presets (<code>java</code>/<code>python</code>/<code>go</code>), which default to newline so
+buffered files and stack traces keep their structure.
 To preserve the original line structure in stack traces or other multi-line content:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>--multiline-join<span class="o">=</span>newline<span class="w">   </span><span class="c1"># Preserve line breaks (use for stack traces, logs with continuations)</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>--multiline-join<span class="o">=</span>space<span class="w">     </span><span class="c1"># Join with spaces (default, good for simple log continuation)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>--multiline-join<span class="o">=</span>empty<span class="w">     </span><span class="c1"># Concatenate directly (no separator)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>--multiline-join<span class="o">=</span>newline<span class="w">   </span><span class="c1"># Preserve line breaks (use for stack traces, logs with continuations)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>--multiline-join<span class="o">=</span>space<span class="w">     </span><span class="c1"># Join with spaces (default, good for simple log continuation)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>--multiline-join<span class="o">=</span>empty<span class="w">     </span><span class="c1"># Concatenate directly (no separator)</span>
 </code></pre></div>
 <p><strong>When to use <code>newline</code>:</strong> If you need to <code>split("\n")</code> the multiline block, count lines, or preserve formatting for display.</p>
 <p><strong>When to use <code>space</code>:</strong> When line breaks are not semantically important and you want a compact single-line representation.</p>
@@ -2977,6 +3044,13 @@ with its line structure intact.</p>
 <p><strong>Strategy misfires</strong>: If you see every line printed individually, your start
   detector did not trigger. Try <code>--multiline regex</code> with an explicit pattern, or
   switch to <code>timestamp</code> with a format hint.</p>
+</li>
+<li>
+<p><strong>A preset splits a trace it should recognize</strong>: presets match the
+  language's standard trace shapes; unusual output (a multi-line exception
+  message, a custom formatter) can fall outside them. Inspect the boundary
+  with <code>-f raw -F json --take 5</code>; if the shape is genuinely standard, that is
+  a preset gap worth reporting. <code>regex:match=</code> remains the escape hatch.</p>
 </li>
 <li>
 <p><strong>Events merge that should split</strong>: with <code>timestamp</code>, lock-in may have

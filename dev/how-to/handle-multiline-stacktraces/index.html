@@ -1305,10 +1305,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-4-regex-based-boundaries" class="md-nav__link">
+  <a href="#step-4-language-presets-for-untimestamped-stack-traces" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4: Regex-Based Boundaries
+        Step 4: Language Presets for Untimestamped Stack Traces
       
     </span>
   </a>
@@ -1316,10 +1316,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-buffer-entire-inputs-last-resort" class="md-nav__link">
+  <a href="#step-5-regex-based-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5: Buffer Entire Inputs (Last Resort)
+        Step 5: Regex-Based Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-buffer-entire-inputs-last-resort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Buffer Entire Inputs (Last Resort)
       
     </span>
   </a>
@@ -2471,10 +2482,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-4-regex-based-boundaries" class="md-nav__link">
+  <a href="#step-4-language-presets-for-untimestamped-stack-traces" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4: Regex-Based Boundaries
+        Step 4: Language Presets for Untimestamped Stack Traces
       
     </span>
   </a>
@@ -2482,10 +2493,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-buffer-entire-inputs-last-resort" class="md-nav__link">
+  <a href="#step-5-regex-based-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5: Buffer Entire Inputs (Last Resort)
+        Step 5: Regex-Based Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-buffer-entire-inputs-last-resort" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Buffer Entire Inputs (Last Resort)
       
     </span>
   </a>
@@ -2556,6 +2578,7 @@
 <h2 id="decision-quick-reference">Decision Quick Reference<a class="headerlink" href="#decision-quick-reference" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Timestamp at the start of every event?</strong> Use <code>--multiline timestamp</code>.</li>
+<li><strong>Stack traces in output without timestamps (raw stderr, container stdout, CI logs)?</strong> Use a language preset: <code>--multiline java</code>, <code>--multiline python</code>, or <code>--multiline go</code>.</li>
 <li><strong>Continuation lines start with whitespace?</strong> Use <code>--multiline indent</code>.</li>
 <li><strong>Blank lines between records?</strong> Use <code>--multiline blank</code> (paragraph mode).</li>
 <li><strong>Events start with specific keywords?</strong> Use <code>--multiline 'regex:match=^PATTERN'</code>.</li>
@@ -2593,20 +2616,35 @@
 <li>Lines beginning with whitespace attach to the previous event.</li>
 <li>Works even when timestamps are missing.</li>
 </ul>
-<h2 id="step-4-regex-based-boundaries">Step 4: Regex-Based Boundaries<a class="headerlink" href="#step-4-regex-based-boundaries" title="Permanent link">&para;</a></h2>
+<h2 id="step-4-language-presets-for-untimestamped-stack-traces">Step 4: Language Presets for Untimestamped Stack Traces<a class="headerlink" href="#step-4-language-presets-for-untimestamped-stack-traces" title="Permanent link">&para;</a></h2>
+<p>When the trace-bearing output has no timestamps — plain <code>python app.py</code>
+stderr, <code>docker logs</code>, CI output — the language presets group traces no other
+strategy can: each line stays its own event, and a recognized trace (with its
+<code>Caused by:</code> chains, chained tracebacks, or blank-separated goroutine blocks)
+attaches to the line that logged it.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>examples/stacktrace_python.log<span class="w"> </span>--multiline<span class="w"> </span>python<span class="w"> </span>-n<span class="w"> </span><span class="m">3</span>
+</code></pre></div>
+<ul>
+<li>Also available: <code>--multiline java</code>, <code>--multiline go</code>.</li>
+<li>Presets join with newlines by default, so frames stay countable via <code>split("\n")</code>.</li>
+<li>On input that <em>does</em> have timestamped headers, prefer <code>--multiline timestamp</code> —
+  it groups any continuation line, not just recognized trace shapes (kelora
+  hints when a preset meets such input).</li>
+</ul>
+<h2 id="step-5-regex-based-boundaries">Step 5: Regex-Based Boundaries<a class="headerlink" href="#step-5-regex-based-boundaries" title="Permanent link">&para;</a></h2>
 <p>Use custom patterns when timestamps or indentation are unreliable.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^(ERROR|Exception|Traceback)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">2</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^(ERROR|Exception|Traceback)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
 <p>Variants:</p>
 <ul>
 <li>Start and end markers: <code>--multiline 'regex:match=^BEGIN:end=^END'</code>.</li>
 <li>Negated starts: treat lines that <strong>do not</strong> match as continuations with <code>--multiline 'regex:match=^[^\\s]'</code>.</li>
 </ul>
-<h2 id="step-5-buffer-entire-inputs-last-resort">Step 5: Buffer Entire Inputs (Last Resort)<a class="headerlink" href="#step-5-buffer-entire-inputs-last-resort" title="Permanent link">&para;</a></h2>
+<h2 id="step-6-buffer-entire-inputs-last-resort">Step 6: Buffer Entire Inputs (Last Resort)<a class="headerlink" href="#step-6-buffer-entire-inputs-last-resort" title="Permanent link">&para;</a></h2>
 <p><code>--multiline all</code> reads the full file into one event. Use sparingly for small JSON documents or configuration files.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>config.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>-J
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>config.json<span class="w"> </span>--multiline<span class="w"> </span>all<span class="w"> </span>-J
 </code></pre></div>
 <ul>
 <li>Avoid on large files; it consumes memory proportional to file size.</li>
@@ -2622,17 +2660,17 @@
 <ul>
 <li>
 <p><strong>Chain with format parsing</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-l<span class="w"> </span>error
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-f<span class="w"> </span>logfmt<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-l<span class="w"> </span>error
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Extract stack trace metadata</strong>
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.frames = e.line.split(&quot;\\n&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,frames,line
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.frames = e.line.split(&quot;\\n&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,frames,line
 </code></pre></div></p>
 </li>
 </ul>
