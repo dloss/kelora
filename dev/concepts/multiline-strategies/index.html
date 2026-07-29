@@ -2972,8 +2972,19 @@ with its line structure intact.</p>
 <p><strong><code>-f raw</code></strong> stores the entire aggregated block in the <code>raw</code> field without further processing. Use this when you want to preserve all text exactly as grouped (combine with <code>--multiline-join=newline</code> if you need to preserve line breaks).</p>
 </li>
 <li>
-<p><strong>Structured parsers</strong> (<code>-f json</code>, <code>-f logfmt</code>, <code>-f cols:...</code>) expect a single
-  logical record. Use multiline to restore that logical record before parsing.</p>
+<p><strong>Structured parsers</strong> (<code>-f json</code>, <code>-f logfmt</code>, <code>-f cols:...</code>, <code>-f combined</code>)
+  expect a single logical record. Use multiline to restore that logical record
+  before parsing.</p>
+<p>If the assembled block is <em>not</em> one record — a <code>key=value</code> line followed by
+stack frames, say — the parser fails and <strong>the whole event is dropped</strong>, so
+turning multiline on can leave you with <em>fewer</em> events than leaving it off.
+No <code>--multiline-join</code> value avoids this: a stack frame is not <code>key=value</code>
+under any separator. kelora hints at the multiline settings when a parse
+error lands on a grouped event, so a run that reports
+<code>Key cannot contain spaces</code> also names the real lever. To keep the
+continuation lines, use a parser that accepts free text — <code>-f raw</code>,
+<code>-f line</code>, or a <code>-f regex:...</code> pattern whose trailing capture spans
+newlines (<code>-f syslog</code> and the built-in application-log patterns already do).</p>
 </li>
 <li>
 <p>After parsing, you can still keep the original text by copying the aggregated block
@@ -3051,6 +3062,13 @@ with its line structure intact.</p>
   message, a custom formatter) can fall outside them. Inspect the boundary
   with <code>-f raw -F json --take 5</code>; if the shape is genuinely standard, that is
   a preset gap worth reporting. <code>regex:match=</code> remains the escape hatch.</p>
+</li>
+<li>
+<p><strong>Fewer events with multiline than without</strong>: the grouped block no longer
+  parses as the chosen format, so each failing event is dropped. The parse
+  error names a symptom (<code>Key cannot contain spaces</code>,
+  <code>Invalid combined log format</code>) and the hint beside it names the cause. See
+  <a href="#choosing-the-right-parser">Choosing the Right Parser</a>.</p>
 </li>
 <li>
 <p><strong>Events merge that should split</strong>: with <code>timestamp</code>, lock-in may have
