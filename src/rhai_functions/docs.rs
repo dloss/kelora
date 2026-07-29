@@ -18,8 +18,6 @@ text.clip()                          Remove leading/trailing non-alphanumeric ch
 text.col(spec [,separator])          Extract columns by index/range/list (e.g., '1', '1,3,5', '1:4')
 text.cols(col1, col2 [,...] [,sep])  Extract multiple columns as array (up to 6 columns)
 text.contains(pattern)               Check if text contains pattern (builtin)
-text.like(pattern)                   Glob match (*, ?) against entire string
-text.ilike(pattern)                  Glob match with Unicode case folding (*, ?)
 text.count(pattern)                  Count occurrences of pattern in text
 text.decode_b64()                    Decode base64 string to text
 text.decode_hex()                    Decode hexadecimal string to text
@@ -45,8 +43,8 @@ text.extract_re_maps(pattern, field)    Deprecated alias for extract_regex_maps
 text.extract_regex(pattern [,group])    Extract regex match or capture group ("" if no match;
                                      add .or_empty() to get () instead)
 text.extract_url([nth])              Extract URL from text (nth: 1=first, -1=last)
-text.matches(pattern)                Regex search (cached; invalid pattern raises error)
 text.hash([algo])                    Hash with algorithm (default: sha256, also: xxh3); redact/anonymize a value
+text.ilike(pattern)                  Glob match with Unicode case folding (*, ?)
 text.index_of(substring [,start])    Find position of literal substring (-1 if not found) (builtin)
 text.is_digit()                      Check if text contains only digits
 text.is_in_cidr(cidr)                Check if IP address is in CIDR network (e.g., "10.0.0.0/8")
@@ -55,15 +53,18 @@ text.is_ipv6()                       Check if text is a valid IPv6 address
 text.is_private_ip()                 Check if IP is in private/internal ranges
 text.lclip()                         Remove leading non-alphanumeric characters (left side only)
 text.len                             Get string length (builtin)
+text.like(pattern)                   Glob match (*, ?) against entire string
 text.lower()                         Convert text to lowercase
 text.lstrip([chars])                 Remove leading whitespace or specified characters
 text.mask_ip([octets])               Mask IP address by zeroing the suffix (IPv4/IPv6)
+text.matches(pattern)                Regex search (cached; invalid pattern raises error)
 text.normalized([patterns])          Replace patterns with placeholders (<ipv4>, <email>, <credit_card>, etc.)
                                      Patterns: ipv4, ipv4_port, ipv6, email, url, fqdn, uuid, mac, md5,
                                      sha1, sha256, path, oauth, function, hexcolor, version, hexnum,
                                      duration, num, credit_card (Luhn), ssn (strict XXX-XX-XXXX), phone (NANP-aware for US/CA; permissive internationally)
                                      PII patterns (credit_card, ssn, phone) are NOT in the default set;
                                      pass them explicitly to redact, e.g. normalized(["credit_card","ssn","phone"])
+text.or_empty()                      Convert empty string/array/map to () for removal/filtering                                  
 text.parse_cef()                     Parse Common Event Format line into fields
 text.parse_cols(spec [,sep])         Parse columns according to spec
 text.parse_combined()                Parse Apache/Nginx combined log line
@@ -98,7 +99,6 @@ text.to_float(thousands, decimal)    Parse with explicit separators
 text.to_int()                        Convert text to integer (returns () on error)
 text.to_int(thousands)               Parse with thousands separator removal
                                      - thousands: remove ANY char in string (e.g., ',', '. ', ",.'")
-text.or_empty()                      Convert empty string/array/map to () for removal/filtering
 text.to_lower()                      Convert to lowercase (builtin)
 text.to_upper()                      Convert to uppercase (builtin; also available as upper())
 text.lower()                         Convert to lowercase (alias for to_lower(); for Python users)
@@ -116,16 +116,13 @@ array.flattened([style [,max_depth]]) Return new flattened map from nested array
 array.join(separator)                Join array elements with separator
 array.len                            Get array length (builtin)
 array.map(|item| expression)         Transform each element (builtin)
-array.pluck(field)                   Extract field from each map/object in array (skips missing/() values)
-array.pluck_as_nums(field)           Extract field as f64 from each map in array (skips invalid/missing)
 array.max()                          Find maximum value in array (rejects mixed types; no auto string-to-number coercion)
 array.mean()                         Calculate arithmetic mean of numeric array (rejects mixed types)
 array.min()                          Find minimum value in array (rejects mixed types; no auto string-to-number coercion)
 array.parse_cols(spec [,sep])        Apply column spec to pre-split values
 array.percentile(pct)                Calculate percentile of numeric array
-array.stddev()                       Calculate standard deviation of numeric array (rejects mixed types)
-array.sum()                          Calculate sum of numeric values in array (rejects mixed types)
-array.variance()                     Calculate variance of numeric array (rejects mixed types)
+array.pluck(field)                   Extract field from each map/object in array (skips missing/() values)
+array.pluck_as_nums(field)           Extract field as f64 from each map in array (skips invalid/missing)
 array.pop()                          Remove and return last item (builtin)
 array.push(item)                     Add item to end of array (builtin)
 array.reduce(|acc, item| expr, init) Aggregate array into single value (builtin)
@@ -136,10 +133,14 @@ array.sort()                         Sort array in place (builtin)
 array.sorted_by(field)               Sort array of objects by field name
 array.sorted()                       Return new sorted array (numeric/lexicographic)
 array.starts_with_any(search_array)  Check if array starts with any search values
+array.stddev()                       Calculate standard deviation of numeric array (rejects mixed types)
+array.sum()                          Calculate sum of numeric values in array (rejects mixed types)
 array.unique()                       Remove all duplicate elements (preserves first occurrence)
-  
+array.variance()                     Calculate variance of numeric array (rejects mixed types)
+
 MAP/OBJECT FUNCTIONS:
 map.contains("key")                  Check if map contains key (ignores value) (builtin)
+map.drop(["field1", ...])            Return new map without selected top-level fields
 map.enrich(other_map)                Merge another map, inserting only missing keys
 map.flattened([style [,max_depth]])  Return new flattened map from nested object
 map.flatten_field("field_name")      Flatten just one field from the map
@@ -151,7 +152,6 @@ map.keep(["field1", ...])            Return new map with only selected top-level
 map.merge(other_map)                 Merge another map into this one (overwrites existing keys)
 map.normalized([patterns])           Return new map with all string fields normalized
 map.path_equals("path", value)       Safe nested field comparison
-map.drop(["field1", ...])            Return new map without selected top-level fields
 map.rename_field("old", "new")       Rename a field, returns true if successful
 map.to_cef()                         Convert map to Common Event Format (CEF) string
 map.to_combined()                    Convert map to Apache/Nginx combined log format
@@ -260,13 +260,13 @@ to_bool_or(value, default)           Convert value to boolean with fallback
 UTILITY FUNCTIONS:
 eprint(message)                      Print to stderr (suppressed with --no-script-output or data-only modes)
 exit(code)                           Exit kelora with given exit code
-skip()                               Skip the current event and continue with the next one
 get_env(var [,default])              Get environment variable with optional default
 print(message)                       Print to stdout (suppressed with --no-script-output or data-only modes)
 pseudonym(value, domain)             Domain-separated pseudonym to redact/anonymize/mask a value
                                      (set KELORA_SECRET for stable output; else ephemeral per-run key)
 read_file(path)                      Read file contents as string
 read_lines(path)                     Read file as array of lines
+skip()                               Skip the current event and continue with the next one
 status_class(status_code)            Convert HTTP status code to class string ("2xx", "4xx", etc.)
 type_of(value)                       Get type name as string (builtin)
 window.pluck(field)                  Extract field values from window array (requires --window)
