@@ -106,7 +106,15 @@ match the regex `^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$`.
    corresponding argument list. Aliases can reference other aliases by using
    `--alias other-alias` inside their definition.
 
-3. **CLI parsing** – the augmented argument vector is passed to Clap, and those
+3. **Format options resolved by precedence** – if the command line names the
+   input format (`-f`, `--input-format`, `-j`) or the output format (`-F`,
+   `--output-format`, `-J`), any occurrence of that same option is dropped from
+   `defaults`. This is what makes `defaults = -f json` compatible with a
+   command-line `-j` (the two are the same option, and Clap treats them as
+   conflicting) and with `-f csv` (which replaces the default rather than
+   extending it into a `json,csv` cascade). `-v` reports what was dropped.
+
+4. **CLI parsing** – the augmented argument vector is passed to Clap, and those
    resolved flags are what the pipeline sees.
 
 Implications:

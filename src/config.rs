@@ -963,6 +963,14 @@ impl KeloraConfig {
             lines.push(config.format_info_message(&format!("  Defaults: {}", defaults)));
         }
 
+        // Parts of the defaults the command line overrode (CLI args > config)
+        if !info.overridden_defaults.is_empty() {
+            lines.push(config.format_info_message(&format!(
+                "  Defaults overridden on the command line: {}",
+                info.overridden_defaults.join(" ")
+            )));
+        }
+
         // Aliases expanded (use info message with indentation)
         for (alias_name, expansion) in &info.expanded_aliases {
             lines.push(
