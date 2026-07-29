@@ -3642,6 +3642,15 @@ so piped or redirected output stays clean. Override with:</p>
 <li><code>--legend</code> — always append the legend (even when piped)</li>
 <li><code>--no-legend</code> — never append the legend</li>
 </ul>
+<p><strong>Map timestamps:</strong></p>
+<p>All three map formats prefix each line with the timestamp of the event that
+opened it. The timestamp is kept even when <code>--keys</code> selects a different field —
+<code>keymap</code> and <code>tailmap</code> require <code>--keys</code>, so otherwise they could never show one.
+Two cases fall back to <code>line N</code> instead:</p>
+<ul>
+<li>the input has no detectable timestamp at all</li>
+<li><code>--exclude-keys</code> explicitly removes the timestamp field</li>
+</ul>
 <p><strong>Keymap Format:</strong></p>
 <p>The <code>keymap</code> format works similarly to <code>levelmap</code> but displays the first character of any specified field instead of being limited to log levels. This is useful for visualizing patterns in custom fields like HTTP methods, status codes, user types, etc.</p>
 <ul>
