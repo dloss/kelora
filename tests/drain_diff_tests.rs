@@ -501,12 +501,137 @@ fn test_cut_diagnostics_name_cut_and_not_since() {
     }
 }
 
-/// The point of --cut-when: split on what the change looks like, with no
+/// The whole point of the pair, and the only thing that separates them: which
+/// side the matching event lands on. Same predicate, same log, one event moves.
+/// Mirrors the --section-from / --section-after distinction.
+#[test]
+fn test_cut_before_and_cut_after_place_the_matching_event_differently() {
+    let marker = "{\"ts\": \"2026-07-24T14:30:00Z\", \"msg\": \"deploy started: v1.4.2\"}\n";
+    let content = format!("{}{}{}", baseline_content(), marker, target_content());
+    let before_file = temp_log(&content);
+    let after_file = temp_log(&content);
+    let predicate = "e.msg.contains(\"deploy started\")";
+
+    let side_counts = |args: &[&str]| -> (u64, u64, String) {
+        let (stdout, stderr, code) = run_diff(args);
+        assert_eq!(code, 0, "stderr: {}", stderr);
+        let json: serde_json::Value = serde_json::from_str(&stdout).expect("valid json");
+        (
+            json["baseline_events"].as_u64().unwrap(),
+            json["target_events"].as_u64().unwrap(),
+            stdout,
+        )
+    };
+
+    let (before_b, before_t, before_out) = side_counts(&[
+        "--drain-diff=json",
+        "--cut-before",
+        predicate,
+        before_file.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    let (after_b, after_t, after_out) = side_counts(&[
+        "--drain-diff=json",
+        "--cut-after",
+        predicate,
+        after_file.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+
+    // Exactly one event moves across the boundary, and the totals are unchanged.
+    assert_eq!(after_b, before_b + 1, "--cut-after keeps the match behind");
+    assert_eq!(
+        after_t,
+        before_t - 1,
+        "--cut-before hands the match forward"
+    );
+    assert_eq!(before_b + before_t, after_b + after_t);
+
+    // --cut-before puts the marker in the target, so its template is NEW there;
+    // --cut-after leaves it in the baseline, where it is the only occurrence and
+    // so falls under the vanished noise floor rather than being reported.
+    assert!(
+        before_out.contains("deploy started: <version>"),
+        "--cut-before must report the marker template: {}",
+        before_out
+    );
+    assert!(
+        !after_out.contains("deploy started: <version>"),
+        "--cut-after must not report the marker as target-side change: {}",
+        after_out
+    );
+}
+
+/// --cut-after adds a degenerate case --cut-before cannot produce: a marker on
+/// the final event starves the target even though the predicate did match. That
+/// needs a different message from "never matched", since the expression is right
+/// and the log is what's wrong.
+#[test]
+fn test_cut_after_distinguishes_a_final_match_from_no_match() {
+    let content = format!(
+        "{}{}",
+        baseline_content(),
+        "{\"ts\": \"2026-07-24T23:59:00Z\", \"msg\": \"shutdown complete: drain-diff-final\"}\n"
+    );
+    let matched = temp_log(&content);
+    let unmatched = temp_log(&content);
+
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut-after",
+        "e.msg.contains(\"drain-diff-final\")",
+        matched.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("matched the last of"),
+        "a final match must not be reported as never matching: {}",
+        stderr
+    );
+    assert!(!stderr.contains("never matched"), "stderr: {}", stderr);
+
+    // Contrast: a genuinely absent marker still gets the "never matched" wording.
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut-after",
+        "e.msg.contains(\"no-such-marker\")",
+        unmatched.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(stderr.contains("never matched"), "stderr: {}", stderr);
+}
+
+/// A first-event match is degenerate for --cut-before but perfectly fine for
+/// --cut-after, which keeps that event on the baseline side.
+#[test]
+fn test_cut_after_accepts_a_first_event_match() {
+    let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=json",
+        "--cut-after",
+        "true",
+        combined.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("valid json");
+    assert_eq!(json["baseline_events"], 1);
+    assert_eq!(json["target_events"], 152);
+}
+
+/// The point of --cut-before: split on what the change looks like, with no
 /// timestamp to look up and no clock to reason about. Must agree exactly with the
 /// equivalent --cut-at, so the two splitters are interchangeable when both are
 /// expressible.
 #[test]
-fn test_cut_when_matches_the_equivalent_timestamp_split() {
+fn test_cut_predicate_matches_the_equivalent_timestamp_split() {
     // A marker sits exactly on the boundary the 14:00 cut would draw.
     let marked = format!(
         "{}{}{}",
@@ -519,7 +644,7 @@ fn test_cut_when_matches_the_equivalent_timestamp_split() {
 
     let (pred_out, pred_err, pred_code) = run_diff(&[
         "--drain-diff",
-        "--cut-when",
+        "--cut-before",
         "e.msg.contains(\"deploy started\")",
         by_predicate.path().to_str().unwrap(),
         "-k",
@@ -537,7 +662,7 @@ fn test_cut_when_matches_the_equivalent_timestamp_split() {
     assert_eq!(time_code, 0);
     assert_eq!(
         pred_out, time_out,
-        "--cut-when and the equivalent --cut-at must draw the same boundary"
+        "--cut-before and the equivalent --cut-at must draw the same boundary"
     );
     // The matching event belongs to the target, not the baseline.
     assert!(
@@ -551,7 +676,7 @@ fn test_cut_when_matches_the_equivalent_timestamp_split() {
 /// once. Without the latch every match would re-cross and the sides would be
 /// interleaved rather than split.
 #[test]
-fn test_cut_when_latches_on_the_first_match() {
+fn test_cut_predicate_latches_on_the_first_match() {
     // 3 baseline events, then 5 that all match: the split must be 3/5, not 3/1.
     let mut content = String::new();
     for i in 0..3 {
@@ -569,7 +694,7 @@ fn test_cut_when_latches_on_the_first_match() {
     let file = temp_log(&content);
     let (stdout, stderr, code) = run_diff(&[
         "--drain-diff=json",
-        "--cut-when",
+        "--cut-before",
         "e.level == \"ERROR\"",
         file.path().to_str().unwrap(),
         "-k",
@@ -585,14 +710,14 @@ fn test_cut_when_latches_on_the_first_match() {
 }
 
 #[test]
-fn test_cut_when_refuses_both_degenerate_predicates() {
+fn test_cut_predicate_refuses_both_degenerate_predicates() {
     let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
     let path = combined.path().to_str().unwrap();
 
     // Never matches: nothing reaches the target.
     let (stdout, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut-when",
+        "--cut-before",
         "e.msg.contains(\"no such line anywhere\")",
         path,
         "-k",
@@ -607,7 +732,7 @@ fn test_cut_when_refuses_both_degenerate_predicates() {
     );
 
     // Always matches: nothing stays in the baseline.
-    let (_, stderr, code) = run_diff(&["--drain-diff", "--cut-when", "true", path, "-k", "msg"]);
+    let (_, stderr, code) = run_diff(&["--drain-diff", "--cut-before", "true", path, "-k", "msg"]);
     assert_eq!(code, 1, "stderr: {}", stderr);
     assert!(
         stderr.contains("matched the very first"),
@@ -619,11 +744,11 @@ fn test_cut_when_refuses_both_degenerate_predicates() {
 /// Stricter than --filter on purpose: the boundary is one decision, so a failed
 /// evaluation before it is found leaves every later event's side unknown.
 #[test]
-fn test_cut_when_evaluation_failure_invalidates_the_report() {
+fn test_cut_predicate_evaluation_failure_invalidates_the_report() {
     let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
     let (stdout, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut-when",
+        "--cut-before",
         "e.nosuchfield.bogus_method()",
         combined.path().to_str().unwrap(),
         "-k",
@@ -631,7 +756,7 @@ fn test_cut_when_evaluation_failure_invalidates_the_report() {
     ]);
     assert_eq!(code, 1, "stderr: {}", stderr);
     assert!(
-        stderr.contains("--cut-when failed to evaluate"),
+        stderr.contains("--cut-before failed to evaluate"),
         "stderr: {}",
         stderr
     );
@@ -643,25 +768,25 @@ fn test_cut_when_evaluation_failure_invalidates_the_report() {
 }
 
 #[test]
-fn test_cut_when_usage_errors() {
+fn test_cut_predicate_usage_errors() {
     let file = temp_log("{\"ts\": \"2026-07-24T10:00:00Z\", \"msg\": \"x\"}\n");
     let path = file.path().to_str().unwrap();
 
     // Without --drain-diff.
-    let (_, stderr, code) = run_diff(&["--cut-when", "true", path, "-k", "msg"]);
+    let (_, stderr, code) = run_diff(&["--cut-before", "true", path, "-k", "msg"]);
     assert_eq!(code, 2, "stderr: {}", stderr);
     assert!(
-        stderr.contains("--cut-when requires --drain-diff"),
+        stderr.contains("--cut-before requires --drain-diff"),
         "stderr: {}",
         stderr
     );
 
-    // Both splitters at once: the two rules would contradict each other.
+    // Multiple splitters at once: the rules would contradict each other.
     let (_, stderr, code) = run_diff(&[
         "--drain-diff",
         "--cut-at",
         "2026-07-24T14:00:00Z",
-        "--cut-when",
+        "--cut-before",
         "true",
         path,
         "-k",
@@ -674,7 +799,7 @@ fn test_cut_when_usage_errors() {
     let other = temp_log("{\"ts\": \"2026-07-24T10:00:00Z\", \"msg\": \"y\"}\n");
     let (_, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut-when",
+        "--cut-before",
         "true",
         path,
         other.path().to_str().unwrap(),
@@ -682,7 +807,7 @@ fn test_cut_when_usage_errors() {
         "msg",
     ]);
     assert_eq!(code, 2, "stderr: {}", stderr);
-    assert!(stderr.contains("--cut-when"), "stderr: {}", stderr);
+    assert!(stderr.contains("--cut-before"), "stderr: {}", stderr);
     assert!(stderr.contains("single input"), "stderr: {}", stderr);
 }
 

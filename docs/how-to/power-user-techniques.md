@@ -54,6 +54,15 @@ for anything archived. A cut that lands outside the data is refused rather than
 reported, and the error names the span the log covers — so a missed first guess
 tells you what to use.
 
+When you know what the change looks like but not when it happened, split on a
+predicate instead and skip the timestamp entirely — `--cut-before` when the
+matching line opens the new regime, `--cut-after` when it closes the old one:
+
+```bash
+kelora --drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log -k msg
+kelora --drain-diff --cut-after 'e.msg.contains("deploy finished")' incident.log -k msg
+```
+
 Comparisons use per-side *shares*, so a 10-minute incident capture diffs
 fairly against a 24-hour baseline. `--filter`/`--exec` run before the
 comparison (diff only errors, or normalize custom tokens first). Use

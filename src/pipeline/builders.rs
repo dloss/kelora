@@ -910,7 +910,7 @@ impl PipelineBuilder {
             })?;
             let stage = DrainDiffStage::new(field, rule.clone());
             let stage = match &rule {
-                crate::config::DrainDiffRule::Predicate { expr, includes } => {
+                crate::config::DrainDiffRule::Predicate { expr, includes, .. } => {
                     stage.with_cut_predicate(expr, includes, &mut rhai_engine)?
                 }
                 _ => stage,

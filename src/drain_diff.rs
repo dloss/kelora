@@ -118,12 +118,17 @@ struct DiffState {
     /// timestamped, and benefits from the same at-a-glance confirmation.
     /// Powers the split echo and the one-sided refusal message.
     spans: [Option<(DateTime<Utc>, DateTime<Utc>)>; 2],
-    /// Events where `--cut-when`'s predicate failed to evaluate *while the
+    /// Events where the `--cut-before`/`--cut-after` predicate failed to evaluate *while the
     /// boundary was still undecided*. Any such failure invalidates the whole
     /// split: the event might have been the boundary, so every event after it may
     /// be on the wrong side. Unlike a `--filter` error, which drops one event,
     /// this silently relabels the rest of the log, so the report is refused.
     cut_predicate_errors: u64,
+    /// Whether the predicate ever matched. Distinguishes the two ways a
+    /// `--cut-after` split can starve the target — never matching, versus
+    /// matching the final event so nothing lands after the boundary — which need
+    /// opposite fixes.
+    cut_predicate_matched: bool,
 }
 
 thread_local! {
@@ -167,7 +172,14 @@ pub fn record(text: &str, side: DiffSide, ts: Option<DateTime<Utc>>) {
     });
 }
 
-/// Record a `--cut-when` predicate failure that left the boundary undecided.
+/// Record that the predicate matched, wherever the boundary ended up landing.
+pub fn record_cut_predicate_matched() {
+    DIFF_STATE.with(|state| {
+        state.borrow_mut().cut_predicate_matched = true;
+    });
+}
+
+/// Record a predicate-split failure that left the boundary undecided.
 /// See `DiffState::cut_predicate_errors`.
 pub fn record_cut_predicate_error() {
     DIFF_STATE.with(|state| {
@@ -289,10 +301,13 @@ pub struct DiffReport {
     /// carried parseable timestamps. See `DiffState::spans`.
     pub baseline_span: Option<(DateTime<Utc>, DateTime<Utc>)>,
     pub target_span: Option<(DateTime<Utc>, DateTime<Utc>)>,
-    /// `--cut-when` evaluation failures that left the boundary undecided; any
+    /// Predicate-split evaluation failures that left the boundary undecided; any
     /// nonzero count invalidates the split. See
     /// `DiffState::cut_predicate_errors`.
     pub cut_predicate_errors: u64,
+    /// Whether the predicate ever matched. See
+    /// `DiffState::cut_predicate_matched`.
+    pub cut_predicate_matched: bool,
 }
 
 impl DiffReport {
@@ -466,6 +481,7 @@ pub fn finalize() -> Result<DiffReport, String> {
             baseline_span: state.spans[0],
             target_span: state.spans[1],
             cut_predicate_errors: state.cut_predicate_errors,
+            cut_predicate_matched: state.cut_predicate_matched,
         })
     })
 }
@@ -818,6 +834,7 @@ mod tests {
             baseline_span: None,
             target_span: None,
             cut_predicate_errors: 0,
+            cut_predicate_matched: false,
         }
     }
 
@@ -1106,6 +1123,7 @@ mod tests {
             baseline_span: None,
             target_span: None,
             cut_predicate_errors: 0,
+            cut_predicate_matched: false,
         };
         let text = format_report_text(&report, false);
         assert!(
@@ -1254,6 +1272,7 @@ mod tests {
             baseline_span: None,
             target_span: None,
             cut_predicate_errors: 0,
+            cut_predicate_matched: false,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target (1 template):"));
@@ -1366,6 +1385,7 @@ mod tests {
             baseline_span: None,
             target_span: None,
             cut_predicate_errors: 0,
+            cut_predicate_matched: false,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target: no new templates"));
@@ -1390,6 +1410,7 @@ mod tests {
             baseline_span: None,
             target_span: None,
             cut_predicate_errors: 0,
+            cut_predicate_matched: false,
         };
         let json: serde_json::Value =
             serde_json::from_str(&format_report_json(&report)).expect("valid JSON");

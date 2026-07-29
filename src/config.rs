@@ -237,21 +237,48 @@ pub enum DrainDiffRule {
         raw: String,
     },
     /// One-input mode: events are the baseline until a Rhai predicate first
-    /// evaluates true, and the target from that event on (the matching event is
-    /// the first target event). The boundary latches, so a predicate that
-    /// matches repeatedly still splits the log exactly once.
+    /// evaluates true. The boundary latches, so a predicate that matches
+    /// repeatedly still splits the log exactly once.
     ///
     /// Unlike `Timestamp` this needs no timestamps and no knowledge of when the
     /// change happened — only what it looks like in the log — and it costs no
     /// buffering, since "have we crossed yet" is one bool of streaming state.
     Predicate {
         expr: String,
+        /// Where the boundary sits relative to the matching event. See
+        /// [`MatchPlacement`].
+        placement: MatchPlacement,
         /// Every `-I/--include` file, so the predicate can call the same helpers
         /// `--filter` can. Carried on the rule rather than threaded through the
         /// builder because this is the only stage that needs them outside the
         /// positional per-stage include mapping.
         includes: Vec<IncludeFile>,
     },
+}
+
+/// Which side of a predicate split the *matching* event lands on — the same
+/// distinction the `--section-*` family draws with its `from`/`after` and
+/// `before`/`through` suffixes, and for the same reason: a marker line can be
+/// either the start of the new regime or the end of the old one, and only the
+/// caller knows which.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MatchPlacement {
+    /// `--cut-before`: the cut sits immediately before the match, so the
+    /// matching event is the first *target* event.
+    Target,
+    /// `--cut-after`: the cut sits immediately after the match, so the matching
+    /// event is the last *baseline* event.
+    Baseline,
+}
+
+impl MatchPlacement {
+    /// The flag that selects this placement, for diagnostics.
+    pub fn flag(self) -> &'static str {
+        match self {
+            MatchPlacement::Target => "--cut-before",
+            MatchPlacement::Baseline => "--cut-after",
+        }
+    }
 }
 
 /// Performance configuration
