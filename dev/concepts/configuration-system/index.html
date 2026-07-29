@@ -2655,6 +2655,15 @@ match the regex <code>^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$</code>.</p>
    <code>--alias other-alias</code> inside their definition.</p>
 </li>
 <li>
+<p><strong>Format options resolved by precedence</strong> – if the command line names the
+   input format (<code>-f</code>, <code>--input-format</code>, <code>-j</code>) or the output format (<code>-F</code>,
+   <code>--output-format</code>, <code>-J</code>), any occurrence of that same option is dropped from
+   <code>defaults</code>. This is what makes <code>defaults = -f json</code> compatible with a
+   command-line <code>-j</code> (the two are the same option, and Clap treats them as
+   conflicting) and with <code>-f csv</code> (which replaces the default rather than
+   extending it into a <code>json,csv</code> cascade). <code>-v</code> reports what was dropped.</p>
+</li>
+<li>
 <p><strong>CLI parsing</strong> – the augmented argument vector is passed to Clap, and those
    resolved flags are what the pipeline sees.</p>
 </li>
