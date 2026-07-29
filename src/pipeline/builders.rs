@@ -908,7 +908,14 @@ impl PipelineBuilder {
                     "--drain-diff requires exactly one effective field in --keys after exclusions, e.g. --keys msg. Use -s to inspect available fields."
                 )
             })?;
-            script_stages.push(Box::new(DrainDiffStage::new(field, rule)));
+            let stage = DrainDiffStage::new(field, rule.clone());
+            let stage = match &rule {
+                crate::config::DrainDiffRule::Predicate { expr, includes } => {
+                    stage.with_cut_predicate(expr, includes, &mut rhai_engine)?
+                }
+                _ => stage,
+            };
+            script_stages.push(Box::new(stage));
         }
 
         // Add key filtering stage (runs after level filtering, before context processing)

@@ -42,14 +42,14 @@ IDs for diffs), `=json` (programmatic). → [`--drain` reference](../reference/c
 
 The first question in every incident: which templates are new, which vanished,
 which shifted in volume. `--drain-diff` answers it directly — baseline first,
-target second, or one file split by time with `--cut`:
+target second, or one file split by time with `--cut-at`:
 
 ```bash
 kelora --drain-diff before.log after.log -k msg
-kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
+kelora --drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
 ```
 
-`--cut` resolves against the clock, not the log, so give an absolute timestamp
+`--cut-at` resolves against the clock, not the log, so give an absolute timestamp
 for anything archived. A cut that lands outside the data is refused rather than
 reported, and the error names the span the log covers — so a missed first guess
 tells you what to use.

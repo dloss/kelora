@@ -1291,14 +1291,17 @@ question in every incident and deploy verification: *what changed?*
 Requires `--keys` with exactly one field (the field to mine, same semantics as
 `--drain`). Summary-only; sequential mode only (not supported with `--parallel`).
 
-Two ways to define baseline and target:
+Three ways to define baseline and target:
 
 ```bash
 # Two inputs: first is baseline, second is target
 kelora --drain-diff old.log new.log -k msg
 
-# One input, split by time: everything before the cut is baseline
-kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
+# One input, split at a timestamp: everything before the cut is baseline
+kelora --drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
+
+# One input, split at the first match: no timestamp needed
+kelora --drain-diff --cut-when 'e.msg.contains("deploy started")' incident.log -k msg
 ```
 
 **Formats:**
@@ -1378,16 +1381,16 @@ when it only means the boundary missed. The run fails with exit `1` and the
 message carries the resolved cut plus the span the input actually covers:
 
 ```console
-$ kelora --drain-diff --cut 1h incident.log -k msg
-kelora: --drain-diff: --cut resolved to 2026-07-29T09:15:00Z, and all 230 compared
+$ kelora --drain-diff --cut-at 1h incident.log -k msg
+kelora: --drain-diff: --cut-at resolved to 2026-07-29T09:15:00Z, and all 230 compared
 event(s) fall before it, so the target side is empty and the report would show every
 template as VANISHED rather than compare anything. The input spans
-2026-07-24T13:30:00Z .. 2026-07-24T14:24:20Z, so pick a --cut inside that range.
+2026-07-24T13:30:00Z .. 2026-07-24T14:24:20Z, so pick a --cut-at inside that range.
 Note that relative times resolve against the current time, not the log's — '1h'
 means an hour ago, and a bare '14:00' means today.
 ```
 
-The span is the actionable half: it is what a working `--cut` gets picked from, so
+The span is the actionable half: it is what a working `--cut-at` gets picked from, so
 a first attempt that misses doubles as the lookup step. In two-input mode the same
 refusal fires when one file contributes nothing (empty, or emptied by
 `--filter`/`--since`).
@@ -1429,7 +1432,7 @@ stdin a first-class input (nothing is re-read).
   one can clear the bar by luck. The size bar filters most of those out, but a
   borderline row on a very template-heavy log is worth a second look.
 
-#### `--cut <TIME>`
+#### `--cut-at <TIME>`
 
 Timestamp splitting a single `--drain-diff` input into baseline (before the
 cut) and target (at/after). Accepts the same timestamp formats as
@@ -1437,15 +1440,16 @@ cut) and target (at/after). Accepts the same timestamp formats as
 are excluded from the comparison and surfaced in a warning.
 
 ```bash
-kelora --drain-diff --cut '2026-07-24 14:00' incident.log -k msg
+kelora --drain-diff --cut-at '2026-07-24 14:00' incident.log -k msg
 ```
 
-**The cut resolves against the clock, not the log.** Because `--cut` shares
-`--since`'s vocabulary, `--cut 1h` means "an hour before *now*" and a bare
-`--cut 14:00` means "*today* at 14:00" — neither is relative to the log's own
+**The cut resolves against the clock, not the log.** Because `--cut-at` shares
+`--since`'s vocabulary, `--cut-at 1h` means "an hour before *now*" and a bare
+`--cut-at 14:00` means "*today* at 14:00" — neither is relative to the log's own
 time range. On an archived or incident log both land outside the data entirely,
 which is why a one-sided split is a hard error rather than a report (above). For
-a historical log, give an absolute timestamp.
+a historical log, give an absolute timestamp — or use
+[`--cut-when`](#-cut-when-expr), which needs no clock at all.
 
 Every successful run states where the split landed, so the boundary is never
 something you have to verify separately:
@@ -1456,12 +1460,57 @@ totals: baseline 110 events, target 120 events, 2 shared templates within noise
   target   spans 2026-07-24T14:00:00Z .. 2026-07-24T14:24:20Z
 ```
 
-The spans are printed in the timestamp form `--cut` accepts back verbatim, so
+The spans are printed in the timestamp form `--cut-at` accepts back verbatim, so
 they can be copied straight into a follow-up invocation. `--drain-diff=json`
 carries the same information as `baseline_span` / `target_span` objects
 (`{"first": ..., "last": ...}`, or `null` when the events carried no parseable
 timestamps). Two-input mode reports its spans too whenever the logs are
 timestamped.
+
+#### `--cut-when <EXPR>`
+
+Boolean Rhai expression whose **first match** splits a single `--drain-diff`
+input: events before it are the baseline, the matching event and everything after
+are the target.
+
+Use this when you know what the change looks like in the log but not when it
+happened — which is the common case in an incident. There is no timestamp to look
+up, no clock to reason about, and nothing to check the log's time range for first:
+
+```bash
+# Split at the deploy marker
+kelora --drain-diff --cut-when 'e.msg.contains("deploy started")' incident.log -k msg
+
+# Split at the first server error
+kelora --drain-diff --cut-when 'e.status >= 500' access.log -k msg
+
+# Split at the first event off the old version
+kelora --drain-diff --cut-when 'e.version != "1.4.2"' rollout.log -k msg
+```
+
+The boundary **latches** on the first match, so a predicate that keeps matching
+(`e.status >= 500` on a log full of errors) still splits the log exactly once. The
+predicate is only evaluated until it matches, so the rest of the stream costs
+nothing, and no events are held in memory — unlike a time-relative split, this
+needs one bool of state.
+
+Same expression syntax as [`--filter`](#-filter-expr) (see `--help-rhai`), and
+`-I`/`--include` helpers are available.
+
+Two failure modes are refused rather than reported (exit `1`):
+
+- **The predicate never matched.** The target side would be empty and every
+  template would read as VANISHED. The error suggests trying the expression with
+  `--filter` first.
+- **The predicate matched the very first event.** The baseline side would be empty
+  and every template would read as NEW — the predicate is too broad.
+
+A predicate that *fails to evaluate* before it finds the boundary also fails the
+run. This is stricter than `--filter`, where a per-event error drops just that
+event: here the boundary is a single decision, so one failed evaluation leaves it
+unknown and silently puts every later event on the baseline side.
+
+Mutually exclusive with `--cut-at`.
 
 ### Field Discovery
 

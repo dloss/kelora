@@ -146,13 +146,31 @@ pub fn validate_cli_args(cli: &Cli) -> Result<()> {
     Ok(())
 }
 
+/// Which splitter puts `--drain-diff` in one-input mode, for diagnostics that
+/// need to name it. Clap rejects both at once, so at most one is set.
+fn drain_diff_splitter_flag(cli: &Cli) -> Option<&'static str> {
+    if cli.cut_at.is_some() {
+        Some("--cut-at")
+    } else if cli.cut_when.is_some() {
+        Some("--cut-when")
+    } else {
+        None
+    }
+}
+
 /// Validate the --drain-diff flag family: input arity (two inputs, or one plus
-/// --cut), the single-field key requirement shared with --drain, and mode
+/// a splitter), the single-field key requirement shared with --drain, and mode
 /// conflicts.
 fn validate_drain_diff_args(cli: &Cli, implies_parallel: bool) -> Result<()> {
-    if cli.cut.is_some() && cli.drain_diff.is_none() {
+    if cli.cut_at.is_some() && cli.drain_diff.is_none() {
         return Err(anyhow::anyhow!(
-            "--cut requires --drain-diff. Use --since/--until to filter events by time."
+            "--cut-at requires --drain-diff. Use --since/--until to filter events by time."
+        ));
+    }
+
+    if cli.cut_when.is_some() && cli.drain_diff.is_none() {
+        return Err(anyhow::anyhow!(
+            "--cut-when requires --drain-diff. Use --filter to select events by expression."
         ));
     }
 
@@ -174,7 +192,7 @@ fn validate_drain_diff_args(cli: &Cli, implies_parallel: bool) -> Result<()> {
 
     if cli.merge_ts {
         return Err(anyhow::anyhow!(
-            "--drain-diff is not supported with --merge-sorted: merging interleaves the inputs, but the diff needs them apart. In two-input mode the first input is the baseline; with --cut the timestamp does the splitting."
+            "--drain-diff is not supported with --merge-sorted: merging interleaves the inputs, but the diff needs them apart. In two-input mode the first input is the baseline; with --cut-at or --cut-when the split happens inside one input."
         ));
     }
 
@@ -196,17 +214,19 @@ fn validate_drain_diff_args(cli: &Cli, implies_parallel: bool) -> Result<()> {
         ));
     }
 
-    if cli.cut.is_some() {
+    if let Some(splitter) = drain_diff_splitter_flag(cli) {
         if cli.files.len() > 1 {
             return Err(anyhow::anyhow!(
-                "--drain-diff with --cut takes a single input (the cut timestamp splits it into baseline and target); got {} inputs. Drop --cut to compare two files.",
-                cli.files.len()
+                "--drain-diff with {} takes a single input (the split happens inside it); got {} inputs. Drop {} to compare two files.",
+                splitter,
+                cli.files.len(),
+                splitter
             ));
         }
     } else {
         if cli.files.len() != 2 {
             return Err(anyhow::anyhow!(
-                "--drain-diff requires exactly 2 inputs (baseline first, then target); got {}. For a single input, split it by time with --cut <timestamp>.",
+                "--drain-diff requires exactly 2 inputs (baseline first, then target); got {}. For a single input, split it with --cut-at <timestamp> or --cut-when <expr>.",
                 cli.files.len()
             ));
         }
@@ -218,7 +238,7 @@ fn validate_drain_diff_args(cli: &Cli, implies_parallel: bool) -> Result<()> {
         };
         if canonical(&cli.files[0]) == canonical(&cli.files[1]) {
             return Err(anyhow::anyhow!(
-                "--drain-diff baseline and target are the same file ('{}'); a self-diff is empty by construction. Compare two different files, or split one file by time with --cut.",
+                "--drain-diff baseline and target are the same file ('{}'); a self-diff is empty by construction. Compare two different files, or split one file with --cut-at / --cut-when.",
                 cli.files[0]
             ));
         }

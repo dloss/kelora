@@ -1240,22 +1240,49 @@ impl ScriptStage for DrainStage {
 pub struct DrainDiffStage {
     field_name: String,
     rule: crate::config::DrainDiffRule,
+    /// `--cut-when`'s predicate, compiled once at construction.
+    cut_predicate: Option<crate::engine::CompiledExpression>,
+    /// Whether `cut_predicate` has already matched. The boundary latches, so a
+    /// predicate that keeps matching still splits the log exactly once — and the
+    /// whole splitter costs one bool of state, with no events held back.
+    cut_crossed: bool,
 }
 
 impl DrainDiffStage {
     pub fn new(field_name: String, rule: crate::config::DrainDiffRule) -> Self {
-        Self { field_name, rule }
+        Self {
+            field_name,
+            rule,
+            cut_predicate: None,
+            cut_crossed: false,
+        }
+    }
+
+    /// Compile `--cut-when`'s predicate, using the same machinery as `--filter`
+    /// so the two accept identical expressions and the same include helpers.
+    pub fn with_cut_predicate(
+        mut self,
+        expr: &str,
+        includes: &[crate::config::IncludeFile],
+        engine: &mut RhaiEngine,
+    ) -> Result<Self> {
+        self.cut_predicate = Some(engine.compile_filter_with_includes(expr, includes)?);
+        Ok(self)
     }
 }
 
 impl ScriptStage for DrainDiffStage {
-    // Mines templates from a single field's text. In --cut mode the side is
+    // Mines templates from a single field's text. In --cut-at mode the side is
     // decided by `parsed_ts`, which the parser derives from the timestamp
     // candidate fields — keep those names so projection pushdown does not
-    // strip them.
+    // strip them. --cut-when's predicate can read anything, so that mode has to
+    // give up projection and demand every field.
     fn field_demands(&self) -> crate::projection::Demand {
+        if matches!(self.rule, crate::config::DrainDiffRule::Predicate { .. }) {
+            return crate::projection::Demand::All;
+        }
         let mut fields = vec![self.field_name.clone()];
-        if matches!(self.rule, crate::config::DrainDiffRule::ByCut { .. }) {
+        if matches!(self.rule, crate::config::DrainDiffRule::Timestamp { .. }) {
             fields.extend(
                 crate::event::TIMESTAMP_FIELD_NAMES
                     .iter()
@@ -1265,16 +1292,16 @@ impl ScriptStage for DrainDiffStage {
         crate::projection::Demand::Fields(fields)
     }
 
-    fn apply(&mut self, event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
+    fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
         let side = match &self.rule {
-            crate::config::DrainDiffRule::ByFile { baseline } => {
+            crate::config::DrainDiffRule::TwoInputs { baseline } => {
                 if event.filename.as_deref() == Some(baseline.as_str()) {
                     crate::drain_diff::DiffSide::Baseline
                 } else {
                     crate::drain_diff::DiffSide::Target
                 }
             }
-            crate::config::DrainDiffRule::ByCut { cut, .. } => match event.parsed_ts {
+            crate::config::DrainDiffRule::Timestamp { cut, .. } => match event.parsed_ts {
                 Some(ts) if ts < *cut => crate::drain_diff::DiffSide::Baseline,
                 Some(_) => crate::drain_diff::DiffSide::Target,
                 None => {
@@ -1285,6 +1312,42 @@ impl ScriptStage for DrainDiffStage {
                     return ScriptResult::Emit(event);
                 }
             },
+            crate::config::DrainDiffRule::Predicate { .. } => {
+                // Evaluate only until the boundary is found: afterwards the side
+                // is settled, so the remaining events cost nothing. A predicate
+                // that errors is a broken split rather than a per-event problem
+                // — every later event would inherit the wrong side — so it fails
+                // the run instead of being absorbed.
+                if !self.cut_crossed {
+                    let Some(predicate) = self.cut_predicate.as_ref() else {
+                        return ScriptResult::Error(
+                            "--cut-when predicate was not compiled; this is a bug".to_string(),
+                        );
+                    };
+                    match ctx.rhai.execute_compiled_filter(
+                        predicate,
+                        &event,
+                        &mut ctx.tracker,
+                        &mut ctx.internal_tracker,
+                    ) {
+                        Ok(true) => self.cut_crossed = true,
+                        Ok(false) => {}
+                        Err(err) => {
+                            // Recorded as well as reported: the per-event error
+                            // path is resilient by default, and absorbing this
+                            // one would leave the boundary undecided while every
+                            // later event silently inherited the baseline side.
+                            crate::drain_diff::record_cut_predicate_error();
+                            return ScriptResult::Error(format!("--cut-when: {}", err));
+                        }
+                    }
+                }
+                if self.cut_crossed {
+                    crate::drain_diff::DiffSide::Target
+                } else {
+                    crate::drain_diff::DiffSide::Baseline
+                }
+            }
         };
 
         // An event whose mined field carries no text contributes nothing to the

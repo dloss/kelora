@@ -224,17 +224,33 @@ pub struct ProcessingConfig {
 pub enum DrainDiffRule {
     /// Two-input mode: events from `baseline` (matched on the event's
     /// filename) are the baseline, everything else is the target.
-    ByFile { baseline: String },
+    TwoInputs { baseline: String },
     /// One-input mode: events with a timestamp before `cut` are the baseline,
     /// events at/after it are the target. Events without a parseable
     /// timestamp are excluded and counted.
-    ByCut {
+    Timestamp {
         cut: chrono::DateTime<chrono::Utc>,
-        /// The literal `--cut` text, kept only for diagnostics: a lopsided split
-        /// warrants explaining now-relative resolution when the user wrote
+        /// The literal `--cut-at` text, kept only for diagnostics: a lopsided
+        /// split warrants explaining now-relative resolution when the user wrote
         /// something like `1h`, and would just be noise when they wrote an
         /// absolute stamp.
         raw: String,
+    },
+    /// One-input mode: events are the baseline until a Rhai predicate first
+    /// evaluates true, and the target from that event on (the matching event is
+    /// the first target event). The boundary latches, so a predicate that
+    /// matches repeatedly still splits the log exactly once.
+    ///
+    /// Unlike `Timestamp` this needs no timestamps and no knowledge of when the
+    /// change happened — only what it looks like in the log — and it costs no
+    /// buffering, since "have we crossed yet" is one bool of streaming state.
+    Predicate {
+        expr: String,
+        /// Every `-I/--include` file, so the predicate can call the same helpers
+        /// `--filter` can. Carried on the rule rather than threaded through the
+        /// builder because this is the only stage that needs them outside the
+        /// positional per-stage include mapping.
+        includes: Vec<IncludeFile>,
     },
 }
 
