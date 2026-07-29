@@ -533,9 +533,40 @@ fn rate_multiple(entry: &DiffEntry) -> String {
     }
 }
 
+/// Rows shown per section in the table report before the rest collapse into a
+/// footer line.
+///
+/// A section is only as readable as it is short. High-cardinality fields produce
+/// long NEW sections however good the clustering is — a burst of one message
+/// under 85 distinct user names is 85 rows of the same finding — and past a
+/// screenful the reader has lost the ranking the sort exists to provide. The
+/// sections are ordered by what an operator acts on (count for NEW/VANISHED,
+/// |Δ share| for shifts), so the head is the part worth showing.
+///
+/// Never a silent cut: the footer names how many rows and how many events were
+/// held back, and where to get all of them.
+const MAX_ROWS_PER_SECTION: usize = 20;
+
+/// The "and the rest" footer for a capped section, or `None` when everything fit.
+fn truncation_note(
+    shown: usize,
+    entries: &[DiffEntry],
+    count: impl Fn(&DiffEntry) -> u64,
+) -> Option<String> {
+    let hidden = entries.len().checked_sub(shown).filter(|n| *n > 0)?;
+    let events: u64 = entries.iter().skip(shown).map(count).sum();
+    Some(format!(
+        "  … {} more {} ({} event(s)) not shown; --drain-diff=json lists every one",
+        hidden,
+        if hidden == 1 { "template" } else { "templates" },
+        events,
+    ))
+}
+
 /// Format the report as the three-section human-readable table. Sections with
 /// zero entries print a single line rather than disappearing — absence of
-/// change is information.
+/// change is information. Long sections are capped at [`MAX_ROWS_PER_SECTION`]
+/// with a footer stating what was held back.
 pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
     let (red, gray, green, bold, reset) = if use_colors {
         ("\x1b[31m", "\x1b[90m", "\x1b[32m", "\x1b[1m", "\x1b[0m")
@@ -563,8 +594,9 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
             plural(report.new.len()),
             reset
         ));
-        let width = count_width(&mut report.new.iter().map(|e| e.target_count));
-        for entry in &report.new {
+        let shown = report.new.len().min(MAX_ROWS_PER_SECTION);
+        let width = count_width(&mut report.new[..shown].iter().map(|e| e.target_count));
+        for entry in &report.new[..shown] {
             out.push_str(&format!(
                 "  {:>w$}  {}{}{}\n",
                 entry.target_count,
@@ -573,6 +605,9 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
                 reset,
                 w = width
             ));
+        }
+        if let Some(note) = truncation_note(shown, &report.new, |e| e.target_count) {
+            out.push_str(&format!("{}{}{}\n", gray, note, reset));
         }
     }
     out.push('\n');
@@ -590,8 +625,9 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
             plural(report.vanished.len()),
             reset
         ));
-        let width = count_width(&mut report.vanished.iter().map(|e| e.baseline_count));
-        for entry in &report.vanished {
+        let shown = report.vanished.len().min(MAX_ROWS_PER_SECTION);
+        let width = count_width(&mut report.vanished[..shown].iter().map(|e| e.baseline_count));
+        for entry in &report.vanished[..shown] {
             out.push_str(&format!(
                 "  {:>w$}  {}{}{}          (baseline count)\n",
                 entry.baseline_count,
@@ -600,6 +636,9 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
                 reset,
                 w = width
             ));
+        }
+        if let Some(note) = truncation_note(shown, &report.vanished, |e| e.baseline_count) {
+            out.push_str(&format!("{}{}{}\n", gray, note, reset));
         }
     }
     out.push('\n');
@@ -617,7 +656,8 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
             plural(report.shifted.len()),
             reset
         ));
-        for entry in &report.shifted {
+        let shown = report.shifted.len().min(MAX_ROWS_PER_SECTION);
+        for entry in &report.shifted[..shown] {
             let delta_color = if entry.delta_pp >= 0.0 { red } else { green };
             out.push_str(&format!("  {}\n", entry.template));
             out.push_str(&format!(
@@ -630,6 +670,11 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
                 rate_multiple(entry),
                 reset,
             ));
+        }
+        // Shifts count events on both sides, so the note reports the target
+        // count, matching the direction NEW uses.
+        if let Some(note) = truncation_note(shown, &report.shifted, |e| e.target_count) {
+            out.push_str(&format!("{}{}{}\n", gray, note, reset));
         }
     }
 
