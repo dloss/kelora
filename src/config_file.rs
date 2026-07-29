@@ -1,6 +1,6 @@
 #![allow(dead_code)] // Config file helpers for future CLI edits are not exercised by current binary paths
 use anyhow::{anyhow, Context, Result};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -20,6 +20,206 @@ pub struct ConfigExpansionInfo {
     pub applied_defaults: Option<String>,
     /// Aliases that were expanded: (alias_name, final_expansion)
     pub expanded_aliases: Vec<(String, String)>,
+    /// Parts of `defaults` dropped because the command line named the same option
+    /// (e.g. `-f json` from the config when the user passed `-j`)
+    pub overridden_defaults: Vec<String>,
+}
+
+/// Option families where clap treats the members as mutually exclusive because
+/// one is a short alias for another: `-j` stands for `-f json`, `-J` for
+/// `-F json`. Documented precedence is CLI args > config, so naming any member
+/// of a family on the command line drops the whole family from the config
+/// `defaults` line. Without this, a committed `defaults = -f json` turns `-j`
+/// into a usage error about `--input-format` (a flag the user never typed), and
+/// turns `-f csv` into a `json,csv` cascade instead of plain csv.
+const DEFAULTS_OVERRIDE_FAMILIES: &[&[&str]] = &[
+    &["-f", "--input-format", "-j"],
+    &["-F", "--output-format", "-J"],
+];
+
+/// One flag occurrence: canonical name (`--long` or `-c`) plus its value, if any.
+#[derive(Debug)]
+struct FlagUse {
+    name: String,
+    value: Option<String>,
+}
+
+/// One argv item: the flags it names (empty for a positional) and the original
+/// tokens it spans, so untouched items can be passed through verbatim.
+#[derive(Debug)]
+struct ArgItem {
+    flags: Vec<FlagUse>,
+    tokens: Vec<String>,
+}
+
+/// Flags that consume the following argv token as their value, learned from the
+/// clap definition so the walker never mistakes a value for a flag
+/// (`-o out-f.json` names `-o` only). Options with `require_equals` are excluded:
+/// their value is always attached, never the next token.
+fn value_consuming_flags() -> &'static (HashSet<char>, HashSet<String>) {
+    use clap::CommandFactory;
+    use std::sync::OnceLock;
+
+    static FLAGS: OnceLock<(HashSet<char>, HashSet<String>)> = OnceLock::new();
+    FLAGS.get_or_init(|| {
+        let mut shorts = HashSet::new();
+        let mut longs = HashSet::new();
+        let mut command = crate::cli::Cli::command();
+        command.build();
+        for arg in command.get_arguments() {
+            if !arg.get_action().takes_values() || arg.is_require_equals_set() {
+                continue;
+            }
+            if let Some(short) = arg.get_short() {
+                shorts.insert(short);
+            }
+            if let Some(long) = arg.get_long() {
+                longs.insert(format!("--{}", long));
+            }
+        }
+        (shorts, longs)
+    })
+}
+
+/// Walk argv-style tokens into items, handling `--long`, `--long=value`, `-c`,
+/// `-cvalue`, short clusters (`-jb`) and the `--` positional escape. Values are
+/// never scanned for flags.
+fn walk_args(tokens: &[String]) -> Vec<ArgItem> {
+    let (value_shorts, value_longs) = value_consuming_flags();
+    let mut items = Vec::new();
+    let mut positional_only = false;
+    let mut i = 0;
+
+    while i < tokens.len() {
+        let token = &tokens[i];
+
+        if positional_only || token == "-" || !token.starts_with('-') {
+            items.push(ArgItem {
+                flags: Vec::new(),
+                tokens: vec![token.clone()],
+            });
+            i += 1;
+        } else if token == "--" {
+            positional_only = true;
+            items.push(ArgItem {
+                flags: Vec::new(),
+                tokens: vec![token.clone()],
+            });
+            i += 1;
+        } else if let Some(long) = token.strip_prefix("--") {
+            let (name, inline) = match long.split_once('=') {
+                Some((name, value)) => (format!("--{}", name), Some(value.to_string())),
+                None => (format!("--{}", long), None),
+            };
+            let mut span = vec![token.clone()];
+            let value = match inline {
+                Some(value) => Some(value),
+                None if value_longs.contains(&name) && i + 1 < tokens.len() => {
+                    span.push(tokens[i + 1].clone());
+                    Some(tokens[i + 1].clone())
+                }
+                None => None,
+            };
+            i += span.len();
+            items.push(ArgItem {
+                flags: vec![FlagUse { name, value }],
+                tokens: span,
+            });
+        } else {
+            let chars: Vec<char> = token[1..].chars().collect();
+            let mut flags = Vec::new();
+            let mut span = vec![token.clone()];
+
+            for (index, ch) in chars.iter().enumerate() {
+                // `-s=json`: everything from the '=' on is a value, not flags.
+                if *ch == '=' {
+                    break;
+                }
+                let name = format!("-{}", ch);
+                if value_shorts.contains(ch) {
+                    let attached: String = chars[index + 1..].iter().collect();
+                    let value = if !attached.is_empty() {
+                        Some(attached)
+                    } else if i + 1 < tokens.len() {
+                        span.push(tokens[i + 1].clone());
+                        Some(tokens[i + 1].clone())
+                    } else {
+                        None
+                    };
+                    flags.push(FlagUse { name, value });
+                    break;
+                }
+                flags.push(FlagUse { name, value: None });
+            }
+
+            i += span.len();
+            items.push(ArgItem {
+                flags,
+                tokens: span,
+            });
+        }
+    }
+
+    items
+}
+
+/// Drop config-supplied options whose family the command line also names, so the
+/// documented CLI > config precedence holds before clap sees the arguments.
+/// Returns the surviving default tokens and a display form of what was dropped.
+fn strip_overridden_defaults(
+    default_args: &[String],
+    cli_args: &[String],
+) -> (Vec<String>, Vec<String>) {
+    let named_on_cli: HashSet<&str> = walk_args(cli_args)
+        .iter()
+        .flat_map(|item| &item.flags)
+        .filter_map(|flag| {
+            DEFAULTS_OVERRIDE_FAMILIES
+                .iter()
+                .flat_map(|family| family.iter())
+                .find(|member| **member == flag.name)
+                .copied()
+        })
+        .collect();
+
+    if named_on_cli.is_empty() {
+        return (default_args.to_vec(), Vec::new());
+    }
+
+    let overridden: HashSet<&str> = DEFAULTS_OVERRIDE_FAMILIES
+        .iter()
+        .filter(|family| family.iter().any(|member| named_on_cli.contains(member)))
+        .flat_map(|family| family.iter().copied())
+        .collect();
+
+    let mut kept = Vec::new();
+    let mut dropped = Vec::new();
+
+    for item in walk_args(default_args) {
+        if !item
+            .flags
+            .iter()
+            .any(|f| overridden.contains(f.name.as_str()))
+        {
+            kept.extend(item.tokens);
+            continue;
+        }
+        // Mixed cluster (`-jb` with only `-j` dropped): re-emit the survivors
+        // one flag per token, which clap accepts identically.
+        for flag in item.flags {
+            let target = if overridden.contains(flag.name.as_str()) {
+                &mut dropped
+            } else {
+                &mut kept
+            };
+            target.push(flag.name);
+            if let Some(value) = flag.value {
+                target.push(value);
+            }
+        }
+    }
+
+    (kept, dropped)
 }
 
 impl ConfigFile {
@@ -350,7 +550,7 @@ impl ConfigFile {
     pub fn resolve_alias(
         &self,
         name: &str,
-        seen: &mut std::collections::HashSet<String>,
+        seen: &mut HashSet<String>,
         depth: usize,
     ) -> Result<Vec<String>> {
         const MAX_DEPTH: usize = 10;
@@ -404,52 +604,67 @@ impl ConfigFile {
     /// Returns the processed args and information about what was expanded
     pub fn process_args(&self, args: Vec<String>) -> Result<(Vec<String>, ConfigExpansionInfo)> {
         let mut info = ConfigExpansionInfo::default();
-
-        // First, apply defaults if they exist
         let mut result = Vec::new();
 
-        // Add defaults at the beginning, but preserve the program name
+        // Keep the program name in front of everything
+        let user_args = if args.is_empty() {
+            Vec::new()
+        } else {
+            result.push(args[0].clone());
+            args[1..].to_vec()
+        };
+
+        // Aliases are expanded before the precedence check below, so a `-j` that
+        // arrives via an alias overrides a config default just like a typed one.
+        // Defaults are expanded first to keep info.expanded_aliases in argv order.
         if let Some(defaults) = &self.defaults {
             info.applied_defaults = Some(defaults.clone());
 
-            if !args.is_empty() {
-                result.push(args[0].clone()); // Keep program name
-            }
-
-            // Parse defaults using shell_words and add them
             let default_args = shell_words::split(defaults)
                 .with_context(|| "Invalid defaults: failed to parse arguments".to_string())?;
-            result.extend(default_args);
+            let default_args = self.expand_aliases(&default_args, &mut info)?;
+            let user_args = self.expand_aliases(&user_args, &mut info)?;
 
-            // Add remaining user args (skip program name)
-            result.extend(args.into_iter().skip(1));
+            let (kept, overridden) = strip_overridden_defaults(&default_args, &user_args);
+            info.overridden_defaults = overridden;
+            result.extend(kept);
+            result.extend(user_args);
         } else {
-            result = args;
+            result.extend(self.expand_aliases(&user_args, &mut info)?);
         }
 
-        // Then expand aliases
-        let mut final_result = Vec::new();
+        Ok((result, info))
+    }
+
+    /// Replace every `-a NAME` / `--alias NAME` pair with its expansion,
+    /// recording each expansion for `-v` reporting
+    fn expand_aliases(
+        &self,
+        args: &[String],
+        info: &mut ConfigExpansionInfo,
+    ) -> Result<Vec<String>> {
+        let mut result = Vec::new();
         let mut i = 0;
 
-        while i < result.len() {
-            if (result[i] == "-a" || result[i] == "--alias") && i + 1 < result.len() {
-                let name = result[i + 1].clone();
-                let mut seen = std::collections::HashSet::new();
+        while i < args.len() {
+            if (args[i] == "-a" || args[i] == "--alias") && i + 1 < args.len() {
+                let name = args[i + 1].clone();
+                let mut seen = HashSet::new();
                 let resolved = self.resolve_alias(&name, &mut seen, 0)?;
 
                 // Track the expansion for display
                 let expansion = resolved.join(" ");
                 info.expanded_aliases.push((name, expansion));
 
-                final_result.extend(resolved);
+                result.extend(resolved);
                 i += 2;
             } else {
-                final_result.push(result[i].clone());
+                result.push(args[i].clone());
                 i += 1;
             }
         }
 
-        Ok((final_result, info))
+        Ok(result)
     }
 
     /// Resolve all `-a` and `--alias` flags in the given arguments, returning a flattened list
@@ -461,7 +676,7 @@ impl ConfigFile {
         while i < args.len() {
             if (args[i] == "-a" || args[i] == "--alias") && i + 1 < args.len() {
                 let name = &args[i + 1];
-                let mut seen = std::collections::HashSet::new();
+                let mut seen = HashSet::new();
                 let resolved = self.resolve_alias(name, &mut seen, 0)?;
                 result.extend(resolved);
                 i += 2;
@@ -735,7 +950,7 @@ mod tests {
             .aliases
             .insert("json-errors".to_string(), "-f json -a errors".to_string());
 
-        let mut seen = std::collections::HashSet::new();
+        let mut seen = HashSet::new();
         let resolved = config.resolve_alias("json-errors", &mut seen, 0).unwrap();
 
         assert_eq!(resolved, vec!["-f", "json", "-l", "error"]);
@@ -751,7 +966,7 @@ mod tests {
             .aliases
             .insert("alias2".to_string(), "-a alias1".to_string());
 
-        let mut seen = std::collections::HashSet::new();
+        let mut seen = HashSet::new();
         let result = config.resolve_alias("alias1", &mut seen, 0);
 
         assert!(result.is_err());
@@ -804,6 +1019,91 @@ mod tests {
             processed,
             vec!["kelora", "--stats", "--parallel", "-f", "json", "input.log"]
         );
+    }
+
+    #[test]
+    fn test_cli_short_alias_drops_conflicting_default() {
+        let config = ConfigFile {
+            defaults: Some("-f json --stats".to_string()),
+            ..ConfigFile::default()
+        };
+
+        let args = vec!["kelora".to_string(), "-j".to_string()];
+        let (processed, info) = config.process_args(args).unwrap();
+
+        assert_eq!(processed, vec!["kelora", "--stats", "-j"]);
+        assert_eq!(info.overridden_defaults, vec!["-f", "json"]);
+    }
+
+    #[test]
+    fn test_cli_format_replaces_default_format() {
+        let config = ConfigFile {
+            defaults: Some("-f json -F json".to_string()),
+            ..ConfigFile::default()
+        };
+
+        let args = vec![
+            "kelora".to_string(),
+            "-f".to_string(),
+            "csv".to_string(),
+            "in.log".to_string(),
+        ];
+        let (processed, _info) = config.process_args(args).unwrap();
+
+        // -f json is dropped, -F json (a different family) survives
+        assert_eq!(
+            processed,
+            vec!["kelora", "-F", "json", "-f", "csv", "in.log"]
+        );
+    }
+
+    #[test]
+    fn test_default_survives_lookalike_cli_value() {
+        let config = ConfigFile {
+            defaults: Some("-f json".to_string()),
+            ..ConfigFile::default()
+        };
+
+        // Values that happen to contain 'j'/'f' must not count as -j/-f
+        let args = vec![
+            "kelora".to_string(),
+            "--stats=json".to_string(),
+            "-o".to_string(),
+            "out-j.txt".to_string(),
+            "-ofix.txt".to_string(),
+        ];
+        let (processed, info) = config.process_args(args).unwrap();
+
+        assert_eq!(processed[1..3], ["-f".to_string(), "json".to_string()]);
+        assert!(info.overridden_defaults.is_empty());
+    }
+
+    #[test]
+    fn test_alias_expanded_short_alias_drops_conflicting_default() {
+        let mut config = ConfigFile {
+            defaults: Some("-f json".to_string()),
+            ..ConfigFile::default()
+        };
+        config.aliases.insert("j".to_string(), "-j".to_string());
+
+        let args = vec!["kelora".to_string(), "-a".to_string(), "j".to_string()];
+        let (processed, _info) = config.process_args(args).unwrap();
+
+        assert_eq!(processed, vec!["kelora", "-j"]);
+    }
+
+    #[test]
+    fn test_mixed_short_cluster_in_defaults_keeps_survivors() {
+        let config = ConfigFile {
+            defaults: Some("-jb".to_string()),
+            ..ConfigFile::default()
+        };
+
+        let args = vec!["kelora".to_string(), "-f".to_string(), "csv".to_string()];
+        let (processed, info) = config.process_args(args).unwrap();
+
+        assert_eq!(processed, vec!["kelora", "-b", "-f", "csv"]);
+        assert_eq!(info.overridden_defaults, vec!["-j"]);
     }
 
     #[test]

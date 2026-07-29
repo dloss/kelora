@@ -590,6 +590,143 @@ fn test_defaults_with_cli_override() {
 }
 
 #[test]
+fn test_short_alias_overrides_defaults_input_format() {
+    // `defaults = -f json` used to make `-j` (the documented shortcut for the
+    // same thing) a hard usage error about a flag the user never typed.
+    let temp_dir = TempDir::new().unwrap();
+    fs::write(temp_dir.path().join(".kelora.ini"), "defaults = -f json\n").unwrap();
+
+    let log_file = temp_dir.path().join("test.jsonl");
+    fs::write(&log_file, "{\"level\":\"INFO\",\"svc\":\"auth\"}\n").unwrap();
+
+    for args in [
+        vec!["-j", "-n", "1"],
+        // Bundled with another short flag, and via an alias-free long form
+        vec!["-jn", "1"],
+        vec!["--input-format", "json", "-n", "1"],
+    ] {
+        let mut full_args = vec![log_file.to_str().unwrap()];
+        full_args.extend(args.iter().copied());
+        let (stdout, stderr, exit_code) = run_kelora_in_dir(temp_dir.path(), &full_args, "");
+
+        assert_eq!(exit_code, 0, "args {:?} failed: {}", args, stderr);
+        assert!(stdout.contains("auth"), "args {:?}: {}", args, stdout);
+    }
+}
+
+#[test]
+fn test_short_alias_overrides_defaults_output_format() {
+    let temp_dir = TempDir::new().unwrap();
+    fs::write(temp_dir.path().join(".kelora.ini"), "defaults = -F json\n").unwrap();
+
+    let log_file = temp_dir.path().join("test.jsonl");
+    fs::write(&log_file, "{\"level\":\"INFO\",\"svc\":\"auth\"}\n").unwrap();
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_in_dir(temp_dir.path(), &[log_file.to_str().unwrap(), "-J"], "");
+
+    assert_eq!(
+        exit_code, 0,
+        "-J with `defaults = -F json` failed: {}",
+        stderr
+    );
+    assert!(stdout.contains("\"svc\":\"auth\""), "{}", stdout);
+}
+
+#[test]
+fn test_cli_input_format_replaces_defaults_instead_of_cascading() {
+    // A `-f` on the command line replaces the config's `-f`, rather than being
+    // appended to it as a cascade (CLI args > config).
+    let temp_dir = TempDir::new().unwrap();
+    fs::write(temp_dir.path().join(".kelora.ini"), "defaults = -f json\n").unwrap();
+
+    let log_file = temp_dir.path().join("test.csv");
+    fs::write(&log_file, "level,svc\nINFO,auth\n").unwrap();
+
+    let (stdout, stderr, exit_code) = run_kelora_in_dir(
+        temp_dir.path(),
+        &[log_file.to_str().unwrap(), "-f", "csv"],
+        "",
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "-f csv over `defaults = -f json` failed: {}",
+        stderr
+    );
+    assert!(stdout.contains("auth"), "{}", stdout);
+}
+
+#[test]
+fn test_overridden_default_is_reported_under_verbose() {
+    let temp_dir = TempDir::new().unwrap();
+    fs::write(temp_dir.path().join(".kelora.ini"), "defaults = -f json\n").unwrap();
+
+    let log_file = temp_dir.path().join("test.jsonl");
+    fs::write(&log_file, "{\"level\":\"INFO\"}\n").unwrap();
+
+    let (_stdout, stderr, exit_code) = run_kelora_in_dir(
+        temp_dir.path(),
+        &[log_file.to_str().unwrap(), "-j", "-v"],
+        "",
+    );
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("Defaults overridden on the command line: -f json"),
+        "{}",
+        stderr
+    );
+}
+
+#[test]
+fn test_conflicting_formats_on_cli_still_error() {
+    // The conflict check only exists for genuinely contradictory CLI args; it
+    // must survive the config-precedence fix.
+    let temp_dir = TempDir::new().unwrap();
+    let log_file = temp_dir.path().join("test.jsonl");
+    fs::write(&log_file, "{\"level\":\"INFO\"}\n").unwrap();
+
+    let (_stdout, stderr, exit_code) = run_kelora_in_dir(
+        temp_dir.path(),
+        &[log_file.to_str().unwrap(), "-j", "-f", "csv"],
+        "",
+    );
+
+    assert_eq!(exit_code, 2, "expected a usage error: {}", stderr);
+    assert!(stderr.contains("cannot be used with"), "{}", stderr);
+}
+
+#[test]
+fn test_defaults_survive_unrelated_cli_flags() {
+    // Only the option families the command line actually names get dropped.
+    let temp_dir = TempDir::new().unwrap();
+    fs::write(temp_dir.path().join(".kelora.ini"), "defaults = -f json\n").unwrap();
+
+    let log_file = temp_dir.path().join("test.log");
+    fs::write(&log_file, "not json at all\n").unwrap();
+
+    // `--stats=json` mentions "json" but names neither -f nor -j: the default
+    // json input format must still apply, so this line fails to parse.
+    let (stdout, stderr, exit_code) = run_kelora_in_dir(
+        temp_dir.path(),
+        &[log_file.to_str().unwrap(), "--stats=json"],
+        "",
+    );
+
+    assert_eq!(
+        exit_code, 1,
+        "expected the json default to still apply: {}",
+        stderr
+    );
+    assert!(
+        stdout.contains("\"detected\": \"json\""),
+        "input format should still come from the config: {}",
+        stdout
+    );
+}
+
+#[test]
 fn test_alias_with_quoted_args() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join(".kelora.ini");
