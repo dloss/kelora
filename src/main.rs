@@ -1341,7 +1341,7 @@ fn drain_diff_one_sided_message(
             let flag = placement.flag();
             match empty {
                 crate::drain_diff::DiffSide::Target if !report.cut_predicate_matched => format!(
-                    "--drain-diff: {} '{}' never matched any of the {} compared event(s), so the target side is empty and the report would show every template as VANISHED rather than compare anything. Check the expression against the log first, e.g. with --filter '{}'.",
+                    "--drain-diff: {} '{}' never matched any of the {} compared event(s), so the target side is empty and the report would show every template as VANISHED rather than compare anything. Check the expression against the log with --filter '{}' — and note that any --filter / --levels / --since runs before the split, so a marker event can be removed before the predicate ever sees it.",
                     flag, expr, compared, expr
                 ),
                 // Reachable only under --cut-after: the match is kept on the

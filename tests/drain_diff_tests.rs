@@ -501,6 +501,62 @@ fn test_cut_diagnostics_name_cut_and_not_since() {
     }
 }
 
+/// The predicate runs where the pipeline leaves the event, so a field invented by
+/// --exec is usable as the marker. Pins the documented idiom.
+#[test]
+fn test_cut_predicate_sees_exec_created_fields() {
+    let marker = "{\"ts\": \"2026-07-24T14:30:00Z\", \"msg\": \"deploy started: v1.4.2\"}\n";
+    let file = temp_log(&format!(
+        "{}{}{}",
+        baseline_content(),
+        marker,
+        target_content()
+    ));
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=json",
+        "--exec",
+        "e.marker = e.msg.normalized()",
+        "--cut-before",
+        "e.marker == \"deploy started: <version>\"",
+        file.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("valid json");
+    assert_eq!(json["baseline_events"], 80);
+    // The marker plus the whole target corpus.
+    assert_eq!(json["target_events"], 74);
+}
+
+/// Narrowing runs before the split, so a --filter that removes the marker can
+/// starve the target. That must be refused, and the message must name the cause
+/// the user is least likely to suspect — their own filter.
+#[test]
+fn test_cut_predicate_blames_narrowing_when_the_marker_is_filtered_out() {
+    let marker =
+        "{\"ts\": \"2026-07-24T14:30:00Z\", \"level\": \"INFO\", \"msg\": \"deploy started\"}\n";
+    let file = temp_log(&format!("{}{}", marker, baseline_content()));
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut-before",
+        "e.msg.contains(\"deploy started\")",
+        // Drops the marker but keeps everything else.
+        "--filter",
+        "!e.msg.contains(\"deploy\")",
+        file.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(stderr.contains("never matched"), "stderr: {}", stderr);
+    assert!(
+        stderr.contains("runs before the split"),
+        "the message must point at narrowing as a cause: {}",
+        stderr
+    );
+}
+
 /// The whole point of the pair, and the only thing that separates them: which
 /// side the matching event lands on. Same predicate, same log, one event moves.
 /// Mirrors the --section-from / --section-after distinction.
