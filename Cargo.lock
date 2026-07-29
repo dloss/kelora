@@ -526,14 +526,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "drain-rs"
-version = "0.3.0"
-dependencies = [
- "grok",
- "serde",
-]
-
-[[package]]
 name = "either"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1009,7 +1001,6 @@ dependencies = [
  "crossbeam-channel",
  "csv",
  "dirs",
- "drain-rs",
  "fastrand",
  "flate2",
  "glob",

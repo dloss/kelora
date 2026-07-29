@@ -94,7 +94,6 @@ hyperloglog = { version = "1.0", features = ["with_serde"] }  # HyperLogLog algo
 # Rhai built-in functions - networking
 url = "2.5"  # URL parsing and manipulation exposed to Rhai scripts
 ipnet = "2.9"  # IP address and network parsing/matching exposed to Rhai scripts
-drain-rs = "0.3.0"
 grok = "1.2"
 
 [features]
@@ -119,7 +118,6 @@ panic = "abort"  # ~7-8% faster + 12% smaller: removes unwind landing pads from 
 
 [patch.crates-io]
 grok = { path = "vendor/grok" }
-drain-rs = { path = "vendor/drain-rs" }
 
 [[bench]]
 name = "micro_search"
