@@ -9624,8 +9624,12 @@ mirroring <code>map.get(key, default)</code>.</p>
 </ul>
 </div>
 <div class="admonition note">
+<p class="admonition-title">Estimates, not exact percentiles</p>
+<p>The t-digest is a sketch: it keeps at most a few hundred centroids per metric, so cost and memory stay flat no matter how many events you feed it, and the reported percentiles are estimates — typically within 0.5% of the exact value, and most accurate in the tails you usually care about (p95, p99). For an exact percentile on a dataset small enough to hold, collect the values in a script and sort them.</p>
+</div>
+<div class="admonition note">
 <p class="admonition-title">Parallel Mode Behavior</p>
-<p>In parallel mode, each worker maintains its own t-digest. During merge, digests are combined using the t-digest merge algorithm, preserving accuracy. Final percentile values are deterministic.</p>
+<p>In parallel mode, each worker maintains its own t-digest and the digests are combined with the t-digest merge algorithm at the end. Because the sketch is compressed as it grows, which values land in which worker affects the estimate slightly: parallel runs can differ from each other and from a sequential run within the error bar above. Sequential runs are reproducible — the same input always gives the same numbers.</p>
 </div>
 <hr />
 <h4 id="track_statskey-value-percentiles"><code>track_stats(key, value [, [percentiles]])</code><a class="headerlink" href="#track_statskey-value-percentiles" title="Permanent link">&para;</a></h4>
@@ -9674,7 +9678,7 @@ mirroring <code>map.get(key, default)</code>.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Performance Considerations</p>
-<p><code>track_stats()</code> internally calls the same logic as individual tracking functions, so it has the same performance characteristics. The main overhead is from percentile tracking (~4KB memory per metric). If you don't need percentiles, use <code>track_min()</code>, <code>track_max()</code>, and <code>track_avg()</code> instead.</p>
+<p><code>track_stats()</code> internally calls the same logic as individual tracking functions, so it has the same performance characteristics. The main overhead is from percentile tracking (~4KB memory per metric, and the <code>_pNN</code> values are estimates — see <code>track_percentiles()</code> above). If you don't need percentiles, use <code>track_min()</code>, <code>track_max()</code>, and <code>track_avg()</code> instead.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Parallel Mode Behavior</p>
