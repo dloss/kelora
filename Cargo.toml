@@ -119,6 +119,7 @@ panic = "abort"  # ~7-8% faster + 12% smaller: removes unwind landing pads from 
 
 [patch.crates-io]
 grok = { path = "vendor/grok" }
+drain-rs = { path = "vendor/drain-rs" }
 
 [[bench]]
 name = "micro_search"

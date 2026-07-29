@@ -62,7 +62,7 @@ pub struct DrainResult {
     pub last_line: Option<usize>,
 }
 
-/// Metadata tracked per template (sample, first/last line numbers)
+/// Metadata tracked per cluster (sample, first/last line numbers)
 #[derive(Debug, Clone)]
 struct TemplateMetadata {
     sample: String,
@@ -76,9 +76,15 @@ struct DrainState {
     tree: DrainTree,
     /// Masks every line before the tree sees it (see [`Masker`]).
     masker: Masker,
-    /// Metadata tracked per normalized template string (see `normalize_template`
-    /// — the key is behaviorally identical to the template id, minus the hash).
-    metadata: HashMap<String, TemplateMetadata>,
+    /// Metadata tracked per cluster, keyed by the cluster's stable id.
+    ///
+    /// Not by its template: a cluster's template is rewritten as the cluster
+    /// generalizes (a position its members disagree on becomes `<*>`), so a
+    /// template-keyed entry would be orphaned on the first rewrite — the sample
+    /// and `first_line` would jump to whichever line triggered it, and the dead
+    /// entry would leak. The id is also cheaper: no per-line normalization or
+    /// owned key `String`.
+    metadata: HashMap<u64, TemplateMetadata>,
 }
 
 impl DrainState {
@@ -105,19 +111,17 @@ impl DrainState {
         }
     }
 
-    /// Per-line hot path: add `text` to the tree and update per-template
-    /// metadata, returning the raw template string, its match count, and whether
-    /// this was the template's first sighting.
+    /// Per-line hot path: add `text` to the tree and update the cluster's
+    /// metadata, returning the raw template string, its match count, whether
+    /// this was the cluster's first sighting, and the cluster's id.
     ///
     /// The template id (a SHA256 hash) is deliberately *not* computed here — it
-    /// is display-only and derived once per template in [`templates`]. The
-    /// metadata key is looked up borrowed, so an owned key `String` is allocated
-    /// only the first time a template is seen, not on every line.
+    /// is display-only and derived once per template in [`templates`].
     fn record(
         &mut self,
         text: &str,
         line_num: Option<usize>,
-    ) -> Result<(String, usize, bool), String> {
+    ) -> Result<(String, usize, bool, u64), String> {
         // The tree sees the masked line; `text` stays the stored sample.
         let masked = self.masker.mask_line(text);
         let cluster = self
@@ -126,38 +130,40 @@ impl DrainState {
             .ok_or_else(|| "Drain failed to match or create a cluster".to_string())?;
         let count = usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX);
         let template = cluster.as_string();
+        let cluster_id = cluster.id();
         let is_new = count == 1;
 
-        let key = normalize_template(&template);
-        if let Some(meta) = self.metadata.get_mut(&key) {
+        match self.metadata.get_mut(&cluster_id) {
             // Hit path (the common case): no allocation, just refresh last_line.
-            if let Some(ln) = line_num {
-                meta.last_line = Some(ln);
+            Some(meta) => {
+                if let Some(ln) = line_num {
+                    meta.last_line = Some(ln);
+                }
             }
-        } else {
-            self.metadata.insert(
-                key,
-                TemplateMetadata {
-                    sample: text.to_string(),
-                    first_line: line_num,
-                    last_line: line_num,
-                },
-            );
+            None => {
+                self.metadata.insert(
+                    cluster_id,
+                    TemplateMetadata {
+                        sample: text.to_string(),
+                        first_line: line_num,
+                        last_line: line_num,
+                    },
+                );
+            }
         }
 
-        Ok((template, count, is_new))
+        Ok((template, count, is_new, cluster_id))
     }
 
     fn ingest(&mut self, text: &str, line_num: Option<usize>) -> Result<DrainResult, String> {
-        let (template, count, is_new) = self.record(text, line_num)?;
+        let (template, count, is_new, cluster_id) = self.record(text, line_num)?;
         let template_id = generate_template_id(&template);
 
         // `record` guarantees the entry exists; the fallback keeps this total.
-        let (sample, first_line, last_line) =
-            match self.metadata.get(&normalize_template(&template)) {
-                Some(meta) => (meta.sample.clone(), meta.first_line, meta.last_line),
-                None => (text.to_string(), line_num, line_num),
-            };
+        let (sample, first_line, last_line) = match self.metadata.get(&cluster_id) {
+            Some(meta) => (meta.sample.clone(), meta.first_line, meta.last_line),
+            None => (text.to_string(), line_num, line_num),
+        };
 
         Ok(DrainResult {
             template,
@@ -178,7 +184,7 @@ impl DrainState {
             .map(|cluster| {
                 let template = cluster.as_string();
                 let template_id = generate_template_id(&template);
-                let meta = self.metadata.get(&normalize_template(&template));
+                let meta = self.metadata.get(&cluster.id());
                 DrainTemplate {
                     template,
                     template_id,
@@ -311,7 +317,9 @@ fn default_filter_patterns() -> Vec<&'static str> {
         "%{KELORA_VERSION:version}",
         "%{KELORA_HEXNUM:hexnum}",
         "%{KELORA_DURATION:duration}",
-        // Timestamps before NUM so they're matched as a unit
+        // Specific before generic. Since a tie at the same position goes to the
+        // longer match (see `Masker::next_match`), this order only decides
+        // between patterns that cover exactly the same span.
         "%{KELORA_ISO8601:timestamp}",
         "%{KELORA_DATE:date}",
         "%{KELORA_TIME:time}",
@@ -344,6 +352,9 @@ static CALENDAR_TS_RE: LazyLock<Regex> = LazyLock::new(|| {
     .expect("failed to compile calendar timestamp regex")
 });
 
+/// How drain spells a generalized token, in a tree and in a stored template.
+const WILDCARD: &str = "<*>";
+
 /// One token after masking: either a placeholder/literal, or drain's wildcard
 /// (`<*>`, which a stored template also spells that way).
 #[derive(Debug, Clone, PartialEq)]
@@ -355,7 +366,7 @@ enum MaskedToken {
 impl MaskedToken {
     fn as_str(&self) -> &str {
         match self {
-            MaskedToken::WildCard => "<*>",
+            MaskedToken::WildCard => WILDCARD,
             MaskedToken::Val(v) => v.as_str(),
         }
     }
@@ -367,33 +378,37 @@ impl MaskedToken {
 /// (see [`DrainState::new`]), so drain tokenizes what comes out of here
 /// verbatim. That is deliberate — `drain_rs::DrainTree::process` masks one
 /// space-separated token at a time and replaces the *whole* token as soon as a
-/// pattern matches anywhere inside it, which loses information this pass keeps:
+/// pattern matches anywhere inside it, which throws away exactly the literal
+/// text that names a message. This pass differs in three ways:
 ///
 /// 1. A pattern cannot span a space, so multi-token calendar timestamps never
 ///    mask (see [`CALENDAR_TS_RE`]).
-/// 2. Because a match consumes the whole token, `uid=0` masks to `<num>` — key
-///    and all — so a template no longer records which number was which, while
-///    `tty=ssh` keeps its key simply because nothing matched. Here the value is
-///    masked on its own (`uid=<num>`), which keeps the discriminating part and
-///    makes the two cases consistent.
+/// 2. A match replaces only the span it covers, not the whole token, so the
+///    literal part survives: `worker-3` masks to `worker-<num>` rather than
+///    `<num>`, `HTTP/1.1` to `HTTP/<version>`, `uid=0` to `uid=<num>` (which
+///    also makes it consistent with `tty=ssh`, whose key survived only because
+///    nothing matched it), and `took=1.5s,retries=3` to
+///    `took=<duration>,retries=<num>` — whole-token masking rendered that last
+///    one as `took=<version>`, silently deleting `,retries=3`.
+/// 3. A span only masks when a word doesn't run into it (see
+///    [`is_word_delimited`]), so a digit that belongs to a word stays put:
+///    `ssh2`, `utf8`, `sha256`, `eth0` and `log4j` are words, not numbers, and
+///    whole-token masking turned every one of them into `<num>`.
 ///
 /// Leaving drain a second pass would also undo the result: placeholder names
 /// containing a digit re-match the num pattern, so `rhost=<ipv4>` would collapse
 /// to `<num>` on the "4".
-///
-/// Per-token masking otherwise mirrors `DrainTree::process` exactly — same
-/// patterns in the same order, first match wins, token trimmed — so templates
-/// are unchanged apart from the two cases above.
 #[derive(Debug)]
 struct Masker {
     /// Compiled filter patterns, in the same order and built the same way as
     /// `DrainTree::build_patterns` (named captures only, uncompilable patterns
     /// skipped).
     patterns: Vec<grok::Pattern>,
-    /// Only the default filter set implies the calendar-timestamp collapse.
-    /// An explicit `filters:` list means "mask exactly these", so a caller who
-    /// overrides it gets their patterns and nothing else.
-    collapse_calendar_ts: bool,
+    /// Set when the default filter set is in force. An explicit `filters:` list
+    /// means "mask exactly these", so a caller who overrides it gets their
+    /// patterns and nothing else — no calendar-timestamp collapse, and no
+    /// [`cannot_match_defaults`] shortcut (which knows what the defaults need).
+    defaults: bool,
 }
 
 impl Masker {
@@ -410,20 +425,24 @@ impl Masker {
             .collect();
         Self {
             patterns,
-            collapse_calendar_ts: filters.is_empty(),
+            defaults: filters.is_empty(),
         }
     }
 
     /// Mask `line` into the tokens drain should cluster on.
     fn mask_tokens(&self, line: &str) -> Vec<MaskedToken> {
-        let line = if self.collapse_calendar_ts {
+        let line = if self.defaults {
             CALENDAR_TS_RE.replace_all(line, "<timestamp>")
         } else {
             Cow::Borrowed(line)
         };
+        // One scratch buffer per line, reused by every token (see `mask_token`).
+        let mut spans = Vec::with_capacity(self.patterns.len());
         // split(' ') (not split_whitespace) keeps drain's token count, including
         // the empty tokens a run of spaces produces.
-        line.split(' ').map(|t| self.mask_token(t.trim())).collect()
+        line.split(' ')
+            .map(|t| self.mask_token(t.trim(), &mut spans))
+            .collect()
     }
 
     /// The masked line drain ingests: [`Self::mask_tokens`] joined back with
@@ -440,50 +459,154 @@ impl Masker {
         out
     }
 
-    fn mask_token(&self, token: &str) -> MaskedToken {
-        if let Some(masked) = self.mask_kv_token(token) {
-            return MaskedToken::Val(masked);
+    /// Replace every filter match inside `token` with its placeholder, keeping
+    /// the text around them (see this type's docs for why that matters).
+    ///
+    /// `spans` is caller-owned scratch space holding one candidate span per
+    /// filter pattern; its contents are meaningless between calls.
+    fn mask_token(&self, token: &str, spans: &mut Vec<Option<Span>>) -> MaskedToken {
+        if self.defaults && cannot_match_defaults(token) {
+            return MaskedToken::Val(token.to_string());
         }
-        match self.first_match(token) {
-            Some(Some(name)) => MaskedToken::Val(format!("<{}>", name)),
-            Some(None) => MaskedToken::WildCard,
+        spans.clear();
+        spans.extend(self.patterns.iter().map(|p| next_span(p, token, 0)));
+
+        // Left untouched, the token is returned as-is: no allocation for the
+        // plain words that make up most of a line.
+        let mut out: Option<String> = None;
+        let mut pos = 0;
+        while let Some((start, end, name)) = self.next_match(token, pos, spans) {
+            let out = out.get_or_insert_with(|| String::with_capacity(token.len()));
+            out.push_str(&token[pos..start]);
+            match name {
+                Some(name) => {
+                    out.push('<');
+                    out.push_str(name);
+                    out.push('>');
+                }
+                None => out.push_str(WILDCARD),
+            }
+            pos = end;
+        }
+        match out {
             None => MaskedToken::Val(token.to_string()),
+            Some(mut out) => {
+                out.push_str(&token[pos..]);
+                if out == WILDCARD {
+                    MaskedToken::WildCard
+                } else {
+                    MaskedToken::Val(out)
+                }
+            }
         }
     }
 
-    /// `uid=0` -> `uid=<num>`: the same first-match-wins rule, applied to the
-    /// value alone so the key survives. `None` falls back to whole-token masking
-    /// — the token isn't a `key=value` pair, or its value matched nothing.
-    fn mask_kv_token(&self, token: &str) -> Option<String> {
-        let (key, value) = token.split_once('=')?;
-        if value.is_empty() || !is_bare_key(key) {
-            return None;
+    /// The span to mask next, at or after `from`: leftmost wins, longest breaks
+    /// a tie, filter order breaks what's left. The name is the pattern's alias,
+    /// or `None` for an alias-free pattern (drain's wildcard).
+    ///
+    /// Leftmost-longest rather than drain's plain filter order because a span is
+    /// now only as wide as its match: `1.5s` under filter order matches
+    /// `version` (`1.5`) before `duration`, and where whole-token masking hid
+    /// that as `<version>`, substituting in place would leave `<version>s`.
+    /// Preferring the longer match at the same position picks `<duration>`, and
+    /// makes the specific-before-generic ordering of the filter list a
+    /// tie-breaker instead of a load-bearing detail.
+    fn next_match(
+        &self,
+        token: &str,
+        from: usize,
+        spans: &mut [Option<Span>],
+    ) -> Option<(usize, usize, Option<&str>)> {
+        let mut best: Option<(usize, usize, Option<&str>)> = None;
+        for (pattern, span) in self.patterns.iter().zip(spans.iter_mut()) {
+            // Only a span the scan has already run past needs re-searching.
+            // `None` never goes stale: `next_span` searches forward, so a
+            // pattern with no match from here has none from later either.
+            if span.is_some_and(|(start, _)| start < from) {
+                *span = next_span(pattern, token, from);
+            }
+            let Some((start, end)) = *span else {
+                continue;
+            };
+            let better = match best {
+                None => true,
+                Some((best_start, best_end, _)) => {
+                    start < best_start || (start == best_start && end > best_end)
+                }
+            };
+            if better {
+                best = Some((start, end, pattern.alias()));
+            }
         }
-        let name = self.first_match(value)??;
-        Some(format!("{}=<{}>", key, name))
-    }
-
-    /// Resolve `text` the way `DrainTree::process` does: the first filter
-    /// pattern that matches anywhere in it wins. `None` means no pattern
-    /// matched; `Some(None)` means one did but exposed no named capture (drain's
-    /// wildcard).
-    fn first_match(&self, text: &str) -> Option<Option<String>> {
-        self.patterns.iter().find_map(|p| {
-            let matches = p.match_against(text)?;
-            Some(matches.iter().next().map(|(name, _)| name.to_string()))
-        })
+        best
     }
 }
 
-/// A `key` in `key=value` worth keeping in a template: a plain identifier, so
-/// `a=b=c` fragments, prose (`x -= 1`), or an already-masked token
-/// (`<num>=...`) fall back to whole-token masking.
-fn is_bare_key(key: &str) -> bool {
-    !key.is_empty()
-        && key.starts_with(|c: char| c.is_ascii_alphabetic() || c == '_')
-        && key
+/// Byte offsets `(start, end)` of a match inside one token.
+type Span = (usize, usize);
+
+/// Whether `token` provably matches none of the default filter patterns, so the
+/// whole pattern loop can be skipped — which is most words in a log line.
+///
+/// Every default pattern needs an ASCII digit (`num`, `version`, the timestamps,
+/// …), a non-alphanumeric character (`path` a `/`, `email` an `@`, `ipv6` a `:`,
+/// `fqdn` a `.`, …), or 32+ characters (`md5`, `sha1`, `sha256`, whose hex runs
+/// can be all letters). A short run of plain ASCII letters has none of the
+/// three. Only sound for the default set, hence [`Masker::defaults`].
+fn cannot_match_defaults(token: &str) -> bool {
+    token.len() < 32 && token.bytes().all(|b| b.is_ascii_alphabetic())
+}
+
+/// The leftmost match of `pattern` at or after `from` that is safe to mask,
+/// skipping the ones a word runs into (see [`is_word_delimited`]).
+fn next_span(pattern: &grok::Pattern, token: &str, from: usize) -> Option<Span> {
+    let mut at = from;
+    while at <= token.len() {
+        let (start, end) = pattern.find_at(token, at)?;
+        // An empty match would never advance `pos` in mask_token; skip it.
+        if end > start && is_word_delimited(token, start, end) {
+            return Some((start, end));
+        }
+        at = resume_after(token, start);
+    }
+    None
+}
+
+/// Where to resume a pattern's search after one of its matches was rejected:
+/// past the whole alphanumeric run the match started inside, so a long
+/// alphanumeric blob costs one search rather than one per character. Always
+/// past `start`, so the search terminates.
+fn resume_after(token: &str, start: usize) -> usize {
+    let rest = &token[start..];
+    let run = rest
+        .char_indices()
+        .find(|(_, c)| !c.is_alphanumeric())
+        .map_or(rest.len(), |(i, _)| i);
+    start + run.max(rest.chars().next().map_or(1, char::len_utf8))
+}
+
+/// Whether `text[start..end]` can be masked without cutting a word in half:
+/// neither neighbouring character is alphanumeric.
+///
+/// This is what keeps `ssh2`, `utf8`, `sha256`, `eth0` and `log4j` intact —
+/// their digits are part of the word, and whole-token masking turned all five
+/// into `<num>` — while `worker-3`, `uid=0` and `session_12345` still mask,
+/// because there a delimiter separates the word from the number.
+///
+/// `_` counts as a delimiter, matching Drain3's default masking, so `x86_64`
+/// does become `x86_<num>`. That is the right way round: a constant token masks
+/// harmlessly (it is constant either way), whereas a varying one is far better
+/// off as `session_<num>` than as the bare `<*>` drain would generalize it to.
+fn is_word_delimited(text: &str, start: usize, end: usize) -> bool {
+    !text[..start]
+        .chars()
+        .next_back()
+        .is_some_and(char::is_alphanumeric)
+        && !text[end..]
             .chars()
-            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'))
+            .next()
+            .is_some_and(char::is_alphanumeric)
 }
 
 thread_local! {
@@ -868,10 +991,17 @@ mod tests {
         // pass would collapse `rhost=<ipv4>` to `<num>` on the "4".
         assert_eq!(masker.mask_line("rhost=10.0.0.1"), "rhost=<ipv4>");
         assert_eq!(masker.mask_line("dir=/var/log/messages"), "dir=<path>");
-        // Nothing that looks like a key: whole-token masking, exactly as before.
+        // A token that is nothing but the value masks to the placeholder alone.
         assert_eq!(masker.mask_line("connect 10.0.0.1"), "connect <ipv4>");
         assert_eq!(masker.mask_line("count -= 1"), "count -= <num>");
-        assert_eq!(masker.mask_line("=42"), "<num>");
+        // Substituting in place keeps the delimiter, whatever it is.
+        assert_eq!(masker.mask_line("=42"), "=<num>");
+        // Several values in one token: each masks on its own. Whole-token
+        // masking rendered this as `took=<version>`, deleting `,retries=3`.
+        assert_eq!(
+            masker.mask_line("took=1.5s,retries=3"),
+            "took=<duration>,retries=<num>"
+        );
     }
 
     #[test]
@@ -881,6 +1011,62 @@ mod tests {
         let masker = Masker::new(&[]);
         assert_eq!(masker.mask_line("tty=ssh"), "tty=ssh");
         assert_eq!(masker.mask_line("ruser="), "ruser=");
+    }
+
+    #[test]
+    fn keeps_digits_that_belong_to_a_word() {
+        // Every one of these masked to a bare `<num>` when a match anywhere in a
+        // token replaced the whole token: the word naming the message was lost.
+        let masker = Masker::new(&[]);
+        assert_eq!(
+            masker.mask_line("Accepted publickey for root port 22 ssh2"),
+            "Accepted publickey for root port <num> ssh2"
+        );
+        assert_eq!(
+            masker.mask_line("decoded utf8 via base64 using sha256 and log4j on eth0"),
+            "decoded utf8 via base64 using sha256 and log4j on eth0"
+        );
+        // A delimiter between word and number still masks — that number varies.
+        assert_eq!(masker.mask_line("worker-3"), "worker-<num>");
+        assert_eq!(masker.mask_line("session_12345"), "session_<num>");
+        // `_` is a delimiter (as in Drain3), so a constant like this masks too.
+        // Harmless: constant either way, and it keeps `session_<num>` working.
+        assert_eq!(masker.mask_line("host x86_64"), "host x86_<num>");
+    }
+
+    #[test]
+    fn keeps_the_literal_part_of_a_partially_matched_token() {
+        let masker = Masker::new(&[]);
+        // The literal prefix/suffix is what names the message; whole-token
+        // masking dropped it (`<version>`, `<path>`, `<timestamp>`).
+        assert_eq!(
+            masker.mask_line("GET /api/v1/users?id=5 HTTP/1.1 200"),
+            "GET <path>?id=<num> HTTP/<version> <num>"
+        );
+        assert_eq!(
+            masker.mask_line("[2026-07-29T10:00:00Z] done"),
+            "[<timestamp>] done"
+        );
+        // Repeats of one pattern in a token all mask, not just the first.
+        assert_eq!(
+            masker.mask_line("10.0.0.1:53->10.0.0.2:80"),
+            "<ipv4_port>-><ipv4_port>"
+        );
+    }
+
+    #[test]
+    fn prefers_the_longest_placeholder_at_a_position() {
+        // `version` precedes `duration` in the filter list and matches `1.5` of
+        // `1.5s`. Whole-token masking hid that behind `<version>`; masking in
+        // place would expose it as `<version>s` if the longer match didn't win.
+        let masker = Masker::new(&[]);
+        assert_eq!(masker.mask_line("in 1.5s"), "in <duration>");
+        // Same rule, one place further down: date-only vs. the full ISO stamp.
+        assert_eq!(
+            masker.mask_line("at 2026-07-29T10:00:00Z"),
+            "at <timestamp>"
+        );
+        assert_eq!(masker.mask_line("on 2026-07-29"), "on <date>");
     }
 
     #[test]
@@ -895,6 +1081,45 @@ mod tests {
         );
         // Value-only masking is structural, so it applies to custom filters too.
         assert_eq!(masker.mask_line("rhost=10.0.0.1"), "rhost=<ipv4>");
+    }
+
+    #[test]
+    fn generalizes_a_position_the_cluster_members_disagree_on() {
+        // Drain's defining step: where a cluster's members disagree, the
+        // template says `<*>`. `drain_rs::LogCluster::add_log` never ran it — it
+        // compared each incoming token against itself instead of against the
+        // stored one — so a template stayed whatever its first line produced
+        // while counting lines that said something else. On the loghub
+        // `Linux_2k.log` sample that made one template read "session closed for
+        // user cyrus" over 123 events, 80 of which named news, test or root.
+        // Pinned here because kelora's suite is what exercises the patched copy
+        // in `vendor/drain-rs`.
+        let mut drain = DrainState::new(DrainConfig::default());
+        for user in ["cyrus", "news", "test"] {
+            drain
+                .record(
+                    &format!(
+                        "combo sshd(pam_unix)[19937]: session closed for user {}",
+                        user
+                    ),
+                    None,
+                )
+                .expect("record");
+        }
+
+        let templates = drain.templates();
+        assert_eq!(templates.len(), 1, "got {:?}", templates);
+        assert_eq!(
+            templates[0].template,
+            "combo <function>[<num>]: session closed for user <*>"
+        );
+        assert_eq!(templates[0].count, 3);
+        // The stored sample still shows a real line, so the concrete value is
+        // one `--drain=full` away.
+        assert_eq!(
+            templates[0].sample,
+            "combo sshd(pam_unix)[19937]: session closed for user cyrus"
+        );
     }
 
     #[test]
@@ -943,11 +1168,11 @@ mod tests {
     }
 
     #[test]
-    fn whitespace_variant_templates_share_metadata() {
+    fn whitespace_variant_templates_keep_their_own_metadata() {
         // Two messages whose Drain templates differ only by internal whitespace
-        // hash to the same template_id, so they share one metadata entry. Keying
-        // metadata on the normalized template (instead of the id) must preserve
-        // this collision behavior: first-seen sample and first_line win.
+        // are separate clusters (the token counts differ) that hash to the same
+        // template_id. Metadata is per cluster, so each reports its own sample
+        // and line — the id collision is confined to the displayed id.
         let mut drain = DrainState::new(DrainConfig::default());
         let a = drain.ingest("alpha  bravo", Some(1)).expect("first ingest");
         let b = drain.ingest("alpha bravo", Some(2)).expect("second ingest");
@@ -956,9 +1181,10 @@ mod tests {
             a.template_id, b.template_id,
             "ids collide via normalization"
         );
-        // Shared entry: the second sighting reports the first's sample/first_line.
-        assert_eq!(b.sample, "alpha  bravo");
-        assert_eq!(b.first_line, Some(1));
+        assert_eq!(a.sample, "alpha  bravo");
+        assert_eq!(a.first_line, Some(1));
+        assert_eq!(b.sample, "alpha bravo");
+        assert_eq!(b.first_line, Some(2));
         assert_eq!(b.last_line, Some(2));
     }
 

@@ -528,8 +528,6 @@ dependencies = [
 [[package]]
 name = "drain-rs"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ef5e9048b7d0bf0c07c4bed8bafd71715eb7f8e102c3e096889e1daac35b3a1"
 dependencies = [
  "grok",
  "serde",
