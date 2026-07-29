@@ -3,7 +3,7 @@ use grok::Grok;
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::LazyLock;
@@ -609,14 +609,56 @@ fn is_word_delimited(text: &str, start: usize, end: usize) -> bool {
             .is_some_and(char::is_alphanumeric)
 }
 
+/// What the `--drain` stage did with the field named by `-k`.
+///
+/// Kept outside [`DrainState`] on purpose: the case worth reporting is a field
+/// that was never present on any event, and in that case nothing was ever mined,
+/// so no `DrainState` exists to hold the count.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct MinedFieldStats {
+    /// Events whose mined field carried text and reached the tree.
+    pub mined: u64,
+    /// Events skipped because the field was absent, or present but empty.
+    pub excluded_no_field: u64,
+}
+
 thread_local! {
     static DRAIN_STATE: RefCell<Option<DrainState>> = const { RefCell::new(None) };
+    static MINED_FIELD_STATS: Cell<MinedFieldStats> = const {
+        Cell::new(MinedFieldStats {
+            mined: 0,
+            excluded_no_field: 0,
+        })
+    };
 }
 
 pub fn reset() {
     DRAIN_STATE.with(|state| {
         *state.borrow_mut() = None;
     });
+    MINED_FIELD_STATS.with(|stats| stats.set(MinedFieldStats::default()));
+}
+
+/// Count an event whose mined field carried text. See [`MinedFieldStats`].
+pub fn record_mined() {
+    MINED_FIELD_STATS.with(|stats| {
+        let mut current = stats.get();
+        current.mined += 1;
+        stats.set(current);
+    });
+}
+
+/// Count an event skipped for carrying no value in the mined field.
+pub fn record_excluded_no_field() {
+    MINED_FIELD_STATS.with(|stats| {
+        let mut current = stats.get();
+        current.excluded_no_field += 1;
+        stats.set(current);
+    });
+}
+
+pub fn mined_field_stats() -> MinedFieldStats {
+    MINED_FIELD_STATS.with(|stats| stats.get())
 }
 
 /// Lazily initialize the thread-local drain state, validating that a

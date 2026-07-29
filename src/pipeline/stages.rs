@@ -1210,21 +1210,30 @@ impl ScriptStage for DrainStage {
     }
 
     fn apply(&mut self, event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
-        if let Some(value) = event.fields.get(&self.field_name) {
-            let text = if value.is_string() {
-                value.clone().into_string().unwrap_or_default()
-            } else {
-                value.to_string()
-            };
+        // Counted the same way `DrainDiffStage` counts, and for the same reason: a
+        // typo'd -k leaves *every* event without a value, which --drain would
+        // otherwise report as an empty template list and a successful exit.
+        match event.fields.get(&self.field_name) {
+            Some(value) => {
+                let text = if value.is_string() {
+                    value.clone().into_string().unwrap_or_default()
+                } else {
+                    value.to_string()
+                };
 
-            if !text.is_empty() {
-                // The CLI drain pipeline discards the per-line result, so use the
-                // lighter `drain_record` entry point (no template-id hash or
-                // sample clone per line) — templates are emitted at the end.
-                if let Err(err) = crate::drain::drain_record(&text, None, event.line_num) {
-                    return ScriptResult::Error(err);
+                if text.is_empty() {
+                    crate::drain::record_excluded_no_field();
+                } else {
+                    // The CLI drain pipeline discards the per-line result, so use
+                    // the lighter `drain_record` entry point (no template-id hash
+                    // or sample clone per line) — templates are emitted at the end.
+                    if let Err(err) = crate::drain::drain_record(&text, None, event.line_num) {
+                        return ScriptResult::Error(err);
+                    }
+                    crate::drain::record_mined();
                 }
             }
+            None => crate::drain::record_excluded_no_field(),
         }
 
         ScriptResult::Emit(event)

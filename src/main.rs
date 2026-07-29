@@ -1220,13 +1220,20 @@ fn unseen_key_suggestion(key: &str, discovered: &BTreeSet<String>) -> String {
     present_fields_hint(discovered)
 }
 
-/// Error text for a `--drain-diff` run whose mined field carried no value on a
-/// single event: every event that reached the comparison was excluded, so the
-/// report would claim "no new templates / no volume shifts" over zero events.
-/// The `-k` typo that causes this is invisible in that report, so the run fails
-/// instead — reusing the same suggestion machinery as the `-k` typo hint, which
-/// this mode's implicit hint suppression would otherwise swallow.
-fn drain_diff_dead_field_message(
+/// Error text for a `--drain`/`--drain-diff` run whose mined field carried no
+/// value on a single event: every event was excluded, so the mode's output
+/// describes nothing. `--drain-diff` would claim "no new templates / no volume
+/// shifts" over zero events; `--drain` would print an empty template list. The
+/// `-k` typo that causes this is invisible in both, so the run fails instead —
+/// reusing the same suggestion machinery as the `-k` typo hint, which these
+/// modes' implicit hint suppression would otherwise swallow.
+///
+/// `flag` names the mode and `consequence` completes "…so there is nothing to
+/// {consequence}", so the two modes stay worded alike without pretending a
+/// summary is a comparison.
+fn dead_mined_field_message(
+    flag: &str,
+    consequence: &str,
     field: Option<&str>,
     excluded: u64,
     stats: Option<&stats::ProcessingStats>,
@@ -1248,18 +1255,18 @@ fn drain_diff_dead_field_message(
     // validation accepted it; keep a usable message rather than asserting.
     let Some(field) = field else {
         return format!(
-            "--drain-diff found no value to mine on any of the {excluded} event(s) it read, so there is nothing to compare. Check the field named by -k/--keys. {}",
+            "{flag} found no value to mine on any of the {excluded} event(s) it read, so there is nothing to {consequence}. Check the field named by -k/--keys. {}",
             present_fields_hint(&known)
         );
     };
 
     if known.contains(field) {
         format!(
-            "--drain-diff: -k/--keys names field '{field}', which was empty on all {excluded} event(s), so there is nothing to compare."
+            "{flag}: -k/--keys names field '{field}', which was empty on all {excluded} event(s), so there is nothing to {consequence}."
         )
     } else {
         format!(
-            "--drain-diff: -k/--keys names field '{field}', which was never present in the input, so all {excluded} event(s) were excluded and there is nothing to compare. {}",
+            "{flag}: -k/--keys names field '{field}', which was never present in the input, so all {excluded} event(s) were excluded and there is nothing to {consequence}. {}",
             unseen_key_suggestion(field, &known)
         )
     }
@@ -1715,6 +1722,26 @@ fn handle_pipeline_success(
     // on signal termination too so `tail -f … --drain` yields its summary on
     // Ctrl-C rather than nothing.
     if let Some(drain_format) = config.output.drain.clone() {
+        // Refuse a run where the mined field was never present, the way
+        // --drain-diff refuses the same mistake. Without this, `-k message` on a
+        // log whose field is `msg` printed nothing at all and exited 0 — the rule
+        // of silence applied to what is really a usage error. Partial exclusions
+        // stay silent: unlike a diff, a template list carries no totals and so
+        // never implies it covered every event.
+        let mined = crate::drain::mined_field_stats();
+        if mined.mined == 0 && mined.excluded_no_field > 0 {
+            let message = dead_mined_field_message(
+                "--drain",
+                "summarize",
+                crate::pipeline::builders::single_effective_key(config).as_deref(),
+                mined.excluded_no_field,
+                pipeline_result.stats.as_ref(),
+            );
+            stderr
+                .writeln(&config.format_error_message(&message))
+                .unwrap_or(());
+            std::process::exit(ExitCode::GeneralError as i32);
+        }
         if terminal_allowed {
             let templates = crate::drain::drain_templates();
             let output = match drain_format {
@@ -1773,7 +1800,9 @@ fn handle_pipeline_success(
                 // this mode's implicit diagnostics suppression and make the
                 // exit code nonzero.
                 if report.compared_events() == 0 && report.excluded_no_field > 0 {
-                    let message = drain_diff_dead_field_message(
+                    let message = dead_mined_field_message(
+                        "--drain-diff",
+                        "compare",
                         mined_field.as_deref(),
                         report.excluded_no_field,
                         pipeline_result.stats.as_ref(),
