@@ -9,6 +9,7 @@ Group multi-line events (stack traces, continuation lines, JSON blocks) into sin
 
 ## Decision Quick Reference
 - **Timestamp at the start of every event?** Use `--multiline timestamp`.
+- **Stack traces in output without timestamps (raw stderr, container stdout, CI logs)?** Use a language preset: `--multiline java`, `--multiline python`, or `--multiline go`.
 - **Continuation lines start with whitespace?** Use `--multiline indent`.
 - **Blank lines between records?** Use `--multiline blank` (paragraph mode).
 - **Events start with specific keywords?** Use `--multiline 'regex:match=^PATTERN'`.
@@ -54,7 +55,24 @@ kelora examples/multiline_indent.log \
 - Lines beginning with whitespace attach to the previous event.
 - Works even when timestamps are missing.
 
-## Step 4: Regex-Based Boundaries
+## Step 4: Language Presets for Untimestamped Stack Traces
+When the trace-bearing output has no timestamps — plain `python app.py`
+stderr, `docker logs`, CI output — the language presets group traces no other
+strategy can: each line stays its own event, and a recognized trace (with its
+`Caused by:` chains, chained tracebacks, or blank-separated goroutine blocks)
+attaches to the line that logged it.
+
+```bash
+kelora examples/stacktrace_python.log --multiline python -n 3
+```
+
+- Also available: `--multiline java`, `--multiline go`.
+- Presets join with newlines by default, so frames stay countable via `split("\n")`.
+- On input that *does* have timestamped headers, prefer `--multiline timestamp` —
+  it groups any continuation line, not just recognized trace shapes (kelora
+  hints when a preset meets such input).
+
+## Step 5: Regex-Based Boundaries
 Use custom patterns when timestamps or indentation are unreliable.
 
 ```bash
@@ -68,7 +86,7 @@ Variants:
 - Start and end markers: `--multiline 'regex:match=^BEGIN:end=^END'`.
 - Negated starts: treat lines that **do not** match as continuations with `--multiline 'regex:match=^[^\\s]'`.
 
-## Step 5: Buffer Entire Inputs (Last Resort)
+## Step 6: Buffer Entire Inputs (Last Resort)
 `--multiline all` reads the full file into one event. Use sparingly for small JSON documents or configuration files.
 
 ```bash

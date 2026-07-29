@@ -47,10 +47,17 @@ fn build_chunker_runtime(
     } else {
         None
     };
+    let preset_ts_hint = if config.hints_allowed() {
+        crate::config::preset_ts_hint_text(&multiline_config.strategy)
+            .map(|text| config.format_hint_message(&text))
+    } else {
+        None
+    };
     ChunkerRuntime {
         idle_timeout: multiline_config.idle_timeout,
         idle_hint,
         cap_warning,
+        preset_ts_hint,
     }
 }
 
@@ -178,6 +185,7 @@ impl ParallelProcessor {
             let section_config = config.input.section.clone();
             let global_tracker_clone = self.global_tracker.clone();
             let input_format = config.input.format.clone();
+            let multiline_active = config.input.multiline.is_some();
             let ctrl_for_batcher = ctrl_rx.clone();
 
             thread::spawn(move || {
@@ -195,6 +203,7 @@ impl ParallelProcessor {
                         section_config,
                         input_format,
                         preprocessing_line_count,
+                        multiline_active,
                     },
                     ctrl_for_batcher,
                 )
@@ -386,6 +395,7 @@ impl ParallelProcessor {
             let global_tracker_clone = self.global_tracker.clone();
             let input_format = config.input.format.clone();
             let strict = config.processing.strict;
+            let multiline_active = config.input.multiline.is_some();
             let ctrl_for_batcher = ctrl_rx.clone();
 
             thread::spawn(move || {
@@ -402,6 +412,7 @@ impl ParallelProcessor {
                     section_config,
                     input_format,
                     strict,
+                    multiline_active,
                     ctrl_for_batcher,
                 )
             })

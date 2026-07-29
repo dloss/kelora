@@ -19,6 +19,7 @@ pub mod section_selector;
 mod span;
 pub mod span_summary;
 pub mod stages;
+pub(crate) mod trace_presets;
 
 // Re-export main types for convenience
 pub use builders::*;
@@ -327,6 +328,13 @@ pub trait Chunker: Send {
     /// True once if a record was split by the line cap since the last call;
     /// the driver turns this into a once-per-run warning.
     fn take_cap_hit(&mut self) -> bool {
+        false
+    }
+    /// True once when a language preset strategy (`--multiline java|python|go`)
+    /// has repeatedly started events on timestamped header lines — the input
+    /// has reliable headers, so the driver hints once that `--multiline
+    /// timestamp` also keeps non-stacktrace continuation lines together.
+    fn take_preset_ts_hint(&mut self) -> bool {
         false
     }
     /// True when every fed line is exactly one record (no buffering ever).
@@ -934,5 +942,10 @@ impl Pipeline {
     /// True once if the multiline line cap split an event since the last call.
     pub fn take_multiline_cap_hit(&mut self) -> bool {
         self.chunker.take_cap_hit()
+    }
+
+    /// True once when a preset strategy keeps meeting timestamped headers.
+    pub fn take_multiline_preset_ts_hint(&mut self) -> bool {
+        self.chunker.take_preset_ts_hint()
     }
 }

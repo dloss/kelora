@@ -779,6 +779,7 @@ pub(crate) struct ChunkerRuntime {
     pub idle_timeout: Option<Duration>,
     pub idle_hint: Option<String>,
     pub cap_warning: Option<String>,
+    pub preset_ts_hint: Option<String>,
 }
 
 /// Chunker thread: converts line batches to event batches for multiline
@@ -802,6 +803,7 @@ pub(crate) fn chunker_thread(
     let mut seen_line = false;
     let mut idle_hinted = false;
     let mut cap_warned = false;
+    let mut preset_ts_hinted = false;
     let mut last_csv_headers: Option<Vec<String>> = None;
     let mut last_csv_type_map: Option<TypeMap> = None;
 
@@ -918,6 +920,13 @@ pub(crate) fn chunker_thread(
                 cap_warned = true;
                 if let Some(warning) = &runtime.cap_warning {
                     let _ = crate::platform::SafeStderr::new().writeln(warning);
+                }
+            }
+
+            if chunker.take_preset_ts_hint() && !preset_ts_hinted {
+                preset_ts_hinted = true;
+                if let Some(hint) = &runtime.preset_ts_hint {
+                    let _ = crate::platform::SafeStderr::new().writeln(hint);
                 }
             }
         }

@@ -9,6 +9,7 @@ Quick usage:
   kelora report.txt --multiline blank
   kelora trace.log --multiline regex:match=^TRACE
   kelora payload.json --multiline all
+  kelora stderr.log --multiline python     (also: java, go)
 
 MODES:
 
@@ -38,10 +39,27 @@ regex:match=REGEX[:end=REGEX]
 all
   Buffer the entire input as a single event (reads everything into memory).
 
+java | python | go
+  Language presets for stack traces in output WITHOUT reliable timestamps
+  (raw stderr, container stdout, CI logs). Each line is its own event unless
+  it is a recognized trace line: a trace start (java.lang...Exception:,
+  "Traceback (most recent call last):", panic:/fatal error:/goroutine dumps)
+  attaches to the line that logged it, and continuations (at ..., Caused by:,
+  File "...", goroutine blocks -- interior blank lines included for
+  python/go) extend the event. Default join: newline.
+  If lines DO start with timestamps, a locked timestamp header always starts
+  a new event, so a preset stays safe on timestamped files -- but prefer
+  `timestamp` there: it also keeps non-stacktrace continuations (wrapped
+  messages, embedded payloads) with their events; kelora hints once when a
+  preset meets such input. Known limits: a multi-line exception *message*
+  is not recognized past its first line, and a Java exception class named
+  without Exception/Error/Throwable is only caught at its first frame.
+
 RELATED FLAGS:
   --multiline-join=space|newline|empty
-      How buffered lines are joined. Default: space (newline for `all`).
-      Use newline to keep stack traces readable and splittable.
+      How buffered lines are joined. Default: space (newline for `all` and
+      the language presets). Use newline to keep stack traces readable and
+      splittable.
   --multiline-timeout DURATION
       Flush a buffered partial event after this much input inactivity
       (e.g. 400ms, 2s; 0 = never). Default: off for regular files (file

@@ -1,3 +1,4 @@
+use super::trace_presets::{TraceMachine, TraceStep};
 use super::{Chunk, ChunkLine, Chunker};
 use crate::config::{MultilineConfig, MultilineJoin, MultilineStrategy};
 use crate::timestamp::{AdaptiveTsParser, TsMatchKind};
@@ -5,6 +6,10 @@ use regex::Regex;
 
 const MAX_TIMESTAMP_PREFIX_CHARS: usize = 64;
 const MAX_TIMESTAMP_TOKENS: usize = 6;
+/// After this many timestamped header lines have started events under a
+/// preset strategy, the input evidently has reliable headers and the driver
+/// is told to hint at `--multiline timestamp` once.
+const PRESET_TS_HINT_HEADERS: u32 = 3;
 
 /// Multi-line chunker that implements the reduced set of strategies for
 /// detecting event boundaries.
@@ -26,8 +31,26 @@ pub struct MultilineChunker {
     start_regex: Option<Regex>,
     end_regex: Option<Regex>,
     timestamp_detector: Option<TimestampDetector>,
+    preset: Option<PresetState>,
     /// Set when the line cap split an event; drained by `take_cap_hit`.
     cap_hit: bool,
+}
+
+/// Runtime state for a language preset strategy: the trace rule machine plus
+/// a timestamp guard. The guard makes the intuitive-but-suboptimal choice
+/// safe: on input that *does* have timestamped headers, a locked header line
+/// always starts a new event — overriding any trace continuation — so a
+/// preset can never bleed a trace across a real event boundary. (Where
+/// headers exist, `--multiline timestamp` is still the better tool; the
+/// guard feeds the once-per-run hint that says so.)
+struct PresetState {
+    machine: TraceMachine,
+    guard: TimestampDetector,
+    /// Header lines the guard has turned into event starts.
+    guard_boundaries: u32,
+    /// Set once `guard_boundaries` reaches the hint threshold; drained by
+    /// `take_preset_ts_hint`.
+    ts_hint: bool,
 }
 
 impl MultilineChunker {
@@ -35,6 +58,7 @@ impl MultilineChunker {
         let mut start_regex = None;
         let mut end_regex = None;
         let mut timestamp_detector = None;
+        let mut preset = None;
 
         match &config.strategy {
             MultilineStrategy::Regex { start, end } => {
@@ -55,6 +79,14 @@ impl MultilineChunker {
             } => {
                 timestamp_detector = Some(TimestampDetector::new(chrono_format.clone(), *loose));
             }
+            MultilineStrategy::Preset(lang) => {
+                preset = Some(PresetState {
+                    machine: TraceMachine::new(*lang)?,
+                    guard: TimestampDetector::new(None, false),
+                    guard_boundaries: 0,
+                    ts_hint: false,
+                });
+            }
             MultilineStrategy::Indent | MultilineStrategy::Blank | MultilineStrategy::All => {}
         }
 
@@ -66,6 +98,7 @@ impl MultilineChunker {
             start_regex,
             end_regex,
             timestamp_detector,
+            preset,
             cap_hit: false,
         })
     }
@@ -90,7 +123,11 @@ impl MultilineChunker {
                     false
                 }
             }
-            MultilineStrategy::Blank | MultilineStrategy::All => false,
+            // Presets never reach here: `feed_line` classifies their lines
+            // through the trace machine instead.
+            MultilineStrategy::Blank | MultilineStrategy::All | MultilineStrategy::Preset(_) => {
+                false
+            }
         }
     }
 
@@ -340,6 +377,31 @@ impl Chunker for MultilineChunker {
                 }
                 self.push_line(line);
             }
+            MultilineStrategy::Preset(_) => {
+                let preset = self
+                    .preset
+                    .as_mut()
+                    .expect("preset state exists for preset strategy");
+                // The guard outranks the trace machine: a line starting with
+                // a locked-format timestamp is always an event header, even
+                // where a preset rule would read it as a continuation. (It
+                // also locks on the file's first header, like the timestamp
+                // strategy, so evaluate it on every line.)
+                let boundary = if preset.guard.is_header(&line.text) {
+                    preset.machine.reset();
+                    preset.guard_boundaries += 1;
+                    if preset.guard_boundaries == PRESET_TS_HINT_HEADERS {
+                        preset.ts_hint = true;
+                    }
+                    true
+                } else {
+                    preset.machine.feed(&line.text) == TraceStep::Boundary
+                };
+                if boundary {
+                    self.flush_buffer(out);
+                }
+                self.push_line(line);
+            }
             MultilineStrategy::Timestamp { .. }
             | MultilineStrategy::Indent
             | MultilineStrategy::Regex { .. } => {
@@ -369,6 +431,11 @@ impl Chunker for MultilineChunker {
 
     fn flush(&mut self, out: &mut Vec<Chunk>) {
         self.flush_buffer(out);
+        // A flush is a hard boundary (file change, idle timeout, EOF): a
+        // trace never continues across one, so forget any in-trace state.
+        if let Some(preset) = self.preset.as_mut() {
+            preset.machine.reset();
+        }
     }
 
     fn has_pending(&self) -> bool {
@@ -377,6 +444,12 @@ impl Chunker for MultilineChunker {
 
     fn take_cap_hit(&mut self) -> bool {
         std::mem::take(&mut self.cap_hit)
+    }
+
+    fn take_preset_ts_hint(&mut self) -> bool {
+        self.preset
+            .as_mut()
+            .is_some_and(|p| std::mem::take(&mut p.ts_hint))
     }
 }
 
@@ -921,15 +994,160 @@ mod tests {
             create_multiline_chunker(&config(MultilineStrategy::Indent, MultilineJoin::Space));
         assert!(result.is_ok());
     }
+
+    mod presets {
+        use super::*;
+        use crate::config::TracePreset;
+
+        fn preset_chunker(preset: TracePreset) -> MultilineChunker {
+            MultilineChunker::new(config(
+                MultilineStrategy::Preset(preset),
+                MultilineJoin::Newline,
+            ))
+            .expect("preset chunker builds")
+        }
+
+        #[test]
+        fn python_traceback_attaches_to_logging_header() {
+            // `logger.exception(...)` output: the header line is followed by
+            // the traceback; both belong to one event, the neighbors stay
+            // single-line events.
+            let mut chunker = preset_chunker(TracePreset::Python);
+            let chunks = chunk_all(
+                &mut chunker,
+                "starting worker\nrequest failed\nTraceback (most recent call last):\n  File \"/app/m.py\", line 3, in run\n    handle()\nValueError: boom\nnext request\n",
+            );
+            assert_eq!(
+                texts(&chunks),
+                vec![
+                    "starting worker",
+                    "request failed\nTraceback (most recent call last):\n  File \"/app/m.py\", line 3, in run\n    handle()\nValueError: boom",
+                    "next request"
+                ]
+            );
+            assert_eq!(chunks[1].first_line_num, 2);
+            assert_eq!(chunks[1].line_count, 5);
+        }
+
+        #[test]
+        fn go_blank_separated_goroutine_blocks_stay_one_event() {
+            let mut chunker = preset_chunker(TracePreset::Go);
+            let chunks = chunk_all(
+                &mut chunker,
+                "panic: boom\n\ngoroutine 1 [running]:\nmain.main()\n\t/app/main.go:5 +0x20\n\ngoroutine 7 [select]:\nmain.worker()\n\t/app/w.go:9 +0x11\nrestarted\n",
+            );
+            assert_eq!(chunks.len(), 2);
+            assert!(chunks[0].text.contains("goroutine 7"));
+            assert_eq!(chunks[1].text, "restarted");
+        }
+
+        #[test]
+        fn timestamped_headers_split_events_and_trace_still_attaches() {
+            // The intuitive-but-suboptimal case from the design discussion:
+            // a preset applied to a timestamped log. Locked headers always
+            // start events, the trace still glues to the header that logged
+            // it, and after enough headers the hint flag is raised so the
+            // driver can point at --multiline timestamp.
+            let mut chunker = preset_chunker(TracePreset::Java);
+            let chunks = chunk_all(
+                &mut chunker,
+                "2024-01-01T10:00:00 INFO started\n2024-01-01T10:00:01 ERROR sync failed\njava.lang.IllegalStateException: boom\n\tat com.example.Foo.bar(Foo.java:10)\nCaused by: java.lang.NullPointerException\n\t... 3 more\n2024-01-01T10:00:02 INFO recovered\n2024-01-01T10:00:03 INFO steady\n",
+            );
+            assert_eq!(chunks.len(), 4);
+            assert!(chunks[1].text.contains("ERROR sync failed"));
+            assert!(chunks[1].text.contains("... 3 more"));
+            assert_eq!(chunks[2].text, "2024-01-01T10:00:02 INFO recovered");
+            assert!(
+                chunker.take_preset_ts_hint(),
+                "three headers reached the hint threshold"
+            );
+            assert!(!chunker.take_preset_ts_hint(), "hint flag is take-once");
+        }
+
+        #[test]
+        fn headerless_input_never_raises_the_ts_hint() {
+            let mut chunker = preset_chunker(TracePreset::Python);
+            let _ = chunk_all(
+                &mut chunker,
+                "one plain line\nanother\nTraceback (most recent call last):\n  File \"x.py\", line 1, in <module>\nValueError: x\nmore prose\n",
+            );
+            assert!(!chunker.take_preset_ts_hint());
+        }
+
+        #[test]
+        fn flush_resets_trace_state_across_boundaries() {
+            // A file boundary flush must not let a trace continue into the
+            // next file: the blank line after the flush is no longer a Go
+            // trace continuation and produces no junk grouping.
+            let mut chunker = preset_chunker(TracePreset::Go);
+            let mut out = Vec::new();
+            for (idx, line) in ["panic: boom", "goroutine 1 [running]:"].iter().enumerate() {
+                chunker.feed_line(
+                    ChunkLine {
+                        text: line.to_string(),
+                        line_num: idx + 1,
+                        filename: Some("a.log".to_string()),
+                    },
+                    &mut out,
+                );
+            }
+            chunker.flush(&mut out); // file boundary
+            chunker.feed_line(
+                ChunkLine {
+                    text: "\t/app/main.go:5 +0x20".to_string(),
+                    line_num: 1,
+                    filename: Some("b.log".to_string()),
+                },
+                &mut out,
+            );
+            chunker.feed_line(
+                ChunkLine {
+                    text: "plain".to_string(),
+                    line_num: 2,
+                    filename: Some("b.log".to_string()),
+                },
+                &mut out,
+            );
+            chunker.flush(&mut out);
+            let texts: Vec<&str> = out.iter().map(|c| c.text.as_str()).collect();
+            assert_eq!(
+                texts,
+                vec![
+                    "panic: boom\ngoroutine 1 [running]:",
+                    "\t/app/main.go:5 +0x20",
+                    "plain"
+                ],
+                "the tab line after the boundary is not glued to the flushed trace"
+            );
+        }
+
+        #[test]
+        fn preset_respects_line_cap() {
+            let mut cfg = config(
+                MultilineStrategy::Preset(TracePreset::Go),
+                MultilineJoin::Newline,
+            );
+            cfg.max_lines = 3;
+            let mut chunker = MultilineChunker::new(cfg).unwrap();
+            let chunks = chunk_all(
+                &mut chunker,
+                "panic: boom\n\ngoroutine 1 [running]:\nmain.main()\n\t/app/main.go:5 +0x20\n",
+            );
+            assert!(chunks.len() >= 2, "cap splits the oversized trace");
+            assert!(chunker.take_cap_hit());
+        }
+    }
 }
 
 #[cfg(test)]
 mod proptests {
     use super::*;
+    use crate::config::TracePreset;
     use proptest::prelude::*;
 
     /// A soup of the line shapes that exercise every boundary rule: headers,
-    /// indented continuations, blanks, prose, and start/end markers.
+    /// indented continuations, blanks, prose, start/end markers, and
+    /// stack-trace fragments for the language presets.
     fn arb_line() -> impl Strategy<Value = String> {
         prop_oneof![
             (1u8..9, 0u8..9).prop_map(|(d, s)| format!("2024-01-0{}T10:00:0{} msg", d, s)),
@@ -939,6 +1157,16 @@ mod proptests {
             (0u32..50).prop_map(|n| format!("word{} plain 17:03", n)),
             Just("START block".to_string()),
             Just("middle END".to_string()),
+            Just("Traceback (most recent call last):".to_string()),
+            (0u32..9).prop_map(|n| format!("  File \"m.py\", line {}, in f", n)),
+            Just("ValueError: boom".to_string()),
+            Just("java.lang.IllegalStateException: boom".to_string()),
+            (0u32..9).prop_map(|n| format!("\tat com.example.A.b(A.java:{})", n)),
+            Just("Caused by: java.lang.Error: e".to_string()),
+            Just("panic: kaboom".to_string()),
+            (1u32..9).prop_map(|n| format!("goroutine {} [running]:", n)),
+            Just("main.main()".to_string()),
+            Just("\t/app/main.go:5 +0x20".to_string()),
         ]
     }
 
@@ -963,6 +1191,9 @@ mod proptests {
                 end: Some("END$".to_string()),
             },
             MultilineStrategy::All,
+            MultilineStrategy::Preset(TracePreset::Java),
+            MultilineStrategy::Preset(TracePreset::Python),
+            MultilineStrategy::Preset(TracePreset::Go),
         ]
     }
 

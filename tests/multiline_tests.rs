@@ -1293,3 +1293,159 @@ fn test_multiline_sequential_and_parallel_agree() {
     assert_eq!(c2, 0);
     assert_eq!(seq, par, "sequential and parallel must agree byte-for-byte");
 }
+
+#[test]
+fn test_multiline_python_preset_groups_traceback_with_header() {
+    // Headerless console output: the traceback (chained, with the bridge
+    // sentence and interior blanks) attaches to the line that logged it;
+    // surrounding lines stay single-line events.
+    // A raw string keeps the traceback's indentation (a `\`-continued string
+    // literal would strip it and break the File/code lines).
+    let input = r#"starting worker
+request failed
+Traceback (most recent call last):
+  File "/app/db.py", line 12, in fetch
+    return cache[key]
+KeyError: 'user'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/main.py", line 30, in handle
+    fetch(key)
+ValueError: no such user
+next request
+"#;
+
+    let (stdout, _stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "raw",
+            "-M",
+            "python",
+            "--multiline-timeout",
+            "0",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(code, 0);
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(lines.len(), 3, "three events: {stdout}");
+    let trace: serde_json::Value = serde_json::from_str(lines[1]).unwrap();
+    let raw = trace["raw"].as_str().unwrap();
+    assert!(raw.starts_with("request failed\nTraceback"));
+    assert!(raw.contains("KeyError"), "first traceback kept");
+    assert!(raw.contains("ValueError"), "chained traceback kept");
+}
+
+#[test]
+fn test_multiline_java_preset_on_timestamped_input_hints_at_timestamp_strategy() {
+    // The intuitive-but-suboptimal choice: a preset on a log that has
+    // reliable timestamped headers. Grouping stays correct (headers always
+    // split; the trace still attaches to its header event), and kelora hints
+    // once that --multiline timestamp fits better.
+    let input = "2024-01-01T10:00:00 INFO started\n\
+2024-01-01T10:00:01 ERROR sync failed\n\
+java.lang.IllegalStateException: boom\n\
+\tat com.example.Foo.bar(Foo.java:10)\n\
+Caused by: java.lang.NullPointerException\n\
+\t... 3 more\n\
+2024-01-01T10:00:02 INFO recovered\n\
+2024-01-01T10:00:03 INFO steady\n";
+
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "raw",
+            "-M",
+            "java",
+            "--multiline-timeout",
+            "0",
+            "-F",
+            "json",
+        ],
+        input,
+    );
+    assert_eq!(code, 0);
+    let lines: Vec<&str> = stdout.trim().lines().collect();
+    assert_eq!(lines.len(), 4, "each header starts an event: {stdout}");
+    let trace: serde_json::Value = serde_json::from_str(lines[1]).unwrap();
+    let raw = trace["raw"].as_str().unwrap();
+    assert!(raw.contains("ERROR sync failed"));
+    assert!(raw.contains("... 3 more"), "trace attached to its header");
+    assert!(
+        stderr.contains("--multiline timestamp"),
+        "hint names the better strategy: {stderr}"
+    );
+
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "raw",
+            "-M",
+            "java",
+            "--multiline-timeout",
+            "0",
+            "-F",
+            "json",
+            "--no-hints",
+        ],
+        input,
+    );
+    assert_eq!(code, 0);
+    assert!(
+        !stderr.contains("--multiline timestamp"),
+        "--no-hints silences the advisory: {stderr}"
+    );
+}
+
+#[test]
+fn test_multiline_go_preset_sequential_and_parallel_agree() {
+    let mut input = String::new();
+    for i in 0..80 {
+        input.push_str(&format!("worker {} heartbeat\n", i));
+        if i % 10 == 3 {
+            input.push_str(
+                "panic: runtime error: invalid memory address or nil pointer dereference\n\
+[signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x45a1af]\n\
+\n\
+goroutine 1 [running]:\n\
+main.handle(0x0?)\n\
+\t/app/main.go:10 +0x1d\n\
+created by main.main in goroutine 1\n\
+\t/app/main.go:5 +0x20\n",
+            );
+        }
+    }
+
+    let args_base = [
+        "-f",
+        "raw",
+        "-M",
+        "go",
+        "--multiline-timeout",
+        "0",
+        "-F",
+        "json",
+    ];
+    let (seq, _e1, c1) = run_kelora_with_input(&args_base, &input);
+    let mut par_args = args_base.to_vec();
+    par_args.push("--parallel");
+    let (par, _e2, c2) = run_kelora_with_input(&par_args, &input);
+    assert_eq!(c1, 0);
+    assert_eq!(c2, 0);
+    assert_eq!(seq, par, "sequential and parallel must agree byte-for-byte");
+    assert!(
+        seq.contains("goroutine 1 [running]:"),
+        "panic dump grouped: {seq}"
+    );
+    // 80 heartbeats + 8 panic dumps (each attached to the heartbeat that
+    // preceded it keeps the heartbeat's event, so still one event per dump).
+    let count = seq.trim().lines().count();
+    assert_eq!(
+        count, 80,
+        "each dump glues to the preceding heartbeat: {count}"
+    );
+}

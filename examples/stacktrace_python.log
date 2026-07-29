@@ -1,0 +1,26 @@
+worker[1] booting
+worker[1] connected to redis://cache:6379
+request GET /users/42 failed
+Traceback (most recent call last):
+  File "/app/db.py", line 12, in fetch
+    return cache[key]
+KeyError: 'user:42'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/handlers.py", line 30, in get_user
+    user = fetch(f"user:{user_id}")
+  File "/app/db.py", line 15, in fetch
+    raise LookupError(f"no cached entry for {key}")
+LookupError: no cached entry for user:42
+request GET /users/43 ok in 12ms
+request GET /health ok in 1ms
+shutdown requested
+Traceback (most recent call last):
+  File "/app/main.py", line 51, in <module>
+    loop.run_forever()
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 641, in run_forever
+    self._run_once()
+KeyboardInterrupt
+worker[1] stopped
