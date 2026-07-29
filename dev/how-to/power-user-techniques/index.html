@@ -2693,9 +2693,19 @@ IDs for diffs), <code>=json</code> (programmatic). → <a href="../../reference/
 <h2 id="template-diffing">What changed? Template diffing — <code>--drain-diff</code><a class="headerlink" href="#template-diffing" title="Permanent link">&para;</a></h2>
 <p>The first question in every incident: which templates are new, which vanished,
 which shifted in volume. <code>--drain-diff</code> answers it directly — baseline first,
-target second, or one file split by time with <code>--cut</code>:</p>
+target second, or one file split by time with <code>--cut-at</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>before.log<span class="w"> </span>after.log<span class="w"> </span>-k<span class="w"> </span>msg
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut<span class="w"> </span><span class="s1">&#39;14:00&#39;</span><span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-at<span class="w"> </span><span class="m">2026</span>-07-24T14:00Z<span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
+</code></pre></div>
+<p><code>--cut-at</code> resolves against the clock, not the log, so give an absolute timestamp
+for anything archived. A cut that lands outside the data is refused rather than
+reported, and the error names the span the log covers — so a missed first guess
+tells you what to use.</p>
+<p>When you know what the change looks like but not when it happened, split on a
+predicate instead and skip the timestamp entirely — <code>--cut-before</code> when the
+matching line opens the new regime, <code>--cut-after</code> when it closes the old one:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-before<span class="w"> </span><span class="s1">&#39;e.msg.contains(&quot;deploy started&quot;)&#39;</span><span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-after<span class="w"> </span><span class="s1">&#39;e.msg.contains(&quot;deploy finished&quot;)&#39;</span><span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
 </code></pre></div>
 <p>Comparisons use per-side <em>shares</em>, so a 10-minute incident capture diffs
 fairly against a 24-hour baseline. <code>--filter</code>/<code>--exec</code> run before the
@@ -2763,12 +2773,12 @@ claims <code>exp</code>/<code>iat</code>/<code>nbf</code> come back as datetimes
 </div>
 </div>
 <p>Find expired tokens by comparing the decoded expiry against the current time:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.token.parse_jwt().expires_at &lt; now()&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.token.parse_jwt().expires_at &lt; now()&#39;</span>
 </code></pre></div>
 <p>To flatten the claims straight onto the event in one step (dropping the token),
 use <code>absorb_jwt()</code> — the JWT member of the <a href="../../reference/functions/#eabsorb_jwtfield-options">absorb family</a>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_jwt(&quot;token&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_jwt(&quot;token&quot;)&#39;</span>
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -2921,18 +2931,18 @@ counting prefer <code>track_*()</code>, which works in parallel.</p>
 <h2 id="combine-them">Combine them<a class="headerlink" href="#combine-them" title="Permanent link">&para;</a></h2>
 <p>The payoff is composition — fan out nested orders, normalize errors, hash
 users, take a deterministic sample, and aggregate, in one command:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-responses.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.api_version == &quot;v2&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.get_path(&quot;data.orders&quot;, []))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.error_pattern = e.get(&quot;error_msg&quot;, &quot;&quot;).normalized();</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">          e.user_hash = e.user_id.hash(&quot;xxh3&quot;);</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">          e.sample_group = e.order_id.bucket() % 10;</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">          e.user_id = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.sample_group &lt; 3&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;error_pattern&quot;, e.error_pattern)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span>-k<span class="w"> </span>order_id,sku,quantity,error_pattern<span class="w"> </span>-F<span class="w"> </span>csv
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-responses.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.api_version == &quot;v2&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.get_path(&quot;data.orders&quot;, []))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.error_pattern = e.get(&quot;error_msg&quot;, &quot;&quot;).normalized();</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">          e.user_hash = e.user_id.hash(&quot;xxh3&quot;);</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">          e.sample_group = e.order_id.bucket() % 10;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">          e.user_id = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.sample_group &lt; 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;error_pattern&quot;, e.error_pattern)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span>-k<span class="w"> </span>order_id,sku,quantity,error_pattern<span class="w"> </span>-F<span class="w"> </span>csv
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
