@@ -23,6 +23,8 @@ making it hard to correlate context.
 
 **Start with `timestamp`** if your logs have timestamp prefixes (works for 80% of application logs with stack traces).
 
+**Use a language preset (`java`, `python`, `go`)** for stack traces in output *without* reliable timestamps — raw stderr, container stdout, CI logs. If your lines do start with timestamps, prefer `timestamp`: it also keeps non-stacktrace continuations with their events.
+
 **Use `indent`** if continuation lines start with whitespace but the first line doesn't have a timestamp.
 
 **Use `blank`** for paragraph-shaped input where blank lines separate records.
@@ -73,7 +75,8 @@ block. Choose the approach that matches your log format.
 
 ## Built-in Strategies
 
-Kelora ships five strategies. Only one can be active at a time.
+Kelora ships five general strategies plus three language stack-trace presets.
+Only one can be active at a time.
 
 ### 1. Timestamp Headers (`--multiline timestamp`)
 
@@ -188,10 +191,59 @@ Use with care: the entire input must fit in memory.
 kelora -f raw big.json --multiline all --exec 'print(e.raw.len())'
 ```
 
+### 6. Language Stack-Trace Presets (`--multiline java|python|go`)
+
+Say what your logs contain instead of describing boundaries. Each preset is a
+small state machine over the language's real trace shape — the approach Fluent
+Bit's built-in multiline parsers use — aimed at output **without reliable
+timestamps**: raw stderr, container stdout, CI logs. There, no other strategy
+works: `timestamp` has nothing to lock onto, `indent` splits on the unindented
+lines every real trace pivots on (Python's final `ValueError: ...`, Java's
+`Caused by:`, Go's `goroutine N [running]:`), and `regex:match=` has the
+inverse semantics (everything between matches becomes one event).
+
+Under a preset, **every line is its own event unless it is a recognized trace
+line**. A trace start attaches to the line that logged it — so a
+`logger.exception(...)` header keeps its traceback — and continuations extend
+the event:
+
+- **`java`** — a dotted exception line (optionally `Exception in thread "..."`),
+  `at ...` frames, `Caused by:` / `Suppressed:` chains, `... N more`. An
+  exception class whose name lacks `Exception`/`Error`/`Throwable` is caught
+  from its first indented frame.
+- **`python`** — `Traceback (most recent call last):`, indented frames and
+  source lines, the final exception line (dotted name, bare
+  `KeyboardInterrupt` included), chained-exception bridges (`During handling
+  of ...` / `The above exception ...`), exception groups (3.11+), and
+  header-less `SyntaxError` blocks.
+- **`go`** — `panic:` / `fatal error:` / `http: panic serving`, the `[signal
+  ...]` line, goroutine headers, call/location pairs, `created by ...`, and
+  the **blank lines between goroutine blocks**, so a full dump stays one
+  event; standalone SIGQUIT goroutine dumps group too.
+
+```bash
+docker logs app 2>&1 | kelora -f raw --multiline python -F json
+```
+
+Presets default to `--multiline-join=newline` — their whole point is stack
+traces, which space-joining destroys.
+
+**On timestamped input, presets are safe but not optimal.** A line starting
+with a timestamp (same lock-in as the `timestamp` strategy) always begins a
+new event, overriding any trace rule, so a preset can never bleed a trace
+across a real event boundary. But `timestamp` groups *any* continuation line
+— wrapped messages, embedded payloads — not just recognized trace shapes, so
+kelora hints once when a preset keeps meeting timestamped headers. Known
+limits, accepted by design: a multi-line exception *message* (a
+`str(e)`/`getMessage()` containing newlines) is not recognized past its first
+line, and the losslessness guarantee still holds — an unrecognized trace shape
+degrades to split events, never to dropped lines.
+
 ## Controlling Line Joining
 
-By default, `--multiline` joins grouped lines with spaces — except `all`,
-which defaults to newline so a whole buffered file keeps its structure.
+By default, `--multiline` joins grouped lines with spaces — except `all` and
+the language presets (`java`/`python`/`go`), which default to newline so
+buffered files and stack traces keep their structure.
 To preserve the original line structure in stack traces or other multi-line content:
 
 ```bash
@@ -272,6 +324,12 @@ Two flags bound the buffer's behavior:
 - **Strategy misfires**: If you see every line printed individually, your start
   detector did not trigger. Try `--multiline regex` with an explicit pattern, or
   switch to `timestamp` with a format hint.
+
+- **A preset splits a trace it should recognize**: presets match the
+  language's standard trace shapes; unusual output (a multi-line exception
+  message, a custom formatter) can fall outside them. Inspect the boundary
+  with `-f raw -F json --take 5`; if the shape is genuinely standard, that is
+  a preset gap worth reporting. `regex:match=` remains the escape hatch.
 
 - **Events merge that should split**: with `timestamp`, lock-in may have
   latched onto the wrong format if the file's first line looks time-like but

@@ -305,8 +305,9 @@ pub struct Cli {
 
     /// Multi-line event detection strategy. Supply values like `timestamp`,
     /// `timestamp:format=%Y-%m-%d %H-%M-%S`, `indent`, `blank`,
-    /// `regex:match=^START`, or `regex:match=^START:end=^END$`.
-    /// See `kelora --help-multiline` for details.
+    /// `regex:match=^START`, `regex:match=^START:end=^END$`, or a language
+    /// stack-trace preset (`java`, `python`, `go`) for logs without
+    /// timestamped headers. See `kelora --help-multiline` for details.
     #[arg(
         short = 'M',
         long = "multiline",

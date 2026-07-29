@@ -1366,6 +1366,7 @@ struct MultilineSeqState {
     seen_line: bool,
     cap_warned: bool,
     idle_hinted: bool,
+    preset_ts_hinted: bool,
 }
 
 impl MultilineSeqState {
@@ -1423,6 +1424,29 @@ impl MultilineSeqState {
              (0 = unlimited) if your events are really that large",
             max_lines
         )));
+    }
+
+    /// Called after feeding a line. Hints once per run when a language preset
+    /// keeps meeting timestamped header lines: the input has reliable headers,
+    /// so `--multiline timestamp` would also keep non-stacktrace continuation
+    /// lines (wrapped messages, embedded payloads) with their events.
+    fn note_preset_ts_hint(&mut self, pipeline: &mut pipeline::Pipeline, config: &KeloraConfig) {
+        if !pipeline.take_multiline_preset_ts_hint() || self.preset_ts_hinted {
+            return;
+        }
+        self.preset_ts_hinted = true;
+        if !config.hints_allowed() {
+            return;
+        }
+        let Some(text) = config
+            .input
+            .multiline
+            .as_ref()
+            .and_then(|m| crate::config::preset_ts_hint_text(&m.strategy))
+        else {
+            return;
+        };
+        let _ = SafeStderr::new().writeln(&config.format_hint_message(&text));
     }
 }
 
@@ -1748,6 +1772,7 @@ fn process_line_sequential<W: Write>(
     match pipeline.process_line(chunk_line, ctx) {
         Ok(results) => {
             multiline_state.note_cap_hit(pipeline, config);
+            multiline_state.note_preset_ts_hint(pipeline, config);
             // Count output lines for stats
             if config.output.stats.is_some() && !results.is_empty() {
                 stats_add_line_output();

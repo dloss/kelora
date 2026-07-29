@@ -511,6 +511,29 @@ pub enum MultilineStrategy {
     Regex { start: String, end: Option<String> },
     /// Read entire input as a single event
     All,
+    /// Language stack-trace preset (`java`, `python`, `go`): each line is its
+    /// own event unless recognized as part of a trace, which attaches to the
+    /// line that logged it. See [`crate::pipeline::trace_presets`].
+    Preset(TracePreset),
+}
+
+/// The language whose stack-trace shape a preset strategy recognizes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TracePreset {
+    Java,
+    Python,
+    Go,
+}
+
+impl TracePreset {
+    /// The CLI spelling (`--multiline java` etc.), for messages and hints.
+    pub fn name(&self) -> &'static str {
+        match self {
+            TracePreset::Java => "java",
+            TracePreset::Python => "python",
+            TracePreset::Go => "go",
+        }
+    }
 }
 
 /// How multiline events join buffered lines
@@ -667,9 +690,19 @@ impl MultilineConfig {
                 }
                 MultilineStrategy::All
             }
+            "java" | "python" | "go" => {
+                if !segments.is_empty() {
+                    return Err(format!("{} does not accept options", strategy_name));
+                }
+                MultilineStrategy::Preset(match strategy_name {
+                    "java" => TracePreset::Java,
+                    "python" => TracePreset::Python,
+                    _ => TracePreset::Go,
+                })
+            }
             other => {
                 return Err(format!(
-                    "Unknown multiline strategy: {} (supported: timestamp, indent, blank, regex, all)",
+                    "Unknown multiline strategy: {} (supported: timestamp, indent, blank, regex, all, java, python, go)",
                     other
                 ));
             }
@@ -686,13 +719,30 @@ impl MultilineConfig {
     }
 
     /// The join mode used when `--multiline-join` is not given: `all` preserves
-    /// the input's line structure, everything else joins with spaces.
+    /// the input's line structure, and the language presets keep newlines too —
+    /// their whole point is stack traces, which space-joining destroys.
     pub fn default_join_for(strategy: &MultilineStrategy) -> MultilineJoin {
         match strategy {
-            MultilineStrategy::All => MultilineJoin::Newline,
+            MultilineStrategy::All | MultilineStrategy::Preset(_) => MultilineJoin::Newline,
             _ => MultilineJoin::Space,
         }
     }
+}
+
+/// The preset-on-timestamped-input hint body, shared verbatim by the
+/// sequential and parallel drivers (the latter preformats it in
+/// `build_chunker_runtime`). `None` for non-preset strategies, which never
+/// raise this hint.
+pub fn preset_ts_hint_text(strategy: &MultilineStrategy) -> Option<String> {
+    let MultilineStrategy::Preset(preset) = strategy else {
+        return None;
+    };
+    Some(format!(
+        "multiline: input lines start with timestamps; --multiline {} joins only \
+         recognized trace lines — --multiline timestamp keeps any continuation line \
+         with its event (see --help-multiline)",
+        preset.name()
+    ))
 }
 
 fn unknown_option_error(strategy: &str, segment: &str) -> String {
@@ -2635,5 +2685,32 @@ mod tests {
     fn multiline_parse_duplicate_option_errors() {
         assert!(MultilineConfig::parse("regex:match=a:match=b").is_err());
         assert!(MultilineConfig::parse("timestamp:format=%H:format=%M").is_err());
+    }
+
+    #[test]
+    fn multiline_parse_language_presets() {
+        for (name, preset) in [
+            ("java", TracePreset::Java),
+            ("python", TracePreset::Python),
+            ("go", TracePreset::Go),
+        ] {
+            let cfg = MultilineConfig::parse(name).expect("parses");
+            assert!(
+                matches!(cfg.strategy, MultilineStrategy::Preset(p) if p == preset),
+                "{name}"
+            );
+            // Stack traces are the presets' whole point: keep line structure.
+            assert_eq!(cfg.join, MultilineJoin::Newline, "{name}");
+            assert!(
+                MultilineConfig::parse(&format!("{name}:x=1")).is_err(),
+                "{name} takes no options"
+            );
+        }
+    }
+
+    #[test]
+    fn multiline_parse_unknown_strategy_lists_presets() {
+        let err = MultilineConfig::parse("rust").unwrap_err();
+        assert!(err.contains("java, python, go"), "{err}");
     }
 }

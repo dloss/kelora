@@ -34,6 +34,10 @@ pub(crate) struct PlainLineContext<'a> {
     /// True while a quoted CSV/TSV field is open across physical lines, so the
     /// batcher can defer a size-based cut until the record is complete.
     pub csv_quote_open: &'a mut bool,
+    /// With --multiline active, blank lines carry event-boundary semantics
+    /// and must reach the chunker for every format (mirrors the sequential
+    /// driver's gate on the pre-chunk empty-line drop).
+    pub multiline_active: bool,
 }
 
 /// Context for processing file-aware lines (with filename tracking)
@@ -62,6 +66,10 @@ pub(crate) struct FileAwareLineContext<'a> {
     /// True while a quoted CSV/TSV field is open across physical lines, so the
     /// batcher can defer a size-based cut until the record is complete.
     pub csv_quote_open: &'a mut bool,
+    /// With --multiline active, blank lines carry event-boundary semantics
+    /// and must reach the chunker for every format (mirrors the sequential
+    /// driver's gate on the pre-chunk empty-line drop).
+    pub multiline_active: bool,
 }
 
 /// Configuration for batcher thread - groups all configuration parameters
@@ -78,6 +86,7 @@ pub(crate) struct BatcherThreadConfig {
     pub section_config: Option<crate::config::SectionConfig>,
     pub input_format: crate::config::InputFormat,
     pub preprocessing_line_count: usize,
+    pub multiline_active: bool,
 }
 
 /// Configuration for parallel processing

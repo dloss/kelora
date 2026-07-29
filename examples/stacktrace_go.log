@@ -1,0 +1,26 @@
+ingest worker 3 started
+flushed 2048 samples in 41ms
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x45a1af]
+
+goroutine 1 [running]:
+main.(*Pipeline).flush(0x0?, {0xc000112000, 0x800, 0x800})
+	/app/pipeline.go:87 +0x1d
+main.run()
+	/app/main.go:32 +0x9a
+main.main()
+	/app/main.go:14 +0x20
+exit status 2
+supervisor: restarting ingest worker 3
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan receive]:
+main.main()
+	/app/main.go:21 +0x2d
+
+goroutine 18 [select]:
+main.(*Pipeline).run(0xc000010028)
+	/app/pipeline.go:54 +0x85
+created by main.main in goroutine 1
+	/app/main.go:19 +0x1e
+supervisor: giving up after 2 crashes

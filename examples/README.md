@@ -225,6 +225,14 @@ Different strategies for parsing multi-line log entries:
 - `multiline_indent.log` - Indentation-based grouping
 - `multiline_boundary.log` - Delimiter-based boundaries
 - `multiline_json_arrays.log` - JSON arrays spanning lines
+- `stacktrace_java.log` - Untimestamped console output with JVM traces (`--multiline java`)
+- `stacktrace_python.log` - Untimestamped console output with chained tracebacks (`--multiline python`)
+- `stacktrace_go.log` - Untimestamped console output with panics and goroutine dumps (`--multiline go`)
+
+```bash
+# Group each traceback with the line that logged it; other lines stay single events
+kelora examples/stacktrace_python.log --multiline python -n 3
+```
 
 See `kelora --help-multiline` for detailed multiline strategies.
 

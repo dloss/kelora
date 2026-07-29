@@ -455,6 +455,7 @@ pub(crate) fn file_aware_batcher_thread(
     section_config: Option<crate::config::SectionConfig>,
     input_format: crate::config::InputFormat,
     strict: bool,
+    multiline_active: bool,
     ctrl_rx: Receiver<Ctrl>,
 ) -> Result<()> {
     let mut batch_id = 0u64;
@@ -561,6 +562,7 @@ pub(crate) fn file_aware_batcher_thread(
                                 current_type_map: &mut current_type_map,
                                 last_filename: &mut last_filename,
                                 csv_quote_open: &mut csv_quote_open,
+                                multiline_active,
                             };
                             handle_file_aware_line(line, filename, ctx)?;
 
@@ -708,6 +710,7 @@ pub(crate) fn file_aware_batcher_thread(
                                 current_type_map: &mut current_type_map,
                                 last_filename: &mut last_filename,
                                 csv_quote_open: &mut csv_quote_open,
+                                multiline_active,
                             };
                             handle_file_aware_line(line, filename, ctx)?;
 
@@ -820,6 +823,7 @@ fn feed_plain_line(
             keep_lines: &config.keep_lines,
             pending_deadline,
             csv_quote_open,
+            multiline_active: config.multiline_active,
         },
     )?;
 
@@ -888,7 +892,10 @@ pub(crate) fn handle_plain_line(line: &str, ctx: PlainLineContext<'_>) -> Result
             }
         }
 
-        if line.is_empty() && !matches!(ctx.input_format, crate::config::InputFormat::Line) {
+        if line.is_empty()
+            && !ctx.multiline_active
+            && !matches!(ctx.input_format, crate::config::InputFormat::Line)
+        {
             return Ok(());
         }
 
@@ -993,7 +1000,10 @@ pub(crate) fn handle_file_aware_line(
             }
         }
 
-        if line.is_empty() && !matches!(ctx.input_format, crate::config::InputFormat::Line) {
+        if line.is_empty()
+            && !ctx.multiline_active
+            && !matches!(ctx.input_format, crate::config::InputFormat::Line)
+        {
             return Ok(());
         }
 

@@ -1,0 +1,19 @@
+Starting OrderService v2.3.1
+Connected to broker at kafka:9092
+Failed to process order batch 7712
+org.springframework.dao.DataAccessResourceFailureException: could not execute statement
+	at org.springframework.orm.jpa.vendor.HibernateJpaDialect.convert(HibernateJpaDialect.java:277)
+	at org.springframework.orm.jpa.JpaTransactionManager.doCommit(JpaTransactionManager.java:566)
+	at com.example.orders.BatchWriter.flush(BatchWriter.java:88)
+	at com.example.orders.OrderConsumer.onMessage(OrderConsumer.java:41)
+Caused by: java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30000ms
+	at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)
+	at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:181)
+	... 4 more
+	Suppressed: java.lang.IllegalStateException: transaction already rolled back
+		at com.example.orders.BatchWriter.rollback(BatchWriter.java:112)
+Retrying batch 7712 in 5s
+Exception in thread "metrics-flusher" java.lang.OutOfMemoryError: Java heap space
+	at java.base/java.util.Arrays.copyOf(Arrays.java:3512)
+	at com.example.metrics.Buffer.grow(Buffer.java:29)
+Batch 7712 processed on retry
