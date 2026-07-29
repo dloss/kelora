@@ -2810,3 +2810,98 @@ fn test_metrics_cardinality_bookkeeping_key_is_hidden() {
         "scripts should see the same whole count the table prints: {stdout}"
     );
 }
+
+/// #377: percentile tracking was quadratic because the stored t-digest grew a
+/// centroid per event and was re-sorted and re-serialized on every one. The fix
+/// compresses the digest to a fixed centroid budget, which trades exactness for
+/// a bounded ~1% estimator error — so assert the estimates over an input large
+/// enough to actually trigger compression are still usable.
+#[test]
+fn test_percentiles_stay_accurate_once_the_digest_is_compressed() {
+    // 5000 events, values 1..=5000: true p50 = 2500, p95 = 4750, p99 = 4950.
+    let input: String = (1..=5000).map(|i| format!("{{\"d\":{i}}}\n")).collect();
+
+    let (json, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-j",
+            "-q",
+            "-e",
+            "track_percentiles(\"lat\", e.d)",
+            "--metrics=json",
+        ],
+        &input,
+    );
+    assert_eq!(exit_code, 0, "should exit successfully");
+
+    let parsed: serde_json::Value = serde_json::from_str(&json).expect("metrics json should parse");
+    for (key, expected) in [
+        ("lat_p50", 2500.0),
+        ("lat_p95", 4750.0),
+        ("lat_p99", 4950.0),
+    ] {
+        let actual = parsed[key]
+            .as_f64()
+            .unwrap_or_else(|| panic!("{key} should be a number: {json}"));
+        let error = (actual - expected).abs() / expected;
+        assert!(
+            error < 0.02,
+            "{key} should stay within 2% of {expected}, got {actual} ({:.2}% off)",
+            error * 100.0
+        );
+    }
+}
+
+/// #377: the fix bounds each worker's t-digest, but the *global* merge must stay
+/// uncompressed — `TDigest::merge` concatenates and sorts, so its result depends
+/// only on the centroid multiset and not on which batch finished first.
+/// Compressing mid-merge would make percentiles vary run to run in parallel
+/// mode, which the reference documents as deterministic.
+#[test]
+fn test_parallel_percentiles_are_deterministic_across_runs() {
+    // Large enough to span several reader batches and to push each worker's
+    // digest past the compression threshold.
+    let input: String = (0..100_000)
+        .map(|i| format!("{{\"d\":{}}}\n", i % 997))
+        .collect();
+
+    let mut results = Vec::new();
+    for _ in 0..4 {
+        let (json, _stderr, exit_code) = run_kelora_with_input(
+            &[
+                "-j",
+                "-q",
+                "-P",
+                "-e",
+                "track_percentiles(\"lat\", e.d)",
+                "--metrics=json",
+            ],
+            &input,
+        );
+        assert_eq!(exit_code, 0, "should exit successfully");
+
+        // Compare the parsed values, not the raw text: `--metrics=json` emits
+        // keys in hash order, which varies between runs on its own.
+        let parsed: serde_json::Value =
+            serde_json::from_str(&json).expect("metrics json should parse");
+        let values: Vec<(String, f64)> = ["lat_p50", "lat_p95", "lat_p99"]
+            .iter()
+            .map(|k| {
+                (
+                    (*k).to_string(),
+                    parsed[*k]
+                        .as_f64()
+                        .unwrap_or_else(|| panic!("{k} should be a number: {json}")),
+                )
+            })
+            .collect();
+        results.push(values);
+    }
+
+    for (i, result) in results.iter().enumerate().skip(1) {
+        assert_eq!(
+            &results[0], result,
+            "parallel run {i} disagreed with run 0; percentile merging must not \
+             depend on batch arrival order"
+        );
+    }
+}

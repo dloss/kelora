@@ -569,7 +569,13 @@ impl GlobalTracker {
         let existing_digest = deserialize_tdigest(&existing_blob)?;
         let new_digest = deserialize_tdigest(&new_blob)?;
 
-        // Merge the digests using the merge method
+        // Deliberately *not* compressed here, unlike the per-event path
+        // (#377). `merge` concatenates and sorts centroids, so the result is a
+        // function of the centroid multiset alone — identical no matter which
+        // order batches finish in. Compressing mid-merge would make the answer
+        // depend on that arrival order and cost the run-to-run determinism this
+        // mode documents. Workers already cap their own digests before hand-off,
+        // so the global list grows with the batch count, not the event count.
         let merged_digest = existing_digest.merge(&new_digest);
 
         // Serialize and store

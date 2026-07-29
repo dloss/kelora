@@ -2116,7 +2116,10 @@ track_percentiles("api_p95", latency)   // Skips () values
     - Working with latency, response time, or duration metrics
 
 !!! note "Parallel Mode Behavior"
-    In parallel mode, each worker maintains its own t-digest. During merge, digests are combined using the t-digest merge algorithm, preserving accuracy. Final percentile values are deterministic.
+    In parallel mode, each worker maintains its own t-digest. During merge, digests are combined using the t-digest merge algorithm, preserving accuracy. Final percentile values are deterministic — repeating a run gives the same numbers, regardless of the order workers finish in. Because the workers see different slices of the stream, a parallel run's estimates can differ from a serial run's by a fraction of the estimator's error bar.
+
+!!! note "Accuracy and Memory"
+    The sketch is compressed to a bounded number of centroids, so memory and per-event cost stay constant no matter how many events you feed it. The reported values are estimates with roughly 1% error — accurate enough for SLO thresholds and tail analysis, but not exact order statistics. Runs with only a few hundred values stay below the compression threshold and report exact percentiles.
 
 ---
 

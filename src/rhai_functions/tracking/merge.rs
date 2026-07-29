@@ -14,6 +14,26 @@ const HLL_SEED: u128 = 0x6b656c6f72615f686c6c5f73656564; // "kelora_hll_seed" in
 /// Magic bytes to identify HLL blobs (distinguishes from t-digest blobs)
 const HLL_MAGIC: &[u8; 4] = b"HLL\x01";
 
+/// Centroid budget for a stored t-digest.
+///
+/// `TDigest::merge` concatenates centroid lists without combining them, so an
+/// uncompressed digest grows by one centroid per value and every subsequent
+/// event pays for the whole list — quadratic in the event count (#377). 200
+/// centroids keeps the quantile error around 1%, which is well inside what the
+/// metrics views already round to.
+pub(crate) const TDIGEST_MAX_CENTROIDS: usize = 200;
+
+/// Bound a t-digest's centroid list so per-event work stays constant.
+///
+/// Compression only runs once the list has grown to twice the budget, so the
+/// O(k) compaction itself is amortized over `TDIGEST_MAX_CENTROIDS` events and
+/// small digests — the ones tests and short runs produce — stay exact.
+pub(crate) fn compress_tdigest(digest: &mut TDigest) {
+    if digest.centroids().len() > TDIGEST_MAX_CENTROIDS * 2 {
+        digest.compress(TDIGEST_MAX_CENTROIDS);
+    }
+}
+
 /// Public function name(s) behind an internal operation id, for error messages.
 pub(crate) fn op_display_name(op: &str) -> &str {
     match op {
@@ -239,6 +259,51 @@ mod tests {
             Dynamic::from(2_000_000_000i64),
         );
         assert_eq!(result.as_int().unwrap(), 3_000_000_000i64);
+    }
+
+    /// #377: `track_percentiles` folded one value per event into the stored
+    /// digest, and `TDigest::merge` concatenates centroids without combining
+    /// them — so the list grew by one per event and every event re-sorted and
+    /// re-serialized all of it. Replay the per-event loop and assert the digest
+    /// stays bounded; unbounded growth is the quadratic cost.
+    #[test]
+    fn test_tdigest_centroids_stay_bounded_across_events() {
+        let mut digest = TDigest::from_values(vec![0.0]);
+        for i in 1..10_000 {
+            digest = digest.merge(&TDigest::from_values(vec![i as f64]));
+            compress_tdigest(&mut digest);
+        }
+
+        assert!(
+            digest.centroids().len() <= TDIGEST_MAX_CENTROIDS * 2,
+            "10k events should not accumulate more than {} centroids, got {}",
+            TDIGEST_MAX_CENTROIDS * 2,
+            digest.centroids().len()
+        );
+
+        // Compression is only worth it if the estimates survive it: uniform
+        // 0..9999, so the true median is ~5000 and p95 is ~9500.
+        let p50 = digest.estimate_quantile(0.50);
+        let p95 = digest.estimate_quantile(0.95);
+        assert!(
+            (p50 - 5000.0).abs() < 100.0,
+            "p50 should stay within 1% of 5000, got {p50}"
+        );
+        assert!(
+            (p95 - 9500.0).abs() < 100.0,
+            "p95 should stay within ~1% of 9500, got {p95}"
+        );
+    }
+
+    /// A digest small enough to fit the budget must be left alone, so short
+    /// runs and the exact-value tests keep reporting exact quantiles.
+    #[test]
+    fn test_tdigest_under_budget_is_not_compressed() {
+        let values: Vec<f64> = (1..=200).map(|i| i as f64).collect();
+        let mut digest = TDigest::from_values(values);
+        let before = digest.centroids().len();
+        compress_tdigest(&mut digest);
+        assert_eq!(before, digest.centroids().len());
     }
 
     #[test]
