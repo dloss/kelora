@@ -1,4 +1,5 @@
-use drain_rs::DrainTree;
+mod tree;
+
 use grok::Grok;
 use regex::Regex;
 use sha2::{Digest, Sha256};
@@ -8,8 +9,24 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::LazyLock;
 
+/// Clusters held before the least-recently-matched one is evicted.
+///
+/// Not a user-facing option: a field that mines more distinct templates than
+/// this is a field that should not be templated (the fix is to normalize it, not
+/// to raise a cap), and a template list this long is past reading anyway. The cap
+/// exists so `--drain` on `tail -f` cannot grow without bound, which it did.
+const DEFAULT_MAX_CLUSTERS: usize = 10_000;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct DrainConfig {
+    /// Leading tokens used as tree routing keys.
+    ///
+    /// This is the count itself, not the literature's off-by-a-constant
+    /// `depth` (Drain's reference implementation subtracts 2 and starts at 1,
+    /// so its `depth=4` keys on one token). The vendored crate kelora used
+    /// before took the reference default of 4 while keying on 5 tokens, which
+    /// split every message that varies early — `Failed password for <user> …`
+    /// became one template per user.
     pub depth: usize,
     pub max_children: usize,
     pub similarity: f64,
@@ -19,9 +36,23 @@ pub struct DrainConfig {
 impl Default for DrainConfig {
     fn default() -> Self {
         Self {
-            depth: 4,
+            // Both values come from a grid over all 16 loghub_2k datasets
+            // (`just drain-accuracy`, baseline in dev/), not from the
+            // literature's defaults — which kelora had copied verbatim onto a
+            // tree that counted `depth` differently.
+            //
+            // Two keyed tokens: enough that unrelated messages rarely share a
+            // leaf, few enough that a value in an early position does not split
+            // the cluster.
+            depth: 2,
             max_children: 100,
-            similarity: 0.4,
+            // Fewer keyed tokens means the similarity bar has to do the work the
+            // routing keys used to do, so it is far above the reference 0.4: at
+            // 0.4 unrelated messages sharing a leaf merged freely, which raised
+            // accuracy on paper while destroying distinctions (over-merged events
+            // rose). 0.8 was the joint optimum — accuracy peaks there *and*
+            // fewer events land in over-merged templates than before.
+            similarity: 0.8,
             filters: Vec::new(),
         }
     }
@@ -29,7 +60,10 @@ impl Default for DrainConfig {
 
 impl DrainConfig {
     pub fn sanitized(&self) -> Self {
-        let depth = self.depth.max(2);
+        // One keyed token is meaningful now that `depth` counts keys directly
+        // (with none, every line of a length would share one leaf), where the
+        // old floor of 2 was chosen against the crate's different accounting.
+        let depth = self.depth.max(1);
         let max_children = self.max_children.max(1);
         let similarity = self.similarity.clamp(0.0, 1.0);
         Self {
@@ -37,6 +71,15 @@ impl DrainConfig {
             max_children,
             similarity,
             filters: self.filters.clone(),
+        }
+    }
+
+    fn tree_config(&self) -> tree::TreeConfig {
+        tree::TreeConfig {
+            depth: self.depth,
+            max_children: self.max_children,
+            min_similarity: self.similarity,
+            max_clusters: DEFAULT_MAX_CLUSTERS,
         }
     }
 }
@@ -73,9 +116,14 @@ struct TemplateMetadata {
 #[derive(Debug)]
 struct DrainState {
     config: DrainConfig,
-    tree: DrainTree,
+    tree: tree::Tree,
     /// Masks every line before the tree sees it (see [`Masker`]).
     masker: Masker,
+    /// Reused per-line buffers: the masked tokens, and the routing key the tree
+    /// builds from them. Both are overwritten on every line; keeping them here
+    /// keeps two allocations out of the hot path.
+    token_scratch: Vec<MaskedToken>,
+    route_scratch: Vec<MaskedToken>,
     /// Metadata tracked per cluster, keyed by the cluster's stable id.
     ///
     /// Not by its template: a cluster's template is rewritten as the cluster
@@ -90,50 +138,34 @@ struct DrainState {
 impl DrainState {
     fn new(config: DrainConfig) -> Self {
         let config = config.sanitized();
-        // Masking lives in kelora's Masker, which sees whole lines and so can
-        // do what drain's per-token pass cannot; the tree therefore gets no
-        // filter patterns of its own. Handing drain the patterns as well would
-        // mask the placeholders a second time — every name containing a digit
-        // (`<ipv4>`, `<sha256>`) re-matches the num pattern.
-        let mut grok = build_grok();
-        let tree = DrainTree::new()
-            .max_depth(to_u16(config.depth))
-            .max_children(to_u16(config.max_children))
-            .min_similarity(config.similarity as f32)
-            .filter_patterns(Vec::new())
-            .build_patterns(&mut grok);
+        let tree = tree::Tree::new(config.tree_config());
         let masker = Masker::new(&config.filters);
         Self {
             config,
             tree,
             masker,
+            token_scratch: Vec::new(),
+            route_scratch: Vec::new(),
             metadata: HashMap::new(),
         }
     }
 
     /// Per-line hot path: add `text` to the tree and update the cluster's
-    /// metadata, returning the raw template string, its match count, whether
-    /// this was the cluster's first sighting, and the cluster's id.
+    /// metadata, returning the cluster's match count, whether this was its first
+    /// sighting, and its id.
     ///
-    /// The template id (a SHA256 hash) is deliberately *not* computed here — it
-    /// is display-only and derived once per template in [`templates`].
-    fn record(
-        &mut self,
-        text: &str,
-        line_num: Option<usize>,
-    ) -> Result<(String, usize, bool, u64), String> {
-        // The tree sees the masked line; `text` stays the stored sample.
-        let masked = self.masker.mask_line(text);
-        let cluster = self
-            .tree
-            .add_log_line(&masked)
-            .ok_or_else(|| "Drain failed to match or create a cluster".to_string())?;
-        let count = usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX);
-        let template = cluster.as_string();
-        let cluster_id = cluster.id();
-        let is_new = count == 1;
+    /// Deliberately returns no template: rendering one costs a `String` per line
+    /// and only the Rhai entry point wants it, while the CLI modes read the
+    /// finished set once at end of input. The template id (a SHA256 hash) is not
+    /// computed here either — it is display-only, derived once per template in
+    /// [`DrainState::templates`].
+    fn record(&mut self, text: &str, line_num: Option<usize>) -> (usize, bool, u64) {
+        // The tree sees the masked tokens; `text` stays the stored sample.
+        self.masker.mask_into(text, &mut self.token_scratch);
+        let matched = self.tree.add(&self.token_scratch, &mut self.route_scratch);
+        let count = usize::try_from(matched.count).unwrap_or(usize::MAX);
 
-        match self.metadata.get_mut(&cluster_id) {
+        match self.metadata.get_mut(&matched.id) {
             // Hit path (the common case): no allocation, just refresh last_line.
             Some(meta) => {
                 if let Some(ln) = line_num {
@@ -142,7 +174,7 @@ impl DrainState {
             }
             None => {
                 self.metadata.insert(
-                    cluster_id,
+                    matched.id,
                     TemplateMetadata {
                         sample: text.to_string(),
                         first_line: line_num,
@@ -152,11 +184,16 @@ impl DrainState {
             }
         }
 
-        Ok((template, count, is_new, cluster_id))
+        (count, matched.is_new, matched.id)
     }
 
     fn ingest(&mut self, text: &str, line_num: Option<usize>) -> Result<DrainResult, String> {
-        let (template, count, is_new, cluster_id) = self.record(text, line_num)?;
+        let (count, is_new, cluster_id) = self.record(text, line_num);
+        let template = self
+            .tree
+            .cluster(cluster_id)
+            .map(|cluster| cluster.template())
+            .ok_or_else(|| "Drain lost the cluster it just matched".to_string())?;
         let template_id = generate_template_id(&template);
 
         // `record` guarantees the entry exists; the fallback keeps this total.
@@ -176,34 +213,83 @@ impl DrainState {
         })
     }
 
-    fn templates(&self) -> Vec<DrainTemplate> {
-        let mut templates: Vec<DrainTemplate> = self
+    /// The finished template set, as every end-of-input consumer sees it.
+    ///
+    /// The single place the model is turned into results, so `--drain`'s listing
+    /// and `--drain-diff`'s frozen matcher can never disagree about what was
+    /// mined. Sorted for a deterministic, readable order: heaviest first, then by
+    /// template.
+    fn finalized(&self) -> Vec<Finalized> {
+        let mut out: Vec<Finalized> = self
             .tree
-            .log_groups()
-            .into_iter()
-            .map(|cluster| {
-                let template = cluster.as_string();
-                let template_id = generate_template_id(&template);
-                let meta = self.metadata.get(&cluster.id());
-                DrainTemplate {
-                    template,
-                    template_id,
-                    count: usize::try_from(cluster.num_matched()).unwrap_or(usize::MAX),
+            .clusters()
+            .map(|(id, cluster)| {
+                let meta = self.metadata.get(&id);
+                Finalized {
+                    tokens: cluster.tokens.clone(),
+                    count: usize::try_from(cluster.count).unwrap_or(usize::MAX),
                     sample: meta.map(|m| m.sample.clone()).unwrap_or_default(),
                     first_line: meta.and_then(|m| m.first_line),
                     last_line: meta.and_then(|m| m.last_line),
                 }
             })
             .collect();
-
-        templates.sort_by(|a, b| {
+        out.sort_by(|a, b| {
             b.count
                 .cmp(&a.count)
-                .then_with(|| a.template.cmp(&b.template))
+                .then_with(|| a.template().cmp(&b.template()))
         });
-
-        templates
+        out
     }
+
+    fn templates(&self) -> Vec<DrainTemplate> {
+        self.finalized()
+            .into_iter()
+            .map(|entry| {
+                let template = entry.template();
+                DrainTemplate {
+                    template_id: generate_template_id(&template),
+                    template,
+                    count: entry.count,
+                    sample: entry.sample,
+                    first_line: entry.first_line,
+                    last_line: entry.last_line,
+                }
+            })
+            .collect()
+    }
+}
+
+/// One template of the finished set, before it is rendered for a particular
+/// consumer. Carries tokens rather than a rendered string because that is the
+/// form the tree and the frozen matcher both compare in.
+#[derive(Debug, Clone)]
+struct Finalized {
+    tokens: Vec<MaskedToken>,
+    count: usize,
+    sample: String,
+    first_line: Option<usize>,
+    last_line: Option<usize>,
+}
+
+impl Finalized {
+    fn template(&self) -> String {
+        render_template(&self.tokens)
+    }
+}
+
+/// Render masked tokens the way a template is displayed and stored: joined with
+/// single spaces. [`FrozenTemplateSet`] splits on the same separator, so the
+/// round-trip is exact.
+fn render_template(tokens: &[MaskedToken]) -> String {
+    let mut out = String::new();
+    for (i, token) in tokens.iter().enumerate() {
+        if i > 0 {
+            out.push(' ');
+        }
+        out.push_str(token.as_str());
+    }
+    out
 }
 
 /// Generate a stable, deterministic template ID from a template string.
@@ -249,10 +335,6 @@ fn normalize_template(template: &str) -> String {
         out.push_str(token);
     }
     out
-}
-
-fn to_u16(value: usize) -> u16 {
-    value.min(u16::MAX as usize) as u16
 }
 
 fn build_grok() -> Grok {
@@ -357,7 +439,9 @@ const WILDCARD: &str = "<*>";
 
 /// One token after masking: either a placeholder/literal, or drain's wildcard
 /// (`<*>`, which a stored template also spells that way).
-#[derive(Debug, Clone, PartialEq)]
+///
+/// `Hash`/`Eq` because the tree keys its routing nodes on these directly.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum MaskedToken {
     WildCard,
     Val(String),
@@ -429,8 +513,9 @@ impl Masker {
         }
     }
 
-    /// Mask `line` into the tokens drain should cluster on.
-    fn mask_tokens(&self, line: &str) -> Vec<MaskedToken> {
+    /// Mask `line` into the tokens the tree clusters on, reusing `out`'s
+    /// allocation. The per-line entry point.
+    fn mask_into(&self, line: &str, out: &mut Vec<MaskedToken>) {
         let line = if self.defaults {
             CALENDAR_TS_RE.replace_all(line, "<timestamp>")
         } else {
@@ -438,25 +523,28 @@ impl Masker {
         };
         // One scratch buffer per line, reused by every token (see `mask_token`).
         let mut spans = Vec::with_capacity(self.patterns.len());
-        // split(' ') (not split_whitespace) keeps drain's token count, including
-        // the empty tokens a run of spaces produces.
-        line.split(' ')
-            .map(|t| self.mask_token(t.trim(), &mut spans))
-            .collect()
+        out.clear();
+        // split(' ') (not split_whitespace) keeps the token count stable,
+        // including the empty tokens a run of spaces produces.
+        out.extend(
+            line.split(' ')
+                .map(|t| self.mask_token(t.trim(), &mut spans)),
+        );
     }
 
-    /// The masked line drain ingests: [`Self::mask_tokens`] joined back with
-    /// single spaces, which is how drain itself renders a template.
-    fn mask_line(&self, line: &str) -> String {
-        let tokens = self.mask_tokens(line);
-        let mut out = String::with_capacity(line.len());
-        for (i, token) in tokens.iter().enumerate() {
-            if i > 0 {
-                out.push(' ');
-            }
-            out.push_str(token.as_str());
-        }
+    /// [`Self::mask_into`] into a fresh vector, for callers that are not on the
+    /// per-line path.
+    fn mask_tokens(&self, line: &str) -> Vec<MaskedToken> {
+        let mut out = Vec::new();
+        self.mask_into(line, &mut out);
         out
+    }
+
+    /// The masked line as a template string, for readable test assertions: this
+    /// is exactly what the tree would store for a line seen once.
+    #[cfg(test)]
+    fn mask_line(&self, line: &str) -> String {
+        render_template(&self.mask_tokens(line))
     }
 
     /// Replace every filter match inside `token` with its placeholder, keeping
@@ -716,7 +804,8 @@ pub fn drain_record(
         let drain = state
             .as_mut()
             .ok_or_else(|| "Drain state not initialized".to_string())?;
-        drain.record(text, line_num).map(|_| ())
+        drain.record(text, line_num);
+        Ok(())
     })
 }
 
@@ -757,28 +846,17 @@ pub struct FrozenTemplateSet {
 }
 
 impl FrozenTemplateSet {
-    fn new(templates: Vec<String>, filters: &[String]) -> Self {
+    fn new(templates: Vec<Vec<MaskedToken>>, filters: &[String]) -> Self {
         let mut by_len: HashMap<usize, Vec<FrozenEntry>> = HashMap::new();
-        for template in templates {
-            // as_string() joins tokens with single spaces, so split(' ')
-            // round-trips them (including empty tokens from blank runs).
-            let tokens: Vec<MaskedToken> = template
-                .split(' ')
-                .map(|t| {
-                    if t == "<*>" {
-                        MaskedToken::WildCard
-                    } else {
-                        MaskedToken::Val(t.to_string())
-                    }
-                })
-                .collect();
+        for tokens in templates {
+            let template = render_template(&tokens);
             by_len
                 .entry(tokens.len())
                 .or_default()
                 .push(FrozenEntry { tokens, template });
         }
-        // log_groups() iterates HashMaps, so its order varies between runs;
-        // sort so similarity ties resolve deterministically.
+        // Sort so similarity ties resolve deterministically regardless of the
+        // order the model happened to yield its clusters in.
         for entries in by_len.values_mut() {
             entries.sort_by(|a, b| a.template.cmp(&b.template));
         }
@@ -827,21 +905,40 @@ impl FrozenTemplateSet {
 
 /// Snapshot the current thread's mined templates into a [`FrozenTemplateSet`].
 /// Empty (matches nothing) when no drain state exists.
+///
+/// Built from the same [`DrainState::finalized`] set `--drain` prints, so a
+/// template a user can see is a template the diff can count into.
 pub fn frozen_template_set() -> FrozenTemplateSet {
     DRAIN_STATE.with(|state| {
         let state = state.borrow();
         match state.as_ref() {
             Some(drain) => {
                 let templates = drain
-                    .tree
-                    .log_groups()
+                    .finalized()
                     .into_iter()
-                    .map(|cluster| cluster.as_string())
+                    .map(|entry| entry.tokens)
                     .collect();
                 FrozenTemplateSet::new(templates, &drain.config.filters)
             }
             None => FrozenTemplateSet::new(Vec::new(), &[]),
         }
+    })
+}
+
+/// The cluster cap in force, for the warning that reports hitting it.
+pub fn max_clusters() -> usize {
+    DEFAULT_MAX_CLUSTERS
+}
+
+/// Clusters dropped to stay under the cluster cap, if any drain state exists.
+/// Nonzero means the reported counts are incomplete.
+pub fn evicted_clusters() -> u64 {
+    DRAIN_STATE.with(|state| {
+        state
+            .borrow()
+            .as_ref()
+            .map(|drain| drain.tree.evicted())
+            .unwrap_or(0)
     })
 }
 
@@ -985,12 +1082,10 @@ mod tests {
             (2, "Fri Jul  1 04:11:02 2005"), // asctime pads the day to width 2
             (3, "Sun Jul 10 05:00:00 2005"),
         ] {
-            drain
-                .record(
-                    &format!("connection from 10.0.0.{} at {}", line, at),
-                    Some(line),
-                )
-                .expect("record");
+            drain.record(
+                &format!("connection from 10.0.0.{} at {}", line, at),
+                Some(line),
+            );
         }
 
         let templates = drain.templates();
@@ -1138,15 +1233,13 @@ mod tests {
         // in `vendor/drain-rs`.
         let mut drain = DrainState::new(DrainConfig::default());
         for user in ["cyrus", "news", "test"] {
-            drain
-                .record(
-                    &format!(
-                        "combo sshd(pam_unix)[19937]: session closed for user {}",
-                        user
-                    ),
-                    None,
-                )
-                .expect("record");
+            drain.record(
+                &format!(
+                    "combo sshd(pam_unix)[19937]: session closed for user {}",
+                    user
+                ),
+                None,
+            );
         }
 
         let templates = drain.templates();
@@ -1170,21 +1263,19 @@ mod tests {
         // must stay identical to the ingest path's.
         let mut drain = DrainState::new(DrainConfig::default());
         for line in 1..=3 {
-            drain
-                .record(
-                    &format!(
-                        "connection from 10.0.0.{} at Mon Jun 13 03:55:1{} 2005 uid=0",
-                        line, line
-                    ),
-                    Some(line),
-                )
-                .expect("record");
+            drain.record(
+                &format!(
+                    "connection from 10.0.0.{} at Mon Jun 13 03:55:1{} 2005 uid=0",
+                    line, line
+                ),
+                Some(line),
+            );
         }
         let templates = drain.templates();
         assert_eq!(templates.len(), 1, "got {:?}", templates);
 
         let frozen = FrozenTemplateSet::new(
-            templates.iter().map(|t| t.template.clone()).collect(),
+            drain.finalized().into_iter().map(|e| e.tokens).collect(),
             &drain.config.filters,
         );
         assert_eq!(
@@ -1235,12 +1326,8 @@ mod tests {
         // The CLI --drain path uses `record`; it must feed the same tree/metadata
         // that `templates()` reads, so counts and samples match the `ingest` path.
         let mut drain = DrainState::new(DrainConfig::default());
-        drain
-            .record("connect to 10.0.0.1", Some(1))
-            .expect("first record");
-        drain
-            .record("connect to 10.0.0.2", Some(4))
-            .expect("second record");
+        drain.record("connect to 10.0.0.1", Some(1));
+        drain.record("connect to 10.0.0.2", Some(4));
 
         let templates = drain.templates();
         assert_eq!(templates.len(), 1);

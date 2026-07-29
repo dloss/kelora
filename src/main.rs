@@ -1220,6 +1220,26 @@ fn unseen_key_suggestion(key: &str, discovered: &BTreeSet<String>) -> String {
     present_fields_hint(discovered)
 }
 
+/// Warning text when the template model hit its cluster cap, or `None` when it
+/// did not (the overwhelmingly common case).
+///
+/// Evicted clusters take their counts with them, so the output silently
+/// under-reports — exactly the kind of cap the project refuses to apply
+/// quietly. The advice is to normalize rather than to raise a limit: a field
+/// mining this many distinct templates is one where templating is the wrong
+/// tool, the same reasoning behind `--drain-diff`'s unique-value cap.
+fn cluster_cap_warning(flag: &str) -> Option<String> {
+    let evicted = crate::drain::evicted_clusters();
+    if evicted == 0 {
+        return None;
+    }
+    Some(format!(
+        "{flag} reached its limit of {} templates and dropped the {} least-recently-seen one(s), so the counts below are incomplete. The mined field is too varied to template as-is — normalize it first (e.g. --exec 'e.msg = e.msg.normalized()') or narrow the input with --filter.",
+        crate::drain::max_clusters(),
+        evicted,
+    ))
+}
+
 /// Error text for a `--drain`/`--drain-diff` run whose mined field carried no
 /// value on a single event: every event was excluded, so the mode's output
 /// describes nothing. `--drain-diff` would claim "no new templates / no volume
@@ -1743,6 +1763,13 @@ fn handle_pipeline_success(
             std::process::exit(ExitCode::GeneralError as i32);
         }
         if terminal_allowed {
+            if config.warnings_allowed() {
+                if let Some(warning) = cluster_cap_warning("--drain") {
+                    stderr
+                        .writeln(&crate::config::format_warning_message_auto(&warning))
+                        .unwrap_or(());
+                }
+            }
             let templates = crate::drain::drain_templates();
             let output = match drain_format {
                 crate::cli::DrainFormat::Table
@@ -1833,6 +1860,13 @@ fn handle_pipeline_success(
                 }
                 if terminal_allowed {
                     if config.warnings_allowed() {
+                        // Same shared model, same incompleteness: a diff computed
+                        // from an evicted template set under-reports both sides.
+                        if let Some(warning) = cluster_cap_warning("--drain-diff") {
+                            stderr
+                                .writeln(&crate::config::format_warning_message_auto(&warning))
+                                .unwrap_or(());
+                        }
                         // Partial exclusions are normal in heterogeneous logs,
                         // but they shrink the corpus invisibly — the totals line
                         // reports what was compared, never what was dropped.
