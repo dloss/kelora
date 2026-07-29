@@ -7402,7 +7402,13 @@ timestamp, date, time, num.
 <code>timestamp</code> also covers calendar dates spanning several tokens — ctime/asctime
 (<code>Mon Jun 13 03:55:15 2005</code>, with or without the year) and the bare syslog form
 (<code>Jun 13 03:55:15</code>) — so one message doesn't split into a template per weekday.
-In a <code>key=value</code> token only the value is masked (<code>uid=&lt;num&gt;</code>), keeping the key.</p>
+Only the matched span is masked, so the literal part of a token survives:
+<code>uid=0</code> → <code>uid=&lt;num&gt;</code>, <code>worker-3</code> → <code>worker-&lt;num&gt;</code>, <code>GET /api/v1/users?id=5</code> →
+<code>GET &lt;path&gt;?id=&lt;num&gt;</code>. A digit inside a word belongs to the word and is left
+alone, so <code>ssh2</code>, <code>utf8</code> and <code>sha256</code> stay as they are.
+What no filter catches, Drain itself generalizes: a position the events in one
+template disagree on is shown as <code>&lt;*&gt;</code> (<code>session closed for user &lt;*&gt;</code>), with
+<code>--drain=full</code>'s <code>sample:</code> giving a real line for the concrete value.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a><span class="c1"># Default table format</span>
 <a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span>--drain<span class="w"> </span>-k<span class="w"> </span>message
 <a id="__codelineno-83-3" name="__codelineno-83-3" href="#__codelineno-83-3"></a>
