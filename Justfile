@@ -172,6 +172,16 @@ docs-prune *args:
     UV_TOOL_DIR="{{justfile_directory()}}/.uv/tools" \
     bash dev/prune-doc-versions.sh "$@"
 
+# Drain template-mining accuracy against the loghub_2k ground truth (manual; fetches ~4MB on first run)
+drain-accuracy *args:
+    bash dev/fetch-drain-corpus.sh
+    cargo test --test drain_accuracy -- --ignored --nocapture {{args}}
+
+# Re-record dev/drain-accuracy-baseline.json after an intended clustering change
+drain-accuracy-update:
+    bash dev/fetch-drain-corpus.sh
+    KELORA_DRAIN_ACCURACY_UPDATE=1 cargo test --test drain_accuracy -- --ignored --nocapture
+
 # Run JSON parser fuzzing locally (requires cargo-fuzz + nightly toolchain)
 fuzz-json *args:
     #!/usr/bin/env bash
