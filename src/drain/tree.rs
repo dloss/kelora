@@ -390,6 +390,14 @@ mod tests {
     fn a_short_line_still_leaves_a_position_to_generalize() {
         // Every token would be a routing key under `drain-rs`'s termination
         // rule, so these mined one template per value however `depth` was set.
+        //
+        // Structural, not a statement about the shipped default: this uses the
+        // helper's permissive similarity, and at the tuned default of 0.8 two of
+        // three tokens matching (0.67) is still short of the bar. Loosening the
+        // bar to admit them was measured and rejected — allowing any one position
+        // to differ regardless of length over-merged short messages badly
+        // (Android -32pp, HPC -47pp). What changed here is that the position is
+        // now *available* to generalize; whether it does is the threshold's call.
         let mut t = tree(4);
         assert_eq!(
             mine(&mut t, &["started service alpha", "started service bravo"]),
