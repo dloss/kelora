@@ -33,6 +33,21 @@
 //! Memory is bounded: a stream with unbounded template variety evicts the
 //! least-recently-matched cluster past `max_clusters` rather than growing
 //! forever, and reports that it did (`--drain` on `tail -f` had no cap at all).
+//!
+//! # Cost on input that is not log-shaped
+//!
+//! Routing is O(`depth`) and a leaf normally holds a handful of clusters, so the
+//! per-line cost is flat — 400k lines of real log mine in ~17s, dominated by
+//! masking. The exception is input whose *keyed* positions are near-unique: once a
+//! node exceeds `max_children` distinct keys everything else shares its wildcard
+//! child, so a log with thousands of distinct first tokens funnels into one leaf
+//! and each line is compared against everything in it. 14k such lines take ~6s
+//! rather than ~0.6s.
+//!
+//! Left alone deliberately. Bounding the comparison would change which cluster a
+//! line joins on ordinary input to speed up input that is already being reported
+//! as untemplatable — a field this varied trips the cluster cap and its warning,
+//! whose advice is to normalize the field rather than mine more of it.
 
 use super::MaskedToken;
 use lru::LruCache;
