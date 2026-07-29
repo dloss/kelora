@@ -1629,10 +1629,27 @@ For lightweight normalization without Drain, use `normalized()` on the field ins
 
 Optional `options` map keys:
 
-- `depth` (int)
-- `max_children` (int)
-- `similarity` (float)
+- `depth` (int) — leading tokens used as clustering keys (default 2). This is the
+  count itself, not the Drain paper's `depth` (whose 4 means one keyed token).
+  Raising it separates messages that differ early; lowering it groups more.
+  Never more than one below a message's token count, so a position is always left
+  for `<*>`.
+- `max_children` (int) — distinct keys allowed at one tree node (default 100)
+  before further values share a wildcard branch.
+- `similarity` (float) — fraction of positions that must match exactly for a line
+  to join an existing template (default 0.8). With few keyed tokens this is what
+  keeps unrelated messages apart, so it is well above the paper's 0.4.
 - `filters` (string CSV or array of grok patterns)
+
+The defaults come from measuring all 16 [loghub](https://github.com/logpai/loghub)
+`_2k` datasets against their ground truth (`just drain-accuracy`), not from the
+paper's defaults — see `dev/drain-accuracy-baseline.json`. Prefer changing the
+mined field (or `normalized()`) over tuning these.
+
+Per-line results are provisional: a template is rewritten as its cluster
+generalizes, and near-identical templates are merged once input ends. So the
+`template` this returns mid-stream is the model *so far*, while `--drain` and
+`drain_templates()` report the finished set.
 
 #### `drain_templates()`
 Return array of `{template, count}` from the current Drain model. Sequential mode only.

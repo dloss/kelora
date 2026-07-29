@@ -1274,6 +1274,31 @@ What no filter catches, Drain itself generalizes: a position the events in one
 template disagree on is shown as `<*>` (`session closed for user <*>`), with
 `--drain=full`'s `sample:` giving a real line for the concrete value.
 
+**How lines are grouped.** Messages are bucketed by token count, then routed on
+their first two tokens, then matched against the templates already in that bucket
+— a line joins the closest one when at least 80% of its positions match exactly,
+and starts a new template otherwise. At end of input, templates that differ in a
+single position are merged when the evidence says that position holds a value
+rather than a keyword, so a message split across many names (`Invalid user admin
+…`, `… oracle …`) reports once as `Invalid user <*> from <ipv4>`. A merge that
+would leave a template with no literal text of its own is refused, so distinct
+event names are never collapsed into `<*> <num>`.
+
+Two consequences worth knowing. A message whose *early* tokens vary can still
+split, and the fix is the mined field rather than a flag: `--exec` the varying
+prefix away, or mine a narrower field. And very short messages (three or four
+tokens) rarely generalize, because one varying token out of three is too little
+agreement to be sure two lines are the same message.
+
+These settings are not exposed as CLI flags. They were chosen by measuring all
+16 [loghub](https://github.com/logpai/loghub) `_2k` datasets against their
+ground truth (`just drain-accuracy`); `drain_template()` in Rhai takes `depth` and
+`similarity` for the rare log that needs different ones.
+
+The model is bounded at 10,000 templates. A field varied enough to exceed that
+gets a warning (🔸) saying counts are incomplete — the answer there is to
+normalize the field, not to mine more of it.
+
 ```bash
 # Default table format
 kelora -j app.log --drain -k message
