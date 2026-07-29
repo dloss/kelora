@@ -1301,7 +1301,7 @@ kelora --drain-diff old.log new.log -k msg
 kelora --drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
 
 # One input, split at the first match: no timestamp needed
-kelora --drain-diff --cut-when 'e.msg.contains("deploy started")' incident.log -k msg
+kelora --drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log -k msg
 ```
 
 **Formats:**
@@ -1449,7 +1449,8 @@ kelora --drain-diff --cut-at '2026-07-24 14:00' incident.log -k msg
 time range. On an archived or incident log both land outside the data entirely,
 which is why a one-sided split is a hard error rather than a report (above). For
 a historical log, give an absolute timestamp — or use
-[`--cut-when`](#-cut-when-expr), which needs no clock at all.
+[`--cut-before`](#-cut-before-expr) / [`--cut-after`](#-cut-after-expr), which
+need no clock at all.
 
 Every successful run states where the split landed, so the boundary is never
 something you have to verify separately:
@@ -1467,26 +1468,36 @@ carries the same information as `baseline_span` / `target_span` objects
 timestamps). Two-input mode reports its spans too whenever the logs are
 timestamped.
 
-#### `--cut-when <EXPR>`
+#### `--cut-before <EXPR>` / `--cut-after <EXPR>`
 
 Boolean Rhai expression whose **first match** splits a single `--drain-diff`
-input: events before it are the baseline, the matching event and everything after
-are the target.
+input. The two flags differ only in where the cut is placed relative to the
+matching event — the same distinction the
+[`--section-*`](#-section-from-regex) family draws:
 
-Use this when you know what the change looks like in the log but not when it
-happened — which is the common case in an incident. There is no timestamp to look
-up, no clock to reason about, and nothing to check the log's time range for first:
+| Flag | Cut placed | Matching event becomes |
+|------|-----------|------------------------|
+| `--cut-before` | immediately **before** the match | the first **target** event |
+| `--cut-after` | immediately **after** the match | the last **baseline** event |
+
+Pick by what the marker means. A line that *opens* the new regime — a deploy
+marker, the first error of an incident — takes `--cut-before`. A line that
+*closes* the old one — `deploy finished`, `migration complete`, the last healthy
+heartbeat — takes `--cut-after`.
 
 ```bash
-# Split at the deploy marker
-kelora --drain-diff --cut-when 'e.msg.contains("deploy started")' incident.log -k msg
+# The marker starts the new regime
+kelora --drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log -k msg
+kelora --drain-diff --cut-before 'e.status >= 500' access.log -k msg
 
-# Split at the first server error
-kelora --drain-diff --cut-when 'e.status >= 500' access.log -k msg
-
-# Split at the first event off the old version
-kelora --drain-diff --cut-when 'e.version != "1.4.2"' rollout.log -k msg
+# The marker ends the old one
+kelora --drain-diff --cut-after 'e.msg.contains("deploy finished")' incident.log -k msg
+kelora --drain-diff --cut-after 'e.phase == "warmup"' rollout.log -k msg
 ```
+
+Use either when you know what the change looks like in the log but not when it
+happened — which is the common case in an incident. There is no timestamp to look
+up, no clock to reason about, and no need to check the log's time range first.
 
 The boundary **latches** on the first match, so a predicate that keeps matching
 (`e.status >= 500` on a log full of errors) still splits the log exactly once. The
@@ -1495,22 +1506,26 @@ nothing, and no events are held in memory — unlike a time-relative split, this
 needs one bool of state.
 
 Same expression syntax as [`--filter`](#-filter-expr) (see `--help-rhai`), and
-`-I`/`--include` helpers are available.
+`-I`/`--include` helpers are available. Mutually exclusive with each other and
+with `--cut-at`.
 
-Two failure modes are refused rather than reported (exit `1`):
+**Degenerate splits are refused** rather than reported (exit `1`), each with the
+diagnosis that fits:
 
 - **The predicate never matched.** The target side would be empty and every
   template would read as VANISHED. The error suggests trying the expression with
   `--filter` first.
-- **The predicate matched the very first event.** The baseline side would be empty
-  and every template would read as NEW — the predicate is too broad.
+- **`--cut-before` matched the very first event.** The baseline side would be
+  empty and every template would read as NEW — either the predicate is too broad,
+  or the marker genuinely is the first event and `--cut-after` is the right flag.
+- **`--cut-after` matched the last event.** The predicate was right but nothing
+  falls after the boundary, so the target is empty. Distinguished from "never
+  matched", since the fix is different: compare against a later capture.
 
 A predicate that *fails to evaluate* before it finds the boundary also fails the
 run. This is stricter than `--filter`, where a per-event error drops just that
 event: here the boundary is a single decision, so one failed evaluation leaves it
 unknown and silently puts every later event on the baseline side.
-
-Mutually exclusive with `--cut-at`.
 
 ### Field Discovery
 

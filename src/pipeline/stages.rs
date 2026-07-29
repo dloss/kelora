@@ -1240,7 +1240,7 @@ impl ScriptStage for DrainStage {
 pub struct DrainDiffStage {
     field_name: String,
     rule: crate::config::DrainDiffRule,
-    /// `--cut-when`'s predicate, compiled once at construction.
+    /// The `--cut-before`/`--cut-after` predicate, compiled once at construction.
     cut_predicate: Option<crate::engine::CompiledExpression>,
     /// Whether `cut_predicate` has already matched. The boundary latches, so a
     /// predicate that keeps matching still splits the log exactly once — and the
@@ -1258,7 +1258,7 @@ impl DrainDiffStage {
         }
     }
 
-    /// Compile `--cut-when`'s predicate, using the same machinery as `--filter`
+    /// Compile the `--cut-before`/`--cut-after` predicate, using the same machinery as `--filter`
     /// so the two accept identical expressions and the same include helpers.
     pub fn with_cut_predicate(
         mut self,
@@ -1275,7 +1275,7 @@ impl ScriptStage for DrainDiffStage {
     // Mines templates from a single field's text. In --cut-at mode the side is
     // decided by `parsed_ts`, which the parser derives from the timestamp
     // candidate fields — keep those names so projection pushdown does not
-    // strip them. --cut-when's predicate can read anything, so that mode has to
+    // strip them. A --cut-before/--cut-after predicate can read anything, so that mode has to
     // give up projection and demand every field.
     fn field_demands(&self) -> crate::projection::Demand {
         if matches!(self.rule, crate::config::DrainDiffRule::Predicate { .. }) {
@@ -1312,17 +1312,20 @@ impl ScriptStage for DrainDiffStage {
                     return ScriptResult::Emit(event);
                 }
             },
-            crate::config::DrainDiffRule::Predicate { .. } => {
+            crate::config::DrainDiffRule::Predicate { placement, .. } => {
                 // Evaluate only until the boundary is found: afterwards the side
                 // is settled, so the remaining events cost nothing. A predicate
                 // that errors is a broken split rather than a per-event problem
                 // — every later event would inherit the wrong side — so it fails
                 // the run instead of being absorbed.
-                if !self.cut_crossed {
+                let matched = if self.cut_crossed {
+                    false
+                } else {
                     let Some(predicate) = self.cut_predicate.as_ref() else {
-                        return ScriptResult::Error(
-                            "--cut-when predicate was not compiled; this is a bug".to_string(),
-                        );
+                        return ScriptResult::Error(format!(
+                            "{} predicate was not compiled; this is a bug",
+                            placement.flag()
+                        ));
                     };
                     match ctx.rhai.execute_compiled_filter(
                         predicate,
@@ -1330,22 +1333,34 @@ impl ScriptStage for DrainDiffStage {
                         &mut ctx.tracker,
                         &mut ctx.internal_tracker,
                     ) {
-                        Ok(true) => self.cut_crossed = true,
-                        Ok(false) => {}
+                        Ok(matched) => {
+                            if matched {
+                                crate::drain_diff::record_cut_predicate_matched();
+                            }
+                            self.cut_crossed = matched;
+                            matched
+                        }
                         Err(err) => {
                             // Recorded as well as reported: the per-event error
                             // path is resilient by default, and absorbing this
                             // one would leave the boundary undecided while every
                             // later event silently inherited the baseline side.
                             crate::drain_diff::record_cut_predicate_error();
-                            return ScriptResult::Error(format!("--cut-when: {}", err));
+                            return ScriptResult::Error(format!("{}: {}", placement.flag(), err));
                         }
                     }
-                }
-                if self.cut_crossed {
-                    crate::drain_diff::DiffSide::Target
-                } else {
-                    crate::drain_diff::DiffSide::Baseline
+                };
+
+                // The two placements differ only on the matching event itself:
+                // --cut-before hands it to the target (it opens the new regime),
+                // --cut-after keeps it in the baseline (it closes the old one).
+                // Every later event is on the target side either way.
+                match (self.cut_crossed, matched, placement) {
+                    (true, true, crate::config::MatchPlacement::Baseline) => {
+                        crate::drain_diff::DiffSide::Baseline
+                    }
+                    (true, _, _) => crate::drain_diff::DiffSide::Target,
+                    (false, _, _) => crate::drain_diff::DiffSide::Baseline,
                 }
             }
         };

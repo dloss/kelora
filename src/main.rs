@@ -267,7 +267,7 @@ fn main() -> Result<()> {
     }
 
     // Resolve the --drain-diff side rule: a --cut-at timestamp (parsed with the
-    // same machinery as --since), a --cut-when predicate, or the first input file
+    // same machinery as --since), a --cut-before/--cut-after predicate, or the first input file
     // as the baseline.
     if config.output.drain_diff.is_some() {
         let rule = if let Some(cut_str) = &cli.cut_at {
@@ -288,16 +288,30 @@ fn main() -> Result<()> {
                     ExitCode::InvalidUsage.exit();
                 }
             }
-        } else if let Some(expr) = &cli.cut_when {
+        } else if let Some((expr, placement)) = cli
+            .cut_before
+            .as_ref()
+            .map(|e| (e, config::MatchPlacement::Target))
+            .or_else(|| {
+                cli.cut_after
+                    .as_ref()
+                    .map(|e| (e, config::MatchPlacement::Baseline))
+            })
+        {
             // The predicate is compiled later, when the pipeline's engine exists;
             // a syntax error surfaces from there as a normal script error.
             config::DrainDiffRule::Predicate {
                 expr: expr.clone(),
+                placement,
                 includes: match cli::load_all_include_files(&cli.includes) {
                     Ok(includes) => includes,
                     Err(e) => {
                         stderr
-                            .writeln(&config.format_error_message(&format!("--cut-when: {}", e)))
+                            .writeln(&config.format_error_message(&format!(
+                                "{}: {}",
+                                placement.flag(),
+                                e
+                            )))
                             .unwrap_or(());
                         ExitCode::InvalidUsage.exit();
                     }
@@ -316,7 +330,7 @@ fn main() -> Result<()> {
                 None => {
                     stderr
                         .writeln(&config.format_error_message(
-                            "--drain-diff requires exactly 2 inputs (baseline first, then target), or 1 input plus --cut-at / --cut-when.",
+                            "--drain-diff requires exactly 2 inputs (baseline first, then target), or 1 input plus --cut-at / --cut-before / --cut-after.",
                         ))
                         .unwrap_or(());
                     ExitCode::InvalidUsage.exit();
@@ -1316,18 +1330,30 @@ fn drain_diff_one_sided_message(
                 clock_note,
             )
         }
-        Some(config::DrainDiffRule::Predicate { expr, .. }) => {
-            // Which way the predicate failed says what to change, and the two
-            // fixes are opposites: never matching means the boundary was not
-            // found, matching on the very first event means it was too broad.
+        Some(config::DrainDiffRule::Predicate {
+            expr, placement, ..
+        }) => {
+            // Three distinct mistakes, each with its own fix: the boundary was
+            // never found, it landed at the very start, or it landed at the very
+            // end. Only the first is about the expression being wrong — the other
+            // two mean the marker is real but sits where there is nothing on one
+            // side of it to compare.
+            let flag = placement.flag();
             match empty {
+                crate::drain_diff::DiffSide::Target if !report.cut_predicate_matched => format!(
+                    "--drain-diff: {} '{}' never matched any of the {} compared event(s), so the target side is empty and the report would show every template as VANISHED rather than compare anything. Check the expression against the log first, e.g. with --filter '{}'.",
+                    flag, expr, compared, expr
+                ),
+                // Reachable only under --cut-after: the match is kept on the
+                // baseline side, so matching the final event leaves nothing after
+                // the boundary.
                 crate::drain_diff::DiffSide::Target => format!(
-                    "--drain-diff: --cut-when '{}' never matched any of the {} compared event(s), so the target side is empty and the report would show every template as VANISHED rather than compare anything. Check the expression against the log first, e.g. with --filter '{}'.",
-                    expr, compared, expr
+                    "--drain-diff: {} '{}' matched the last of the {} compared event(s), so nothing falls after the boundary and the target side is empty. The marker is at the end of the log — compare against a later capture, or use --cut-before if the matching event is meant to start the target rather than end the baseline.",
+                    flag, expr, compared
                 ),
                 crate::drain_diff::DiffSide::Baseline => format!(
-                    "--drain-diff: --cut-when '{}' matched the very first of the {} compared event(s), so the baseline side is empty and the report would show every template as NEW rather than compare anything. The predicate needs to be specific to the change you are looking for — it currently matches from the start of the log.",
-                    expr, compared
+                    "--drain-diff: {} '{}' matched the very first of the {} compared event(s), so the baseline side is empty and the report would show every template as NEW rather than compare anything. Either the predicate matches from the start of the log and needs to be more specific, or the marker really is the first event — use --cut-after to keep it on the baseline side.",
+                    flag, expr, compared
                 ),
             }
         }
@@ -1723,10 +1749,18 @@ fn handle_pipeline_success(
                 // boundary is undecided, so any failure counted here means the
                 // split point itself is unknown.
                 if report.cut_predicate_errors > 0 {
+                    let flag = match &config.processing.drain_diff_rule {
+                        Some(config::DrainDiffRule::Predicate { placement, .. }) => {
+                            placement.flag()
+                        }
+                        // Only a predicate rule can record these, so the fallback
+                        // is unreachable; name the pair rather than assert.
+                        _ => "--cut-before/--cut-after",
+                    };
                     stderr
                         .writeln(&config.format_error_message(&format!(
-                            "--drain-diff: --cut-when failed to evaluate on {} event(s) before it found the boundary, so which events belong to which side is unknown and no report can be trusted. Fix the expression — try it with --filter first, where a per-event failure only drops that event.",
-                            report.cut_predicate_errors
+                            "--drain-diff: {} failed to evaluate on {} event(s) before it found the boundary, so which events belong to which side is unknown and no report can be trusted. Fix the expression — try it with --filter first, where a per-event failure only drops that event.",
+                            flag, report.cut_predicate_errors
                         )))
                         .unwrap_or(());
                     std::process::exit(ExitCode::GeneralError as i32);
