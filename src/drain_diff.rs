@@ -52,6 +52,7 @@
 //! and VANISHED's fixed floor are untouched, since scaling those away would
 //! risk silencing rare-but-real incident signals the mode exists to surface.
 
+use chrono::{DateTime, Utc};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
@@ -60,6 +61,16 @@ use std::collections::HashMap;
 pub enum DiffSide {
     Baseline,
     Target,
+}
+
+impl DiffSide {
+    /// Report-facing name, used in the split echo and the one-sided refusal.
+    pub fn label(self) -> &'static str {
+        match self {
+            DiffSide::Baseline => "baseline",
+            DiffSide::Target => "target",
+        }
+    }
 }
 
 /// Two-proportion z-test critical value gating volume shifts (~95%
@@ -100,6 +111,13 @@ struct DiffState {
     /// Events excluded because the mined field carried no text (absent, or
     /// present but empty).
     excluded_no_field: u64,
+    /// Observed timestamp span (earliest, latest) of the events counted on each
+    /// side, indexed like `counts`. `None` when no event on that side carried a
+    /// parseable timestamp, which is the only case where the split echo is
+    /// omitted — two-file mode fills these in too whenever the logs are
+    /// timestamped, and benefits from the same at-a-glance confirmation.
+    /// Powers the split echo and the one-sided refusal message.
+    spans: [Option<(DateTime<Utc>, DateTime<Utc>)>; 2],
 }
 
 thread_local! {
@@ -114,13 +132,23 @@ pub fn reset() {
 
 /// Record one event's mined field value on the given side (pass 1 counting;
 /// the caller separately feeds the joint drain tree via `drain_record`).
-pub fn record(text: &str, side: DiffSide) {
+///
+/// `ts` is the event's parsed timestamp when it has one; it only widens the
+/// side's observed span for the report, and never affects the counts — an event
+/// already assigned a side is counted whether or not it is timestamped.
+pub fn record(text: &str, side: DiffSide, ts: Option<DateTime<Utc>>) {
     DIFF_STATE.with(|state| {
         let mut state = state.borrow_mut();
         let idx = match side {
             DiffSide::Baseline => 0,
             DiffSide::Target => 1,
         };
+        if let Some(ts) = ts {
+            state.spans[idx] = Some(match state.spans[idx] {
+                Some((first, last)) => (first.min(ts), last.max(ts)),
+                None => (ts, ts),
+            });
+        }
         if let Some(entry) = state.counts.get_mut(text) {
             entry[idx] += 1;
         } else if state.counts.len() >= MAX_UNIQUE_VALUES {
@@ -243,6 +271,10 @@ pub struct DiffReport {
     /// Events excluded because the mined field carried no text. See
     /// `record_excluded_no_field`.
     pub excluded_no_field: u64,
+    /// Observed timestamp span of the events counted on each side, when they
+    /// carried parseable timestamps. See `DiffState::spans`.
+    pub baseline_span: Option<(DateTime<Utc>, DateTime<Utc>)>,
+    pub target_span: Option<(DateTime<Utc>, DateTime<Utc>)>,
 }
 
 impl DiffReport {
@@ -251,6 +283,32 @@ impl DiffReport {
     /// must not present it as "nothing changed".
     pub fn compared_events(&self) -> u64 {
         self.baseline_total + self.target_total
+    }
+
+    /// The empty side of a lopsided comparison: one side got every event and
+    /// the other got none. Such a report is not a comparison — every template
+    /// lands in NEW or VANISHED by construction — so callers refuse it rather
+    /// than print sections that read as a dramatic finding.
+    ///
+    /// `None` when both sides have events, and also when *neither* does: that
+    /// case is vacuous for a different reason and has its own handling, so
+    /// keeping it out here leaves one cause per message.
+    pub fn empty_side(&self) -> Option<DiffSide> {
+        match (self.baseline_total, self.target_total) {
+            (0, t) if t > 0 => Some(DiffSide::Baseline),
+            (b, 0) if b > 0 => Some(DiffSide::Target),
+            _ => None,
+        }
+    }
+
+    /// The observed timestamp span across both sides, for the "pick a cut
+    /// inside this range" half of the one-sided refusal message.
+    pub fn overall_span(&self) -> Option<(DateTime<Utc>, DateTime<Utc>)> {
+        match (self.baseline_span, self.target_span) {
+            (Some((b0, b1)), Some((t0, t1))) => Some((b0.min(t0), b1.max(t1))),
+            (Some(span), None) | (None, Some(span)) => Some(span),
+            (None, None) => None,
+        }
     }
 }
 
@@ -387,6 +445,8 @@ pub fn finalize() -> Result<DiffReport, String> {
             unmatched_events: unmatched,
             excluded_no_timestamp: state.excluded_no_timestamp,
             excluded_no_field: state.excluded_no_field,
+            baseline_span: state.spans[0],
+            target_span: state.spans[1],
         })
     })
 }
@@ -554,7 +614,29 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
         plural(report.unchanged_count),
     ));
 
+    // Where the split actually landed. In --cut mode the boundary is the whole
+    // premise of the report and the easiest thing to get wrong, so the spans it
+    // produced belong with the totals rather than in a separate check the user
+    // has to think to run. Only present when timestamps survived to the diff.
+    if let (Some(baseline), Some(target)) = (report.baseline_span, report.target_span) {
+        out.push_str(&format!(
+            "\n  {}baseline spans {} .. {}\n  target   spans {} .. {}{}",
+            gray,
+            format_instant(baseline.0),
+            format_instant(baseline.1),
+            format_instant(target.0),
+            format_instant(target.1),
+            reset,
+        ));
+    }
+
     out
+}
+
+/// Render an instant in the form `--cut`/`--since` accept back verbatim, so a
+/// span printed in the report can be copied straight into the next invocation.
+pub fn format_instant(ts: DateTime<Utc>) -> String {
+    ts.format("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
 /// The explanation for suppressed moves, phrased for someone who did not come
@@ -632,8 +714,23 @@ pub fn format_report_json(report: &DiffReport) -> String {
         "unmatched_events": report.unmatched_events,
         "excluded_no_timestamp": report.excluded_no_timestamp,
         "excluded_no_field": report.excluded_no_field,
+        // Null unless timestamps reached the diff (i.e. --cut mode). Same
+        // purpose as the table's span lines: let a consumer confirm the split
+        // landed where it meant it to, without a second pass over the input.
+        "baseline_span": span_json(report.baseline_span),
+        "target_span": span_json(report.target_span),
     });
     serde_json::to_string_pretty(&json).unwrap_or_else(|_| "{}".to_string())
+}
+
+fn span_json(span: Option<(DateTime<Utc>, DateTime<Utc>)>) -> serde_json::Value {
+    match span {
+        Some((first, last)) => serde_json::json!({
+            "first": format_instant(first),
+            "last": format_instant(last),
+        }),
+        None => serde_json::Value::Null,
+    }
 }
 
 #[cfg(test)]
@@ -676,8 +773,32 @@ mod tests {
     }
 
     fn mine_and_record(text: &str, side: DiffSide) {
+        mine_and_record_at(text, side, None);
+    }
+
+    fn mine_and_record_at(text: &str, side: DiffSide, ts: Option<DateTime<Utc>>) {
         crate::drain::drain_record(text, None, None).expect("drain_record");
-        record(text, side);
+        record(text, side, ts);
+    }
+
+    /// A report whose only meaningful content is the per-side event totals, for
+    /// exercising the vacuity predicates that read nothing else.
+    fn report_with_totals(baseline_total: u64, target_total: u64) -> DiffReport {
+        DiffReport {
+            new: vec![],
+            vanished: vec![],
+            shifted: vec![],
+            unchanged_count: 0,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
+            baseline_total,
+            target_total,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
+        }
     }
 
     #[test]
@@ -962,6 +1083,8 @@ mod tests {
             unmatched_events: 0,
             excluded_no_timestamp: 0,
             excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
         };
         let text = format_report_text(&report, false);
         assert!(
@@ -1107,6 +1230,8 @@ mod tests {
             unmatched_events: 0,
             excluded_no_timestamp: 0,
             excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target (1 template):"));
@@ -1124,6 +1249,85 @@ mod tests {
     }
 
     #[test]
+    fn empty_side_names_the_starved_side_and_ignores_the_both_empty_case() {
+        let mut report = report_with_totals(0, 0);
+        assert_eq!(
+            report.empty_side(),
+            None,
+            "neither side having events is a different diagnosis, handled elsewhere"
+        );
+
+        report.baseline_total = 0;
+        report.target_total = 5;
+        assert_eq!(report.empty_side(), Some(DiffSide::Baseline));
+
+        report.baseline_total = 5;
+        report.target_total = 0;
+        assert_eq!(report.empty_side(), Some(DiffSide::Target));
+
+        report.target_total = 1;
+        assert_eq!(
+            report.empty_side(),
+            None,
+            "a single event on a side is lopsided, not vacuous — still a comparison"
+        );
+    }
+
+    #[test]
+    fn overall_span_unions_the_sides_and_survives_a_missing_one() {
+        let ts = |h: u32, m: u32| {
+            chrono::DateTime::parse_from_rfc3339(&format!("2026-07-24T{:02}:{:02}:00Z", h, m))
+                .expect("fixture parses")
+                .with_timezone(&Utc)
+        };
+
+        let mut report = report_with_totals(5, 5);
+        report.baseline_span = Some((ts(10, 0), ts(11, 0)));
+        report.target_span = Some((ts(14, 0), ts(15, 0)));
+        assert_eq!(report.overall_span(), Some((ts(10, 0), ts(15, 0))));
+
+        // Out-of-order sides must still yield the true outer bounds.
+        report.baseline_span = Some((ts(14, 0), ts(15, 0)));
+        report.target_span = Some((ts(10, 0), ts(11, 0)));
+        assert_eq!(report.overall_span(), Some((ts(10, 0), ts(15, 0))));
+
+        // The refusal path always has one side empty, so exactly one span is
+        // typically present — that side still has to produce a range.
+        report.target_span = None;
+        assert_eq!(report.overall_span(), Some((ts(14, 0), ts(15, 0))));
+
+        report.baseline_span = None;
+        assert_eq!(report.overall_span(), None);
+    }
+
+    #[test]
+    fn record_widens_the_side_span_without_touching_the_other() {
+        let ts = |h: u32| {
+            chrono::DateTime::parse_from_rfc3339(&format!("2026-07-24T{:02}:00:00Z", h))
+                .expect("fixture parses")
+                .with_timezone(&Utc)
+        };
+        reset_all();
+
+        // Deliberately out of order: the span is min/max, not first/last seen.
+        mine_and_record_at("worker started", DiffSide::Baseline, Some(ts(11)));
+        mine_and_record_at("worker started", DiffSide::Baseline, Some(ts(9)));
+        mine_and_record_at("worker started", DiffSide::Baseline, Some(ts(10)));
+        // An untimestamped event still counts, it just cannot widen the span.
+        mine_and_record_at("worker started", DiffSide::Target, None);
+        mine_and_record_at("worker started", DiffSide::Target, Some(ts(15)));
+
+        let report = finalize().expect("finalize");
+        assert_eq!(report.baseline_span, Some((ts(9), ts(11))));
+        assert_eq!(report.target_span, Some((ts(15), ts(15))));
+        assert_eq!(report.baseline_total, 3);
+        assert_eq!(
+            report.target_total, 2,
+            "the untimestamped event still counts"
+        );
+    }
+
+    #[test]
     fn empty_sections_print_single_lines() {
         let report = DiffReport {
             new: vec![],
@@ -1137,6 +1341,8 @@ mod tests {
             unmatched_events: 0,
             excluded_no_timestamp: 0,
             excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target: no new templates"));
@@ -1158,6 +1364,8 @@ mod tests {
             unmatched_events: 0,
             excluded_no_timestamp: 2,
             excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
         };
         let json: serde_json::Value =
             serde_json::from_str(&format_report_json(&report)).expect("valid JSON");

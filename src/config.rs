@@ -228,7 +228,14 @@ pub enum DrainDiffRule {
     /// One-input mode: events with a timestamp before `cut` are the baseline,
     /// events at/after it are the target. Events without a parseable
     /// timestamp are excluded and counted.
-    ByCut { cut: chrono::DateTime<chrono::Utc> },
+    ByCut {
+        cut: chrono::DateTime<chrono::Utc>,
+        /// The literal `--cut` text, kept only for diagnostics: a lopsided split
+        /// warrants explaining now-relative resolution when the user wrote
+        /// something like `1h`, and would just be noise when they wrote an
+        /// absolute stamp.
+        raw: String,
+    },
 }
 
 /// Performance configuration

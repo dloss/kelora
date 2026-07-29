@@ -271,20 +271,18 @@ fn main() -> Result<()> {
     if config.output.drain_diff.is_some() {
         let rule = if let Some(cut_str) = &cli.cut {
             let cli_timezone = config.input.default_timezone.as_deref();
-            match crate::timestamp::resolve_time_range(Some(cut_str), None, cli_timezone) {
-                Ok((Some(cut), _)) => config::DrainDiffRule::ByCut { cut },
-                Ok((None, _)) => {
-                    stderr
-                        .writeln(&config.format_error_message(&format!(
-                            "--cut: could not resolve '{}' to a timestamp. See --help-time for accepted formats.",
-                            cut_str
-                        )))
-                        .unwrap_or(());
-                    ExitCode::InvalidUsage.exit();
-                }
+            match crate::timestamp::resolve_cut_timestamp(cut_str, cli_timezone) {
+                Ok(cut) => config::DrainDiffRule::ByCut {
+                    cut,
+                    raw: cut_str.clone(),
+                },
                 Err(e) => {
                     stderr
-                        .writeln(&config.format_error_message(&format!("--cut: {}", e)))
+                        .writeln(&config.format_error_message(&format!(
+                            "--cut '{}': {}. See --help-time for accepted formats.",
+                            cut_str,
+                            e.trim_end_matches('.')
+                        )))
                         .unwrap_or(());
                     ExitCode::InvalidUsage.exit();
                 }
@@ -1237,6 +1235,95 @@ fn drain_diff_dead_field_message(
     }
 }
 
+/// Error text for a `--drain-diff` run where one side got every event and the
+/// other got none. Such a report is not a comparison: every template lands in
+/// NEW or VANISHED by construction, which reads as a dramatic finding ("the
+/// service stopped doing everything") when it only means the split missed.
+///
+/// A mis-aimed `--cut` is the usual cause, and easy to hit by accident, because
+/// `--cut` shares `--since`'s vocabulary: relative forms resolve against
+/// wall-clock now and a bare `14:00` means *today*, so both land outside an
+/// archived log entirely. The observed span is therefore part of the message —
+/// it is exactly the information needed to pick a working cut, which turns the
+/// failed run into the lookup step instead of sending the user off to a separate
+/// command.
+fn drain_diff_one_sided_message(
+    empty: crate::drain_diff::DiffSide,
+    report: &crate::drain_diff::DiffReport,
+    rule: Option<&config::DrainDiffRule>,
+) -> String {
+    let compared = report.compared_events();
+    let filled = match empty {
+        crate::drain_diff::DiffSide::Baseline => crate::drain_diff::DiffSide::Target,
+        crate::drain_diff::DiffSide::Target => crate::drain_diff::DiffSide::Baseline,
+    };
+
+    match rule {
+        Some(config::DrainDiffRule::ByCut { cut, raw }) => {
+            // "before"/"at or after" mirrors the split rule in DrainDiffStage:
+            // ts < cut is baseline, everything else is target.
+            let relation = match empty {
+                crate::drain_diff::DiffSide::Baseline => "at or after",
+                crate::drain_diff::DiffSide::Target => "before",
+            };
+            let range = match report.overall_span() {
+                Some((first, last)) => format!(
+                    " The input spans {} .. {}, so pick a --cut inside that range.",
+                    crate::drain_diff::format_instant(first),
+                    crate::drain_diff::format_instant(last),
+                ),
+                // No span means no event carried a parseable timestamp, yet a
+                // side still filled — impossible via --cut, which excludes
+                // untimestamped events. Kept reachable-safe rather than
+                // asserting.
+                None => String::new(),
+            };
+            // Someone who typed an absolute stamp already knows it was absolute;
+            // the now-relative explanation is only news to someone whose text
+            // resolved against the clock, which is where the trap actually is.
+            let clock_note = if cut_text_is_absolute(raw) {
+                ""
+            } else {
+                " Note that relative times resolve against the current time, not the log's — '1h' means an hour ago, and a bare '14:00' means today."
+            };
+            format!(
+                "--drain-diff: --cut resolved to {}, and all {} compared event(s) fall {} it, so the {} side is empty and the report would show every template as {} rather than compare anything.{}{}",
+                crate::drain_diff::format_instant(*cut),
+                compared,
+                relation,
+                empty.label(),
+                match empty {
+                    crate::drain_diff::DiffSide::Baseline => "NEW",
+                    crate::drain_diff::DiffSide::Target => "VANISHED",
+                },
+                range,
+                clock_note,
+            )
+        }
+        _ => format!(
+            "--drain-diff: the {} input contributed all {} compared event(s) and the {} input contributed none, so the report would show every template as {} rather than compare anything. Check that both inputs are non-empty and that --filter / --since / --level did not remove one side entirely.",
+            filled.label(),
+            compared,
+            empty.label(),
+            match empty {
+                crate::drain_diff::DiffSide::Baseline => "NEW",
+                crate::drain_diff::DiffSide::Target => "VANISHED",
+            },
+        ),
+    }
+}
+
+/// Whether a `--cut` argument pinned a date itself rather than leaning on the
+/// clock. A leading four-digit year is what separates the two in every accepted
+/// form: `2026-07-24T14:00Z` and `2026-07-24 14:00` carry one, while `1h`,
+/// `now-30m`, `yesterday`, and a bare `14:00` do not. Only used to decide whether
+/// a diagnostic explains now-relative resolution, so a misjudgement costs one
+/// sentence, not correctness.
+fn cut_text_is_absolute(raw: &str) -> bool {
+    let digits: Vec<char> = raw.chars().take_while(|c| c.is_ascii_digit()).collect();
+    digits.len() == 4
+}
+
 /// When an unseen key looks like a flattened nested path — it contains a `.` or
 /// ends with `[]`, the way `--discover` prints nested fields (`api.queries`,
 /// `tags[]`) — and its leading segment *is* a present top-level field, the user
@@ -1611,6 +1698,25 @@ fn handle_pipeline_success(
                         mined_field.as_deref(),
                         report.excluded_no_field,
                         pipeline_result.stats.as_ref(),
+                    );
+                    stderr
+                        .writeln(&config.format_error_message(&message))
+                        .unwrap_or(());
+                    std::process::exit(ExitCode::GeneralError as i32);
+                }
+                // Refuse a lopsided split for the same reason: with one side
+                // empty, every template is NEW or VANISHED by construction, so
+                // the sections read as a dramatic finding when they only mean
+                // the boundary missed. A mis-aimed --cut is the usual cause and
+                // is easy to produce by accident — relative forms resolve
+                // against wall-clock now, so `--cut 1h` on an archived log lands
+                // past every event — so the message carries the resolved
+                // instant and the span the input actually covers.
+                if let Some(empty) = report.empty_side() {
+                    let message = drain_diff_one_sided_message(
+                        empty,
+                        &report,
+                        config.processing.drain_diff_rule.as_ref(),
                     );
                     stderr
                         .writeln(&config.format_error_message(&message))

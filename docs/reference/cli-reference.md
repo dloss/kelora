@@ -1369,13 +1369,36 @@ kelora --drain-diff old.log new.log -k msg --filter 'e.level == "ERROR"'
 kelora --drain-diff old.log new.log -k msg --exec 'e.msg = e.msg.replace(e.order_id, "<order>")'
 ```
 
-**Empty comparisons are refused, not reported.** An all-empty report ("no new
+**Vacuous comparisons are refused, not reported.** An all-empty report ("no new
 templates / no volume shifts", 0 events) reads as a confident *nothing changed*,
 so `--drain-diff` refuses to print one when the mined field never yielded a
 value: if every event lacked the field named by `-k` — a typo, or a field that
 only exists in a different log — the run fails with exit `1` and names the
 nearest field it did see, instead of certifying a log as unchanged that was never
-examined. Related, quieter cases stay non-fatal:
+examined.
+
+A **one-sided split** is refused the same way. When one side gets every event and
+the other gets none, every template lands in NEW or VANISHED by construction, so
+the report reads as a dramatic finding ("the service stopped doing everything")
+when it only means the boundary missed. The run fails with exit `1` and the
+message carries the resolved cut plus the span the input actually covers:
+
+```console
+$ kelora --drain-diff --cut 1h incident.log -k msg
+kelora: --drain-diff: --cut resolved to 2026-07-29T09:15:00Z, and all 230 compared
+event(s) fall before it, so the target side is empty and the report would show every
+template as VANISHED rather than compare anything. The input spans
+2026-07-24T13:30:00Z .. 2026-07-24T14:24:20Z, so pick a --cut inside that range.
+Note that relative times resolve against the current time, not the log's — '1h'
+means an hour ago, and a bare '14:00' means today.
+```
+
+The span is the actionable half: it is what a working `--cut` gets picked from, so
+a first attempt that misses doubles as the lookup step. In two-input mode the same
+refusal fires when one file contributes nothing (empty, or emptied by
+`--filter`/`--since`).
+
+Related, quieter cases stay non-fatal:
 
 - Some events carry the field and some don't (normal in heterogeneous logs): a
   warning reports how many events were excluded and how many were actually
@@ -1422,6 +1445,29 @@ are excluded from the comparison and surfaced in a warning.
 ```bash
 kelora --drain-diff --cut '2026-07-24 14:00' incident.log -k msg
 ```
+
+**The cut resolves against the clock, not the log.** Because `--cut` shares
+`--since`'s vocabulary, `--cut 1h` means "an hour before *now*" and a bare
+`--cut 14:00` means "*today* at 14:00" — neither is relative to the log's own
+time range. On an archived or incident log both land outside the data entirely,
+which is why a one-sided split is a hard error rather than a report (above). For
+a historical log, give an absolute timestamp.
+
+Every successful run states where the split landed, so the boundary is never
+something you have to verify separately:
+
+```
+totals: baseline 110 events, target 120 events, 2 shared templates within noise
+  baseline spans 2026-07-24T13:30:00Z .. 2026-07-24T13:56:10Z
+  target   spans 2026-07-24T14:00:00Z .. 2026-07-24T14:24:20Z
+```
+
+The spans are printed in the timestamp form `--cut` accepts back verbatim, so
+they can be copied straight into a follow-up invocation. `--drain-diff=json`
+carries the same information as `baseline_span` / `target_span` objects
+(`{"first": ..., "last": ...}`, or `null` when the events carried no parseable
+timestamps). Two-input mode reports its spans too whenever the logs are
+timestamped.
 
 ### Field Discovery
 
