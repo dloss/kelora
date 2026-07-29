@@ -281,7 +281,9 @@ drain_templates()                    Return array of templates with same fields 
                                      hexnum, duration, timestamp, date, time, num
                                      timestamp also covers multi-token calendar dates (ctime/asctime
                                      "Mon Jun 13 03:55:15 2005", syslog "Jun 13 03:55:15")
-                                     In a key=value token only the value masks, so the key is kept (uid=<num>)
+                                     Only the matched span masks, so the literal part of a token is kept
+                                     (uid=<num>, worker-<num>, HTTP/<version>, <path>?id=<num>)
+                                     A digit inside a word is part of the word, so ssh2/utf8/sha256 stay
                                      An explicit filters: list masks exactly those patterns (no calendar dates)
                                      For PII (credit_card/ssn/phone), pre-mask with normalized() before drain_template()
                                      Options: depth, max_children, similarity, filters, line_num

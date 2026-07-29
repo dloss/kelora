@@ -43,6 +43,37 @@ fn test_ctime_dates_do_not_split_one_message_into_several_templates() {
 }
 
 #[test]
+fn test_a_digit_inside_a_word_is_not_a_number() {
+    // `ssh2` is a protocol name, not a number, but a pattern matching anywhere
+    // in a token used to replace the whole token: this template read
+    // "... port <num> <num>", with the word that names the message gone.
+    let input = "Accepted publickey for root from 10.0.0.1 port 22 ssh2\n\
+                 Accepted publickey for root from 10.0.0.2 port 4022 ssh2\n";
+
+    let stdout = drain_templates(input);
+    assert!(
+        stdout.contains("2: Accepted publickey for root from <ipv4> port <num> ssh2"),
+        "expected ssh2 to survive masking, got:\n{}",
+        stdout
+    );
+}
+
+#[test]
+fn test_the_literal_part_of_a_token_survives_masking() {
+    // Whole-token masking rendered these as "<num> ... <num> <version> <num>
+    // <num>": the path, the query key, the protocol and the worker all gone.
+    let input = "worker-3 GET /api/v1/users?id=5 HTTP/1.1 200 1234\n\
+                 worker-11 GET /api/v1/users?id=97 HTTP/1.1 200 8899\n";
+
+    let stdout = drain_templates(input);
+    assert!(
+        stdout.contains("2: worker-<num> GET <path>?id=<num> HTTP/<version> <num> <num>"),
+        "expected the literal parts to survive, got:\n{}",
+        stdout
+    );
+}
+
+#[test]
 fn test_key_value_masking_keeps_the_key() {
     // uid=0 used to mask to <num>, key included, so the template no longer
     // recorded which number was which -- while tty=ssh kept its key because

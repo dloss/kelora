@@ -1617,7 +1617,12 @@ timestamp, date, time, num.
 `timestamp` also covers calendar dates that span several tokens — ctime/asctime
 (`Mon Jun 13 03:55:15 2005`, with or without the year) and the bare syslog form
 (`Jun 13 03:55:15`) — so one message doesn't split into a template per weekday.
-In a `key=value` token only the value is masked (`uid=<num>`), keeping the key.
+Only the matched span is masked, so the literal part of a token survives:
+`uid=0` → `uid=<num>`, `worker-3` → `worker-<num>`, `GET /api/v1/users?id=5` →
+`GET <path>?id=<num>`. A digit inside a word belongs to the word and is left
+alone, so `ssh2`, `utf8` and `sha256` stay as they are.
+What no filter catches, Drain itself generalizes: a position the events in one
+template disagree on is reported as `<*>`, with `sample` giving a real line.
 An explicit `filters` list masks exactly those patterns, without the multi-token
 calendar dates.
 For lightweight normalization without Drain, use `normalized()` on the field instead.

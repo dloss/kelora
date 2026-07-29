@@ -9,7 +9,7 @@ extern crate onig;
 
 include!(concat!(env!("OUT_DIR"), "/patterns.rs"));
 
-use onig::{Captures, Regex};
+use onig::{Captures, Regex, Region, SearchOptions};
 use std::collections::{BTreeMap, HashMap};
 use std::error::Error as StdError;
 use std::fmt;
@@ -141,6 +141,33 @@ impl Pattern {
         self.regex
             .captures(text)
             .map(|cap| Matches::new(cap, &self.names, &self.name_to_index))
+    }
+
+    /// Byte offsets `(start, end)` of the leftmost match beginning at or after
+    /// `start`, or `None` if the pattern does not match there.
+    ///
+    /// Unlike slicing the text before calling [`Pattern::match_against`], the
+    /// whole `text` stays visible to the engine, so lookbehind assertions (the
+    /// bundled `IPV4` pattern opens with `(?<![0-9])`) still see what precedes
+    /// `start`.
+    pub fn find_at(&self, text: &str, start: usize) -> Option<(usize, usize)> {
+        let mut region = Region::new();
+        self.regex.search_with_options(
+            text,
+            start,
+            text.len(),
+            SearchOptions::SEARCH_OPTION_NONE,
+            Some(&mut region),
+        )?;
+        region.pos(0)
+    }
+
+    /// The alias of this pattern's first named capture group, in declaration
+    /// order — the name a match should be reported under. `None` for a pattern
+    /// with no named captures (compiling with `with_alias_only` strips the
+    /// unaliased ones).
+    pub fn alias(&self) -> Option<&str> {
+        self.names.first().map(|(name, _)| name.as_str())
     }
 }
 
