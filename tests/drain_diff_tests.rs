@@ -323,6 +323,184 @@ fn test_cut_mode_warns_on_events_without_timestamps() {
     );
 }
 
+/// A cut that lands outside the log leaves one side empty, which makes every
+/// template NEW or VANISHED by construction — a report that reads as a dramatic
+/// finding when it only means the boundary missed. It must fail instead, and the
+/// message must hand over the log's real span so the next attempt can work.
+#[test]
+fn test_cut_outside_the_log_is_refused_with_the_observed_span() {
+    let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
+    let path = combined.path().to_str().unwrap();
+
+    // Past every event: the target side is starved.
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut",
+        "2030-01-01T00:00:00Z",
+        path,
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("the target side is empty"),
+        "stderr: {}",
+        stderr
+    );
+    assert!(stderr.contains("fall before it"), "stderr: {}", stderr);
+    // The span is the actionable half — it is what a working --cut is picked from.
+    assert!(
+        stderr.contains("The input spans 2026-07-24T10:00:00Z .. 2026-07-24T15:39:00Z"),
+        "stderr: {}",
+        stderr
+    );
+    assert!(
+        !stdout.contains("VANISHED"),
+        "a refused comparison must not also print its report: {}",
+        stdout
+    );
+
+    // Before every event: the baseline side is starved.
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut",
+        "2000-01-01T00:00:00Z",
+        path,
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("the baseline side is empty"),
+        "stderr: {}",
+        stderr
+    );
+    assert!(stderr.contains("fall at or after it"), "stderr: {}", stderr);
+}
+
+/// The trap this refusal exists for: `--cut` shares `--since`'s vocabulary, so a
+/// relative value resolves against wall-clock now and silently overshoots any
+/// archived log. Those users get the clock caveat; someone who typed an absolute
+/// stamp already knows it was absolute and does not need the sentence.
+#[test]
+fn test_now_relative_cut_explains_the_clock_only_when_relevant() {
+    let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
+    let path = combined.path().to_str().unwrap();
+
+    let (_, stderr, code) = run_diff(&["--drain-diff", "--cut", "1h", path, "-k", "msg"]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("relative times resolve against the current time"),
+        "stderr: {}",
+        stderr
+    );
+
+    let (_, stderr, _) = run_diff(&[
+        "--drain-diff",
+        "--cut",
+        "2030-01-01T00:00:00Z",
+        path,
+        "-k",
+        "msg",
+    ]);
+    assert!(
+        !stderr.contains("relative times resolve"),
+        "an absolute --cut needs no clock caveat: {}",
+        stderr
+    );
+}
+
+/// Same vacuity, reached the other way: two inputs where one contributes nothing.
+#[test]
+fn test_two_input_mode_refuses_an_empty_side() {
+    let baseline = temp_log(&baseline_content());
+    let empty = temp_log("");
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        baseline.path().to_str().unwrap(),
+        empty.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("the target input contributed none"),
+        "stderr: {}",
+        stderr
+    );
+}
+
+/// The split is the report's whole premise, so a successful run states where it
+/// landed — otherwise "target 0 events" and "the log stops there" are
+/// indistinguishable without a second command.
+#[test]
+fn test_report_echoes_the_span_of_each_side() {
+    let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut",
+        "2026-07-24T14:00:00Z",
+        combined.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(
+        stdout.contains("baseline spans 2026-07-24T10:00:00Z .. 2026-07-24T11:19:00Z"),
+        "stdout: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("target   spans 2026-07-24T15:00:00Z .. 2026-07-24T15:39:00Z"),
+        "stdout: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_json_report_carries_each_side_span() {
+    let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=json",
+        "--cut",
+        "2026-07-24T14:00:00Z",
+        combined.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("valid json");
+    assert_eq!(json["baseline_span"]["first"], "2026-07-24T10:00:00Z");
+    assert_eq!(json["baseline_span"]["last"], "2026-07-24T11:19:00Z");
+    assert_eq!(json["target_span"]["first"], "2026-07-24T15:00:00Z");
+    assert_eq!(json["target_span"]["last"], "2026-07-24T15:39:00Z");
+}
+
+/// `--cut` used to be resolved by calling the `--since` parser, so its failures
+/// named a flag that was never on the command line.
+#[test]
+fn test_cut_diagnostics_name_cut_and_not_since() {
+    let file = temp_log("{\"ts\": \"2026-07-24T10:00:00Z\", \"msg\": \"x\"}\n");
+    let path = file.path().to_str().unwrap();
+
+    for value in ["not-a-time", "until-1h", "since+5m"] {
+        let (_, stderr, code) = run_diff(&["--drain-diff", "--cut", value, path, "-k", "msg"]);
+        assert_eq!(code, 2, "value {}: stderr {}", value, stderr);
+        assert!(
+            stderr.contains(&format!("--cut '{}'", value)),
+            "value {} must be quoted back: {}",
+            value,
+            stderr
+        );
+        assert!(
+            !stderr.contains("--since"),
+            "value {} must not blame --since: {}",
+            value,
+            stderr
+        );
+    }
+}
+
 #[test]
 fn test_filters_run_before_diffing() {
     let baseline = temp_log(&baseline_content());

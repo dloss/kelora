@@ -46,8 +46,13 @@ target second, or one file split by time with `--cut`:
 
 ```bash
 kelora --drain-diff before.log after.log -k msg
-kelora --drain-diff --cut '14:00' incident.log -k msg
+kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
 ```
+
+`--cut` resolves against the clock, not the log, so give an absolute timestamp
+for anything archived. A cut that lands outside the data is refused rather than
+reported, and the error names the span the log covers — so a missed first guess
+tells you what to use.
 
 Comparisons use per-side *shares*, so a 10-minute incident capture diffs
 fairly against a 24-hour baseline. `--filter`/`--exec` run before the

@@ -715,6 +715,31 @@ pub fn parse_timestamp_arg_with_timezone(
         .ok_or_else(|| format!("Could not parse timestamp: {}", arg))
 }
 
+/// Resolve `--cut` to a single instant, accepting the same vocabulary as
+/// `--since`/`--until` (absolute stamps, bare times, `now-1h`, `yesterday`).
+///
+/// Kept separate from `resolve_time_range` so the diagnostics name the flag the
+/// user actually typed: routing `--cut` through the range resolver reported its
+/// failures as "Invalid --since timestamp", sending readers to a flag that was
+/// never on the command line. The `since±`/`until±` anchor forms are rejected up
+/// front for the same reason — there is no range for them to anchor to here, and
+/// the resolver's own complaint about a missing `--until` is a dead end.
+pub fn resolve_cut_timestamp(
+    arg: &str,
+    default_timezone: Option<&str>,
+) -> Result<DateTime<Utc>, String> {
+    for anchor in ["since+", "since-", "until+", "until-"] {
+        if let Some(offset) = arg.strip_prefix(anchor) {
+            let bare = anchor.trim_end_matches(['+', '-']);
+            return Err(format!(
+                "'{}' anchors a range bound, but --cut is a single instant with no range to anchor to. Give an absolute timestamp, or offset from now (e.g. now-{}).",
+                bare, offset
+            ));
+        }
+    }
+    parse_anchored_timestamp(arg, None, None, default_timezone)
+}
+
 /// Parse anchored timestamp expressions like "since+30m", "until-1h", "now+5m"
 /// Requires the corresponding anchor timestamp to be provided (except for "now")
 pub fn parse_anchored_timestamp(

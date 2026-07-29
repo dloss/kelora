@@ -118,8 +118,13 @@ Timestamp filtering with --since and --until:
   kelora --since now-15m app.log                  # the last 15 minutes
 
 Splitting a log for template diffing with --cut (same formats as --since):
-  kelora --drain-diff --cut 14:00 incident.log -k msg   # before 14:00 = baseline,
-                                                        # at/after = target
+  kelora --drain-diff --cut 2026-07-24T14:00Z incident.log -k msg
+
+  before the cut = baseline, at/after = target. Like --since, --cut resolves
+  against the clock and not the log, so '1h' means an hour before now and a
+  bare '14:00' means today — on an archived log both land outside the data.
+  Prefer an absolute timestamp there; a cut that misses is refused, and the
+  error names the span the log actually covers.
 
   Only one bound may anchor to the other: --since and --until cannot both
   reference each other (e.g., --since until-1h --until since+1h is rejected).

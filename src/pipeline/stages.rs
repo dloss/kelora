@@ -1274,7 +1274,7 @@ impl ScriptStage for DrainDiffStage {
                     crate::drain_diff::DiffSide::Target
                 }
             }
-            crate::config::DrainDiffRule::ByCut { cut } => match event.parsed_ts {
+            crate::config::DrainDiffRule::ByCut { cut, .. } => match event.parsed_ts {
                 Some(ts) if ts < *cut => crate::drain_diff::DiffSide::Baseline,
                 Some(_) => crate::drain_diff::DiffSide::Target,
                 None => {
@@ -1307,7 +1307,7 @@ impl ScriptStage for DrainDiffStage {
                     if let Err(err) = crate::drain::drain_record(&text, None, event.line_num) {
                         return ScriptResult::Error(err);
                     }
-                    crate::drain_diff::record(&text, side);
+                    crate::drain_diff::record(&text, side, event.parsed_ts);
                 }
             }
             None => crate::drain_diff::record_excluded_no_field(),
