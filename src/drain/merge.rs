@@ -62,9 +62,64 @@
 use super::{is_bare_placeholder, Finalized, MaskedToken};
 use std::collections::HashMap;
 
-/// Identifies a variant family: token count, the position that varies, and the
-/// shared skeleton (the template with that position wildcarded).
-type FamilyKey = (usize, usize, Vec<MaskedToken>);
+/// Identifies a variant family, without materializing the skeleton it names.
+///
+/// The obvious key — the position plus an owned copy of the template with that
+/// position wildcarded — costs one vector and one string clone per token per
+/// template per position, which at the 10k-cluster cap is millions of
+/// allocations for a set that mostly does not merge. This borrows the template
+/// instead and substitutes the wildcard while hashing and comparing, so building
+/// the index allocates nothing beyond the map itself. Only families that actually
+/// merge get an owned skeleton, and there are few of those.
+///
+/// `skip` is part of the identity, not just a detail of how the key is read: two
+/// templates already holding a wildcard can produce the same token sequence from
+/// different positions (`x <*> c` at 0 and `<*> y c` at 1 both read
+/// `<*> <*> c`), and those are different families.
+#[derive(Debug, Clone, Copy)]
+struct FamilyKey<'a> {
+    tokens: &'a [MaskedToken],
+    skip: usize,
+}
+
+impl FamilyKey<'_> {
+    /// The token at `position` as the skeleton has it.
+    fn token(&self, position: usize) -> &MaskedToken {
+        if position == self.skip {
+            &MaskedToken::WildCard
+        } else {
+            &self.tokens[position]
+        }
+    }
+
+    /// The skeleton as an owned template, built only for a family that merges.
+    fn skeleton(&self) -> Vec<MaskedToken> {
+        let mut out = self.tokens.to_vec();
+        out[self.skip] = MaskedToken::WildCard;
+        out
+    }
+}
+
+impl PartialEq for FamilyKey<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.skip == other.skip
+            && self.tokens.len() == other.tokens.len()
+            && (0..self.tokens.len()).all(|i| self.token(i) == other.token(i))
+    }
+}
+
+impl Eq for FamilyKey<'_> {}
+
+impl std::hash::Hash for FamilyKey<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // Must agree with `eq`: same length, same skip, same substituted tokens.
+        self.tokens.len().hash(state);
+        self.skip.hash(state);
+        for i in 0..self.tokens.len() {
+            self.token(i).hash(state);
+        }
+    }
+}
 
 /// Distinct values at one position, across otherwise-identical templates, taken
 /// as evidence that the position is a parameter rather than a keyword.
@@ -103,46 +158,58 @@ fn one_round(entries: Vec<Finalized>) -> Vec<Finalized> {
     // family is found in one pass. The skeleton is the template with that
     // position wildcarded, which is also exactly what a merged member becomes —
     // so a member that already holds `<*>` there lands in its own family.
-    let mut families: HashMap<FamilyKey, Vec<usize>> = HashMap::new();
+    let mut families: HashMap<FamilyKey<'_>, Vec<usize>> = HashMap::new();
     for (idx, entry) in entries.iter().enumerate() {
         for position in 0..entry.tokens.len() {
-            let skeleton = skeleton_at(&entry.tokens, position);
             families
-                .entry((entry.tokens.len(), position, skeleton))
+                .entry(FamilyKey {
+                    tokens: &entry.tokens,
+                    skip: position,
+                })
                 .or_default()
                 .push(idx);
         }
     }
 
-    // Largest families first so the most confident merge claims its members
-    // before a smaller overlapping one can; ties break on the family key for a
-    // deterministic result regardless of HashMap order.
-    let mut candidates: Vec<(&FamilyKey, &Vec<usize>)> = families.iter().collect();
+    // Families of two or more are the only candidates, and most sets have few, so
+    // filter before sorting. Largest first, so the most confident merge claims its
+    // members before a smaller overlapping one can; ties break on the family
+    // itself for a result independent of HashMap order.
+    let mut candidates: Vec<(&FamilyKey<'_>, &Vec<usize>)> =
+        families.iter().filter(|(_, m)| m.len() > 1).collect();
     candidates.sort_by(|a, b| {
         b.1.len()
             .cmp(&a.1.len())
-            .then_with(|| a.0 .1.cmp(&b.0 .1))
-            .then_with(|| super::render_template(&a.0 .2).cmp(&super::render_template(&b.0 .2)))
+            .then_with(|| a.0.skip.cmp(&b.0.skip))
+            .then_with(|| {
+                super::render_template(&a.0.skeleton())
+                    .cmp(&super::render_template(&b.0.skeleton()))
+            })
     });
 
     let mut claimed = vec![false; entries.len()];
     // Merged results, and the members that went into each.
     let mut merges: Vec<(Vec<MaskedToken>, Vec<usize>)> = Vec::new();
-    for ((_, position, skeleton), members) in candidates {
-        if members.len() < 2 || members.iter().any(|idx| claimed[*idx]) {
+    for (family, members) in candidates {
+        if members.iter().any(|idx| claimed[*idx]) {
             continue;
         }
+        let position = family.skip;
         let has_wildcard_sibling = members
             .iter()
-            .any(|idx| matches!(entries[*idx].tokens[*position], MaskedToken::WildCard));
+            .any(|idx| matches!(entries[*idx].tokens[position], MaskedToken::WildCard));
         let rule_applies = has_wildcard_sibling || members.len() >= MIN_VARIANTS;
-        if !rule_applies || literal_count(skeleton) < MIN_LITERALS {
+        if !rule_applies {
+            continue;
+        }
+        let skeleton = family.skeleton();
+        if literal_count(&skeleton) < MIN_LITERALS {
             continue;
         }
         for idx in members {
             claimed[*idx] = true;
         }
-        merges.push((skeleton.clone(), members.clone()));
+        merges.push((skeleton, members.clone()));
     }
 
     if merges.is_empty() {
@@ -170,13 +237,6 @@ fn one_round(entries: Vec<Finalized>) -> Vec<Finalized> {
         }
     }
     by_template.into_values().collect()
-}
-
-/// `tokens` with `position` replaced by the wildcard.
-fn skeleton_at(tokens: &[MaskedToken], position: usize) -> Vec<MaskedToken> {
-    let mut out = tokens.to_vec();
-    out[position] = MaskedToken::WildCard;
-    out
 }
 
 /// Tokens carrying text of their own, as opposed to a bare placeholder. See the
