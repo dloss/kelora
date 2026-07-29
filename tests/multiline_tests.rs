@@ -1449,3 +1449,119 @@ created by main.main in goroutine 1\n\
         "each dump glues to the preceding heartbeat: {count}"
     );
 }
+
+/// #376: under a one-record-per-line grammar, a strategy that absorbs a
+/// free-text continuation makes the assembled event unparseable, so the event is
+/// *dropped* — grouping lowers the event count and the parse message blames the
+/// user's key syntax. The summary must name the multiline settings as the cause.
+#[test]
+fn multiline_parse_failure_under_logfmt_names_the_multiline_settings() {
+    let input = "level=info msg=\"started\"\n\
+level=error msg=\"payment failed\"\n\
+\tat com.acme.pay.Client.charge(Client.java:88)\n\
+level=info msg=\"retrying\"\n";
+
+    for join in ["newline", "space", "empty"] {
+        let (stdout, stderr, code) = run_kelora_with_input(
+            &[
+                "-f",
+                "logfmt",
+                "-M",
+                "indent",
+                "--multiline-join",
+                join,
+                "--multiline-timeout",
+                "0",
+            ],
+            input,
+        );
+        assert_eq!(code, 0, "recovered parse error: {stderr}");
+        // The error event really is gone — that is what the hint has to explain.
+        assert!(
+            !stdout.contains("payment failed"),
+            "join={join}: grouped event dropped: {stdout}"
+        );
+        assert!(
+            stderr.contains("--multiline"),
+            "join={join}: summary names the multiline settings: {stderr}"
+        );
+        assert!(
+            stderr.contains("logfmt"),
+            "join={join}: summary names the format: {stderr}"
+        );
+    }
+}
+
+/// The hint is advisory, so `--no-hints` silences it while the parse error
+/// itself still reports.
+#[test]
+fn multiline_parse_failure_hint_honors_no_hints() {
+    let input = "level=info msg=\"a\"\n\tat Foo.bar(Foo.java:1)\n";
+    let (_stdout, stderr, _code) = run_kelora_with_input(
+        &[
+            "-f",
+            "logfmt",
+            "-M",
+            "indent",
+            "--multiline-timeout",
+            "0",
+            "--no-hints",
+        ],
+        input,
+    );
+    assert!(
+        stderr.contains("Parse errors"),
+        "parse error still reported: {stderr}"
+    );
+    assert!(
+        !stderr.contains("--multiline-join"),
+        "--no-hints silences the advisory: {stderr}"
+    );
+}
+
+/// A parse error on a record the chunker did *not* group is not the multiline
+/// settings' fault, so the hint must stay quiet even with a strategy active.
+#[test]
+fn multiline_hint_stays_quiet_for_single_line_parse_failures() {
+    let input = "level=info msg=\"a\"\nthis is not logfmt at all\nlevel=info msg=\"b\"\n";
+    let (_stdout, stderr, _code) = run_kelora_with_input(
+        &["-f", "logfmt", "-M", "indent", "--multiline-timeout", "0"],
+        input,
+    );
+    assert!(
+        stderr.contains("Parse errors"),
+        "parse error reported: {stderr}"
+    );
+    assert!(
+        !stderr.contains("--multiline-join"),
+        "ungrouped failure must not blame multiline: {stderr}"
+    );
+}
+
+/// Parallel workers each count their own grouped failures; the merge op has to
+/// sum them into the one summary the run prints.
+#[test]
+fn multiline_parse_failure_hint_counts_across_parallel_workers() {
+    let mut input = String::new();
+    for i in 0..200 {
+        input.push_str(&format!("level=error msg=\"boom {}\"\n", i));
+        input.push_str("\tat com.acme.pay.Client.charge(Client.java:88)\n");
+    }
+
+    let (_stdout, stderr, _code) = run_kelora_with_input(
+        &[
+            "-f",
+            "logfmt",
+            "-M",
+            "indent",
+            "--multiline-timeout",
+            "0",
+            "--parallel",
+        ],
+        &input,
+    );
+    assert!(
+        stderr.contains("200 events failed to parse after --multiline"),
+        "worker counts sum into one hint: {stderr}"
+    );
+}

@@ -653,6 +653,7 @@ fn worker_process_event_batch(
         let current_line_num = chunk.first_line_num;
         ctx.meta.line_num = Some(current_line_num);
         ctx.meta.filename = chunk.filename.clone();
+        ctx.meta.multiline_assembled = chunk.line_count > 1;
 
         crate::rhai_functions::strings::clear_captured_prints();
         crate::rhai_functions::strings::clear_captured_eprints();

@@ -266,8 +266,20 @@ with its line structure intact.
 
 - **`-f raw`** stores the entire aggregated block in the `raw` field without further processing. Use this when you want to preserve all text exactly as grouped (combine with `--multiline-join=newline` if you need to preserve line breaks).
 
-- **Structured parsers** (`-f json`, `-f logfmt`, `-f cols:...`) expect a single
-  logical record. Use multiline to restore that logical record before parsing.
+- **Structured parsers** (`-f json`, `-f logfmt`, `-f cols:...`, `-f combined`)
+  expect a single logical record. Use multiline to restore that logical record
+  before parsing.
+
+    If the assembled block is *not* one record — a `key=value` line followed by
+    stack frames, say — the parser fails and **the whole event is dropped**, so
+    turning multiline on can leave you with *fewer* events than leaving it off.
+    No `--multiline-join` value avoids this: a stack frame is not `key=value`
+    under any separator. kelora hints at the multiline settings when a parse
+    error lands on a grouped event, so a run that reports
+    `Key cannot contain spaces` also names the real lever. To keep the
+    continuation lines, use a parser that accepts free text — `-f raw`,
+    `-f line`, or a `-f regex:...` pattern whose trailing capture spans
+    newlines (`-f syslog` and the built-in application-log patterns already do).
 
 - After parsing, you can still keep the original text by copying the aggregated block
   into another field inside an exec script.
@@ -330,6 +342,12 @@ Two flags bound the buffer's behavior:
   message, a custom formatter) can fall outside them. Inspect the boundary
   with `-f raw -F json --take 5`; if the shape is genuinely standard, that is
   a preset gap worth reporting. `regex:match=` remains the escape hatch.
+
+- **Fewer events with multiline than without**: the grouped block no longer
+  parses as the chosen format, so each failing event is dropped. The parse
+  error names a symptom (`Key cannot contain spaces`,
+  `Invalid combined log format`) and the hint beside it names the cause. See
+  [Choosing the Right Parser](#choosing-the-right-parser).
 
 - **Events merge that should split**: with `timestamp`, lock-in may have
   latched onto the wrong format if the file's first line looks time-like but
