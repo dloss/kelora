@@ -80,7 +80,7 @@ kelora --drain-diff examples/deploy_before.jsonl examples/deploy_after.jsonl -k 
 
 # One input, split by time: everything before the cut is baseline
 cat examples/deploy_before.jsonl examples/deploy_after.jsonl | \
-  kelora --drain-diff --cut 2025-01-20T14:00Z -k msg
+  kelora --drain-diff --cut-at 2025-01-20T14:00Z -k msg
 
 # JSON for scripting; --filter runs before the comparison
 kelora --drain-diff=json examples/deploy_before.jsonl examples/deploy_after.jsonl \

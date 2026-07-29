@@ -266,26 +266,42 @@ fn main() -> Result<()> {
         config.processing.timestamp_filter = Some(TimestampFilterConfig { since, until });
     }
 
-    // Resolve the --drain-diff side rule: a --cut timestamp (parsed with the
-    // same machinery as --since), or the first input file as the baseline.
+    // Resolve the --drain-diff side rule: a --cut-at timestamp (parsed with the
+    // same machinery as --since), a --cut-when predicate, or the first input file
+    // as the baseline.
     if config.output.drain_diff.is_some() {
-        let rule = if let Some(cut_str) = &cli.cut {
+        let rule = if let Some(cut_str) = &cli.cut_at {
             let cli_timezone = config.input.default_timezone.as_deref();
             match crate::timestamp::resolve_cut_timestamp(cut_str, cli_timezone) {
-                Ok(cut) => config::DrainDiffRule::ByCut {
+                Ok(cut) => config::DrainDiffRule::Timestamp {
                     cut,
                     raw: cut_str.clone(),
                 },
                 Err(e) => {
                     stderr
                         .writeln(&config.format_error_message(&format!(
-                            "--cut '{}': {}. See --help-time for accepted formats.",
+                            "--cut-at '{}': {}. See --help-time for accepted formats.",
                             cut_str,
                             e.trim_end_matches('.')
                         )))
                         .unwrap_or(());
                     ExitCode::InvalidUsage.exit();
                 }
+            }
+        } else if let Some(expr) = &cli.cut_when {
+            // The predicate is compiled later, when the pipeline's engine exists;
+            // a syntax error surfaces from there as a normal script error.
+            config::DrainDiffRule::Predicate {
+                expr: expr.clone(),
+                includes: match cli::load_all_include_files(&cli.includes) {
+                    Ok(includes) => includes,
+                    Err(e) => {
+                        stderr
+                            .writeln(&config.format_error_message(&format!("--cut-when: {}", e)))
+                            .unwrap_or(());
+                        ExitCode::InvalidUsage.exit();
+                    }
+                },
             }
         } else {
             // Two-input mode: the baseline is the first input after --file-order
@@ -294,13 +310,13 @@ fn main() -> Result<()> {
                 pipeline::builders::sort_files(&config.input.files, &config.input.file_order)
                     .unwrap_or_else(|_| config.input.files.clone());
             match sorted.first() {
-                Some(baseline) => config::DrainDiffRule::ByFile {
+                Some(baseline) => config::DrainDiffRule::TwoInputs {
                     baseline: baseline.clone(),
                 },
                 None => {
                     stderr
                         .writeln(&config.format_error_message(
-                            "--drain-diff requires exactly 2 inputs (baseline first, then target), or 1 input plus --cut.",
+                            "--drain-diff requires exactly 2 inputs (baseline first, then target), or 1 input plus --cut-at / --cut-when.",
                         ))
                         .unwrap_or(());
                     ExitCode::InvalidUsage.exit();
@@ -1240,8 +1256,8 @@ fn drain_diff_dead_field_message(
 /// NEW or VANISHED by construction, which reads as a dramatic finding ("the
 /// service stopped doing everything") when it only means the split missed.
 ///
-/// A mis-aimed `--cut` is the usual cause, and easy to hit by accident, because
-/// `--cut` shares `--since`'s vocabulary: relative forms resolve against
+/// A mis-aimed `--cut-at` is the usual cause, and easy to hit by accident, because
+/// `--cut-at` shares `--since`'s vocabulary: relative forms resolve against
 /// wall-clock now and a bare `14:00` means *today*, so both land outside an
 /// archived log entirely. The observed span is therefore part of the message —
 /// it is exactly the information needed to pick a working cut, which turns the
@@ -1259,7 +1275,7 @@ fn drain_diff_one_sided_message(
     };
 
     match rule {
-        Some(config::DrainDiffRule::ByCut { cut, raw }) => {
+        Some(config::DrainDiffRule::Timestamp { cut, raw }) => {
             // "before"/"at or after" mirrors the split rule in DrainDiffStage:
             // ts < cut is baseline, everything else is target.
             let relation = match empty {
@@ -1268,12 +1284,12 @@ fn drain_diff_one_sided_message(
             };
             let range = match report.overall_span() {
                 Some((first, last)) => format!(
-                    " The input spans {} .. {}, so pick a --cut inside that range.",
+                    " The input spans {} .. {}, so pick a --cut-at inside that range.",
                     crate::drain_diff::format_instant(first),
                     crate::drain_diff::format_instant(last),
                 ),
                 // No span means no event carried a parseable timestamp, yet a
-                // side still filled — impossible via --cut, which excludes
+                // side still filled — impossible via --cut-at, which excludes
                 // untimestamped events. Kept reachable-safe rather than
                 // asserting.
                 None => String::new(),
@@ -1287,7 +1303,7 @@ fn drain_diff_one_sided_message(
                 " Note that relative times resolve against the current time, not the log's — '1h' means an hour ago, and a bare '14:00' means today."
             };
             format!(
-                "--drain-diff: --cut resolved to {}, and all {} compared event(s) fall {} it, so the {} side is empty and the report would show every template as {} rather than compare anything.{}{}",
+                "--drain-diff: --cut-at resolved to {}, and all {} compared event(s) fall {} it, so the {} side is empty and the report would show every template as {} rather than compare anything.{}{}",
                 crate::drain_diff::format_instant(*cut),
                 compared,
                 relation,
@@ -1299,6 +1315,21 @@ fn drain_diff_one_sided_message(
                 range,
                 clock_note,
             )
+        }
+        Some(config::DrainDiffRule::Predicate { expr, .. }) => {
+            // Which way the predicate failed says what to change, and the two
+            // fixes are opposites: never matching means the boundary was not
+            // found, matching on the very first event means it was too broad.
+            match empty {
+                crate::drain_diff::DiffSide::Target => format!(
+                    "--drain-diff: --cut-when '{}' never matched any of the {} compared event(s), so the target side is empty and the report would show every template as VANISHED rather than compare anything. Check the expression against the log first, e.g. with --filter '{}'.",
+                    expr, compared, expr
+                ),
+                crate::drain_diff::DiffSide::Baseline => format!(
+                    "--drain-diff: --cut-when '{}' matched the very first of the {} compared event(s), so the baseline side is empty and the report would show every template as NEW rather than compare anything. The predicate needs to be specific to the change you are looking for — it currently matches from the start of the log.",
+                    expr, compared
+                ),
+            }
         }
         _ => format!(
             "--drain-diff: the {} input contributed all {} compared event(s) and the {} input contributed none, so the report would show every template as {} rather than compare anything. Check that both inputs are non-empty and that --filter / --since / --level did not remove one side entirely.",
@@ -1313,7 +1344,7 @@ fn drain_diff_one_sided_message(
     }
 }
 
-/// Whether a `--cut` argument pinned a date itself rather than leaning on the
+/// Whether a `--cut-at` argument pinned a date itself rather than leaning on the
 /// clock. A leading four-digit year is what separates the two in every accepted
 /// form: `2026-07-24T14:00Z` and `2026-07-24 14:00` carry one, while `1h`,
 /// `now-30m`, `yesterday`, and a bare `14:00` do not. Only used to decide whether
@@ -1686,6 +1717,20 @@ fn handle_pipeline_success(
         // through. Only the report and its advisory tiers are silenced.
         match crate::drain_diff::finalize() {
             Ok(report) => {
+                // Checked first: a broken splitter invalidates every side
+                // assignment, so the resulting counts are not worth diagnosing
+                // any further. The stage only evaluates the predicate while the
+                // boundary is undecided, so any failure counted here means the
+                // split point itself is unknown.
+                if report.cut_predicate_errors > 0 {
+                    stderr
+                        .writeln(&config.format_error_message(&format!(
+                            "--drain-diff: --cut-when failed to evaluate on {} event(s) before it found the boundary, so which events belong to which side is unknown and no report can be trusted. Fix the expression — try it with --filter first, where a per-event failure only drops that event.",
+                            report.cut_predicate_errors
+                        )))
+                        .unwrap_or(());
+                    std::process::exit(ExitCode::GeneralError as i32);
+                }
                 // Refuse the report when every event that reached the
                 // comparison was excluded for lacking the mined field: the
                 // three sections would each read "no change" over zero
@@ -1707,9 +1752,9 @@ fn handle_pipeline_success(
                 // Refuse a lopsided split for the same reason: with one side
                 // empty, every template is NEW or VANISHED by construction, so
                 // the sections read as a dramatic finding when they only mean
-                // the boundary missed. A mis-aimed --cut is the usual cause and
+                // the boundary missed. A mis-aimed --cut-at is the usual cause and
                 // is easy to produce by accident — relative forms resolve
-                // against wall-clock now, so `--cut 1h` on an archived log lands
+                // against wall-clock now, so `--cut-at 1h` on an archived log lands
                 // past every event — so the message carries the resolved
                 // instant and the span the input actually covers.
                 if let Some(empty) = report.empty_side() {
@@ -1743,7 +1788,7 @@ fn handle_pipeline_success(
                         // Reaching here with zero compared events means the
                         // field was never the problem (that path exited above),
                         // so the only concrete cause left to defer to is the
-                        // --cut timestamp exclusion warned about below.
+                        // --cut-at timestamp exclusion warned about below.
                         if report.compared_events() == 0 {
                             stderr
                                 .writeln(&crate::config::format_warning_message_auto(&format!(
@@ -1759,7 +1804,7 @@ fn handle_pipeline_success(
                         if report.excluded_no_timestamp > 0 {
                             stderr
                                 .writeln(&crate::config::format_warning_message_auto(&format!(
-                                    "--drain-diff --cut excluded {} event(s) without a parseable timestamp from the comparison. Check --ts-field / --ts-format if your timestamps use a non-default field.",
+                                    "--drain-diff --cut-at excluded {} event(s) without a parseable timestamp from the comparison. Check --ts-field / --ts-format if your timestamps use a non-default field.",
                                     report.excluded_no_timestamp
                                 )))
                                 .unwrap_or(());

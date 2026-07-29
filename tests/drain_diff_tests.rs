@@ -282,7 +282,7 @@ fn test_cut_mode_equals_pre_split_files() {
 
     let (cut_out, cut_err, cut_code) = run_diff(&[
         "--drain-diff",
-        "--cut",
+        "--cut-at",
         "2026-07-24T14:00:00Z",
         combined.path().to_str().unwrap(),
         "-k",
@@ -299,7 +299,7 @@ fn test_cut_mode_equals_pre_split_files() {
     assert_eq!(split_code, 0);
     assert_eq!(
         cut_out, split_out,
-        "single file with --cut must equal the same file pre-split"
+        "single file with --cut-at must equal the same file pre-split"
     );
 }
 
@@ -309,7 +309,7 @@ fn test_cut_mode_warns_on_events_without_timestamps() {
     let file = temp_log(content);
     let (_stdout, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut",
+        "--cut-at",
         "2026-07-24T14:00:00Z",
         file.path().to_str().unwrap(),
         "-k",
@@ -335,7 +335,7 @@ fn test_cut_outside_the_log_is_refused_with_the_observed_span() {
     // Past every event: the target side is starved.
     let (stdout, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut",
+        "--cut-at",
         "2030-01-01T00:00:00Z",
         path,
         "-k",
@@ -348,7 +348,7 @@ fn test_cut_outside_the_log_is_refused_with_the_observed_span() {
         stderr
     );
     assert!(stderr.contains("fall before it"), "stderr: {}", stderr);
-    // The span is the actionable half — it is what a working --cut is picked from.
+    // The span is the actionable half — it is what a working --cut-at is picked from.
     assert!(
         stderr.contains("The input spans 2026-07-24T10:00:00Z .. 2026-07-24T15:39:00Z"),
         "stderr: {}",
@@ -363,7 +363,7 @@ fn test_cut_outside_the_log_is_refused_with_the_observed_span() {
     // Before every event: the baseline side is starved.
     let (_, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut",
+        "--cut-at",
         "2000-01-01T00:00:00Z",
         path,
         "-k",
@@ -378,7 +378,7 @@ fn test_cut_outside_the_log_is_refused_with_the_observed_span() {
     assert!(stderr.contains("fall at or after it"), "stderr: {}", stderr);
 }
 
-/// The trap this refusal exists for: `--cut` shares `--since`'s vocabulary, so a
+/// The trap this refusal exists for: `--cut-at` shares `--since`'s vocabulary, so a
 /// relative value resolves against wall-clock now and silently overshoots any
 /// archived log. Those users get the clock caveat; someone who typed an absolute
 /// stamp already knows it was absolute and does not need the sentence.
@@ -387,7 +387,7 @@ fn test_now_relative_cut_explains_the_clock_only_when_relevant() {
     let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
     let path = combined.path().to_str().unwrap();
 
-    let (_, stderr, code) = run_diff(&["--drain-diff", "--cut", "1h", path, "-k", "msg"]);
+    let (_, stderr, code) = run_diff(&["--drain-diff", "--cut-at", "1h", path, "-k", "msg"]);
     assert_eq!(code, 1, "stderr: {}", stderr);
     assert!(
         stderr.contains("relative times resolve against the current time"),
@@ -397,7 +397,7 @@ fn test_now_relative_cut_explains_the_clock_only_when_relevant() {
 
     let (_, stderr, _) = run_diff(&[
         "--drain-diff",
-        "--cut",
+        "--cut-at",
         "2030-01-01T00:00:00Z",
         path,
         "-k",
@@ -405,7 +405,7 @@ fn test_now_relative_cut_explains_the_clock_only_when_relevant() {
     ]);
     assert!(
         !stderr.contains("relative times resolve"),
-        "an absolute --cut needs no clock caveat: {}",
+        "an absolute --cut-at needs no clock caveat: {}",
         stderr
     );
 }
@@ -438,7 +438,7 @@ fn test_report_echoes_the_span_of_each_side() {
     let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
     let (stdout, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut",
+        "--cut-at",
         "2026-07-24T14:00:00Z",
         combined.path().to_str().unwrap(),
         "-k",
@@ -462,7 +462,7 @@ fn test_json_report_carries_each_side_span() {
     let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
     let (stdout, stderr, code) = run_diff(&[
         "--drain-diff=json",
-        "--cut",
+        "--cut-at",
         "2026-07-24T14:00:00Z",
         combined.path().to_str().unwrap(),
         "-k",
@@ -476,7 +476,7 @@ fn test_json_report_carries_each_side_span() {
     assert_eq!(json["target_span"]["last"], "2026-07-24T15:39:00Z");
 }
 
-/// `--cut` used to be resolved by calling the `--since` parser, so its failures
+/// `--cut-at` used to be resolved by calling the `--since` parser, so its failures
 /// named a flag that was never on the command line.
 #[test]
 fn test_cut_diagnostics_name_cut_and_not_since() {
@@ -484,10 +484,10 @@ fn test_cut_diagnostics_name_cut_and_not_since() {
     let path = file.path().to_str().unwrap();
 
     for value in ["not-a-time", "until-1h", "since+5m"] {
-        let (_, stderr, code) = run_diff(&["--drain-diff", "--cut", value, path, "-k", "msg"]);
+        let (_, stderr, code) = run_diff(&["--drain-diff", "--cut-at", value, path, "-k", "msg"]);
         assert_eq!(code, 2, "value {}: stderr {}", value, stderr);
         assert!(
-            stderr.contains(&format!("--cut '{}'", value)),
+            stderr.contains(&format!("--cut-at '{}'", value)),
             "value {} must be quoted back: {}",
             value,
             stderr
@@ -499,6 +499,191 @@ fn test_cut_diagnostics_name_cut_and_not_since() {
             stderr
         );
     }
+}
+
+/// The point of --cut-when: split on what the change looks like, with no
+/// timestamp to look up and no clock to reason about. Must agree exactly with the
+/// equivalent --cut-at, so the two splitters are interchangeable when both are
+/// expressible.
+#[test]
+fn test_cut_when_matches_the_equivalent_timestamp_split() {
+    // A marker sits exactly on the boundary the 14:00 cut would draw.
+    let marked = format!(
+        "{}{}{}",
+        baseline_content(),
+        "{\"ts\": \"2026-07-24T14:30:00Z\", \"msg\": \"deploy started: v1.4.2\"}\n",
+        target_content()
+    );
+    let by_predicate = temp_log(&marked);
+    let by_time = temp_log(&marked);
+
+    let (pred_out, pred_err, pred_code) = run_diff(&[
+        "--drain-diff",
+        "--cut-when",
+        "e.msg.contains(\"deploy started\")",
+        by_predicate.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    let (time_out, _, time_code) = run_diff(&[
+        "--drain-diff",
+        "--cut-at",
+        "2026-07-24T14:30:00Z",
+        by_time.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(pred_code, 0, "stderr: {}", pred_err);
+    assert_eq!(time_code, 0);
+    assert_eq!(
+        pred_out, time_out,
+        "--cut-when and the equivalent --cut-at must draw the same boundary"
+    );
+    // The matching event belongs to the target, not the baseline.
+    assert!(
+        pred_out.contains("deploy started: <version>"),
+        "stdout: {}",
+        pred_out
+    );
+}
+
+/// The boundary latches, so a predicate matching most of the log still splits it
+/// once. Without the latch every match would re-cross and the sides would be
+/// interleaved rather than split.
+#[test]
+fn test_cut_when_latches_on_the_first_match() {
+    // 3 baseline events, then 5 that all match: the split must be 3/5, not 3/1.
+    let mut content = String::new();
+    for i in 0..3 {
+        content.push_str(&format!(
+            "{{\"ts\": \"2026-07-24T10:0{}:00Z\", \"level\": \"INFO\", \"msg\": \"request {} served\"}}\n",
+            i, i
+        ));
+    }
+    for i in 0..5 {
+        content.push_str(&format!(
+            "{{\"ts\": \"2026-07-24T11:0{}:00Z\", \"level\": \"ERROR\", \"msg\": \"upstream {} failed\"}}\n",
+            i, i
+        ));
+    }
+    let file = temp_log(&content);
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=json",
+        "--cut-when",
+        "e.level == \"ERROR\"",
+        file.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    let json: serde_json::Value = serde_json::from_str(&stdout).expect("valid json");
+    assert_eq!(json["baseline_events"], 3);
+    assert_eq!(
+        json["target_events"], 5,
+        "all five matching events belong to the target, not just the first"
+    );
+}
+
+#[test]
+fn test_cut_when_refuses_both_degenerate_predicates() {
+    let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
+    let path = combined.path().to_str().unwrap();
+
+    // Never matches: nothing reaches the target.
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut-when",
+        "e.msg.contains(\"no such line anywhere\")",
+        path,
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(stderr.contains("never matched"), "stderr: {}", stderr);
+    assert!(
+        !stdout.contains("VANISHED"),
+        "a refused comparison must not also print its report: {}",
+        stdout
+    );
+
+    // Always matches: nothing stays in the baseline.
+    let (_, stderr, code) = run_diff(&["--drain-diff", "--cut-when", "true", path, "-k", "msg"]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("matched the very first"),
+        "stderr: {}",
+        stderr
+    );
+}
+
+/// Stricter than --filter on purpose: the boundary is one decision, so a failed
+/// evaluation before it is found leaves every later event's side unknown.
+#[test]
+fn test_cut_when_evaluation_failure_invalidates_the_report() {
+    let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut-when",
+        "e.nosuchfield.bogus_method()",
+        combined.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 1, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("--cut-when failed to evaluate"),
+        "stderr: {}",
+        stderr
+    );
+    assert!(
+        !stdout.contains("NEW in target"),
+        "an unknown split must not print a report: {}",
+        stdout
+    );
+}
+
+#[test]
+fn test_cut_when_usage_errors() {
+    let file = temp_log("{\"ts\": \"2026-07-24T10:00:00Z\", \"msg\": \"x\"}\n");
+    let path = file.path().to_str().unwrap();
+
+    // Without --drain-diff.
+    let (_, stderr, code) = run_diff(&["--cut-when", "true", path, "-k", "msg"]);
+    assert_eq!(code, 2, "stderr: {}", stderr);
+    assert!(
+        stderr.contains("--cut-when requires --drain-diff"),
+        "stderr: {}",
+        stderr
+    );
+
+    // Both splitters at once: the two rules would contradict each other.
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut-at",
+        "2026-07-24T14:00:00Z",
+        "--cut-when",
+        "true",
+        path,
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 2, "stderr: {}", stderr);
+    assert!(stderr.contains("cannot be used with"), "stderr: {}", stderr);
+
+    // Two inputs plus a predicate: the split happens inside one input.
+    let other = temp_log("{\"ts\": \"2026-07-24T10:00:00Z\", \"msg\": \"y\"}\n");
+    let (_, stderr, code) = run_diff(&[
+        "--drain-diff",
+        "--cut-when",
+        "true",
+        path,
+        other.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 2, "stderr: {}", stderr);
+    assert!(stderr.contains("--cut-when"), "stderr: {}", stderr);
+    assert!(stderr.contains("single input"), "stderr: {}", stderr);
 }
 
 #[test]
@@ -528,7 +713,7 @@ fn test_usage_errors_exit_2() {
     let file = temp_log("{\"msg\": \"x\"}\n");
     let path = file.path().to_str().unwrap();
 
-    // One input without --cut.
+    // One input without --cut-at.
     let (_, stderr, code) = run_diff(&["--drain-diff", path, "-k", "msg"]);
     assert_eq!(code, 2, "stderr: {}", stderr);
     assert!(stderr.contains("exactly 2 inputs"));
@@ -543,16 +728,16 @@ fn test_usage_errors_exit_2() {
     assert_eq!(code, 2);
     assert!(stderr.contains("same file"));
 
-    // --cut without --drain-diff.
-    let (_, stderr, code) = run_diff(&["--cut", "14:00", path, "-k", "msg"]);
+    // --cut-at without --drain-diff.
+    let (_, stderr, code) = run_diff(&["--cut-at", "14:00", path, "-k", "msg"]);
     assert_eq!(code, 2);
-    assert!(stderr.contains("--cut requires --drain-diff"));
+    assert!(stderr.contains("--cut-at requires --drain-diff"));
 
-    // --cut with two inputs.
+    // --cut-at with two inputs.
     let other = temp_log("{\"msg\": \"y\"}\n");
     let (_, stderr, code) = run_diff(&[
         "--drain-diff",
-        "--cut",
+        "--cut-at",
         "14:00",
         path,
         other.path().to_str().unwrap(),
@@ -586,10 +771,11 @@ fn test_usage_errors_exit_2() {
     assert_eq!(code, 2);
     assert!(stderr.contains("pick one summary mode"));
 
-    // Invalid --cut timestamp.
-    let (_, stderr, code) = run_diff(&["--drain-diff", "--cut", "not-a-time", path, "-k", "msg"]);
+    // Invalid --cut-at timestamp.
+    let (_, stderr, code) =
+        run_diff(&["--drain-diff", "--cut-at", "not-a-time", path, "-k", "msg"]);
     assert_eq!(code, 2);
-    assert!(stderr.contains("--cut"));
+    assert!(stderr.contains("--cut-at"));
 }
 
 #[test]

@@ -7,7 +7,7 @@
 //! counts occurrences of each *unique* field value per side. Logs are
 //! repetitive, so the unique-value map is far smaller than the event stream;
 //! it doubles as the buffered corpus for pass 2, which makes stdin and
-//! `--cut` first-class (no re-reading of inputs, no seekability concerns).
+//! `--cut-at` first-class (no re-reading of inputs, no seekability concerns).
 //!
 //! **Pass 2 (finalize)** — the template set is frozen
 //! (`crate::drain::frozen_template_set`) and each unique value is matched
@@ -106,7 +106,7 @@ struct DiffState {
     counts: HashMap<String, [u64; 2]>,
     /// True once `counts` refused an insertion; the report is then invalid.
     cap_exceeded: bool,
-    /// Events excluded in --cut mode because they carry no parseable timestamp.
+    /// Events excluded in --cut-at mode because they carry no parseable timestamp.
     excluded_no_timestamp: u64,
     /// Events excluded because the mined field carried no text (absent, or
     /// present but empty).
@@ -118,6 +118,12 @@ struct DiffState {
     /// timestamped, and benefits from the same at-a-glance confirmation.
     /// Powers the split echo and the one-sided refusal message.
     spans: [Option<(DateTime<Utc>, DateTime<Utc>)>; 2],
+    /// Events where `--cut-when`'s predicate failed to evaluate *while the
+    /// boundary was still undecided*. Any such failure invalidates the whole
+    /// split: the event might have been the boundary, so every event after it may
+    /// be on the wrong side. Unlike a `--filter` error, which drops one event,
+    /// this silently relabels the rest of the log, so the report is refused.
+    cut_predicate_errors: u64,
 }
 
 thread_local! {
@@ -161,7 +167,15 @@ pub fn record(text: &str, side: DiffSide, ts: Option<DateTime<Utc>>) {
     });
 }
 
-/// Record an event dropped from the comparison in --cut mode because it has
+/// Record a `--cut-when` predicate failure that left the boundary undecided.
+/// See `DiffState::cut_predicate_errors`.
+pub fn record_cut_predicate_error() {
+    DIFF_STATE.with(|state| {
+        state.borrow_mut().cut_predicate_errors += 1;
+    });
+}
+
+/// Record an event dropped from the comparison in --cut-at mode because it has
 /// no parseable timestamp. Surfaced as a warning with the report.
 pub fn record_excluded_no_timestamp() {
     DIFF_STATE.with(|state| {
@@ -275,6 +289,10 @@ pub struct DiffReport {
     /// carried parseable timestamps. See `DiffState::spans`.
     pub baseline_span: Option<(DateTime<Utc>, DateTime<Utc>)>,
     pub target_span: Option<(DateTime<Utc>, DateTime<Utc>)>,
+    /// `--cut-when` evaluation failures that left the boundary undecided; any
+    /// nonzero count invalidates the split. See
+    /// `DiffState::cut_predicate_errors`.
+    pub cut_predicate_errors: u64,
 }
 
 impl DiffReport {
@@ -447,6 +465,7 @@ pub fn finalize() -> Result<DiffReport, String> {
             excluded_no_field: state.excluded_no_field,
             baseline_span: state.spans[0],
             target_span: state.spans[1],
+            cut_predicate_errors: state.cut_predicate_errors,
         })
     })
 }
@@ -614,7 +633,7 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
         plural(report.unchanged_count),
     ));
 
-    // Where the split actually landed. In --cut mode the boundary is the whole
+    // Where the split actually landed. In --cut-at mode the boundary is the whole
     // premise of the report and the easiest thing to get wrong, so the spans it
     // produced belong with the totals rather than in a separate check the user
     // has to think to run. Only present when timestamps survived to the diff.
@@ -633,7 +652,7 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
     out
 }
 
-/// Render an instant in the form `--cut`/`--since` accept back verbatim, so a
+/// Render an instant in the form `--cut-at`/`--since` accept back verbatim, so a
 /// span printed in the report can be copied straight into the next invocation.
 pub fn format_instant(ts: DateTime<Utc>) -> String {
     ts.format("%Y-%m-%dT%H:%M:%SZ").to_string()
@@ -714,7 +733,7 @@ pub fn format_report_json(report: &DiffReport) -> String {
         "unmatched_events": report.unmatched_events,
         "excluded_no_timestamp": report.excluded_no_timestamp,
         "excluded_no_field": report.excluded_no_field,
-        // Null unless timestamps reached the diff (i.e. --cut mode). Same
+        // Null unless timestamps reached the diff (i.e. --cut-at mode). Same
         // purpose as the table's span lines: let a consumer confirm the split
         // landed where it meant it to, without a second pass over the input.
         "baseline_span": span_json(report.baseline_span),
@@ -798,6 +817,7 @@ mod tests {
             excluded_no_field: 0,
             baseline_span: None,
             target_span: None,
+            cut_predicate_errors: 0,
         }
     }
 
@@ -1085,6 +1105,7 @@ mod tests {
             excluded_no_field: 0,
             baseline_span: None,
             target_span: None,
+            cut_predicate_errors: 0,
         };
         let text = format_report_text(&report, false);
         assert!(
@@ -1232,6 +1253,7 @@ mod tests {
             excluded_no_field: 0,
             baseline_span: None,
             target_span: None,
+            cut_predicate_errors: 0,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target (1 template):"));
@@ -1343,6 +1365,7 @@ mod tests {
             excluded_no_field: 0,
             baseline_span: None,
             target_span: None,
+            cut_predicate_errors: 0,
         };
         let text = format_report_text(&report, false);
         assert!(text.contains("NEW in target: no new templates"));
@@ -1366,6 +1389,7 @@ mod tests {
             excluded_no_field: 0,
             baseline_span: None,
             target_span: None,
+            cut_predicate_errors: 0,
         };
         let json: serde_json::Value =
             serde_json::from_str(&format_report_json(&report)).expect("valid JSON");
