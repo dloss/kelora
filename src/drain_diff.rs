@@ -588,45 +588,9 @@ fn rate_multiple(entry: &DiffEntry, glyphs: &Glyphs) -> String {
     }
 }
 
-/// Rows shown per marker group (`+`, `-`, `*`) before the rest collapse into a
-/// single line.
-///
-/// A group is only as readable as it is short. High-cardinality fields produce
-/// long `+` groups however good the clustering is — a burst of one message
-/// under 85 distinct user names is 85 rows of the same finding — and past a
-/// screenful the reader has lost the ranking the sort exists to provide. Each
-/// group is ordered by what an operator acts on (count for `+`/`-`, |Δ share|
-/// for `*`), so the head is the part worth showing.
-///
-/// Never a silent cut: the note names how many rows and how many events were
-/// held back, and where to get all of them.
-const MAX_ROWS_PER_SECTION: usize = 20;
-
 /// Smallest template column we will render. Below this a row says nothing, so
 /// a very narrow terminal gets an overlong line rather than a useless one.
 const MIN_TEMPLATE_WIDTH: usize = 24;
-
-/// The "and the rest" line for a capped group, or `None` when everything fit.
-/// Carries its group's marker so it stays self-locating in a flat row list.
-fn truncation_note(
-    marker: char,
-    shown: usize,
-    entries: &[DiffEntry],
-    count: impl Fn(&DiffEntry) -> u64,
-    glyphs: &Glyphs,
-) -> Option<String> {
-    let hidden = entries.len().checked_sub(shown).filter(|n| *n > 0)?;
-    let events: u64 = entries.iter().skip(shown).map(count).sum();
-    Some(format!(
-        "{} {} {} more {} ({} {}) not shown; --drain-diff=json lists every one",
-        marker,
-        glyphs.ellipsis,
-        hidden,
-        if hidden == 1 { "template" } else { "templates" },
-        events,
-        if events == 1 { "event" } else { "events" },
-    ))
-}
 
 /// How each side is named on its `---`/`+++` header line. Built by the caller,
 /// which is the only place that knows the filenames and which splitter produced
@@ -704,8 +668,9 @@ fn side_header(label: &str, total: u64, span: Option<(DateTime<Utc>, DateTime<Ut
 /// baseline), or `*` (present in both, at a materially different rate).
 ///
 /// Templates whose frequency did not meaningfully change are the diff's context
-/// lines — counted in the footer, not printed. Long groups are capped at
-/// [`MAX_ROWS_PER_SECTION`] with a line stating what was held back.
+/// lines — counted in the footer, not printed. Everything that did change gets
+/// a row: like `--drain` and `--freq`, this prints what it found and leaves
+/// `| head` to the caller, rather than deciding for them what fits a screen.
 pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> String {
     let glyphs = Glyphs::new(opts.use_unicode);
     let colors = crate::colors::DiffColors::new(opts.use_colors);
@@ -743,12 +708,8 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
     ));
     out.push('\n');
 
-    let new_shown = report.new.len().min(MAX_ROWS_PER_SECTION);
-    let vanished_shown = report.vanished.len().min(MAX_ROWS_PER_SECTION);
-    let shifted_shown = report.shifted.len().min(MAX_ROWS_PER_SECTION);
-
     let mut rows: Vec<DiffRow> = Vec::new();
-    for entry in &report.new[..new_shown] {
+    for entry in &report.new {
         rows.push(DiffRow {
             marker: '+',
             color: colors.added,
@@ -756,7 +717,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
             template: &entry.template,
         });
     }
-    for entry in &report.vanished[..vanished_shown] {
+    for entry in &report.vanished {
         rows.push(DiffRow {
             marker: '-',
             color: colors.removed,
@@ -764,7 +725,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
             template: &entry.template,
         });
     }
-    for entry in &report.shifted[..shifted_shown] {
+    for entry in &report.shifted {
         rows.push(DiffRow {
             marker: '*',
             // Uncolored on purpose: growth is not a verdict. See `DiffColors`.
@@ -788,54 +749,17 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
         let prefix = 1 + 1 + annotation_width + 2;
         let template_width = opts.width.saturating_sub(prefix).max(MIN_TEMPLATE_WIDTH);
 
-        let emit = |rows: &[DiffRow], note: Option<String>, out: &mut String| {
-            for row in rows {
-                out.push_str(&line(
-                    row.color,
-                    &format!(
-                        "{} {}  {}",
-                        row.marker,
-                        pad_left_display(&row.annotation, annotation_width),
-                        truncate_for_display(row.template, template_width, glyphs.ellipsis),
-                    ),
-                ));
-            }
-            if let Some(note) = note {
-                out.push_str(&line("", &note));
-            }
-        };
-
-        let (added, rest) = rows.split_at(new_shown);
-        let (removed, changed) = rest.split_at(vanished_shown);
-        emit(
-            added,
-            truncation_note('+', new_shown, &report.new, |e| e.target_count, &glyphs),
-            &mut out,
-        );
-        emit(
-            removed,
-            truncation_note(
-                '-',
-                vanished_shown,
-                &report.vanished,
-                |e| e.baseline_count,
-                &glyphs,
-            ),
-            &mut out,
-        );
-        emit(
-            changed,
-            // Frequency changes count events on both sides; the note reports the
-            // target count, matching the direction `+` rows use.
-            truncation_note(
-                '*',
-                shifted_shown,
-                &report.shifted,
-                |e| e.target_count,
-                &glyphs,
-            ),
-            &mut out,
-        );
+        for row in &rows {
+            out.push_str(&line(
+                row.color,
+                &format!(
+                    "{} {}  {}",
+                    row.marker,
+                    pad_left_display(&row.annotation, annotation_width),
+                    truncate_for_display(row.template, template_width, glyphs.ellipsis),
+                ),
+            ));
+        }
     }
 
     let mut footer = Vec::new();
@@ -989,10 +913,8 @@ const KIND_FREQ_CHANGED: &str = "freq_changed";
 /// precision: enough to distinguish any two templates in a realistic log, and
 /// stable enough to diff two runs of this command.
 ///
-/// The row cap that keeps the table readable does not apply — a machine format
-/// with silently missing rows is worse than a long one — and neither do the
-/// header/footer, which carry no per-template data. Use `=json` when the totals,
-/// spans and exclusion counts matter.
+/// The header and footer do not appear: they carry no per-template data. Use
+/// `=json` when the totals, spans and exclusion counts matter.
 pub fn format_report_tsv(report: &DiffReport) -> String {
     use crate::rhai_functions::tracking::tsv_sanitize;
 
