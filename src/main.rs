@@ -835,7 +835,14 @@ fn maybe_print_zero_results_hint(
     stats: &stats::ProcessingStats,
     stderr: &mut SafeStderr,
 ) {
-    if stats.events_created == 0 || stats.events_output > 0 || stats.has_errors() {
+    // `events_created == 0` normally means "nothing to explain" — but a run whose
+    // every line was dropped by the level pre-filter also lands here, and that one
+    // has the most to explain (#369). Let it through; the level hint below is the
+    // only branch that can fire for it, since no event ever reached a later stage.
+    if (stats.events_created == 0 && stats.lines_prefiltered == 0)
+        || stats.events_output > 0
+        || stats.has_errors()
+    {
         return;
     }
 
@@ -894,6 +901,12 @@ fn maybe_print_no_input_hint(
         || stats.lines_read != 0
         || stats.events_created != 0
         || stats.lines_errors != 0
+        // Lines the level pre-filter dropped never reached the parser, so none of
+        // the signals above see them. Without this, a piped run whose `-l` token
+        // matches nothing is told "stdin is empty" when it was not — the most
+        // misleading form of #369, since it blames the plumbing. The
+        // level-filter hint explains that run instead.
+        || stats.lines_prefiltered != 0
     {
         return;
     }
@@ -966,9 +979,23 @@ fn maybe_print_naive_tz_hint(
 ///
 /// `--exclude-levels` alone keeps level-less events, so only an active include
 /// list can zero the stream this way.
+///
+/// A third cause is handled first, because it invalidates the evidence the other
+/// two rely on: when the raw-line level pre-filter is armed, the parser only ever
+/// sees lines containing a requested level token, so `discovered_keys` and
+/// `discovered_levels` are *subsets* of the input's real shape. Reporting them as
+/// complete produced the two original #369 symptoms — silence when the pre-filter
+/// dropped every line (`events_created == 0`), and a truthful-looking but wrong
+/// "levels present: ERROR" when it dropped only most of them. The pre-filter
+/// branch therefore asserts only what a substring test can prove and sends the
+/// operator to `--freq` for the real vocabulary.
 fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats) -> Option<String> {
     if config.processing.levels.is_empty() {
         return None;
+    }
+
+    if stats.level_prefilter_active {
+        return level_prefilter_zero_hint(config, stats);
     }
 
     let has_level_field = crate::event::LEVEL_FIELD_NAMES
@@ -1010,6 +1037,76 @@ fn level_filter_zero_hint(config: &KeloraConfig, stats: &stats::ProcessingStats)
         config.processing.levels.join(","),
         levels_present.join(","),
         example
+    ))
+}
+
+/// The `-l` zero-result hint for runs where the raw-line level pre-filter was
+/// armed (#369). Split out because the evidence available here is different in
+/// kind: the pre-filter drops lines before parsing, so nothing observed about the
+/// input is known to be complete.
+///
+/// Two shapes, distinguished by whether anything survived to be parsed:
+///
+/// * Nothing parsed (`events_created == 0`) — every line failed the substring
+///   test, which *proves* the requested text appears nowhere in the input. That
+///   is a stronger statement than the non-pre-filtered hint can make, and it is
+///   stated directly. Nothing is claimed about the input's structure: with no
+///   line parsed, "has a level field" is unknowable, and guessing produced the
+///   bogus "it looks unstructured" advice on well-formed JSON.
+/// * Some parsed but none matched — the token exists somewhere in the text (in a
+///   message, say) but no event's *level* equals it. The levels seen are a subset,
+///   so they are deliberately not listed; `--freq` on the level field is the
+///   accurate way to get the real vocabulary.
+///
+/// Returns `None` when a requested level does appear among the levels seen: the
+/// level filter matched and something later in the pipeline dropped the events
+/// (`-l error --filter 'false'`), which is not this hint's story to tell.
+fn level_prefilter_zero_hint(
+    config: &KeloraConfig,
+    stats: &stats::ProcessingStats,
+) -> Option<String> {
+    let requested_present = config.processing.levels.iter().any(|requested| {
+        stats
+            .discovered_levels
+            .iter()
+            .any(|seen| seen.eq_ignore_ascii_case(requested))
+    });
+    if requested_present {
+        return None;
+    }
+
+    // Name the level field the input actually uses when a line was parsed; fall
+    // back to `level` when the pre-filter dropped everything and we cannot know.
+    let level_field = crate::event::LEVEL_FIELD_NAMES
+        .iter()
+        .find(|name| stats.discovered_keys.contains(**name))
+        .copied()
+        .unwrap_or("level");
+
+    let requested = config.processing.levels.join(",");
+
+    if stats.events_created == 0 {
+        let quoted: Vec<String> = config
+            .processing
+            .levels
+            .iter()
+            .map(|level| format!("'{level}'"))
+            .collect();
+        let absent = if quoted.len() == 1 {
+            format!("the text {} appears nowhere in the input", quoted[0])
+        } else {
+            format!(
+                "none of the texts {} appear anywhere in the input",
+                quoted.join(", ")
+            )
+        };
+        return Some(format!(
+            "0 events matched. -l/--levels {requested} matched nothing because {absent}, so no event's level can equal it — -l compares level values literally, not by severity. If these logs spell levels differently ('E' for ERROR, 'CRIT' for CRITICAL), list the real values with --freq {level_field}, then match one directly."
+        ));
+    }
+
+    Some(format!(
+        "0 events matched. -l/--levels {requested} matched no event's level. List the levels actually present with --freq {level_field}, then match one directly — e.g. --filter 'e.{level_field} == \"ERROR\"' if it is the same level under a different name."
     ))
 }
 

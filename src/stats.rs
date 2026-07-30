@@ -124,6 +124,16 @@ pub struct ProcessingStats {
     pub truncated_lines: usize,
     /// The byte cap in effect when a truncation occurred, for the diagnostic.
     pub line_byte_cap: usize,
+    /// Number of input lines the raw-line level pre-filter dropped before parsing
+    /// (see `Pipeline::level_prefilter_needles`). A dropped line creates no event,
+    /// so `events_created` alone cannot tell "empty input" from "every line was
+    /// pre-filtered" — this counter is what distinguishes them (#369).
+    pub lines_prefiltered: usize,
+    /// True when the level pre-filter was armed for this run. While it is, the
+    /// parser only ever sees lines containing a requested level token, so
+    /// `discovered_levels` holds a *subset* of the levels actually in the input
+    /// and must not be reported as the complete vocabulary (#369).
+    pub level_prefilter_active: bool,
 }
 
 // Allow disabling stats collection when diagnostics/stats are suppressed
@@ -155,6 +165,12 @@ static FIRST_DECODE_WARNING_SAMPLE: OnceLock<Mutex<Option<String>>> = OnceLock::
 // truncation happens on reader threads, like decode warnings and file failures.
 static TRUNCATED_LINES: AtomicUsize = AtomicUsize::new(0);
 static LINE_BYTE_CAP: AtomicUsize = AtomicUsize::new(0);
+
+// The level pre-filter drops lines on whichever thread parses them (worker
+// threads under --parallel), so its counter and armed flag live in process-wide
+// atomics and are merged like the truncation counters above.
+static LINES_PREFILTERED: AtomicUsize = AtomicUsize::new(0);
+static LEVEL_PREFILTER_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 pub fn set_collect_stats(enabled: bool) {
     COLLECT_STATS.store(enabled, Ordering::Relaxed);
@@ -279,6 +295,36 @@ pub fn truncated_line_count() -> usize {
 /// The byte cap that was in effect when truncation occurred (process-wide).
 pub fn truncation_byte_cap() -> usize {
     LINE_BYTE_CAP.load(Ordering::Relaxed)
+}
+
+/// Record that the raw-line level pre-filter dropped a line before parsing.
+///
+/// Gated on stats collection like the other per-line counters: the pre-filter's
+/// only observer is the zero-result hint, and `collect_stats` is already true
+/// whenever hints can fire (see `runner.rs`), so `--no-diagnostics` keeps the
+/// fast path with no counter cost.
+pub fn stats_record_level_prefilter_drop() {
+    if !stats_enabled() {
+        return;
+    }
+    LINES_PREFILTERED.fetch_add(1, Ordering::Relaxed);
+}
+
+/// Number of lines dropped by the level pre-filter (process-wide). Exposed so
+/// the parallel tracker can merge it into its final stats.
+pub fn level_prefiltered_line_count() -> usize {
+    LINES_PREFILTERED.load(Ordering::Relaxed)
+}
+
+/// Arm/disarm the "level pre-filter was active" flag at pipeline build time.
+/// Not gated on stats collection: it describes the pipeline, not an event.
+pub fn set_level_prefilter_active(active: bool) {
+    LEVEL_PREFILTER_ACTIVE.store(active, Ordering::Relaxed);
+}
+
+/// Whether the level pre-filter was armed for this run (process-wide).
+pub fn level_prefilter_active() -> bool {
+    LEVEL_PREFILTER_ACTIVE.load(Ordering::Relaxed)
 }
 
 // Thread-local storage for statistics (following track_freq pattern)
@@ -524,6 +570,8 @@ pub fn get_thread_stats() -> ProcessingStats {
         s.first_decode_warning_sample = first_decode_warning_sample();
         s.truncated_lines = TRUNCATED_LINES.load(Ordering::Relaxed);
         s.line_byte_cap = LINE_BYTE_CAP.load(Ordering::Relaxed);
+        s.lines_prefiltered = LINES_PREFILTERED.load(Ordering::Relaxed);
+        s.level_prefilter_active = LEVEL_PREFILTER_ACTIVE.load(Ordering::Relaxed);
         s
     })
 }

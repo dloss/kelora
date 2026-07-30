@@ -983,3 +983,240 @@ fn test_exec_before_levels_observes_all_events() {
         exec_metric_line.trim()
     );
 }
+
+// ---------------------------------------------------------------------------
+// #369: the raw-line level pre-filter must not starve the zero-result hint.
+//
+// The pre-filter (json/logfmt only, include-only `-l` as the first stage) drops
+// lines *before* parsing, so `events_created` and `discovered_levels` no longer
+// describe the input. Three symptoms followed, one per test below. All are
+// stdin-piped on purpose: that is the path where the missing counter also
+// produced a false "stdin is empty".
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_level_typo_on_json_hints_instead_of_silence() {
+    // Symptom 1: every line failed the substring test, so nothing was parsed and
+    // the run went completely silent — exit 0, no output, no hint, which reads as
+    // "no errors in this log".
+    let input = "{\"level\":\"E\",\"msg\":\"boom\"}\n{\"level\":\"I\",\"msg\":\"ready\"}";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json", "-l", "bogus"], input);
+
+    assert_eq!(exit_code, 0, "a level miss stays non-fatal");
+    assert!(stdout.is_empty(), "no events should be output: {stdout}");
+    assert!(
+        stderr.contains("0 events matched"),
+        "a typo'd -l on JSON must not be silent: {stderr:?}"
+    );
+    assert!(
+        stderr.contains("appears nowhere in the input"),
+        "the hint should state what a substring test proves: {stderr}"
+    );
+    // With nothing parsed we cannot know whether a level field exists, so the
+    // "looks unstructured" advice must not be guessed at on well-formed JSON.
+    assert!(
+        !stderr.contains("no level field"),
+        "must not claim a missing level field when nothing was parsed: {stderr}"
+    );
+}
+
+#[test]
+fn test_level_typo_on_logfmt_hints_instead_of_silence() {
+    // Same as above for the other projecting parser.
+    let input = "level=E msg=boom\nlevel=I msg=ready";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "logfmt", "-l", "bogus"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("0 events matched") && stderr.contains("appears nowhere in the input"),
+        "a typo'd -l on logfmt must not be silent: {stderr:?}"
+    );
+}
+
+#[test]
+fn test_level_hint_does_not_report_a_prefiltered_level_subset() {
+    // Symptom 2, the worse one: `err` is a substring of `ERROR`, so ERROR lines
+    // survived the pre-filter and INFO/WARN lines did not. `discovered_levels`
+    // was therefore {ERROR}, and the hint reported "levels present: ERROR" as
+    // fact — telling the operator this log contains only errors. It contains all
+    // three. The list must be withheld whenever the pre-filter was armed.
+    let input = "{\"level\":\"ERROR\",\"msg\":\"boom\"}\n\
+                 {\"level\":\"INFO\",\"msg\":\"ready\"}\n\
+                 {\"level\":\"WARN\",\"msg\":\"slow\"}";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json", "-l", "err"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("0 events matched"),
+        "a level miss must still be explained: {stderr:?}"
+    );
+    assert!(
+        !stderr.contains("levels present:"),
+        "the observed levels are a pre-filtered subset and must not be listed: {stderr}"
+    );
+    assert!(
+        stderr.contains("--freq level"),
+        "point at the accurate way to get the real vocabulary: {stderr}"
+    );
+}
+
+#[test]
+fn test_prefiltered_stdin_is_not_reported_as_empty() {
+    // Symptom 3: with no line reaching the parser, the no-input hint's guards all
+    // read zero, so a piped run whose `-l` matched nothing was told its stdin was
+    // empty — sending the operator to debug the pipe instead of the flag.
+    let input = "{\"level\":\"E\",\"msg\":\"boom\"}";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json", "-l", "bogus"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stderr.contains("stdin is empty"),
+        "input arrived; only the level filter dropped it: {stderr}"
+    );
+    assert!(
+        stderr.contains("0 events matched"),
+        "the level filter should own the explanation: {stderr:?}"
+    );
+}
+
+#[test]
+fn test_level_matched_but_later_filter_dropped_all_stays_silent() {
+    // Guard against over-firing: here `-l error` *did* match and a later --filter
+    // removed the events. Blaming the level filter would be a new false hint, so
+    // the pre-filter branch must defer whenever a requested level is among those
+    // actually seen.
+    let input = "{\"level\":\"error\",\"msg\":\"boom\"}";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "-l", "error", "--filter", "false"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stderr.contains("matched no event's level")
+            && !stderr.contains("appears nowhere in the input"),
+        "the level filter matched; do not blame it: {stderr}"
+    );
+}
+
+#[test]
+fn test_non_projecting_parsers_keep_the_original_vocabulary_hint() {
+    // The pre-filter is off for glog (level_appears_verbatim() is false), so the
+    // richer "levels present: ..." wording is still available there and must not
+    // regress to the pre-filter phrasing.
+    let input = "I0102 15:04:05.123456 1234 server.go:42] starting\n\
+                 E0612 09:10:11.000001 7 reflector.go:138] failed";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "glog", "-l", "bogus"], input);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("levels present:") && stderr.contains('E') && stderr.contains('I'),
+        "glog keeps the full-vocabulary hint: {stderr}"
+    );
+    assert!(
+        !stderr.contains("appears nowhere in the input"),
+        "the pre-filter wording should not leak into non-pre-filtered runs: {stderr}"
+    );
+}
+
+/// Run kelora twice — pre-filter armed, then forced off via the internal
+/// `KELORA_NO_LEVEL_PREFILTER` escape hatch — and return both results.
+fn run_with_and_without_level_prefilter(
+    args: &[&str],
+    input: &str,
+) -> ((String, String, i32), (String, String, i32)) {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let run = |disable: bool| {
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_kelora"));
+        cmd.args(args)
+            .env("LLVM_PROFILE_FILE", "/dev/null")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        if disable {
+            cmd.env("KELORA_NO_LEVEL_PREFILTER", "1");
+        }
+        let mut child = cmd.spawn().expect("failed to start kelora");
+        child
+            .stdin
+            .as_mut()
+            .expect("stdin")
+            .write_all(input.as_bytes())
+            .expect("failed to write stdin");
+        let out = child.wait_with_output().expect("failed to read output");
+        (
+            String::from_utf8_lossy(&out.stdout).to_string(),
+            String::from_utf8_lossy(&out.stderr).to_string(),
+            out.status.code().unwrap_or(-1),
+        )
+    };
+
+    (run(false), run(true))
+}
+
+#[test]
+fn test_level_prefilter_is_unobservable_to_the_user() {
+    // The differential check that #369 was missing. `compute_projection` has had
+    // KELORA_NO_PROJECTION for exactly this purpose; the level pre-filter had no
+    // equivalent, so an optimization that changed stderr went unnoticed.
+    //
+    // Invariants, and why they differ:
+    //  - stdout must be byte-identical. The pre-filter is only sound because a
+    //    line lacking the level token cannot carry that level, so it may never
+    //    change the event stream.
+    //  - stderr wording may differ (pre-filtering discards the evidence needed
+    //    for the full-vocabulary hint), but *whether a hint fires at all* may
+    //    not. Firing in one mode and not the other is precisely the bug.
+    let input = "{\"level\":\"ERROR\",\"msg\":\"boom\"}\n\
+                 {\"level\":\"INFO\",\"msg\":\"ready\"}\n\
+                 {\"level\":\"WARN\",\"msg\":\"slow\"}";
+
+    let logfmt_input = "level=ERROR msg=boom\nlevel=INFO msg=ready\nlevel=WARN msg=slow";
+
+    // (args, input) — the logfmt cases need logfmt-shaped input. Feeding JSON to
+    // `-f logfmt` makes every line a parse error, and the pre-filter drops lines
+    // before they can produce one, so the exit code diverges (1 vs 0) for a reason
+    // unrelated to this hint. That masking is a real, pre-existing limitation of
+    // the optimization, but it is an exit-code question and is tracked separately;
+    // keep this test on the diagnostics invariant.
+    let cases: &[(&[&str], &str)] = &[
+        (&["-f", "json", "-l", "bogus"], input),
+        (&["-f", "json", "-l", "err"], input),
+        (&["-f", "json", "-l", "eror"], input),
+        (&["-f", "json", "-l", "ERROR"], input),
+        (&["-f", "json", "-l", "info,warn"], input),
+        (&["-f", "json", "-l", "bogus", "--filter", "true"], input),
+        (&["-f", "json", "-l", "ERROR", "--filter", "false"], input),
+        (&["-f", "json", "-l", "ERROR", "-k", "level,msg"], input),
+        (&["-f", "logfmt", "-l", "bogus"], logfmt_input),
+        (&["-f", "logfmt", "-l", "ERROR"], logfmt_input),
+    ];
+
+    for (args, case_input) in cases {
+        let ((on_out, on_err, on_code), (off_out, off_err, off_code)) =
+            run_with_and_without_level_prefilter(args, case_input);
+
+        assert_eq!(
+            on_out, off_out,
+            "stdout must not depend on the level pre-filter for {args:?}"
+        );
+        assert_eq!(
+            on_code, off_code,
+            "exit code must not depend on the level pre-filter for {args:?}"
+        );
+        assert_eq!(
+            on_err.contains("kelora hint:"),
+            off_err.contains("kelora hint:"),
+            "hint presence must not depend on the level pre-filter for {args:?}\n\
+             armed:   {on_err:?}\n\
+             disabled:{off_err:?}"
+        );
+    }
+}
