@@ -588,7 +588,7 @@ fn rate_multiple(entry: &DiffEntry, glyphs: &Glyphs) -> String {
     }
 }
 
-/// Rows shown per marker group (`+`, `-`, `~`) before the rest collapse into a
+/// Rows shown per marker group (`+`, `-`, `*`) before the rest collapse into a
 /// single line.
 ///
 /// A group is only as readable as it is short. High-cardinality fields produce
@@ -596,7 +596,7 @@ fn rate_multiple(entry: &DiffEntry, glyphs: &Glyphs) -> String {
 /// under 85 distinct user names is 85 rows of the same finding — and past a
 /// screenful the reader has lost the ranking the sort exists to provide. Each
 /// group is ordered by what an operator acts on (count for `+`/`-`, |Δ share|
-/// for `~`), so the head is the part worth showing.
+/// for `*`), so the head is the part worth showing.
 ///
 /// Never a silent cut: the note names how many rows and how many events were
 /// held back, and where to get all of them.
@@ -701,7 +701,7 @@ fn side_header(label: &str, total: u64, span: Option<(DateTime<Utc>, DateTime<Ut
 
 /// Format the report as a diff: two header lines naming the sides, then one
 /// row per changed template marked `+` (only in the target), `-` (only in the
-/// baseline), or `~` (present in both, at a materially different rate).
+/// baseline), or `*` (present in both, at a materially different rate).
 ///
 /// Templates whose frequency did not meaningfully change are the diff's context
 /// lines — counted in the footer, not printed. Long groups are capped at
@@ -766,7 +766,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
     }
     for entry in &report.shifted[..shifted_shown] {
         rows.push(DiffRow {
-            marker: '~',
+            marker: '*',
             // Uncolored on purpose: growth is not a verdict. See `DiffColors`.
             color: "",
             annotation: rate_multiple(entry, &glyphs),
@@ -828,7 +828,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
             // Frequency changes count events on both sides; the note reports the
             // target count, matching the direction `+` rows use.
             truncation_note(
-                '~',
+                '*',
                 shifted_shown,
                 &report.shifted,
                 |e| e.target_count,
@@ -901,7 +901,7 @@ fn within_noise_note(report: &DiffReport) -> Option<String> {
 /// are emitted in percent so they share units with `delta_pp`.
 ///
 /// The three arrays are named for the same three things the table marks — `new`
-/// (`+`), `gone` (`-`), `freq_changed` (`~`) — and every entry names the side
+/// (`+`), `gone` (`-`), `freq_changed` (`*`) — and every entry names the side
 /// each number belongs to, so `count`/`share_pct` never leave a consumer asking
 /// "which side is this?". `freq_changed` rather than `changed`: the message
 /// wording is exactly what this cannot see, and a bare `changed` would promise
@@ -966,7 +966,7 @@ pub fn format_report_json(report: &DiffReport) -> String {
 }
 
 /// Kind column for the machine formats, matching the JSON array names and the
-/// table's `+` / `-` / `~` markers.
+/// table's `+` / `-` / `*` markers.
 const KIND_NEW: &str = "new";
 const KIND_GONE: &str = "gone";
 const KIND_FREQ_CHANGED: &str = "freq_changed";
@@ -1605,7 +1605,7 @@ mod tests {
         // 2.1% of the baseline's lines -> 14.8% of the target's: 7.1x the rate.
         let changed = row("Upstream <fqdn> returned <num>");
         assert!(
-            changed.starts_with("  ~ ") && changed.contains("7.1\u{d7} more"),
+            changed.starts_with("  * ") && changed.contains("7.1\u{d7} more"),
             "{}",
             changed
         );
@@ -1649,7 +1649,7 @@ mod tests {
         );
         let rows: Vec<&str> = text
             .lines()
-            .filter(|line| line.starts_with("  +") || line.starts_with("  ~"))
+            .filter(|line| line.starts_with("  +") || line.starts_with("  *"))
             .collect();
         assert_eq!(rows.len(), 2, "text: {}", text);
         // The widest annotation ("3.0x more") sets one column for both markers,

@@ -103,7 +103,7 @@ redirected. `--drain-diff=table` forces the report through a pipe.
   +        3  config reloaded with <num> stale keys
   +        2  worker <num> restarted after heartbeat timeout <duration>
   -        8  connection pool recycled for <fqdn>
-  ~ 14x more  upstream <fqdn> returned <num> for request <uuid>
+  * 14x more  upstream <fqdn> returned <num> for request <uuid>
 
 2 templates unchanged in frequency | field: msg
 2 of them changed a little, but 110 and 120 events are too few to tell that from random variation
@@ -111,7 +111,7 @@ redirected. `--drain-diff=table` forces the report through a pipe.
 
 It reads like a diff, because it is one — of *which message templates occur and
 how often*, not of what the messages say. `+` is a template only the target has,
-`-` one only the baseline had, and `~` one both logs have at a materially
+`-` one only the baseline had, and `*` one both logs have at a materially
 different rate. The `---`/`+++` lines name the two sides and how many events
 each contributed.
 
@@ -121,7 +121,7 @@ former share of the log. Comparisons use per-side shares (count / side total),
 so sides of very different sizes diff fairly, and `+` templates are reported
 down to a single occurrence — a message appearing 3 times only after the deploy
 is exactly what you're looking for. The count on a `+` or `-` row is that
-template's own event count; `~` rows carry the rate change instead, which is
+template's own event count; `*` rows carry the rate change instead, which is
 what the two shares would not hand you directly (raw counts, 30 vs 2, would
 have claimed 15x — the multiple is computed from shares, so it stays honest
 when the two sides are different sizes).
