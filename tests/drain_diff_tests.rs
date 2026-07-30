@@ -75,9 +75,11 @@ fn diff_body(stdout: &str) -> String {
         .join("\n")
 }
 
-/// Rows carrying a given marker, annotation and template intact.
+/// Rows carrying a given marker, annotation and template intact. The trailing
+/// space is what separates a `-` row from the `---` header line, which shares
+/// its first character exactly as it does in a real unified diff.
 fn rows_with(stdout: &str, marker: char) -> Vec<String> {
-    let prefix = format!("  {} ", marker);
+    let prefix = format!("{} ", marker);
     stdout
         .lines()
         .filter(|line| line.starts_with(&prefix))
