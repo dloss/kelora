@@ -85,7 +85,15 @@ cat examples/deploy_before.jsonl examples/deploy_after.jsonl | \
 # JSON for scripting; --filter runs before the comparison
 kelora --drain-diff=json examples/deploy_before.jsonl examples/deploy_after.jsonl \
   -k msg --filter 'e.level == "ERROR"'
+
+# One tab-separated record per changed template, for awk/sort/duckdb
+kelora --drain-diff=tsv examples/deploy_before.jsonl examples/deploy_after.jsonl \
+  -k msg | awk -F'\t' '$1=="new"'
 ```
+
+Like `-m` and `--span-summary`, a bare `--drain-diff` picks its own format: the
+report below on a terminal, the `tsv` record stream when stdout is piped or
+redirected. `--drain-diff=table` forces the report through a pipe.
 
 **Example output:**
 ```

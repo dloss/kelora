@@ -1337,8 +1337,13 @@ kelora --drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log
 
 **Formats:**
 
-- `table` (default) - Diff-style rows plus a footer
-- `json` - One JSON object with `new`, `vanished`, `shifted`, `unchanged_count` (the within-noise tally), per-side totals, and the exclusion counts (`excluded_no_field`, `excluded_no_timestamp`)
+- `table` - Diff-style rows plus a footer. The default on a terminal.
+- `tsv` - One tab-separated record per changed template, no header and no surrounding report. The default when stdout is piped or redirected.
+- `json` - One JSON object with `new`, `gone`, `freq_changed`, the unchanged tally, per-side totals, spans, and the exclusion counts (`excluded_no_field`, `excluded_no_timestamp`)
+
+A bare `--drain-diff` picks between `table` and `tsv` the way `-m` and
+`--span-summary` do: the report on a terminal, the record stream when stdout is
+piped or redirected. `--drain-diff=table` forces the report through a pipe.
 
 **Reading the report.** It is shaped like a unified diff, because that is what
 it is — a diff of *which message templates occur and how often*:
@@ -1415,10 +1420,41 @@ marker and annotation columns stay aligned. An explicit `COLUMNS` is honored
 even when the output is redirected; otherwise a redirect lays out at 200
 columns. `--no-emoji` swaps the Unicode punctuation (`…`, `×`) for ASCII.
 
-`--drain-diff=json` reports both views per shift — `delta_pp` for the share move
-and `z_score` for the test behind the first bar (signed to match the direction)
-— for anyone who wants a different cutoff: filter downstream, including with
-kelora itself.
+**Machine formats.** `tsv` is one fixed nine-column record per changed template,
+written verbatim so `head`/`sort`/`awk` see only data:
+
+```
+change  template_id  baseline_count  target_count  baseline_pct  target_pct  delta_pp  z_score  template
+```
+
+`change` is `new`, `gone` or `freq_changed` — the same three names the JSON
+arrays use, and the same three things the table marks `+`, `-` and `~`. The side
+a row is absent from carries a `0`, `z_score` is empty for `new`/`gone` (they
+are gated by the noise floor, not the z-test), and the template goes last
+because it is the only free-form field — tabs and newlines inside it are
+flattened to spaces so one record stays one line. Percentages are rounded to
+four decimals.
+
+```bash
+# Only what appeared, biggest first
+kelora --drain-diff=tsv old.log new.log -k msg | awk -F'\t' '$1=="new"' | sort -t$'\t' -k4,4nr
+
+# Only rate changes that at least doubled
+kelora --drain-diff=tsv old.log new.log -k msg | awk -F'\t' '$1=="freq_changed" && ($6/$5>=2 || $5/$6>=2)'
+```
+
+The row cap that keeps the table readable does not apply to `tsv` or `json` — a
+machine format with silently missing rows is worse than a long one. Neither
+carries the header and footer, which hold no per-template data; use `json` when
+the totals, spans and exclusion counts matter.
+
+`--drain-diff=json` reports both views per `freq_changed` entry — `delta_pp` for
+the share move and `z_score` for the test behind the first bar (signed to match
+the direction) — plus `freq_unchanged_moved` and `freq_unchanged_max_delta_pp`,
+so a consumer can reproduce the table's explanatory note rather than infer it.
+
+Want a different cutoff than the built-in bars? Filter the machine formats
+downstream — including with kelora itself.
 
 `--drain-diff` composes with the normal pipeline: `--filter`/`--exec` run
 before the comparison, so you can diff only errors, or normalize a field first:

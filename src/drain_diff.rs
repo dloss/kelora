@@ -899,13 +899,20 @@ fn within_noise_note(report: &DiffReport) -> Option<String> {
 
 /// Format the report as one JSON object for scripting and agent use. Shares
 /// are emitted in percent so they share units with `delta_pp`.
+///
+/// The three arrays are named for the same three things the table marks — `new`
+/// (`+`), `gone` (`-`), `freq_changed` (`~`) — and every entry names the side
+/// each number belongs to, so `count`/`share_pct` never leave a consumer asking
+/// "which side is this?". `freq_changed` rather than `changed`: the message
+/// wording is exactly what this cannot see, and a bare `changed` would promise
+/// it.
 pub fn format_report_json(report: &DiffReport) -> String {
-    let entry_new_vanished = |e: &DiffEntry, count: u64, share: f64| {
+    let one_sided = |e: &DiffEntry, count_key: &str, pct_key: &str, count: u64, share: f64| {
         serde_json::json!({
             "template": e.template,
             "template_id": e.template_id,
-            "count": count,
-            "share_pct": share * 100.0,
+            count_key: count,
+            pct_key: share * 100.0,
         })
     };
 
@@ -913,14 +920,14 @@ pub fn format_report_json(report: &DiffReport) -> String {
         "new": report
             .new
             .iter()
-            .map(|e| entry_new_vanished(e, e.target_count, e.target_share))
+            .map(|e| one_sided(e, "target_count", "target_pct", e.target_count, e.target_share))
             .collect::<Vec<_>>(),
-        "vanished": report
+        "gone": report
             .vanished
             .iter()
-            .map(|e| entry_new_vanished(e, e.baseline_count, e.baseline_share))
+            .map(|e| one_sided(e, "baseline_count", "baseline_pct", e.baseline_count, e.baseline_share))
             .collect::<Vec<_>>(),
-        "shifted": report
+        "freq_changed": report
             .shifted
             .iter()
             .map(|e| {
@@ -936,19 +943,90 @@ pub fn format_report_json(report: &DiffReport) -> String {
                 })
             })
             .collect::<Vec<_>>(),
-        "unchanged_count": report.unchanged_count,
+        // Templates present on both sides that did not clear the reporting bars
+        // — the diff's context lines. Named for the axis it is about, like the
+        // array above it.
+        "freq_unchanged_count": report.unchanged_count,
+        // How many of those did move visibly, and by how much, so a consumer can
+        // reproduce the table's explanatory note instead of inferring it.
+        "freq_unchanged_moved": report.within_noise_moved,
+        "freq_unchanged_max_delta_pp": report.within_noise_max_delta_pp,
         "baseline_events": report.baseline_total,
         "target_events": report.target_total,
         "unmatched_events": report.unmatched_events,
         "excluded_no_timestamp": report.excluded_no_timestamp,
         "excluded_no_field": report.excluded_no_field,
         // Null unless timestamps reached the diff (i.e. --cut-at mode). Same
-        // purpose as the table's span lines: let a consumer confirm the split
+        // purpose as the table's header lines: let a consumer confirm the split
         // landed where it meant it to, without a second pass over the input.
         "baseline_span": span_json(report.baseline_span),
         "target_span": span_json(report.target_span),
     });
     serde_json::to_string_pretty(&json).unwrap_or_else(|_| "{}".to_string())
+}
+
+/// Kind column for the machine formats, matching the JSON array names and the
+/// table's `+` / `-` / `~` markers.
+const KIND_NEW: &str = "new";
+const KIND_GONE: &str = "gone";
+const KIND_FREQ_CHANGED: &str = "freq_changed";
+
+/// Format the report as one tab-separated record per changed template:
+///
+/// ```text
+/// change  template_id  baseline_count  target_count  baseline_pct  target_pct  delta_pp  z_score  template
+/// ```
+///
+/// No header row and no surrounding report, matching `-m --metrics=tsv`: a
+/// record stream is written verbatim so `head`/`sort`/`awk` see only data. The
+/// column count is fixed, so `new` and `gone` rows carry a `0` for the side they
+/// are absent from and an empty `z_score` (they are gated by the noise floor,
+/// not the z-test). The template goes last because it is the only free-form
+/// field; tabs and newlines inside it are flattened to spaces so one record
+/// stays one line.
+///
+/// Percentages are rounded to four decimals rather than emitted at full f64
+/// precision: enough to distinguish any two templates in a realistic log, and
+/// stable enough to diff two runs of this command.
+///
+/// The row cap that keeps the table readable does not apply — a machine format
+/// with silently missing rows is worse than a long one — and neither do the
+/// header/footer, which carry no per-template data. Use `=json` when the totals,
+/// spans and exclusion counts matter.
+pub fn format_report_tsv(report: &DiffReport) -> String {
+    use crate::rhai_functions::tracking::tsv_sanitize;
+
+    let mut out = String::new();
+    let mut row = |kind: &str, e: &DiffEntry| {
+        out.push_str(&format!(
+            "{}\t{}\t{}\t{}\t{:.4}\t{:.4}\t{:.4}\t{}\t{}\n",
+            kind,
+            tsv_sanitize(&e.template_id),
+            e.baseline_count,
+            e.target_count,
+            e.baseline_share * 100.0,
+            e.target_share * 100.0,
+            e.delta_pp,
+            match e.z_score {
+                Some(z) => format!("{:.4}", z),
+                None => String::new(),
+            },
+            tsv_sanitize(&e.template),
+        ));
+    };
+
+    for entry in &report.new {
+        row(KIND_NEW, entry);
+    }
+    for entry in &report.vanished {
+        row(KIND_GONE, entry);
+    }
+    for entry in &report.shifted {
+        row(KIND_FREQ_CHANGED, entry);
+    }
+
+    // The caller's `writeln` terminates the last record.
+    out.trim_end_matches('\n').to_string()
 }
 
 fn span_json(span: Option<(DateTime<Utc>, DateTime<Utc>)>) -> serde_json::Value {
@@ -1828,15 +1906,107 @@ mod tests {
         };
         let json: serde_json::Value =
             serde_json::from_str(&format_report_json(&report)).expect("valid JSON");
-        assert_eq!(json["new"][0]["count"], 7);
-        assert_eq!(json["vanished"][0]["count"], 5);
-        assert_eq!(json["shifted"][0]["baseline_count"], 5);
-        assert_eq!(json["unchanged_count"], 3);
+        // The array names match the table's markers, and every count and percent
+        // names the side it belongs to rather than leaving that to be inferred.
+        assert_eq!(json["new"][0]["target_count"], 7);
+        assert_eq!(json["gone"][0]["baseline_count"], 5);
+        assert_eq!(json["freq_changed"][0]["baseline_count"], 5);
+        assert_eq!(json["freq_changed"][0]["target_count"], 13);
+        assert_eq!(json["freq_unchanged_count"], 3);
         assert_eq!(json["baseline_events"], 10);
         assert_eq!(json["target_events"], 20);
         assert_eq!(json["excluded_no_timestamp"], 2);
-        // share_pct and delta_pp share units (percent).
-        assert!((json["new"][0]["share_pct"].as_f64().unwrap() - 35.0).abs() < 0.01);
-        assert!(json["shifted"][0]["z_score"].is_number());
+        // Percent keys and delta_pp share units.
+        assert!((json["new"][0]["target_pct"].as_f64().unwrap() - 35.0).abs() < 0.01);
+        assert!((json["gone"][0]["baseline_pct"].as_f64().unwrap() - 50.0).abs() < 0.01);
+        assert!(json["freq_changed"][0]["z_score"].is_number());
+        // The old names are gone rather than aliased: one vocabulary per report.
+        assert!(json.get("vanished").is_none());
+        assert!(json.get("shifted").is_none());
+        assert!(json.get("unchanged_count").is_none());
+        assert!(json["new"][0].get("count").is_none());
+        assert!(json["new"][0].get("share_pct").is_none());
+    }
+
+    #[test]
+    fn tsv_is_one_fixed_width_record_per_changed_template() {
+        let report = DiffReport {
+            new: vec![entry("a new <num>", 0, 7, 10, 20)],
+            vanished: vec![entry("an old <num>", 5, 0, 10, 20)],
+            shifted: vec![entry("a shared <num>", 5, 13, 10, 20)],
+            unchanged_count: 3,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
+            baseline_total: 10,
+            target_total: 20,
+            baseline_templates: 2,
+            target_templates: 2,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
+            cut_predicate_errors: 0,
+            cut_predicate_matched: false,
+        };
+        let tsv = format_report_tsv(&report);
+        let rows: Vec<Vec<&str>> = tsv.lines().map(|l| l.split('\t').collect()).collect();
+        assert_eq!(rows.len(), 3, "tsv: {}", tsv);
+        // Fixed column count, so awk positions hold whatever the row kind is.
+        for row in &rows {
+            assert_eq!(row.len(), 9, "row: {:?}", row);
+        }
+        assert_eq!(rows[0][0], "new");
+        assert_eq!(rows[1][0], "gone");
+        assert_eq!(rows[2][0], "freq_changed");
+        // The absent side is a real zero, and only both-sides rows carry a z.
+        assert_eq!(rows[0][2], "0", "a new template has no baseline count");
+        assert_eq!(rows[1][3], "0", "a gone template has no target count");
+        assert_eq!(
+            rows[0][7], "",
+            "new/gone are gated by the floor, not the z-test"
+        );
+        assert!(!rows[2][7].is_empty(), "row: {:?}", rows[2]);
+        // Template last, so the only free-form field cannot shift the columns.
+        assert_eq!(rows[0][8], "a new <num>");
+        // No header row: a record stream is data only.
+        assert!(!tsv.starts_with("change"), "tsv: {}", tsv);
+    }
+
+    #[test]
+    fn tsv_flattens_tabs_inside_a_template() {
+        // Templates come from log text, which can contain tabs; one record has
+        // to stay one line with a fixed field count.
+        let report = DiffReport {
+            new: vec![entry("a\tnew\nline <num>", 0, 7, 10, 20)],
+            vanished: vec![],
+            shifted: vec![],
+            unchanged_count: 0,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
+            baseline_total: 10,
+            target_total: 20,
+            baseline_templates: 0,
+            target_templates: 1,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
+            cut_predicate_errors: 0,
+            cut_predicate_matched: false,
+        };
+        let tsv = format_report_tsv(&report);
+        assert_eq!(tsv.lines().count(), 1, "tsv: {:?}", tsv);
+        assert_eq!(tsv.split('\t').count(), 9, "tsv: {:?}", tsv);
+        assert!(tsv.ends_with("a new line <num>"), "tsv: {:?}", tsv);
+    }
+
+    #[test]
+    fn tsv_of_an_unchanged_comparison_is_empty() {
+        // A record stream with no records writes nothing, rather than putting a
+        // blank line or a prose sentence into a pipe.
+        let report = report_with_totals(100, 100);
+        assert_eq!(format_report_tsv(&report), "");
     }
 }

@@ -81,8 +81,18 @@ kelora --drain-diff --cut-after 'e.msg.contains("deploy finished")' incident.log
 
 Comparisons use per-side *shares*, so a 10-minute incident capture diffs
 fairly against a 24-hour baseline. `--filter`/`--exec` run before the
-comparison (diff only errors, or normalize custom tokens first). Use
-`--drain-diff=json` for scripting.
+comparison (diff only errors, or normalize custom tokens first).
+
+For scripting, a bare `--drain-diff` already switches to a tab-separated record
+stream when stdout is piped (the same rule `-m` follows), so the report never
+has to be parsed:
+
+```bash
+kelora --drain-diff before.log after.log -k msg | awk -F'\t' '$1=="new"'
+```
+
+`--drain-diff=json` carries the totals, spans and per-entry statistics too;
+`--drain-diff=table` forces the report through a pipe.
 → [`--drain-diff` reference](../reference/cli-reference.md).
 
 ## Deterministic sampling — `bucket()` {#deterministic-sampling-with-bucket}
