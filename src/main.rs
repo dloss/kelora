@@ -2033,7 +2033,7 @@ fn handle_pipeline_success(
                         crate::cli::DrainDiffFormat::Auto => {
                             unreachable!("Auto is resolved above")
                         }
-                        crate::cli::DrainDiffFormat::Table => {
+                        crate::cli::DrainDiffFormat::Table | crate::cli::DrainDiffFormat::Full => {
                             let opts = crate::drain_diff::TextReportOptions {
                                 labels: drain_diff_side_labels(config),
                                 mined_field: mined_field.clone(),
@@ -2044,6 +2044,7 @@ fn handle_pipeline_success(
                                     &config.output.emoji,
                                     &config.output.color,
                                 ),
+                                detail: resolved_format == crate::cli::DrainDiffFormat::Full,
                                 width: crate::text_width::output_width(),
                             };
                             crate::drain_diff::format_report_text(&report, &opts)

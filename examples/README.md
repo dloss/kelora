@@ -89,6 +89,9 @@ kelora --drain-diff=json examples/deploy_before.jsonl examples/deploy_after.json
 # One tab-separated record per changed template, for awk/sort/duckdb
 kelora --drain-diff=tsv examples/deploy_before.jsonl examples/deploy_after.jsonl \
   -k msg | awk -F'\t' '$1=="new"'
+
+# Same rows, plus a real line behind each template
+kelora --drain-diff=full examples/deploy_before.jsonl examples/deploy_after.jsonl -k msg
 ```
 
 Like `-m` and `--span-summary`, a bare `--drain-diff` picks its own format: the
@@ -125,6 +128,20 @@ template's own event count; `*` rows carry the rate change instead, which is
 what the two shares would not hand you directly (raw counts, 30 vs 2, would
 have claimed 15x — the multiple is computed from shares, so it stays honest
 when the two sides are different sizes).
+
+`--drain-diff=full` answers the question the compact report leaves open — what
+does one of these lines actually look like:
+
+```
+* 14x more  upstream <fqdn> returned <num> for request <uuid>
+     id: v1:95dadd630a7f7097
+     baseline: 2 events (1.8%)  ->  target: 30 events (25.0%)
+     sample: "upstream payments.svc.cluster.local returned 503 for request 1a2b0c4d-…"
+```
+
+It mirrors `--drain=full`, and the sample is the most frequent line that matched
+on that side, so it is representative rather than incidental — and identical
+between two runs over the same log.
 
 Templates whose frequency did not meaningfully change are this diff's context
 lines: counted in the footer, not printed. Two of them here are the flip side of

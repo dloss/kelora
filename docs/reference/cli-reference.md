@@ -1338,6 +1338,7 @@ kelora --drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log
 **Formats:**
 
 - `table` - Diff-style rows plus a footer. The default on a terminal.
+- `full` - The same rows, each followed by indented detail: template id, the counts and shares the compact row leaves out, and a sample of a real line.
 - `tsv` - One tab-separated record per changed template, no header and no surrounding report. The default when stdout is piped or redirected.
 - `json` - One JSON object with `new`, `gone`, `freq_changed`, the unchanged tally, per-side totals, spans, and the exclusion counts (`excluded_no_field`, `excluded_no_timestamp`)
 
@@ -1420,6 +1421,27 @@ marker and annotation columns stay aligned. An explicit `COLUMNS` is honored
 even when the output is redirected; otherwise a redirect lays out at 200
 columns. `--no-emoji` swaps the Unicode punctuation (`…`, `×`) for ASCII.
 
+**`--drain-diff=full`** mirrors [`--drain=full`](#-drainformat): the same rows,
+each followed by the detail a one-line row has no room for.
+
+```
+* 14x more  upstream <fqdn> returned <num> for request <uuid>
+     id: v1:95dadd630a7f7097
+     baseline: 2 events (1.8%)  ->  target: 30 events (25.0%)
+     sample: "upstream payments.svc.cluster.local returned 503 for request 1a2b0c4d-…"
+```
+
+Three things the compact row omits. The **id** is the join key `--drain=id`
+prints, so a template can be followed across runs and modes. The **counts and
+shares** are both sides — for a `*` row this is where the multiple's inputs
+appear, so `25.0 / 1.8 ≈ 14` can be checked rather than taken on trust; a `+` or
+`-` row shows only the side it exists on. The **sample** is a real line the
+template matched, which is the first thing anyone wants after reading a
+template, and it is the most frequent line on that side (with the text as
+tie-break) so it is both representative and identical between two runs over the
+same log. `full` prints templates untruncated, since it is about to print a
+whole sample line under each one anyway.
+
 **Machine formats.** `tsv` is one fixed nine-column record per changed template,
 written verbatim so `head`/`sort`/`awk` see only data:
 
@@ -1442,6 +1464,12 @@ kelora --drain-diff=tsv old.log new.log -k msg | awk -F'\t' '$1=="new"' | sort -
 # Only rate changes that at least doubled
 kelora --drain-diff=tsv old.log new.log -k msg | awk -F'\t' '$1=="freq_changed" && ($6/$5>=2 || $5/$6>=2)'
 ```
+
+`json` carries the same samples as `full`, per side (`target_sample` on a `new`
+entry, `baseline_sample` on a `gone` one, both on a `freq_changed` one). `tsv`
+does not: a sample is free-form log text, and widening the record to hold it
+would trade a fixed column count — the property that makes `awk` positions
+reliable — for something `json` already provides.
 
 Neither `tsv` nor `json` carries the header and footer, which hold no
 per-template data; use `json` when the totals, spans and exclusion counts
