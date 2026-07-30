@@ -2292,7 +2292,7 @@ let res = e.absorb_logfmt("msg");
 if res.status == "applied" {
     // e.pod == "kube-system/foo", e.err == "connection refused", e.replicas == 3 (int)
 } else if res.status == "parse_error" {
-    warn(`not logfmt: ${res.error}`);
+    eprint(`not logfmt: ${res.error}`);
 }
 ```
 
@@ -2311,7 +2311,7 @@ let res = e.absorb_json("payload");
 if res.status == "applied" {
     e.actor = e.actor ?? e.user;      // merged from payload
 } else if res.status == "parse_error" {
-    warn(`bad payload: ${res.error}`);
+    eprint(`bad payload: ${res.error}`);
 }
 ```
 
@@ -2331,7 +2331,7 @@ let res = e.absorb_jwt("token");
 if res.status == "applied" {
     // e.sub == "alice", e.role == "admin", e.exp == 1735689600 (int), ...
 } else if res.status == "parse_error" {
-    warn(`bad token: ${res.error}`);
+    eprint(`bad token: ${res.error}`);
 }
 ```
 

@@ -901,12 +901,16 @@ fn maybe_print_no_input_hint(
         || stats.lines_read != 0
         || stats.events_created != 0
         || stats.lines_errors != 0
-        // Lines the level pre-filter dropped never reached the parser, so none of
-        // the signals above see them. Without this, a piped run whose `-l` token
-        // matches nothing is told "stdin is empty" when it was not — the most
-        // misleading form of #369, since it blames the plumbing. The
-        // level-filter hint explains that run instead.
+        // Pre-parse drops never reach the parser, so none of the signals above see
+        // them. Without these, a piped run whose lines were all dropped is told
+        // "stdin is empty" when it was not — the most misleading form of #369,
+        // since it blames the plumbing. The level pre-filter case is explained by
+        // the level-filter hint instead; a `--keep-lines`/`--ignore-lines` or
+        // `--section` run that matched nothing gets no hint at all, which is
+        // correct — the pattern was asked for, so an empty result is self-evident
+        // (Rule of Silence). Either way, claiming there was no input is false.
         || stats.lines_prefiltered != 0
+        || stats.lines_filtered != 0
     {
         return;
     }

@@ -1648,10 +1648,13 @@ fn process_line_sequential<W: Write>(
         // Apply section selection if configured (filters out lines outside selected sections)
         if let Some(selector) = section_selector {
             if !selector.should_include_line(&line) {
-                // Count filtered line for stats
-                if config.output.stats.is_some() {
-                    stats_add_line_filtered();
-                }
+                // Count the drop whenever stats are being collected, not only
+                // under `--stats`. `stats_add_line_filtered` already self-gates on
+                // `stats_enabled()`, and the count is the only surviving evidence
+                // that input arrived: these lines never reach the parser, so
+                // without it a piped run whose pattern matched nothing is told
+                // "stdin is empty" when it was not (#369).
+                stats_add_line_filtered();
                 return Ok(ProcessingResult::Continue);
             }
         }
@@ -1659,10 +1662,13 @@ fn process_line_sequential<W: Write>(
         // Apply keep-lines filter if configured (early filtering before parsing)
         if let Some(ref keep_regex) = config.input.keep_lines {
             if !keep_regex.is_match(&line) {
-                // Count filtered line for stats
-                if config.output.stats.is_some() {
-                    stats_add_line_filtered();
-                }
+                // Count the drop whenever stats are being collected, not only
+                // under `--stats`. `stats_add_line_filtered` already self-gates on
+                // `stats_enabled()`, and the count is the only surviving evidence
+                // that input arrived: these lines never reach the parser, so
+                // without it a piped run whose pattern matched nothing is told
+                // "stdin is empty" when it was not (#369).
+                stats_add_line_filtered();
                 return Ok(ProcessingResult::Continue);
             }
         }
@@ -1670,10 +1676,13 @@ fn process_line_sequential<W: Write>(
         // Apply ignore-lines filter if configured (early filtering before parsing)
         if let Some(ref ignore_regex) = config.input.ignore_lines {
             if ignore_regex.is_match(&line) {
-                // Count filtered line for stats
-                if config.output.stats.is_some() {
-                    stats_add_line_filtered();
-                }
+                // Count the drop whenever stats are being collected, not only
+                // under `--stats`. `stats_add_line_filtered` already self-gates on
+                // `stats_enabled()`, and the count is the only surviving evidence
+                // that input arrived: these lines never reach the parser, so
+                // without it a piped run whose pattern matched nothing is told
+                // "stdin is empty" when it was not (#369).
+                stats_add_line_filtered();
                 return Ok(ProcessingResult::Continue);
             }
         }
