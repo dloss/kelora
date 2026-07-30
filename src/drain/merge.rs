@@ -41,18 +41,45 @@
 //!
 //! # The guard
 //!
-//! A merge that leaves a template with no literal tokens is refused
-//! ([`MIN_LITERALS`]). This is what separates a parameter from an event name.
-//! Position 0 frequently holds the name of the thing that happened —
-//! `onStandStepChanged <num>`, `onReceive <num>`, a dozen more in one Android or
-//! HealthApp log — and those are a large variant family by R2's test. Merging
-//! them yields `<*> <num>`, which identifies nothing and silently swallows a
-//! dozen distinct events. The same guard blocks `<*> <path> <num>` from eating
-//! every HTTP method.
+//! A merge that leaves a template with **no literal tokens at all** is refused
+//! ([`MIN_LITERALS`]). Such a template identifies nothing: `<*> <num>` would
+//! swallow every one-value-plus-number message in the log, and `<*> <path>
+//! <num>` would eat every HTTP method.
 //!
 //! A token counts as literal when it carries text of its own: `Invalid`, `user`
 //! and `uid=<num>` do, while a bare placeholder (`<num>`, `<ipv4>`, `<*>`) does
 //! not — it is a position the masker already emptied of meaning.
+//!
+//! ## What the guard does not do
+//!
+//! It does **not** separate a parameter from an event name in general, and it
+//! cannot: the two are the same shape. A family of twelve `onReceive succeeded`
+//! / `onStandStepChanged succeeded` messages merges to `<*> succeeded`, which
+//! names no event — and a family of twelve `starting nginx` / `starting redis`
+//! merges to `starting <*>`, which is exactly right. Nothing local to the
+//! template tells them apart.
+//!
+//! Tightening it was measured against the loghub suite and rejected. Two
+//! candidates, both worse than living with `<*> succeeded`:
+//!
+//! * **Refuse a merge that consumes the template's leading literal.** This is
+//!   the rule that catches the event-name case, and it is backwards on real
+//!   data: **Proxifier 47.8% -> 0.0%** (mean -3.0pp, every other dataset
+//!   unchanged to the decimal). Proxifier's leading token is
+//!   `proxy.cse.cuhk.edu.hk:5070` -> `<fqdn>:<num>`, which counts as a literal
+//!   because it is only partially masked — so it *is* the leading literal, and
+//!   it *is* a parameter. Merging it is the whole of that dataset's gain.
+//! * **Require two surviving literals.** Cheap on the suite (-0.1pp) but it does
+//!   not fix the shape — `<*> handler done` keeps two literals and still merges —
+//!   while refusing the legitimate two-token `starting <*>`.
+//!
+//! And the shape does not occur in the corpus: across all 16 datasets (32,000
+//! annotated lines) exactly one merge-produced template leads with `<*>`, and it
+//! is Proxifier's correct one. So `MIN_LITERALS = 1` stands, and the residual
+//! over-merge is a known, tested limitation rather than an oversight — see
+//! `merges_a_family_that_may_be_event_names`. Distinguishing the two would take
+//! evidence the template alone does not carry, such as whether the varying value
+//! also appears in other families (a hostname does, an event name does not).
 //!
 //! Rounds repeat to a fixpoint (bounded by [`MAX_ROUNDS`]) because a merge
 //! creates a new wildcard sibling, which can make R1 apply where it did not
@@ -132,7 +159,11 @@ impl std::hash::Hash for FamilyKey<'_> {
 const MIN_VARIANTS: usize = 12;
 
 /// Literal tokens a merged template must retain. Below this it identifies
-/// nothing; see the module docs on the event-name failure mode.
+/// nothing at all.
+///
+/// Deliberately 1, not 2: raising it neither fixes the event-name shape nor pays
+/// for itself on the suite. See the module docs under "What the guard does not
+/// do" for the measurements behind that.
 const MIN_LITERALS: usize = 1;
 
 /// Fixpoint iteration bound. Each round strictly reduces the template count, so
@@ -379,6 +410,38 @@ mod tests {
         let expected = family.len();
         let merged = merge_variants(family);
         assert_eq!(merged.len(), expected, "nothing should merge");
+    }
+
+    #[test]
+    fn merges_a_family_that_may_be_event_names() {
+        // Pins a known limitation rather than an intended behaviour: with one
+        // literal surviving, R2 merges a family whose varying position may hold
+        // event names, so `<*> succeeded` names no event.
+        //
+        // It stays this way because every structural fix measured worse. The
+        // rule that catches this — refusing to consume the leading literal —
+        // takes Proxifier from 47.8% to 0.0%, because that dataset's leading
+        // token is a partially-masked hostname that really is a parameter.
+        // Requiring two literals does not catch it at all (`<*> handler done`
+        // survives with two) and refuses the correct `starting <*>` below.
+        // See the module docs for the full numbers before changing this.
+        let family: Vec<Finalized> = (0..MIN_VARIANTS)
+            .map(|i| entry(&format!("onEvent{i} succeeded"), 30, i + 1))
+            .collect();
+        assert_eq!(
+            templates(merge_variants(family)),
+            vec![("<*> succeeded".to_string(), 30 * MIN_VARIANTS)]
+        );
+
+        // The same shape, where merging is what a reader wants. Structurally
+        // indistinguishable from the case above, which is the point.
+        let services: Vec<Finalized> = (0..MIN_VARIANTS)
+            .map(|i| entry(&format!("starting svc{i}"), 30, i + 1))
+            .collect();
+        assert_eq!(
+            templates(merge_variants(services)),
+            vec![("starting <*>".to_string(), 30 * MIN_VARIANTS)]
+        );
     }
 
     #[test]
