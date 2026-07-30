@@ -20,6 +20,7 @@ pub mod projection;
 pub mod readers;
 pub mod rhai_functions;
 pub mod stats;
+pub mod text_width;
 pub mod timestamp;
 pub mod tty;
 

@@ -1316,7 +1316,7 @@ kelora -j app.log --drain=json -k message
 #### `--drain-diff[=FORMAT]`
 
 Compare template frequencies between a **baseline** and a **target** log — which
-templates are new, which vanished, and which shifted in volume. The first
+templates are new, which are gone, and which changed rate. The first
 question in every incident and deploy verification: *what changed?*
 
 Requires `--keys` with exactly one field (the field to mine, same semantics as
@@ -1337,8 +1337,40 @@ kelora --drain-diff --cut-before 'e.msg.contains("deploy started")' incident.log
 
 **Formats:**
 
-- `table` (default) - Three sections (NEW / VANISHED / VOLUME SHIFTS) plus a totals line
+- `table` (default) - Diff-style rows plus a footer
 - `json` - One JSON object with `new`, `vanished`, `shifted`, `unchanged_count` (the within-noise tally), per-side totals, and the exclusion counts (`excluded_no_field`, `excluded_no_timestamp`)
+
+**Reading the report.** It is shaped like a unified diff, because that is what
+it is — a diff of *which message templates occur and how often*:
+
+```
+--- deploy_before.jsonl  110 events  2025-01-20T13:30:00Z .. 2025-01-20T13:56:10Z
++++ deploy_after.jsonl   120 events  2025-01-20T14:00:00Z .. 2025-01-20T14:24:20Z
+
+  +        3  config reloaded with <num> stale keys
+  +        2  worker <num> restarted after heartbeat timeout <duration>
+  -        8  connection pool recycled for <fqdn>
+  ~ 14x more  upstream <fqdn> returned <num> for request <uuid>
+
+2 templates unchanged in frequency | field: msg
+```
+
+| | meaning | annotation |
+|---|---|---|
+| `---` / `+++` | the baseline and the target, with each side's event count and observed span | |
+| `+` | a template only the target has | its event count in the target |
+| `-` | a template only the baseline had | its event count in the baseline |
+| `~` | a template both logs have, at a materially different rate | the rate change, as a plain multiple |
+
+The header lines are the report's provenance: in one-input mode they name the
+split rule (`incident.log before 2026-07-24T14:00:00Z`) rather than just the
+file, because "before the cut" and "from the cut" are not filenames. Spans are
+printed in the form `--cut-at` accepts back, so a first attempt that misses
+doubles as the lookup for the next one.
+
+**It cannot see rewording.** A message changing from "timeout after 5s" to
+"timed out after 5s" is one `-` plus one `+`, never a modified template — `~`
+means *the same template at a different rate*, nothing else.
 
 **How it works.** Both sides are mined through a single shared drain instance
 (so the template set is joint), then every distinct field value is re-matched
@@ -1347,39 +1379,41 @@ counts mislead when the sides differ in size (10 minutes of incident vs. 24
 hours of baseline), all comparisons use **share** — count divided by that
 side's total events.
 
-Each shift line ends with that change as a plain multiple —
-`baseline: 2 (1.8%) → target: 30 (25.0%)   14× more frequent`. The multiple is
-computed from the shares, not the raw counts (30/2 would say 15× here, but the
-target side is bigger, so its lines are cheaper), and it is the number the two
-percentages don't already give you: subtracting 1.8% from 25.0% is something
-your eye does for free, dividing them is not.
+A `~` row's multiple is computed from the shares, not the raw counts (30/2
+would say 15× above, but the target side is bigger, so its lines are cheaper).
+It is also the number two percentages would not hand you: subtracting 1.8% from
+25.0% is something your eye does for free, dividing them is not.
 
 There are no threshold flags by design. Templates with a combined count below
-2 are ignored, and NEW templates are exempt from that floor — a template
+2 are ignored, and `+` templates are exempt from that floor — a template
 appearing even once only after the deploy is exactly what you are looking for.
 
-A volume shift is reported when the move is too big to be chance at those event
+A `~` row is reported when the change is too big to be chance at those event
 counts, **and** big enough to matter: at least 0.5 points of that side's
 traffic, or a 1.5× change in the template's rate. Both bars are needed — the
 first keeps one event on a 20-event side out of the report, the second keeps
-out moves that are real but too small to act on.
+out changes that are real but too small to act on.
 
-Everything else is counted as *within noise* on the totals line — not
-"unchanged", because some of those did move, just not by enough to call. If one
-of them moved by a point of traffic or more, the report says so rather than
+Everything else is this diff's **context lines**: templates whose frequency did
+not meaningfully change, tallied in the footer rather than printed. "Unchanged"
+is a slight simplification — some of them did move, just not by enough to call —
+so when one moved by a point of traffic or more the report says so rather than
 leaving you to wonder where it went:
 
 ```
-VOLUME SHIFTS (1 template):
-  upstream <fqdn> returned <num> for request <uuid>
-    baseline: 2 (1.8%)  →  target: 30 (25.0%)   14× more frequent
-  2 more templates moved, but 110/120 events is too few to be sure they're real
+2 templates unchanged in frequency | field: msg
+2 of them changed a little, but 110 and 120 events are too few to tell that from random variation
 ```
 
-Output is sorted so your eye does the thresholding: counts descending for
-new/vanished, and shifts by how much of the side's traffic moved — visible in
-the percentages, not in the multiple, so a template that tripled from 0.01% to
-0.03% sorts below one that took over a quarter of the log.
+Rows are sorted so your eye does the thresholding: counts descending within `+`
+and `-`, and `~` rows by how much of the side's traffic moved, so a template
+that tripled from 0.01% to 0.03% sorts below one that took over a quarter of
+the log.
+
+Templates are truncated to the terminal width rather than wrapped, so the
+marker and annotation columns stay aligned. An explicit `COLUMNS` is honored
+even when the output is redirected; otherwise a redirect lays out at 200
+columns. `--no-emoji` swaps the Unicode punctuation (`…`, `×`) for ASCII.
 
 `--drain-diff=json` reports both views per shift — `delta_pp` for the share move
 and `z_score` for the test behind the first bar (signed to match the direction)
@@ -1397,8 +1431,8 @@ kelora --drain-diff old.log new.log -k msg --filter 'e.level == "ERROR"'
 kelora --drain-diff old.log new.log -k msg --exec 'e.msg = e.msg.replace(e.order_id, "<order>")'
 ```
 
-**Vacuous comparisons are refused, not reported.** An all-empty report ("no new
-templates / no volume shifts", 0 events) reads as a confident *nothing changed*,
+**Vacuous comparisons are refused, not reported.** An all-empty report ("no
+template differences", 0 events) reads as a confident *nothing changed*,
 so `--drain-diff` refuses to print one when the mined field never yielded a
 value: if every event lacked the field named by `-k` — a typo, or a field that
 only exists in a different log — the run fails with exit `1` and names the
@@ -1406,7 +1440,7 @@ nearest field it did see, instead of certifying a log as unchanged that was neve
 examined.
 
 A **one-sided split** is refused the same way. When one side gets every event and
-the other gets none, every template lands in NEW or VANISHED by construction, so
+the other gets none, every template lands in `+` or `-` by construction, so
 the report reads as a dramatic finding ("the service stopped doing everything")
 when it only means the boundary missed. The run fails with exit `1` and the
 message carries the resolved cut plus the span the input actually covers:
@@ -1414,8 +1448,8 @@ message carries the resolved cut plus the span the input actually covers:
 ```console
 $ kelora --drain-diff --cut-at 1h incident.log -k msg
 kelora: --drain-diff: --cut-at resolved to 2026-07-29T09:15:00Z, and all 230 compared
-event(s) fall before it, so the target side is empty and the report would show every
-template as VANISHED rather than compare anything. The input spans
+event(s) fall before it, so the target side is empty and the report would mark every
+template gone rather than compare anything. The input spans
 2026-07-24T13:30:00Z .. 2026-07-24T14:24:20Z, so pick a --cut-at inside that range.
 Note that relative times resolve against the current time, not the log's — '1h'
 means an hour ago, and a bare '14:00' means today.
@@ -1483,13 +1517,12 @@ a historical log, give an absolute timestamp — or use
 [`--cut-before`](#-cut-before-expr) / [`--cut-after`](#-cut-after-expr), which
 need no clock at all.
 
-Every successful run states where the split landed, so the boundary is never
-something you have to verify separately:
+Every successful run states where the split landed, on the header line for each
+side, so the boundary is never something you have to verify separately:
 
 ```
-totals: baseline 110 events, target 120 events, 2 shared templates within noise
-  baseline spans 2026-07-24T13:30:00Z .. 2026-07-24T13:56:10Z
-  target   spans 2026-07-24T14:00:00Z .. 2026-07-24T14:24:20Z
+--- incident.log before 2026-07-24T14:00:00Z  110 events  2026-07-24T13:30:00Z .. 2026-07-24T13:56:10Z
++++ incident.log from 2026-07-24T14:00:00Z  120 events  2026-07-24T14:00:00Z .. 2026-07-24T14:24:20Z
 ```
 
 The spans are printed in the timestamp form `--cut-at` accepts back verbatim, so
@@ -1558,10 +1591,10 @@ diffing, filter *after* mining instead — or widen the predicate.
 diagnosis that fits:
 
 - **The predicate never matched.** The target side would be empty and every
-  template would read as VANISHED. The error suggests trying the expression with
+  template would read as `-`. The error suggests trying the expression with
   `--filter` first.
 - **`--cut-before` matched the very first event.** The baseline side would be
-  empty and every template would read as NEW — either the predicate is too broad,
+  empty and every template would read as `+` — either the predicate is too broad,
   or the marker genuinely is the first event and `--cut-after` is the right flag.
 - **`--cut-after` matched the last event.** The predicate was right but nothing
   falls after the boundary, so the target is empty. Distinguished from "never
@@ -1571,9 +1604,9 @@ A split that leaves *one* event on a side — `--cut-before` matching the last
 event, `--cut-after` matching the first — is **warned about (🔸) rather than
 refused**, and the report still prints. Shares and z-scores compute on a
 one-event side, so the report is well-formed; what it is not is informative,
-because the other side's templates read as NEW or VANISHED for want of anything
+because the other side's templates read as `+` or `-` rows for want of anything
 to compare against. The warning names the shortfall and points at the spans on
-the totals line. The same warning covers a two-input run whose target file holds
+the `---`/`+++` lines. The same warning covers a two-input run whose target file holds
 one line, and a `--cut-at` that lands one event inside the range.
 
 A predicate that *fails to evaluate* before it finds the boundary also fails the

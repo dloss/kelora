@@ -40,14 +40,30 @@ IDs for diffs), `=json` (programmatic). → [`--drain` reference](../reference/c
 
 ## What changed? Template diffing — `--drain-diff` {#template-diffing}
 
-The first question in every incident: which templates are new, which vanished,
-which shifted in volume. `--drain-diff` answers it directly — baseline first,
-target second, or one file split by time with `--cut-at`:
+The first question in every incident: which templates are new, which are gone,
+which changed rate. `--drain-diff` answers it directly, as a diff — baseline
+first, target second, or one file split by time with `--cut-at`:
 
 ```bash
 kelora --drain-diff before.log after.log -k msg
 kelora --drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
 ```
+
+```
+--- before.log  110 events  2026-07-24T13:30:00Z .. 2026-07-24T13:56:10Z
++++ after.log   120 events  2026-07-24T14:00:00Z .. 2026-07-24T14:24:20Z
+
+  +        3  config reloaded with <num> stale keys
+  -        8  connection pool recycled for <fqdn>
+  ~ 14x more  upstream <fqdn> returned <num> for request <uuid>
+
+2 templates unchanged in frequency | field: msg
+```
+
+`+` is a template only the target has, `-` one only the baseline had, and `~`
+one both logs have at a materially different rate. It diffs *which templates
+occur and how often*, not what the messages say: a reworded message reads as one
+`-` plus one `+`.
 
 `--cut-at` resolves against the clock, not the log, so give an absolute timestamp
 for anything archived. A cut that lands outside the data is refused rather than

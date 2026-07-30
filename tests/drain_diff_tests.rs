@@ -65,8 +65,28 @@ fn run_diff(args: &[&str]) -> (String, String, i32) {
     run_kelora(args)
 }
 
+/// The report minus its `---`/`+++` header lines, which name the inputs and so
+/// legitimately differ between two runs that compare the same events.
+fn diff_body(stdout: &str) -> String {
+    stdout
+        .lines()
+        .filter(|line| !line.starts_with("--- ") && !line.starts_with("+++ "))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Rows carrying a given marker, annotation and template intact.
+fn rows_with(stdout: &str, marker: char) -> Vec<String> {
+    let prefix = format!("  {} ", marker);
+    stdout
+        .lines()
+        .filter(|line| line.starts_with(&prefix))
+        .map(|line| line.to_string())
+        .collect()
+}
+
 #[test]
-fn test_two_file_diff_reports_three_sections() {
+fn test_two_file_diff_marks_each_changed_template() {
     let baseline = temp_log(&baseline_content());
     let target = temp_log(&target_content());
 
@@ -78,16 +98,36 @@ fn test_two_file_diff_reports_three_sections() {
         "msg",
     ]);
     assert_eq!(code, 0, "stderr: {}", stderr);
-    assert!(stdout.contains("NEW in target"), "stdout: {}", stdout);
+    // Each side is named on its own header line, with that side's event count.
     assert!(
-        stdout.contains("VANISHED from target"),
+        stdout.contains(&format!(
+            "--- {}  80 events",
+            baseline.path().to_str().unwrap()
+        )),
         "stdout: {}",
         stdout
     );
-    assert!(stdout.contains("VOLUME SHIFTS"), "stdout: {}", stdout);
-    assert!(stdout.contains("totals: baseline 80 events, target 73 events"));
-    // The vanished template keeps its baseline count.
-    assert!(stdout.contains("20  connection pool recycled"));
+    assert!(
+        stdout.contains(&format!(
+            "+++ {}  73 events",
+            target.path().to_str().unwrap()
+        )),
+        "stdout: {}",
+        stdout
+    );
+    assert!(!rows_with(&stdout, '+').is_empty(), "stdout: {}", stdout);
+    assert!(!rows_with(&stdout, '~').is_empty(), "stdout: {}", stdout);
+    // The removed template keeps its baseline count.
+    let removed = rows_with(&stdout, '-');
+    assert!(
+        removed
+            .iter()
+            .any(|row| row.contains("20") && row.contains("connection pool recycled")),
+        "stdout: {}",
+        stdout
+    );
+    // The field that was compared is named, so a pasted report is attributable.
+    assert!(stdout.contains("field: msg"), "stdout: {}", stdout);
     // No spurious pass-2 residue warning.
     assert!(
         !stderr.contains("matched no frozen template"),
@@ -138,13 +178,19 @@ fn test_self_diff_yields_no_changes() {
         "msg",
     ]);
     assert_eq!(code, 0, "stderr: {}", stderr);
-    assert!(stdout.contains("no new templates"), "stdout: {}", stdout);
     assert!(
-        stdout.contains("no vanished templates"),
+        stdout.contains("no template differences"),
         "stdout: {}",
         stdout
     );
-    assert!(stdout.contains("no volume shifts"), "stdout: {}", stdout);
+    for marker in ['+', '-', '~'] {
+        assert!(
+            rows_with(&stdout, marker).is_empty(),
+            "identical inputs must produce no {} rows: {}",
+            marker,
+            stdout
+        );
+    }
 }
 
 #[test]
@@ -264,12 +310,12 @@ fn test_proportionally_identical_sides_produce_no_shifts() {
     ]);
     assert_eq!(code, 0, "stderr: {}", stderr);
     assert!(
-        stdout.contains("no volume shifts"),
+        rows_with(&stdout, '~').is_empty(),
         "share math must not flag proportionally identical sides: {}",
         stdout
     );
-    assert!(stdout.contains("no new templates"));
-    assert!(stdout.contains("no vanished templates"));
+    assert!(rows_with(&stdout, '+').is_empty());
+    assert!(rows_with(&stdout, '-').is_empty());
 }
 
 #[test]
@@ -297,9 +343,19 @@ fn test_cut_mode_equals_pre_split_files() {
     ]);
     assert_eq!(cut_code, 0, "stderr: {}", cut_err);
     assert_eq!(split_code, 0);
+    // The header lines name the inputs and the split rule, so they differ by
+    // design; everything the comparison concluded must not.
     assert_eq!(
-        cut_out, split_out,
+        diff_body(&cut_out),
+        diff_body(&split_out),
         "single file with --cut-at must equal the same file pre-split"
+    );
+    // The one-input header says where the boundary landed, not just the file.
+    assert!(
+        cut_out.contains("before 2026-07-24T14:00:00Z")
+            && cut_out.contains("from 2026-07-24T14:00:00Z"),
+        "cut_out: {}",
+        cut_out
     );
 }
 
@@ -445,13 +501,22 @@ fn test_report_echoes_the_span_of_each_side() {
         "msg",
     ]);
     assert_eq!(code, 0, "stderr: {}", stderr);
+    // Each side's span rides on its own header line, in the form --cut-at
+    // accepts back, so a first attempt that misses doubles as the lookup.
+    let header = |marker: &str| -> String {
+        stdout
+            .lines()
+            .find(|line| line.starts_with(marker))
+            .unwrap_or_else(|| panic!("no {} header: {}", marker, stdout))
+            .to_string()
+    };
     assert!(
-        stdout.contains("baseline spans 2026-07-24T10:00:00Z .. 2026-07-24T11:19:00Z"),
+        header("--- ").ends_with("2026-07-24T10:00:00Z .. 2026-07-24T11:19:00Z"),
         "stdout: {}",
         stdout
     );
     assert!(
-        stdout.contains("target   spans 2026-07-24T15:00:00Z .. 2026-07-24T15:39:00Z"),
+        header("+++ ").ends_with("2026-07-24T15:00:00Z .. 2026-07-24T15:39:00Z"),
         "stdout: {}",
         stdout
     );
@@ -716,8 +781,11 @@ fn test_cut_predicate_matches_the_equivalent_timestamp_split() {
     ]);
     assert_eq!(pred_code, 0, "stderr: {}", pred_err);
     assert_eq!(time_code, 0);
+    // The header lines name the splitter that produced each side, so they
+    // differ by design; the comparison they produced must not.
     assert_eq!(
-        pred_out, time_out,
+        diff_body(&pred_out),
+        diff_body(&time_out),
         "--cut-before and the equivalent --cut-at must draw the same boundary"
     );
     // The matching event belongs to the target, not the baseline.
@@ -1142,7 +1210,16 @@ fn test_partially_missing_field_warns_but_still_reports() {
         "stderr: {}",
         stderr
     );
-    assert!(stdout.contains("totals: baseline 2 events, target 2 events"));
+    // The header lines report what was actually compared, not what was read.
+    let header = |marker: &str| -> String {
+        stdout
+            .lines()
+            .find(|line| line.starts_with(marker))
+            .unwrap_or_else(|| panic!("no {} header: {}", marker, stdout))
+            .to_string()
+    };
+    assert!(header("--- ").contains("2 events"), "stdout: {}", stdout);
+    assert!(header("+++ ").contains("2 events"), "stdout: {}", stdout);
 }
 
 #[test]
@@ -1167,7 +1244,11 @@ fn test_zero_compared_events_warns_that_the_report_is_vacuous() {
         "stderr: {}",
         stderr
     );
-    assert!(stdout.contains("no new templates"), "stdout: {}", stdout);
+    assert!(
+        stdout.contains("no template differences"),
+        "stdout: {}",
+        stdout
+    );
 }
 
 #[test]
@@ -1204,6 +1285,11 @@ fn test_events_are_suppressed_in_diff_mode() {
         "diff mode must not emit individual events: {}",
         stdout
     );
-    // The report itself is the only stdout payload.
-    assert!(stdout.trim_start().starts_with("NEW in target"));
+    // The report itself is the only stdout payload, starting with the header
+    // line that names the baseline.
+    assert!(
+        stdout.trim_start().starts_with("--- "),
+        "stdout: {}",
+        stdout
+    );
 }
