@@ -1220,3 +1220,48 @@ fn test_level_prefilter_is_unobservable_to_the_user() {
         );
     }
 }
+
+#[test]
+fn test_line_filter_dropping_everything_is_not_reported_as_empty_stdin() {
+    // Same #369 root cause as the level pre-filter, different trigger: lines
+    // dropped by --keep-lines/--ignore-lines never reach the parser either, and
+    // the drop was only counted under --stats. A piped run whose pattern matched
+    // nothing was therefore told its stdin was empty, sending the user to debug
+    // the pipe rather than the pattern.
+    //
+    // Unlike a `-l` typo these drops were *asked for*, so no hint is owed — an
+    // empty result from a pattern you named is self-evident. The requirement is
+    // only that kelora not assert something false.
+    let input = "{\"level\":\"INFO\",\"msg\":\"a\"}\n{\"level\":\"INFO\",\"msg\":\"b\"}";
+
+    for args in [
+        vec!["-f", "json", "--ignore-lines", "."],
+        vec!["-f", "json", "--keep-lines", "ZZZZ"],
+    ] {
+        let (stdout, stderr, exit_code) = run_kelora_with_input(&args, input);
+
+        assert_eq!(exit_code, 0, "{args:?} should stay non-fatal");
+        assert!(stdout.is_empty(), "{args:?} should emit nothing: {stdout}");
+        assert!(
+            !stderr.contains("stdin is empty"),
+            "input arrived; the pattern dropped it: {args:?}: {stderr}"
+        );
+        // The level-filter hint must not be dragged in either: no -l was given.
+        assert!(
+            !stderr.contains("0 events matched"),
+            "a requested line-pattern drop needs no hint: {args:?}: {stderr}"
+        );
+    }
+}
+
+#[test]
+fn test_genuinely_empty_stdin_still_hints() {
+    // Guard the other direction: the no-input hint must survive the fix above.
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "json"], "");
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("stdin is empty"),
+        "an actually-empty stdin should still be explained: {stderr:?}"
+    );
+}
