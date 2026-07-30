@@ -52,6 +52,7 @@
 //! and VANISHED's fixed floor are untouched, since scaling those away would
 //! risk silencing rare-but-real incident signals the mode exists to surface.
 
+use crate::text_width::{display_width, pad_left_display, truncate_for_display, Glyphs};
 use chrono::{DateTime, Utc};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -326,7 +327,7 @@ impl DiffReport {
 
     /// The empty side of a lopsided comparison: one side got every event and
     /// the other got none. Such a report is not a comparison — every template
-    /// lands in NEW or VANISHED by construction — so callers refuse it rather
+    /// lands on a `+` or `-` row by construction — so callers refuse it rather
     /// than print sections that read as a dramatic finding.
     ///
     /// `None` when both sides have events, and also when *neither* does: that
@@ -346,8 +347,8 @@ impl DiffReport {
     /// [`Self::empty_side`] refuses the case where a comparison is *undefined*
     /// — a side with no events at all. This names the softer one next to it: a
     /// side with events, so shares and z-scores compute and the report is
-    /// well-formed, but so few of them that the other side's templates land in
-    /// NEW or VANISHED because the small side never had room for them rather
+    /// well-formed, but so few of them that the other side's templates land on
+    /// `+` or `-` rows because the small side never had room for them rather
     /// than because anything changed. That is the shape a boundary landing at
     /// the edge of the log produces — a `--cut-before` marker matching the last
     /// event, a `--cut-at` one event inside the range, a target file with one
@@ -551,10 +552,6 @@ fn normalize_key(template: &str) -> String {
     template.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-fn pct(share: f64) -> String {
-    format!("{:.1}%", share * 100.0)
-}
-
 fn signed_pp(delta: f64) -> String {
     format!(
         "{}{:.1}pp",
@@ -564,13 +561,13 @@ fn signed_pp(delta: f64) -> String {
 }
 
 /// How much more (or less) of the log this template is, as a plain multiple:
-/// `14× more frequent`. Computed from *shares*, not raw counts, so sides of
-/// different sizes compare fairly — the same quantity `MIN_RATE_RATIO` gates.
+/// `14× more`. Computed from *shares*, not raw counts, so sides of different
+/// sizes compare fairly — the same quantity `MIN_RATE_RATIO` gates.
 ///
-/// This is what the shift line shows instead of the change in percentage
-/// points, because the two shares printed beside it already carry that: the eye
+/// A multiple rather than the change in percentage points because it is the
+/// number a reader cannot recover for themselves: given two shares the eye
 /// subtracts 1.8% from 25.0% for free, but it does not divide.
-fn rate_multiple(entry: &DiffEntry) -> String {
+fn rate_multiple(entry: &DiffEntry, glyphs: &Glyphs) -> String {
     // Everything in the shifted list has counts on both sides, so both shares
     // are positive. Defensive fallback only, in case that ever changes.
     if entry.baseline_share <= 0.0 || entry.target_share <= 0.0 {
@@ -585,193 +582,290 @@ fn rate_multiple(entry: &DiffEntry) -> String {
     // A tenth matters near the 1.5x bar, where "1.5x" and "2x" are different
     // claims; past 10x it is noise, and "14x" reads better than "13.8x".
     if factor >= 10.0 {
-        format!("{:.0}\u{d7} {} frequent", factor, direction)
+        format!("{:.0}{} {}", factor, glyphs.times, direction)
     } else {
-        format!("{:.1}\u{d7} {} frequent", factor, direction)
+        format!("{:.1}{} {}", factor, glyphs.times, direction)
     }
 }
 
-/// Rows shown per section in the table report before the rest collapse into a
-/// footer line.
+/// Rows shown per marker group (`+`, `-`, `~`) before the rest collapse into a
+/// single line.
 ///
-/// A section is only as readable as it is short. High-cardinality fields produce
-/// long NEW sections however good the clustering is — a burst of one message
+/// A group is only as readable as it is short. High-cardinality fields produce
+/// long `+` groups however good the clustering is — a burst of one message
 /// under 85 distinct user names is 85 rows of the same finding — and past a
-/// screenful the reader has lost the ranking the sort exists to provide. The
-/// sections are ordered by what an operator acts on (count for NEW/VANISHED,
-/// |Δ share| for shifts), so the head is the part worth showing.
+/// screenful the reader has lost the ranking the sort exists to provide. Each
+/// group is ordered by what an operator acts on (count for `+`/`-`, |Δ share|
+/// for `~`), so the head is the part worth showing.
 ///
-/// Never a silent cut: the footer names how many rows and how many events were
+/// Never a silent cut: the note names how many rows and how many events were
 /// held back, and where to get all of them.
 const MAX_ROWS_PER_SECTION: usize = 20;
 
-/// The "and the rest" footer for a capped section, or `None` when everything fit.
+/// Smallest template column we will render. Below this a row says nothing, so
+/// a very narrow terminal gets an overlong line rather than a useless one.
+const MIN_TEMPLATE_WIDTH: usize = 24;
+
+/// The "and the rest" line for a capped group, or `None` when everything fit.
+/// Carries its group's marker so it stays self-locating in a flat row list.
 fn truncation_note(
+    marker: char,
     shown: usize,
     entries: &[DiffEntry],
     count: impl Fn(&DiffEntry) -> u64,
+    glyphs: &Glyphs,
 ) -> Option<String> {
     let hidden = entries.len().checked_sub(shown).filter(|n| *n > 0)?;
     let events: u64 = entries.iter().skip(shown).map(count).sum();
     Some(format!(
-        "  … {} more {} ({} event(s)) not shown; --drain-diff=json lists every one",
+        "  {} {} {} more {} ({} {}) not shown; --drain-diff=json lists every one",
+        marker,
+        glyphs.ellipsis,
         hidden,
         if hidden == 1 { "template" } else { "templates" },
         events,
+        if events == 1 { "event" } else { "events" },
     ))
 }
 
-/// Format the report as the three-section human-readable table. Sections with
-/// zero entries print a single line rather than disappearing — absence of
-/// change is information. Long sections are capped at [`MAX_ROWS_PER_SECTION`]
-/// with a footer stating what was held back.
-pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
-    let (red, gray, green, bold, reset) = if use_colors {
-        ("\x1b[31m", "\x1b[90m", "\x1b[32m", "\x1b[1m", "\x1b[0m")
-    } else {
-        ("", "", "", "", "")
-    };
+/// How each side is named on its `---`/`+++` header line. Built by the caller,
+/// which is the only place that knows the filenames and which splitter produced
+/// them.
+#[derive(Debug, Clone)]
+pub struct DiffSideLabels {
+    pub baseline: String,
+    pub target: String,
+}
 
+/// Everything the text report needs beyond the numbers.
+#[derive(Debug, Clone)]
+pub struct TextReportOptions {
+    pub labels: DiffSideLabels,
+    /// The field named by `-k`, echoed in the footer so a pasted report says
+    /// what it actually compared.
+    pub mined_field: Option<String>,
+    pub use_colors: bool,
+    /// False under `--no-emoji`: punctuation falls back to ASCII.
+    pub use_unicode: bool,
+    /// Column budget. Templates are truncated to fit; a wrapped row would
+    /// destroy the alignment the marker column exists to provide.
+    pub width: usize,
+}
+
+impl TextReportOptions {
+    /// Plain, uncolored, generously wide — for tests and for callers that only
+    /// want the body text.
+    #[cfg(test)]
+    pub fn plain(baseline: &str, target: &str) -> Self {
+        Self {
+            labels: DiffSideLabels {
+                baseline: baseline.to_string(),
+                target: target.to_string(),
+            },
+            mined_field: None,
+            use_colors: false,
+            use_unicode: true,
+            width: crate::text_width::REDIRECTED_TABLE_WIDTH,
+        }
+    }
+}
+
+/// One rendered row, before column widths are known.
+struct DiffRow<'a> {
+    marker: char,
+    color: &'a str,
+    annotation: String,
+    template: &'a str,
+}
+
+/// `--- <label>  <n> events  <first> .. <last>`, the line that answers "which
+/// side is which" in syntax every engineer already reads. The span is the same
+/// form `--cut-at` accepts back, so a header line doubles as the lookup for the
+/// next invocation.
+fn side_header(label: &str, total: u64, span: Option<(DateTime<Utc>, DateTime<Utc>)>) -> String {
+    let mut out = format!(
+        "{}  {} event{}",
+        label,
+        total,
+        if total == 1 { "" } else { "s" }
+    );
+    if let Some((first, last)) = span {
+        out.push_str(&format!(
+            "  {} .. {}",
+            format_instant(first),
+            format_instant(last)
+        ));
+    }
+    out
+}
+
+/// Format the report as a diff: two header lines naming the sides, then one
+/// row per changed template marked `+` (only in the target), `-` (only in the
+/// baseline), or `~` (present in both, at a materially different rate).
+///
+/// Templates whose frequency did not meaningfully change are the diff's context
+/// lines — counted in the footer, not printed. Long groups are capped at
+/// [`MAX_ROWS_PER_SECTION`] with a line stating what was held back.
+pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> String {
+    let glyphs = Glyphs::new(opts.use_unicode);
+    let colors = crate::colors::DiffColors::new(opts.use_colors);
     let plural = |n: usize| if n == 1 { "template" } else { "templates" };
-    let plural_events = |n: u64| if n == 1 { "event" } else { "events" };
-    let count_width = |counts: &mut dyn Iterator<Item = u64>| -> usize {
-        counts.map(|c| c.to_string().len()).max().unwrap_or(1)
+
+    // Colors open and close within one line: an escape left open across a
+    // newline survives neither a pager nor a line-oriented filter. An uncolored
+    // row emits no reset either, so `--no-color` output stays byte-clean.
+    let line = |color: &str, text: &str| {
+        if color.is_empty() {
+            format!("{}\n", text)
+        } else {
+            format!("{}{}{}\n", color, text, colors.reset)
+        }
     };
 
     let mut out = String::new();
-
-    if report.new.is_empty() {
-        out.push_str(&format!(
-            "{}NEW in target:{} no new templates\n",
-            bold, reset
-        ));
-    } else {
-        out.push_str(&format!(
-            "{}NEW in target ({} {}):{}\n",
-            bold,
-            report.new.len(),
-            plural(report.new.len()),
-            reset
-        ));
-        let shown = report.new.len().min(MAX_ROWS_PER_SECTION);
-        let width = count_width(&mut report.new[..shown].iter().map(|e| e.target_count));
-        for entry in &report.new[..shown] {
-            out.push_str(&format!(
-                "  {:>w$}  {}{}{}\n",
-                entry.target_count,
-                red,
-                entry.template,
-                reset,
-                w = width
-            ));
-        }
-        if let Some(note) = truncation_note(shown, &report.new, |e| e.target_count) {
-            out.push_str(&format!("{}{}{}\n", gray, note, reset));
-        }
-    }
+    out.push_str(&line(
+        colors.dim,
+        &format!(
+            "--- {}",
+            side_header(
+                &opts.labels.baseline,
+                report.baseline_total,
+                report.baseline_span
+            )
+        ),
+    ));
+    out.push_str(&line(
+        colors.dim,
+        &format!(
+            "+++ {}",
+            side_header(&opts.labels.target, report.target_total, report.target_span)
+        ),
+    ));
     out.push('\n');
 
-    if report.vanished.is_empty() {
-        out.push_str(&format!(
-            "{}VANISHED from target:{} no vanished templates\n",
-            bold, reset
-        ));
-    } else {
-        out.push_str(&format!(
-            "{}VANISHED from target ({} {}):{}\n",
-            bold,
-            report.vanished.len(),
-            plural(report.vanished.len()),
-            reset
-        ));
-        let shown = report.vanished.len().min(MAX_ROWS_PER_SECTION);
-        let width = count_width(&mut report.vanished[..shown].iter().map(|e| e.baseline_count));
-        for entry in &report.vanished[..shown] {
-            out.push_str(&format!(
-                "  {:>w$}  {}{}{}          (baseline count)\n",
-                entry.baseline_count,
-                gray,
-                entry.template,
-                reset,
-                w = width
-            ));
-        }
-        if let Some(note) = truncation_note(shown, &report.vanished, |e| e.baseline_count) {
-            out.push_str(&format!("{}{}{}\n", gray, note, reset));
-        }
-    }
-    out.push('\n');
+    let new_shown = report.new.len().min(MAX_ROWS_PER_SECTION);
+    let vanished_shown = report.vanished.len().min(MAX_ROWS_PER_SECTION);
+    let shifted_shown = report.shifted.len().min(MAX_ROWS_PER_SECTION);
 
-    if report.shifted.is_empty() {
-        out.push_str(&format!(
-            "{}VOLUME SHIFTS:{} no volume shifts\n",
-            bold, reset
-        ));
+    let mut rows: Vec<DiffRow> = Vec::new();
+    for entry in &report.new[..new_shown] {
+        rows.push(DiffRow {
+            marker: '+',
+            color: colors.added,
+            annotation: entry.target_count.to_string(),
+            template: &entry.template,
+        });
+    }
+    for entry in &report.vanished[..vanished_shown] {
+        rows.push(DiffRow {
+            marker: '-',
+            color: colors.removed,
+            annotation: entry.baseline_count.to_string(),
+            template: &entry.template,
+        });
+    }
+    for entry in &report.shifted[..shifted_shown] {
+        rows.push(DiffRow {
+            marker: '~',
+            // Uncolored on purpose: growth is not a verdict. See `DiffColors`.
+            color: "",
+            annotation: rate_multiple(entry, &glyphs),
+            template: &entry.template,
+        });
+    }
+
+    if rows.is_empty() {
+        out.push_str(&line(colors.dim, "no template differences"));
     } else {
-        out.push_str(&format!(
-            "{}VOLUME SHIFTS ({} {}):{}\n",
-            bold,
-            report.shifted.len(),
-            plural(report.shifted.len()),
-            reset
+        // One annotation column across all three markers, so the templates
+        // start at the same column whatever mix of rows a run produces.
+        let annotation_width = rows
+            .iter()
+            .map(|row| display_width(&row.annotation))
+            .max()
+            .unwrap_or(1);
+        // "  " + marker + " " + annotation + "  "
+        let prefix = 2 + 1 + 1 + annotation_width + 2;
+        let template_width = opts.width.saturating_sub(prefix).max(MIN_TEMPLATE_WIDTH);
+
+        let emit = |rows: &[DiffRow], note: Option<String>, out: &mut String| {
+            for row in rows {
+                out.push_str(&line(
+                    row.color,
+                    &format!(
+                        "  {} {}  {}",
+                        row.marker,
+                        pad_left_display(&row.annotation, annotation_width),
+                        truncate_for_display(row.template, template_width, glyphs.ellipsis),
+                    ),
+                ));
+            }
+            if let Some(note) = note {
+                out.push_str(&line(colors.dim, &note));
+            }
+        };
+
+        let (added, rest) = rows.split_at(new_shown);
+        let (removed, changed) = rest.split_at(vanished_shown);
+        emit(
+            added,
+            truncation_note('+', new_shown, &report.new, |e| e.target_count, &glyphs),
+            &mut out,
+        );
+        emit(
+            removed,
+            truncation_note(
+                '-',
+                vanished_shown,
+                &report.vanished,
+                |e| e.baseline_count,
+                &glyphs,
+            ),
+            &mut out,
+        );
+        emit(
+            changed,
+            // Frequency changes count events on both sides; the note reports the
+            // target count, matching the direction `+` rows use.
+            truncation_note(
+                '~',
+                shifted_shown,
+                &report.shifted,
+                |e| e.target_count,
+                &glyphs,
+            ),
+            &mut out,
+        );
+    }
+
+    let mut footer = Vec::new();
+    if report.unchanged_count > 0 {
+        footer.push(format!(
+            "{} {} unchanged in frequency",
+            report.unchanged_count,
+            plural(report.unchanged_count)
         ));
-        let shown = report.shifted.len().min(MAX_ROWS_PER_SECTION);
-        for entry in &report.shifted[..shown] {
-            let delta_color = if entry.delta_pp >= 0.0 { red } else { green };
-            out.push_str(&format!("  {}\n", entry.template));
-            out.push_str(&format!(
-                "    baseline: {} ({})  \u{2192}  target: {} ({})   {}{}{}\n",
-                entry.baseline_count,
-                pct(entry.baseline_share),
-                entry.target_count,
-                pct(entry.target_share),
-                delta_color,
-                rate_multiple(entry),
-                reset,
-            ));
-        }
-        // Shifts count events on both sides, so the note reports the target
-        // count, matching the direction NEW uses.
-        if let Some(note) = truncation_note(shown, &report.shifted, |e| e.target_count) {
-            out.push_str(&format!("{}{}{}\n", gray, note, reset));
-        }
+    }
+    if let Some(field) = &opts.mined_field {
+        footer.push(format!("field: {}", field));
+    }
+    if !footer.is_empty() {
+        out.push('\n');
+        out.push_str(&line(colors.dim, &footer.join(" | ")));
     }
 
     // Without this, a report can look self-contradictory: a template that moved
-    // by a visible amount would silently sit in the totals line as if it had
-    // not moved. Only fires in that case, so ordinary reports stay quiet.
+    // by a visible amount would sit silently in the unchanged tally as if it had
+    // not moved at all. Only fires in that case, so ordinary reports stay quiet.
     if let Some(note) = within_noise_note(report) {
-        out.push_str(&format!("  {}{}{}\n", gray, note, reset));
-    }
-    out.push('\n');
-
-    out.push_str(&format!(
-        "totals: baseline {} {}, target {} {}, {} shared {} within noise",
-        report.baseline_total,
-        plural_events(report.baseline_total),
-        report.target_total,
-        plural_events(report.target_total),
-        report.unchanged_count,
-        plural(report.unchanged_count),
-    ));
-
-    // Where the split actually landed. In --cut-at mode the boundary is the whole
-    // premise of the report and the easiest thing to get wrong, so the spans it
-    // produced belong with the totals rather than in a separate check the user
-    // has to think to run. Only present when timestamps survived to the diff.
-    if let (Some(baseline), Some(target)) = (report.baseline_span, report.target_span) {
-        out.push_str(&format!(
-            "\n  {}baseline spans {} .. {}\n  target   spans {} .. {}{}",
-            gray,
-            format_instant(baseline.0),
-            format_instant(baseline.1),
-            format_instant(target.0),
-            format_instant(target.1),
-            reset,
-        ));
+        if footer.is_empty() {
+            out.push('\n');
+        }
+        out.push_str(&line(colors.dim, &note));
     }
 
-    out
+    // The caller's `writeln` terminates the last line.
+    out.trim_end_matches('\n').to_string()
 }
 
 /// Render an instant in the form `--cut-at`/`--since` accept back verbatim, so a
@@ -780,14 +874,17 @@ pub fn format_instant(ts: DateTime<Utc>) -> String {
     ts.format("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
-/// The explanation for suppressed moves, phrased for someone who did not come
+/// The explanation for suppressed changes, phrased for someone who did not come
 /// here for statistics: event counts, and the implied fix (collect more).
-/// `None` — the common case — when nothing held back moved by enough for its
+/// `None` — the common case — when nothing held back changed by enough for its
 /// absence to read as an omission.
+///
+/// The two totals are spelled out rather than joined with a slash: `110/120`
+/// reads as "110 out of 120", which is not what it means.
 fn within_noise_note(report: &DiffReport) -> Option<String> {
-    /// A suppressed move this large registers on the report's own scale (a full
-    /// point of the side's traffic), so leaving it unexplained invites "where
-    /// did my drop go?". Below it, nobody is counting.
+    /// A suppressed change this large registers on the report's own scale (a
+    /// full point of the side's traffic), so leaving it unexplained invites
+    /// "where did my drop go?". Below it, nobody is counting.
     const NOTE_FLOOR_PP: f64 = 1.0;
 
     if report.within_noise_moved == 0 || report.within_noise_max_delta_pp < NOTE_FLOOR_PP {
@@ -795,18 +892,8 @@ fn within_noise_note(report: &DiffReport) -> Option<String> {
     }
     let n = report.within_noise_moved;
     Some(format!(
-        "{} {}{} moved, but {}/{} events is too few to be sure {} real",
-        n,
-        // "2 more templates" reads wrong when no shifts were listed above it.
-        if report.shifted.is_empty() {
-            ""
-        } else {
-            "more "
-        },
-        if n == 1 { "template" } else { "templates" },
-        report.baseline_total,
-        report.target_total,
-        if n == 1 { "it's" } else { "they're" },
+        "{} of them changed a little, but {} and {} events are too few to tell that from random variation",
+        n, report.baseline_total, report.target_total,
     ))
 }
 
@@ -1237,40 +1324,42 @@ mod tests {
             cut_predicate_errors: 0,
             cut_predicate_matched: false,
         };
-        let text = format_report_text(&report, false);
+        let opts = TextReportOptions::plain("before.log", "after.log");
+        let text = format_report_text(&report, &opts);
         assert!(
             text.contains(
-                "2 more templates moved, but 110/120 events is too few to be sure they're real"
+                "2 of them changed a little, but 110 and 120 events are too few to tell that from random variation"
             ),
             "text: {}",
             text
         );
 
-        // Nothing held back moved by a full point of traffic: nothing to explain.
+        // Nothing held back changed by a full point of traffic: nothing to explain.
         let quiet = DiffReport {
             within_noise_max_delta_pp: 0.6,
             ..report.clone()
         };
-        assert!(!format_report_text(&quiet, false).contains("too few to be sure"));
+        assert!(!format_report_text(&quiet, &opts).contains("too few to tell"));
 
-        // Same with no shifts shown at all — the note is not a zero-match nag.
+        // Same with no frequency changes shown at all — not a zero-match nag.
         let quiet = DiffReport {
             shifted: vec![],
             within_noise_max_delta_pp: 0.9,
             ..report.clone()
         };
-        assert!(!format_report_text(&quiet, false).contains("too few to be sure"));
+        assert!(!format_report_text(&quiet, &opts).contains("too few to tell"));
 
-        // Nothing reported and a large move held back: "more" would be wrong.
+        // Nothing reported at all, and a large change held back: the note has to
+        // stand on its own rather than reading as a follow-on to listed rows.
         let lone = DiffReport {
             shifted: vec![],
             within_noise_moved: 1,
             within_noise_max_delta_pp: 4.0,
             ..report
         };
-        let text = format_report_text(&lone, false);
+        let text = format_report_text(&lone, &opts);
         assert!(
-            text.contains("1 template moved, but 110/120 events is too few to be sure it's real"),
+            text.contains("1 of them changed a little, but 110 and 120 events"),
             "text: {}",
             text
         );
@@ -1278,28 +1367,37 @@ mod tests {
 
     #[test]
     fn rate_multiple_reads_as_a_plain_factor() {
+        let g = Glyphs::new(true);
         // 1.8% -> 25.0% of the side's lines. Past 10x the tenth is noise.
         assert_eq!(
-            rate_multiple(&entry("t <num>", 2, 30, 110, 120)),
-            "14\u{d7} more frequent"
+            rate_multiple(&entry("t <num>", 2, 30, 110, 120), &g),
+            "14\u{d7} more"
         );
         // Declines invert the ratio rather than printing a fraction.
         assert_eq!(
-            rate_multiple(&entry("t <num>", 30, 2, 120, 110)),
-            "14\u{d7} less frequent"
+            rate_multiple(&entry("t <num>", 30, 2, 120, 110), &g),
+            "14\u{d7} less"
         );
         // Near the MIN_RATE_RATIO bar the tenth is the whole claim.
         assert_eq!(
-            rate_multiple(&entry("t <num>", 100, 160, 1000, 1000)),
-            "1.6\u{d7} more frequent"
+            rate_multiple(&entry("t <num>", 100, 160, 1000, 1000), &g),
+            "1.6\u{d7} more"
         );
         // Raw counts would say 2x here; shares say the rate held steady.
         assert_eq!(
-            rate_multiple(&entry("t <num>", 100, 200, 1000, 2000)),
-            "1.0\u{d7} more frequent"
+            rate_multiple(&entry("t <num>", 100, 200, 1000, 2000), &g),
+            "1.0\u{d7} more"
         );
         // Defensive fallback for a degenerate entry (not reachable via finalize).
-        assert_eq!(rate_multiple(&entry("t <num>", 0, 30, 110, 120)), "+25.0pp");
+        assert_eq!(
+            rate_multiple(&entry("t <num>", 0, 30, 110, 120), &g),
+            "+25.0pp"
+        );
+        // --no-emoji falls back to ASCII rather than emitting a multiplication sign.
+        assert_eq!(
+            rate_multiple(&entry("t <num>", 2, 30, 110, 120), &Glyphs::new(false)),
+            "14x more"
+        );
     }
 
     #[test]
@@ -1350,7 +1448,7 @@ mod tests {
     }
 
     #[test]
-    fn text_output_has_three_sections_and_totals() {
+    fn text_output_is_a_diff_with_named_sides() {
         let report = DiffReport {
             new: vec![entry(
                 "OOM killer invoked for process <num>",
@@ -1388,19 +1486,114 @@ mod tests {
             cut_predicate_errors: 0,
             cut_predicate_matched: false,
         };
-        let text = format_report_text(&report, false);
-        assert!(text.contains("NEW in target (1 template):"));
-        assert!(text.contains("3412  OOM killer invoked for process <num>"));
-        assert!(text.contains("VANISHED from target (1 template):"));
-        assert!(text.contains("(baseline count)"));
-        assert!(text.contains("VOLUME SHIFTS (1 template):"));
+        let text = format_report_text(
+            &report,
+            &TextReportOptions {
+                mined_field: Some("msg".to_string()),
+                ..TextReportOptions::plain("before.log", "after.log")
+            },
+        );
+        // The two sides are named in unified-diff syntax, with their own totals.
+        assert!(
+            text.contains("--- before.log  9014 events"),
+            "text: {}",
+            text
+        );
+        assert!(
+            text.contains("+++ after.log  14903 events"),
+            "text: {}",
+            text
+        );
+        // One row per changed template, marked by direction and annotated with
+        // the number that matters for that direction.
+        let row = |template: &str| -> String {
+            text.lines()
+                .find(|line| line.contains(template))
+                .unwrap_or_else(|| panic!("no row for {}: {}", template, text))
+                .to_string()
+        };
+        let added = row("OOM killer invoked for process <num>");
+        assert!(
+            added.starts_with("  + ") && added.contains("3412"),
+            "{}",
+            added
+        );
+        let removed = row("Connection pool recycled for <fqdn>");
+        assert!(
+            removed.starts_with("  - ") && removed.contains("438"),
+            "{}",
+            removed
+        );
         // 2.1% of the baseline's lines -> 14.8% of the target's: 7.1x the rate.
-        assert!(text.contains("7.1\u{d7} more frequent"), "text: {}", text);
-        assert!(text.contains(
-            "totals: baseline 9014 events, target 14903 events, 41 shared templates within noise"
-        ));
-        // Nothing suppressed moved, so the explanatory note stays out.
-        assert!(!text.contains("too few to be sure"));
+        let changed = row("Upstream <fqdn> returned <num>");
+        assert!(
+            changed.starts_with("  ~ ") && changed.contains("7.1\u{d7} more"),
+            "{}",
+            changed
+        );
+        assert!(text.contains("41 templates unchanged in frequency | field: msg"));
+        // Nothing suppressed changed, so the explanatory note stays out.
+        assert!(!text.contains("too few to tell"));
+        // No section headers, no blank-line padding between groups.
+        assert!(!text.contains("NEW in target"));
+        assert!(!text.contains("VOLUME SHIFTS"));
+    }
+
+    #[test]
+    fn rows_share_one_annotation_column_and_templates_are_truncated_to_width() {
+        let long =
+            "circuit breaker <num> opened for downstream service <fqdn> after <num> failures";
+        let report = DiffReport {
+            new: vec![entry(long, 0, 400, 800, 800)],
+            vanished: vec![],
+            shifted: vec![entry("steady heartbeat <num>", 100, 300, 800, 800)],
+            unchanged_count: 0,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
+            baseline_total: 800,
+            target_total: 800,
+            baseline_templates: 1,
+            target_templates: 2,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
+            cut_predicate_errors: 0,
+            cut_predicate_matched: false,
+        };
+        let text = format_report_text(
+            &report,
+            &TextReportOptions {
+                width: 60,
+                ..TextReportOptions::plain("a.log", "b.log")
+            },
+        );
+        let rows: Vec<&str> = text
+            .lines()
+            .filter(|line| line.starts_with("  +") || line.starts_with("  ~"))
+            .collect();
+        assert_eq!(rows.len(), 2, "text: {}", text);
+        // The widest annotation ("3.0x more") sets one column for both markers,
+        // so every template starts at the same offset.
+        // Templates carry no double space, so the last run of two is the gap
+        // between the annotation column and the template column.
+        // Measured in display columns, not bytes: the `×` in a rate multiple is
+        // two bytes wide and one column, which is exactly the confusion the
+        // shared width helpers exist to prevent.
+        let starts: Vec<usize> = rows
+            .iter()
+            .map(|row| {
+                let gap = row.rfind("  ").expect("annotation gap");
+                display_width(&row[..gap + 2])
+            })
+            .collect();
+        assert_eq!(starts[0], starts[1], "rows: {:?}", rows);
+        // Nothing wraps: a long template is cut to fit, never folded.
+        for row in &rows {
+            assert!(display_width(row) <= 60, "row overflows width: {:?}", row);
+        }
+        assert!(text.contains('\u{2026}'), "long template must be elided");
     }
 
     #[test]
@@ -1474,16 +1667,13 @@ mod tests {
     }
 
     #[test]
-    fn totals_line_says_one_event_not_one_events() {
+    fn side_header_says_one_event_not_one_events() {
         let mut report = report_with_totals(2389, 1);
         report.baseline_templates = 5;
         report.target_templates = 1;
-        let text = format_report_text(&report, false);
-        assert!(
-            text.contains("totals: baseline 2389 events, target 1 event,"),
-            "text: {}",
-            text
-        );
+        let text = format_report_text(&report, &TextReportOptions::plain("a.log", "b.log"));
+        assert!(text.contains("--- a.log  2389 events"), "text: {}", text);
+        assert!(text.contains("+++ b.log  1 event"), "text: {}", text);
     }
 
     #[test]
@@ -1541,7 +1731,7 @@ mod tests {
     }
 
     #[test]
-    fn empty_sections_print_single_lines() {
+    fn a_report_with_no_differences_says_so_once() {
         let report = DiffReport {
             new: vec![],
             vanished: vec![],
@@ -1561,10 +1751,58 @@ mod tests {
             cut_predicate_errors: 0,
             cut_predicate_matched: false,
         };
-        let text = format_report_text(&report, false);
-        assert!(text.contains("NEW in target: no new templates"));
-        assert!(text.contains("VANISHED from target: no vanished templates"));
-        assert!(text.contains("VOLUME SHIFTS: no volume shifts"));
+        let text = format_report_text(&report, &TextReportOptions::plain("a.log", "b.log"));
+        // One statement, not three "no X" lines: absence of change is one fact.
+        assert!(text.contains("no template differences"), "text: {}", text);
+        assert_eq!(text.matches("no template differences").count(), 1);
+        // The sides and the unchanged tally still report — a null result has to
+        // show it compared something.
+        assert!(text.contains("--- a.log  100 events"));
+        assert!(text.contains("+++ b.log  100 events"));
+        assert!(text.contains("5 templates unchanged in frequency"));
+    }
+
+    #[test]
+    fn colors_open_and_close_within_each_line() {
+        let report = DiffReport {
+            new: vec![entry("a new <num>", 0, 7, 10, 20)],
+            vanished: vec![entry("an old <num>", 5, 0, 10, 20)],
+            shifted: vec![],
+            unchanged_count: 1,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
+            baseline_total: 10,
+            target_total: 20,
+            baseline_templates: 1,
+            target_templates: 1,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
+            cut_predicate_errors: 0,
+            cut_predicate_matched: false,
+        };
+        let text = format_report_text(
+            &report,
+            &TextReportOptions {
+                use_colors: true,
+                ..TextReportOptions::plain("a.log", "b.log")
+            },
+        );
+        // An escape left open across a newline survives neither a pager nor a
+        // line-oriented filter, so every colored line must close its own.
+        for line in text.lines() {
+            let escapes = line.matches('\u{1b}').count();
+            if escapes == 0 {
+                continue;
+            }
+            assert_eq!(escapes, 2, "line is not exactly open+reset: {:?}", line);
+            assert!(line.ends_with("\u{1b}[0m"), "line leaks color: {:?}", line);
+        }
+        // Diff convention: additions green, removals red.
+        assert!(text.contains("\u{1b}[32m  + "), "text: {:?}", text);
+        assert!(text.contains("\u{1b}[31m  - "), "text: {:?}", text);
     }
 
     #[test]

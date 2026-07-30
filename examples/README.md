@@ -89,37 +89,41 @@ kelora --drain-diff=json examples/deploy_before.jsonl examples/deploy_after.json
 
 **Example output:**
 ```
-NEW in target (2 templates):
-  3  config reloaded with <num> stale keys
-  2  worker <num> restarted after heartbeat timeout <duration>
+--- examples/deploy_before.jsonl  110 events  2025-01-20T13:30:00Z .. 2025-01-20T13:56:10Z
++++ examples/deploy_after.jsonl  120 events  2025-01-20T14:00:00Z .. 2025-01-20T14:24:20Z
 
-VANISHED from target (1 template):
-  8  connection pool recycled for <fqdn>          (baseline count)
+  +        3  config reloaded with <num> stale keys
+  +        2  worker <num> restarted after heartbeat timeout <duration>
+  -        8  connection pool recycled for <fqdn>
+  ~ 14x more  upstream <fqdn> returned <num> for request <uuid>
 
-VOLUME SHIFTS (1 template):
-  upstream <fqdn> returned <num> for request <uuid>
-    baseline: 2 (1.8%)  →  target: 30 (25.0%)   14× more frequent
-  2 more templates moved, but 110/120 events is too few to be sure they're real
-
-totals: baseline 110 events, target 120 events, 2 shared templates within noise
+2 templates unchanged in frequency | field: msg
+2 of them changed a little, but 110 and 120 events are too few to tell that from random variation
 ```
 
-The story reads straight off the report: the deploy introduced two new
-templates, retired the pool recycler, and upstream 503s exploded from 1.8% to
-25% of traffic. Comparisons use per-side shares (count / side total), so sides
-of very different sizes diff fairly, and NEW templates are reported down to a
-single occurrence — a message appearing 3 times only after the deploy is
-exactly what you're looking for.
+It reads like a diff, because it is one — of *which message templates occur and
+how often*, not of what the messages say. `+` is a template only the target has,
+`-` one only the baseline had, and `~` one both logs have at a materially
+different rate. The `---`/`+++` lines name the two sides and how many events
+each contributed.
 
-The two templates held back are the flip side of that same rise: with 503s
-taking a quarter of the traffic, the healthy patterns have to give up share.
-At 110 and 120 events per side those drops could still be luck of the draw, so
-they get one summary line instead of rows of their own — and the report says so
-rather than quietly filing them under "unchanged". Feed it a bigger capture and
-they show up. The `14× more frequent` at the end of a shift line is the rate
-change the two percentages don't hand you directly — computed from shares, so
-it stays honest when the two sides are different sizes (raw counts, 30 vs 2,
-would have claimed 15×).
+The story reads straight off the report: the deploy introduced two new
+templates, retired the pool recycler, and upstream 503s exploded to 14x their
+former share of the log. Comparisons use per-side shares (count / side total),
+so sides of very different sizes diff fairly, and `+` templates are reported
+down to a single occurrence — a message appearing 3 times only after the deploy
+is exactly what you're looking for. The count on a `+` or `-` row is that
+template's own event count; `~` rows carry the rate change instead, which is
+what the two shares would not hand you directly (raw counts, 30 vs 2, would
+have claimed 15x — the multiple is computed from shares, so it stays honest
+when the two sides are different sizes).
+
+Templates whose frequency did not meaningfully change are this diff's context
+lines: counted in the footer, not printed. Two of them here are the flip side of
+that same rise — with 503s taking a quarter of the traffic, the healthy patterns
+have to give up share. At 110 and 120 events per side those drops could still be
+luck of the draw, so the report says so rather than quietly filing them under
+"unchanged". Feed it a bigger capture and they get rows of their own.
 
 ## Filter Patterns (Boolean Logic)
 

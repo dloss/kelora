@@ -103,6 +103,7 @@ mod runner;
 mod stats;
 #[cfg(test)]
 mod test_env;
+mod text_width;
 mod timestamp;
 mod tty;
 
@@ -1292,9 +1293,69 @@ fn dead_mined_field_message(
     }
 }
 
+/// How the report's `---` and `+++` lines name the two sides.
+///
+/// A report that does not say what it compared is unattributable the moment it
+/// is pasted anywhere, and in one-input mode the split rule *is* the identity of
+/// the sides — "before the cut" and "from the cut" are not filenames, so naming
+/// only the file would say nothing about where the boundary landed.
+fn drain_diff_side_labels(config: &config::KeloraConfig) -> crate::drain_diff::DiffSideLabels {
+    let display = |path: &str| {
+        if path == "-" {
+            "<stdin>".to_string()
+        } else {
+            path.to_string()
+        }
+    };
+    // One-input modes read from a single source, or stdin when none was named.
+    let source = || {
+        config
+            .input
+            .files
+            .first()
+            .map(|path| display(path))
+            .unwrap_or_else(|| "<stdin>".to_string())
+    };
+
+    let (baseline, target) = match &config.processing.drain_diff_rule {
+        Some(config::DrainDiffRule::TwoInputs { baseline }) => {
+            let target = config
+                .input
+                .files
+                .iter()
+                .find(|path| path.as_str() != baseline.as_str())
+                .map(|path| display(path))
+                .unwrap_or_else(|| "target".to_string());
+            (display(baseline), target)
+        }
+        Some(config::DrainDiffRule::Timestamp { cut, .. }) => {
+            let cut = crate::drain_diff::format_instant(*cut);
+            (
+                format!("{} before {}", source(), cut),
+                format!("{} from {}", source(), cut),
+            )
+        }
+        Some(config::DrainDiffRule::Predicate { placement, .. }) => match placement {
+            // The matching event starts the target, so the baseline stops short
+            // of it; --cut-after keeps it as the baseline's last event instead.
+            config::MatchPlacement::Target => (
+                format!("{} before first match", source()),
+                format!("{} from first match", source()),
+            ),
+            config::MatchPlacement::Baseline => (
+                format!("{} through first match", source()),
+                format!("{} after first match", source()),
+            ),
+        },
+        None => ("baseline".to_string(), "target".to_string()),
+    };
+
+    crate::drain_diff::DiffSideLabels { baseline, target }
+}
+
 /// Error text for a `--drain-diff` run where one side got every event and the
 /// other got none. Such a report is not a comparison: every template lands in
-/// NEW or VANISHED by construction, which reads as a dramatic finding ("the
+/// `+` or `-` by construction, which reads as a dramatic finding ("the
 /// service stopped doing everything") when it only means the split missed.
 ///
 /// A mis-aimed `--cut-at` is the usual cause, and easy to hit by accident, because
@@ -1344,14 +1405,14 @@ fn drain_diff_one_sided_message(
                 " Note that relative times resolve against the current time, not the log's — '1h' means an hour ago, and a bare '14:00' means today."
             };
             format!(
-                "--drain-diff: --cut-at resolved to {}, and all {} compared event(s) fall {} it, so the {} side is empty and the report would show every template as {} rather than compare anything.{}{}",
+                "--drain-diff: --cut-at resolved to {}, and all {} compared event(s) fall {} it, so the {} side is empty and the report would mark every template {} rather than compare anything.{}{}",
                 crate::drain_diff::format_instant(*cut),
                 compared,
                 relation,
                 empty.label(),
                 match empty {
-                    crate::drain_diff::DiffSide::Baseline => "NEW",
-                    crate::drain_diff::DiffSide::Target => "VANISHED",
+                    crate::drain_diff::DiffSide::Baseline => "new",
+                    crate::drain_diff::DiffSide::Target => "gone",
                 },
                 range,
                 clock_note,
@@ -1368,7 +1429,7 @@ fn drain_diff_one_sided_message(
             let flag = placement.flag();
             match empty {
                 crate::drain_diff::DiffSide::Target if !report.cut_predicate_matched => format!(
-                    "--drain-diff: {} '{}' never matched any of the {} compared event(s), so the target side is empty and the report would show every template as VANISHED rather than compare anything. Check the expression against the log with --filter '{}' — and note that any --filter / --levels / --since runs before the split, so a marker event can be removed before the predicate ever sees it.",
+                    "--drain-diff: {} '{}' never matched any of the {} compared event(s), so the target side is empty and the report would mark every template gone rather than compare anything. Check the expression against the log with --filter '{}' — and note that any --filter / --levels / --since runs before the split, so a marker event can be removed before the predicate ever sees it.",
                     flag, expr, compared, expr
                 ),
                 // Reachable only under --cut-after: the match is kept on the
@@ -1379,19 +1440,19 @@ fn drain_diff_one_sided_message(
                     flag, expr, compared
                 ),
                 crate::drain_diff::DiffSide::Baseline => format!(
-                    "--drain-diff: {} '{}' matched the very first of the {} compared event(s), so the baseline side is empty and the report would show every template as NEW rather than compare anything. Either the predicate matches from the start of the log and needs to be more specific, or the marker really is the first event — use --cut-after to keep it on the baseline side.",
+                    "--drain-diff: {} '{}' matched the very first of the {} compared event(s), so the baseline side is empty and the report would mark every template new rather than compare anything. Either the predicate matches from the start of the log and needs to be more specific, or the marker really is the first event — use --cut-after to keep it on the baseline side.",
                     flag, expr, compared
                 ),
             }
         }
         _ => format!(
-            "--drain-diff: the {} input contributed all {} compared event(s) and the {} input contributed none, so the report would show every template as {} rather than compare anything. Check that both inputs are non-empty and that --filter / --since / --level did not remove one side entirely.",
+            "--drain-diff: the {} input contributed all {} compared event(s) and the {} input contributed none, so the report would mark every template {} rather than compare anything. Check that both inputs are non-empty and that --filter / --since / --level did not remove one side entirely.",
             filled.label(),
             compared,
             empty.label(),
             match empty {
-                crate::drain_diff::DiffSide::Baseline => "NEW",
-                crate::drain_diff::DiffSide::Target => "VANISHED",
+                crate::drain_diff::DiffSide::Baseline => "new",
+                crate::drain_diff::DiffSide::Target => "gone",
             },
         ),
     }
@@ -1840,7 +1901,7 @@ fn handle_pipeline_success(
                     std::process::exit(ExitCode::GeneralError as i32);
                 }
                 // Refuse a lopsided split for the same reason: with one side
-                // empty, every template is NEW or VANISHED by construction, so
+                // empty, every template is + or - by construction, so
                 // the sections read as a dramatic finding when they only mean
                 // the boundary missed. A mis-aimed --cut-at is the usual cause and
                 // is easy to produce by accident — relative forms resolve
@@ -1868,8 +1929,8 @@ fn handle_pipeline_success(
                                 .unwrap_or(());
                         }
                         // Partial exclusions are normal in heterogeneous logs,
-                        // but they shrink the corpus invisibly — the totals line
-                        // reports what was compared, never what was dropped.
+                        // but they shrink the corpus invisibly — the header
+                        // lines report what was compared, never what was dropped.
                         if report.excluded_no_field > 0 {
                             stderr
                                 .writeln(&crate::config::format_warning_message_auto(&format!(
@@ -1888,12 +1949,12 @@ fn handle_pipeline_success(
                         // of the log looks like, and it used to print a report
                         // saying the whole log changed with nothing said.
                         if let Some(small) = report.undersized_side() {
-                            let (events, other_templates, section) = match small {
+                            let (events, other_templates, marker) = match small {
                                 crate::drain_diff::DiffSide::Baseline => {
-                                    (report.baseline_total, report.target_templates, "NEW")
+                                    (report.baseline_total, report.target_templates, '+')
                                 }
                                 crate::drain_diff::DiffSide::Target => {
-                                    (report.target_total, report.baseline_templates, "VANISHED")
+                                    (report.target_total, report.baseline_templates, '-')
                                 }
                             };
                             // The span pointer is only earned when the report
@@ -1904,17 +1965,17 @@ fn handle_pipeline_success(
                             let where_to_look = if report.baseline_span.is_some()
                                 && report.target_span.is_some()
                             {
-                                " Check that each side covers the window you meant — the totals line states the span of both."
+                                " Check that each side covers the window you meant — the --- and +++ lines state the span of both."
                             } else {
                                 " Check that each side covers the window you meant."
                             };
                             stderr
                                 .writeln(&crate::config::format_warning_message_auto(&format!(
-                                    "--drain-diff: the {} side contributed only {} event(s), fewer than the {} template(s) on the other side, so most of the {} section reflects that shortfall rather than a change.{}",
+                                    "--drain-diff: the {} side contributed only {} event(s), fewer than the {} template(s) on the other side, so most of the {} rows reflect that shortfall rather than a change.{}",
                                     small.label(),
                                     events,
                                     other_templates,
-                                    section,
+                                    marker,
                                     where_to_look,
                                 )))
                                 .unwrap_or(());
@@ -1954,10 +2015,21 @@ fn handle_pipeline_success(
                                 .unwrap_or(());
                         }
                     }
-                    let use_colors = crate::tty::should_use_colors_with_mode(&config.output.color);
                     let output = match diff_format {
                         crate::cli::DrainDiffFormat::Table => {
-                            crate::drain_diff::format_report_text(&report, use_colors)
+                            let opts = crate::drain_diff::TextReportOptions {
+                                labels: drain_diff_side_labels(config),
+                                mined_field: mined_field.clone(),
+                                use_colors: crate::tty::should_use_colors_with_mode(
+                                    &config.output.color,
+                                ),
+                                use_unicode: crate::tty::should_use_emoji_with_mode(
+                                    &config.output.emoji,
+                                    &config.output.color,
+                                ),
+                                width: crate::text_width::output_width(),
+                            };
+                            crate::drain_diff::format_report_text(&report, &opts)
                         }
                         crate::cli::DrainDiffFormat::Json => {
                             crate::drain_diff::format_report_json(&report)

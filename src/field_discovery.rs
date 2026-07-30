@@ -7,24 +7,21 @@
 //!   - Small sets (≤ threshold): exact `HashSet` tracking
 //!   - Large sets: graduated to HyperLogLog estimation
 
+use crate::text_width::{
+    display_width, output_width, pad_left_display, pad_right_display, truncate_for_display, Glyphs,
+};
 use hyperloglog::HyperLogLog;
 use indexmap::IndexMap;
 use rhai::Dynamic;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use unicode_width::UnicodeWidthStr;
 
 /// Threshold at which we graduate from exact tracking to HLL estimation.
 const EXACT_CARDINALITY_THRESHOLD: usize = 256;
 
 /// Maximum number of sample values to keep per field.
 const MAX_SAMPLES: usize = 8;
-
-/// Default table width for `--discover` when output is redirected (not a TTY)
-/// and no `COLUMNS` override is set. Chosen wide enough that the examples
-/// column has room to breathe in files and pipes.
-const REDIRECTED_TABLE_WIDTH: usize = 200;
 
 /// Maximum number of distinct fields to track (memory safety).
 const MAX_TRACKED_FIELDS: usize = 1_000;
@@ -529,18 +526,7 @@ impl FieldDiscovery {
     /// real horizontal ellipsis (`…`) and em dash (`—`); when false (e.g.
     /// `--no-emoji`) it falls back to ASCII (`...`, `-`).
     pub fn format_table(&self, use_unicode: bool) -> std::string::String {
-        let width = if crate::tty::is_stdout_tty() {
-            crate::tty::get_terminal_width()
-        } else {
-            // Honor an explicit COLUMNS override even when piped; otherwise
-            // fall back to a generous default so examples have room to expand.
-            std::env::var("COLUMNS")
-                .ok()
-                .and_then(|s| s.parse::<usize>().ok())
-                .filter(|&c| c > 0)
-                .unwrap_or(REDIRECTED_TABLE_WIDTH)
-        };
-        self.format_table_for_width(width, use_unicode)
+        self.format_table_for_width(output_width(), use_unicode)
     }
 
     fn format_table_for_width(
@@ -830,31 +816,6 @@ impl FieldDiscovery {
 
 // ── helpers ────────────────────────────────────────────────────────────
 
-/// Punctuation glyphs used in the table, chosen by whether Unicode output is
-/// allowed (`--no-emoji` falls back to ASCII).
-struct Glyphs {
-    /// Truncation / "more values exist" marker: `…` or `...`.
-    ellipsis: &'static str,
-    /// Placeholder for fields with no scalar cardinality: `—` or `-`.
-    em_dash: &'static str,
-}
-
-impl Glyphs {
-    fn new(use_unicode: bool) -> Self {
-        if use_unicode {
-            Self {
-                ellipsis: "\u{2026}",
-                em_dash: "\u{2014}",
-            }
-        } else {
-            Self {
-                ellipsis: "...",
-                em_dash: "-",
-            }
-        }
-    }
-}
-
 /// Format the type column for a field profile.
 fn format_types(profile: &FieldProfile) -> std::string::String {
     let types = profile.types_by_frequency();
@@ -1037,45 +998,6 @@ fn hash_value(ft: &FieldType, display: &str) -> u64 {
     ft.hash(&mut hasher);
     display.hash(&mut hasher);
     hasher.finish()
-}
-
-/// Truncate a string to `max_chars` with an ellipsis suffix, preserving valid
-/// UTF-8 boundaries. `ellipsis` is the suffix to append when truncation occurs
-/// (`…` normally, `...` under `--no-emoji`).
-fn truncate_for_display(s: &str, max_chars: usize, ellipsis: &str) -> std::string::String {
-    let ell_width = ellipsis.chars().count();
-    if max_chars <= ell_width {
-        return ".".repeat(max_chars);
-    }
-    let char_count = s.chars().count();
-    if char_count <= max_chars {
-        return s.to_string();
-    }
-
-    let keep = max_chars - ell_width;
-    let mut out = s.chars().take(keep).collect::<std::string::String>();
-    out.push_str(ellipsis);
-    out
-}
-
-fn display_width(s: &str) -> usize {
-    UnicodeWidthStr::width(s)
-}
-
-fn pad_right_display(s: &str, width: usize) -> std::string::String {
-    let current = display_width(s);
-    if current >= width {
-        return s.to_string();
-    }
-    format!("{s}{}", " ".repeat(width - current))
-}
-
-fn pad_left_display(s: &str, width: usize) -> std::string::String {
-    let current = display_width(s);
-    if current >= width {
-        return s.to_string();
-    }
-    format!("{}{s}", " ".repeat(width - current))
 }
 
 struct TableWidths {

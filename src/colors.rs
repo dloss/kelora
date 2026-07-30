@@ -80,9 +80,53 @@ impl ColorScheme {
     }
 }
 
+/// ANSI colors for the `--drain-diff` report.
+///
+/// Deliberately the diff palette rather than a severity one: green marks what
+/// the target added and red what it dropped, exactly as every diff does, so the
+/// color carries structure and not a verdict. A template growing is not "bad" —
+/// more of `request served ok` is good news — so the frequency-change rows stay
+/// uncolored rather than being scored.
+#[derive(Debug, Clone, Copy)]
+pub struct DiffColors {
+    /// Templates only the target has.
+    pub added: &'static str,
+    /// Templates only the baseline had.
+    pub removed: &'static str,
+    /// Header, footer, and truncation notes — present but not the payload.
+    pub dim: &'static str,
+    pub reset: &'static str,
+}
+
+impl DiffColors {
+    pub fn new(use_colors: bool) -> Self {
+        if use_colors {
+            Self {
+                added: "\x1b[32m",
+                removed: "\x1b[31m",
+                dim: "\x1b[90m",
+                reset: "\x1b[0m",
+            }
+        } else {
+            Self {
+                added: "",
+                removed: "",
+                dim: "",
+                reset: "",
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn diff_colors_are_empty_without_color() {
+        let c = DiffColors::new(false);
+        assert_eq!((c.added, c.removed, c.dim, c.reset), ("", "", "", ""));
+    }
 
     #[test]
     fn glog_single_letter_levels_match_word_levels() {
