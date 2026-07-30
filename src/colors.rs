@@ -87,14 +87,18 @@ impl ColorScheme {
 /// color carries structure and not a verdict. A template growing is not "bad" —
 /// more of `request served ok` is good news — so the frequency-change rows stay
 /// uncolored rather than being scored.
+///
+/// Only those two. Everything else the report prints — the `---`/`+++` header,
+/// the footer, the truncation notes — is plain text: dimming it made the report
+/// look decorated rather than structured, and grey is the one color that goes
+/// unreadable on a terminal whose background does not match the one it was
+/// picked against.
 #[derive(Debug, Clone, Copy)]
 pub struct DiffColors {
     /// Templates only the target has.
     pub added: &'static str,
     /// Templates only the baseline had.
     pub removed: &'static str,
-    /// Header, footer, and truncation notes — present but not the payload.
-    pub dim: &'static str,
     pub reset: &'static str,
 }
 
@@ -104,14 +108,12 @@ impl DiffColors {
             Self {
                 added: "\x1b[32m",
                 removed: "\x1b[31m",
-                dim: "\x1b[90m",
                 reset: "\x1b[0m",
             }
         } else {
             Self {
                 added: "",
                 removed: "",
-                dim: "",
                 reset: "",
             }
         }
@@ -125,7 +127,7 @@ mod tests {
     #[test]
     fn diff_colors_are_empty_without_color() {
         let c = DiffColors::new(false);
-        assert_eq!((c.added, c.removed, c.dim, c.reset), ("", "", "", ""));
+        assert_eq!((c.added, c.removed, c.reset), ("", "", ""));
     }
 
     #[test]
