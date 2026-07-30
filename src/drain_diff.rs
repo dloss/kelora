@@ -289,6 +289,12 @@ pub struct DiffReport {
     pub within_noise_max_delta_pp: f64,
     pub baseline_total: u64,
     pub target_total: u64,
+    /// Distinct templates each side contributed at least one event to. Counted
+    /// directly rather than derived from the sections, because `vanished` is
+    /// filtered by the noise floor and so undercounts baseline-only templates.
+    /// Used by [`DiffReport::undersized_side`].
+    pub baseline_templates: usize,
+    pub target_templates: usize,
     /// Events whose field value matched no frozen template in pass 2. Should
     /// be impossible by construction (every value was added in pass 1); a
     /// nonzero count guards against future drain behavior changes.
@@ -331,6 +337,47 @@ impl DiffReport {
             (0, t) if t > 0 => Some(DiffSide::Baseline),
             (b, 0) if b > 0 => Some(DiffSide::Target),
             _ => None,
+        }
+    }
+
+    /// The side too small to have exhibited the other's message variety, if
+    /// either is.
+    ///
+    /// [`Self::empty_side`] refuses the case where a comparison is *undefined*
+    /// — a side with no events at all. This names the softer one next to it: a
+    /// side with events, so shares and z-scores compute and the report is
+    /// well-formed, but so few of them that the other side's templates land in
+    /// NEW or VANISHED because the small side never had room for them rather
+    /// than because anything changed. That is the shape a boundary landing at
+    /// the edge of the log produces — a `--cut-before` marker matching the last
+    /// event, a `--cut-at` one event inside the range, a target file with one
+    /// line — and every one of those reported the whole log as changed, exit 0,
+    /// with nothing said.
+    ///
+    /// The test is "fewer events than the other side has distinct templates",
+    /// which is derived rather than tuned: a side cannot show N message types
+    /// with fewer than N events, so below that the section length is bounded by
+    /// the sample size instead of by any change. It deliberately does *not* fire
+    /// on a homogeneous-but-well-sampled side — 500 events of one template
+    /// against five templates is a real finding, not an artifact — which is why
+    /// the count of events is compared against templates rather than a side's
+    /// template count being tested on its own.
+    ///
+    /// Advisory only: the report still prints. Callers warn (🔸) rather than
+    /// refuse, matching how the other compromised-corpus cases (cluster-cap
+    /// eviction, partial field exclusion, zero compared events) are handled.
+    pub fn undersized_side(&self) -> Option<DiffSide> {
+        if self.empty_side().is_some() {
+            // Already refused upstream, and a zero side would trip the test
+            // below for a reason that has its own, better message.
+            return None;
+        }
+        if self.baseline_total < self.target_templates as u64 {
+            Some(DiffSide::Baseline)
+        } else if self.target_total < self.baseline_templates as u64 {
+            Some(DiffSide::Target)
+        } else {
+            None
         }
     }
 
@@ -399,8 +446,17 @@ pub fn finalize() -> Result<DiffReport, String> {
         let mut within_noise_moved = 0usize;
         let mut within_noise_max_delta_pp = 0.0f64;
 
+        let mut baseline_templates = 0usize;
+        let mut target_templates = 0usize;
+
         for (_, (template, counts)) in per_template {
             let (b, t) = (counts[0], counts[1]);
+            if b > 0 {
+                baseline_templates += 1;
+            }
+            if t > 0 {
+                target_templates += 1;
+            }
             let z_score = if b > 0 && t > 0 {
                 Some(two_proportion_z(b, t, baseline_total, target_total))
             } else {
@@ -475,6 +531,8 @@ pub fn finalize() -> Result<DiffReport, String> {
             within_noise_max_delta_pp,
             baseline_total,
             target_total,
+            baseline_templates,
+            target_templates,
             unmatched_events: unmatched,
             excluded_no_timestamp: state.excluded_no_timestamp,
             excluded_no_field: state.excluded_no_field,
@@ -575,6 +633,7 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
     };
 
     let plural = |n: usize| if n == 1 { "template" } else { "templates" };
+    let plural_events = |n: u64| if n == 1 { "event" } else { "events" };
     let count_width = |counts: &mut dyn Iterator<Item = u64>| -> usize {
         counts.map(|c| c.to_string().len()).max().unwrap_or(1)
     };
@@ -687,9 +746,11 @@ pub fn format_report_text(report: &DiffReport, use_colors: bool) -> String {
     out.push('\n');
 
     out.push_str(&format!(
-        "totals: baseline {} events, target {} events, {} shared {} within noise",
+        "totals: baseline {} {}, target {} {}, {} shared {} within noise",
         report.baseline_total,
+        plural_events(report.baseline_total),
         report.target_total,
+        plural_events(report.target_total),
         report.unchanged_count,
         plural(report.unchanged_count),
     ));
@@ -873,6 +934,10 @@ mod tests {
             within_noise_max_delta_pp: 0.0,
             baseline_total,
             target_total,
+            // Zero, so the derived-from-templates predicates read as "nothing
+            // to be undersized against"; tests that care set them explicitly.
+            baseline_templates: 0,
+            target_templates: 0,
             unmatched_events: 0,
             excluded_no_timestamp: 0,
             excluded_no_field: 0,
@@ -1162,6 +1227,8 @@ mod tests {
             within_noise_max_delta_pp: 13.6,
             baseline_total: 110,
             target_total: 120,
+            baseline_templates: 3,
+            target_templates: 3,
             unmatched_events: 0,
             excluded_no_timestamp: 0,
             excluded_no_field: 0,
@@ -1311,6 +1378,8 @@ mod tests {
             within_noise_max_delta_pp: 0.0,
             baseline_total: 9014,
             target_total: 14903,
+            baseline_templates: 43,
+            target_templates: 43,
             unmatched_events: 0,
             excluded_no_timestamp: 0,
             excluded_no_field: 0,
@@ -1356,6 +1425,64 @@ mod tests {
             report.empty_side(),
             None,
             "a single event on a side is lopsided, not vacuous — still a comparison"
+        );
+    }
+
+    #[test]
+    fn undersized_side_catches_a_boundary_that_landed_at_the_edge() {
+        // The `--cut-before` marker matched the last event: one event on the
+        // target, and the baseline's whole template set reads as VANISHED.
+        let mut report = report_with_totals(2390, 1);
+        report.baseline_templates = 5;
+        report.target_templates = 1;
+        assert_eq!(report.undersized_side(), Some(DiffSide::Target));
+
+        // Mirror image: `--cut-after` matching the first event.
+        let mut report = report_with_totals(1, 2389);
+        report.baseline_templates = 1;
+        report.target_templates = 5;
+        assert_eq!(report.undersized_side(), Some(DiffSide::Baseline));
+    }
+
+    #[test]
+    fn undersized_side_ignores_a_well_sampled_or_vacuous_comparison() {
+        // Ordinary comparison: both sides have far more events than either has
+        // templates.
+        let mut report = report_with_totals(1050, 1340);
+        report.baseline_templates = 6;
+        report.target_templates = 6;
+        assert_eq!(report.undersized_side(), None);
+
+        // A homogeneous baseline is not undersized. 500 events of one template
+        // against five templates is a real finding, so testing a side's template
+        // count on its own would fire here and be wrong.
+        let mut report = report_with_totals(500, 400);
+        report.baseline_templates = 1;
+        report.target_templates = 5;
+        assert_eq!(
+            report.undersized_side(),
+            None,
+            "well-sampled side, however few templates it holds"
+        );
+
+        // An empty side is refused upstream with a message of its own; this
+        // predicate stays quiet so the two do not both fire.
+        let mut report = report_with_totals(0, 400);
+        report.baseline_templates = 0;
+        report.target_templates = 5;
+        assert_eq!(report.undersized_side(), None);
+    }
+
+    #[test]
+    fn totals_line_says_one_event_not_one_events() {
+        let mut report = report_with_totals(2389, 1);
+        report.baseline_templates = 5;
+        report.target_templates = 1;
+        let text = format_report_text(&report, false);
+        assert!(
+            text.contains("totals: baseline 2389 events, target 1 event,"),
+            "text: {}",
+            text
         );
     }
 
@@ -1424,6 +1551,8 @@ mod tests {
             within_noise_max_delta_pp: 0.0,
             baseline_total: 100,
             target_total: 100,
+            baseline_templates: 5,
+            target_templates: 5,
             unmatched_events: 0,
             excluded_no_timestamp: 0,
             excluded_no_field: 0,
@@ -1449,6 +1578,8 @@ mod tests {
             within_noise_max_delta_pp: 0.0,
             baseline_total: 10,
             target_total: 20,
+            baseline_templates: 5,
+            target_templates: 5,
             unmatched_events: 0,
             excluded_no_timestamp: 2,
             excluded_no_field: 0,

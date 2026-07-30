@@ -1567,6 +1567,15 @@ diagnosis that fits:
   falls after the boundary, so the target is empty. Distinguished from "never
   matched", since the fix is different: compare against a later capture.
 
+A split that leaves *one* event on a side — `--cut-before` matching the last
+event, `--cut-after` matching the first — is **warned about (🔸) rather than
+refused**, and the report still prints. Shares and z-scores compute on a
+one-event side, so the report is well-formed; what it is not is informative,
+because the other side's templates read as NEW or VANISHED for want of anything
+to compare against. The warning names the shortfall and points at the spans on
+the totals line. The same warning covers a two-input run whose target file holds
+one line, and a `--cut-at` that lands one event inside the range.
+
 A predicate that *fails to evaluate* before it finds the boundary also fails the
 run. This is stricter than `--filter`, where a per-event error drops just that
 event: here the boundary is a single decision, so one failed evaluation leaves it
