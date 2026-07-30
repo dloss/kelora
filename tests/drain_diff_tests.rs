@@ -91,7 +91,7 @@ fn test_two_file_diff_marks_each_changed_template() {
     let target = temp_log(&target_content());
 
     let (stdout, stderr, code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         baseline.path().to_str().unwrap(),
         target.path().to_str().unwrap(),
         "-k",
@@ -157,7 +157,7 @@ fn test_injected_novel_line_is_new_with_exact_count() {
         .filter(|e| e["template"].as_str().unwrap_or("").contains("OOM killer"))
         .collect();
     assert_eq!(oom.len(), 1, "exactly one OOM template: {}", stdout);
-    assert_eq!(oom[0]["count"], 3, "injected exactly 3 copies");
+    assert_eq!(oom[0]["target_count"], 3, "injected exactly 3 copies");
     assert_eq!(json["unmatched_events"], 0, "residue guard");
     assert_eq!(json["baseline_events"], 80);
     assert_eq!(json["target_events"], 73);
@@ -171,7 +171,7 @@ fn test_self_diff_yields_no_changes() {
     let b = temp_log(&content);
 
     let (stdout, stderr, code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         a.path().to_str().unwrap(),
         b.path().to_str().unwrap(),
         "-k",
@@ -209,7 +209,7 @@ fn test_swapping_inputs_flips_deltas_but_keeps_template_set() {
     let rev: serde_json::Value = serde_json::from_str(&rev).expect("rev JSON");
 
     let templates = |v: &serde_json::Value| -> Vec<String> {
-        let mut all: Vec<String> = ["new", "vanished", "shifted"]
+        let mut all: Vec<String> = ["new", "gone", "freq_changed"]
             .iter()
             .flat_map(|section| {
                 v[*section]
@@ -229,15 +229,15 @@ fn test_swapping_inputs_flips_deltas_but_keeps_template_set() {
         "template set must be order-independent"
     );
 
-    // NEW in one direction is VANISHED in the other, with the same count.
+    // What is new in one direction is gone in the other, with the same count.
     let fwd_new = fwd["new"].as_array().unwrap();
-    let rev_vanished = rev["vanished"].as_array().unwrap();
+    let rev_vanished = rev["gone"].as_array().unwrap();
     assert_eq!(fwd_new.len(), rev_vanished.len());
 
     // Shifted deltas flip sign.
-    for entry in fwd["shifted"].as_array().unwrap() {
+    for entry in fwd["freq_changed"].as_array().unwrap() {
         let id = entry["template_id"].as_str().unwrap();
-        let mirrored = rev["shifted"]
+        let mirrored = rev["freq_changed"]
             .as_array()
             .unwrap()
             .iter()
@@ -302,7 +302,7 @@ fn test_proportionally_identical_sides_produce_no_shifts() {
     let target = temp_log(&large);
 
     let (stdout, stderr, code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         baseline.path().to_str().unwrap(),
         target.path().to_str().unwrap(),
         "-k",
@@ -327,7 +327,7 @@ fn test_cut_mode_equals_pre_split_files() {
     let target_file = temp_log(&target);
 
     let (cut_out, cut_err, cut_code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         "--cut-at",
         "2026-07-24T14:00:00Z",
         combined.path().to_str().unwrap(),
@@ -335,7 +335,7 @@ fn test_cut_mode_equals_pre_split_files() {
         "msg",
     ]);
     let (split_out, _, split_code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         base_file.path().to_str().unwrap(),
         target_file.path().to_str().unwrap(),
         "-k",
@@ -493,7 +493,7 @@ fn test_two_input_mode_refuses_an_empty_side() {
 fn test_report_echoes_the_span_of_each_side() {
     let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
     let (stdout, stderr, code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         "--cut-at",
         "2026-07-24T14:00:00Z",
         combined.path().to_str().unwrap(),
@@ -519,6 +519,152 @@ fn test_report_echoes_the_span_of_each_side() {
         header("+++ ").ends_with("2026-07-24T15:00:00Z .. 2026-07-24T15:39:00Z"),
         "stdout: {}",
         stdout
+    );
+}
+
+/// A bare `--drain-diff` resolves like `-m` and `--span-summary`: the report on
+/// a terminal, the record stream when stdout is piped or redirected. The test
+/// harness captures stdout through a pipe, so a bare flag here *is* the piped
+/// case — the report has to be asked for explicitly.
+#[test]
+fn test_bare_flag_auto_selects_tsv_when_piped() {
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+    let args = |flag: &str| {
+        vec![
+            flag.to_string(),
+            baseline.path().to_str().unwrap().to_string(),
+            target.path().to_str().unwrap().to_string(),
+            "-k".to_string(),
+            "msg".to_string(),
+        ]
+    };
+    fn borrow(v: &[String]) -> Vec<&str> {
+        v.iter().map(|s| s.as_str()).collect()
+    }
+
+    let bare = args("--drain-diff");
+    let (auto_out, stderr, code) = run_diff(&borrow(&bare));
+    assert_eq!(code, 0, "stderr: {}", stderr);
+    assert!(
+        !auto_out.contains("--- ") && auto_out.contains('\t'),
+        "a piped bare --drain-diff must emit records, not the report: {}",
+        auto_out
+    );
+
+    // ...and an explicit =table forces the report back through the pipe.
+    let table = args("--drain-diff=table");
+    let (table_out, _, table_code) = run_diff(&borrow(&table));
+    assert_eq!(table_code, 0);
+    assert!(table_out.starts_with("--- "), "stdout: {}", table_out);
+
+    // The two formats are two views of one run, not two runs.
+    let tsv = args("--drain-diff=tsv");
+    let (tsv_out, _, tsv_code) = run_diff(&borrow(&tsv));
+    assert_eq!(tsv_code, 0);
+    assert_eq!(auto_out, tsv_out);
+}
+
+#[test]
+fn test_tsv_records_are_greppable_by_kind() {
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=tsv",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+
+    let rows: Vec<Vec<&str>> = stdout.lines().map(|l| l.split('\t').collect()).collect();
+    assert!(!rows.is_empty(), "stdout: {}", stdout);
+    for row in &rows {
+        assert_eq!(row.len(), 9, "fixed column count: {:?}", row);
+    }
+    let kinds: Vec<&str> = rows.iter().map(|r| r[0]).collect();
+    assert!(kinds.contains(&"new"), "stdout: {}", stdout);
+    assert!(kinds.contains(&"gone"), "stdout: {}", stdout);
+    assert!(kinds.contains(&"freq_changed"), "stdout: {}", stdout);
+    // The kind column matches the JSON array names, so one vocabulary covers
+    // both machine formats.
+    let (json_out, _, _) = run_diff(&[
+        "--drain-diff=json",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    let json: serde_json::Value = serde_json::from_str(&json_out).expect("valid json");
+    for kind in ["new", "gone", "freq_changed"] {
+        assert_eq!(
+            kinds.iter().filter(|k| **k == kind).count(),
+            json[kind].as_array().expect(kind).len(),
+            "{} rows must match the {} array",
+            kind,
+            kind
+        );
+    }
+    // No report scaffolding leaks into the record stream.
+    assert!(!stdout.contains("field: msg"), "stdout: {}", stdout);
+    assert!(
+        !stdout.contains("unchanged in frequency"),
+        "stdout: {}",
+        stdout
+    );
+}
+
+/// The row cap that keeps the report readable must not silently truncate a
+/// machine format — a missing record is indistinguishable from a real absence.
+#[test]
+fn test_tsv_is_not_capped_at_the_report_row_limit() {
+    let mut baseline = String::new();
+    let mut target = String::new();
+    // Distinct *shapes*, not just distinct values: drain clusters by token
+    // count first, so messages differing only in a number would collapse into
+    // one template — and the cap this test is about applies to templates. Each
+    // shape also needs more than one occurrence to clear the noise floor.
+    for i in 0..25 {
+        let padding = "stalled ".repeat(i + 1);
+        for _ in 0..3 {
+            baseline.push_str(&format!(
+                "{{\"msg\": \"{}subsystem never reconciled\"}}\n",
+                padding
+            ));
+            target.push_str("{\"msg\": \"steady heartbeat\"}\n");
+        }
+    }
+    let baseline = temp_log(&baseline);
+    let target = temp_log(&target);
+
+    let (table_out, _, _) = run_diff(&[
+        "--drain-diff=table",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    let (tsv_out, _, code) = run_diff(&[
+        "--drain-diff=tsv",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0);
+    // The report caps and says so; the record stream carries every row.
+    assert!(
+        table_out.contains("not shown; --drain-diff=json lists every one"),
+        "stdout: {}",
+        table_out
+    );
+    let gone = tsv_out.lines().filter(|l| l.starts_with("gone\t")).count();
+    assert!(
+        gone > 20,
+        "tsv must carry every removed template, got {}: {}",
+        gone,
+        tsv_out
     );
 }
 
@@ -1193,7 +1339,7 @@ fn test_partially_missing_field_warns_but_still_reports() {
     );
 
     let (stdout, stderr, code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         baseline.path().to_str().unwrap(),
         target.path().to_str().unwrap(),
         "-k",
@@ -1230,7 +1376,7 @@ fn test_zero_compared_events_warns_that_the_report_is_vacuous() {
     let target = temp_log(&target_content());
 
     let (stdout, stderr, code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         baseline.path().to_str().unwrap(),
         target.path().to_str().unwrap(),
         "-k",
@@ -1273,7 +1419,7 @@ fn test_events_are_suppressed_in_diff_mode() {
     let baseline = temp_log(&baseline_content());
     let target = temp_log(&target_content());
     let (stdout, _, code) = run_diff(&[
-        "--drain-diff",
+        "--drain-diff=table",
         baseline.path().to_str().unwrap(),
         target.path().to_str().unwrap(),
         "-k",

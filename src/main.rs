@@ -2015,7 +2015,24 @@ fn handle_pipeline_success(
                                 .unwrap_or(());
                         }
                     }
-                    let output = match diff_format {
+                    // Resolve the auto default like -m and --span-summary: the
+                    // diff report on a terminal, the tsv record stream when
+                    // stdout is piped or redirected. An explicit
+                    // --drain-diff=table forces the report through a pipe.
+                    let resolved_format = match diff_format {
+                        crate::cli::DrainDiffFormat::Auto => {
+                            if crate::tty::is_stdout_tty() {
+                                crate::cli::DrainDiffFormat::Table
+                            } else {
+                                crate::cli::DrainDiffFormat::Tsv
+                            }
+                        }
+                        other => other,
+                    };
+                    let output = match resolved_format {
+                        crate::cli::DrainDiffFormat::Auto => {
+                            unreachable!("Auto is resolved above")
+                        }
                         crate::cli::DrainDiffFormat::Table => {
                             let opts = crate::drain_diff::TextReportOptions {
                                 labels: drain_diff_side_labels(config),
@@ -2031,11 +2048,18 @@ fn handle_pipeline_success(
                             };
                             crate::drain_diff::format_report_text(&report, &opts)
                         }
+                        crate::cli::DrainDiffFormat::Tsv => {
+                            crate::drain_diff::format_report_tsv(&report)
+                        }
                         crate::cli::DrainDiffFormat::Json => {
                             crate::drain_diff::format_report_json(&report)
                         }
                     };
-                    stdout.writeln(&output).unwrap_or(());
+                    // A record stream with nothing to say writes nothing at all,
+                    // so an empty diff does not emit a blank line into a pipe.
+                    if !output.is_empty() {
+                        stdout.writeln(&output).unwrap_or(());
+                    }
                 }
             }
             Err(e) => {
