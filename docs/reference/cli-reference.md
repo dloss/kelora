@@ -1443,10 +1443,11 @@ kelora --drain-diff=tsv old.log new.log -k msg | awk -F'\t' '$1=="new"' | sort -
 kelora --drain-diff=tsv old.log new.log -k msg | awk -F'\t' '$1=="freq_changed" && ($6/$5>=2 || $5/$6>=2)'
 ```
 
-The row cap that keeps the table readable does not apply to `tsv` or `json` — a
-machine format with silently missing rows is worse than a long one. Neither
-carries the header and footer, which hold no per-template data; use `json` when
-the totals, spans and exclusion counts matter.
+Neither `tsv` nor `json` carries the header and footer, which hold no
+per-template data; use `json` when the totals, spans and exclusion counts
+matter. No format truncates: all three list every template that changed, the way
+`--drain` lists every template it mined, so `| head` stays the caller's decision
+rather than the tool's.
 
 `--drain-diff=json` reports both views per `freq_changed` entry — `delta_pp` for
 the share move and `z_score` for the test behind the first bar (signed to match

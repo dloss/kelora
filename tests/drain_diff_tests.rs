@@ -617,16 +617,18 @@ fn test_tsv_records_are_greppable_by_kind() {
     );
 }
 
-/// The row cap that keeps the report readable must not silently truncate a
-/// machine format — a missing record is indistinguishable from a real absence.
+/// No format hides rows. `--drain` and `--freq` print everything they found and
+/// leave `| head` to the caller; this does too, so the three formats always
+/// agree on how many templates changed.
 #[test]
-fn test_tsv_is_not_capped_at_the_report_row_limit() {
+fn test_no_format_truncates_a_long_group() {
     let mut baseline = String::new();
     let mut target = String::new();
     // Distinct *shapes*, not just distinct values: drain clusters by token
     // count first, so messages differing only in a number would collapse into
-    // one template — and the cap this test is about applies to templates. Each
-    // shape also needs more than one occurrence to clear the noise floor.
+    // one template. Each shape also needs more than one occurrence to clear the
+    // noise floor. 25 of them is comfortably past the 20-row cap this mode used
+    // to apply.
     for i in 0..25 {
         let padding = "stalled ".repeat(i + 1);
         for _ in 0..3 {
@@ -654,20 +656,33 @@ fn test_tsv_is_not_capped_at_the_report_row_limit() {
         "-k",
         "msg",
     ]);
+    let (json_out, _, _) = run_diff(&[
+        "--drain-diff=json",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
     assert_eq!(code, 0);
-    // The report caps and says so; the record stream carries every row.
+
+    let tsv_gone = tsv_out.lines().filter(|l| l.starts_with("gone\t")).count();
     assert!(
-        table_out.contains("not shown; --drain-diff=json lists every one"),
-        "stdout: {}",
-        table_out
-    );
-    let gone = tsv_out.lines().filter(|l| l.starts_with("gone\t")).count();
-    assert!(
-        gone > 20,
-        "tsv must carry every removed template, got {}: {}",
-        gone,
+        tsv_gone > 20,
+        "fixture must exceed the old cap to be worth testing, got {}: {}",
+        tsv_gone,
         tsv_out
     );
+    let table_gone = rows_with(&table_out, '-').len();
+    let json: serde_json::Value = serde_json::from_str(&json_out).expect("valid json");
+    let json_gone = json["gone"].as_array().expect("gone array").len();
+    assert_eq!(
+        (table_gone, json_gone),
+        (tsv_gone, tsv_gone),
+        "table and json must carry every row tsv does: {}",
+        table_out
+    );
+    // Nothing is held back, so nothing announces that it was.
+    assert!(!table_out.contains("not shown"), "stdout: {}", table_out);
 }
 
 #[test]
