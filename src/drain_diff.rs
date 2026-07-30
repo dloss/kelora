@@ -207,6 +207,39 @@ pub fn record_excluded_no_field() {
     });
 }
 
+/// Pass 2's accumulator for one template: per-side counts, plus one raw line
+/// per side to show as a sample.
+struct TemplateTally {
+    template: String,
+    counts: [u64; 2],
+    /// `(count, text)` of the sample kept for each side. See
+    /// [`TemplateTally::keep_sample`].
+    samples: [Option<(u64, String)>; 2],
+}
+
+impl TemplateTally {
+    /// Keep the most frequent raw line as the side's sample, breaking ties on
+    /// the text itself.
+    ///
+    /// Both halves matter. *Most frequent* makes the sample representative
+    /// rather than incidental — for `session closed for user <*>` it shows the
+    /// user the message usually names. The *tie-break* is what makes it
+    /// deterministic: pass 2 walks a `HashMap`, whose order varies run to run,
+    /// and a sample that changed between two runs over the same log would make
+    /// the report look unstable when nothing had moved.
+    fn keep_sample(&mut self, side: usize, text: &str, count: u64) {
+        let better = match &self.samples[side] {
+            None => true,
+            Some((best_count, best_text)) => {
+                count > *best_count || (count == *best_count && text < best_text.as_str())
+            }
+        };
+        if better {
+            self.samples[side] = Some((count, text.to_string()));
+        }
+    }
+}
+
 /// One template's numbers in the diff report. Shares are fractions of the
 /// side's total events (0.021 = 2.1%); `delta_pp` is target share minus
 /// baseline share in percentage points.
@@ -224,6 +257,11 @@ pub struct DiffEntry {
     /// larger one; `None` for NEW/VANISHED, which are gated by the fixed noise
     /// floor instead. See `Z_CRITICAL`.
     pub z_score: Option<f64>,
+    /// One raw line this template matched on each side, for `--drain-diff=full`
+    /// and the JSON form. `None` for the side with no events. See
+    /// [`TemplateTally::keep_sample`] for which line is picked.
+    pub baseline_sample: Option<String>,
+    pub target_sample: Option<String>,
 }
 
 /// Two-proportion z-test with continuity correction, signed to match the
@@ -408,9 +446,10 @@ pub fn finalize() -> Result<DiffReport, String> {
             ));
         }
 
-        // Per-template per-side counts, keyed on the normalized template
-        // string (the same identity generate_template_id hashes).
-        let mut per_template: HashMap<String, (String, [u64; 2])> = HashMap::new();
+        // Per-template per-side counts plus one representative raw line per
+        // side, keyed on the normalized template string (the same identity
+        // generate_template_id hashes).
+        let mut per_template: HashMap<String, TemplateTally> = HashMap::new();
         let mut unmatched: u64 = 0;
         let mut baseline_total: u64 = 0;
         let mut target_total: u64 = 0;
@@ -422,11 +461,18 @@ pub fn finalize() -> Result<DiffReport, String> {
             match frozen.match_text(text) {
                 Some(template) => {
                     let key = normalize_key(template);
-                    let entry = per_template
-                        .entry(key)
-                        .or_insert_with(|| (template.to_string(), [0u64; 2]));
-                    entry.1[0] += counts[0];
-                    entry.1[1] += counts[1];
+                    let entry = per_template.entry(key).or_insert_with(|| TemplateTally {
+                        template: template.to_string(),
+                        counts: [0u64; 2],
+                        samples: [None, None],
+                    });
+                    entry.counts[0] += counts[0];
+                    entry.counts[1] += counts[1];
+                    for (side, count) in counts.iter().enumerate() {
+                        if *count > 0 {
+                            entry.keep_sample(side, text, *count);
+                        }
+                    }
                 }
                 None => unmatched += counts[0] + counts[1],
             }
@@ -450,7 +496,9 @@ pub fn finalize() -> Result<DiffReport, String> {
         let mut baseline_templates = 0usize;
         let mut target_templates = 0usize;
 
-        for (_, (template, counts)) in per_template {
+        for (_, tally) in per_template {
+            let (template, counts) = (tally.template, tally.counts);
+            let [baseline_sample, target_sample] = tally.samples;
             let (b, t) = (counts[0], counts[1]);
             if b > 0 {
                 baseline_templates += 1;
@@ -472,6 +520,8 @@ pub fn finalize() -> Result<DiffReport, String> {
                 target_share: share(t, target_total),
                 delta_pp: (share(t, target_total) - share(b, baseline_total)) * 100.0,
                 z_score,
+                baseline_sample: baseline_sample.map(|(_, text)| text),
+                target_sample: target_sample.map(|(_, text)| text),
             };
             if b == 0 && t > 0 {
                 // NEW templates bypass the noise floor down to count 1.
@@ -611,6 +661,9 @@ pub struct TextReportOptions {
     pub use_colors: bool,
     /// False under `--no-emoji`: punctuation falls back to ASCII.
     pub use_unicode: bool,
+    /// `--drain-diff=full`: add indented detail lines under each row — the
+    /// template id, the numbers the compact row leaves out, and a sample line.
+    pub detail: bool,
     /// Column budget. Templates are truncated to fit; a wrapped row would
     /// destroy the alignment the marker column exists to provide.
     pub width: usize,
@@ -629,6 +682,7 @@ impl TextReportOptions {
             mined_field: None,
             use_colors: false,
             use_unicode: true,
+            detail: false,
             width: crate::text_width::REDIRECTED_TABLE_WIDTH,
         }
     }
@@ -640,6 +694,63 @@ struct DiffRow<'a> {
     color: &'a str,
     annotation: String,
     template: &'a str,
+    /// The entry behind the row, for `--drain-diff=full`'s detail lines.
+    entry: &'a DiffEntry,
+}
+
+/// The indented detail lines under one row in `--drain-diff=full`, mirroring
+/// what `--drain=full` adds to a template.
+///
+/// Each row's compact form shows the one number that matters for its direction;
+/// this is where the rest goes — both counts and both shares, so a `*` row's
+/// multiple can be checked against the shares it came from — along with the
+/// template id (the join key `--drain=id` prints) and a real line, which is the
+/// first thing anyone wants after reading a template.
+fn detail_lines(entry: &DiffEntry, marker: char) -> Vec<String> {
+    let mut out = vec![format!("     id: {}", entry.template_id)];
+    out.push(match marker {
+        '+' => format!(
+            "     target: {} events ({})",
+            entry.target_count,
+            pct(entry.target_share)
+        ),
+        '-' => format!(
+            "     baseline: {} events ({})",
+            entry.baseline_count,
+            pct(entry.baseline_share)
+        ),
+        _ => format!(
+            "     baseline: {} events ({})  ->  target: {} events ({})",
+            entry.baseline_count,
+            pct(entry.baseline_share),
+            entry.target_count,
+            pct(entry.target_share),
+        ),
+    });
+    // The sample comes from the side the row is about: a removed template has
+    // no target line to show, and for a rate change the target is the state the
+    // reader is looking at now.
+    let sample = match marker {
+        '-' => entry.baseline_sample.as_deref(),
+        _ => entry
+            .target_sample
+            .as_deref()
+            .or(entry.baseline_sample.as_deref()),
+    };
+    if let Some(sample) = sample.filter(|s| !s.is_empty()) {
+        out.push(format!("     sample: \"{}\"", escape_sample(sample)));
+    }
+    out
+}
+
+/// Keep a sample on one line: a mined field can contain newlines when the input
+/// was assembled by `--multiline`.
+fn escape_sample(s: &str) -> String {
+    s.replace('\n', "\\n").replace('\r', "\\r")
+}
+
+fn pct(share: f64) -> String {
+    format!("{:.1}%", share * 100.0)
 }
 
 /// `--- <label>  <n> events  <first> .. <last>`, the line that answers "which
@@ -715,6 +826,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
             color: colors.added,
             annotation: entry.target_count.to_string(),
             template: &entry.template,
+            entry,
         });
     }
     for entry in &report.vanished {
@@ -723,6 +835,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
             color: colors.removed,
             annotation: entry.baseline_count.to_string(),
             template: &entry.template,
+            entry,
         });
     }
     for entry in &report.shifted {
@@ -732,6 +845,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
             color: "",
             annotation: rate_multiple(entry, &glyphs),
             template: &entry.template,
+            entry,
         });
     }
 
@@ -756,9 +870,21 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
                     "{} {}  {}",
                     row.marker,
                     pad_left_display(&row.annotation, annotation_width),
-                    truncate_for_display(row.template, template_width, glyphs.ellipsis),
+                    // Detail mode prints the template in full: it is about to
+                    // print a whole sample line under it, so clipping the
+                    // template to the terminal would be the wrong economy.
+                    if opts.detail {
+                        row.template.to_string()
+                    } else {
+                        truncate_for_display(row.template, template_width, glyphs.ellipsis)
+                    },
                 ),
             ));
+            if opts.detail {
+                for detail in detail_lines(row.entry, row.marker) {
+                    out.push_str(&line("", &detail));
+                }
+            }
         }
     }
 
@@ -830,13 +956,24 @@ fn within_noise_note(report: &DiffReport) -> Option<String> {
 /// "which side is this?". `freq_changed` rather than `changed`: the message
 /// wording is exactly what this cannot see, and a bare `changed` would promise
 /// it.
+///
+/// Each entry also carries a `*_sample`: one raw line the template matched on
+/// that side, the same one `--drain-diff=full` prints, so a consumer can show a
+/// concrete example without going back to the log.
 pub fn format_report_json(report: &DiffReport) -> String {
-    let one_sided = |e: &DiffEntry, count_key: &str, pct_key: &str, count: u64, share: f64| {
+    let one_sided = |e: &DiffEntry,
+                     count_key: &str,
+                     pct_key: &str,
+                     sample_key: &str,
+                     count: u64,
+                     share: f64,
+                     sample: Option<&String>| {
         serde_json::json!({
             "template": e.template,
             "template_id": e.template_id,
             count_key: count,
             pct_key: share * 100.0,
+            sample_key: sample,
         })
     };
 
@@ -844,12 +981,12 @@ pub fn format_report_json(report: &DiffReport) -> String {
         "new": report
             .new
             .iter()
-            .map(|e| one_sided(e, "target_count", "target_pct", e.target_count, e.target_share))
+            .map(|e| one_sided(e, "target_count", "target_pct", "target_sample", e.target_count, e.target_share, e.target_sample.as_ref()))
             .collect::<Vec<_>>(),
         "gone": report
             .vanished
             .iter()
-            .map(|e| one_sided(e, "baseline_count", "baseline_pct", e.baseline_count, e.baseline_share))
+            .map(|e| one_sided(e, "baseline_count", "baseline_pct", "baseline_sample", e.baseline_count, e.baseline_share, e.baseline_sample.as_ref()))
             .collect::<Vec<_>>(),
         "freq_changed": report
             .shifted
@@ -864,6 +1001,8 @@ pub fn format_report_json(report: &DiffReport) -> String {
                     "target_pct": e.target_share * 100.0,
                     "delta_pp": e.delta_pp,
                     "z_score": e.z_score,
+                    "baseline_sample": e.baseline_sample,
+                    "target_sample": e.target_sample,
                 })
             })
             .collect::<Vec<_>>(),
@@ -990,6 +1129,10 @@ mod tests {
             target_share: ts,
             delta_pp: (ts - bs) * 100.0,
             z_score,
+            // A synthetic instance of the template, so `=full` fixtures have
+            // something to print without a real corpus behind them.
+            baseline_sample: (b > 0).then(|| template.replace("<num>", "1")),
+            target_sample: (t > 0).then(|| template.replace("<num>", "2")),
         }
     }
 
@@ -1860,6 +2003,168 @@ mod tests {
         assert!(json.get("unchanged_count").is_none());
         assert!(json["new"][0].get("count").is_none());
         assert!(json["new"][0].get("share_pct").is_none());
+    }
+
+    #[test]
+    fn sample_is_the_most_frequent_line_and_stable_across_runs() {
+        // Pass 2 walks a HashMap, so a sample chosen by iteration order would
+        // vary run to run over the same log. It is picked by count instead,
+        // with the text as tie-break.
+        for _ in 0..8 {
+            reset_all();
+            for _ in 0..2 {
+                mine_and_record("session closed for user root", DiffSide::Baseline);
+            }
+            for _ in 0..9 {
+                mine_and_record("session closed for user news", DiffSide::Baseline);
+            }
+            mine_and_record("session closed for user test", DiffSide::Baseline);
+            mine_and_record("worker started", DiffSide::Target);
+            let report = finalize().expect("finalize");
+            let gone = report
+                .vanished
+                .iter()
+                .find(|e| e.template.contains("session closed"))
+                .expect("the session template vanished");
+            assert_eq!(
+                gone.baseline_sample.as_deref(),
+                Some("session closed for user news"),
+                "the sample must name the user the message usually named"
+            );
+            // The side with no events has no line to show.
+            assert_eq!(gone.target_sample, None);
+        }
+    }
+
+    #[test]
+    fn sample_ties_break_on_the_text_so_the_report_is_reproducible() {
+        for _ in 0..8 {
+            reset_all();
+            for user in ["zoe", "adam", "mary"] {
+                mine_and_record(
+                    &format!("session closed for user {}", user),
+                    DiffSide::Baseline,
+                );
+            }
+            mine_and_record("worker started", DiffSide::Target);
+            let report = finalize().expect("finalize");
+            let gone = report
+                .vanished
+                .iter()
+                .find(|e| e.template.contains("session closed"))
+                .expect("the session template vanished");
+            assert_eq!(
+                gone.baseline_sample.as_deref(),
+                Some("session closed for user adam"),
+                "all counts equal, so the smallest text wins every time"
+            );
+        }
+    }
+
+    #[test]
+    fn full_adds_id_the_missing_numbers_and_a_sample_under_each_row() {
+        let report = DiffReport {
+            new: vec![entry("a new <num>", 0, 7, 10, 20)],
+            vanished: vec![entry("an old <num>", 5, 0, 10, 20)],
+            shifted: vec![entry("a shared <num>", 5, 13, 10, 20)],
+            unchanged_count: 0,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
+            baseline_total: 10,
+            target_total: 20,
+            baseline_templates: 2,
+            target_templates: 2,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
+            cut_predicate_errors: 0,
+            cut_predicate_matched: false,
+        };
+        let full = format_report_text(
+            &report,
+            &TextReportOptions {
+                detail: true,
+                ..TextReportOptions::plain("a.log", "b.log")
+            },
+        );
+        // Every row keeps its compact form and gains detail beneath it.
+        let lines: Vec<&str> = full.lines().collect();
+        let row = lines
+            .iter()
+            .position(|l| l.starts_with("+ ") && l.ends_with("a new <num>"))
+            .expect("no + row");
+        assert!(lines[row + 1].starts_with("     id: "), "full: {}", full);
+        // A one-sided row reports only the side it exists on...
+        assert!(
+            full.contains("     target: 7 events (35.0%)"),
+            "full: {}",
+            full
+        );
+        assert!(
+            full.contains("     baseline: 5 events (50.0%)\n"),
+            "full: {}",
+            full
+        );
+        // ...while a rate change reports both, which is what the compact row's
+        // multiple was computed from.
+        assert!(
+            full.contains("     baseline: 5 events (50.0%)  ->  target: 13 events (65.0%)"),
+            "full: {}",
+            full
+        );
+        assert!(full.contains("     sample: \"a new 2\""), "full: {}", full);
+        // The removed row's sample can only come from the baseline.
+        assert!(full.contains("     sample: \"an old 1\""), "full: {}", full);
+
+        // The compact form carries none of it.
+        let compact = format_report_text(&report, &TextReportOptions::plain("a.log", "b.log"));
+        assert!(!compact.contains("     id: "), "compact: {}", compact);
+        assert!(!compact.contains("sample:"), "compact: {}", compact);
+    }
+
+    #[test]
+    fn full_prints_the_whole_template_rather_than_clipping_it() {
+        let long =
+            "circuit breaker <num> opened for downstream service <fqdn> after <num> failures";
+        let report = DiffReport {
+            new: vec![entry(long, 0, 400, 800, 800)],
+            vanished: vec![],
+            shifted: vec![],
+            unchanged_count: 0,
+            within_noise_moved: 0,
+            within_noise_max_delta_pp: 0.0,
+            baseline_total: 800,
+            target_total: 800,
+            baseline_templates: 0,
+            target_templates: 1,
+            unmatched_events: 0,
+            excluded_no_timestamp: 0,
+            excluded_no_field: 0,
+            baseline_span: None,
+            target_span: None,
+            cut_predicate_errors: 0,
+            cut_predicate_matched: false,
+        };
+        let opts = TextReportOptions {
+            detail: true,
+            width: 60,
+            ..TextReportOptions::plain("a.log", "b.log")
+        };
+        let full = format_report_text(&report, &opts);
+        // Detail mode is about to print a whole sample line anyway, so clipping
+        // the template to the terminal would be the wrong economy.
+        assert!(full.contains(long), "full: {}", full);
+        // The compact form at the same width still clips.
+        let compact = format_report_text(
+            &report,
+            &TextReportOptions {
+                detail: false,
+                ..opts
+            },
+        );
+        assert!(!compact.contains(long), "compact: {}", compact);
     }
 
     #[test]

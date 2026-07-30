@@ -685,6 +685,131 @@ fn test_no_format_truncates_a_long_group() {
     assert!(!table_out.contains("not shown"), "stdout: {}", table_out);
 }
 
+/// `--drain-diff=full` mirrors `--drain=full`: the same rows, each followed by
+/// the detail a compact row has no room for. The sample is the point — after
+/// reading a template the next question is always "show me a real line".
+#[test]
+fn test_full_shows_a_real_line_behind_each_template() {
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+    let (stdout, stderr, code) = run_diff(&[
+        "--drain-diff=full",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(code, 0, "stderr: {}", stderr);
+
+    // Every row gains an id and a sample, and the samples are real lines from
+    // the input rather than templates with the placeholders left in.
+    let rows = rows_with(&stdout, '+').len()
+        + rows_with(&stdout, '-').len()
+        + rows_with(&stdout, '*').len();
+    assert!(rows > 0, "stdout: {}", stdout);
+    assert_eq!(
+        stdout.matches("     id: v1:").count(),
+        rows,
+        "one id per row: {}",
+        stdout
+    );
+    let samples: Vec<&str> = stdout
+        .lines()
+        .filter(|l| l.starts_with("     sample: "))
+        .collect();
+    assert_eq!(samples.len(), rows, "one sample per row: {}", stdout);
+    for sample in &samples {
+        assert!(
+            !sample.contains('<'),
+            "sample is a template, not a line: {}",
+            sample
+        );
+    }
+    // The OOM template's sample is the literal line the fixture wrote.
+    assert!(
+        stdout.contains(r#"     sample: "OOM killer invoked for process 4242""#),
+        "stdout: {}",
+        stdout
+    );
+
+    // Same run, same report: the sample must not depend on hash order.
+    let (again, _, _) = run_diff(&[
+        "--drain-diff=full",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert_eq!(stdout, again);
+
+    // The compact table is unchanged by the new mode existing.
+    let (compact, _, _) = run_diff(&[
+        "--drain-diff=table",
+        baseline.path().to_str().unwrap(),
+        target.path().to_str().unwrap(),
+        "-k",
+        "msg",
+    ]);
+    assert!(!compact.contains("     id: "), "stdout: {}", compact);
+    assert_eq!(
+        rows_with(&compact, '+').len() + rows_with(&compact, '-').len(),
+        rows_with(&stdout, '+').len() + rows_with(&stdout, '-').len(),
+        "full and table must report the same rows"
+    );
+}
+
+#[test]
+fn test_json_carries_the_same_sample_full_prints() {
+    let baseline = temp_log(&baseline_content());
+    let target = temp_log(&target_content());
+    let args = |fmt: &str| {
+        vec![
+            fmt.to_string(),
+            baseline.path().to_str().unwrap().to_string(),
+            target.path().to_str().unwrap().to_string(),
+            "-k".to_string(),
+            "msg".to_string(),
+        ]
+    };
+    fn borrow(v: &[String]) -> Vec<&str> {
+        v.iter().map(|s| s.as_str()).collect()
+    }
+    let j = args("--drain-diff=json");
+    let (json_out, _, code) = run_diff(&borrow(&j));
+    assert_eq!(code, 0);
+    let json: serde_json::Value = serde_json::from_str(&json_out).expect("valid json");
+
+    let oom = json["new"]
+        .as_array()
+        .expect("new")
+        .iter()
+        .find(|e| e["template"].as_str().unwrap_or("").contains("OOM killer"))
+        .expect("OOM template");
+    assert_eq!(
+        oom["target_sample"], "OOM killer invoked for process 4242",
+        "json: {}",
+        json_out
+    );
+    // A one-sided entry names only the side it has.
+    assert!(oom.get("baseline_sample").is_none(), "json: {}", json_out);
+    // Both sides on a rate change, matching its counts and percents.
+    for entry in json["freq_changed"].as_array().expect("freq_changed") {
+        assert!(entry["baseline_sample"].is_string(), "json: {}", json_out);
+        assert!(entry["target_sample"].is_string(), "json: {}", json_out);
+    }
+
+    let f = args("--drain-diff=full");
+    let (full_out, _, _) = run_diff(&borrow(&f));
+    assert!(
+        full_out.contains(&format!(
+            r#"     sample: "{}""#,
+            oom["target_sample"].as_str().unwrap()
+        )),
+        "the two formats must show the same line: {}",
+        full_out
+    );
+}
+
 #[test]
 fn test_json_report_carries_each_side_span() {
     let combined = temp_log(&format!("{}{}", baseline_content(), target_content()));
