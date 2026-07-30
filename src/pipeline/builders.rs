@@ -491,6 +491,16 @@ impl PipelineBuilder {
     ) -> Vec<Vec<u8>> {
         use crate::config::ScriptStageType;
 
+        // Internal escape hatch: force the pre-filter off, mirroring
+        // `KELORA_NO_PROJECTION` in `compute_projection`. Undocumented; exists so
+        // the differential test harness can compare pre-filter-on vs -off on
+        // byte-identical commands — stdout *and* stderr, since this optimization's
+        // one observable leak was into stderr diagnostics (#369) — and as an
+        // operational safety valve.
+        if std::env::var_os("KELORA_NO_LEVEL_PREFILTER").is_some() {
+            return Vec::new();
+        }
+
         if !self.output_allows_prefilter
             || self.context_config.is_active()
             || self.span.is_some()
@@ -756,6 +766,9 @@ impl PipelineBuilder {
         let parser = self.build_parser_internal()?;
         let level_prefilter_needles =
             self.compute_level_prefilter_needles(&stages, parser.as_ref());
+        // Tell the diagnostics layer the parser will only ever see lines carrying a
+        // requested level token, so `discovered_levels` is a subset (#369).
+        crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
 
         // Create formatter
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);
@@ -1143,6 +1156,8 @@ impl PipelineBuilder {
         let parser = self.build_parser_internal()?;
         let level_prefilter_needles =
             self.compute_level_prefilter_needles(&stages, parser.as_ref());
+        // Same subset caveat as the sequential path (#369).
+        crate::stats::set_level_prefilter_active(!level_prefilter_needles.is_empty());
 
         // Create formatter (workers still need formatters for output)
         let use_colors = crate::tty::should_use_colors_with_mode(&self.config.color_mode);

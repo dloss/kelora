@@ -841,14 +841,19 @@ impl Pipeline {
         // enabled it at build time, so the disabled cost is one branch per line.
         // A dropped line is skipped exactly like the pre-parse line filters
         // (--keep-lines/--ignore-lines): no event is created, so it does not
-        // count toward event/parse stats. The gate guarantees those counters are
-        // unobservable when the pre-filter is active.
+        // count toward event/parse stats. The output-mode gate keeps those
+        // counters unobservable via `--stats`/`--discover`, but the zero-result
+        // hint reads them too, so every drop is counted here: without it a run
+        // where the pre-filter discarded *everything* is indistinguishable from
+        // empty input, and kelora answers a typo'd `-l` with silence — or, on
+        // stdin, with a false "stdin is empty" (#369).
         if !self.level_prefilter_needles.is_empty()
             && !stages::raw_line_matches_level_needles(
                 chunk.as_bytes(),
                 &self.level_prefilter_needles,
             )
         {
+            crate::stats::stats_record_level_prefilter_drop();
             return Ok(Vec::new());
         }
 

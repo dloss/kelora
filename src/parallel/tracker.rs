@@ -250,6 +250,11 @@ impl GlobalTracker {
         // by the reader thread; merge them like decode warnings.
         stats.truncated_lines = crate::stats::truncated_line_count();
         stats.line_byte_cap = crate::stats::truncation_byte_cap();
+        // Level pre-filter drops happen on worker threads and land in a
+        // process-wide atomic, so merge them the same way — the zero-result hint
+        // needs them to tell "everything pre-filtered" from "empty input" (#369).
+        stats.lines_prefiltered = crate::stats::level_prefiltered_line_count();
+        stats.level_prefilter_active = crate::stats::level_prefilter_active();
         // File-open failures happen on reader/decompression threads and land in a
         // process-wide atomic, not in per-worker stats — so read them here (same
         // pattern as decode warnings) to keep the structural-failure exit code
