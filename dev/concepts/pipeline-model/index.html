@@ -3585,11 +3585,11 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <li><code>--end</code> runs sequentially after workers complete (with merged metrics)</li>
 </ul>
 <h3 id="context-lines">Context Lines<a class="headerlink" href="#context-lines" title="Permanent link">&para;</a></h3>
-<p>Show surrounding lines around matches:</p>
+<p>Show surrounding events around matches:</p>
 <ul>
-<li><code>--before-context N</code> / <code>-B N</code> - Show N lines before match</li>
-<li><code>--after-context N</code> / <code>-A N</code> - Show N lines after match</li>
-<li><code>--context N</code> / <code>-C N</code> - Show N lines before and after</li>
+<li><code>--before-context N</code> / <code>-B N</code> - Show N events before match</li>
+<li><code>--after-context N</code> / <code>-A N</code> - Show N events after match</li>
+<li><code>--context N</code> / <code>-C N</code> - Show N events before and after</li>
 </ul>
 <p>Requires active filtering (--filter, --levels, --since, etc.).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
@@ -3597,6 +3597,13 @@ Closes span on aligned time windows (5m, 1h, 30s, etc.).</p>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--before-context<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--after-context<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
+<p>Context is resolved once, against the combined verdict of the leading run of
+filter stages, and each event reaches output exactly once — marked <code>◉</code>/<code>*</code> for a
+match, <code>/</code> before, <code>\</code> after, or <code>|</code> when it sits between two matches whose
+windows overlap. Because the <code>|</code> case cannot be recognised until up to
+<code>before_context</code> further events have arrived, output is held back by that many
+events; this is why context forces sequential mode. See
+<a href="../../reference/cli-reference/#-c---context-n">CLI reference</a> for the full rules.</p>
 <h3 id="output-stage">Output Stage<a class="headerlink" href="#output-stage" title="Permanent link">&para;</a></h3>
 <p>Format and emit events:</p>
 <ul>
