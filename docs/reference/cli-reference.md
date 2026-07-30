@@ -110,7 +110,7 @@ Specify input format. Supports standard formats, column parsing, and CSV with ty
 
 **Standard Formats:**
 
-- `auto` - Auto-detect format from the first non-empty line (default)
+- `auto` - Auto-detect format (default): from the first non-empty line on stdin, from a sample of the file head on files (mixed-format files get a cascade automatically)
 - `auto-per-file` - Auto-detect once per file; useful when different files use different formats
 - `json` - JSON lines (one JSON object per line)
 - `line` - Plain text (one line per event)

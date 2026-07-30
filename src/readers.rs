@@ -228,6 +228,41 @@ impl<R: BufRead> PeekableLineReader<R> {
         }
     }
 
+    /// Peek at up to `max_lines` non-empty lines without consuming them,
+    /// stopping early at EOF or once `max_bytes` raw bytes have been buffered.
+    /// Everything read (including blank lines) is kept in the prefix buffer and
+    /// replayed to the consumer, exactly like `peek_first_non_empty_line`.
+    ///
+    /// The first returned line is obtained via `peek_first_non_empty_line`, so
+    /// the two peek APIs always agree on what the first line is. Like that
+    /// method, this must be called before any bytes are consumed.
+    pub fn peek_nonempty_lines(
+        &mut self,
+        max_lines: usize,
+        max_bytes: usize,
+    ) -> io::Result<Vec<String>> {
+        debug_assert_eq!(self.prefix_pos, 0, "peek after consumption would re-buffer");
+
+        let mut lines = Vec::new();
+        let Some(first) = self.peek_first_non_empty_line()? else {
+            return Ok(lines);
+        };
+        lines.push(first);
+
+        while lines.len() < max_lines && self.buffered_prefix.len() < max_bytes {
+            let start = self.buffered_prefix.len();
+            let n = self.inner.read_until(b'\n', &mut self.buffered_prefix)?;
+            if n == 0 {
+                break;
+            }
+            let line = String::from_utf8_lossy(&self.buffered_prefix[start..]).into_owned();
+            if !line.trim().is_empty() {
+                lines.push(line);
+            }
+        }
+        Ok(lines)
+    }
+
     pub fn saw_any_input(&self) -> bool {
         self.saw_any_input
     }
@@ -673,6 +708,49 @@ mod tests {
         assert!(line.is_empty());
 
         Ok(())
+    }
+
+    #[test]
+    fn test_peek_nonempty_lines_replays_all_bytes() {
+        // Sampling several lines (skipping blanks) must leave the stream
+        // intact: the consumer still reads every byte from the start.
+        let data = "\n{\"a\":1}\n\nplain line\n{\"b\":2}\nlast";
+        let mut reader = PeekableLineReader::new(std::io::Cursor::new(data.as_bytes()));
+
+        let lines = reader.peek_nonempty_lines(3, 64 * 1024).unwrap();
+        assert_eq!(
+            lines,
+            vec![
+                "{\"a\":1}\n".to_string(),
+                "plain line\n".to_string(),
+                "{\"b\":2}\n".to_string()
+            ]
+        );
+        assert!(reader.saw_any_input());
+
+        let mut replayed = String::new();
+        reader.read_to_string(&mut replayed).unwrap();
+        assert_eq!(replayed, data);
+    }
+
+    #[test]
+    fn test_peek_nonempty_lines_respects_caps_and_eof() {
+        // EOF before max_lines: return what's there.
+        let mut reader = PeekableLineReader::new(std::io::Cursor::new(b"one\ntwo\n".as_slice()));
+        let lines = reader.peek_nonempty_lines(10, 64 * 1024).unwrap();
+        assert_eq!(lines.len(), 2);
+
+        // Byte cap: stop buffering once the cap is reached (the first line is
+        // always sampled, further lines only while under the cap).
+        let data = "aaaa\nbbbb\ncccc\ndddd\n";
+        let mut reader = PeekableLineReader::new(std::io::Cursor::new(data.as_bytes()));
+        let lines = reader.peek_nonempty_lines(10, 6).unwrap();
+        assert_eq!(lines, vec!["aaaa\n".to_string(), "bbbb\n".to_string()]);
+
+        // Empty input: no lines, no input seen.
+        let mut reader = PeekableLineReader::new(std::io::Cursor::new(b"".as_slice()));
+        assert!(reader.peek_nonempty_lines(10, 1024).unwrap().is_empty());
+        assert!(!reader.saw_any_input());
     }
 
     #[test]

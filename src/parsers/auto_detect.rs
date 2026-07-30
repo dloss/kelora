@@ -78,6 +78,106 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
     Ok(ConfigInputFormat::Line)
 }
 
+/// Detect the input format from a multi-line sample instead of a single line.
+///
+/// Each sampled line is classified with [`detect_format`]. A homogeneous sample
+/// returns exactly what single-line detection would have returned, so files
+/// that detect cleanly today are unaffected. A *mixed* sample — the messy
+/// multiformat file this exists for (JSON with plain-text startup lines,
+/// concatenated logs from different services) — returns
+/// [`ConfigInputFormat::Cascade`] over the detected formats, ordered by the
+/// same specificity ranking the single-line detector uses, so each line is
+/// parsed by the format that claims it instead of becoming a parse error.
+///
+/// Two rules keep the schema-based formats sane:
+///
+/// - If the *first* line reads as csv/tsv, that format is returned immediately.
+///   A schema format owns the whole file (its header/column layout is fixed at
+///   the head), can't participate in a cascade, and its data rows would
+///   re-detect as assorted csv variants anyway.
+/// - A csv/tsv detection on a *later* line is treated as `line`. A file that
+///   doesn't start as CSV can't be parsed as CSV mid-stream, so such a line is
+///   really an unstructured line with delimiter-shaped content (e.g. a log
+///   message containing commas) — exactly what the cascade's `line` member is
+///   for.
+///
+/// Every format the single-line detector can return other than csv/tsv is
+/// cascade-eligible (see `InputFormat::is_cascade_eligible`), so the cascade
+/// built here always passes the CLI-level cascade validation rules: no schema
+/// formats, and the catch-all `line` sorted last.
+pub fn detect_format_from_sample<'a, I>(lines: I) -> Result<ConfigInputFormat>
+where
+    I: IntoIterator<Item = &'a str>,
+{
+    let mut iter = lines.into_iter();
+    let Some(first) = iter.next() else {
+        return Ok(ConfigInputFormat::Line);
+    };
+
+    let first_format = detect_format(first)?;
+    if is_schema_format(&first_format) {
+        return Ok(first_format);
+    }
+
+    let mut members: Vec<ConfigInputFormat> = vec![first_format];
+    for line in iter {
+        let detected = detect_format(line)?;
+        let fmt = if is_schema_format(&detected) {
+            ConfigInputFormat::Line
+        } else {
+            detected
+        };
+        if !members
+            .iter()
+            .any(|m| m.to_display_string() == fmt.to_display_string())
+        {
+            members.push(fmt);
+        }
+    }
+
+    if members.len() == 1 {
+        return Ok(members.remove(0));
+    }
+
+    // Stable sort: formats with equal rank (multiple named app-log formats)
+    // keep their first-seen order.
+    members.sort_by_key(cascade_rank);
+    Ok(ConfigInputFormat::Cascade(members))
+}
+
+/// CSV/TSV in any variant: the formats whose schema is fixed at the head of
+/// the file and which therefore can't join a per-line cascade.
+fn is_schema_format(fmt: &ConfigInputFormat) -> bool {
+    matches!(
+        fmt,
+        ConfigInputFormat::Csv(_)
+            | ConfigInputFormat::Tsv(_)
+            | ConfigInputFormat::Csvnh
+            | ConfigInputFormat::Tsvnh
+    )
+}
+
+/// Ordering for auto-built cascades, mirroring the priority order of
+/// [`detect_format`]: more specific formats first, so they get first shot at
+/// each line, with the catch-all `line` guaranteed last (as the cascade
+/// validation rules require).
+fn cascade_rank(fmt: &ConfigInputFormat) -> u8 {
+    match fmt {
+        ConfigInputFormat::Json => 0,
+        ConfigInputFormat::Cef => 1,
+        ConfigInputFormat::Syslog => 2,
+        ConfigInputFormat::Combined => 3,
+        // CRI is detected before logfmt (its message payload is often logfmt
+        // or JSON), so it must also *parse* before logfmt in a cascade.
+        ConfigInputFormat::Named(f) if f.name == "cri" => 4,
+        ConfigInputFormat::Logfmt => 5,
+        ConfigInputFormat::Named(_) => 6,
+        ConfigInputFormat::Line => u8::MAX,
+        // Unreachable from detection; rank just below the catch-all.
+        _ => u8::MAX - 1,
+    }
+}
+
 /// Detect JSON format - starts with '{' and is valid JSON
 fn detect_json(line: &str) -> bool {
     if !line.starts_with('{') {
@@ -570,6 +670,143 @@ mod tests {
             detect_format("level=info msg=hi count=1").unwrap(),
             ConfigInputFormat::Logfmt
         );
+    }
+
+    #[test]
+    fn test_sample_homogeneous_matches_single_line_detection() {
+        // A sample where every line detects the same way must return exactly
+        // what single-line detection returns — files that detect cleanly today
+        // are unaffected by sampling.
+        assert_eq!(
+            detect_format_from_sample([r#"{"a":1}"#, r#"{"b":2}"#, r#"{"c":3}"#]).unwrap(),
+            ConfigInputFormat::Json
+        );
+        assert_eq!(
+            detect_format_from_sample(["level=info msg=a", "level=warn msg=b"]).unwrap(),
+            ConfigInputFormat::Logfmt
+        );
+        assert_eq!(
+            detect_format_from_sample(["plain text", "more plain text"]).unwrap(),
+            ConfigInputFormat::Line
+        );
+        assert_eq!(
+            detect_format_from_sample([]).unwrap(),
+            ConfigInputFormat::Line
+        );
+    }
+
+    #[test]
+    fn test_sample_mixed_builds_cascade_with_line_last() {
+        // The headline case: JSON mixed with plain-text lines becomes a
+        // cascade, catch-all last, regardless of which shape comes first.
+        for sample in [
+            vec![r#"{"a":1}"#, "Server starting up...", r#"{"b":2}"#],
+            vec!["Server starting up...", r#"{"a":1}"#],
+        ] {
+            match detect_format_from_sample(sample.iter().copied()).unwrap() {
+                ConfigInputFormat::Cascade(members) => {
+                    assert_eq!(
+                        members,
+                        vec![ConfigInputFormat::Json, ConfigInputFormat::Line],
+                        "wrong cascade for sample {sample:?}"
+                    );
+                }
+                other => panic!("expected cascade for {sample:?}, got {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn test_sample_mixed_orders_by_specificity() {
+        // Order in the cascade follows detection priority (specific first),
+        // not sample order: logfmt seen first must still sort after json.
+        let sample = [
+            "level=info msg=starting",
+            r#"{"level":"error"}"#,
+            "something unstructured happened",
+        ];
+        match detect_format_from_sample(sample).unwrap() {
+            ConfigInputFormat::Cascade(members) => {
+                assert_eq!(
+                    members,
+                    vec![
+                        ConfigInputFormat::Json,
+                        ConfigInputFormat::Logfmt,
+                        ConfigInputFormat::Line
+                    ]
+                );
+            }
+            other => panic!("expected cascade, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_sample_mixed_without_line_fallthrough_omits_line() {
+        // No sampled line fell through to `line`, so the cascade holds only
+        // the structured formats.
+        let sample = [r#"{"a":1}"#, "level=info msg=hi"];
+        match detect_format_from_sample(sample).unwrap() {
+            ConfigInputFormat::Cascade(members) => {
+                assert_eq!(
+                    members,
+                    vec![ConfigInputFormat::Json, ConfigInputFormat::Logfmt]
+                );
+            }
+            other => panic!("expected cascade, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_sample_first_line_csv_short_circuits() {
+        // A schema format owns the whole file: sampling must not try to build
+        // a cascade around it, even though its data rows re-detect as
+        // assorted csv variants.
+        assert!(matches!(
+            detect_format_from_sample(["name,age,city", "john,25,nyc", "1,2,3"]).unwrap(),
+            ConfigInputFormat::Csv(_)
+        ));
+        assert!(matches!(
+            detect_format_from_sample(["2024-01-02 10:00:00,INFO,started", "a,b,c"]).unwrap(),
+            ConfigInputFormat::Csvnh
+        ));
+    }
+
+    #[test]
+    fn test_sample_later_csv_looking_lines_count_as_line() {
+        // A comma-heavy line mid-file can't be parsed as CSV mid-stream (no
+        // header, no fixed schema), so it joins the cascade as `line` rather
+        // than poisoning detection.
+        let sample = [r#"{"a":1}"#, "1,2,3", r#"{"b":2}"#];
+        match detect_format_from_sample(sample).unwrap() {
+            ConfigInputFormat::Cascade(members) => {
+                assert_eq!(
+                    members,
+                    vec![ConfigInputFormat::Json, ConfigInputFormat::Line]
+                );
+            }
+            other => panic!("expected cascade, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_sample_named_formats_join_cascades() {
+        // log4j lines plus stray unstructured lines: the named format keeps
+        // its identity inside the cascade.
+        let sample = [
+            "2024-01-02 15:04:05,123 INFO [main] com.example.Service - up",
+            "some bare continuation text",
+        ];
+        match detect_format_from_sample(sample).unwrap() {
+            ConfigInputFormat::Cascade(members) => {
+                assert_eq!(members.len(), 2);
+                match &members[0] {
+                    ConfigInputFormat::Named(fmt) => assert_eq!(fmt.name, "log4j"),
+                    other => panic!("expected named log4j first, got {other:?}"),
+                }
+                assert_eq!(members[1], ConfigInputFormat::Line);
+            }
+            other => panic!("expected cascade, got {other:?}"),
+        }
     }
 
     #[test]

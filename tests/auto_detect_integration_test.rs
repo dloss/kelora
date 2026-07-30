@@ -515,3 +515,184 @@ fn test_auto_detect_reports_open_failure_alongside_empty_file() {
         stderr
     );
 }
+
+/// A file whose head mixes JSON and plain-text lines is parsed with an
+/// auto-built cascade: every line becomes an event (no parse errors), each
+/// tagged with the `_format` that claimed it.
+#[test]
+fn test_auto_detect_mixed_file_builds_cascade() {
+    let dir = TempDir::new().expect("tempdir");
+    let mixed = write_input(
+        &dir,
+        "mixed.log",
+        "{\"level\":\"info\",\"msg\":\"service up\"}\nServer starting on port 8080\n{\"level\":\"error\",\"msg\":\"connection refused\"}\n",
+    );
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&mixed]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("msg='service up'") && stdout.contains("msg='connection refused'"),
+        "JSON lines must parse as JSON, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("line='Server starting on port 8080'"),
+        "plain-text line must survive as a line event, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("_format='json'") && stdout.contains("_format='line'"),
+        "cascade events must carry the winning format, got: {}",
+        stdout
+    );
+    assert!(
+        !stderr.contains("Parse errors"),
+        "no line should fail to parse: {}",
+        stderr
+    );
+}
+
+/// A stray banner line at the head of an otherwise-JSON file used to pin the
+/// whole file to `line`; head sampling must see past it.
+#[test]
+fn test_auto_detect_sees_past_banner_first_line() {
+    let dir = TempDir::new().expect("tempdir");
+    let banner = write_input(
+        &dir,
+        "banner.log",
+        "Log opened at 2024-01-02\n{\"level\":\"info\",\"msg\":\"up\"}\n{\"level\":\"warn\",\"msg\":\"hot\"}\n",
+    );
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&banner]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("msg='up'") && stdout.contains("msg='hot'"),
+        "JSON lines must be parsed as JSON despite the banner, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("line='Log opened at 2024-01-02'"),
+        "the banner itself stays a line event, got: {}",
+        stdout
+    );
+}
+
+/// The `-v` notice for a sampled mixed file names the cascade and the sample.
+#[test]
+fn test_auto_detect_mixed_file_verbose_notice() {
+    let dir = TempDir::new().expect("tempdir");
+    let mixed = write_input(&dir, "mixed.log", "{\"a\":1}\nplain text here\n{\"b\":2}\n");
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto", "-v"], &[&mixed]);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        stderr.contains("cascade(json,line)") && stderr.contains("mixed formats in first 3 lines"),
+        "verbose notice should name the cascade and sample size: {}",
+        stderr
+    );
+}
+
+/// A homogeneous file must detect exactly as before — one format, no cascade,
+/// no `_format` field on events.
+#[test]
+fn test_auto_detect_homogeneous_file_stays_single_format() {
+    let dir = TempDir::new().expect("tempdir");
+    let json = write_input(&dir, "clean.json", "{\"a\":1}\n{\"b\":2}\n{\"c\":3}\n");
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto", "-v"], &[&json]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stderr.contains("Auto-detected format: json"),
+        "homogeneous file must detect as plain json: {}",
+        stderr
+    );
+    assert!(
+        !stdout.contains("_format"),
+        "no cascade means no _format field: {}",
+        stdout
+    );
+}
+
+/// CSV keeps whole-file semantics under sampling: data rows after the header
+/// must not turn the file into a cascade.
+#[test]
+fn test_auto_detect_csv_file_is_not_a_cascade() {
+    let dir = TempDir::new().expect("tempdir");
+    let csv = write_input(
+        &dir,
+        "people.csv",
+        "name,age,city\njohn,25,nyc\njane,31,sf\n",
+    );
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto", "-v"], &[&csv]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stderr.contains("Auto-detected format: csv"),
+        "csv file must stay csv: {}",
+        stderr
+    );
+    assert!(
+        stdout.contains("name='john'"),
+        "header must be applied to data rows: {}",
+        stdout
+    );
+}
+
+/// stdin keeps first-line detection — a mixed stream pins to the first line's
+/// format so a live pipe never waits for a sample. (Mixed stdin wants an
+/// explicit cascade.)
+#[test]
+fn test_auto_detect_stdin_keeps_first_line_semantics() {
+    let input = "{\"a\":1}\nplain text line\n{\"b\":2}\n";
+
+    let (stdout, stderr, exit_code) = run_kelora_with_input(&["-f", "auto", "-v"], input);
+
+    assert_eq!(exit_code, 0, "parse errors are not fatal: {}", stderr);
+    assert!(
+        stderr.contains("Auto-detected format: json (from first line)"),
+        "stdin must detect from the first line only: {}",
+        stderr
+    );
+    assert!(
+        !stdout.contains("_format"),
+        "stdin detection must not auto-build a cascade: {}",
+        stdout
+    );
+}
+
+/// auto-per-file samples each file's head, so a mixed file among clean ones
+/// gets its own per-file cascade.
+#[test]
+fn test_auto_per_file_mixed_file_gets_cascade() {
+    let dir = TempDir::new().expect("tempdir");
+    let mixed = write_input(
+        &dir,
+        "mixed.log",
+        "{\"msg\":\"json here\"}\nplain text line\n",
+    );
+    let logfmt = write_input(
+        &dir,
+        "app.logfmt",
+        "level=info msg=one\nlevel=warn msg=two\n",
+    );
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_files(&["-f", "auto-per-file"], &[&mixed, &logfmt]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("msg='json here'") && stdout.contains("line='plain text line'"),
+        "mixed file must parse via its cascade, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("msg='one'") && !stdout.contains("msg='one' _format"),
+        "clean logfmt file must parse without a cascade, got: {}",
+        stdout
+    );
+}

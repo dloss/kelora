@@ -14,7 +14,7 @@ pub mod syslog;
 pub mod type_conversion;
 
 #[allow(unused_imports)] // Used by lib.rs for format auto-detection
-pub use auto_detect::detect_format;
+pub use auto_detect::{detect_format, detect_format_from_sample};
 #[allow(unused_imports)] // FORMAT_FIELD re-exported for external access
 pub use cascade::{CascadingParser, FORMAT_FIELD};
 pub use cef::CefParser;
