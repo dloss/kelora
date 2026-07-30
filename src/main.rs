@@ -1880,6 +1880,45 @@ fn handle_pipeline_success(
                                 )))
                                 .unwrap_or(());
                         }
+                        // A side with events but too few of them to have shown
+                        // the other's message variety: well-formed, so it is
+                        // not refused like an empty side, but its NEW/VANISHED
+                        // section is bounded by the sample rather than by
+                        // change. This is what a boundary landing at the edge
+                        // of the log looks like, and it used to print a report
+                        // saying the whole log changed with nothing said.
+                        if let Some(small) = report.undersized_side() {
+                            let (events, other_templates, section) = match small {
+                                crate::drain_diff::DiffSide::Baseline => {
+                                    (report.baseline_total, report.target_templates, "NEW")
+                                }
+                                crate::drain_diff::DiffSide::Target => {
+                                    (report.target_total, report.baseline_templates, "VANISHED")
+                                }
+                            };
+                            // The span pointer is only earned when the report
+                            // actually prints spans, which needs timestamps on
+                            // both sides; "check the window" holds either way,
+                            // and stays true for two inputs, where there is no
+                            // split to have landed anywhere.
+                            let where_to_look = if report.baseline_span.is_some()
+                                && report.target_span.is_some()
+                            {
+                                " Check that each side covers the window you meant — the totals line states the span of both."
+                            } else {
+                                " Check that each side covers the window you meant."
+                            };
+                            stderr
+                                .writeln(&crate::config::format_warning_message_auto(&format!(
+                                    "--drain-diff: the {} side contributed only {} event(s), fewer than the {} template(s) on the other side, so most of the {} section reflects that shortfall rather than a change.{}",
+                                    small.label(),
+                                    events,
+                                    other_templates,
+                                    section,
+                                    where_to_look,
+                                )))
+                                .unwrap_or(());
+                        }
                         // A diff over no events at all is vacuous rather than
                         // reassuring; say so, since the sections below cannot.
                         // Reaching here with zero compared events means the
