@@ -618,7 +618,7 @@ fn truncation_note(
     let hidden = entries.len().checked_sub(shown).filter(|n| *n > 0)?;
     let events: u64 = entries.iter().skip(shown).map(count).sum();
     Some(format!(
-        "  {} {} {} more {} ({} {}) not shown; --drain-diff=json lists every one",
+        "{} {} {} more {} ({} {}) not shown; --drain-diff=json lists every one",
         marker,
         glyphs.ellipsis,
         hidden,
@@ -784,8 +784,8 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
             .map(|row| display_width(&row.annotation))
             .max()
             .unwrap_or(1);
-        // "  " + marker + " " + annotation + "  "
-        let prefix = 2 + 1 + 1 + annotation_width + 2;
+        // marker + " " + annotation + "  "
+        let prefix = 1 + 1 + annotation_width + 2;
         let template_width = opts.width.saturating_sub(prefix).max(MIN_TEMPLATE_WIDTH);
 
         let emit = |rows: &[DiffRow], note: Option<String>, out: &mut String| {
@@ -793,7 +793,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
                 out.push_str(&line(
                     row.color,
                     &format!(
-                        "  {} {}  {}",
+                        "{} {}  {}",
                         row.marker,
                         pad_left_display(&row.annotation, annotation_width),
                         truncate_for_display(row.template, template_width, glyphs.ellipsis),
@@ -1592,20 +1592,20 @@ mod tests {
         };
         let added = row("OOM killer invoked for process <num>");
         assert!(
-            added.starts_with("  + ") && added.contains("3412"),
+            added.starts_with("+ ") && added.contains("3412"),
             "{}",
             added
         );
         let removed = row("Connection pool recycled for <fqdn>");
         assert!(
-            removed.starts_with("  - ") && removed.contains("438"),
+            removed.starts_with("- ") && removed.contains("438"),
             "{}",
             removed
         );
         // 2.1% of the baseline's lines -> 14.8% of the target's: 7.1x the rate.
         let changed = row("Upstream <fqdn> returned <num>");
         assert!(
-            changed.starts_with("  * ") && changed.contains("7.1\u{d7} more"),
+            changed.starts_with("* ") && changed.contains("7.1\u{d7} more"),
             "{}",
             changed
         );
@@ -1649,7 +1649,7 @@ mod tests {
         );
         let rows: Vec<&str> = text
             .lines()
-            .filter(|line| line.starts_with("  +") || line.starts_with("  *"))
+            .filter(|line| line.starts_with("+ ") || line.starts_with("* "))
             .collect();
         assert_eq!(rows.len(), 2, "text: {}", text);
         // The widest annotation ("3.0x more") sets one column for both markers,
@@ -1879,8 +1879,8 @@ mod tests {
             assert!(line.ends_with("\u{1b}[0m"), "line leaks color: {:?}", line);
         }
         // Diff convention: additions green, removals red.
-        assert!(text.contains("\u{1b}[32m  + "), "text: {:?}", text);
-        assert!(text.contains("\u{1b}[31m  - "), "text: {:?}", text);
+        assert!(text.contains("\u{1b}[32m+ "), "text: {:?}", text);
+        assert!(text.contains("\u{1b}[31m- "), "text: {:?}", text);
         // ...and nothing else is colored. Only the two markers that carry a
         // direction earn a color; the scaffolding around them stays plain.
         for line in text.lines() {
