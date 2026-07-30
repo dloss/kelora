@@ -724,7 +724,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
 
     let mut out = String::new();
     out.push_str(&line(
-        colors.dim,
+        "",
         &format!(
             "--- {}",
             side_header(
@@ -735,7 +735,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
         ),
     ));
     out.push_str(&line(
-        colors.dim,
+        "",
         &format!(
             "+++ {}",
             side_header(&opts.labels.target, report.target_total, report.target_span)
@@ -775,7 +775,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
     }
 
     if rows.is_empty() {
-        out.push_str(&line(colors.dim, "no template differences"));
+        out.push_str(&line("", "no template differences"));
     } else {
         // One annotation column across all three markers, so the templates
         // start at the same column whatever mix of rows a run produces.
@@ -801,7 +801,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
                 ));
             }
             if let Some(note) = note {
-                out.push_str(&line(colors.dim, &note));
+                out.push_str(&line("", &note));
             }
         };
 
@@ -851,7 +851,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
     }
     if !footer.is_empty() {
         out.push('\n');
-        out.push_str(&line(colors.dim, &footer.join(" | ")));
+        out.push_str(&line("", &footer.join(" | ")));
     }
 
     // Without this, a report can look self-contradictory: a template that moved
@@ -861,7 +861,7 @@ pub fn format_report_text(report: &DiffReport, opts: &TextReportOptions) -> Stri
         if footer.is_empty() {
             out.push('\n');
         }
-        out.push_str(&line(colors.dim, &note));
+        out.push_str(&line("", &note));
     }
 
     // The caller's `writeln` terminates the last line.
@@ -1881,6 +1881,18 @@ mod tests {
         // Diff convention: additions green, removals red.
         assert!(text.contains("\u{1b}[32m  + "), "text: {:?}", text);
         assert!(text.contains("\u{1b}[31m  - "), "text: {:?}", text);
+        // ...and nothing else is colored. Only the two markers that carry a
+        // direction earn a color; the scaffolding around them stays plain.
+        for line in text.lines() {
+            if line.starts_with("\u{1b}[32m") || line.starts_with("\u{1b}[31m") {
+                continue;
+            }
+            assert!(
+                !line.contains('\u{1b}'),
+                "only + and - rows may be colored: {:?}",
+                line
+            );
+        }
     }
 
     #[test]
