@@ -193,7 +193,9 @@ impl Tree {
     /// text — that text is exactly what names the message.
     fn key_token(token: &MaskedToken) -> MaskedToken {
         match token {
-            MaskedToken::WildCard => MaskedToken::WildCard,
+            // A Gap can never reach the tree (only `merge` creates it, after
+            // mining); routed like the wildcard if that ever changes.
+            MaskedToken::WildCard | MaskedToken::Gap => MaskedToken::WildCard,
             MaskedToken::Val(s) if is_bare_placeholder(s) => MaskedToken::WildCard,
             MaskedToken::Val(s) => MaskedToken::Val(s.clone()),
         }

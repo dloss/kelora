@@ -280,14 +280,21 @@ drain_templates()                    Return array of templates with same fields 
                                      mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
                                      hexnum, duration, timestamp, date, time, num
                                      timestamp also covers multi-token calendar dates (ctime/asctime
-                                     "Mon Jun 13 03:55:15 2005", syslog "Jun 13 03:55:15")
+                                     "Mon Jun 13 03:55:15 2005", syslog "Jun 13 03:55:15"); sizes with
+                                     units ("18.4 KB", "10MB") mask as <size_kb>-style tokens and spaced
+                                     durations ("took 5 seconds") as <duration>, so a value spanning
+                                     several tokens stays one token
                                      Only the matched span masks, so the literal part of a token is kept
                                      (uid=<num>, worker-<num>, HTTP/<version>, <path>?id=<num>)
                                      A digit inside a word is part of the word, so ssh2/utf8/sha256 stay
-                                     An explicit filters: list masks exactly those patterns (no calendar dates)
+                                     An explicit filters: list masks exactly those patterns (no multi-token
+                                     collapses)
                                      For PII (credit_card/ssn/phone), pre-mask with normalized() before drain_template()
                                      Per-line template is provisional: clusters generalize, and
-                                     near-identical templates merge at end of input
+                                     near-identical templates merge at end of input — including across
+                                     token counts, so an optional segment ("(1.13 KB)") or a value of
+                                     varying width ("lifetime 00:03" / "lifetime <1 sec") folds into
+                                     one template with <*> covering the varying stretch
                                      Options: depth (keyed tokens, default 2), similarity (default 0.8),
                                      max_children, filters, line_num
 

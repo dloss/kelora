@@ -1617,14 +1617,20 @@ timestamp, date, time, num.
 `timestamp` also covers calendar dates that span several tokens — ctime/asctime
 (`Mon Jun 13 03:55:15 2005`, with or without the year) and the bare syslog form
 (`Jun 13 03:55:15`) — so one message doesn't split into a template per weekday.
+Sizes with units mask as one `<size_kb>`-style token however they were spelled
+(`18.4 KB`, `10MB`), and spaced durations (`took 5 seconds`) as `<duration>`, so
+a value spanning several tokens stays one token.
 Only the matched span is masked, so the literal part of a token survives:
 `uid=0` → `uid=<num>`, `worker-3` → `worker-<num>`, `GET /api/v1/users?id=5` →
 `GET <path>?id=<num>`. A digit inside a word belongs to the word and is left
 alone, so `ssh2`, `utf8` and `sha256` stay as they are.
 What no filter catches, Drain itself generalizes: a position the events in one
-template disagree on is reported as `<*>`, with `sample` giving a real line.
+template disagree on is reported as `<*>`, with `sample` giving a real line —
+including across token counts, so an optional segment (`(1.13 KB)`) or a value
+of varying width (`lifetime 00:03` / `lifetime <1 sec`) folds into one template
+whose `<*>` covers the varying stretch.
 An explicit `filters` list masks exactly those patterns, without the multi-token
-calendar dates.
+collapses.
 For lightweight normalization without Drain, use `normalized()` on the field instead.
 
 Optional `options` map keys:

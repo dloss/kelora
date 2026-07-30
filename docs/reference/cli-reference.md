@@ -1299,10 +1299,15 @@ timestamp, date, time, num.
 `timestamp` also covers calendar dates spanning several tokens — ctime/asctime
 (`Mon Jun 13 03:55:15 2005`, with or without the year) and the bare syslog form
 (`Jun 13 03:55:15`) — so one message doesn't split into a template per weekday.
+Sizes with units mask as one `<size_kb>`-style token however they were spelled
+(`18.4 KB`, `10MB`), and spaced durations (`took 5 seconds`) as `<duration>`.
 Only the matched span is masked, so the literal part of a token survives:
 `uid=0` → `uid=<num>`, `worker-3` → `worker-<num>`, `GET /api/v1/users?id=5` →
 `GET <path>?id=<num>`. A digit inside a word belongs to the word and is left
-alone, so `ssh2`, `utf8` and `sha256` stay as they are.
+alone, so `ssh2`, `utf8` and `sha256` stay as they are. Templates that differ
+only in how many tokens a value spans (an optional `(1.13 KB)` segment,
+`lifetime 00:03` vs `lifetime <1 sec`) merge at end of input, with `<*>`
+covering the varying stretch.
 What no filter catches, Drain itself generalizes: a position the events in one
 template disagree on is shown as `<*>` (`session closed for user <*>`), with
 `--drain=full`'s `sample:` giving a real line for the concrete value.

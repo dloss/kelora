@@ -456,6 +456,68 @@ static CALENDAR_TS_RE: LazyLock<Regex> = LazyLock::new(|| {
     .expect("failed to compile calendar timestamp regex")
 });
 
+/// Sizes whose unit is its own token (`18846 bytes (18.4 KB) received`) or fused
+/// (`10MB`), which per-token masking splits or skips: `18.4 KB` masks to
+/// `<version> KB` — two tokens whose second is a stray unit word — and `10MB`
+/// stays literal because the digits run into the letters. One placeholder token
+/// keeps the value's width stable however it was spelled, which the
+/// cross-length merge (see `merge`) depends on: `(18.4 KB)` versus `(1.01 MB)`
+/// must not leave `KB)`/`MB)` behind as disagreeing keywords.
+///
+/// The placeholder keeps the unit (`<size_kb>`, `<size_mb>`): a size's scale is
+/// often the only thing separating two messages the reader must not lose —
+/// `memory limit: 2048.00 MB` and `disk limit: 20.00 GB` collapsed into one
+/// cluster when both masked to a bare `<size>`, because the tree's similarity
+/// bar then saw six of seven tokens agree. Cross-length merging is unharmed:
+/// its window guard asks whether a masked value is present, not which one.
+///
+/// `bytes` is deliberately not a unit here (`403 bytes` reads as prose and
+/// masks fine as `<num> bytes`), and bare `B` only counts behind a decimal
+/// fraction: `93.0 B` is a size the same logger prints as `5.2 KB` one line
+/// later, while `5 B` is too little evidence to take a lone capital letter as
+/// a unit.
+static SPACED_SIZE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\b\d+(?:(?:\.\d+)?\x20?([KMGTPE]i?B|kB)|\.\d+\x20?(B))\b")
+        .expect("failed to compile spaced size regex")
+});
+
+/// Durations whose unit is a separate word (`lifetime <1 sec`, `took 5
+/// seconds`), the same shape as [`SPACED_SIZE_RE`] one value-kind over.
+/// Single-token forms (`1.5s`, `340ms`) are already `KELORA_DURATION`'s job.
+static SPACED_DURATION_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"\b\d+(?:\.\d+)?\x20+(?:sec|secs|second|seconds|msec|msecs|min|mins|minute|minutes|hr|hrs|hour|hours)\b",
+    )
+    .expect("failed to compile spaced duration regex")
+});
+
+/// The default-filters pre-pass over the raw line: replace every value that
+/// spans (or fuses) token boundaries — calendar timestamps, spaced sizes,
+/// spaced durations — with a single placeholder token, so the per-token
+/// masking that follows sees one value where the log wrote several words.
+fn collapse_multi_token_values(line: &str) -> Cow<'_, str> {
+    let line = CALENDAR_TS_RE.replace_all(line, "<timestamp>");
+    let size_placeholder = |caps: &regex::Captures| -> String {
+        let unit = caps
+            .get(1)
+            .or_else(|| caps.get(2))
+            .expect("one unit group always matches")
+            .as_str();
+        format!("<size_{}>", unit.to_ascii_lowercase())
+    };
+    let line = match SPACED_SIZE_RE.replace_all(&line, size_placeholder) {
+        // Unchanged: keep whatever the previous stage produced (possibly
+        // still the borrowed input, so the common no-match line allocates
+        // nothing).
+        Cow::Borrowed(_) => line,
+        Cow::Owned(replaced) => Cow::Owned(replaced),
+    };
+    match SPACED_DURATION_RE.replace_all(&line, "<duration>") {
+        Cow::Borrowed(_) => line,
+        Cow::Owned(replaced) => Cow::Owned(replaced),
+    }
+}
+
 /// How drain spells a generalized token, in a tree and in a stored template.
 const WILDCARD: &str = "<*>";
 
@@ -466,13 +528,22 @@ const WILDCARD: &str = "<*>";
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum MaskedToken {
     WildCard,
+    /// A variable-width stretch: matches **zero or more** line tokens, where
+    /// [`MaskedToken::WildCard`] matches exactly one.
+    ///
+    /// Never produced by the masker or the tree — only `merge`'s cross-length
+    /// rules create it, when templates that differ in token count fold into one
+    /// (`lifetime 00:03` / `lifetime <1 sec`). Displayed as `<*>`, like the
+    /// wildcard: to a reader both mean "something varies here", and the
+    /// distinction only matters to the matcher.
+    Gap,
     Val(String),
 }
 
 impl MaskedToken {
     fn as_str(&self) -> &str {
         match self {
-            MaskedToken::WildCard => WILDCARD,
+            MaskedToken::WildCard | MaskedToken::Gap => WILDCARD,
             MaskedToken::Val(v) => v.as_str(),
         }
     }
@@ -512,8 +583,10 @@ struct Masker {
     patterns: Vec<grok::Pattern>,
     /// Set when the default filter set is in force. An explicit `filters:` list
     /// means "mask exactly these", so a caller who overrides it gets their
-    /// patterns and nothing else — no calendar-timestamp collapse, and no
-    /// [`cannot_match_defaults`] shortcut (which knows what the defaults need).
+    /// patterns and nothing else — no multi-token value collapse (calendar
+    /// timestamps, spaced sizes/durations; see
+    /// [`collapse_multi_token_values`]), and no [`cannot_match_defaults`]
+    /// shortcut (which knows what the defaults need).
     defaults: bool,
 }
 
@@ -539,7 +612,7 @@ impl Masker {
     /// allocation. The per-line entry point.
     fn mask_into(&self, line: &str, out: &mut Vec<MaskedToken>) {
         let line = if self.defaults {
-            CALENDAR_TS_RE.replace_all(line, "<timestamp>")
+            collapse_multi_token_values(line)
         } else {
             Cow::Borrowed(line)
         };
@@ -864,53 +937,83 @@ struct FrozenEntry {
 /// so a line always finds at least the cluster it was mined into.
 pub struct FrozenTemplateSet {
     by_len: HashMap<usize, Vec<FrozenEntry>>,
+    /// Templates containing a [`MaskedToken::Gap`], which match lines of more
+    /// than one token count and so cannot live in `by_len`. Few by
+    /// construction — only cross-length merges produce them.
+    gapped: Vec<FrozenEntry>,
     masker: Masker,
 }
 
 impl FrozenTemplateSet {
     fn new(templates: Vec<Vec<MaskedToken>>, filters: &[String]) -> Self {
         let mut by_len: HashMap<usize, Vec<FrozenEntry>> = HashMap::new();
+        let mut gapped: Vec<FrozenEntry> = Vec::new();
         for tokens in templates {
             let template = render_template(&tokens);
-            by_len
-                .entry(tokens.len())
-                .or_default()
-                .push(FrozenEntry { tokens, template });
+            if tokens.contains(&MaskedToken::Gap) {
+                gapped.push(FrozenEntry { tokens, template });
+            } else {
+                by_len
+                    .entry(tokens.len())
+                    .or_default()
+                    .push(FrozenEntry { tokens, template });
+            }
         }
         // Sort so similarity ties resolve deterministically regardless of the
         // order the model happened to yield its clusters in.
         for entries in by_len.values_mut() {
             entries.sort_by(|a, b| a.template.cmp(&b.template));
         }
+        gapped.sort_by(|a, b| a.template.cmp(&b.template));
 
         Self {
             by_len,
+            gapped,
             masker: Masker::new(filters),
         }
     }
 
-    /// Match `text` against the frozen set, returning the best template with
-    /// the same token count (drain's similarity ordering: fraction of exact
-    /// token matches first, wildcard coverage as the tie-breaker). Returns
-    /// None only when no template has that token count.
+    /// Match `text` against the frozen set, returning the best template
+    /// (drain's similarity ordering: fraction of exact token matches first,
+    /// wildcard coverage as the tie-breaker). Fixed-length templates must have
+    /// the line's token count; gap templates align via [`gapped_similarity`]
+    /// and are considered after them, so on an exact-score tie the more
+    /// specific fixed-length template wins. Returns None only when no
+    /// fixed-length template has that token count and no gap template aligns.
     pub fn match_text(&self, text: &str) -> Option<&str> {
         // Masked the same way the ingest path masks, so a line's tokens are
         // comparable with the templates mined from it.
         let tokens = self.masker.mask_tokens(text);
-        let candidates = self.by_len.get(&tokens.len())?;
         let len = tokens.len() as f32;
         let mut best: Option<(f32, u32, &FrozenEntry)> = None;
-        for entry in candidates {
-            let mut exact = 0f32;
-            let mut approximate = 0u32;
-            for (pattern, token) in entry.tokens.iter().zip(tokens.iter()) {
-                if pattern == token {
-                    exact += 1.0;
-                } else if matches!(pattern, MaskedToken::WildCard) {
-                    approximate += 1;
+        if let Some(candidates) = self.by_len.get(&tokens.len()) {
+            for entry in candidates {
+                let mut exact = 0f32;
+                let mut approximate = 0u32;
+                for (pattern, token) in entry.tokens.iter().zip(tokens.iter()) {
+                    if pattern == token {
+                        exact += 1.0;
+                    } else if matches!(pattern, MaskedToken::WildCard) {
+                        approximate += 1;
+                    }
+                }
+                let exact = exact / len;
+                let better = match &best {
+                    None => true,
+                    Some((best_exact, best_approx, _)) => {
+                        exact > *best_exact || (exact == *best_exact && approximate > *best_approx)
+                    }
+                };
+                if better {
+                    best = Some((exact, approximate, entry));
                 }
             }
-            let exact = exact / len;
+        }
+        for entry in &self.gapped {
+            let Some((exact_count, approximate)) = gapped_similarity(&entry.tokens, &tokens) else {
+                continue;
+            };
+            let exact = exact_count as f32 / len;
             let better = match &best {
                 None => true,
                 Some((best_exact, best_approx, _)) => {
@@ -923,6 +1026,57 @@ impl FrozenTemplateSet {
         }
         best.map(|(_, _, entry)| entry.template.as_str())
     }
+}
+
+/// Align a gap template against a masked line, returning the best
+/// `(exact matches, approximate matches)` over all alignments, or `None` when
+/// no alignment exists (the line is shorter than the template's fixed part).
+///
+/// The same two quantities the fixed-length loop counts, made well-defined for
+/// a template whose width is variable: a [`MaskedToken::Gap`] consumes zero or
+/// more line tokens (each counted as approximate, like a wildcard), a wildcard
+/// consumes exactly one, and everything else consumes exactly one and counts as
+/// exact when equal. Dynamic programming over (template position, line
+/// position), maximizing exact matches first — the same precedence
+/// `match_text` resolves candidates by.
+fn gapped_similarity(template: &[MaskedToken], line: &[MaskedToken]) -> Option<(u32, u32)> {
+    let n = line.len();
+    let mut cur: Vec<Option<(u32, u32)>> = vec![None; n + 1];
+    cur[0] = Some((0, 0));
+    let max_opt = |a: Option<(u32, u32)>, b: Option<(u32, u32)>| match (a, b) {
+        (Some(x), Some(y)) => Some(x.max(y)),
+        (x, None) | (None, x) => x,
+    };
+    for token in template {
+        let mut next: Vec<Option<(u32, u32)>> = vec![None; n + 1];
+        match token {
+            MaskedToken::Gap => {
+                next[0] = cur[0];
+                for j in 1..=n {
+                    // Consume nothing at `j`, or extend the gap by one token.
+                    next[j] = max_opt(cur[j], next[j - 1].map(|(e, a)| (e, a + 1)));
+                }
+            }
+            MaskedToken::WildCard => {
+                for j in (1..=n).rev() {
+                    next[j] = cur[j - 1].map(|(e, a)| (e, a + 1));
+                }
+            }
+            val => {
+                for j in (1..=n).rev() {
+                    next[j] = cur[j - 1].map(|(e, a)| {
+                        if val == &line[j - 1] {
+                            (e + 1, a)
+                        } else {
+                            (e, a)
+                        }
+                    });
+                }
+            }
+        }
+        cur = next;
+    }
+    cur[n]
 }
 
 /// Snapshot the current thread's mined templates into a [`FrozenTemplateSet`].
@@ -1136,6 +1290,38 @@ mod tests {
         // A date with no time of day is not a calendar timestamp: only the day
         // number masks, as before.
         assert_eq!(masker.mask_line("expires Jun 13"), "expires Jun <num>");
+    }
+
+    #[test]
+    fn masks_spaced_sizes_and_durations_as_one_token() {
+        // `18.4 KB` per-token masks to `<version> KB` — a stray unit word that
+        // splits clusters and blocks the cross-length merge; `10MB` stays
+        // literal because the digits run into the letters. Both are one value.
+        let masker = Masker::new(&[]);
+        assert_eq!(
+            masker.mask_line("got 18846 bytes (18.4 KB) fast"),
+            "got <num> bytes (<size_kb>) fast"
+        );
+        // The unit survives in the placeholder: `memory limit: <size_mb>` and
+        // `disk limit: <size_gb>` must not become the same token sequence.
+        assert_eq!(
+            masker.mask_line("wrote 10MB to disk"),
+            "wrote <size_mb> to disk"
+        );
+        assert_eq!(masker.mask_line("lifetime <1 sec"), "lifetime <<duration>");
+        assert_eq!(
+            masker.mask_line("took 5 seconds to settle"),
+            "took <duration> to settle"
+        );
+        // Bare `bytes` is prose, not a unit: the count masks, the word stays.
+        assert_eq!(masker.mask_line("403 bytes sent"), "<num> bytes sent");
+        // Bare `B` is a unit behind a decimal fraction, prose behind a whole
+        // number.
+        assert_eq!(
+            masker.mask_line("estimated size 93.0 B, free 5.2 KB"),
+            "estimated size <size_b>, free <size_kb>"
+        );
+        assert_eq!(masker.mask_line("read 5 B"), "read <num> B");
     }
 
     #[test]
