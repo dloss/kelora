@@ -31,22 +31,145 @@ pub(crate) fn persist_error_tracking(ctx: &mut PipelineContext) {
     }
 }
 
-/// Cached event along with whether it satisfied the stage filter.
-struct ContextBufferEntry {
-    event: Event,
-    is_match: bool,
-    context_type: crate::event::ContextType,
+/// Turn one fed line's context verdict into a stage result.
+///
+/// A release that settled nothing is *not* a filtered event — the line is
+/// parked pending a later match — so it becomes an empty `EmitMultiple` rather
+/// than `Skip`, keeping it out of the filtered tally. A release that only
+/// dropped lines is a genuine `Skip`; the tracker discards at most one line per
+/// fed line, so the one filtered event `Skip` records is exactly right.
+fn context_release_to_result(release: crate::pipeline::ContextRelease) -> ScriptResult {
+    if release.is_deferred() {
+        return ScriptResult::EmitMultiple(Vec::new());
+    }
+    match release.events.len() {
+        0 => ScriptResult::Skip,
+        1 => ScriptResult::Emit(release.events.into_iter().next().expect("len checked")),
+        _ => ScriptResult::EmitMultiple(release.events),
+    }
+}
+
+/// Release whatever a stage's context tracker still holds at end of input.
+///
+/// Lines that age out mid-stream are counted as filtered by the `Skip` this
+/// stage returned for them; the final release has no such path, so it accounts
+/// for its own discards here.
+fn finish_context(
+    tracker: Option<&mut crate::pipeline::ContextTracker>,
+    ctx: &mut PipelineContext,
+) -> Vec<Event> {
+    let Some(tracker) = tracker else {
+        return Vec::new();
+    };
+    let release = tracker.finish();
+    for _ in 0..release.dropped {
+        crate::stats::stats_add_event_filtered();
+    }
+    ctx.internal_stats.events_filtered += release.dropped as u64;
+    release.events
+}
+
+/// Whether this event is a context line an upstream stage already selected.
+///
+/// Context is anchored to the first filtering stage in the pipeline; the lines
+/// it picked out are neighbours of a match, not matches themselves, so a later
+/// `--filter`/`--levels` stage must not re-judge them (grep does not re-apply
+/// its pattern to context lines either).
+fn is_upstream_context_line(event: &Event) -> bool {
+    use crate::event::ContextType;
+    matches!(
+        event.context_type,
+        ContextType::Before | ContextType::After | ContextType::Both
+    )
+}
+
+/// Owns `-B`/`-A`/`-C` for the pipeline's leading run of match filters.
+///
+/// Context needs a stage that sees *every* event: a filter that drops its
+/// non-matches leaves nothing to mark up as a neighbour. So the filters are
+/// wrapped rather than modified — the group runs them exactly where they would
+/// have run, keeps a copy of each event, and reads their combined verdict as
+/// "matched" or "did not match" before handing it to the tracker.
+///
+/// Wrapping the whole leading run, rather than picking one filter, is what makes
+/// `--filter X --filter Y -C 2` and `--filter X --levels error -C 2` mean what
+/// they look like: context around the events that pass *all* of them. Filters
+/// further down the pipeline (behind an `--exec`, say) are left alone, and let
+/// context lines through unjudged.
+pub struct ContextGroupStage {
+    inner: Vec<Box<dyn ScriptStage>>,
+    tracker: crate::pipeline::ContextTracker,
+}
+
+impl ContextGroupStage {
+    pub fn new(
+        inner: Vec<Box<dyn ScriptStage>>,
+        context_config: &crate::config::ContextConfig,
+    ) -> Self {
+        Self {
+            inner,
+            tracker: crate::pipeline::ContextTracker::new(
+                context_config.before_context,
+                context_config.after_context,
+            ),
+        }
+    }
+}
+
+impl ScriptStage for ContextGroupStage {
+    fn uses_window(&self) -> bool {
+        self.inner.iter().any(|stage| stage.uses_window())
+    }
+
+    fn field_demands(&self) -> crate::projection::Demand {
+        use crate::projection::Demand;
+        let mut fields = Vec::new();
+        for stage in &self.inner {
+            match stage.field_demands() {
+                Demand::All => return Demand::All,
+                Demand::Fields(names) => fields.extend(names),
+                Demand::Nothing => {}
+            }
+        }
+        Demand::Fields(fields)
+    }
+
+    fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
+        // The inner filters consume the event to answer "does it match", so keep
+        // a copy: a non-match is not discarded here, it may yet turn out to be
+        // some later match's before-context. Filters never mutate the event, so
+        // the copy is what the inner chain would have emitted.
+        let candidate = event.clone();
+
+        let mut result = ScriptResult::Emit(event);
+        for stage in &mut self.inner {
+            result = match result {
+                ScriptResult::Emit(event) => stage.apply(event, ctx),
+                other => other,
+            };
+            if matches!(result, ScriptResult::Skip | ScriptResult::Error(_)) {
+                break;
+            }
+        }
+
+        let is_match = match result {
+            ScriptResult::Error(msg) => return ScriptResult::Error(msg),
+            ScriptResult::Skip => false,
+            ScriptResult::Emit(_) | ScriptResult::EmitMultiple(_) => true,
+        };
+
+        context_release_to_result(self.tracker.push(candidate, is_match))
+    }
+
+    fn finish(&mut self, ctx: &mut PipelineContext) -> Vec<Event> {
+        finish_context(Some(&mut self.tracker), ctx)
+    }
 }
 
 /// Filter stage implementation
 pub struct FilterStage {
     compiled_filter: crate::engine::CompiledExpression,
     stage_number: usize,
-    // Context processing state
-    context_config: Option<crate::config::ContextConfig>,
-    buffer: std::collections::VecDeque<ContextBufferEntry>,
-    after_counter: usize,
-    pending_output: std::collections::VecDeque<Event>,
 }
 
 impl FilterStage {
@@ -59,29 +182,12 @@ impl FilterStage {
         Ok(Self {
             compiled_filter,
             stage_number: 0,
-            context_config: None,
-            buffer: std::collections::VecDeque::new(),
-            after_counter: 0,
-            pending_output: std::collections::VecDeque::new(),
         })
     }
 
     pub fn with_stage_number(mut self, stage_number: usize) -> Self {
         self.stage_number = stage_number;
         self
-    }
-
-    pub fn with_context(mut self, context_config: crate::config::ContextConfig) -> Self {
-        if context_config.is_active() {
-            let buffer_capacity = context_config.before_context + context_config.after_context + 1;
-            self.buffer = std::collections::VecDeque::with_capacity(buffer_capacity);
-            self.context_config = Some(context_config);
-        }
-        self
-    }
-
-    fn has_context(&self) -> bool {
-        self.context_config.as_ref().is_some_and(|c| c.is_active())
     }
 
     fn evaluate_filter(&mut self, event: &Event, ctx: &mut PipelineContext) -> Result<bool> {
@@ -133,151 +239,6 @@ impl FilterStage {
             }
         }
     }
-
-    fn process_with_context(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
-        let (before_context, after_context) = {
-            let config = self.context_config.as_ref().unwrap();
-            (config.before_context, config.after_context)
-        };
-
-        // Handle pending output first
-        if let Some(pending) = self.pending_output.pop_front() {
-            self.pending_output.push_back(event);
-            return ScriptResult::Emit(pending);
-        }
-
-        // Add event to buffer
-        self.buffer.push_back(ContextBufferEntry {
-            event: event.clone(),
-            is_match: false,
-            context_type: crate::event::ContextType::None,
-        });
-
-        // Check if current event matches filter
-        let is_match = match self.evaluate_filter(&event, ctx) {
-            Ok(result) => result,
-            Err(e) => {
-                crate::rhai_functions::tracking::track_error(
-                    "filter",
-                    ctx.meta.line_num,
-                    &format!("Filter error: {}", e),
-                    Some(&event.original_line),
-                    ctx.meta.filename.as_deref(),
-                    ctx.config.verbose,
-                    ctx.config.quiet_level,
-                    Some(&ctx.config),
-                    None,
-                );
-
-                persist_error_tracking(ctx);
-
-                if e.downcast_ref::<crate::engine::ConfMutationError>()
-                    .is_some()
-                    || ctx.config.strict
-                {
-                    return ScriptResult::Error(format!("Filter error: {}", e));
-                } else {
-                    false // Filter errors evaluate to false in resilient mode
-                }
-            }
-        };
-
-        if crate::rhai_functions::process::take_skip_request() {
-            return ScriptResult::Skip;
-        }
-
-        if let Some(last) = self.buffer.back_mut() {
-            last.is_match = is_match;
-            if is_match {
-                last.context_type = crate::event::ContextType::Match;
-            }
-        }
-
-        if is_match {
-            // We have a match! Emit before-context, match, and prepare after-context
-            let mut output_events = Vec::new();
-
-            // Emit before-context lines
-            let buffer_len = self.buffer.len();
-            let start_idx = if buffer_len > before_context + 1 {
-                buffer_len - before_context - 1
-            } else {
-                0
-            };
-
-            for i in start_idx..buffer_len - 1 {
-                if let Some(buffered) = self.buffer.get_mut(i) {
-                    let mut before_event = buffered.event.clone();
-                    let context_type = if buffered.is_match {
-                        crate::event::ContextType::Match
-                    } else {
-                        match buffered.context_type {
-                            crate::event::ContextType::After | crate::event::ContextType::Both => {
-                                crate::event::ContextType::Both
-                            }
-                            _ => crate::event::ContextType::Before,
-                        }
-                    };
-                    buffered.context_type = context_type;
-                    before_event.context_type = context_type;
-                    output_events.push(before_event);
-                }
-            }
-
-            // Emit the match itself
-            let mut match_event = event;
-            match_event.context_type = crate::event::ContextType::Match;
-            output_events.push(match_event);
-
-            // Set up after-context
-            self.after_counter = after_context;
-
-            // Keep buffer size manageable
-            let max_buffer_size = before_context + after_context + 1;
-            while self.buffer.len() > max_buffer_size {
-                self.buffer.pop_front();
-            }
-
-            if output_events.len() == 1 {
-                ScriptResult::Emit(output_events.into_iter().next().unwrap())
-            } else {
-                ScriptResult::EmitMultiple(output_events)
-            }
-        } else {
-            // No match - treat as after-context if we're within an active window
-            if self.after_counter > 0 {
-                self.after_counter -= 1;
-                let mut after_event = event;
-
-                let updated_context_type = if let Some(last) = self.buffer.back_mut() {
-                    last.context_type = match last.context_type {
-                        crate::event::ContextType::Before | crate::event::ContextType::Both => {
-                            crate::event::ContextType::Both
-                        }
-                        _ => crate::event::ContextType::After,
-                    };
-                    last.context_type
-                } else {
-                    crate::event::ContextType::After
-                };
-                after_event.context_type = updated_context_type;
-
-                let max_buffer_size = before_context + after_context + 1;
-                while self.buffer.len() > max_buffer_size {
-                    self.buffer.pop_front();
-                }
-
-                return ScriptResult::Emit(after_event);
-            }
-
-            // Not a match, keep buffer size manageable
-            let max_buffer_size = before_context + after_context + 1;
-            while self.buffer.len() > max_buffer_size {
-                self.buffer.pop_front();
-            }
-            ScriptResult::Skip
-        }
-    }
 }
 
 impl ScriptStage for FilterStage {
@@ -291,11 +252,11 @@ impl ScriptStage for FilterStage {
             tracer.trace_stage_execution(self.stage_number, "filter");
         }
 
-        if self.has_context() {
-            return self.process_with_context(event, ctx);
+        // Context lines picked by an upstream stage pass through unjudged.
+        if is_upstream_context_line(&event) {
+            return ScriptResult::Emit(event);
         }
 
-        // Original non-context filtering logic
         let result = self.evaluate_filter(&event, ctx);
 
         match result {
@@ -337,6 +298,10 @@ impl ScriptStage for FilterStage {
                 }
             }
         }
+    }
+
+    fn is_match_filter(&self) -> bool {
+        true
     }
 }
 
@@ -888,11 +853,6 @@ fn contains_ascii_ci(haystack: &[u8], needle_lc: &[u8]) -> bool {
 pub struct LevelFilterStage {
     levels: Vec<String>,
     exclude_levels: Vec<String>,
-    // Context processing state
-    context_config: Option<crate::config::ContextConfig>,
-    buffer: std::collections::VecDeque<ContextBufferEntry>,
-    after_counter: usize,
-    pending_output: std::collections::VecDeque<Event>,
 }
 
 impl LevelFilterStage {
@@ -900,29 +860,12 @@ impl LevelFilterStage {
         Self {
             levels,
             exclude_levels,
-            context_config: None,
-            buffer: std::collections::VecDeque::new(),
-            after_counter: 0,
-            pending_output: std::collections::VecDeque::new(),
         }
     }
 
     /// Check if any filtering is needed
     pub fn is_active(&self) -> bool {
         !self.levels.is_empty() || !self.exclude_levels.is_empty()
-    }
-
-    pub fn with_context(mut self, context_config: crate::config::ContextConfig) -> Self {
-        if context_config.is_active() {
-            let buffer_capacity = context_config.before_context + context_config.after_context + 1;
-            self.buffer = std::collections::VecDeque::with_capacity(buffer_capacity);
-            self.context_config = Some(context_config);
-        }
-        self
-    }
-
-    fn has_context(&self) -> bool {
-        self.context_config.as_ref().is_some_and(|c| c.is_active())
     }
 
     fn evaluate_level_filter(&self, event: &Event) -> bool {
@@ -982,108 +925,6 @@ impl LevelFilterStage {
         // No levels specified, only exclude_levels - include by default
         true
     }
-
-    fn process_with_context(&mut self, event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
-        let (before_context, after_context) = {
-            let config = self.context_config.as_ref().unwrap();
-            (config.before_context, config.after_context)
-        };
-
-        // Handle pending output first
-        if let Some(pending) = self.pending_output.pop_front() {
-            self.pending_output.push_back(event);
-            return ScriptResult::Emit(pending);
-        }
-
-        // Add event to buffer
-        self.buffer.push_back(ContextBufferEntry {
-            event: event.clone(),
-            is_match: false,
-            context_type: crate::event::ContextType::None,
-        });
-
-        // Check if current event matches level filter
-        let is_match = self.evaluate_level_filter(&event);
-
-        if let Some(last) = self.buffer.back_mut() {
-            last.is_match = is_match;
-            if is_match {
-                last.context_type = crate::event::ContextType::Match;
-            }
-        }
-
-        if is_match {
-            // We have a match! Emit before-context, match, and prepare after-context
-            let mut output_events = Vec::new();
-
-            // Emit before-context lines
-            let buffer_len = self.buffer.len();
-            let start_idx = if buffer_len > before_context + 1 {
-                buffer_len - before_context - 1
-            } else {
-                0
-            };
-
-            for i in start_idx..buffer_len - 1 {
-                if let Some(buffered) = self.buffer.get_mut(i) {
-                    if !buffered.is_match {
-                        continue;
-                    }
-
-                    let mut before_event = buffered.event.clone();
-                    let context_type = match buffered.context_type {
-                        crate::event::ContextType::After | crate::event::ContextType::Both => {
-                            crate::event::ContextType::Both
-                        }
-                        crate::event::ContextType::Match => crate::event::ContextType::Match,
-                        _ => crate::event::ContextType::Before,
-                    };
-                    buffered.context_type = context_type;
-                    before_event.context_type = context_type;
-                    output_events.push(before_event);
-                }
-            }
-
-            // Emit the match itself
-            let mut match_event = event;
-            match_event.context_type = crate::event::ContextType::Match;
-            output_events.push(match_event);
-
-            // Set up after-context
-            self.after_counter = after_context;
-
-            // Keep buffer size manageable
-            let max_buffer_size = before_context + after_context + 1;
-            while self.buffer.len() > max_buffer_size {
-                self.buffer.pop_front();
-            }
-
-            if output_events.len() == 1 {
-                ScriptResult::Emit(output_events.into_iter().next().unwrap())
-            } else {
-                ScriptResult::EmitMultiple(output_events)
-            }
-        } else {
-            if self.after_counter > 0 {
-                self.after_counter -= 1;
-
-                // Event doesn't pass the filter but still counts toward the after-context window
-                let max_buffer_size = before_context + after_context + 1;
-                while self.buffer.len() > max_buffer_size {
-                    self.buffer.pop_front();
-                }
-
-                return ScriptResult::Skip;
-            }
-
-            // Not a match, keep buffer size manageable
-            let max_buffer_size = before_context + after_context + 1;
-            while self.buffer.len() > max_buffer_size {
-                self.buffer.pop_front();
-            }
-            ScriptResult::Skip
-        }
-    }
 }
 
 impl ScriptStage for LevelFilterStage {
@@ -1099,13 +940,14 @@ impl ScriptStage for LevelFilterStage {
         )
     }
 
-    fn apply(&mut self, event: Event, ctx: &mut PipelineContext) -> ScriptResult {
+    fn apply(&mut self, event: Event, _ctx: &mut PipelineContext) -> ScriptResult {
         if !self.is_active() {
             return ScriptResult::Emit(event);
         }
 
-        if self.has_context() {
-            return self.process_with_context(event, ctx);
+        // Context lines picked by an upstream stage pass through unjudged.
+        if is_upstream_context_line(&event) {
+            return ScriptResult::Emit(event);
         }
 
         // Original non-context level filtering logic
@@ -1115,6 +957,10 @@ impl ScriptStage for LevelFilterStage {
         } else {
             ScriptResult::Skip
         }
+    }
+
+    fn is_match_filter(&self) -> bool {
+        true
     }
 }
 
@@ -1606,289 +1452,132 @@ mod tests {
         assert!(!crate::rhai_functions::process::is_skip_requested());
     }
 
-    #[test]
-    fn filter_stage_marks_overlapping_matches_as_match() {
-        let mut engine = crate::engine::RhaiEngine::new();
-        let mut stage =
-            FilterStage::new("e.method == \"HEAD\"".to_string(), Vec::new(), &mut engine)
-                .expect("filter compilation should succeed")
-                .with_context(crate::config::ContextConfig::new(1, 1));
-
-        let mut ctx = PipelineContext {
-            config: PipelineConfig {
-                brief: false,
-                wrap: crate::config::WrapMode::Always,
-                pretty: false,
-                color_mode: crate::config::ColorMode::Auto,
-                timestamp_formatting: crate::config::TimestampFormatConfig::default(),
-                strict: false,
-                verbose: 0,
-                quiet_events: false,
-                suppress_warnings: false,
-                suppress_hints: false,
-                silent: false,
-                suppress_script_output: false,
-                quiet_level: 0,
-                emoji_mode: crate::config::EmojiMode::Auto,
-                legend_mode: crate::config::LegendMode::Auto,
-                input_files: vec![],
-                allow_fs_writes: false,
-                format_name: None,
-            },
-            tracker: std::collections::HashMap::new(),
-            internal_tracker: std::collections::HashMap::new(),
-            internal_stats: crate::pipeline::InternalStats::default(),
-            window: Vec::new(),
-            rhai: engine,
-            meta: MetaData::default(),
-            pending_file_ops: Vec::new(),
-            discovered_levels: std::collections::HashSet::new(),
-            discovered_keys: std::collections::HashSet::new(),
-            discovered_levels_output: std::collections::HashSet::new(),
-            discovered_keys_output: std::collections::HashSet::new(),
-            pending_span_rows: Vec::new(),
-        };
-
-        let methods = ["POST", "HEAD", "HEAD", "GET"];
+    /// Run a stage over `events`, releasing whatever it still holds at the end,
+    /// and render each output as "<marker><field>" so an assertion can state the
+    /// expected stream verbatim. Markers match the ones the default formatter
+    /// prints: `*` match, `/` before, `\\` after, `|` overlap.
+    fn markers(
+        stage: &mut dyn ScriptStage,
+        ctx: &mut PipelineContext,
+        field: &str,
+        events: Vec<Event>,
+    ) -> Vec<String> {
         let mut outputs = Vec::new();
-
-        for (idx, method) in methods.iter().enumerate() {
-            let mut event = Event::default();
-            event.set_field("method".to_string(), Dynamic::from((*method).to_string()));
-            event.set_field("id".to_string(), Dynamic::from((idx + 1) as i64));
-
-            match stage.apply(event, &mut ctx) {
-                ScriptResult::Emit(emitted) => outputs.push(emitted),
-                ScriptResult::EmitMultiple(mut many) => outputs.append(&mut many),
-                ScriptResult::Skip => {}
-                ScriptResult::Error(err) => panic!("unexpected filter error: {}", err),
-            }
-        }
-
-        let get_method = |event: &Event| {
-            event
-                .fields
-                .get("method")
-                .and_then(|value| value.clone().try_cast::<String>())
+        let collect = |result: ScriptResult, outputs: &mut Vec<Event>| match result {
+            ScriptResult::Emit(emitted) => outputs.push(emitted),
+            ScriptResult::EmitMultiple(mut many) => outputs.append(&mut many),
+            ScriptResult::Skip => {}
+            ScriptResult::Error(err) => panic!("unexpected stage error: {}", err),
         };
 
-        let method_is_head = |event: &Event| get_method(event).as_deref() == Some("HEAD");
+        for event in events {
+            collect(stage.apply(event, ctx), &mut outputs);
+        }
+        outputs.extend(stage.finish(ctx));
 
-        let head_after_count = outputs.iter().filter(|event| {
-            method_is_head(event) && event.context_type == crate::event::ContextType::After
-        });
+        outputs
+            .iter()
+            .map(|event| {
+                let marker = match event.context_type {
+                    crate::event::ContextType::Match => '*',
+                    crate::event::ContextType::Before => '/',
+                    crate::event::ContextType::After => '\\',
+                    crate::event::ContextType::Both => '|',
+                    crate::event::ContextType::None => '.',
+                };
+                let value = event
+                    .fields
+                    .get(field)
+                    .and_then(|value| value.clone().try_cast::<String>())
+                    .unwrap_or_default();
+                format!("{}{}", marker, value)
+            })
+            .collect()
+    }
+
+    fn event_with(field: &str, value: &str) -> Event {
+        let mut event = Event::default();
+        event.set_field(field.to_string(), Dynamic::from(value.to_string()));
+        event
+    }
+
+    fn context_group(
+        stage: Box<dyn ScriptStage>,
+        before: usize,
+        after: usize,
+    ) -> ContextGroupStage {
+        ContextGroupStage::new(
+            vec![stage],
+            &crate::config::ContextConfig::new(before, after),
+        )
+    }
+
+    #[test]
+    fn adjacent_matches_are_not_repeated_as_each_others_context() {
+        let mut engine = crate::engine::RhaiEngine::new();
+        let filter = FilterStage::new("e.method == \"HEAD\"".to_string(), Vec::new(), &mut engine)
+            .expect("filter compilation should succeed");
+        let mut stage = context_group(Box::new(filter), 1, 1);
+        let mut ctx = ctx_with_engine(engine);
+
+        let events = ["POST", "HEAD", "HEAD", "GET"]
+            .iter()
+            .map(|method| event_with("method", method))
+            .collect();
+
+        // Each HEAD is a match, never its neighbour's context, and the run of
+        // matches is emitted once — not once per match whose before-window it
+        // falls into.
         assert_eq!(
-            head_after_count.count(),
-            0,
-            "HEAD events that satisfy the filter must not be marked as after-context",
-        );
-
-        let head_before_count = outputs.iter().filter(|event| {
-            method_is_head(event) && event.context_type == crate::event::ContextType::Before
-        });
-        assert_eq!(
-            head_before_count.count(),
-            0,
-            "HEAD events that satisfy the filter must not be marked as before-context",
-        );
-
-        let second_head_match = outputs.iter().find(|event| {
-            event
-                .fields
-                .get("id")
-                .and_then(|value| value.clone().try_cast::<i64>())
-                == Some(3)
-                && event.context_type == crate::event::ContextType::Match
-        });
-        assert!(
-            second_head_match.is_some(),
-            "Expected the overlapping HEAD event to receive the match marker",
-        );
-
-        let first_head_match = outputs.iter().find(|event| {
-            event
-                .fields
-                .get("id")
-                .and_then(|value| value.clone().try_cast::<i64>())
-                == Some(2)
-                && event.context_type == crate::event::ContextType::Match
-        });
-        assert!(
-            first_head_match.is_some(),
-            "Expected the first HEAD event to retain the match marker when re-emitted as context",
+            markers(&mut stage, &mut ctx, "method", events),
+            ["/POST", "*HEAD", "*HEAD", "\\GET"]
         );
     }
 
     #[test]
-    fn filter_stage_marks_overlapping_context_with_both_marker() {
+    fn line_between_two_matches_is_emitted_once_as_overlap() {
         let mut engine = crate::engine::RhaiEngine::new();
-        let mut stage = FilterStage::new(
+        let filter = FilterStage::new(
             "e.method == \"DELETE\"".to_string(),
             Vec::new(),
             &mut engine,
         )
-        .expect("filter compilation should succeed")
-        .with_context(crate::config::ContextConfig::new(1, 1));
+        .expect("filter compilation should succeed");
+        let mut stage = context_group(Box::new(filter), 1, 1);
+        let mut ctx = ctx_with_engine(engine);
 
-        let mut ctx = PipelineContext {
-            config: PipelineConfig {
-                brief: false,
-                wrap: crate::config::WrapMode::Always,
-                pretty: false,
-                color_mode: crate::config::ColorMode::Auto,
-                timestamp_formatting: crate::config::TimestampFormatConfig::default(),
-                strict: false,
-                verbose: 0,
-                quiet_events: false,
-                suppress_warnings: false,
-                suppress_hints: false,
-                silent: false,
-                suppress_script_output: false,
-                quiet_level: 0,
-                emoji_mode: crate::config::EmojiMode::Auto,
-                legend_mode: crate::config::LegendMode::Auto,
-                input_files: vec![],
-                allow_fs_writes: false,
-                format_name: None,
-            },
-            tracker: std::collections::HashMap::new(),
-            internal_tracker: std::collections::HashMap::new(),
-            internal_stats: crate::pipeline::InternalStats::default(),
-            window: Vec::new(),
-            rhai: engine,
-            meta: MetaData::default(),
-            pending_file_ops: Vec::new(),
-            discovered_levels: std::collections::HashSet::new(),
-            discovered_keys: std::collections::HashSet::new(),
-            discovered_levels_output: std::collections::HashSet::new(),
-            discovered_keys_output: std::collections::HashSet::new(),
-            pending_span_rows: Vec::new(),
-        };
-
-        let methods = ["GET", "DELETE", "PUT", "DELETE"];
-        let mut outputs = Vec::new();
-
-        for (idx, method) in methods.iter().enumerate() {
-            let mut event = Event::default();
-            event.set_field("method".to_string(), Dynamic::from((*method).to_string()));
-            event.set_field("ordinal".to_string(), Dynamic::from((idx + 1) as i64));
-
-            match stage.apply(event, &mut ctx) {
-                ScriptResult::Emit(emitted) => outputs.push(emitted),
-                ScriptResult::EmitMultiple(mut many) => outputs.append(&mut many),
-                ScriptResult::Skip => {}
-                ScriptResult::Error(err) => panic!("unexpected filter error: {}", err),
-            }
-        }
-
-        let put_events: Vec<_> = outputs
+        let events = ["GET", "DELETE", "PUT", "DELETE"]
             .iter()
-            .filter(|event| {
-                event
-                    .fields
-                    .get("method")
-                    .and_then(|value| value.clone().try_cast::<String>())
-                    .as_deref()
-                    == Some("PUT")
-            })
+            .map(|method| event_with("method", method))
             .collect();
 
-        assert!(
-            put_events
-                .iter()
-                .any(|event| event.context_type == crate::event::ContextType::After),
-            "Expected PUT event to first appear as after-context",
-        );
-
-        assert!(
-            put_events
-                .iter()
-                .any(|event| event.context_type == crate::event::ContextType::Both),
-            "Expected PUT event to be re-emitted with the overlapping context marker",
+        // PUT trails the first DELETE and leads the second, so it is overlap —
+        // one line marked `|`, not an after-context line followed by a second
+        // copy of itself.
+        assert_eq!(
+            markers(&mut stage, &mut ctx, "method", events),
+            ["/GET", "*DELETE", "|PUT", "*DELETE"]
         );
     }
 
     #[test]
-    fn level_filter_context_respects_exclude_levels() {
-        let mut stage =
-            LevelFilterStage::new(vec![], vec!["debug".to_string(), "info".to_string()])
-                .with_context(crate::config::ContextConfig::new(1, 0));
+    fn level_filter_context_shows_excluded_levels_as_context() {
+        let stage = LevelFilterStage::new(vec![], vec!["debug".to_string(), "info".to_string()]);
+        let mut stage = context_group(Box::new(stage), 1, 0);
+        let mut ctx = ctx_with_engine(crate::engine::RhaiEngine::new());
 
-        let mut ctx = PipelineContext {
-            config: PipelineConfig {
-                brief: false,
-                wrap: crate::config::WrapMode::Always,
-                pretty: false,
-                color_mode: crate::config::ColorMode::Auto,
-                timestamp_formatting: crate::config::TimestampFormatConfig::default(),
-                strict: false,
-                verbose: 0,
-                quiet_events: false,
-                suppress_warnings: false,
-                suppress_hints: false,
-                silent: false,
-                suppress_script_output: false,
-                quiet_level: 0,
-                emoji_mode: crate::config::EmojiMode::Auto,
-                legend_mode: crate::config::LegendMode::Auto,
-                input_files: vec![],
-                allow_fs_writes: false,
-                format_name: None,
-            },
-            tracker: std::collections::HashMap::new(),
-            internal_tracker: std::collections::HashMap::new(),
-            internal_stats: crate::pipeline::InternalStats::default(),
-            window: Vec::new(),
-            rhai: crate::engine::RhaiEngine::new(),
-            meta: MetaData::default(),
-            pending_file_ops: Vec::new(),
-            discovered_levels: std::collections::HashSet::new(),
-            discovered_keys: std::collections::HashSet::new(),
-            discovered_levels_output: std::collections::HashSet::new(),
-            discovered_keys_output: std::collections::HashSet::new(),
-            pending_span_rows: Vec::new(),
-        };
+        let events = ["debug", "error", "info"]
+            .iter()
+            .map(|level| event_with("level", level))
+            .collect();
 
-        let make_event = |level: &str, msg: &str| {
-            let mut event = Event::default();
-            event.set_field("level".to_string(), Dynamic::from(level.to_string()));
-            event.set_field("msg".to_string(), Dynamic::from(msg.to_string()));
-            event
-        };
-
-        let events = vec![
-            make_event("debug", "debug message"),
-            make_event("error", "error"),
-            make_event("info", "info message"),
-        ];
-
-        let mut outputs = Vec::new();
-        for event in events {
-            match stage.apply(event, &mut ctx) {
-                ScriptResult::Emit(emitted) => outputs.push(emitted),
-                ScriptResult::EmitMultiple(mut many) => outputs.append(&mut many),
-                ScriptResult::Skip => {}
-                ScriptResult::Error(err) => panic!("unexpected level filter error: {}", err),
-            }
-        }
-
-        assert!(outputs.iter().all(|event| {
-            event
-                .fields
-                .get("level")
-                .and_then(|value| value.clone().try_cast::<String>())
-                .map(|level| level != "debug" && level != "info")
-                .unwrap_or(true)
-        }));
-
-        assert!(outputs.iter().any(|event| {
-            event
-                .fields
-                .get("level")
-                .and_then(|value| value.clone().try_cast::<String>())
-                == Some("error".to_string())
-                && event.context_type == crate::event::ContextType::Match
-        }));
+        // `-B 1` asks for the line before each match. The excluded levels are
+        // what those neighbouring lines *are*, so suppressing them would leave
+        // -B/-A/-C with nothing to show.
+        assert_eq!(
+            markers(&mut stage, &mut ctx, "level", events),
+            ["/debug", "*error"]
+        );
     }
 
     #[test]

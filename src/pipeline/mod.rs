@@ -11,6 +11,7 @@ use span::SpanProcessor;
 
 // Re-export submodules
 pub mod builders;
+pub mod context;
 pub mod defaults;
 pub mod multiline;
 pub mod prefix_extractor;
@@ -23,6 +24,7 @@ pub(crate) mod trace_presets;
 
 // Re-export main types for convenience
 pub use builders::*;
+pub use context::{ContextRelease, ContextTracker};
 pub use defaults::*;
 pub use multiline::*;
 pub use prefix_extractor::*;
@@ -376,6 +378,28 @@ pub trait ScriptStage: Send {
     fn field_demands(&self) -> crate::projection::Demand {
         crate::projection::Demand::All
     }
+
+    /// Whether this stage decides, per event, if the event is a *match* —
+    /// `--filter` and `--levels`, not `--since`/`--until` (which narrow the
+    /// input) or `--keys` (which narrows fields).
+    ///
+    /// `-B`/`-A`/`-C` is computed against the combined verdict of the pipeline's
+    /// leading run of these stages; see
+    /// [`crate::pipeline::stages::ContextGroupStage`].
+    fn is_match_filter(&self) -> bool {
+        false
+    }
+
+    /// Release events the stage is still holding at end of input.
+    ///
+    /// A stage tracking context (`-B`/`-A`/`-C`) parks each non-matching line
+    /// until it knows whether a later match makes it before-context, so lines
+    /// still parked when input ends need one final release. Returned events
+    /// continue through the stages *after* this one, exactly as if `apply` had
+    /// emitted them.
+    fn finish(&mut self, _ctx: &mut PipelineContext) -> Vec<Event> {
+        Vec::new()
+    }
 }
 
 /// Optional event limiting (--take N)
@@ -532,6 +556,52 @@ impl Pipeline {
         ctx: &mut PipelineContext,
     ) -> Result<Vec<FormattedOutput>> {
         self.process_chunk_directly(event_string, ctx)
+    }
+
+    /// Release events still held inside script stages at end of input, running
+    /// each through the stages that follow the one holding it.
+    ///
+    /// Only a context stage (`-B`/`-A`/`-C`) holds anything, and there is at
+    /// most one of those, so this is a no-op for every other run.
+    pub fn finish_stages(&mut self, ctx: &mut PipelineContext) -> Result<Vec<FormattedOutput>> {
+        let mut outputs = Vec::new();
+
+        for idx in 0..self.script_stages.len() {
+            let released = self.script_stages[idx].finish(ctx);
+            if released.is_empty() {
+                continue;
+            }
+
+            for event in released {
+                // Feed the released event through the *remaining* stages only:
+                // the stage that held it has already had its say.
+                let mut result = ScriptResult::Emit(event);
+                for stage in &mut self.script_stages[idx + 1..] {
+                    result = match result {
+                        ScriptResult::Emit(event) => stage.apply(event, ctx),
+                        ScriptResult::EmitMultiple(events) => {
+                            let mut kept = Vec::new();
+                            for event in events {
+                                match stage.apply(event, ctx) {
+                                    ScriptResult::Emit(e) => kept.push(e),
+                                    ScriptResult::EmitMultiple(mut es) => kept.append(&mut es),
+                                    ScriptResult::Skip => {}
+                                    ScriptResult::Error(msg) => return Err(anyhow!(msg)),
+                                }
+                            }
+                            ScriptResult::EmitMultiple(kept)
+                        }
+                        other => other,
+                    };
+                    if matches!(result, ScriptResult::Skip | ScriptResult::Error(_)) {
+                        break;
+                    }
+                }
+                self.apply_script_result(result, ctx, &mut outputs)?;
+            }
+        }
+
+        Ok(outputs)
     }
 
     /// Flush formatter state to emit any remaining buffered output

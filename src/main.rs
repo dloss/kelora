@@ -224,6 +224,38 @@ fn main() -> Result<()> {
         stderr.writeln(&warning).unwrap_or(());
     }
 
+    // Context is computed against the leading run of match filters (see
+    // install_context_group). A filter cut off from that run by an --exec or
+    // --assert still judges matches, but its rejections can leave context lines
+    // stranded around events it dropped, so say so rather than let the markers
+    // look wrong.
+    if config.processing.context.is_active() && warnings_allowed {
+        use crate::config::ScriptStageType;
+        let is_match_filter = |stage: &ScriptStageType| {
+            matches!(
+                stage,
+                ScriptStageType::Filter { .. } | ScriptStageType::LevelFilter { .. }
+            )
+        };
+        let stages = &config.processing.stages;
+        let split = stages
+            .iter()
+            .position(is_match_filter)
+            .map(|first| {
+                stages[first..]
+                    .iter()
+                    .skip_while(|stage| is_match_filter(stage))
+                    .any(is_match_filter)
+            })
+            .unwrap_or(false);
+        if split {
+            let warning = config.format_warning_message(
+                "-A/-B/-C context is computed against the filters that run before the first --exec/--assert; a --filter/--levels after one can drop matches and leave their context lines behind. Move the filters together to keep context exact.",
+            );
+            stderr.writeln(&warning).unwrap_or(());
+        }
+    }
+
     if let Some(span_cfg) = &config.processing.span {
         if let SpanMode::Count { events_per_span } = span_cfg.mode {
             if events_per_span > 100_000 && warnings_allowed {

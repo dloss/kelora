@@ -337,6 +337,10 @@ fn worker_flush_pipeline(
     match pipeline.flush(ctx) {
         Ok(mut flush_results) => {
             if final_flush {
+                // No-op unless a stage parked events; context (-A/-B/-C) forces
+                // sequential mode, so in practice nothing is parked here.
+                flush_results.extend(pipeline.finish_stages(ctx)?);
+
                 if let Some(trailing) = pipeline.finish_formatter() {
                     if !trailing.line.is_empty() {
                         flush_results.push(trailing);

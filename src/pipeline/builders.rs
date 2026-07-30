@@ -5,6 +5,7 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 
 use crate::parsers::type_conversion::TypeMap;
+use crate::pipeline::stages::ContextGroupStage;
 use crate::stats::stats_set_timestamp_override;
 
 /// Wrapper parser that applies timestamp configuration after parsing
@@ -210,6 +211,44 @@ pub struct PipelineBuilder {
     /// discovered fields that a pre-parse drop would change. Other conditions
     /// (parser, stage order, context, span, window) are checked in `build`.
     output_allows_prefilter: bool,
+}
+
+/// Hand `-B`/`-A`/`-C` to the leading run of match filters, as one group.
+///
+/// The run is the first contiguous stretch of stages that judge whether an event
+/// matches (`--filter`, `--levels`), which is every filtering flag in a normal
+/// invocation. `--since`/`--until` sit ahead of it and stay outside: they define
+/// which events exist at all, so context is drawn from inside their window, not
+/// across its edges. A filter separated from the run by an `--exec` also stays
+/// outside — moving it into the group would run it before that `--exec` — and
+/// instead lets context lines through unjudged.
+fn install_context_group(
+    script_stages: &mut Vec<Box<dyn ScriptStage>>,
+    context_config: &crate::config::ContextConfig,
+) {
+    if !context_config.is_active() {
+        return;
+    }
+
+    let Some(start) = script_stages
+        .iter()
+        .position(|stage| stage.is_match_filter())
+    else {
+        // Nothing to anchor to. Reaching here means the "context requires
+        // filtering" check upstream let a run through with no filter at all;
+        // leaving the pipeline untouched keeps that a no-op rather than a panic.
+        return;
+    };
+    let mut end = start;
+    while end + 1 < script_stages.len() && script_stages[end + 1].is_match_filter() {
+        end += 1;
+    }
+
+    let group: Vec<Box<dyn ScriptStage>> = script_stages.drain(start..=end).collect();
+    script_stages.insert(
+        start,
+        Box::new(ContextGroupStage::new(group, context_config)),
+    );
 }
 
 impl PipelineBuilder {
@@ -738,7 +777,6 @@ impl PipelineBuilder {
                         self.config.timestamp_formatting.clone(),
                         crate::tty::should_wrap(&self.config.wrap),
                         self.config.pretty,
-                        self.config.quiet_level,
                     ))
                 }
                 crate::OutputFormat::Inspect => Box::new(crate::formatters::InspectFormatter::new(
@@ -816,17 +854,9 @@ impl PipelineBuilder {
         let mut script_stages: Vec<Box<dyn ScriptStage>> = Vec::new();
         let mut stage_number = 1;
 
-        let has_script_filters = stages
-            .iter()
-            .any(|stage| matches!(stage, crate::config::ScriptStageType::Filter { .. }));
         let has_inline_level_stage = stages
             .iter()
             .any(|stage| matches!(stage, crate::config::ScriptStageType::LevelFilter { .. }));
-        let mut level_context = if !has_script_filters && self.context_config.is_active() {
-            Some(self.context_config.clone())
-        } else {
-            None
-        };
 
         // Time-window selection runs FIRST, ahead of every user stage. `--since`/`--until`
         // narrow which events exist for the rest of the run, so metrics accumulated in
@@ -842,8 +872,7 @@ impl PipelineBuilder {
             match stage {
                 crate::config::ScriptStageType::Filter { script, includes } => {
                     let filter_stage = FilterStage::new(script, includes, &mut rhai_engine)?
-                        .with_stage_number(stage_number)
-                        .with_context(self.context_config.clone());
+                        .with_stage_number(stage_number);
                     script_stages.push(Box::new(filter_stage));
                     stage_number += 1;
                 }
@@ -860,11 +889,8 @@ impl PipelineBuilder {
                     stage_number += 1;
                 }
                 crate::config::ScriptStageType::LevelFilter { include, exclude } => {
-                    let mut level_stage = LevelFilterStage::new(include, exclude);
+                    let level_stage = LevelFilterStage::new(include, exclude);
                     if level_stage.is_active() {
-                        if let Some(context) = level_context.take() {
-                            level_stage = level_stage.with_context(context);
-                        }
                         script_stages.push(Box::new(level_stage));
                         stage_number += 1;
                     }
@@ -873,15 +899,14 @@ impl PipelineBuilder {
         }
 
         if !has_inline_level_stage {
-            let mut level_stage =
+            let level_stage =
                 LevelFilterStage::new(self.levels.clone(), self.exclude_levels.clone());
             if level_stage.is_active() {
-                if let Some(context) = level_context.take() {
-                    level_stage = level_stage.with_context(context);
-                }
                 script_stages.push(Box::new(level_stage));
             }
         }
+
+        install_context_group(&mut script_stages, &self.context_config);
 
         if self.normalize_timestamps {
             let conversion_stage = TimestampConversionStage::new(
@@ -1139,7 +1164,6 @@ impl PipelineBuilder {
                         self.config.timestamp_formatting.clone(),
                         crate::tty::should_wrap(&self.config.wrap),
                         self.config.pretty,
-                        self.config.quiet_level,
                     ))
                 }
                 crate::OutputFormat::Inspect => Box::new(crate::formatters::InspectFormatter::new(
@@ -1221,17 +1245,9 @@ impl PipelineBuilder {
         let mut script_stages: Vec<Box<dyn ScriptStage>> = Vec::new();
         let mut stage_number = 1;
 
-        let has_script_filters = stages
-            .iter()
-            .any(|stage| matches!(stage, crate::config::ScriptStageType::Filter { .. }));
         let has_inline_level_stage = stages
             .iter()
             .any(|stage| matches!(stage, crate::config::ScriptStageType::LevelFilter { .. }));
-        let mut level_context = if !has_script_filters && self.context_config.is_active() {
-            Some(self.context_config.clone())
-        } else {
-            None
-        };
 
         // Same ordering as the sequential builder: the time window is applied before
         // any user stage so worker-local metrics only ever see in-window events.
@@ -1244,8 +1260,7 @@ impl PipelineBuilder {
             match stage {
                 crate::config::ScriptStageType::Filter { script, includes } => {
                     let filter_stage = FilterStage::new(script, includes, &mut rhai_engine)?
-                        .with_stage_number(stage_number)
-                        .with_context(self.context_config.clone());
+                        .with_stage_number(stage_number);
                     script_stages.push(Box::new(filter_stage));
                     stage_number += 1;
                 }
@@ -1262,11 +1277,8 @@ impl PipelineBuilder {
                     stage_number += 1;
                 }
                 crate::config::ScriptStageType::LevelFilter { include, exclude } => {
-                    let mut level_stage = LevelFilterStage::new(include, exclude);
+                    let level_stage = LevelFilterStage::new(include, exclude);
                     if level_stage.is_active() {
-                        if let Some(context) = level_context.take() {
-                            level_stage = level_stage.with_context(context);
-                        }
                         script_stages.push(Box::new(level_stage));
                         stage_number += 1;
                     }
@@ -1275,15 +1287,14 @@ impl PipelineBuilder {
         }
 
         if !has_inline_level_stage {
-            let mut level_stage =
+            let level_stage =
                 LevelFilterStage::new(self.levels.clone(), self.exclude_levels.clone());
             if level_stage.is_active() {
-                if let Some(context) = level_context.take() {
-                    level_stage = level_stage.with_context(context);
-                }
                 script_stages.push(Box::new(level_stage));
             }
         }
+
+        install_context_group(&mut script_stages, &self.context_config);
 
         // Add key filtering stage (runs after level filtering, before context processing)
         let key_filter_stage =
