@@ -131,10 +131,19 @@ Type annotations (csv/tsv/cols/regex)
 Meta formats (select or combine the concrete formats above):
 
 auto (default)
-  Auto-detect format from first non-empty line
+  Auto-detect format: from the first non-empty line on stdin (a live pipe
+  never waits for more input), from a sample of the file head — up to the
+  first 64 non-empty lines, capped at 256 KiB — for file input
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
   Note: Detects once and applies to all lines
+  Note: File input only: if the sampled head mixes formats, kelora parses with
+        a cascade of the detected formats (as if you had passed e.g.
+        -f json,line) and adds an '_format' field per event; see cascade mode
+        below. CSV/TSV never joins a cascade: a file starting as csv/tsv is
+        parsed entirely as such, and a csv-looking line later in a non-csv
+        file counts as 'line'. Mixed stdin still pins to the first line's
+        format — pass an explicit cascade for mixed streams.
   Note: The csv/tsv step only claims the input if the first line reads as a
         header row, so a comma in a log message can't turn field names into
         message fragments. A field reads as data if it holds prose, a full ISO
@@ -147,7 +156,9 @@ auto-per-file
   Auto-detect format separately for each input file
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
-  Note: Detects once per file and applies to that file's lines
+  Note: Detects once per file and applies to that file's lines, sampling each
+        file's head like 'auto' — a file that mixes formats gets a per-file
+        cascade
   Note: The same csv/tsv header-plausibility check as 'auto' applies per file
   stdin: behaves like 'auto' (single input stream)
 

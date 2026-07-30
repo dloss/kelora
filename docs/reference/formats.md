@@ -10,7 +10,7 @@ Specify input format with `-f, --input-format <format>`.
 
 | Format | Description |
 |--------|----------|
-| `auto` | Auto-detect from first non-empty line (default) |
+| `auto` | Auto-detect (default): first non-empty line on stdin, sampled file head on files |
 | `json` | Application logs, structured data (shorthand: `-j`) |
 | `line` | Unstructured logs, plain text (trailing newline/CR trimmed) |
 | `raw` | Plain text preserved verbatim (no trimming of newline/CR or other artifacts) |
@@ -465,7 +465,11 @@ The following names cannot be used: `original_line`, `parsed_ts`, `fields`
 
 **Syntax:** `-f auto`
 
-**Description:** Automatically detect format from first non-empty line.
+**Description:** Automatically detect the input format. Reading from stdin,
+detection uses the first non-empty line (a live pipe never waits for more
+input). Reading from files, detection samples the file head — up to the first
+64 non-empty lines (capped at 256 KiB) — so a stray banner line or a mix of
+formats can't mislead it.
 
 **Detection Order:**
 
@@ -482,17 +486,26 @@ The following names cannot be used: `original_line`, `parsed_ts`, `fields`
 **Notes:**
 
 - Detects once, applies to all lines
-- With multiple files, detection uses the first non-empty line across the inputs
-  in order — leading files that are empty or contain only blank lines are
-  skipped, so a freshly rotated (empty) log doesn't force everything to `line`
-- Not suitable for mixed-format files — use **cascade mode** instead
+- With multiple files, detection samples the first file that has content —
+  leading files that are empty or contain only blank lines are skipped, so a
+  freshly rotated (empty) log doesn't force everything to `line`
+- **Mixed-format files (file input only):** when the sampled head shows more
+  than one format, kelora parses with a cascade of the detected formats
+  (e.g. `cascade(json,line)`), exactly as if you had passed `-f json,line`.
+  Each event gets an `_format` field naming the format that parsed it; see
+  **cascade mode** below. CSV/TSV can't participate: a file whose first line
+  reads as CSV is parsed entirely as CSV, and a CSV-looking line later in a
+  non-CSV file is treated as `line`
+- On stdin, mixed input still pins to the first line's format — pass an
+  explicit cascade (`-f json,line`) for mixed streams
 
 ### Auto-Detection Per File
 
 **Syntax:** `-f auto-per-file`
 
-**Description:** Automatically detect format from the first non-empty line of
-each input file, then apply that parser to the rest of the file.
+**Description:** Automatically detect the format of each input file (sampling
+the file head, like `-f auto` on files), then apply that parser to the rest of
+the file.
 
 **Good fit:** Batch runs where each file is internally consistent, but
 different files use different formats.
@@ -509,8 +522,8 @@ kelora -f auto-per-file --levels error,warn logs/**/* -J
 **Notes:**
 
 - Detects once per file
-- Uses the same first-non-empty-line semantics as `-f auto`
-- For mixed formats within a single file, use **cascade mode** instead
+- Uses the same head-sampling semantics as `-f auto` on files, so a file that
+  mixes formats gets a per-file cascade
 - Not supported with `--parallel` or `--merge-sorted`
 
 ### Cascade Mode

@@ -35,6 +35,15 @@ impl std::fmt::Display for AllInputsUnopenable {
 
 impl std::error::Error for AllInputsUnopenable {}
 
+/// How much of an input's head informs sampled (multi-line) detection. Only
+/// file inputs are sampled: a file delivers its head promptly and EOF bounds
+/// short files, whereas stdin can be a live pipe where waiting for more than
+/// the first line would stall the stream — stdin keeps first-line detection.
+pub const SAMPLE_MAX_LINES: usize = 64;
+/// Byte cap on the sampled head, so a file of enormous lines doesn't buffer
+/// unbounded memory during detection.
+pub const SAMPLE_MAX_BYTES: usize = 256 * 1024;
+
 /// Result of format detection
 #[derive(Debug, Clone)]
 pub struct DetectedFormat {
@@ -45,6 +54,10 @@ pub struct DetectedFormat {
     /// `line` because the input ran out. Multi-file detection uses this to keep
     /// scanning past inputs that hold nothing to detect from.
     pub saw_content: bool,
+    /// How many non-empty lines informed the decision (1 for first-line
+    /// detection, up to `SAMPLE_MAX_LINES` for sampled detection). Only used
+    /// to word the `-v` notice.
+    pub sample_lines: usize,
 }
 
 impl DetectedFormat {
@@ -69,6 +82,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             format: config::InputFormat::Line,
             had_input: reader.saw_any_input(),
             saw_content: false,
+            sample_lines: 0,
         }),
         Some(line) => {
             // Remove newline for detection
@@ -78,9 +92,43 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 format: detected,
                 had_input: true,
                 saw_content: true,
+                sample_lines: 1,
             })
         }
     }
+}
+
+/// Detect format from a peekable reader by sampling up to `SAMPLE_MAX_LINES`
+/// non-empty lines (capped at `SAMPLE_MAX_BYTES`) instead of just the first.
+///
+/// A homogeneous sample detects exactly like `detect_format_from_peekable_reader`;
+/// a mixed sample yields a `Cascade` over the detected formats (see
+/// `parsers::detect_format_from_sample`). Used for *file* inputs only — stdin
+/// may be a live pipe, where blocking on a 64-line sample would stall
+/// `tail -f`-style streaming, so it keeps first-line detection.
+pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
+    reader: &mut readers::PeekableLineReader<R>,
+) -> Result<DetectedFormat> {
+    let lines = reader.peek_nonempty_lines(SAMPLE_MAX_LINES, SAMPLE_MAX_BYTES)?;
+    if lines.is_empty() {
+        return Ok(DetectedFormat {
+            format: config::InputFormat::Line,
+            had_input: reader.saw_any_input(),
+            saw_content: false,
+            sample_lines: 0,
+        });
+    }
+    let trimmed: Vec<&str> = lines
+        .iter()
+        .map(|line| line.trim_end_matches(&['\r', '\n'][..]))
+        .collect();
+    let detected = parsers::detect_format_from_sample(trimmed.iter().copied())?;
+    Ok(DetectedFormat {
+        format: detected,
+        had_input: true,
+        saw_content: true,
+        sample_lines: lines.len(),
+    })
 }
 
 /// Detect the input format by scanning `sorted_files` in order, using the first
@@ -122,7 +170,10 @@ pub fn detect_format_from_files(sorted_files: &[String], strict: bool) -> Result
         match decompression::DecompressionReader::new(file_path) {
             Ok(decompressed) => {
                 let mut peekable_reader = readers::PeekableLineReader::new(decompressed);
-                let candidate = detect_format_from_peekable_reader(&mut peekable_reader)?;
+                // Files get sampled detection: the head arrives promptly (unlike
+                // a live stdin pipe) and the reader is discarded afterwards —
+                // regular readers reopen the path for actual processing.
+                let candidate = detect_format_from_peekable_reader_sampled(&mut peekable_reader)?;
                 if candidate.saw_content {
                     detected = Some(candidate);
                     break;
@@ -196,6 +247,7 @@ pub fn detect_format_for_parallel_mode(
                 format: config::InputFormat::Line,
                 had_input: false,
                 saw_content: false,
+                sample_lines: 0,
             },
             None,
         ));
@@ -237,9 +289,16 @@ pub fn format_detected_format_notice(
             return None;
         }
         let format_name = detected.format.to_display_string();
+        let provenance = if detected.format.is_cascade() {
+            format!("mixed formats in first {} lines", detected.sample_lines)
+        } else if detected.sample_lines > 1 {
+            format!("from first {} lines", detected.sample_lines)
+        } else {
+            "from first line".to_string()
+        };
         let message = config.format_info_message(&format!(
-            "Auto-detected format: {} (from first line)",
-            format_name
+            "Auto-detected format: {} ({})",
+            format_name, provenance
         ));
         Some(message)
     } else if detected.fell_back_to_line() {
@@ -329,6 +388,13 @@ fn mixed_format_suggestion(stats: &ProcessingStats) -> Option<String> {
     let primary = stats.detected_format.as_deref()?;
     let sample = stats.first_parse_error_sample.as_deref()?;
 
+    // An auto-detected cascade is already the mixed-format remedy; suggesting
+    // `-f cascade(json,line),X` would be invalid syntax. Let the generic
+    // "parsing mostly failed" guidance handle any remaining failures.
+    if primary.starts_with("cascade(") {
+        return None;
+    }
+
     // Re-detect the format of a line that the primary parser rejected.
     let secondary_fmt = parsers::detect_format(sample).ok()?;
     let secondary = secondary_fmt.cascade_name();
@@ -412,6 +478,82 @@ mod tests {
     }
 
     #[test]
+    fn file_detection_samples_beyond_the_first_line() {
+        // A mixed file (JSON with interleaved plain-text lines) must detect as
+        // a cascade rather than pinning the whole file to the first line's
+        // format — the head is sampled, not just line one.
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let mixed = write_input(
+            &dir,
+            "mixed.log",
+            "{\"level\":\"info\",\"msg\":\"up\"}\nServer starting on port 8080\n{\"level\":\"error\",\"msg\":\"down\"}\n",
+        );
+
+        let detected = detect_format_from_files(&[mixed], false).expect("detection");
+
+        match &detected.format {
+            config::InputFormat::Cascade(members) => {
+                assert_eq!(
+                    members,
+                    &vec![config::InputFormat::Json, config::InputFormat::Line]
+                );
+            }
+            other => panic!("expected cascade(json,line), got {other:?}"),
+        }
+        assert_eq!(detected.sample_lines, 3);
+        assert!(detected.detected_non_line());
+    }
+
+    #[test]
+    fn file_detection_stays_single_format_for_homogeneous_files() {
+        // Sampling must not change the result for files that detect cleanly.
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let json = write_input(&dir, "clean.json", "{\"a\":1}\n{\"b\":2}\n{\"c\":3}\n");
+
+        let detected = detect_format_from_files(&[json], false).expect("detection");
+
+        assert!(
+            matches!(detected.format, config::InputFormat::Json),
+            "homogeneous file must not become a cascade, got {:?}",
+            detected.format
+        );
+    }
+
+    #[test]
+    fn detected_cascade_notice_mentions_mixed_formats() {
+        let detected = DetectedFormat {
+            format: config::InputFormat::Cascade(vec![
+                config::InputFormat::Json,
+                config::InputFormat::Line,
+            ]),
+            had_input: true,
+            saw_content: true,
+            sample_lines: 42,
+        };
+
+        let mut verbose_cfg = base_config();
+        verbose_cfg.processing.verbose = 1;
+        let message =
+            format_detected_format_notice(&verbose_cfg, &detected).expect("expected info notice");
+        assert!(
+            message.contains("cascade(json,line)") && message.contains("first 42 lines"),
+            "message was {message}"
+        );
+    }
+
+    #[test]
+    fn mixed_format_suggestion_skips_auto_detected_cascades() {
+        // A cascade is already the mixed-format remedy; suggesting
+        // `-f cascade(json,line),syslog` would be invalid syntax.
+        let stats = ProcessingStats {
+            detected_format: Some("cascade(json,line)".to_string()),
+            first_parse_error_sample: Some("<13>Apr 15 10:00:00 host app: hi".to_string()),
+            ..Default::default()
+        };
+        assert!(mixed_format_suggestion(&stats).is_none());
+    }
+
+    #[test]
     fn multi_file_detection_falls_back_to_line_when_all_files_are_empty() {
         let dir = tempfile::TempDir::new().expect("tempdir");
         let a = write_input(&dir, "a.log", "");
@@ -461,6 +603,7 @@ mod tests {
             format: config::InputFormat::Json,
             had_input: true,
             saw_content: true,
+            sample_lines: 1,
         };
 
         // A confident auto-detection is silent on a normal run...
