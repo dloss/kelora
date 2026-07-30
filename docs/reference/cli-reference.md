@@ -1355,7 +1355,7 @@ it is — a diff of *which message templates occur and how often*:
   +        3  config reloaded with <num> stale keys
   +        2  worker <num> restarted after heartbeat timeout <duration>
   -        8  connection pool recycled for <fqdn>
-  ~ 14x more  upstream <fqdn> returned <num> for request <uuid>
+  * 14x more  upstream <fqdn> returned <num> for request <uuid>
 
 2 templates unchanged in frequency | field: msg
 ```
@@ -1365,7 +1365,7 @@ it is — a diff of *which message templates occur and how often*:
 | `---` / `+++` | the baseline and the target, with each side's event count and observed span | |
 | `+` | a template only the target has | its event count in the target |
 | `-` | a template only the baseline had | its event count in the baseline |
-| `~` | a template both logs have, at a materially different rate | the rate change, as a plain multiple |
+| `*` | a template both logs have, at a materially different rate | the rate change, as a plain multiple |
 
 The header lines are the report's provenance: in one-input mode they name the
 split rule (`incident.log before 2026-07-24T14:00:00Z`) rather than just the
@@ -1374,7 +1374,7 @@ printed in the form `--cut-at` accepts back, so a first attempt that misses
 doubles as the lookup for the next one.
 
 **It cannot see rewording.** A message changing from "timeout after 5s" to
-"timed out after 5s" is one `-` plus one `+`, never a modified template — `~`
+"timed out after 5s" is one `-` plus one `+`, never a modified template — `*`
 means *the same template at a different rate*, nothing else.
 
 **How it works.** Both sides are mined through a single shared drain instance
@@ -1384,7 +1384,7 @@ counts mislead when the sides differ in size (10 minutes of incident vs. 24
 hours of baseline), all comparisons use **share** — count divided by that
 side's total events.
 
-A `~` row's multiple is computed from the shares, not the raw counts (30/2
+A `*` row's multiple is computed from the shares, not the raw counts (30/2
 would say 15× above, but the target side is bigger, so its lines are cheaper).
 It is also the number two percentages would not hand you: subtracting 1.8% from
 25.0% is something your eye does for free, dividing them is not.
@@ -1393,7 +1393,7 @@ There are no threshold flags by design. Templates with a combined count below
 2 are ignored, and `+` templates are exempt from that floor — a template
 appearing even once only after the deploy is exactly what you are looking for.
 
-A `~` row is reported when the change is too big to be chance at those event
+A `*` row is reported when the change is too big to be chance at those event
 counts, **and** big enough to matter: at least 0.5 points of that side's
 traffic, or a 1.5× change in the template's rate. Both bars are needed — the
 first keeps one event on a 20-event side out of the report, the second keeps
@@ -1411,7 +1411,7 @@ leaving you to wonder where it went:
 ```
 
 Rows are sorted so your eye does the thresholding: counts descending within `+`
-and `-`, and `~` rows by how much of the side's traffic moved, so a template
+and `-`, and `*` rows by how much of the side's traffic moved, so a template
 that tripled from 0.01% to 0.03% sorts below one that took over a quarter of
 the log.
 
@@ -1428,7 +1428,7 @@ change  template_id  baseline_count  target_count  baseline_pct  target_pct  del
 ```
 
 `change` is `new`, `gone` or `freq_changed` — the same three names the JSON
-arrays use, and the same three things the table marks `+`, `-` and `~`. The side
+arrays use, and the same three things the table marks `+`, `-` and `*`. The side
 a row is absent from carries a `0`, `z_score` is empty for `new`/`gone` (they
 are gated by the noise floor, not the z-test), and the template goes last
 because it is the only free-form field — tabs and newlines inside it are

@@ -55,12 +55,12 @@ kelora --drain-diff --cut-at 2026-07-24T14:00Z incident.log -k msg
 
   +        3  config reloaded with <num> stale keys
   -        8  connection pool recycled for <fqdn>
-  ~ 14x more  upstream <fqdn> returned <num> for request <uuid>
+  * 14x more  upstream <fqdn> returned <num> for request <uuid>
 
 2 templates unchanged in frequency | field: msg
 ```
 
-`+` is a template only the target has, `-` one only the baseline had, and `~`
+`+` is a template only the target has, `-` one only the baseline had, and `*`
 one both logs have at a materially different rate. It diffs *which templates
 occur and how often*, not what the messages say: a reworded message reads as one
 `-` plus one `+`.

@@ -116,7 +116,7 @@ fn test_two_file_diff_marks_each_changed_template() {
         stdout
     );
     assert!(!rows_with(&stdout, '+').is_empty(), "stdout: {}", stdout);
-    assert!(!rows_with(&stdout, '~').is_empty(), "stdout: {}", stdout);
+    assert!(!rows_with(&stdout, '*').is_empty(), "stdout: {}", stdout);
     // The removed template keeps its baseline count.
     let removed = rows_with(&stdout, '-');
     assert!(
@@ -183,7 +183,7 @@ fn test_self_diff_yields_no_changes() {
         "stdout: {}",
         stdout
     );
-    for marker in ['+', '-', '~'] {
+    for marker in ['+', '-', '*'] {
         assert!(
             rows_with(&stdout, marker).is_empty(),
             "identical inputs must produce no {} rows: {}",
@@ -310,7 +310,7 @@ fn test_proportionally_identical_sides_produce_no_shifts() {
     ]);
     assert_eq!(code, 0, "stderr: {}", stderr);
     assert!(
-        rows_with(&stdout, '~').is_empty(),
+        rows_with(&stdout, '*').is_empty(),
         "share math must not flag proportionally identical sides: {}",
         stdout
     );
