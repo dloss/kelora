@@ -586,7 +586,8 @@ pub struct Cli {
         short = 'B',
         long = "before-context",
         value_name = "N",
-        help_heading = "Filtering Options"
+        help_heading = "Filtering Options",
+        help = "Show N events before each match (requires filtering).\n\nSee -C for how context lines are marked and which filters define a match."
     )]
     pub before_context: Option<usize>,
 
@@ -595,7 +596,8 @@ pub struct Cli {
         short = 'A',
         long = "after-context",
         value_name = "N",
-        help_heading = "Filtering Options"
+        help_heading = "Filtering Options",
+        help = "Show N events after each match (requires filtering).\n\nSee -C for how context lines are marked and which filters define a match."
     )]
     pub after_context: Option<usize>,
 
@@ -604,7 +606,8 @@ pub struct Cli {
         short = 'C',
         long = "context",
         value_name = "N",
-        help_heading = "Filtering Options"
+        help_heading = "Filtering Options",
+        help = "Show N events before and after each match, like grep -C (requires filtering: --filter, --levels/-l, --exclude-levels/-L, --since/--until).\n\nIn the default output format each event carries a marker naming its role. Every event appears exactly once, with the marker that describes it:\n  \u{25c9} / *   the match itself (\u{25c9} on a color terminal, * otherwise)\n  /       before-context: run-up to a later match\n  \\       after-context: trails an earlier match\n  |       both at once, between two matches close enough to overlap\n\nMarkers appear only in the default format; -F json/csv/logfmt emit the same events unmarked. They are part of the event line on stdout, so --no-warnings/--no-hints/--no-diagnostics leave them alone; -q and --silent drop the events entirely.\n\nA match is an event that passes every filter in the pipeline's leading run of filters, so `--filter A --filter B -C 2` and `--filter A -l error -C 2` both mean \"context around events passing both\". The context lines that run selects are neighbours, not matches, so a later --filter (one placed behind an --exec or --assert) does not re-judge them; kelora warns when a filter sits there, since it can drop matches and leave their context behind.\n\n--since/--until stay outside that run: they define which events exist at all, so context is drawn from inside the time window rather than across its edges.\n\nRequires sequential mode; --parallel is ignored with a warning."
     )]
     pub context: Option<usize>,
 

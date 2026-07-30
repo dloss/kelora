@@ -61,6 +61,29 @@ fn _run_kelora_with_file(args: &[&str], file_content: &str) -> (String, String, 
     )
 }
 
+/// Reduce default-formatter output to one `"<marker> <msg>"` entry per line, so a
+/// test can state the whole expected stream — including any line emitted twice.
+/// Markers are the ones the formatter prints: `*` match, `/` before-context,
+/// `\` after-context, `|` overlap; `.` stands in for an unmarked line.
+fn marked_messages(stdout: &str) -> Vec<String> {
+    stdout
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            let (marker, rest) = match line.split_once(' ') {
+                Some((first, rest)) if ["*", "/", "\\", "|"].contains(&first) => (first, rest),
+                _ => (".", line),
+            };
+            let msg = rest
+                .split_once("msg='")
+                .and_then(|(_, tail)| tail.split_once('\''))
+                .map(|(msg, _)| msg)
+                .unwrap_or(rest);
+            format!("{} {}", marker, msg)
+        })
+        .collect()
+}
+
 // Test data for context tests
 const SAMPLE_JSON_LOGS: &str = r#"{"level": "info", "msg": "normal message 1", "ts": "2024-01-01T10:00:01Z"}
 {"level": "debug", "msg": "debug message", "ts": "2024-01-01T10:00:02Z"}
@@ -289,25 +312,50 @@ fn test_combined_context_option() {
 #[test]
 fn test_context_with_level_filtering() {
     let (stdout, _stderr, exit_code) = run_kelora_with_input(
-        &["-f", "json", "-l", "error,warn", "-A", "1", "--no-color"],
+        &["-f", "json", "-l", "error,warn", "-C", "1", "--no-color"],
         SAMPLE_JSON_LOGS,
     );
 
     assert_eq!(exit_code, 0, "Context with level filtering should succeed");
 
-    let lines: Vec<&str> = stdout.trim().split('\n').collect();
-    assert!(!lines.is_empty(), "Should have output lines");
+    // --levels must produce real context, not just the matches: both matches
+    // marked, and the single line between them marked once as overlap.
+    assert_eq!(
+        marked_messages(&stdout),
+        [
+            "/ debug message",
+            "* ERROR: something went wrong",
+            "| normal message 2",
+            "* warning message",
+            "\\ normal message 3",
+        ]
+    );
+}
 
-    // Should have both error and warning lines with match prefixes
-    let has_error_match = lines
-        .iter()
-        .any(|line| line.starts_with("* ") && line.contains("ERROR: something went wrong"));
-    let has_warn_match = lines
-        .iter()
-        .any(|line| line.starts_with("* ") && line.contains("warning message"));
+#[test]
+fn test_context_with_levels_matches_equivalent_filter() {
+    let (via_levels, _stderr, _code) = run_kelora_with_input(
+        &["-f", "json", "-l", "error", "-C", "2", "--no-color"],
+        SAMPLE_JSON_LOGS,
+    );
+    let (via_filter, _stderr, _code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.level == \"error\"",
+            "-C",
+            "2",
+            "--no-color",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
 
-    assert!(has_error_match, "Should have error line with match prefix");
-    assert!(has_warn_match, "Should have warning line with match prefix");
+    assert_eq!(
+        marked_messages(&via_levels),
+        marked_messages(&via_filter),
+        "--levels and the equivalent --filter must agree on context"
+    );
 }
 
 #[test]
@@ -319,19 +367,17 @@ fn test_context_with_exclude_levels() {
 
     assert_eq!(exit_code, 0, "Context with exclude levels should succeed");
 
-    let output = stdout.trim();
-    assert!(!output.is_empty(), "Should have output");
-
-    // Should exclude debug and info, so only error and warn should appear
-    assert!(
-        output.contains("ERROR: something went wrong"),
-        "Should include error"
-    );
-    assert!(output.contains("warning message"), "Should include warning");
-    assert!(!output.contains("debug message"), "Should exclude debug");
-    assert!(
-        !output.contains("normal message"),
-        "Should exclude info messages"
+    // Excluding a level removes it from the *matches*, not from the context
+    // around them: with -B 1 the excluded neighbours are precisely what there is
+    // to show.
+    assert_eq!(
+        marked_messages(&stdout),
+        [
+            "/ debug message",
+            "* ERROR: something went wrong",
+            "/ normal message 2",
+            "* warning message",
+        ]
     );
 }
 
@@ -695,6 +741,259 @@ fn test_context_with_window_option() {
     assert!(
         stdout.contains("* "),
         "Should have match prefix with window option"
+    );
+}
+
+// REGRESSION TESTS FOR MARKER CORRECTNESS
+
+#[test]
+fn test_overlapping_context_emitted_once_as_overlap() {
+    // Two matches one line apart: the line between them trails the first and
+    // leads the second. It belongs in the output exactly once, marked `|` — it
+    // used to appear twice, first as after-context and again as overlap.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.level == \"error\" || e.level == \"warn\"",
+            "-C",
+            "1",
+            "--no-color",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
+
+    assert_eq!(exit_code, 0, "Overlapping context should succeed");
+    assert_eq!(
+        marked_messages(&stdout),
+        [
+            "/ debug message",
+            "* ERROR: something went wrong",
+            "| normal message 2",
+            "* warning message",
+            "\\ normal message 3",
+        ]
+    );
+}
+
+#[test]
+fn test_adjacent_matches_are_not_duplicated() {
+    // A match inside another match's before-window is still just that match: it
+    // used to be re-emitted once per match whose window it fell into.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.level == \"debug\" || e.level == \"error\"",
+            "-C",
+            "1",
+            "--no-color",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
+
+    assert_eq!(exit_code, 0, "Adjacent matches should succeed");
+    assert_eq!(
+        marked_messages(&stdout),
+        [
+            "/ normal message 1",
+            "* debug message",
+            "* ERROR: something went wrong",
+            "\\ normal message 2",
+        ]
+    );
+}
+
+#[test]
+fn test_no_event_is_emitted_twice_in_structured_output() {
+    // The duplicates were real events, not just repeated markers, so they also
+    // reached JSON output and skewed the --stats tallies.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-F",
+            "json",
+            "--filter",
+            "e.level == \"error\" || e.level == \"warn\"",
+            "-C",
+            "2",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
+
+    assert_eq!(exit_code, 0, "JSON output with context should succeed");
+
+    let mut lines: Vec<&str> = stdout.lines().filter(|l| !l.trim().is_empty()).collect();
+    let total = lines.len();
+    lines.sort_unstable();
+    lines.dedup();
+    assert_eq!(
+        lines.len(),
+        total,
+        "each input event may appear at most once: {}",
+        stdout
+    );
+    assert_eq!(total, 6, "all six events are within two lines of a match");
+}
+
+#[test]
+fn test_trailing_after_context_survives_end_of_input() {
+    // After-context is held back until it is known not to be before-context for
+    // a later match, so the final lines depend on an end-of-input release.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.level == \"warn\"",
+            "-A",
+            "2",
+            "--no-color",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
+
+    assert_eq!(exit_code, 0, "Trailing after-context should succeed");
+    assert_eq!(
+        marked_messages(&stdout),
+        ["* warning message", "\\ normal message 3"]
+    );
+}
+
+#[test]
+fn test_context_combines_filter_and_levels() {
+    // Both stages judge the match; the context lines they select are neighbours,
+    // so the level stage must not re-filter them away.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.msg.contains(\"ERROR\")",
+            "-l",
+            "error",
+            "-C",
+            "1",
+            "--no-color",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
+
+    assert_eq!(exit_code, 0, "--filter with --levels should succeed");
+    assert_eq!(
+        marked_messages(&stdout),
+        [
+            "/ debug message",
+            "* ERROR: something went wrong",
+            "\\ normal message 2",
+        ]
+    );
+}
+
+#[test]
+fn test_context_uses_combined_verdict_of_repeated_filters() {
+    // Context is computed once, against every filter in the leading run — not
+    // once per --filter stage, which used to emit the match once per stage.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--filter",
+            "e.level != \"debug\"",
+            "--filter",
+            "e.level == \"warn\"",
+            "-C",
+            "1",
+            "--no-color",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
+
+    assert_eq!(
+        exit_code, 0,
+        "Repeated --filter with context should succeed"
+    );
+    assert_eq!(
+        marked_messages(&stdout),
+        [
+            "/ normal message 2",
+            "* warning message",
+            "\\ normal message 3",
+        ]
+    );
+}
+
+#[test]
+fn test_context_markers_survive_suppressed_diagnostics() {
+    // Markers are part of the event line on stdout, so the stderr advisory
+    // switches must not touch them. --no-diagnostics used to blank all four.
+    let expected = [
+        "/ debug message",
+        "* ERROR: something went wrong",
+        "\\ normal message 2",
+    ];
+
+    for flags in [
+        vec!["--no-diagnostics"],
+        vec!["--no-warnings", "--no-hints"],
+        vec![],
+    ] {
+        let mut args = vec![
+            "-f",
+            "json",
+            "--filter",
+            "e.level == \"error\"",
+            "-C",
+            "1",
+            "--no-color",
+        ];
+        args.extend(flags.iter().copied());
+
+        let (stdout, _stderr, exit_code) = run_kelora_with_input(&args, SAMPLE_JSON_LOGS);
+        assert_eq!(exit_code, 0, "Run with {:?} should succeed", flags);
+        assert_eq!(
+            marked_messages(&stdout),
+            expected,
+            "context markers must not depend on {:?}",
+            flags
+        );
+    }
+}
+
+#[test]
+fn test_context_event_counts_add_up() {
+    // Every input event is either output or filtered, exactly once. The
+    // duplicates used to make the two tallies sum to more than the total.
+    let (stdout, _stderr, exit_code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "-s",
+            "--filter",
+            "e.level == \"error\"",
+            "-C",
+            "1",
+        ],
+        SAMPLE_JSON_LOGS,
+    );
+
+    assert_eq!(exit_code, 0, "Context with --stats should succeed");
+    let events_line = stdout
+        .lines()
+        .find(|line| line.contains("Events created:"))
+        .unwrap_or_else(|| panic!("no Events line in stats output: {}", stdout));
+    assert!(
+        events_line.contains("6 total") && events_line.contains("3 output"),
+        "expected 6 events with 3 output, got: {}",
+        events_line
+    );
+    assert!(
+        events_line.contains("3 filtered"),
+        "output + filtered must equal the total, got: {}",
+        events_line
     );
 }
 

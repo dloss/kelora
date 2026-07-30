@@ -1319,6 +1319,13 @@ fn run_pipeline_sequential_internal<W: Write>(
         write_formatted_output(formatted, output, &mut gap_tracker)?;
     }
 
+    // Release trailing context lines (-A/-C) still parked in a script stage.
+    // Runs after the chunker flush so the last input line has become an event,
+    // and before spans close so those lines are still inside their span.
+    for formatted in pipeline.finish_stages(&mut ctx)? {
+        write_formatted_output(formatted, output, &mut gap_tracker)?;
+    }
+
     for formatted in pipeline.finish_spans(&mut ctx)? {
         write_formatted_output(formatted, output, &mut gap_tracker)?;
     }

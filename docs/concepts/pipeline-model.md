@@ -371,11 +371,11 @@ In parallel mode:
 
 ### Context Lines
 
-Show surrounding lines around matches:
+Show surrounding events around matches:
 
-- `--before-context N` / `-B N` - Show N lines before match
-- `--after-context N` / `-A N` - Show N lines after match
-- `--context N` / `-C N` - Show N lines before and after
+- `--before-context N` / `-B N` - Show N events before match
+- `--after-context N` / `-A N` - Show N events after match
+- `--context N` / `-C N` - Show N events before and after
 
 Requires active filtering (--filter, --levels, --since, etc.).
 
@@ -385,6 +385,14 @@ kelora -j app.log \
     --before-context 2 \
     --after-context 2
 ```
+
+Context is resolved once, against the combined verdict of the leading run of
+filter stages, and each event reaches output exactly once — marked `◉`/`*` for a
+match, `/` before, `\` after, or `|` when it sits between two matches whose
+windows overlap. Because the `|` case cannot be recognised until up to
+`before_context` further events have arrived, output is held back by that many
+events; this is why context forces sequential mode. See
+[CLI reference](../reference/cli-reference.md#-c---context-n) for the full rules.
 
 ### Output Stage
 

@@ -46,7 +46,6 @@ pub struct DefaultFormatter {
     terminal_width: usize,
     pretty_nested: bool,
     use_emoji: bool,
-    quiet_level: u8,
 }
 
 impl DefaultFormatter {
@@ -57,7 +56,6 @@ impl DefaultFormatter {
         timestamp_formatting: crate::config::TimestampFormatConfig,
         enable_wrapping: bool,
         pretty_nested: bool,
-        quiet_level: u8,
     ) -> Self {
         let terminal_width = if enable_wrapping {
             crate::tty::get_terminal_width()
@@ -82,7 +80,6 @@ impl DefaultFormatter {
             terminal_width,
             pretty_nested,
             use_emoji: use_emoji && use_colors,
-            quiet_level,
         }
     }
 
@@ -336,7 +333,6 @@ impl DefaultFormatter {
         brief: bool,
         timestamp_formatting: crate::config::TimestampFormatConfig,
         pretty_nested: bool,
-        quiet_level: u8,
     ) -> Self {
         Self::new_with_wrapping(
             use_colors,
@@ -345,7 +341,6 @@ impl DefaultFormatter {
             timestamp_formatting,
             true,
             pretty_nested,
-            quiet_level,
         )
     }
 
@@ -380,11 +375,9 @@ impl DefaultFormatter {
     fn get_context_prefix(&self, event: &Event) -> String {
         use crate::event::ContextType;
 
-        // Suppress context markers when events are disabled (-q/--quiet)
-        if self.quiet_level > 0 {
-            return String::new();
-        }
-
+        // No gate on the advisory tiers here: markers are part of the event
+        // line on stdout, not diagnostics. `-q`/`--silent` suppress events by
+        // swapping in HideFormatter, so nothing reaches this code path there.
         match event.context_type {
             ContextType::Match => self.render_context_marker(self.colors.context_match, "◉", "*"),
             ContextType::Before => self.render_context_marker(self.colors.context_before, "/", "/"),

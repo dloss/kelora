@@ -912,7 +912,7 @@ kelora -j --levels error --take 10 app.log
 
 #### `-B, --before-context <N>`
 
-Show N lines before each match (requires filtering with `--filter` or `--levels`).
+Show N events before each match (requires filtering with `--filter`, `--levels`/`--exclude-levels`, or `--since`/`--until`).
 
 ```bash
 kelora -j --levels error --before-context 2 app.log
@@ -920,7 +920,7 @@ kelora -j --levels error --before-context 2 app.log
 
 #### `-A, --after-context <N>`
 
-Show N lines after each match (requires filtering).
+Show N events after each match (requires filtering).
 
 ```bash
 kelora -j --levels error --after-context 3 app.log
@@ -928,7 +928,7 @@ kelora -j --levels error --after-context 3 app.log
 
 #### `-C, --context <N>`
 
-Show N lines before and after each match (requires filtering).
+Show N events before and after each match, like `grep -C` (requires filtering).
 
 ```bash
 kelora -j --levels error --context 2 app.log
@@ -938,7 +938,40 @@ kelora -j --levels error --context 2 app.log
 
 ![Context highlighting in action](../screenshots/error-triage.gif)
 
-Context lines are highlighted with colored symbols: `/` for before-context, `*` for matching lines, `\` for after-context, and `|` for separator lines.
+In the default output format each event carries a colored marker naming its role.
+Every event appears exactly once, with the marker that describes it:
+
+```text
+◉   the match itself (* when color is off)
+/   before-context — the run-up to a later match
+\   after-context — trails an earlier match
+|   both at once — between two matches whose windows overlap
+```
+
+Markers appear only in the default format; `-F json`/`csv`/`logfmt` emit the same
+events unmarked. They are part of the event line on stdout, so the stderr
+advisory switches (`--no-warnings`, `--no-hints`, `--no-diagnostics`) leave them
+alone — `-q` and `--silent` suppress the events themselves.
+
+**What counts as a match.** An event matches when it passes *every* filter in the
+pipeline's leading run of filters, so both of these mean "context around events
+passing both conditions":
+
+```bash
+kelora -j --filter 'e.status >= 500' --filter 'e.host == "web-1"' -C 2 app.log
+kelora -j --filter 'e.msg.contains("timeout")' --levels error -C 2 app.log
+```
+
+The context lines that run selects are neighbours of a match, not matches
+themselves, so a filter placed *after* an `--exec` or `--assert` does not
+re-judge them. Such a filter can drop matches while their context lines remain,
+so kelora warns when one is there; keep the filters together to avoid it.
+
+`--since`/`--until` stay outside the run: they define which events exist at all,
+so context is drawn from inside the time window rather than across its edges.
+
+Context requires sequential mode — `--parallel` is ignored with a warning, since
+batching would reorder the neighbours that define the markers.
 
 ## Output Options
 

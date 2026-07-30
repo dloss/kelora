@@ -183,7 +183,6 @@ fn test_default_formatter() {
         crate::config::TimestampFormatConfig::default(),
         false, // Disable wrapping for this test
         false,
-        0, // No quiet mode
     ); // No colors, no brief mode, no wrapping
     let result = formatter.format(&event);
 
@@ -216,7 +215,6 @@ fn test_default_formatter_uses_ts_format_hint() {
         },
         false,
         false,
-        0,
     );
 
     let result = formatter.format(&event);
@@ -242,7 +240,6 @@ fn test_default_formatter_nested_values_render_as_json() {
         crate::config::TimestampFormatConfig::default(),
         false,
         false,
-        0, // No quiet mode
     );
     let result = formatter.format(&event);
 
@@ -269,7 +266,6 @@ fn test_default_formatter_pretty_nested_output() {
         crate::config::TimestampFormatConfig::default(),
         false,
         true,
-        0, // No quiet mode
     );
     let result = formatter.format(&event);
 
@@ -290,7 +286,6 @@ fn test_default_formatter_brief_mode() {
         crate::config::TimestampFormatConfig::default(),
         false, // Disable wrapping for this test
         false,
-        0, // No quiet mode
     ); // No colors, brief mode, no wrapping
     let result = formatter.format(&event);
 
@@ -307,7 +302,6 @@ fn test_context_markers_use_emoji_when_enabled() {
         crate::config::TimestampFormatConfig::default(),
         false,
         false,
-        0, // No quiet mode
     );
 
     let mut before_event = Event {
@@ -1329,7 +1323,6 @@ fn test_default_formatter_wrapping_disabled() {
         crate::config::TimestampFormatConfig::default(),
         false, // wrapping disabled
         false,
-        0, // No quiet mode
     );
     let result = formatter.format(&event);
 
@@ -1359,7 +1352,6 @@ fn test_default_formatter_wrapping_enabled() {
         crate::config::TimestampFormatConfig::default(),
         true,
         false,
-        0, // No quiet mode
     );
     formatter.set_terminal_width_for_test(50); // Small width to force wrapping
 
@@ -1395,7 +1387,6 @@ fn test_default_formatter_wrapping_brief_mode() {
         crate::config::TimestampFormatConfig::default(),
         true,
         false,
-        0, // No quiet mode
     );
     formatter.set_terminal_width_for_test(30); // Very small width
 
@@ -1423,7 +1414,6 @@ fn test_display_length_ignores_ansi_codes() {
         crate::config::TimestampFormatConfig::default(),
         true,
         false,
-        0, // No quiet mode
     );
 
     // Test string with ANSI color codes
@@ -1454,7 +1444,6 @@ fn test_wrapping_preserves_field_boundaries() {
         crate::config::TimestampFormatConfig::default(),
         true,
         false,
-        0, // No quiet mode
     );
     formatter.set_terminal_width_for_test(20); // Force wrapping
 
@@ -1501,7 +1490,6 @@ fn test_default_formatter_new_constructor_enables_wrapping_by_default() {
         false,
         crate::config::TimestampFormatConfig::default(),
         false,
-        0, // No quiet mode
     );
 
     // Default constructor should have wrapping enabled
