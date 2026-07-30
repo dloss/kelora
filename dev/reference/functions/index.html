@@ -9767,7 +9767,7 @@ mirroring <code>map.get(key, default)</code>.</p>
 <a id="__codelineno-191-3" name="__codelineno-191-3" href="#__codelineno-191-3"></a>if res.status == &quot;applied&quot; {
 <a id="__codelineno-191-4" name="__codelineno-191-4" href="#__codelineno-191-4"></a>    // e.pod == &quot;kube-system/foo&quot;, e.err == &quot;connection refused&quot;, e.replicas == 3 (int)
 <a id="__codelineno-191-5" name="__codelineno-191-5" href="#__codelineno-191-5"></a>} else if res.status == &quot;parse_error&quot; {
-<a id="__codelineno-191-6" name="__codelineno-191-6" href="#__codelineno-191-6"></a>    warn(`not logfmt: ${res.error}`);
+<a id="__codelineno-191-6" name="__codelineno-191-6" href="#__codelineno-191-6"></a>    eprint(`not logfmt: ${res.error}`);
 <a id="__codelineno-191-7" name="__codelineno-191-7" href="#__codelineno-191-7"></a>}
 </code></pre></div>
 <p>Options:</p>
@@ -9782,7 +9782,7 @@ mirroring <code>map.get(key, default)</code>.</p>
 <a id="__codelineno-192-2" name="__codelineno-192-2" href="#__codelineno-192-2"></a>if res.status == &quot;applied&quot; {
 <a id="__codelineno-192-3" name="__codelineno-192-3" href="#__codelineno-192-3"></a>    e.actor = e.actor ?? e.user;      // merged from payload
 <a id="__codelineno-192-4" name="__codelineno-192-4" href="#__codelineno-192-4"></a>} else if res.status == &quot;parse_error&quot; {
-<a id="__codelineno-192-5" name="__codelineno-192-5" href="#__codelineno-192-5"></a>    warn(`bad payload: ${res.error}`);
+<a id="__codelineno-192-5" name="__codelineno-192-5" href="#__codelineno-192-5"></a>    eprint(`bad payload: ${res.error}`);
 <a id="__codelineno-192-6" name="__codelineno-192-6" href="#__codelineno-192-6"></a>}
 </code></pre></div>
 <p>Options:</p>
@@ -9798,7 +9798,7 @@ mirroring <code>map.get(key, default)</code>.</p>
 <a id="__codelineno-193-3" name="__codelineno-193-3" href="#__codelineno-193-3"></a>if res.status == &quot;applied&quot; {
 <a id="__codelineno-193-4" name="__codelineno-193-4" href="#__codelineno-193-4"></a>    // e.sub == &quot;alice&quot;, e.role == &quot;admin&quot;, e.exp == 1735689600 (int), ...
 <a id="__codelineno-193-5" name="__codelineno-193-5" href="#__codelineno-193-5"></a>} else if res.status == &quot;parse_error&quot; {
-<a id="__codelineno-193-6" name="__codelineno-193-6" href="#__codelineno-193-6"></a>    warn(`bad token: ${res.error}`);
+<a id="__codelineno-193-6" name="__codelineno-193-6" href="#__codelineno-193-6"></a>    eprint(`bad token: ${res.error}`);
 <a id="__codelineno-193-7" name="__codelineno-193-7" href="#__codelineno-193-7"></a>}
 </code></pre></div>
 <p>Options:</p>
