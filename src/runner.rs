@@ -1326,6 +1326,8 @@ fn run_pipeline_sequential_internal<W: Write>(
         write_formatted_output(formatted, output, &mut gap_tracker)?;
     }
 
+    multiline_state.note_no_boundary(&pipeline, config);
+
     // Release trailing context lines (-A/-C) still parked in a script stage.
     // Runs after the chunker flush so the last input line has become an event,
     // and before spans close so those lines are still inside their span.
@@ -1457,6 +1459,25 @@ impl MultilineSeqState {
             .multiline
             .as_ref()
             .and_then(|m| crate::config::preset_ts_hint_text(&m.strategy))
+        else {
+            return;
+        };
+        let _ = SafeStderr::new().writeln(&config.format_hint_message(&text));
+    }
+
+    /// Called once after the final flush. Hints when the strategy's boundary
+    /// rule never matched a line, so nothing split the input into events — the
+    /// never-matching pattern that the line cap only catches above its
+    /// 10000-line default, and which is otherwise completely silent (#361).
+    fn note_no_boundary(&mut self, pipeline: &pipeline::Pipeline, config: &KeloraConfig) {
+        if !pipeline.multiline_collapsed_without_boundary() || !config.hints_allowed() {
+            return;
+        }
+        let Some(text) = config
+            .input
+            .multiline
+            .as_ref()
+            .and_then(|m| crate::config::no_boundary_hint_text(&m.strategy))
         else {
             return;
         };

@@ -303,6 +303,38 @@ Two flags bound the buffer's behavior:
   entire input, kelora flushes and tells you. `--multiline all` is exempt —
   buffering everything is its purpose.
 
+### When nothing splits at all
+
+The line cap only engages above its 10000-line default, so on an ordinary file
+a boundary rule that never matches used to be completely silent: one event, no
+errors, exit `0`. kelora now hints once at end of input when the rule never
+matched *any* line, naming the premise that failed:
+
+```console
+$ kelora app.log --multiline regex:match='^NEVERMATCHES'
+kelora hint: multiline 'regex': the start pattern '^NEVERMATCHES' never matched,
+so nothing split the input into separate events — check the pattern
+(see --help-multiline)
+```
+
+The common causes are a typo'd `regex:match=`, `timestamp` on a file whose
+lines carry their timestamp inside the record rather than at column 0 (`{"ts":
+…`, `ts=…`, `[2024-07-14 …]`), `blank` on input with no blank lines, and
+`indent` where every line is indented.
+
+Two strategies are exempt, because finding no boundary is not a mistake for
+them: `all` is asked for exactly one event, and a language preset legitimately
+reports none when the whole input is a single stack trace (a piped crash dump).
+The hint is advisory — `--no-hints`, `--no-diagnostics`, `--silent`, or
+`KELORA_NO_HINTS` silence it, and like other hints it is hushed in data-only
+modes (`-s`, `-m`, …) unless you pass `--hints`.
+
+Note that this catches only the *total* collapse. A strategy that finds some
+boundaries but far fewer than the input has records — `timestamp` on a
+mixed-format capture where only a minority of lines lead with a timestamp — is
+still silent; `-s` is the way to spot it, by comparing `Lines processed` with
+`Events created`.
+
 ## Observability and Debugging
 
 - Run with `--stats` or `-s` to see how many events were emitted after

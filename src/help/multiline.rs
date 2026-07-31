@@ -84,6 +84,10 @@ NOTES:
 
 TROUBLESHOOTING:
 - Use --stats or --metrics to watch buffered event counts.
+- Nothing split at all: when the strategy's boundary rule never matches a
+  single line (a typo'd regex:match=, or `timestamp` on lines whose timestamp
+  is not at column 0), the whole input becomes one event and kelora hints
+  once. `all` and the language presets are exempt.
 - Events merging that should split: with `timestamp`, the lock-in may have
   latched onto the wrong format if the file's first line is not a real
   header — pin it with timestamp:format=... or use timestamp:loose.

@@ -785,6 +785,7 @@ pub(crate) struct ChunkerRuntime {
     pub idle_hint: Option<String>,
     pub cap_warning: Option<String>,
     pub preset_ts_hint: Option<String>,
+    pub no_boundary_hint: Option<String>,
 }
 
 /// Chunker thread: converts line batches to event batches for multiline
@@ -954,6 +955,14 @@ pub(crate) fn chunker_thread(
         last_csv_headers,
         last_csv_type_map,
     );
+
+    // Terminal check: the boundary rule never matched a line, so nothing split
+    // the input into events (#361).
+    if chunker.collapsed_without_boundary() {
+        if let Some(hint) = &runtime.no_boundary_hint {
+            let _ = crate::platform::SafeStderr::new().writeln(hint);
+        }
+    }
 
     Ok(())
 }

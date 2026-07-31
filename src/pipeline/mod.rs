@@ -344,6 +344,15 @@ pub trait Chunker: Send {
     fn take_preset_ts_hint(&mut self) -> bool {
         false
     }
+    /// True at end of input when the strategy's boundary rule never matched a
+    /// single line over a non-trivial amount of input, so nothing split the
+    /// input into events. Unlike the flags above this is a terminal condition,
+    /// not an incremental one: the driver asks once, after the final flush.
+    /// Strategies for which zero boundaries is legitimate (`all`, the language
+    /// presets) always answer false.
+    fn collapsed_without_boundary(&self) -> bool {
+        false
+    }
     /// True when every fed line is exactly one record (no buffering ever).
     /// Lets the pipeline skip the chunk-buffer machinery on the hot path.
     fn is_passthrough(&self) -> bool {
@@ -1039,5 +1048,11 @@ impl Pipeline {
     /// True once when a preset strategy keeps meeting timestamped headers.
     pub fn take_multiline_preset_ts_hint(&mut self) -> bool {
         self.chunker.take_preset_ts_hint()
+    }
+
+    /// True when the multiline boundary rule never matched any line. Ask after
+    /// the final flush; see [`Chunker::collapsed_without_boundary`].
+    pub fn multiline_collapsed_without_boundary(&self) -> bool {
+        self.chunker.collapsed_without_boundary()
     }
 }

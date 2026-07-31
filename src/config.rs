@@ -795,6 +795,44 @@ pub fn preset_ts_hint_text(strategy: &MultilineStrategy) -> Option<String> {
     ))
 }
 
+/// The "boundary rule never fired" hint body, shared verbatim by the sequential
+/// and parallel drivers (the latter preformats it in `build_chunker_runtime`).
+/// Each variant names the premise that failed, because that is the part the user
+/// can act on.
+///
+/// `None` for the strategies where zero boundaries is not evidence of a mistake:
+/// `all` buffers everything by definition, and a language preset legitimately
+/// reports none when the whole input is a single stack trace (a piped crash
+/// dump). The same exemption is applied in `MultilineChunker`, which decides
+/// whether the signal fired at all.
+pub fn no_boundary_hint_text(strategy: &MultilineStrategy) -> Option<String> {
+    let tail = "so nothing split the input into separate events";
+    Some(match strategy {
+        MultilineStrategy::Timestamp { .. } => format!(
+            "multiline 'timestamp': no line began with a detectable timestamp, {} — check that \
+             lines really start with one, or pin the format with timestamp:format='...' \
+             (see --help-multiline)",
+            tail
+        ),
+        MultilineStrategy::Regex { start, .. } => format!(
+            "multiline 'regex': the start pattern '{}' never matched, {} — check the pattern \
+             (see --help-multiline)",
+            start, tail
+        ),
+        MultilineStrategy::Indent => format!(
+            "multiline 'indent': no unindented line was found, {} — event headers must start at \
+             column 0 (see --help-multiline)",
+            tail
+        ),
+        MultilineStrategy::Blank => format!(
+            "multiline 'blank': no blank line was found, {} — records must be separated by blank \
+             lines (see --help-multiline)",
+            tail
+        ),
+        MultilineStrategy::All | MultilineStrategy::Preset(_) => return None,
+    })
+}
+
 fn unknown_option_error(strategy: &str, segment: &str) -> String {
     let supported = match strategy {
         "timestamp" => "format=..., loose",
