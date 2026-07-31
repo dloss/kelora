@@ -3520,6 +3520,14 @@ different files use different formats.</p>
 succeeds handles the event. Designed for the common "noisy JSON" case —
 structured logs with plain-text noise (stack traces, panics, startup banners)
 interspersed — without requiring users to split the stream with <code>grep</code> first.</p>
+<p><strong>Multi-service files:</strong> an explicit cascade is the intended tool for logs
+that genuinely interleave several structured formats — aggregated container
+output, fluentbit file sinks, concatenated logs from different services (the
+files you might otherwise open in lnav). Auto-detection gets you started:
+run <code>kelora file.log</code> once and it parses the dominant format, prints the
+exact <code>-f json,syslog,line</code> that would parse the rest, and you paste it.
+Piped input (<code>kubectl logs … | kelora</code>) always wants the explicit list, since
+stdin detection never samples beyond the first line.</p>
 <p><strong>Input Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>{&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;hello&quot;}
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Server starting on port 8080

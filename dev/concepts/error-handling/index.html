@@ -4052,6 +4052,16 @@ still fires under <code>--discover</code>, because <code>--discover</code> is th
 <code>format: line (auto-detected)</code>. An explicit <code>--no-hints</code>, <code>--no-diagnostics</code>,
 <code>--silent</code>, or <code>KELORA_NO_HINTS</code> still hides it. It is printed at most once per
 run, even when <code>-f auto-per-file</code> detects a format for each of many files.</p>
+<p>One hint <em>escalates</em> instead of staying hushed: when auto-detection dropped a
+structured format from its sample (see mixed-format files in the
+<a href="../../reference/formats/#auto-detection">format reference</a>), a data-only mode
+turns the advisory hint into a warning (🔸) — <code>--freq level</code> over a
+multi-service file would otherwise count only the lines the dominant format
+parses, and nothing on screen would show that the numbers are partial. The
+warning obeys <code>--no-warnings</code>/<code>--silent</code>, and an explicit <code>--no-hints</code> also
+suppresses it (the escalation exists to survive the <em>mode's</em> implicit hush,
+never to override a choice the user actually made); an explicit <code>--hints</code>
+brings back the hint tier instead.</p>
 <h2 id="quietsilent-controls">Quiet/Silent Controls<a class="headerlink" href="#quietsilent-controls" title="Permanent link">&para;</a></h2>
 <p>Each channel can be silenced independently; these flags compose for automation:</p>
 <table>
