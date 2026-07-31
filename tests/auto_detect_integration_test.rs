@@ -844,6 +844,62 @@ fn test_auto_detect_single_outlier_line_does_not_build_cascade() {
     );
 }
 
+/// In data-only modes the dropped-formats signal escalates from hint to
+/// warning: `--freq level` over a multi-service file silently counts only the
+/// lines the dominant format parses, and data-only modes hush hints — so
+/// without the escalation the under-count would be invisible.
+#[test]
+fn test_dropped_formats_warn_in_data_only_modes() {
+    let dir = TempDir::new().expect("tempdir");
+    let mixed = write_input(
+        &dir,
+        "multi.log",
+        "{\"level\":\"info\",\"msg\":\"one\"}\n\
+         {\"level\":\"warn\",\"msg\":\"two\"}\n\
+         {\"level\":\"info\",\"msg\":\"three\"}\n\
+         level=info msg=worker_started port=8080\n\
+         level=warn msg=worker_slow lag=5\n\
+         plain text noise\n",
+    );
+
+    // --freq hushes hints, so the signal must arrive as a warning.
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_files(&["-f", "auto", "--freq", "level"], &[&mixed]);
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stderr.contains("warning")
+            && stderr.contains("under-count")
+            && stderr.contains("-f json,logfmt,line"),
+        "data-only mode must warn about the partial parse: {}",
+        stderr
+    );
+
+    // An explicit --no-hints is a user opt-out; no escalation around it.
+    let (_stdout, stderr, _exit) =
+        run_kelora_with_files(&["-f", "auto", "--freq", "level", "--no-hints"], &[&mixed]);
+    assert!(
+        !stderr.contains("also match"),
+        "explicit --no-hints must silence the signal entirely: {}",
+        stderr
+    );
+
+    // An explicit --hints re-enables the hint tier; the warning must not
+    // duplicate it.
+    let (_stdout, stderr, _exit) =
+        run_kelora_with_files(&["-f", "auto", "--freq", "level", "--hints"], &[&mixed]);
+    assert_eq!(
+        stderr.matches("also match").count(),
+        1,
+        "exactly one tier may speak: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("hint") && !stderr.contains("under-count"),
+        "explicit --hints selects the hint tier: {}",
+        stderr
+    );
+}
+
 /// Detection's sample doubles as a stack-trace scanner: spotting Java frames
 /// produces a once-per-run hint suggesting the matching --multiline preset.
 #[test]

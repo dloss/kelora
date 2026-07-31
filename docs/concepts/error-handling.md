@@ -299,6 +299,17 @@ still fires under `--discover`, because `--discover` is the mode for asking
 `--silent`, or `KELORA_NO_HINTS` still hides it. It is printed at most once per
 run, even when `-f auto-per-file` detects a format for each of many files.
 
+One hint *escalates* instead of staying hushed: when auto-detection dropped a
+structured format from its sample (see mixed-format files in the
+[format reference](../reference/formats.md#auto-detection)), a data-only mode
+turns the advisory hint into a warning (🔸) — `--freq level` over a
+multi-service file would otherwise count only the lines the dominant format
+parses, and nothing on screen would show that the numbers are partial. The
+warning obeys `--no-warnings`/`--silent`, and an explicit `--no-hints` also
+suppresses it (the escalation exists to survive the *mode's* implicit hush,
+never to override a choice the user actually made); an explicit `--hints`
+brings back the hint tier instead.
+
 ## Quiet/Silent Controls
 
 Each channel can be silenced independently; these flags compose for automation:
