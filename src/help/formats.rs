@@ -176,6 +176,8 @@ auto-per-file
             -f json,logfmt,line   (structured streams with fallback)
   Put catch-all fallbacks like 'line' or 'raw' last so stricter parsers get first shot
   Adds an '_format' field to each event with the winning format name
+  A record that already has its own '_format' keeps that value: the tag is
+    skipped for it (with a warning) rather than overwriting your data
   Stats (--stats) include per-format event counts
   Allowed in a comma list: json, line, raw, logfmt, syslog, cef, combined
   NOT in a comma list: auto, csv/tsv/csvnh/tsvnh (schema-based)

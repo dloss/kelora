@@ -261,6 +261,10 @@ impl GlobalTracker {
         // correct in parallel mode.
         stats.files_failed_to_open = crate::stats::files_failed_to_open_count();
         stats.failed_file_samples = crate::stats::failed_file_samples_snapshot();
+        // Cascade `_format` collisions are detected on whichever worker thread
+        // parsed the line and land in a process-wide atomic, so merge them like
+        // the counters above (#406).
+        stats.cascade_format_collisions = crate::stats::cascade_format_collision_count();
         stats
     }
 

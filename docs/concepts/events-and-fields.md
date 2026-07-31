@@ -396,7 +396,9 @@ Different parsers add format-specific fields:
 
 - `_format` — name of the parser that handled this event (e.g. `"json"`,
   `"line"`). Added only in cascade mode so single-format runs stay
-  unchanged. Useful for filtering (`--filter 'e._format == "line"'`) or
+  unchanged, and only when the record does not already have a field of that
+  name — an input `_format` keeps its own value and is reported with a
+  warning. Useful for filtering (`--filter 'e._format == "line"'`) or
   debugging silent misclassification.
 
 ## Working with Nested Structures

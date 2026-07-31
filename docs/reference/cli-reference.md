@@ -138,7 +138,8 @@ Specify input format. Supports standard formats, column parsing, and CSV with ty
 ```
 
 Comma-separated list of simple formats tried in order; first success wins.
-Adds an `_format` field to each event with the winning parser name. Allowed:
+Adds an `_format` field to each event with the winning parser name, unless the
+record already carries its own `_format` (that value is kept). Allowed:
 `json`, `line`, `raw`, `logfmt`, `syslog`, `cef`, `combined`. Schema-based
 formats (`csv`/`tsv`, `cols:`, `regex:`) and `auto` are not allowed inside
 the cascade list. See [Format Reference](formats.md#cascade-mode) for full
