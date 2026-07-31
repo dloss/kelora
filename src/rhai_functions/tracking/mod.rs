@@ -13,9 +13,9 @@ use errors::format_error_location;
 pub use errors::has_errors_in_tracking;
 pub use errors::{
     extract_error_summary_from_tracking, format_fatal_error_line,
-    has_errors_in_tracking_with_policy, has_unrecoverable_script_error, record_filter_stage_error,
-    record_filter_stage_success, record_multiline_parse_error, record_parse_success,
-    reset_stage_success_flags, stage_failed_completely, track_error,
+    has_errors_in_tracking_with_policy, has_unrecoverable_script_error, parse_success_seen,
+    record_filter_stage_error, record_filter_stage_success, record_multiline_parse_error,
+    record_parse_success, reset_stage_success_flags, stage_failed_completely, track_error,
 };
 pub(crate) use format::dynamic_to_json;
 pub use format::{

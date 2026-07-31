@@ -1180,12 +1180,13 @@ fn test_level_prefilter_is_unobservable_to_the_user() {
 
     let logfmt_input = "level=ERROR msg=boom\nlevel=INFO msg=ready\nlevel=WARN msg=slow";
 
-    // (args, input) — the logfmt cases need logfmt-shaped input. Feeding JSON to
-    // `-f logfmt` makes every line a parse error, and the pre-filter drops lines
-    // before they can produce one, so the exit code diverges (1 vs 0) for a reason
-    // unrelated to this hint. That masking is a real, pre-existing limitation of
-    // the optimization, but it is an exit-code question and is tracked separately;
-    // keep this test on the diagnostics invariant.
+    // (args, input) — the logfmt cases below use logfmt-shaped input because that
+    // is what the hint wording is about. Feeding JSON to `-f logfmt` (every line a
+    // parse error) used to be impossible to include here: the pre-filter dropped
+    // the lines before they could produce an error, so the exit code diverged
+    // 1 vs 0 (#401). That is fixed — the dead-end probe parses dropped lines until
+    // the parser succeeds once — and the case is now covered directly in
+    // `test_level_prefilter_cannot_mask_a_wrong_format_run`.
     let cases: &[(&[&str], &str)] = &[
         (&["-f", "json", "-l", "bogus"], input),
         (&["-f", "json", "-l", "err"], input),
@@ -1217,6 +1218,93 @@ fn test_level_prefilter_is_unobservable_to_the_user() {
             "hint presence must not depend on the level pre-filter for {args:?}\n\
              armed:   {on_err:?}\n\
              disabled:{off_err:?}"
+        );
+    }
+}
+
+/// A wrong-format run must fail whether or not `-l` is present (#401).
+///
+/// The pre-filter used to turn `exit 1` into a silent `exit 0`: with every line
+/// dropped before parsing there were zero successes *and* zero errors, so the
+/// "parser never once succeeded" condition never tripped. In CI that made
+/// `kelora -f logfmt app.log -l error` return 0 whether or not the format was
+/// right — green on a pipeline that produced no events at all.
+///
+/// Whether it happened to work was decided by substring coincidence: `-l json`
+/// passed on unparseable text merely because the token appeared in it. So the
+/// cases here are paired — one token that appears in the input, one that does
+/// not — and both must fail.
+#[test]
+fn test_level_prefilter_cannot_mask_a_wrong_format_run() {
+    let not_json = "NOT json at all\nALSO not json";
+    let as_logfmt =
+        "{\"level\":\"ERROR\",\"msg\":\"boom\"}\n{\"level\":\"INFO\",\"msg\":\"ready\"}";
+
+    let cases: &[(&[&str], &str)] = &[
+        // 'json' appears in the text, 'error' does not: same verdict required.
+        (&["-f", "json", "-l", "error"], not_json),
+        (&["-f", "json", "-l", "json"], not_json),
+        (&["-f", "logfmt", "-l", "error"], not_json),
+        // JSON fed to logfmt — the case the #369 differential matrix had to avoid.
+        (&["-f", "logfmt", "-l", "error"], as_logfmt),
+        (&["-f", "logfmt", "-l", "bogus"], as_logfmt),
+        // The parallel path has its own per-worker success latch.
+        (&["-f", "json", "-l", "error", "-P"], not_json),
+    ];
+
+    for (args, input) in cases {
+        let ((on_out, on_err, on_code), (off_out, off_err, off_code)) =
+            run_with_and_without_level_prefilter(args, input);
+
+        assert_eq!(
+            on_code, 1,
+            "nothing parsed: {args:?} must fail the run, not report success\n{on_err}"
+        );
+        // The dead-end probe parses every line on a run where the parser never
+        // succeeds, so this case is not merely non-silent but exactly identical to
+        // the un-optimized run — stderr included, i.e. the full error count.
+        assert_eq!(on_code, off_code, "exit code diverges for {args:?}");
+        assert_eq!(on_out, off_out, "stdout diverges for {args:?}");
+        assert_eq!(
+            on_err, off_err,
+            "a run that parsed nothing must report identically with and without \
+             the pre-filter for {args:?}"
+        );
+        assert!(
+            on_err.contains("Parse errors: 2 total"),
+            "both broken lines must be counted for {args:?}: {on_err}"
+        );
+    }
+}
+
+/// `--strict` promises to abort on the first parse error, so it cannot skip
+/// parses: the pre-filter is disabled outright when it is set (#401).
+///
+/// Before this, `--strict` was silently void for dropped lines — and worse,
+/// `-l error` *did* abort on input whose broken line happened to contain the
+/// text `error`, leaving an explicit user contract decided by coincidence.
+#[test]
+fn test_strict_disables_the_level_prefilter() {
+    // Line 1 is valid and matches -l, so the parse-success latch flips
+    // immediately: the dead-end probe alone would not catch lines 2-4.
+    let input = "{\"level\":\"error\",\"msg\":\"real\"}\n\
+                 BROKEN containing error\n\
+                 BROKEN nothing matching\n\
+                 ALSO broken here";
+
+    for args in [
+        vec!["-f", "json", "-l", "error", "--strict"],
+        vec!["-f", "json", "-l", "warn", "--strict"],
+    ] {
+        let ((_on_out, on_err, on_code), (_off_out, off_err, off_code)) =
+            run_with_and_without_level_prefilter(&args, input);
+
+        assert_eq!(on_code, 1, "{args:?} must abort on a parse error: {on_err}");
+        assert_eq!(on_code, off_code, "exit code diverges for {args:?}");
+        assert_eq!(
+            on_err, off_err,
+            "--strict must report identically with and without the pre-filter \
+             for {args:?}"
         );
     }
 }

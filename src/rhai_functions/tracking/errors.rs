@@ -89,6 +89,15 @@ pub fn record_parse_success(ctx_internal: &mut HashMap<String, Dynamic>) {
     insert_gate_count(ctx_internal, "__kelora_success_count_parse");
 }
 
+/// True once the parser has succeeded at least once on this thread this run.
+/// Lets a pre-parse drop know whether the "parser never succeeded" exit-code
+/// signal is still undecided (#401): while this is false, a dropped line still
+/// has to be parsed to keep that signal honest; once it is true, the signal can
+/// no longer trip and drops are free again.
+pub fn parse_success_seen() -> bool {
+    PARSE_SUCCESS_SEEN.with(|c| c.get())
+}
+
 /// Record that filter stage `stage` evaluated one event without error (whether
 /// or not it matched). Paired with [`record_filter_stage_error`], this lets the
 /// exit-code model distinguish a filter that errored on *some* events

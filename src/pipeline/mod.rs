@@ -854,6 +854,42 @@ impl Pipeline {
             )
         {
             crate::stats::stats_record_level_prefilter_drop();
+            // PROTOTYPE (#401): keep the "parser never succeeded" signal honest.
+            // While no line has parsed yet, a dropped line still has to be parsed,
+            // or a wrong-format run reports success (exit 0, no output, no error).
+            // The probe ends at the first line that parses — one extra parse on a
+            // well-formed log — and its event is discarded, so event/level/key
+            // stats are untouched.
+            if !crate::rhai_functions::tracking::parse_success_seen() {
+                match self.parser.parse_projected(&chunk, &self.projection) {
+                    Ok(_) => crate::rhai_functions::tracking::record_parse_success(
+                        &mut ctx.internal_tracker,
+                    ),
+                    Err(err) => {
+                        crate::stats::stats_add_line_error();
+                        crate::stats::stats_record_parse_error_sample(&chunk);
+                        ctx.internal_stats.lines_errors += 1;
+                        crate::rhai_functions::tracking::track_error(
+                            "parse",
+                            ctx.meta.line_num,
+                            &err.to_string(),
+                            Some(&chunk),
+                            ctx.meta.filename.as_deref(),
+                            ctx.config.verbose,
+                            ctx.config.quiet_level,
+                            Some(&ctx.config),
+                            ctx.config.format_name.as_deref(),
+                        );
+                        if ctx.meta.multiline_assembled {
+                            crate::rhai_functions::tracking::record_multiline_parse_error();
+                        }
+                        stages::persist_error_tracking(ctx);
+                        if ctx.config.strict {
+                            return Err(err);
+                        }
+                    }
+                }
+            }
             return Ok(Vec::new());
         }
 
