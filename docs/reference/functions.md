@@ -2289,7 +2289,7 @@ Options:
 - `keep_source`: bool (default `false`) – leave the original field untouched; use `remainder` for cleaned text.
 - `overwrite`: bool (default `true`) – allow parsed keys to overwrite existing event fields; set `false` to skip conflicts.
 
-Unknown option keys set `status = "invalid_option"`; in `--strict` mode this aborts the pipeline.
+An unknown option key is a **script error**, not a status: the call is discarded, so it is raised (naming the keys that would have worked) instead of being reported only in a return value that working scripts ignore. In `--exec` that means the event rolls back and stderr gets `Exec errors: N total, affecting every event` (exit 0, since transforms are best-effort); `--strict` aborts on the first one. `status = "invalid_option"` therefore never reaches a script that does not `try`/`catch`.
 
 `absorb_kv` is a simple splitter and is **not quote-aware** — it keeps surrounding quotes on values and splits on separators inside quoted values. For logfmt-style fields with quoted values (e.g. `err="connection refused"`), use `absorb_logfmt()` instead.
 
@@ -2379,10 +2379,18 @@ e.absorb_regex("line", pattern);
 
 - `"applied"` – pattern matched and fields were extracted
 - `"empty"` – pattern didn't match (no captures)
-- `"parse_error"` – invalid regex pattern
 - `"missing_field"` – source field doesn't exist
 - `"not_string"` – source field is not a string
-- `"invalid_option"` – unknown option key (aborts in `--strict` mode)
+
+Two failures are *determinate* — they depend on the script, not the data, so no input can make the call work — and are raised as errors rather than returned as a status: an unknown option key (`"invalid_option"`) and a pattern that does not compile (`"parse_error"`). See [`absorb_kv()`](#eabsorb_kvfield-options) for how the error surfaces.
+
+All extracted values are **strings**, including all-digit captures — a regex carries no type information to infer from, unlike `absorb_json()` and `absorb_logfmt()`. So a captured `status` compares as text, and mixing types is quietly false rather than an error: `e.status >= 500` evaluates to `false` for *every* event, including `"503"`. Convert what you need to compare numerically:
+
+```rhai
+e.absorb_regex("line", #"(?P<status>\d{3}) (?P<bytes>\d+)$"#);
+e.status = e.status.to_int();   // now e.status >= 500 works
+e.bytes = e.bytes.to_int();
+```
 
 **When to use:**
 

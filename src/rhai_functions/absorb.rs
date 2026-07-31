@@ -2,14 +2,13 @@ use crate::event::json_to_dynamic;
 use lru::LruCache;
 use regex::Regex;
 use rhai::{Dynamic, Engine, EvalAltResult, ImmutableString, Map};
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::num::NonZeroUsize;
 
 const REGEX_CACHE_CAPACITY: usize = 100;
 
 thread_local! {
-    static ABSORB_STRICT: Cell<bool> = const { Cell::new(false) };
     static ABSORB_REGEX_CACHE: RefCell<LruCache<String, Regex>> = RefCell::new(LruCache::new(
         NonZeroUsize::new(REGEX_CACHE_CAPACITY).expect("regex cache capacity must be non-zero")
     ));
@@ -28,14 +27,6 @@ pub fn register_functions(engine: &mut Engine) {
     engine.register_fn("absorb_regex", absorb_regex_with_options);
 }
 
-pub fn set_absorb_strict(strict: bool) {
-    ABSORB_STRICT.with(|flag| flag.set(strict));
-}
-
-fn is_absorb_strict() -> bool {
-    ABSORB_STRICT.with(|flag| flag.get())
-}
-
 fn absorb_kv_default(event: &mut Map, field: &str) -> Result<Map, Box<EvalAltResult>> {
     finalize_result(absorb_kv_impl(event, field, None), "absorb_kv")
 }
@@ -48,12 +39,31 @@ fn absorb_kv_with_options(
     finalize_result(absorb_kv_impl(event, field, Some(&options)), "absorb_kv")
 }
 
+/// Turn an [`AbsorbResult`] into the status map scripts see — unless the result
+/// is a *determinate* failure, which is raised as a function error instead.
+///
+/// A determinate failure does not depend on the input data: an unknown option key
+/// or an uncompilable pattern is a bug in the script itself, so it fires
+/// identically on every event and no amount of different input makes the call
+/// work. Returning a status map for those was effectively silence (#364) — a
+/// working script never inspects the return value, so the (perfectly good)
+/// message reached nobody and the run exited 0 having extracted nothing.
+///
+/// As an error it flows through the normal script-error channel: `--exec` rolls
+/// back and reports `Exec errors: N total, affecting every event` on stderr
+/// (still exit 0, since transforms are best-effort), `--strict` aborts on the
+/// first one.
+///
+/// Data-dependent statuses stay quiet on purpose and keep returning a status map:
+/// `empty` (the pattern matched nothing on *this* line), `missing_field`,
+/// `not_string`, and content `parse_error`s from `absorb_json`/`absorb_logfmt`/
+/// `absorb_jwt` are all normal for a subset of a real log.
 fn finalize_result(result: AbsorbResult, fn_name: &str) -> Result<Map, Box<EvalAltResult>> {
-    if result.status == AbsorbStatus::InvalidOption && is_absorb_strict() {
+    if result.determinate {
         let message = result
             .error
             .clone()
-            .unwrap_or_else(|| "invalid absorb option".to_string());
+            .unwrap_or_else(|| "invalid absorb call".to_string());
         return Err(format!("{}: {}", fn_name, message).into());
     }
 
@@ -483,6 +493,23 @@ fn absorb_json_impl(event: &mut Map, field: &str, options: Option<&Map>) -> Abso
     result
 }
 
+/// Flatten a `regex` compile error into one line.
+///
+/// The crate's `Display` spans four lines (a header, the pattern, a caret, then
+/// the actual reason). The exec-error summary shows only the first line of a
+/// message, so the multi-line form reduces to the useless "regex parse error:" —
+/// the reason, which is the only part that says what to fix, is what we keep.
+fn condense_regex_error(err: &str) -> String {
+    let detail = err
+        .lines()
+        .rev()
+        .find_map(|line| line.trim().strip_prefix("error: "))
+        .map(|detail| detail.to_string())
+        .unwrap_or_else(|| err.split_whitespace().collect::<Vec<_>>().join(" "));
+
+    format!("Invalid regex pattern: {}", detail)
+}
+
 fn get_or_compile_regex(pattern: &str) -> Result<Regex, String> {
     // Check cache first
     if let Some(regex) = ABSORB_REGEX_CACHE.with(|cache| cache.borrow_mut().get(pattern).cloned()) {
@@ -490,7 +517,7 @@ fn get_or_compile_regex(pattern: &str) -> Result<Regex, String> {
     }
 
     // Compile new regex
-    let regex = Regex::new(pattern).map_err(|err| format!("Invalid regex pattern: {}", err))?;
+    let regex = Regex::new(pattern).map_err(|err| condense_regex_error(&err.to_string()))?;
 
     // Store in cache
     ABSORB_REGEX_CACHE.with(|cache| {
@@ -527,7 +554,7 @@ fn absorb_regex_impl(
     let re = match get_or_compile_regex(pattern) {
         Ok(re) => re,
         Err(err) => {
-            return AbsorbResult::parse_error(err);
+            return AbsorbResult::invalid_pattern(err);
         }
     };
 
@@ -613,6 +640,10 @@ struct AbsorbResult {
     remainder: Option<String>,
     removed_source: bool,
     error: Option<String>,
+    /// This failure is a script bug, not a property of the input — see
+    /// [`finalize_result`], which raises it as a function error rather than
+    /// returning a status map nobody reads.
+    determinate: bool,
 }
 
 impl AbsorbResult {
@@ -624,28 +655,32 @@ impl AbsorbResult {
             remainder: None,
             removed_source: false,
             error: None,
+            determinate: false,
         }
     }
 
     fn invalid_option(err: OptionsError) -> Self {
         Self {
-            status: AbsorbStatus::InvalidOption,
-            data: Map::new(),
-            written: false,
-            remainder: None,
-            removed_source: false,
             error: Some(err.message),
+            determinate: true,
+            ..Self::new(AbsorbStatus::InvalidOption)
         }
     }
 
     fn parse_error(message: String) -> Self {
         Self {
-            status: AbsorbStatus::ParseError,
-            data: Map::new(),
-            written: false,
-            remainder: None,
-            removed_source: false,
             error: Some(message),
+            ..Self::new(AbsorbStatus::ParseError)
+        }
+    }
+
+    /// A pattern that does not compile: `status = "parse_error"` like a content
+    /// parse failure, but determinate — no input can make an invalid regex match,
+    /// so it is raised rather than reported only in the return value.
+    fn invalid_pattern(message: String) -> Self {
+        Self {
+            determinate: true,
+            ..Self::parse_error(message)
         }
     }
 
@@ -697,6 +732,15 @@ impl AbsorbStatus {
         }
     }
 }
+
+/// Every option key [`AbsorbOptions::from_map`] accepts, named in the
+/// unknown-key message so a typo is one read away from its fix instead of a
+/// trip to `--help-functions`. All five `absorb_*` functions share one option
+/// parser, so all five accept all of these; `sep`/`kv_sep` only *mean* anything
+/// to `absorb_kv`, which the per-function docs spell out. Kept in the documented
+/// order and covered by `valid_option_keys_are_all_accepted`, so it cannot drift
+/// from the match arms below.
+const VALID_OPTION_KEYS: &[&str] = &["sep", "kv_sep", "keep_source", "overwrite"];
 
 #[derive(Debug, Clone)]
 struct AbsorbOptions {
@@ -823,7 +867,11 @@ struct OptionsError {
 impl OptionsError {
     fn unknown(key: &str) -> Self {
         Self {
-            message: format!("unknown absorb option: {}", key),
+            message: format!(
+                "unknown absorb option: {} (valid: {})",
+                key,
+                VALID_OPTION_KEYS.join(", ")
+            ),
         }
     }
 
@@ -853,7 +901,6 @@ mod tests {
 
     #[test]
     fn absorb_kv_basic_merge() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert(
             "msg".into(),
@@ -870,7 +917,6 @@ mod tests {
 
     #[test]
     fn absorb_kv_keep_source_preserves_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), map_string("prefix user=alice suffix"));
 
@@ -888,7 +934,6 @@ mod tests {
 
     #[test]
     fn absorb_kv_overwrite_false_skips_existing() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("status".into(), map_string("pending"));
         event.insert("msg".into(), map_string("Processing status=active"));
@@ -904,8 +949,7 @@ mod tests {
     }
 
     #[test]
-    fn absorb_kv_invalid_option_sets_status() {
-        set_absorb_strict(false);
+    fn absorb_kv_unknown_option_message_names_the_valid_keys() {
         let mut event = Map::new();
         event.insert("msg".into(), map_string("user=alice"));
 
@@ -914,15 +958,83 @@ mod tests {
 
         let result = absorb_kv_impl(&mut event, "msg", Some(&options));
         assert_eq!(result.status, AbsorbStatus::InvalidOption);
+        // The message names the keys that *would* have worked, so the fix does not
+        // need a second command (#364).
         assert_eq!(
             result.error.as_deref(),
-            Some("unknown absorb option: keep_sorce")
+            Some("unknown absorb option: keep_sorce (valid: sep, kv_sep, keep_source, overwrite)")
         );
+        // Determinate: raised by finalize_result rather than reported only here.
+        assert!(result.determinate);
+    }
+
+    /// Every key advertised by the unknown-option message must actually parse, or
+    /// the message sends users to an option that does not exist.
+    #[test]
+    fn valid_option_keys_are_all_accepted() {
+        for key in VALID_OPTION_KEYS {
+            let mut options = Map::new();
+            let value = match *key {
+                "sep" | "kv_sep" => Dynamic::from("|".to_string()),
+                _ => Dynamic::from(true),
+            };
+            options.insert((*key).into(), value);
+            assert!(
+                AbsorbOptions::from_map(Some(&options)).is_ok(),
+                "advertised option key {} is rejected by from_map",
+                key
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_option_is_raised_not_returned() {
+        // #364: the status map is the wrong channel for a script bug — a working
+        // script never reads it, so the run used to extract nothing and exit 0.
+        let mut event = Map::new();
+        event.insert("msg".into(), map_string("user=alice"));
+
+        let mut options = Map::new();
+        options.insert("types".into(), Dynamic::from(true));
+
+        let err = absorb_kv_with_options(&mut event, "msg", options)
+            .expect_err("an unknown option key must be a function error");
+        assert!(
+            err.to_string()
+                .contains("absorb_kv: unknown absorb option: types"),
+            "unexpected message: {}",
+            err
+        );
+        // Nothing was extracted, and the source field is left as it was.
+        assert_eq!(event.get("msg").unwrap().to_string(), "user=alice");
+        assert!(!event.contains_key("user"));
+    }
+
+    #[test]
+    fn data_dependent_statuses_are_still_returned() {
+        // The other side of #364: statuses that depend on the input must stay
+        // quiet, or every log with a heterogeneous message field turns noisy.
+        let mut event = Map::new();
+        event.insert("payload".into(), map_string("{ not json"));
+        let result = absorb_json_with_options(&mut event, "payload", Map::new())
+            .expect("a content parse error is data-dependent, not a script bug");
+        assert_eq!(result.get("status").unwrap().to_string(), "parse_error");
+
+        // No such field on this event: normal for an optional field.
+        let mut event = Map::new();
+        let result = absorb_kv_default(&mut event, "msg").expect("missing field is not an error");
+        assert_eq!(result.get("status").unwrap().to_string(), "missing_field");
+
+        // A pattern that compiles but does not match this line.
+        let mut event = Map::new();
+        event.insert("msg".into(), map_string("nothing to see"));
+        let result = absorb_regex_default(&mut event, "msg", r"User (?P<user>\w+)")
+            .expect("a non-matching pattern is data-dependent, not a script bug");
+        assert_eq!(result.get("status").unwrap().to_string(), "empty");
     }
 
     #[test]
     fn absorb_kv_empty_string_removes_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), map_string("   "));
 
@@ -935,7 +1047,6 @@ mod tests {
 
     #[test]
     fn absorb_logfmt_quote_aware_typed_merge() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert(
             "msg".into(),
@@ -955,7 +1066,6 @@ mod tests {
 
     #[test]
     fn absorb_logfmt_keep_source_and_overwrite_false() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("user".into(), map_string("existing"));
         event.insert("msg".into(), map_string(r#"user=alice role=admin"#));
@@ -978,7 +1088,6 @@ mod tests {
 
     #[test]
     fn absorb_logfmt_bare_token_is_parse_error() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), map_string("prefix user=alice suffix"));
 
@@ -996,7 +1105,6 @@ mod tests {
 
     #[test]
     fn absorb_logfmt_empty_string_removes_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), map_string("   "));
 
@@ -1008,7 +1116,6 @@ mod tests {
 
     #[test]
     fn absorb_logfmt_missing_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
 
         let result = absorb_logfmt_impl(&mut event, "msg", None);
@@ -1022,7 +1129,6 @@ mod tests {
 
     #[test]
     fn absorb_jwt_merges_claims() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("token".into(), map_string(JWT_ALICE));
 
@@ -1041,7 +1147,6 @@ mod tests {
 
     #[test]
     fn absorb_jwt_keep_source_and_overwrite_false() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("role".into(), map_string("existing"));
         event.insert("token".into(), map_string(JWT_ALICE));
@@ -1061,7 +1166,6 @@ mod tests {
 
     #[test]
     fn absorb_jwt_malformed_token_is_parse_error() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("token".into(), map_string("not-a-jwt"));
 
@@ -1074,7 +1178,6 @@ mod tests {
 
     #[test]
     fn absorb_jwt_empty_string_removes_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("token".into(), map_string("   "));
 
@@ -1086,7 +1189,6 @@ mod tests {
 
     #[test]
     fn absorb_jwt_missing_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
 
         let result = absorb_jwt_impl(&mut event, "token", None);
@@ -1095,7 +1197,6 @@ mod tests {
 
     #[test]
     fn absorb_json_basic_merge() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert(
             "payload".into(),
@@ -1113,7 +1214,6 @@ mod tests {
 
     #[test]
     fn absorb_json_keep_source_preserves_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert(
             "payload".into(),
@@ -1136,7 +1236,6 @@ mod tests {
 
     #[test]
     fn absorb_json_overwrite_false_skips_existing() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("user".into(), map_string("existing"));
         event.insert(
@@ -1156,7 +1255,6 @@ mod tests {
 
     #[test]
     fn absorb_json_invalid_json_sets_parse_error() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("payload".into(), map_string(r#"{ "user": "alice""#));
 
@@ -1168,7 +1266,6 @@ mod tests {
 
     #[test]
     fn absorb_json_non_object_returns_error() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("payload".into(), map_string(r#"[1, 2, 3]"#));
 
@@ -1183,7 +1280,6 @@ mod tests {
 
     #[test]
     fn absorb_json_whitespace_only_removes_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("payload".into(), map_string("   "));
 
@@ -1195,7 +1291,6 @@ mod tests {
 
     #[test]
     fn absorb_regex_basic_extraction() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert(
             "msg".into(),
@@ -1214,7 +1309,6 @@ mod tests {
 
     #[test]
     fn absorb_regex_keep_source() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), map_string("Status: 200 Duration: 45ms"));
 
@@ -1236,7 +1330,6 @@ mod tests {
 
     #[test]
     fn absorb_regex_overwrite_false() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("status".into(), map_string("existing"));
         event.insert("msg".into(), map_string("Status: 200"));
@@ -1255,7 +1348,6 @@ mod tests {
 
     #[test]
     fn absorb_regex_no_match() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), map_string("No pattern here"));
 
@@ -1269,7 +1361,6 @@ mod tests {
 
     #[test]
     fn absorb_regex_invalid_pattern() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), map_string("Some text"));
 
@@ -1277,13 +1368,37 @@ mod tests {
         let result = absorb_regex_impl(&mut event, "msg", pattern, None);
 
         assert_eq!(result.status, AbsorbStatus::ParseError);
-        assert!(result.error.as_ref().unwrap().contains("Invalid regex"));
+        // One line, ending in the reason: the exec-error summary shows only the
+        // first line of a message. The wording of the reason belongs to the regex
+        // crate, so assert the shape rather than pinning its text.
+        let error = result.error.as_deref().unwrap();
+        assert_eq!(error.lines().count(), 1, "not condensed: {:?}", error);
+        assert!(error.starts_with("Invalid regex pattern: "), "{}", error);
+        assert!(error.contains("group name"), "{}", error);
         assert!(event.contains_key("msg"));
+        // A pattern that does not compile can never match, so it is determinate
+        // and raised rather than reported only in the return value (#364).
+        assert!(result.determinate);
+        assert!(absorb_regex_default(&mut event, "msg", pattern).is_err());
+    }
+
+    #[test]
+    fn condense_regex_error_keeps_the_reason_and_never_loses_the_message() {
+        // Shape the crate emits today: header, pattern, caret, reason.
+        assert_eq!(
+            condense_regex_error("regex parse error:\n    a(?P<b\n         ^\nerror: bad thing"),
+            "Invalid regex pattern: bad thing"
+        );
+        // If the shape ever changes, keep the whole message rather than losing it —
+        // squeezed onto one line so the summary still shows all of it.
+        assert_eq!(
+            condense_regex_error("something\n  unexpected"),
+            "Invalid regex pattern: something unexpected"
+        );
     }
 
     #[test]
     fn absorb_regex_missing_field() {
-        set_absorb_strict(false);
         let mut event = Map::new();
 
         let pattern = r"User (?P<user>\w+)";
@@ -1294,7 +1409,6 @@ mod tests {
 
     #[test]
     fn absorb_regex_not_string() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert("msg".into(), Dynamic::from(123));
 
@@ -1306,7 +1420,6 @@ mod tests {
 
     #[test]
     fn absorb_regex_multiple_captures() {
-        set_absorb_strict(false);
         let mut event = Map::new();
         event.insert(
             "msg".into(),
