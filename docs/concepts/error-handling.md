@@ -429,6 +429,31 @@ If `e.value.to_int()` fails:
 - `e.c` is never set
 - **Original event** is returned unchanged
 
+### What the Rollback Covers
+
+A stage that errors leaves the pipeline as it was before the stage ran. That
+covers everything the stage did, not just the fields it set:
+
+| Effect of the failed stage | Outcome |
+|---|---|
+| Changes to `e` | Rolled back — the original event is emitted |
+| Events produced by `emit_each()` | Dropped |
+| Queued file writes (`append_file`, `truncate_file`, `mkdir`) | Never executed |
+| Values recorded by `track_*` | Undone — the metric reads as if the event had not been seen |
+| `print()` / `eprint()` output | **Already written**, so it stands |
+| Error counts, gate counters, skip tallies | Kept — they exist to record the failure |
+
+Stages are independent transactions, so an *earlier* stage that completed keeps
+what it did. To count an event that a later stage may fail on, record it in its
+own earlier `--exec`:
+
+```bash
+kelora -j --exec 'track_freq("lvl", e.level)' \
+          --exec 'e.n = e.value.to_int()' app.log
+```
+
+The frequency table counts every event; only the conversion rolls back.
+
 ### Why Atomic?
 
 Prevents partial transformations from corrupting data:

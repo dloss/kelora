@@ -1026,12 +1026,16 @@ impl CompiledExpression {
 /// used to make `--freq` on a high-cardinality field cost O(events × distinct
 /// values). See `tracking::state` for why the internal half is still copied.
 ///
-/// `Drop` does the hand-back, so a script error returns the state too. That
-/// includes whatever the failing event recorded before it threw, which is the
-/// same accounting the parallel workers do at a batch boundary.
+/// `Drop` does the hand-back, on every exit path. Which one it took decides
+/// what happens to the metrics: call [`TrackingStateGuard::commit`] when the
+/// stage completed, and dropping without it — the `?` on a script error — undoes
+/// what the stage recorded, so a failed stage leaves the metrics as they were
+/// before it ran. That is the same rollback the event payload, `emit_each`
+/// output and queued file writes already get.
 struct TrackingStateGuard<'a> {
     metrics: &'a mut HashMap<String, Dynamic>,
     internal: &'a mut HashMap<String, Dynamic>,
+    outcome: rhai_functions::tracking::StageOutcome,
 }
 
 impl<'a> TrackingStateGuard<'a> {
@@ -1040,13 +1044,27 @@ impl<'a> TrackingStateGuard<'a> {
         internal: &'a mut HashMap<String, Dynamic>,
     ) -> Self {
         rhai_functions::tracking::install_thread_tracking_state(metrics, internal);
-        Self { metrics, internal }
+        Self {
+            metrics,
+            internal,
+            outcome: rhai_functions::tracking::StageOutcome::Failed,
+        }
+    }
+
+    /// The stage ran to completion: keep the metrics it recorded. Consumes the
+    /// guard, which hands the state back immediately.
+    fn commit(mut self) {
+        self.outcome = rhai_functions::tracking::StageOutcome::Completed;
     }
 }
 
 impl Drop for TrackingStateGuard<'_> {
     fn drop(&mut self) {
-        rhai_functions::tracking::take_thread_tracking_state(self.metrics, self.internal);
+        rhai_functions::tracking::take_thread_tracking_state(
+            self.metrics,
+            self.internal,
+            self.outcome,
+        );
     }
 }
 
@@ -1911,14 +1929,16 @@ impl RhaiEngine {
         if let Some(native) = &compiled.native_predicate {
             let lent = Self::lend_tracking_state(metrics, internal);
             if let Some(result) = native.evaluate(event) {
+                lent.commit();
                 return Ok(result);
             }
             // Not handled natively: hand the state back before the scripted
-            // path below lends it out again.
-            drop(lent);
+            // path below lends it out again. A native predicate cannot record
+            // metrics, so there is nothing either way to keep or undo.
+            lent.commit();
         }
 
-        let _lent = Self::lend_tracking_state(metrics, internal);
+        let lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_optimized(
             event,
             compiled.uses_line,
@@ -1987,6 +2007,7 @@ impl RhaiEngine {
             }
         }
 
+        lent.commit();
         Ok(result)
     }
 
@@ -1997,7 +2018,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
-        let _lent = Self::lend_tracking_state(metrics, internal);
+        let lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_optimized(
             event,
             compiled.uses_line,
@@ -2069,6 +2090,7 @@ impl RhaiEngine {
         }
         // No exec gate counter: exec is best-effort, so it never fails the run
         // on its own (only --strict does). See the gate notes in tracking::errors.
+        lent.commit();
         Ok(())
     }
 
@@ -2078,7 +2100,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<rhai::Map> {
-        let _lent = Self::lend_tracking_state(metrics, internal);
+        let lent = Self::lend_tracking_state(metrics, internal);
 
         // Set begin phase flag to allow read_file/read_lines
         crate::rhai_functions::conf::set_begin_phase(true);
@@ -2105,6 +2127,7 @@ impl RhaiEngine {
 
         // Reset begin phase flag
         crate::rhai_functions::conf::set_begin_phase(false);
+        lent.commit();
 
         // Extract the conf map from scope and store it
         let mut conf_map = scope.get_value::<rhai::Map>("conf").unwrap_or_default();
@@ -2177,7 +2200,7 @@ impl RhaiEngine {
         let metrics_map =
             crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal);
 
-        let _lent = Self::lend_tracking_state(metrics, internal);
+        let lent = Self::lend_tracking_state(metrics, internal);
         scope.set_value("metrics", metrics_map);
         scope.push_constant("span", Dynamic::from(span));
 
@@ -2212,6 +2235,7 @@ impl RhaiEngine {
         let ops = crate::rhai_functions::file_ops::take_pending_ops();
         crate::rhai_functions::file_ops::execute_ops(&ops)?;
 
+        lent.commit();
         Ok(())
     }
 
@@ -2224,7 +2248,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
-        let _lent = Self::lend_tracking_state(metrics, internal);
+        let lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
 
         // Add execution tracing for windowed filter execution
@@ -2299,6 +2323,7 @@ impl RhaiEngine {
             }
         }
 
+        lent.commit();
         Ok(result)
     }
 
@@ -2310,7 +2335,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
-        let _lent = Self::lend_tracking_state(metrics, internal);
+        let lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
 
         // Add execution tracing for windowed exec execution
@@ -2387,6 +2412,7 @@ impl RhaiEngine {
             self.update_event_from_scope(event, &scope);
         }
         // No exec gate counter: exec is best-effort (see tracking::errors gate notes).
+        lent.commit();
         Ok(())
     }
 
@@ -3714,6 +3740,10 @@ mod tests {
                 .unwrap_or_default(),
             7,
             "metrics accumulated before the failing event must survive it"
+        );
+        assert!(
+            !metrics.contains_key("during"),
+            "what the failing stage recorded is undone with the rest of it: {metrics:?}"
         );
     }
 

@@ -41,8 +41,9 @@ pub use state::{
     clear_thread_tracking_state, get_thread_internal_state, get_thread_snapshot,
     get_thread_tracking_state, install_thread_tracking_state, set_thread_internal_state,
     set_thread_tracking_state, take_thread_tracking_state, with_internal_tracking,
-    with_user_tracking, TrackingSnapshot,
+    with_user_tracking, StageOutcome, TrackingSnapshot,
 };
+pub(crate) use state::{journal_undo, Undo};
 
 /// Default N for track_top / track_bottom / track_top_by / track_bottom_by.
 const DEFAULT_RANK_N: i64 = 10;
@@ -330,7 +331,7 @@ pub fn register_functions(engine: &mut Engine) {
             ensure_operation_metadata(key, "sum")?;
             with_user_tracking(|state| {
                 let updated = merge_numeric(state.get(key).cloned(), Dynamic::from(1_i64));
-                state.insert(key.to_string(), updated);
+                state::set_metric(state, key, updated);
             });
             Ok(())
         },
@@ -399,7 +400,7 @@ pub fn register_functions(engine: &mut Engine) {
                     ensure_operation_metadata(key, "sum")?;
                     with_user_tracking(|state| {
                         let updated = merge_numeric(state.get(key).cloned(), num.into_dynamic());
-                        state.insert(key.to_string(), updated);
+                        state::set_metric(state, key, updated);
                     });
                     Ok(())
                 }

@@ -2,6 +2,7 @@ use super::merge::{
     compress_tdigest, deserialize_hll, deserialize_tdigest, ensure_operation_metadata,
     merge_numeric, new_hll, new_hll_with_error, serialize_hll, serialize_tdigest,
 };
+use super::state::set_metric;
 use super::with_user_tracking;
 use rhai::Dynamic;
 use std::collections::HashSet;
@@ -40,7 +41,7 @@ pub(super) fn track_avg_impl(key: &str, value: f64) -> Result<(), Box<rhai::Eval
         let mut map = rhai::Map::new();
         map.insert("sum".into(), Dynamic::from(existing_sum + value));
         map.insert("count".into(), Dynamic::from(existing_count + 1));
-        state.insert(key.to_string(), Dynamic::from(map));
+        set_metric(state, key, Dynamic::from(map));
     });
     Ok(())
 }
@@ -82,7 +83,7 @@ fn track_extreme_impl(
         };
 
         if should_update {
-            state.insert(key.to_string(), stored);
+            set_metric(state, key, stored);
         }
     });
 
@@ -116,7 +117,7 @@ fn bump_cardinality_count(state: &mut std::collections::HashMap<String, Dynamic>
         .and_then(|v| v.as_int().ok())
         .unwrap_or(0)
         .saturating_add(1);
-    state.insert(count_key, Dynamic::from(seen));
+    set_metric(state, &count_key, Dynamic::from(seen));
 }
 
 pub(super) fn track_cardinality_impl<V: std::hash::Hash>(
@@ -139,7 +140,7 @@ pub(super) fn track_cardinality_impl<V: std::hash::Hash>(
         hll.insert(value);
 
         let bytes = serialize_hll(&hll);
-        state.insert(key.to_string(), Dynamic::from_blob(bytes));
+        set_metric(state, key, Dynamic::from_blob(bytes));
         bump_cardinality_count(state, key);
     });
 
@@ -169,7 +170,7 @@ pub(super) fn track_cardinality_with_error_impl<V: std::hash::Hash>(
         hll.insert(value);
 
         let bytes = serialize_hll(&hll);
-        state.insert(key.to_string(), Dynamic::from_blob(bytes));
+        set_metric(state, key, Dynamic::from_blob(bytes));
         bump_cardinality_count(state, key);
     });
 
@@ -253,7 +254,7 @@ pub(super) fn track_percentiles_impl(
             compress_tdigest(&mut digest);
 
             let bytes = serialize_tdigest(&digest);
-            state.insert(metric_key.clone(), Dynamic::from_blob(bytes));
+            set_metric(state, &metric_key, Dynamic::from_blob(bytes));
         });
     }
 
@@ -282,7 +283,7 @@ pub(super) fn track_stats_impl(
             current.as_float().unwrap_or(f64::INFINITY)
         };
         if value < current_val {
-            state.insert(min_key.clone(), Dynamic::from(value));
+            set_metric(state, &min_key, Dynamic::from(value));
         }
     });
 
@@ -299,7 +300,7 @@ pub(super) fn track_stats_impl(
             current.as_float().unwrap_or(f64::NEG_INFINITY)
         };
         if value > current_val {
-            state.insert(max_key.clone(), Dynamic::from(value));
+            set_metric(state, &max_key, Dynamic::from(value));
         }
     });
 
@@ -310,14 +311,14 @@ pub(super) fn track_stats_impl(
     ensure_operation_metadata(&count_key, "count")?;
     with_user_tracking(|state| {
         let updated = merge_numeric(state.get(&count_key).cloned(), Dynamic::from(1_i64));
-        state.insert(count_key.clone(), updated);
+        set_metric(state, &count_key, updated);
     });
 
     let sum_key = format!("{}_sum", key);
     ensure_operation_metadata(&sum_key, "sum")?;
     with_user_tracking(|state| {
         let updated = merge_numeric(state.get(&sum_key).cloned(), Dynamic::from(value));
-        state.insert(sum_key.clone(), updated);
+        set_metric(state, &sum_key, updated);
     });
 
     track_percentiles_impl(key, value, percentiles)?;

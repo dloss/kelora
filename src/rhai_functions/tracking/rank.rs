@@ -82,6 +82,9 @@ fn track_unique_insert(
         };
         if !arr.iter().any(&already_present) {
             arr.push(value);
+            super::journal_undo(|| super::Undo::ArrayPush {
+                key: key.to_string(),
+            });
         }
         arr.len()
     });
@@ -124,8 +127,13 @@ pub(super) fn track_freq_impl(key: &str, value: &str) -> Result<(), Box<rhai::Ev
             state.insert(key.to_string(), Dynamic::from(rhai::Map::new()));
         }
         if let Some(mut map) = state.get_mut(key).and_then(|v| v.write_lock::<rhai::Map>()) {
-            let count = map.get(value).and_then(|v| v.as_int().ok()).unwrap_or(0);
-            map.insert(value.into(), Dynamic::from(count + 1));
+            let prior = map.get(value).and_then(|v| v.as_int().ok());
+            map.insert(value.into(), Dynamic::from(prior.unwrap_or(0) + 1));
+            super::journal_undo(|| super::Undo::MapCount {
+                key: key.to_string(),
+                entry: value.to_string(),
+                prior,
+            });
         }
     });
     Ok(())
@@ -165,7 +173,10 @@ fn find_item_index(arr: &rhai::Array, item_key: &str) -> Option<usize> {
 /// propagate the full user map plus `__op_` metadata; it is filtered from all
 /// metric output by its `__kelora_` prefix.
 fn record_rank_n(state: &mut std::collections::HashMap<String, Dynamic>, key: &str, n: i64) {
-    state.insert(format!("{}{}", super::TOPN_PREFIX, key), Dynamic::from(n));
+    let n_key = format!("{}{}", super::TOPN_PREFIX, key);
+    let prior = state.get(&n_key).cloned();
+    state.insert(n_key.clone(), Dynamic::from(n));
+    super::journal_undo(|| super::Undo::Value { key: n_key, prior });
 }
 
 /// Shared per-event accumulation for track_top / track_bottom. Direction only
@@ -189,10 +200,24 @@ fn rank_count_insert(key: &str, item_key: &str, n: i64) {
                     .and_then(|m| m.get("count").and_then(|v| v.as_int().ok()))
                     .unwrap_or(0)
                     + 1;
+                journal_rank_entry(key, idx, Some(&arr[idx]));
                 arr[idx] = make_count_entry(item_key, count);
             }
-            None => arr.push(make_count_entry(item_key, 1)),
+            None => {
+                journal_rank_entry(key, arr.len(), None);
+                arr.push(make_count_entry(item_key, 1));
+            }
         }
+    });
+}
+
+/// Record how to put one ranked-array element back: its previous entry, or the
+/// index it was appended at.
+fn journal_rank_entry(key: &str, index: usize, prior: Option<&Dynamic>) {
+    super::journal_undo(|| super::Undo::ArrayEntry {
+        key: key.to_string(),
+        index,
+        prior: prior.cloned(),
     });
 }
 
@@ -223,9 +248,13 @@ fn rank_weighted_insert(key: &str, item_key: &str, n: i64, value: f64, is_top: b
                 } else {
                     value.min(current)
                 };
+                journal_rank_entry(key, idx, Some(&arr[idx]));
                 arr[idx] = make_value_entry(item_key, merged);
             }
-            None => arr.push(make_value_entry(item_key, value)),
+            None => {
+                journal_rank_entry(key, arr.len(), None);
+                arr.push(make_value_entry(item_key, value));
+            }
         }
     });
 }
