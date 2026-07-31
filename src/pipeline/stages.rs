@@ -3,7 +3,7 @@ use crate::config::TimestampFilterConfig;
 use crate::engine::RhaiEngine;
 use crate::event::Event;
 use crate::rhai_functions::file_ops;
-use crate::rhai_functions::{absorb, columns, emit};
+use crate::rhai_functions::{columns, emit};
 use anyhow::Result;
 
 /// Preserve error-tracking state across the script error boundary.
@@ -192,7 +192,6 @@ impl FilterStage {
 
     fn evaluate_filter(&mut self, event: &Event, ctx: &mut PipelineContext) -> Result<bool> {
         columns::set_parse_cols_strict(ctx.config.strict);
-        absorb::set_absorb_strict(ctx.config.strict);
 
         file_ops::clear_pending_ops();
 
@@ -344,7 +343,6 @@ impl ScriptStage for ExecStage {
         let mut event_copy = event.clone();
 
         columns::set_parse_cols_strict(ctx.config.strict);
-        absorb::set_absorb_strict(ctx.config.strict);
         emit::set_emit_strict(ctx.config.strict);
         emit::set_emit_use_emoji(crate::tty::should_use_emoji_with_mode(
             &ctx.config.emoji_mode,
@@ -547,7 +545,6 @@ impl AssertStage {
     fn evaluate_assertion(&mut self, event: &Event, ctx: &mut PipelineContext) -> Result<bool> {
         // Same pattern as FilterStage::evaluate_filter
         columns::set_parse_cols_strict(ctx.config.strict);
-        absorb::set_absorb_strict(ctx.config.strict);
 
         file_ops::clear_pending_ops();
 
@@ -730,7 +727,6 @@ impl BeginStage {
     pub fn execute(&self, ctx: &mut PipelineContext) -> Result<()> {
         if let Some(ref compiled) = self.compiled_begin {
             columns::set_parse_cols_strict(ctx.config.strict);
-            absorb::set_absorb_strict(ctx.config.strict);
             file_ops::clear_pending_ops();
             // emit_each() cannot be materialized outside the per-event loop;
             // reject it in --begin. Reset before returning so the per-event
@@ -770,7 +766,6 @@ impl EndStage {
     pub fn execute(&self, ctx: &PipelineContext) -> Result<()> {
         if let Some(ref compiled) = self.compiled_end {
             columns::set_parse_cols_strict(ctx.config.strict);
-            absorb::set_absorb_strict(ctx.config.strict);
             file_ops::clear_pending_ops();
             // emit_each() cannot be materialized after the event loop; reject it
             // in --end. Reset afterward to leave no stale guard on the thread.
