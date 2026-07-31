@@ -44,6 +44,26 @@ pub const SAMPLE_MAX_LINES: usize = 64;
 /// unbounded memory during detection.
 pub const SAMPLE_MAX_BYTES: usize = 256 * 1024;
 
+/// Multi-offset probing: in addition to the head sample, plain (uncompressed,
+/// seekable) files get a few line windows sampled from deeper in the file —
+/// at 1/4, 1/2, 3/4 of the size, plus a window near the end — so a format
+/// change partway through (concatenated rotations, a service that switched
+/// from plaintext to JSON mid-file) is still seen. Head-only sampling can't
+/// catch those by construction. gzip/zstd inputs aren't seekable in the
+/// decompressed domain, so they keep head-only sampling.
+///
+/// Files smaller than this aren't worth probing: their probe windows would
+/// largely overlap the head sample.
+const PROBE_MIN_FILE_BYTES: u64 = 32 * 1024;
+/// Byte budget per probe window; also the amount by which a probe read is
+/// hard-limited (`Read::take`), so one enormous line can't buffer unbounded.
+const PROBE_WINDOW_BYTES: u64 = 64 * 1024;
+/// Non-empty lines sampled per probe window.
+const PROBE_MAX_LINES: usize = 16;
+/// The tail probe starts this many bytes before EOF, so it samples the actual
+/// last lines of the file rather than a window 64 KiB short of them.
+const PROBE_TAIL_BYTES: u64 = 8 * 1024;
+
 /// Result of format detection
 #[derive(Debug, Clone)]
 pub struct DetectedFormat {
@@ -54,10 +74,14 @@ pub struct DetectedFormat {
     /// `line` because the input ran out. Multi-file detection uses this to keep
     /// scanning past inputs that hold nothing to detect from.
     pub saw_content: bool,
-    /// How many non-empty lines informed the decision (1 for first-line
-    /// detection, up to `SAMPLE_MAX_LINES` for sampled detection). Only used
-    /// to word the `-v` notice.
+    /// How many non-empty lines from the input's head informed the decision
+    /// (1 for first-line detection, up to `SAMPLE_MAX_LINES` for sampled
+    /// detection). Only used to word the `-v` notice.
     pub sample_lines: usize,
+    /// How many additional lines came from mid-file probe windows (0 when the
+    /// input wasn't probed: stdin, compressed, or small files). Only used to
+    /// word the `-v` notice.
+    pub probe_lines: usize,
 }
 
 impl DetectedFormat {
@@ -83,6 +107,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             had_input: reader.saw_any_input(),
             saw_content: false,
             sample_lines: 0,
+            probe_lines: 0,
         }),
         Some(line) => {
             // Remove newline for detection
@@ -93,6 +118,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 had_input: true,
                 saw_content: true,
                 sample_lines: 1,
+                probe_lines: 0,
             })
         }
     }
@@ -106,20 +132,30 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
 /// `parsers::detect_format_from_sample`). Used for *file* inputs only — stdin
 /// may be a live pipe, where blocking on a 64-line sample would stall
 /// `tail -f`-style streaming, so it keeps first-line detection.
+///
+/// When `probe_path` names the underlying file, plain uncompressed files of at
+/// least `PROBE_MIN_FILE_BYTES` additionally get mid-file probe windows (see
+/// `probe_file_offsets`) appended to the sample, so a format change beyond the
+/// head is still detected. Probe lines are appended *after* the head lines:
+/// the whole-file csv/tsv rule keys off the file's true first line.
 pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
     reader: &mut readers::PeekableLineReader<R>,
+    probe_path: Option<&str>,
 ) -> Result<DetectedFormat> {
-    let lines = reader.peek_nonempty_lines(SAMPLE_MAX_LINES, SAMPLE_MAX_BYTES)?;
-    if lines.is_empty() {
+    let head_lines = reader.peek_nonempty_lines(SAMPLE_MAX_LINES, SAMPLE_MAX_BYTES)?;
+    if head_lines.is_empty() {
         return Ok(DetectedFormat {
             format: config::InputFormat::Line,
             had_input: reader.saw_any_input(),
             saw_content: false,
             sample_lines: 0,
+            probe_lines: 0,
         });
     }
-    let trimmed: Vec<&str> = lines
+    let probe_lines = probe_path.map(probe_file_offsets).unwrap_or_default();
+    let trimmed: Vec<&str> = head_lines
         .iter()
+        .chain(probe_lines.iter())
         .map(|line| line.trim_end_matches(&['\r', '\n'][..]))
         .collect();
     let detected = parsers::detect_format_from_sample(trimmed.iter().copied())?;
@@ -127,8 +163,98 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
         format: detected,
         had_input: true,
         saw_content: true,
-        sample_lines: lines.len(),
+        sample_lines: head_lines.len(),
+        probe_lines: probe_lines.len(),
     })
+}
+
+/// Sample a few line windows from deeper inside a plain file: at 1/4, 1/2 and
+/// 3/4 of its size, plus a window covering the last `PROBE_TAIL_BYTES`.
+///
+/// Best-effort by design: probing only ever *adds* sample lines on top of an
+/// already-successful head detection, so any condition that makes probing
+/// unsafe or useless — not a regular file, too small, gzip/zstd magic bytes
+/// (byte offsets in the compressed stream are meaningless for the decompressed
+/// lines), or an I/O error mid-probe — degrades to fewer or no probe lines
+/// rather than an error.
+fn probe_file_offsets(path: &str) -> Vec<String> {
+    use std::io::Read;
+
+    let Ok(metadata) = fs::metadata(path) else {
+        return Vec::new();
+    };
+    if !metadata.is_file() || metadata.len() < PROBE_MIN_FILE_BYTES {
+        return Vec::new();
+    }
+    let Ok(mut file) = fs::File::open(path) else {
+        return Vec::new();
+    };
+    let mut magic = [0u8; 4];
+    let Ok(n) = file.read(&mut magic) else {
+        return Vec::new();
+    };
+    if decompression::looks_compressed(&magic[..n]) {
+        return Vec::new();
+    }
+
+    let size = metadata.len();
+    let offsets = [
+        size / 4,
+        size / 2,
+        size / 4 * 3,
+        size.saturating_sub(PROBE_TAIL_BYTES),
+    ];
+    let mut lines = Vec::new();
+    for offset in offsets {
+        match probe_lines_at(&mut file, offset) {
+            Ok(mut probed) => lines.append(&mut probed),
+            Err(_) => break,
+        }
+    }
+    lines
+}
+
+/// Read up to `PROBE_MAX_LINES` non-empty lines from a window starting at
+/// `offset`, hard-limited to `PROBE_WINDOW_BYTES` bytes.
+///
+/// The (almost certainly partial) line the offset lands in is skipped, and a
+/// final line cut off by the window/EOF without its `\n` is dropped: a
+/// truncated line could re-detect as a different format (a JSON line cut in
+/// half reads as `line`) and pollute the cascade with a member the file
+/// doesn't actually contain.
+fn probe_lines_at(file: &mut fs::File, offset: u64) -> std::io::Result<Vec<String>> {
+    use std::io::{Read, Seek, SeekFrom};
+
+    file.seek(SeekFrom::Start(offset))?;
+    let mut window = std::io::BufReader::new(file.by_ref().take(PROBE_WINDOW_BYTES));
+
+    let mut buf = Vec::new();
+    if offset > 0 {
+        // Skip the partial line the seek landed in. If no newline shows up in
+        // the whole window (one enormous line), there is nothing to sample.
+        buf.clear();
+        if window.read_until(b'\n', &mut buf)? == 0 || !buf.ends_with(b"\n") {
+            return Ok(Vec::new());
+        }
+    }
+
+    let mut lines = Vec::new();
+    while lines.len() < PROBE_MAX_LINES {
+        buf.clear();
+        if window.read_until(b'\n', &mut buf)? == 0 {
+            break;
+        }
+        if !buf.ends_with(b"\n") {
+            // Cut off by the window cap (or a missing trailing newline at
+            // EOF); can't tell truncation from completeness, so drop it.
+            break;
+        }
+        let line = String::from_utf8_lossy(&buf).into_owned();
+        if !line.trim().is_empty() {
+            lines.push(line);
+        }
+    }
+    Ok(lines)
 }
 
 /// Detect the input format by scanning `sorted_files` in order, using the first
@@ -172,8 +298,12 @@ pub fn detect_format_from_files(sorted_files: &[String], strict: bool) -> Result
                 let mut peekable_reader = readers::PeekableLineReader::new(decompressed);
                 // Files get sampled detection: the head arrives promptly (unlike
                 // a live stdin pipe) and the reader is discarded afterwards —
-                // regular readers reopen the path for actual processing.
-                let candidate = detect_format_from_peekable_reader_sampled(&mut peekable_reader)?;
+                // regular readers reopen the path for actual processing. The
+                // path is passed along so plain files also get mid-file probes.
+                let candidate = detect_format_from_peekable_reader_sampled(
+                    &mut peekable_reader,
+                    Some(file_path),
+                )?;
                 if candidate.saw_content {
                     detected = Some(candidate);
                     break;
@@ -248,6 +378,7 @@ pub fn detect_format_for_parallel_mode(
                 had_input: false,
                 saw_content: false,
                 sample_lines: 0,
+                probe_lines: 0,
             },
             None,
         ));
@@ -289,10 +420,18 @@ pub fn format_detected_format_notice(
             return None;
         }
         let format_name = detected.format.to_display_string();
+        let sampled = if detected.probe_lines > 0 {
+            format!(
+                "first {} + {} mid-file lines",
+                detected.sample_lines, detected.probe_lines
+            )
+        } else {
+            format!("first {} lines", detected.sample_lines)
+        };
         let provenance = if detected.format.is_cascade() {
-            format!("mixed formats in first {} lines", detected.sample_lines)
-        } else if detected.sample_lines > 1 {
-            format!("from first {} lines", detected.sample_lines)
+            format!("mixed formats in {}", sampled)
+        } else if detected.sample_lines > 1 || detected.probe_lines > 0 {
+            format!("from {}", sampled)
         } else {
             "from first line".to_string()
         };
@@ -504,6 +643,119 @@ mod tests {
         assert!(detected.detected_non_line());
     }
 
+    /// Enough JSON lines to pass `PROBE_MIN_FILE_BYTES` on their own.
+    fn json_block(lines: usize) -> String {
+        (0..lines)
+            .map(|i| {
+                format!(
+                    "{{\"level\":\"info\",\"msg\":\"padding padding padding padding\",\"seq\":{i}}}\n"
+                )
+            })
+            .collect()
+    }
+
+    fn text_block(lines: usize) -> String {
+        (0..lines)
+            .map(|i| format!("plain text payload without any structure at all {i}\n"))
+            .collect()
+    }
+
+    #[test]
+    fn probing_detects_format_change_beyond_the_head() {
+        // JSON for the first ~40 KiB, plain text after: the 64-line head
+        // sample sees only JSON; the mid-file/tail probes must catch the
+        // switch and turn detection into a cascade.
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let contents = format!("{}{}", json_block(600), text_block(600));
+        assert!(contents.len() as u64 >= PROBE_MIN_FILE_BYTES * 2);
+        let path = write_input(&dir, "rotated.log", &contents);
+
+        let detected = detect_format_from_files(&[path], false).expect("detection");
+
+        match &detected.format {
+            config::InputFormat::Cascade(members) => {
+                assert_eq!(
+                    members,
+                    &vec![config::InputFormat::Json, config::InputFormat::Line]
+                );
+            }
+            other => panic!("expected cascade(json,line), got {other:?}"),
+        }
+        assert!(detected.probe_lines > 0, "probes must have contributed");
+    }
+
+    #[test]
+    fn probing_keeps_homogeneous_large_files_single_format() {
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let path = write_input(&dir, "big.json", &json_block(1200));
+
+        let detected = detect_format_from_files(&[path], false).expect("detection");
+
+        assert!(
+            matches!(detected.format, config::InputFormat::Json),
+            "homogeneous large file must stay json, got {:?}",
+            detected.format
+        );
+        assert!(detected.probe_lines > 0, "file is large enough to probe");
+    }
+
+    #[test]
+    fn small_files_are_not_probed() {
+        // Below PROBE_MIN_FILE_BYTES the head sample is the whole story: a
+        // format change past the 64-line head window is (documentedly) missed.
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let contents = format!("{}{}", json_block(100), text_block(20));
+        assert!((contents.len() as u64) < PROBE_MIN_FILE_BYTES);
+        let path = write_input(&dir, "small.log", &contents);
+
+        let detected = detect_format_from_files(&[path], false).expect("detection");
+
+        assert_eq!(detected.probe_lines, 0);
+        assert!(matches!(detected.format, config::InputFormat::Json));
+    }
+
+    #[test]
+    fn probe_skips_compressed_files() {
+        // Byte offsets in a compressed stream are meaningless for the
+        // decompressed lines, so files with gzip magic are never probed —
+        // regardless of size.
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let mut contents = vec![0x1F, 0x8B, 0x08];
+        contents.extend(std::iter::repeat_n(
+            b'a',
+            (PROBE_MIN_FILE_BYTES * 2) as usize,
+        ));
+        let path = dir.path().join("fake.gz");
+        std::fs::write(&path, contents).expect("write");
+
+        assert!(probe_file_offsets(&path.to_string_lossy()).is_empty());
+    }
+
+    #[test]
+    fn probe_window_skips_partial_and_drops_unterminated_lines() {
+        // Seeking into the middle of a line must not sample the fragment, and
+        // a final line without its newline (EOF or window cap) is dropped —
+        // a truncated JSON line would misdetect as `line`.
+        let mut file = tempfile::tempfile().expect("tempfile");
+        {
+            use std::io::Write;
+            write!(file, "first line\nsecond line\nthird line\nunterminated").expect("write");
+        }
+
+        // Offset 3 lands inside "first line": skip it, keep the two complete
+        // lines, drop the unterminated tail.
+        let lines = probe_lines_at(&mut file, 3).expect("probe");
+        assert_eq!(
+            lines,
+            vec!["second line\n".to_string(), "third line\n".to_string()]
+        );
+
+        // Offset 0 skips nothing but still drops the unterminated tail.
+        let lines = probe_lines_at(&mut file, 0).expect("probe");
+        assert_eq!(lines.len(), 3);
+        assert_eq!(lines[0], "first line\n");
+    }
+
     #[test]
     fn file_detection_stays_single_format_for_homogeneous_files() {
         // Sampling must not change the result for files that detect cleanly.
@@ -529,6 +781,7 @@ mod tests {
             had_input: true,
             saw_content: true,
             sample_lines: 42,
+            probe_lines: 0,
         };
 
         let mut verbose_cfg = base_config();
@@ -604,6 +857,7 @@ mod tests {
             had_input: true,
             saw_content: true,
             sample_lines: 1,
+            probe_lines: 0,
         };
 
         // A confident auto-detection is silent on a normal run...
