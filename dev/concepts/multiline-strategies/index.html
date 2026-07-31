@@ -1942,6 +1942,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Streams, Timeouts, and Safety Caps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-nothing-splits-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When nothing splits at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2667,6 +2684,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Streams, Timeouts, and Safety Caps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-nothing-splits-at-all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When nothing splits at all
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -3012,6 +3046,31 @@ newlines (<code>-f syslog</code> and the built-in application-log patterns alrea
   buffering everything is its purpose.</p>
 </li>
 </ul>
+<h3 id="when-nothing-splits-at-all">When nothing splits at all<a class="headerlink" href="#when-nothing-splits-at-all" title="Permanent link">&para;</a></h3>
+<p>The line cap only engages above its 10000-line default, so on an ordinary file
+a boundary rule that never matches used to be completely silent: one event, no
+errors, exit <code>0</code>. kelora now hints once at end of input when the rule never
+matched <em>any</em> line, naming the premise that failed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gp">$ </span>kelora<span class="w"> </span>app.log<span class="w"> </span>--multiline<span class="w"> </span>regex:match<span class="o">=</span><span class="s1">&#39;^NEVERMATCHES&#39;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="go">kelora hint: multiline &#39;regex&#39;: the start pattern &#39;^NEVERMATCHES&#39; never matched,</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="go">so nothing split the input into separate events — check the pattern</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="gp gp-VirtualEnv">(see --help-multiline)</span>
+</code></pre></div>
+<p>The common causes are a typo'd <code>regex:match=</code>, <code>timestamp</code> on a file whose
+lines carry their timestamp inside the record rather than at column 0 (<code>{"ts":
+…</code>, <code>ts=…</code>, <code>[2024-07-14 …]</code>), <code>blank</code> on input with no blank lines, and
+<code>indent</code> where every line is indented.</p>
+<p>Two strategies are exempt, because finding no boundary is not a mistake for
+them: <code>all</code> is asked for exactly one event, and a language preset legitimately
+reports none when the whole input is a single stack trace (a piped crash dump).
+The hint is advisory — <code>--no-hints</code>, <code>--no-diagnostics</code>, <code>--silent</code>, or
+<code>KELORA_NO_HINTS</code> silence it, and like other hints it is hushed in data-only
+modes (<code>-s</code>, <code>-m</code>, …) unless you pass <code>--hints</code>.</p>
+<p>Note that this catches only the <em>total</em> collapse. A strategy that finds some
+boundaries but far fewer than the input has records — <code>timestamp</code> on a
+mixed-format capture where only a minority of lines lead with a timestamp — is
+still silent; <code>-s</code> is the way to spot it, by comparing <code>Lines processed</code> with
+<code>Events created</code>.</p>
 <h2 id="observability-and-debugging">Observability and Debugging<a class="headerlink" href="#observability-and-debugging" title="Permanent link">&para;</a></h2>
 <ul>
 <li>

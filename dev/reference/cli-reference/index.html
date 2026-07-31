@@ -7443,8 +7443,15 @@ For manual or lightweight bucketing, <code>normalized()</code> can pre-normalize
 <li><code>json</code> - Complete metadata for programmatic use</li>
 </ul>
 <p>Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
+md5, sha1, sha256, path, oauth, hexcolor, version, hexnum, duration,
 timestamp, date, time, num.
+<code>function</code> exists but is <strong>off by default</strong>: it replaced the identifier along
+with the parentheses, so <code>Intel(R) Xeon(TM) CPU</code> mined as <code>&lt;function&gt; &lt;function&gt;
+CPU</code>, <code>Received SNMP packet(s)</code> as <code>Received SNMP &lt;function&gt;</code>, and
+<code>pam_unix(sshd:auth)</code> and <code>pam_unix(sshd:session)</code> collapsed into one template.
+Whatever varies inside the parentheses is already covered by <code>num</code>, <code>path</code> and
+friends. Opt back in with
+<code>drain_template(msg, #{filters: ["%{KELORA_FUNCTION:function}", ...]})</code>.
 <code>timestamp</code> also covers calendar dates spanning several tokens — ctime/asctime
 (<code>Mon Jun 13 03:55:15 2005</code>, with or without the year) and the bare syslog form
 (<code>Jun 13 03:55:15</code>) — so one message doesn't split into a template per weekday.

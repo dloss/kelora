@@ -9201,8 +9201,12 @@ replacing sensitive patterns with placeholders.</p>
 <a id="__codelineno-150-2" name="__codelineno-150-2" href="#__codelineno-150-2"></a>e.template = r.template;
 </code></pre></div>
 <p>Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
+md5, sha1, sha256, path, oauth, hexcolor, version, hexnum, duration,
 timestamp, date, time, num.
+<code>function</code> is <strong>not</strong> in the default set: it replaced the identifier along with
+the parentheses, so <code>Intel(R)</code> and <code>packet(s)</code> both mined as <code>&lt;function&gt;</code>. Ask
+for it with <code>filters: ["%{KELORA_FUNCTION:function}", ...]</code>. (It is unrelated to
+<code>normalized()</code>'s <code>function</code> pattern, which stays on by default.)
 <code>timestamp</code> also covers calendar dates that span several tokens — ctime/asctime
 (<code>Mon Jun 13 03:55:15 2005</code>, with or without the year) and the bare syslog form
 (<code>Jun 13 03:55:15</code>) — so one message doesn't split into a template per weekday.
