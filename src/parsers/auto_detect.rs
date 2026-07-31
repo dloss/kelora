@@ -78,16 +78,71 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
     Ok(ConfigInputFormat::Line)
 }
 
+/// What a multi-line sample detected: the format to parse with, plus any
+/// structured formats the sample contained that the format does *not* parse.
+#[derive(Debug)]
+pub struct SampleDetection {
+    /// The format the run should use. One of: a single format (homogeneous
+    /// sample, or whole-file csv/tsv), plain `line`, or a two-member
+    /// `cascade(X,line)` — auto-detection never builds anything wider.
+    pub format: ConfigInputFormat,
+    /// Display names of structured formats seen in the sample but left out of
+    /// `format` (rank order). Their lines will parse as whole `line` events;
+    /// detection surfaces them via a hint suggesting `suggested_cascade`.
+    pub unparsed_formats: Vec<String>,
+    /// The explicit `-f` value that would parse everything the sample showed
+    /// (all structured formats by specificity, `line` last). `Some` exactly
+    /// when `unparsed_formats` is non-empty.
+    pub suggested_cascade: Option<String>,
+}
+
+impl SampleDetection {
+    fn plain(format: ConfigInputFormat) -> Self {
+        Self {
+            format,
+            unparsed_formats: Vec::new(),
+            suggested_cascade: None,
+        }
+    }
+}
+
+/// In samples of at least this many lines, a structured format needs
+/// [`CASCADE_QUORUM`] matching lines to anchor a cascade. Below it, a single
+/// line is a meaningful fraction of the file and counts on its own.
+const CASCADE_QUORUM_MIN_SAMPLE: usize = 4;
+/// Sampled lines a structured format must claim before auto-detection builds
+/// a cascade around it. With head + probe samples reaching ~128 lines, a
+/// single matching line is far more likely to be an accident (one
+/// `key=value key2=value2`-shaped line in a CI log) than a format the file
+/// really contains — and one accidental member used to change how every
+/// other line in the file was parsed.
+const CASCADE_QUORUM: usize = 2;
+
 /// Detect the input format from a multi-line sample instead of a single line.
 ///
 /// Each sampled line is classified with [`detect_format`]. A homogeneous sample
 /// returns exactly what single-line detection would have returned, so files
 /// that detect cleanly today are unaffected. A *mixed* sample — the messy
-/// multiformat file this exists for (JSON with plain-text startup lines,
-/// concatenated logs from different services) — returns
-/// [`ConfigInputFormat::Cascade`] over the detected formats, ordered by the
-/// same specificity ranking the single-line detector uses, so each line is
-/// parsed by the format that claims it instead of becoming a parse error.
+/// real-world file this exists for (JSON with plain-text startup lines, a
+/// service log with interleaved tracebacks) — parses with a capped cascade:
+///
+/// - **At most one structured format joins.** The dominant one — most sampled
+///   lines, ties broken by detection specificity — paired with the `line`
+///   catch-all: `cascade(json,line)`, never `cascade(json,syslog,logfmt,…)`.
+///   Detection is per-line parser acceptance, which has good recall but
+///   imperfect precision; a wide auto-built cascade let any accidental member
+///   claim lines it was never voted in by. Files that genuinely interleave
+///   several structured formats keep working line-by-line (the extras parse
+///   as `line`), and the returned `unparsed_formats`/`suggested_cascade`
+///   drive a hint telling the user the explicit `-f json,syslog,line` that
+///   parses everything.
+/// - **Membership needs a quorum** ([`CASCADE_QUORUM`]): one matching line in
+///   a large sample doesn't recruit a parser for the whole file.
+/// - **`line` is always the second member**, even when no sampled line needed
+///   it, so an auto-built cascade is total: a line past the sample window can
+///   never become a parse error on the strength of a guess. (Explicit user
+///   cascades are not padded this way — `-f json,logfmt` failing loudly on
+///   other content is what the user asked for.)
 ///
 /// Two rules keep the schema-based formats sane:
 ///
@@ -100,49 +155,86 @@ pub fn detect_format(sample_line: &str) -> Result<ConfigInputFormat> {
 ///   really an unstructured line with delimiter-shaped content (e.g. a log
 ///   message containing commas) — exactly what the cascade's `line` member is
 ///   for.
-///
-/// Every format the single-line detector can return other than csv/tsv is
-/// cascade-eligible (see `InputFormat::is_cascade_eligible`), so the cascade
-/// built here always passes the CLI-level cascade validation rules: no schema
-/// formats, and the catch-all `line` sorted last.
-pub fn detect_format_from_sample<'a, I>(lines: I) -> Result<ConfigInputFormat>
+pub fn detect_format_from_sample<'a, I>(lines: I) -> Result<SampleDetection>
 where
     I: IntoIterator<Item = &'a str>,
 {
     let mut iter = lines.into_iter();
     let Some(first) = iter.next() else {
-        return Ok(ConfigInputFormat::Line);
+        return Ok(SampleDetection::plain(ConfigInputFormat::Line));
     };
 
     let first_format = detect_format(first)?;
     if is_schema_format(&first_format) {
-        return Ok(first_format);
+        return Ok(SampleDetection::plain(first_format));
     }
 
-    let mut members: Vec<ConfigInputFormat> = vec![first_format];
+    let mut tallies: Vec<(ConfigInputFormat, usize)> = vec![(first_format, 1)];
+    let mut total_lines = 1usize;
     for line in iter {
+        total_lines += 1;
         let detected = detect_format(line)?;
         let fmt = if is_schema_format(&detected) {
             ConfigInputFormat::Line
         } else {
             detected
         };
-        if !members
-            .iter()
-            .any(|m| m.to_display_string() == fmt.to_display_string())
+        match tallies
+            .iter_mut()
+            .find(|(m, _)| m.to_display_string() == fmt.to_display_string())
         {
-            members.push(fmt);
+            Some(entry) => entry.1 += 1,
+            None => tallies.push((fmt, 1)),
         }
     }
 
-    if members.len() == 1 {
-        return Ok(members.remove(0));
+    if tallies.len() == 1 {
+        return Ok(SampleDetection::plain(tallies.remove(0).0));
     }
 
-    // Stable sort: formats with equal rank (multiple named app-log formats)
-    // keep their first-seen order.
-    members.sort_by_key(cascade_rank);
-    Ok(ConfigInputFormat::Cascade(members))
+    // Mixed sample: pick the dominant structured format. Stable sort, so
+    // equal (count, rank) keys — e.g. two named app-log formats tied on
+    // support — keep their first-seen order.
+    let mut structured: Vec<(ConfigInputFormat, usize)> = tallies
+        .into_iter()
+        .filter(|(fmt, _)| !matches!(fmt, ConfigInputFormat::Line))
+        .collect();
+    structured.sort_by_key(|(fmt, count)| (std::cmp::Reverse(*count), cascade_rank(fmt)));
+
+    let quorum = if total_lines >= CASCADE_QUORUM_MIN_SAMPLE {
+        CASCADE_QUORUM
+    } else {
+        1
+    };
+    let dominant = (structured.first().map_or(0, |(_, count)| *count) >= quorum)
+        .then(|| structured.remove(0).0);
+
+    // Everything structured that we are not parsing — for the hint. The
+    // suggestion includes the dominant format too, so it is a complete `-f`
+    // value, ordered by specificity with the catch-all last.
+    let mut unparsed: Vec<ConfigInputFormat> = structured.into_iter().map(|(fmt, _)| fmt).collect();
+    unparsed.sort_by_key(cascade_rank);
+    let suggested_cascade = (!unparsed.is_empty()).then(|| {
+        let mut all: Vec<&ConfigInputFormat> = unparsed.iter().chain(dominant.iter()).collect();
+        all.sort_by_key(|fmt| cascade_rank(fmt));
+        let mut names: Vec<String> = all.iter().map(|fmt| fmt.to_display_string()).collect();
+        names.push("line".to_string());
+        names.join(",")
+    });
+    let unparsed_formats: Vec<String> = unparsed
+        .iter()
+        .map(ConfigInputFormat::to_display_string)
+        .collect();
+
+    let format = match dominant {
+        Some(fmt) => ConfigInputFormat::Cascade(vec![fmt, ConfigInputFormat::Line]),
+        None => ConfigInputFormat::Line,
+    };
+    Ok(SampleDetection {
+        format,
+        unparsed_formats,
+        suggested_cascade,
+    })
 }
 
 /// CSV/TSV in any variant: the formats whose schema is fixed at the head of
@@ -248,9 +340,28 @@ fn detect_cri(line: &str) -> Option<&'static crate::parsers::lnav_formats::LnavF
     crate::parsers::lnav_formats::matches_named("cri", line)
 }
 
-/// Detect logfmt format using actual parser for 100% accuracy
+/// Detect logfmt with stricter rules than the parser itself.
+///
+/// The parser is deliberately tolerant — under an explicit `-f logfmt` a line
+/// is whatever the user says it is, and salvaging is right. Detection needs
+/// precision instead: `parser.parse(line).is_ok()` accepts any line whose
+/// every whitespace token contains `=`, which claims URLs with query strings
+/// (`…/search?q=timeout&limit=10`), base64 padding (`…Zw==`), env/assignment
+/// dumps (`PATH=/usr/bin`), and CLI flags (`--config=/etc/app.yaml`). Two
+/// extra requirements kill that entire family while keeping real logfmt:
+///
+/// - **at least two key=value pairs** — every accidental match above is a
+///   single "assignment-shaped" token, while genuine logfmt records carry
+///   several fields (a pure `cache=hit`-style single-pair log would no longer
+///   auto-detect, and wants an explicit `-f logfmt`);
+/// - **no unterminated quotes** (`parse_strict`) — an unclosed quote
+///   swallowing the rest of the line into one value is evidence *against*
+///   logfmt, even though the parser tolerates it for truncated lines.
 fn detect_logfmt(line: &str) -> bool {
-    logfmt_detector().parse(line).is_ok()
+    logfmt_detector()
+        .parse_strict(line)
+        .map(|event| event.fields.len() >= 2)
+        .unwrap_or(false)
 }
 
 /// Detect CSV/TSV variants
@@ -496,6 +607,97 @@ mod tests {
             detect_format("key1=value1 key2=value2 key3=value3").unwrap(),
             ConfigInputFormat::Logfmt
         );
+        // Two pairs is the detection minimum.
+        assert_eq!(
+            detect_format("level=info port=8080").unwrap(),
+            ConfigInputFormat::Logfmt
+        );
+    }
+
+    #[test]
+    fn test_assignment_shaped_lines_are_not_logfmt() {
+        // The parser accepts all of these (every whitespace token contains
+        // '='), and must keep doing so under an explicit -f logfmt. Detection
+        // must not: each is a single assignment-shaped token, not a logfmt
+        // record, and one such line used to recruit logfmt into an
+        // auto-detected cascade for the whole file.
+        for line in [
+            // URL with a query string.
+            "https://api.example.com/v1/search?q=timeout&limit=10",
+            // Base64 padding.
+            "dGhpcyBpcyBhIGJhc2U2NCBibG9iIHdpdGggcGFkZGluZw==",
+            // Environment/assignment dump.
+            "PATH=/usr/local/bin:/usr/bin:/bin",
+            // CLI flag.
+            "--config=/etc/app/app.yaml",
+            // Single genuine-looking pair: below the two-pair minimum.
+            "cache=hit",
+            "x==",
+        ] {
+            assert_eq!(
+                detect_format(line).unwrap(),
+                ConfigInputFormat::Line,
+                "assignment-shaped line must not detect as logfmt: {line}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_unterminated_quote_is_not_logfmt() {
+        // The parser tolerates an unclosed quote (the value runs to end of
+        // line) so a truncated line under -f logfmt still salvages, but for
+        // detection an unclosed quote swallowing prose is evidence against
+        // logfmt — even when enough pairs precede it.
+        for line in [
+            r#"config="/etc/app.yaml not found, falling back to defaults"#,
+            r#"a=1 msg="unterminated quote and then whatever prose follows"#,
+        ] {
+            assert_eq!(
+                detect_format(line).unwrap(),
+                ConfigInputFormat::Line,
+                "unterminated quote must not detect as logfmt: {line}"
+            );
+        }
+        // The same shapes with the quote closed are logfmt again.
+        assert_eq!(
+            detect_format(r#"a=1 msg="now properly terminated""#).unwrap(),
+            ConfigInputFormat::Logfmt
+        );
+    }
+
+    #[test]
+    fn test_syslog_requires_a_real_timestamp() {
+        // `\w{3}` used to accept any three-letter word as a month and any
+        // \d{2}:\d{2}:\d{2} as a clock, fabricating ts fields from lines that
+        // were never syslog.
+        for line in [
+            "Job 15 12:00:00 worker task: completed",
+            "Run 27 08:15:00 stage deploy: promoting build",
+            "foo 1 10:00:00 h a: b",
+            "Feb 30 99:99:99 host app: impossible clock",
+            "Jan 0 10:00:00 host app: day zero",
+            "Jan 45 10:00:00 host app: day forty-five",
+        ] {
+            assert_eq!(
+                detect_format(line).unwrap(),
+                ConfigInputFormat::Line,
+                "line with a fake timestamp must not detect as syslog: {line}"
+            );
+        }
+        // Genuine RFC3164 timestamps keep working, including single-digit days
+        // and lowercase month spellings.
+        for line in [
+            "Jan 15 10:30:45 server1 sshd[1234]: Accepted publickey",
+            "Dec 25 23:59:59 hostname kernel: USB disconnect",
+            "Jan 5 00:00:00 host app: single-digit day",
+            "jan 15 10:30:45 host app: lowercase month",
+        ] {
+            assert_eq!(
+                detect_format(line).unwrap(),
+                ConfigInputFormat::Syslog,
+                "genuine syslog line must still detect: {line}"
+            );
+        }
     }
 
     #[test]
@@ -689,25 +891,57 @@ mod tests {
         );
     }
 
+    /// Assert a `SampleDetection` is `cascade(expected, line)` with no
+    /// dropped formats.
+    fn assert_capped_cascade(detection: &SampleDetection, expected: &ConfigInputFormat) {
+        match &detection.format {
+            ConfigInputFormat::Cascade(members) => {
+                assert_eq!(members.len(), 2, "auto cascades hold exactly two members");
+                assert_eq!(
+                    members[0].to_display_string(),
+                    expected.to_display_string(),
+                    "wrong dominant format"
+                );
+                assert_eq!(
+                    members[1],
+                    ConfigInputFormat::Line,
+                    "catch-all must be line"
+                );
+            }
+            other => panic!("expected cascade, got {other:?}"),
+        }
+        assert!(
+            detection.unparsed_formats.is_empty() && detection.suggested_cascade.is_none(),
+            "no formats should have been dropped: {:?}",
+            detection.unparsed_formats
+        );
+    }
+
     #[test]
     fn test_sample_homogeneous_matches_single_line_detection() {
         // A sample where every line detects the same way must return exactly
         // what single-line detection returns — files that detect cleanly today
         // are unaffected by sampling.
         assert_eq!(
-            detect_format_from_sample([r#"{"a":1}"#, r#"{"b":2}"#, r#"{"c":3}"#]).unwrap(),
+            detect_format_from_sample([r#"{"a":1}"#, r#"{"b":2}"#, r#"{"c":3}"#])
+                .unwrap()
+                .format,
             ConfigInputFormat::Json
         );
         assert_eq!(
-            detect_format_from_sample(["level=info msg=a", "level=warn msg=b"]).unwrap(),
+            detect_format_from_sample(["level=info msg=a", "level=warn msg=b"])
+                .unwrap()
+                .format,
             ConfigInputFormat::Logfmt
         );
         assert_eq!(
-            detect_format_from_sample(["plain text", "more plain text"]).unwrap(),
+            detect_format_from_sample(["plain text", "more plain text"])
+                .unwrap()
+                .format,
             ConfigInputFormat::Line
         );
         assert_eq!(
-            detect_format_from_sample([]).unwrap(),
+            detect_format_from_sample([]).unwrap().format,
             ConfigInputFormat::Line
         );
     }
@@ -720,57 +954,87 @@ mod tests {
             vec![r#"{"a":1}"#, "Server starting up...", r#"{"b":2}"#],
             vec!["Server starting up...", r#"{"a":1}"#],
         ] {
-            match detect_format_from_sample(sample.iter().copied()).unwrap() {
-                ConfigInputFormat::Cascade(members) => {
-                    assert_eq!(
-                        members,
-                        vec![ConfigInputFormat::Json, ConfigInputFormat::Line],
-                        "wrong cascade for sample {sample:?}"
-                    );
-                }
-                other => panic!("expected cascade for {sample:?}, got {other:?}"),
-            }
+            let detection = detect_format_from_sample(sample.iter().copied()).unwrap();
+            assert_capped_cascade(&detection, &ConfigInputFormat::Json);
         }
     }
 
     #[test]
-    fn test_sample_mixed_orders_by_specificity() {
-        // Order in the cascade follows detection priority (specific first),
-        // not sample order: logfmt seen first must still sort after json.
+    fn test_sample_caps_cascade_at_one_structured_format() {
+        // Two structured formats in the sample: only the dominant one joins
+        // the cascade (most lines; ties broken by detection specificity — here
+        // json over logfmt). The other is reported for the hint, with a
+        // complete, correctly ordered `-f` suggestion.
         let sample = [
             "level=info msg=starting",
             r#"{"level":"error"}"#,
+            r#"{"level":"warn"}"#,
             "something unstructured happened",
         ];
-        match detect_format_from_sample(sample).unwrap() {
+        let detection = detect_format_from_sample(sample).unwrap();
+        match &detection.format {
             ConfigInputFormat::Cascade(members) => {
                 assert_eq!(
                     members,
-                    vec![
-                        ConfigInputFormat::Json,
-                        ConfigInputFormat::Logfmt,
-                        ConfigInputFormat::Line
-                    ]
+                    &vec![ConfigInputFormat::Json, ConfigInputFormat::Line]
                 );
             }
             other => panic!("expected cascade, got {other:?}"),
         }
+        assert_eq!(detection.unparsed_formats, vec!["logfmt".to_string()]);
+        assert_eq!(
+            detection.suggested_cascade.as_deref(),
+            Some("json,logfmt,line")
+        );
     }
 
     #[test]
-    fn test_sample_mixed_without_line_fallthrough_omits_line() {
-        // No sampled line fell through to `line`, so the cascade holds only
-        // the structured formats.
-        let sample = [r#"{"a":1}"#, "level=info msg=hi"];
-        match detect_format_from_sample(sample).unwrap() {
+    fn test_sample_line_member_is_always_present() {
+        // Even when no sampled line fell through to `line`, the auto-built
+        // cascade still ends in the catch-all: the sample is a guess from a
+        // bounded window, so a line past it must never become a parse error
+        // on the strength of that guess.
+        let sample = [r#"{"a":1}"#, r#"{"b":2}"#, "level=info msg=hi"];
+        let detection = detect_format_from_sample(sample).unwrap();
+        match &detection.format {
             ConfigInputFormat::Cascade(members) => {
                 assert_eq!(
                     members,
-                    vec![ConfigInputFormat::Json, ConfigInputFormat::Logfmt]
+                    &vec![ConfigInputFormat::Json, ConfigInputFormat::Line]
                 );
             }
             other => panic!("expected cascade, got {other:?}"),
         }
+        assert_eq!(detection.unparsed_formats, vec!["logfmt".to_string()]);
+    }
+
+    #[test]
+    fn test_sample_quorum_ignores_a_single_outlier_line() {
+        // One structured-looking line in a big sample must not recruit a
+        // parser for the whole file — that single accidental member used to
+        // change how every other line was parsed. The dropped format is still
+        // reported so the hint can offer the explicit cascade.
+        let mut sample: Vec<String> = (0..40)
+            .map(|i| format!("Processing batch {i} of 40 records"))
+            .collect();
+        sample.push("cache=warm ttl=300".to_string());
+        let detection = detect_format_from_sample(sample.iter().map(|s| s.as_str())).unwrap();
+        assert_eq!(detection.format, ConfigInputFormat::Line);
+        assert_eq!(detection.unparsed_formats, vec!["logfmt".to_string()]);
+        assert_eq!(detection.suggested_cascade.as_deref(), Some("logfmt,line"));
+
+        // A second supporting line meets the quorum and anchors the cascade.
+        sample.push("cache=cold ttl=60".to_string());
+        let detection = detect_format_from_sample(sample.iter().map(|s| s.as_str())).unwrap();
+        assert_capped_cascade(&detection, &ConfigInputFormat::Logfmt);
+    }
+
+    #[test]
+    fn test_sample_tiny_samples_skip_the_quorum() {
+        // In a file of only two or three lines, a single structured line is a
+        // meaningful fraction of the file, not an outlier.
+        let detection = detect_format_from_sample([r#"{"a":1}"#, "plain text line"]).unwrap();
+        assert_capped_cascade(&detection, &ConfigInputFormat::Json);
     }
 
     #[test]
@@ -779,11 +1043,15 @@ mod tests {
         // a cascade around it, even though its data rows re-detect as
         // assorted csv variants.
         assert!(matches!(
-            detect_format_from_sample(["name,age,city", "john,25,nyc", "1,2,3"]).unwrap(),
+            detect_format_from_sample(["name,age,city", "john,25,nyc", "1,2,3"])
+                .unwrap()
+                .format,
             ConfigInputFormat::Csv(_)
         ));
         assert!(matches!(
-            detect_format_from_sample(["2024-01-02 10:00:00,INFO,started", "a,b,c"]).unwrap(),
+            detect_format_from_sample(["2024-01-02 10:00:00,INFO,started", "a,b,c"])
+                .unwrap()
+                .format,
             ConfigInputFormat::Csvnh
         ));
     }
@@ -794,15 +1062,8 @@ mod tests {
         // header, no fixed schema), so it joins the cascade as `line` rather
         // than poisoning detection.
         let sample = [r#"{"a":1}"#, "1,2,3", r#"{"b":2}"#];
-        match detect_format_from_sample(sample).unwrap() {
-            ConfigInputFormat::Cascade(members) => {
-                assert_eq!(
-                    members,
-                    vec![ConfigInputFormat::Json, ConfigInputFormat::Line]
-                );
-            }
-            other => panic!("expected cascade, got {other:?}"),
-        }
+        let detection = detect_format_from_sample(sample).unwrap();
+        assert_capped_cascade(&detection, &ConfigInputFormat::Json);
     }
 
     #[test]
@@ -813,7 +1074,8 @@ mod tests {
             "2024-01-02 15:04:05,123 INFO [main] com.example.Service - up",
             "some bare continuation text",
         ];
-        match detect_format_from_sample(sample).unwrap() {
+        let detection = detect_format_from_sample(sample).unwrap();
+        match &detection.format {
             ConfigInputFormat::Cascade(members) => {
                 assert_eq!(members.len(), 2);
                 match &members[0] {

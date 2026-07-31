@@ -494,12 +494,18 @@ head only, since compressed streams aren't seekable.
   leading files that are empty or contain only blank lines are skipped, so a
   freshly rotated (empty) log doesn't force everything to `line`
 - **Mixed-format files (file input only):** when the sampled head shows more
-  than one format, kelora parses with a cascade of the detected formats
-  (e.g. `cascade(json,line)`), exactly as if you had passed `-f json,line`.
-  Each event gets an `_format` field naming the format that parsed it; see
-  **cascade mode** below. CSV/TSV can't participate: a file whose first line
-  reads as CSV is parsed entirely as CSV, and a CSV-looking line later in a
-  non-CSV file is treated as `line`
+  than one format, kelora parses with a two-member cascade — the *dominant*
+  structured format plus the `line` catch-all (e.g. `cascade(json,line)`),
+  exactly as if you had passed `-f json,line`. Each event gets an `_format`
+  field naming the format that parsed it; see **cascade mode** below.
+  Auto-detection never builds anything wider: per-line detection has good
+  recall but imperfect precision, so a format needs at least two sampled
+  lines to anchor a cascade (in samples of four lines or more), and any
+  *further* structured formats in the sample parse as whole `line` events —
+  with a hint naming the explicit cascade (`-f json,syslog,line`) that would
+  parse them. CSV/TSV can't participate: a file whose first line reads as
+  CSV is parsed entirely as CSV, and a CSV-looking line later in a non-CSV
+  file is treated as `line`
 - On stdin, mixed input still pins to the first line's format — pass an
   explicit cascade (`-f json,line`) for mixed streams
 

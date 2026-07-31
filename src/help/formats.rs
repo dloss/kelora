@@ -141,10 +141,14 @@ auto (default)
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
   Note: Detects once and applies to all lines
-  Note: File input only: if the sampled head mixes formats, kelora parses with
-        a cascade of the detected formats (as if you had passed e.g.
-        -f json,line) and adds an '_format' field per event; see cascade mode
-        below. CSV/TSV never joins a cascade: a file starting as csv/tsv is
+  Note: File input only: if the sampled head mixes formats, kelora parses
+        with a two-member cascade of the dominant structured format plus the
+        'line' catch-all (as if you had passed -f json,line) and adds an
+        '_format' field per event; see cascade mode below. Auto-detection
+        never builds wider cascades: a format needs at least two sampled
+        lines to qualify, and any further structured formats in the sample
+        parse as 'line' with a hint naming the explicit -f that would parse
+        them. CSV/TSV never joins a cascade: a file starting as csv/tsv is
         parsed entirely as such, and a csv-looking line later in a non-csv
         file counts as 'line'. Mixed stdin still pins to the first line's
         format — pass an explicit cascade for mixed streams.

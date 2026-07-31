@@ -86,6 +86,14 @@ pub struct DetectedFormat {
     /// advisory "consider --multiline <preset>" hint; never affects the
     /// detected format itself.
     pub multiline_hint: Option<&'static MultilineSignature>,
+    /// Structured formats the sample contained that `format` does not parse
+    /// (auto-built cascades are capped at one structured member plus `line`).
+    /// Display names in specificity order; feeds the advisory hint only.
+    pub unparsed_formats: Vec<String>,
+    /// The explicit `-f` value that would parse everything the sample showed
+    /// (e.g. `json,syslog,line`). `Some` exactly when `unparsed_formats` is
+    /// non-empty; feeds the same hint.
+    pub cascade_suggestion: Option<String>,
 }
 
 /// A multiline (stack-trace) shape that detection can spot in its sample and
@@ -184,6 +192,8 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             sample_lines: 0,
             probe_lines: 0,
             multiline_hint: None,
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
         }),
         Some(line) => {
             // Remove newline for detection
@@ -196,6 +206,8 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 sample_lines: 1,
                 probe_lines: 0,
                 multiline_hint: None,
+                unparsed_formats: Vec::new(),
+                cascade_suggestion: None,
             })
         }
     }
@@ -205,8 +217,9 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
 /// non-empty lines (capped at `SAMPLE_MAX_BYTES`) instead of just the first.
 ///
 /// A homogeneous sample detects exactly like `detect_format_from_peekable_reader`;
-/// a mixed sample yields a `Cascade` over the detected formats (see
-/// `parsers::detect_format_from_sample`). Used for *file* inputs only — stdin
+/// a mixed sample yields a capped `Cascade` — the dominant structured format
+/// plus the `line` catch-all (see `parsers::detect_format_from_sample`, which
+/// also reports any further formats for the hint). Used for *file* inputs only — stdin
 /// may be a live pipe, where blocking on a 64-line sample would stall
 /// `tail -f`-style streaming, so it keeps first-line detection.
 ///
@@ -228,6 +241,8 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
             sample_lines: 0,
             probe_lines: 0,
             multiline_hint: None,
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
         });
     }
     let probe_lines = probe_path.map(probe_file_offsets).unwrap_or_default();
@@ -242,12 +257,14 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
     // scan the untrimmed-start lines (only the trailing newline is gone).
     let multiline_hint = detect_multiline_signature(trimmed.iter().copied());
     Ok(DetectedFormat {
-        format: detected,
+        format: detected.format,
         had_input: true,
         saw_content: true,
         sample_lines: head_lines.len(),
         probe_lines: probe_lines.len(),
         multiline_hint,
+        unparsed_formats: detected.unparsed_formats,
+        cascade_suggestion: detected.suggested_cascade,
     })
 }
 
@@ -463,6 +480,8 @@ pub fn detect_format_for_parallel_mode(
                 sample_lines: 0,
                 probe_lines: 0,
                 multiline_hint: None,
+                unparsed_formats: Vec::new(),
+                cascade_suggestion: None,
             },
             None,
         ));
@@ -533,6 +552,13 @@ pub fn format_detected_format_notice(
         if !config.format_fallback_hint_allowed() {
             return None;
         }
+        // When the sample did contain structured-looking lines — just not
+        // enough of any one format to anchor a cascade — say so specifically
+        // instead of the generic fallback advice: the suggestion names the
+        // exact -f value that would parse them.
+        if let Some(message) = unparsed_formats_hint_text(detected) {
+            return Some(config.format_hint_message(&message));
+        }
         let message = config.format_hint_message(
             "No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(2) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(2) level *msg'. See --help-formats.",
         );
@@ -556,6 +582,10 @@ static FALLBACK_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
 /// repeat the identical advice for every file that contains a trace.
 static MULTILINE_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
 
+/// Tracks whether the "sample also contained other formats" hint already went
+/// out this run — same once-per-run rule as the hints above.
+static UNPARSED_FORMATS_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
+
 /// Build the advisory "consider --multiline <preset>" hint (💡) when the
 /// detection sample contained a stack-trace shape.
 ///
@@ -575,6 +605,37 @@ pub fn multiline_hint_message(config: &KeloraConfig, detected: &DetectedFormat) 
     )))
 }
 
+/// The body of the "sample also contained other formats" hint, or `None` when
+/// the sample didn't drop any structured format. Shared between the
+/// fell-back-to-line notice (where it replaces the generic fallback text) and
+/// the capped-cascade hint.
+fn unparsed_formats_hint_text(detected: &DetectedFormat) -> Option<String> {
+    let suggestion = detected.cascade_suggestion.as_ref()?;
+    let names = detected.unparsed_formats.join(", ");
+    let plural = if detected.unparsed_formats.len() > 1 {
+        "s"
+    } else {
+        ""
+    };
+    Some(format!(
+        "Sampled lines also match the {names} format{plural}; auto-detection parses at most one structured format, so those lines stay whole 'line' events. To parse them too: -f {suggestion}. See --help-formats."
+    ))
+}
+
+/// Build the advisory hint (💡) for structured formats the sample contained
+/// but the capped auto-cascade does not parse. Only for runs where detection
+/// picked a non-line format (a cascade or single format) — the fell-back-to-
+/// line path folds the same text into its own notice instead.
+pub fn unparsed_formats_hint_message(
+    config: &KeloraConfig,
+    detected: &DetectedFormat,
+) -> Option<String> {
+    if !config.hints_allowed() || !detected.detected_non_line() {
+        return None;
+    }
+    Some(config.format_hint_message(&unparsed_formats_hint_text(detected)?))
+}
+
 /// Emit a notice about detected format to stderr
 pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFormat) {
     if let Some(message) = format_detected_format_notice(config, detected) {
@@ -584,7 +645,19 @@ pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFor
         }
         eprintln!("{}", message);
     }
+    eprint_unparsed_formats_hint(config, detected);
     eprint_multiline_hint(config, detected);
+}
+
+/// Emit the dropped-formats hint at most once per run (auto-per-file would
+/// otherwise repeat near-identical advice for every mixed file).
+fn eprint_unparsed_formats_hint(config: &KeloraConfig, detected: &DetectedFormat) {
+    if let Some(message) = unparsed_formats_hint_message(config, detected) {
+        if UNPARSED_FORMATS_HINT_EMITTED.swap(true, Ordering::Relaxed) {
+            return;
+        }
+        eprintln!("{}", message);
+    }
 }
 
 /// Emit the --multiline hint at most once per run.
@@ -939,6 +1012,8 @@ mod tests {
             sample_lines: 10,
             probe_lines: 0,
             multiline_hint: detect_multiline_signature(["\tat com.example.Foo.bar(Foo.java:1)"]),
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
         };
         assert!(detected.multiline_hint.is_some());
 
@@ -964,6 +1039,8 @@ mod tests {
         // No signature, no hint.
         let clean = DetectedFormat {
             multiline_hint: None,
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
             ..detected
         };
         assert!(multiline_hint_message(&cfg, &clean).is_none());
@@ -1015,6 +1092,8 @@ mod tests {
             sample_lines: 42,
             probe_lines: 0,
             multiline_hint: None,
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
         };
 
         let mut verbose_cfg = base_config();
@@ -1092,6 +1171,8 @@ mod tests {
             sample_lines: 1,
             probe_lines: 0,
             multiline_hint: None,
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
         };
 
         // A confident auto-detection is silent on a normal run...

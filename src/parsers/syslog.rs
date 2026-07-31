@@ -30,8 +30,14 @@ impl SyslogParser {
         )
         .context("Failed to compile RFC5424 regex")?;
 
+        // The timestamp validates for real: a named month (any case) instead of
+        // `\w{3}`, a 1-31 day, and a 24h clock. `\w{3}` accepted any 3-letter
+        // word, so `Job 15 12:00:00 worker task: completed` parsed as syslog
+        // with `ts='Job 15 12:00:00'` — a fabricated timestamp that then failed
+        // chrono parsing anyway. No real RFC3164 line is rejected by the
+        // tightening; only never-were-syslog lines are.
         let rfc3164_regex = multiline_aware_regex(
-            r"^(?:<(\d{1,3})>)?(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
+            r"^(?:<(\d{1,3})>)?((?i:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?:[12]\d|3[01]|0?[1-9])\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d)\s+(\S+)\s+([^:\[\s]+)(?:\[(\d+)\])?\s*:\s*(.*)(?:\r?\n)?$"
         ).context("Failed to compile RFC3164 regex")?;
 
         Ok(Self {
@@ -252,6 +258,37 @@ impl EventParser for SyslogParser {
 mod tests {
     use super::*;
     use crate::pipeline::EventParser;
+
+    #[test]
+    fn test_rfc3164_timestamp_must_be_real() {
+        // `\w{3}` used to accept any three-letter word as the month and any
+        // \d{2}:\d{2}:\d{2} as the clock, so `Job 15 12:00:00 worker task: …`
+        // parsed as syslog with a fabricated `ts` field. The month is now a
+        // real month name (any case), the day 1-31, and the clock 24h-valid.
+        let parser = SyslogParser::new().unwrap();
+        for line in [
+            "Job 15 12:00:00 worker task: completed",
+            "foo 1 10:00:00 h a: b",
+            "Feb 30 99:99:99 host app: impossible clock",
+            "Jan 32 10:00:00 host app: day out of range",
+            "Jan 15 24:00:00 host app: hour out of range",
+        ] {
+            assert!(
+                EventParser::parse(&parser, line).is_err(),
+                "fake timestamp must not parse as RFC3164: {line}"
+            );
+        }
+        for line in [
+            "Jan 5 00:00:00 host app: single-digit day",
+            "Dec 31 23:59:59 host app: end of year",
+            "jan 15 10:30:45 host app: lowercase month",
+        ] {
+            assert!(
+                EventParser::parse(&parser, line).is_ok(),
+                "genuine RFC3164 line must still parse: {line}"
+            );
+        }
+    }
 
     #[test]
     fn test_syslog_parser_rfc5424() {

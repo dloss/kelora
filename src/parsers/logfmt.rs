@@ -46,11 +46,18 @@ impl LogfmtParser {
     /// unit tests and the differential matrix): key errors, `""`/`\x` escape
     /// handling, unterminated quotes running to end of line, and numeric/boolean
     /// coercion are all preserved.
+    ///
+    /// `strict` turns the unterminated-quote tolerance into an error. Normal
+    /// parsing (`-f logfmt`) never sets it — a truncated line should still
+    /// salvage what it can — but format *detection* does: an unclosed quote
+    /// swallowing the rest of the line is evidence the line isn't logfmt at
+    /// all, not a value delimiter (see `parse_strict`).
     fn parse_into_event(
         &self,
         line: &str,
         event: &mut Event,
         projection: Option<&Projection>,
+        strict: bool,
     ) -> Result<(), String> {
         let bytes = line.as_bytes();
         let len = bytes.len();
@@ -97,6 +104,9 @@ impl LogfmtParser {
                 let mut needs_unescape = false;
                 loop {
                     if i >= len {
+                        if strict {
+                            return Err("Unterminated quoted value".to_string());
+                        }
                         break; // unterminated quote: value runs to end of line
                     }
                     match bytes[i] {
@@ -185,6 +195,30 @@ impl LogfmtParser {
             Cow::Borrowed(s) => Dynamic::from(rhai::ImmutableString::from(s)),
         }
     }
+
+    /// Parse with detection-grade strictness: identical to `parse`, except an
+    /// unterminated quoted value is an error instead of running to end of line.
+    ///
+    /// Used by format auto-detection, where the tolerance works against us: a
+    /// prose line like `msg="config not found, falling back to defaults` would
+    /// otherwise "parse" by swallowing the whole sentence into one value.
+    /// Explicit `-f logfmt` never goes through here — the parser proper stays
+    /// maximally tolerant.
+    pub fn parse_strict(&self, line: &str) -> Result<Event> {
+        let line = line.trim_end_matches('\n').trim_end_matches('\r');
+        let content = line.trim();
+
+        let capacity = memchr::memchr_iter(b'=', content.as_bytes()).count();
+        let mut event = Event::with_capacity(line.to_string(), capacity);
+
+        self.parse_into_event(content, &mut event, None, true)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+
+        if self.auto_timestamp {
+            event.extract_timestamp();
+        }
+        Ok(event)
+    }
 }
 
 /// Un-escape the raw content of a quoted logfmt value — the bytes between the
@@ -243,7 +277,7 @@ impl EventParser for LogfmtParser {
         let capacity = memchr::memchr_iter(b'=', content.as_bytes()).count();
         let mut event = Event::with_capacity(line.to_string(), capacity);
 
-        self.parse_into_event(content, &mut event, None)
+        self.parse_into_event(content, &mut event, None, false)
             .map_err(|e| anyhow::anyhow!("{}", e))?;
 
         // Extract timestamp from the parsed data
@@ -265,7 +299,7 @@ impl EventParser for LogfmtParser {
 
         // Wanted keys get their real (parsed) value; unwanted keys keep only
         // their name with a `UNIT` placeholder (see `parse_into_event`).
-        self.parse_into_event(content, &mut event, Some(projection))
+        self.parse_into_event(content, &mut event, Some(projection), false)
             .map_err(|e| anyhow::anyhow!("{}", e))?;
 
         if self.auto_timestamp {
@@ -565,6 +599,32 @@ mod tests {
                 .into_string()
                 .unwrap(),
             "alice"
+        );
+    }
+
+    #[test]
+    fn test_parse_strict_rejects_unterminated_quotes_parse_tolerates_them() {
+        let parser = LogfmtParser::new();
+        for line in [
+            r#"msg="unterminated quote running to end of line"#,
+            r#"a=1 b="closed" c="open ended"#,
+        ] {
+            // The tolerant parse salvages the line (value runs to EOL)…
+            assert!(
+                EventParser::parse(&parser, line).is_ok(),
+                "parse must stay tolerant: {line}"
+            );
+            // …while the detection-grade parse refuses it.
+            assert!(
+                parser.parse_strict(line).is_err(),
+                "parse_strict must reject: {line}"
+            );
+        }
+        // Properly terminated quotes are identical under both.
+        let ev = parser.parse_strict(r#"a=1 msg="all good""#).unwrap();
+        assert_eq!(
+            ev.fields.get("msg").unwrap().clone().into_string().unwrap(),
+            "all good"
         );
     }
 

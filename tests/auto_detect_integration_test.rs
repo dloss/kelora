@@ -736,6 +736,114 @@ fn test_auto_detect_probes_catch_late_format_change() {
     );
 }
 
+/// A CI-style log where a few lines happen to be assignment-shaped
+/// (`CI=true`, `GITHUB_REF=…`) must stay uniformly `line`: single-pair
+/// assignments don't detect as logfmt, so no cascade is built and the
+/// natural `e.line` filter keeps working on every event.
+#[test]
+fn test_auto_detect_env_dump_lines_do_not_recruit_logfmt() {
+    let dir = TempDir::new().expect("tempdir");
+    let ci = write_input(
+        &dir,
+        "ci.log",
+        "Starting CI job for acme-api\n\
+         Environment:\n\
+         CI=true\n\
+         GITHUB_REF=refs/heads/main\n\
+         RUNNER_OS=Linux\n\
+         Resolving dependencies\n\
+         Job succeeded in 94s\n",
+    );
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&ci]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("line='CI=true'"),
+        "env-var lines must stay whole line events, got: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("_format"),
+        "no cascade should be built for this file: {}",
+        stdout
+    );
+}
+
+/// Auto-built cascades are capped at one structured format plus `line`. A
+/// file that genuinely mixes JSON, logfmt and plain text parses with
+/// cascade(json,line) — and a hint names the dropped format with the exact
+/// explicit cascade that would parse it too.
+#[test]
+fn test_auto_detect_caps_cascade_and_hints_dropped_formats() {
+    let dir = TempDir::new().expect("tempdir");
+    let mixed = write_input(
+        &dir,
+        "multi.log",
+        "{\"level\":\"info\",\"msg\":\"one\"}\n\
+         {\"level\":\"warn\",\"msg\":\"two\"}\n\
+         {\"level\":\"info\",\"msg\":\"three\"}\n\
+         level=info msg=worker_started port=8080\n\
+         level=warn msg=worker_slow lag=5\n\
+         plain text noise\n",
+    );
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto", "-v"], &[&mixed]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stderr.contains("cascade(json,line)"),
+        "cascade must hold only the dominant format plus line: {}",
+        stderr
+    );
+    assert!(
+        stderr.contains("-f json,logfmt,line"),
+        "hint must offer the full explicit cascade: {}",
+        stderr
+    );
+    assert!(
+        stdout.contains("line='level=info msg=worker_started port=8080'"),
+        "the dropped format's lines parse as whole line events: {}",
+        stdout
+    );
+    assert!(
+        !stderr.contains("Parse errors"),
+        "the line catch-all must keep the run total: {}",
+        stderr
+    );
+}
+
+/// One structured-looking line in a large sample must not flip the file into
+/// a cascade (quorum), but the hint still points at the explicit cascade.
+#[test]
+fn test_auto_detect_single_outlier_line_does_not_build_cascade() {
+    let dir = TempDir::new().expect("tempdir");
+    let mut contents: String = (0..40)
+        .map(|i| format!("Processing batch {i} of 40 records\n"))
+        .collect();
+    contents.push_str("cache=warm ttl=300 region=eu\n");
+    let log = write_input(&dir, "batch.log", &contents);
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto", "--hints"], &[&log]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        !stdout.contains("_format"),
+        "one outlier line must not create a cascade: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("line='cache=warm ttl=300 region=eu'"),
+        "the outlier itself parses as a line event: {}",
+        stdout
+    );
+    assert!(
+        stderr.contains("-f logfmt,line"),
+        "hint must offer the explicit cascade for the dropped format: {}",
+        stderr
+    );
+}
+
 /// Detection's sample doubles as a stack-trace scanner: spotting Java frames
 /// produces a once-per-run hint suggesting the matching --multiline preset.
 #[test]
