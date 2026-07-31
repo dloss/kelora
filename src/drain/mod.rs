@@ -380,6 +380,8 @@ fn custom_grok_definitions() -> Vec<(&'static str, &'static str)> {
         // Require at least 2 path components to avoid matching ratios like "20/20"
         ("KELORA_PATH", r"/[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)+"),
         ("KELORA_OAUTH", r"ya29\.[0-9A-Za-z_-]+"),
+        // Kept for an explicit `filters:` list, but *not* in
+        // `default_filter_patterns` — see the note there.
         ("KELORA_FUNCTION", r"[A-Za-z0-9_.]+\([^)]*\)"),
         ("KELORA_HEXCOLOR", r"#[0-9A-Fa-f]{6}"),
         (
@@ -401,6 +403,28 @@ fn custom_grok_definitions() -> Vec<(&'static str, &'static str)> {
     ]
 }
 
+/// The masks applied when no explicit `filters:` list is given.
+///
+/// # Why `KELORA_FUNCTION` is not here
+///
+/// It matched `name(args)` and replaced *the whole thing*, identifier included —
+/// but the identifier is the most stable, most identifying literal in the line,
+/// and the varying part inside the parentheses is already covered by
+/// `KELORA_NUM`/`KELORA_PATH`/`KELORA_HEXNUM`. Over the 16 loghub_2k datasets it
+/// fired 4272 times, and 77% of those had nothing to generalize: 56% empty args
+/// (`jk2_init()`), 5% the English plural idiom (`packet(s)`, `error(s)`), the
+/// rest already-stable text. What it destroyed instead: `Intel(R) Xeon(TM) CPU`
+/// mined as `<function> <function> CPU`, `Unknown cmd fd(5) cmd(80081272){00}`
+/// as `Unknown cmd <function> <function>{<num>}`, and one HealthApp template
+/// rendered as the bare string `<function>` — two true clusters, zero
+/// information. It also merged distinctions worth keeping, folding
+/// `pam_unix(sshd:auth)` and `pam_unix(sshd:session)` together.
+///
+/// Dropping it moves `just drain-accuracy` from 87.1% to 87.2% mean (HealthApp
+/// +0.2pp to 100%, Mac +1.5pp, nothing worse) and takes 46 events out of
+/// over-merged templates — the direction this suite weights heaviest. The mask
+/// itself is still defined, so an explicit
+/// `filters: ["%{KELORA_FUNCTION:function}"]` opts back in.
 fn default_filter_patterns() -> Vec<&'static str> {
     vec![
         "%{KELORA_IPV4_PORT:ipv4_port}",
@@ -416,7 +440,6 @@ fn default_filter_patterns() -> Vec<&'static str> {
         "%{KELORA_SHA256:sha256}",
         "%{KELORA_PATH:path}",
         "%{KELORA_OAUTH:oauth}",
-        "%{KELORA_FUNCTION:function}",
         "%{KELORA_HEXCOLOR:hexcolor}",
         "%{KELORA_VERSION:version}",
         "%{KELORA_HEXNUM:hexnum}",
@@ -1429,6 +1452,24 @@ mod tests {
     }
 
     #[test]
+    fn function_masking_is_available_but_not_default() {
+        // Dropping `function` from `default_filter_patterns` must not un-define
+        // the pattern: naming it explicitly is the documented way back.
+        let masker = Masker::new(&[]);
+        assert_eq!(
+            masker.mask_line("data_thread() got no answer"),
+            "data_thread() got no answer"
+        );
+
+        let filters = vec!["%{KELORA_FUNCTION:function}".to_string()];
+        let masker = Masker::new(&filters);
+        assert_eq!(
+            masker.mask_line("data_thread() got no answer"),
+            "<function> got no answer"
+        );
+    }
+
+    #[test]
     fn generalizes_a_position_the_cluster_members_disagree_on() {
         // Drain's defining step: where a cluster's members disagree, the
         // template says `<*>`. `drain_rs::LogCluster::add_log` never ran it — it
@@ -1454,7 +1495,7 @@ mod tests {
         assert_eq!(templates.len(), 1, "got {:?}", templates);
         assert_eq!(
             templates[0].template,
-            "combo <function>[<num>]: session closed for user <*>"
+            "combo sshd(pam_unix)[<num>]: session closed for user <*>"
         );
         assert_eq!(templates[0].count, 3);
         // The stored sample still shows a real line, so the concrete value is

@@ -277,8 +277,11 @@ drain_template(text [,options])      Add line to Drain model; returns {template,
                                      is_new, sample, first_line, last_line}
 drain_templates()                    Return array of templates with same fields (except is_new)
                                      Default filters: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid,
-                                     mac, md5, sha1, sha256, path, oauth, function, hexcolor, version,
-                                     hexnum, duration, timestamp, date, time, num
+                                     mac, md5, sha1, sha256, path, oauth, hexcolor, version, hexnum,
+                                     duration, timestamp, date, time, num
+                                     function is off by default -- it masked the identifier too, so
+                                     "Intel(R)" and "packet(s)" became <function>; opt back in with
+                                     filters: ["%{KELORA_FUNCTION:function}", ...]
                                      timestamp also covers multi-token calendar dates (ctime/asctime
                                      "Mon Jun 13 03:55:15 2005", syslog "Jun 13 03:55:15"); sizes with
                                      units ("18.4 KB", "10MB") mask as <size_kb>-style tokens and spaced

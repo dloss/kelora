@@ -1,6 +1,6 @@
 {
   "_comment": "Written by `just drain-accuracy-update`. Grouping accuracy against loghub_2k; see tests/drain_accuracy.rs.",
-  "mean_accuracy": 0.8712,
+  "mean_accuracy": 0.8722,
   "datasets": {
     "Android": {
       "accuracy": 0.7985,
@@ -51,12 +51,12 @@
       "overmerged_events": 8
     },
     "HealthApp": {
-      "accuracy": 0.9975,
-      "templates": 73,
+      "accuracy": 1.0,
+      "templates": 75,
       "clusters": 75,
       "oversplit": 0,
-      "overmerged": 2,
-      "overmerged_events": 5
+      "overmerged": 0,
+      "overmerged_events": 0
     },
     "Linux": {
       "accuracy": 0.8115,
@@ -67,12 +67,12 @@
       "overmerged_events": 374
     },
     "Mac": {
-      "accuracy": 0.784,
-      "templates": 325,
+      "accuracy": 0.799,
+      "templates": 330,
       "clusters": 341,
-      "oversplit": 6,
-      "overmerged": 21,
-      "overmerged_events": 230
+      "oversplit": 8,
+      "overmerged": 18,
+      "overmerged_events": 189
     },
     "OpenSSH": {
       "accuracy": 0.814,

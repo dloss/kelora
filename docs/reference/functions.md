@@ -1612,8 +1612,12 @@ e.template = r.template;
 ```
 
 Default token filters normalize: ipv4_port, ipv4, ipv6, email, url, fqdn, uuid, mac,
-md5, sha1, sha256, path, oauth, function, hexcolor, version, hexnum, duration,
+md5, sha1, sha256, path, oauth, hexcolor, version, hexnum, duration,
 timestamp, date, time, num.
+`function` is **not** in the default set: it replaced the identifier along with
+the parentheses, so `Intel(R)` and `packet(s)` both mined as `<function>`. Ask
+for it with `filters: ["%{KELORA_FUNCTION:function}", ...]`. (It is unrelated to
+`normalized()`'s `function` pattern, which stays on by default.)
 `timestamp` also covers calendar dates that span several tokens — ctime/asctime
 (`Mon Jun 13 03:55:15 2005`, with or without the year) and the bare syslog form
 (`Jun 13 03:55:15`) — so one message doesn't split into a template per weekday.
