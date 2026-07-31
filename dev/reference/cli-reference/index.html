@@ -6672,7 +6672,8 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>-f<span class="w"> </span>json,logfmt,line<span class="w">   </span><span class="c1"># three-way cascade</span>
 </code></pre></div></p>
 <p>Comma-separated list of simple formats tried in order; first success wins.
-Adds an <code>_format</code> field to each event with the winning parser name. Allowed:
+Adds an <code>_format</code> field to each event with the winning parser name, unless the
+record already carries its own <code>_format</code> (that value is kept). Allowed:
 <code>json</code>, <code>line</code>, <code>raw</code>, <code>logfmt</code>, <code>syslog</code>, <code>cef</code>, <code>combined</code>. Schema-based
 formats (<code>csv</code>/<code>tsv</code>, <code>cols:</code>, <code>regex:</code>) and <code>auto</code> are not allowed inside
 the cascade list. See <a href="../formats/#cascade-mode">Format Reference</a> for full

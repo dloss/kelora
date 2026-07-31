@@ -4049,7 +4049,9 @@ paths (<code>"user.role"</code>, <code>"items[0].name"</code>).</p>
 <ul>
 <li><code>_format</code> — name of the parser that handled this event (e.g. <code>"json"</code>,
   <code>"line"</code>). Added only in cascade mode so single-format runs stay
-  unchanged. Useful for filtering (<code>--filter 'e._format == "line"'</code>) or
+  unchanged, and only when the record does not already have a field of that
+  name — an input <code>_format</code> keeps its own value and is reported with a
+  warning. Useful for filtering (<code>--filter 'e._format == "line"'</code>) or
   debugging silent misclassification.</li>
 </ul>
 <h2 id="working-with-nested-structures">Working with Nested Structures<a class="headerlink" href="#working-with-nested-structures" title="Permanent link">&para;</a></h2>

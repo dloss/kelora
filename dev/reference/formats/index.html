@@ -3552,6 +3552,10 @@ stdin detection never samples beyond the first line.</p>
 field is <strong>only</strong> added in cascade mode — single-format runs are unchanged.
 Filter or group by it in Rhai, or inspect it in the output to debug
 classification.</p>
+<p>If a record already carries a field of its own named <code>_format</code>, that value is
+kept and the tag is <strong>not</strong> added to it — your data is never overwritten. A
+warning reports how many events this affected, and the format name is still
+available from <code>--stats</code> and the <code>-v</code> detection notice.</p>
 <p><strong>Diagnostic counts:</strong> With <code>--stats</code>, cascade mode adds a per-format
 breakdown so silent misclassification surfaces immediately:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Cascade formats: json=9812, line=23
