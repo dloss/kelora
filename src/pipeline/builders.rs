@@ -505,6 +505,7 @@ impl PipelineBuilder {
             || self.context_config.is_active()
             || self.span.is_some()
             || self.window_size > 0
+            || self.strict
             || !parser.level_appears_verbatim()
         {
             return Vec::new();
