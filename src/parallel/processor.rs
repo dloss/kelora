@@ -53,11 +53,18 @@ fn build_chunker_runtime(
     } else {
         None
     };
+    let no_boundary_hint = if config.hints_allowed() {
+        crate::config::no_boundary_hint_text(&multiline_config.strategy)
+            .map(|text| config.format_hint_message(&text))
+    } else {
+        None
+    };
     ChunkerRuntime {
         idle_timeout: multiline_config.idle_timeout,
         idle_hint,
         cap_warning,
         preset_ts_hint,
+        no_boundary_hint,
     }
 }
 

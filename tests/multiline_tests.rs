@@ -1565,3 +1565,120 @@ fn multiline_parse_failure_hint_counts_across_parallel_workers() {
         "worker counts sum into one hint: {stderr}"
     );
 }
+
+/// A start pattern that never matches buffers the whole input into one event.
+/// The line cap only notices above its 10000-line default, so before #361 a
+/// typo'd pattern on an ordinary file was completely silent: zero errors, zero
+/// warnings, exit 0, and an event count that quietly said 1.
+#[test]
+fn multiline_hints_when_the_boundary_rule_never_matches() {
+    let mut input = String::new();
+    for i in 0..40 {
+        input.push_str(&format!("ts=2024-01-01T10:00:00Z level=info seq={}\n", i));
+    }
+
+    for extra in [&[][..], &["--parallel"][..]] {
+        let mut args = vec![
+            "-f",
+            "line",
+            "-M",
+            "regex:match=^NEVERMATCHES",
+            "--multiline-timeout",
+            "0",
+        ];
+        args.extend_from_slice(extra);
+        let (stdout, stderr, code) = run_kelora_with_input(&args, &input);
+
+        assert_eq!(code, 0, "the run still succeeds: {stderr}");
+        assert_eq!(
+            stdout.trim().lines().count(),
+            1,
+            "everything collapsed into one event: {stdout}"
+        );
+        assert!(
+            stderr.contains("never matched") && stderr.contains("^NEVERMATCHES"),
+            "hint names the pattern that failed ({extra:?}): {stderr}"
+        );
+
+        args.push("--no-hints");
+        let (_stdout, stderr, code) = run_kelora_with_input(&args, &input);
+        assert_eq!(code, 0);
+        assert!(
+            !stderr.contains("never matched"),
+            "--no-hints silences the advisory ({extra:?}): {stderr}"
+        );
+    }
+}
+
+/// The same silence, reached through the strategy the issue was filed against:
+/// `timestamp` on lines that carry their timestamp inside the record rather
+/// than at column 0.
+#[test]
+fn multiline_timestamp_hints_when_no_line_starts_with_one() {
+    let mut input = String::new();
+    for i in 0..40 {
+        input.push_str(&format!(
+            "{{\"ts\":\"2024-07-14T14:00:{:02}Z\",\"msg\":\"ok\"}}\n",
+            i
+        ));
+    }
+
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "line", "-M", "timestamp", "--multiline-timeout", "0"],
+        &input,
+    );
+    assert_eq!(code, 0);
+    assert!(
+        stderr.contains("no line began with a detectable timestamp"),
+        "hint names the premise that failed: {stderr}"
+    );
+    assert!(
+        stderr.contains("timestamp:format="),
+        "hint names a concrete lever: {stderr}"
+    );
+}
+
+/// The advisory must not fire on the workloads multiline exists for. Each of
+/// these legitimately groups many lines per event.
+#[test]
+fn multiline_no_boundary_hint_stays_quiet_on_legitimate_grouping() {
+    let mut timestamped = String::new();
+    for i in 0..20 {
+        timestamped.push_str(&format!("2024-01-01 10:00:{:02} INFO request {}\n", i, i));
+        timestamped.push_str("\tat com.example.Foo.bar(Foo.java:10)\n");
+    }
+
+    let mut stanzas = String::new();
+    for i in 0..12 {
+        stanzas.push_str(&format!("Name:      pod-{}\nStatus:    Running\n\n", i));
+    }
+
+    let mut one_traceback = String::from("Traceback (most recent call last):\n");
+    for i in 0..12 {
+        one_traceback.push_str(&format!("  File \"/app/m.py\", line {}, in run\n", i));
+    }
+    one_traceback.push_str("ValueError: boom\n");
+
+    let all_input = (0..20)
+        .map(|i| format!("plain line {}\n", i))
+        .collect::<String>();
+
+    for (label, strategy, input) in [
+        ("timestamp on a timestamped log", "timestamp", &timestamped),
+        ("blank on paragraph records", "blank", &stanzas),
+        // A piped crash dump really is one event; presets are exempt.
+        ("python preset on one traceback", "python", &one_traceback),
+        // `all` is asked for exactly this.
+        ("all", "all", &all_input),
+    ] {
+        let (_stdout, stderr, code) = run_kelora_with_input(
+            &["-f", "raw", "-M", strategy, "--multiline-timeout", "0"],
+            input,
+        );
+        assert_eq!(code, 0, "{label}: {stderr}");
+        assert!(
+            !stderr.contains("nothing split the input"),
+            "{label} must not be nagged: {stderr}"
+        );
+    }
+}

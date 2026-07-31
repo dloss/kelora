@@ -10,6 +10,10 @@ const MAX_TIMESTAMP_TOKENS: usize = 6;
 /// preset strategy, the input evidently has reliable headers and the driver
 /// is told to hint at `--multiline timestamp` once.
 const PRESET_TS_HINT_HEADERS: u32 = 3;
+/// Below this many fed lines, a run that found no event boundary is not worth
+/// mentioning: a one-record input or a two-line smoke test legitimately has
+/// nothing to split, and nagging there would be noise rather than a footgun.
+const MIN_LINES_FOR_NO_BOUNDARY_HINT: u64 = 10;
 
 /// Multi-line chunker that implements the reduced set of strategies for
 /// detecting event boundaries.
@@ -34,6 +38,12 @@ pub struct MultilineChunker {
     preset: Option<PresetState>,
     /// Set when the line cap split an event; drained by `take_cap_hit`.
     cap_hit: bool,
+    /// Lines fed so far, and the number of times the strategy's boundary rule
+    /// fired. The cap and the end-of-input flush deliberately do not count: they
+    /// are the safety net and EOF, not the rule matching. "Many lines, zero
+    /// firings" is what `collapsed_without_boundary` reports.
+    lines_fed: u64,
+    boundaries: u64,
 }
 
 /// Runtime state for a language preset strategy: the trace rule machine plus
@@ -100,6 +110,8 @@ impl MultilineChunker {
             timestamp_detector,
             preset,
             cap_hit: false,
+            lines_fed: 0,
+            boundaries: 0,
         })
     }
 
@@ -361,6 +373,7 @@ fn push_candidate(candidates: &mut Vec<String>, candidate: String) {
 
 impl Chunker for MultilineChunker {
     fn feed_line(&mut self, line: ChunkLine, out: &mut Vec<Chunk>) {
+        self.lines_fed += 1;
         match &self.config.strategy {
             MultilineStrategy::All => {
                 self.push_line(line);
@@ -372,6 +385,7 @@ impl Chunker for MultilineChunker {
                 // Paragraph mode: a blank line terminates the record and is
                 // itself part of no record.
                 if is_line_blank(&line.text) {
+                    self.boundaries += 1;
                     self.flush_buffer(out);
                     return;
                 }
@@ -398,6 +412,7 @@ impl Chunker for MultilineChunker {
                     preset.machine.feed(&line.text) == TraceStep::Boundary
                 };
                 if boundary {
+                    self.boundaries += 1;
                     self.flush_buffer(out);
                 }
                 self.push_line(line);
@@ -410,14 +425,24 @@ impl Chunker for MultilineChunker {
                     // line: the timestamp detector locks onto the first format
                     // that matches, and that must be the leading real header,
                     // not whichever parseable prefix shows up first later.
-                    let _ = self.starts_new_event(&line.text);
+                    // It splits nothing (there is nothing to split yet), but it
+                    // is the rule firing, so it counts: that keeps
+                    // `collapsed_without_boundary` meaning "the predicate never
+                    // matched any line", which is what the hint claims.
+                    if self.starts_new_event(&line.text) {
+                        self.boundaries += 1;
+                    }
                 } else if self.starts_new_event(&line.text) {
+                    self.boundaries += 1;
                     self.flush_buffer(out);
                 }
 
                 let ends = self.ends_current_event(&line.text);
                 self.push_line(line);
                 if ends {
+                    // A terminator is the rule firing too, so a run split only
+                    // by `end=` does not report a collapse.
+                    self.boundaries += 1;
                     self.flush_buffer(out);
                 }
             }
@@ -450,6 +475,20 @@ impl Chunker for MultilineChunker {
         self.preset
             .as_mut()
             .is_some_and(|p| std::mem::take(&mut p.ts_hint))
+    }
+
+    fn collapsed_without_boundary(&self) -> bool {
+        // `all` is asked for exactly this, and a preset reporting no boundary
+        // means the whole input was one stack trace (a piped crash dump) —
+        // neither is a mistake. Mirrored by `config::no_boundary_hint_text`,
+        // which has no message for these.
+        if matches!(
+            self.config.strategy,
+            MultilineStrategy::All | MultilineStrategy::Preset(_)
+        ) {
+            return false;
+        }
+        self.boundaries == 0 && self.lines_fed >= MIN_LINES_FOR_NO_BOUNDARY_HINT
     }
 }
 
@@ -726,6 +765,134 @@ mod tests {
         assert_eq!(chunks[0].line_count, 3);
         assert!(chunker.take_cap_hit());
         assert!(!chunker.take_cap_hit(), "cap-hit flag is take-once");
+    }
+
+    /// 12 lines, no line matching the start pattern: the rule never fired, so
+    /// the whole input is one event and the driver must be told (#361).
+    #[test]
+    fn no_boundary_is_reported_when_the_rule_never_matches() {
+        let mut chunker = MultilineChunker::new(config(
+            MultilineStrategy::Regex {
+                start: "^NEVER".to_string(),
+                end: None,
+            },
+            MultilineJoin::Newline,
+        ))
+        .unwrap();
+
+        let input = (0..12).map(|i| format!("line {}\n", i)).collect::<String>();
+        let chunks = chunk_all(&mut chunker, &input);
+        assert_eq!(chunks.len(), 1, "everything collapsed into one event");
+        assert!(chunker.collapsed_without_boundary());
+    }
+
+    #[test]
+    fn one_matching_line_is_enough_to_stay_quiet() {
+        // The predicate fired on the first line. It split nothing (there was
+        // nothing to split yet), but "no line began with a timestamp" would be
+        // a false claim, so the hint must not fire.
+        let mut chunker =
+            MultilineChunker::new(config(timestamp_strategy(), MultilineJoin::Newline)).unwrap();
+
+        let mut input = String::from("2024-01-01T10:00:00 header\n");
+        for i in 0..12 {
+            input.push_str(&format!("continuation {}\n", i));
+        }
+        let chunks = chunk_all(&mut chunker, &input);
+        assert_eq!(chunks.len(), 1, "still one event");
+        assert!(
+            !chunker.collapsed_without_boundary(),
+            "the rule did match a line"
+        );
+    }
+
+    #[test]
+    fn regex_end_only_split_is_not_a_collapse() {
+        // `end=` matched even though `match=` never did, so events *were* split
+        // and "nothing split the input" would be wrong.
+        let mut chunker = MultilineChunker::new(config(
+            MultilineStrategy::Regex {
+                start: "^NEVER".to_string(),
+                end: Some("^END".to_string()),
+            },
+            MultilineJoin::Newline,
+        ))
+        .unwrap();
+
+        let mut input = String::new();
+        for i in 0..6 {
+            input.push_str(&format!("body {}\nEND\n", i));
+        }
+        let chunks = chunk_all(&mut chunker, &input);
+        assert_eq!(chunks.len(), 6, "end= terminated each event");
+        assert!(!chunker.collapsed_without_boundary());
+    }
+
+    #[test]
+    fn tiny_input_without_boundaries_stays_quiet() {
+        // A one-record input has nothing to split; nagging there is noise.
+        let mut chunker =
+            MultilineChunker::new(config(timestamp_strategy(), MultilineJoin::Newline)).unwrap();
+        let chunks = chunk_all(&mut chunker, "no timestamp here\nnor here\n");
+        assert_eq!(chunks.len(), 1);
+        assert!(
+            !chunker.collapsed_without_boundary(),
+            "below the line floor"
+        );
+    }
+
+    #[test]
+    fn all_and_presets_never_report_a_collapse() {
+        // `all` is asked for exactly one event, and a preset legitimately finds
+        // no boundary when the whole input is a single stack trace.
+        let long = (0..20).map(|i| format!("line {}\n", i)).collect::<String>();
+
+        let mut chunker =
+            MultilineChunker::new(config(MultilineStrategy::All, MultilineJoin::Newline)).unwrap();
+        let _ = chunk_all(&mut chunker, &long);
+        assert!(!chunker.collapsed_without_boundary(), "`all` is exempt");
+
+        let mut trace = String::from("Traceback (most recent call last):\n");
+        for i in 0..12 {
+            trace.push_str(&format!("  File \"m.py\", line {}, in f\n", i));
+        }
+        trace.push_str("ValueError: boom\n");
+        let mut chunker = MultilineChunker::new(config(
+            MultilineStrategy::Preset(crate::config::TracePreset::Python),
+            MultilineJoin::Newline,
+        ))
+        .unwrap();
+        let chunks = chunk_all(&mut chunker, &trace);
+        assert_eq!(chunks.len(), 1, "one traceback, one event");
+        assert!(
+            !chunker.collapsed_without_boundary(),
+            "presets are exempt: a piped crash dump is not a mistake"
+        );
+    }
+
+    /// The cap is the safety net, not the rule: splitting on it must not mask a
+    /// pattern that never matched. Both advisories fire, and together they
+    /// diagnose the never-matching pattern.
+    #[test]
+    fn cap_splits_do_not_count_as_boundaries() {
+        let mut cfg = config(
+            MultilineStrategy::Regex {
+                start: "^NEVER".to_string(),
+                end: None,
+            },
+            MultilineJoin::Newline,
+        );
+        cfg.max_lines = 4;
+        let mut chunker = MultilineChunker::new(cfg).unwrap();
+
+        let input = (0..20).map(|i| format!("line {}\n", i)).collect::<String>();
+        let chunks = chunk_all(&mut chunker, &input);
+        assert_eq!(chunks.len(), 5, "cap split the run into fixed slices");
+        assert!(chunker.take_cap_hit());
+        assert!(
+            chunker.collapsed_without_boundary(),
+            "cap splits are not the rule firing"
+        );
     }
 
     #[test]
