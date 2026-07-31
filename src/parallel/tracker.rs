@@ -501,22 +501,54 @@ impl GlobalTracker {
         Some(Dynamic::from(merged))
     }
 
-    /// Merge min values (returns smallest)
-    fn merge_min(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
-        if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
-            Some(Dynamic::from(a.min(b)))
+    /// Read a stored min/max value as a comparable f64, matching how the
+    /// sequential path compares them (`dynamic_to_cmp_f64` in tracking::metrics).
+    /// `track_min`/`track_max` only accept numeric arguments, so a non-numeric
+    /// value here means the metric was never a min/max in the first place.
+    fn extreme_cmp_f64(value: &Dynamic) -> Option<f64> {
+        if value.is_int() {
+            value.as_int().ok().map(|i| i as f64)
+        } else if value.is_float() {
+            value.as_float().ok()
         } else {
             None
         }
     }
 
+    /// Pick the winning side of a min/max merge and return it *verbatim*.
+    ///
+    /// Comparing in f64 space is what lets float metrics merge at all: reading
+    /// both sides as i64 fails on floats, and a failed merge falls through to
+    /// replace-the-value below, so whichever worker finished last used to win —
+    /// silently reporting some partition's extreme as the global one.
+    ///
+    /// The winner is returned unconverted rather than promoted to f64 because
+    /// the sequential path stores the value exactly as the script produced it,
+    /// so an int metric has to stay an int under `--parallel` too.
+    fn merge_extreme(existing: &Dynamic, value: &Dynamic, is_min: bool) -> Option<Dynamic> {
+        let current = Self::extreme_cmp_f64(existing)?;
+        let candidate = Self::extreme_cmp_f64(value)?;
+        // Ties and NaN keep `existing`, as the sequential comparison does.
+        let take_candidate = if is_min {
+            candidate < current
+        } else {
+            candidate > current
+        };
+        Some(if take_candidate {
+            value.clone()
+        } else {
+            existing.clone()
+        })
+    }
+
+    /// Merge min values (returns smallest)
+    fn merge_min(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
+        Self::merge_extreme(existing, value, true)
+    }
+
     /// Merge max values (returns largest)
     fn merge_max(existing: &Dynamic, value: &Dynamic) -> Option<Dynamic> {
-        if let (Ok(a), Ok(b)) = (existing.as_int(), value.as_int()) {
-            Some(Dynamic::from(a.max(b)))
-        } else {
-            None
-        }
+        Self::merge_extreme(existing, value, false)
     }
 
     /// Merge unique arrays (no duplicates)
@@ -931,6 +963,111 @@ mod tests {
         // Verify maximum is 90
         let global = tracker.user_tracked.lock().unwrap();
         assert_eq!(global.get("max_latency").unwrap().as_int().unwrap(), 90);
+    }
+
+    // Float min/max used to read both sides as i64, fail, and fall through to
+    // replace — so the last worker to merge won and the reported extreme was
+    // whichever partition happened to finish last. These four tests cover the
+    // float and mixed-type cases the int-only tests above cannot catch.
+
+    #[test]
+    fn test_merge_worker_state_min_operation_with_floats() {
+        let tracker = GlobalTracker::new();
+
+        // Worker order puts the true minimum in the middle, so a merge that
+        // simply keeps the newest value cannot pass by luck.
+        for value in [61.5_f64, 0.001, 186.39] {
+            let mut worker_user = HashMap::new();
+            worker_user.insert("min_latency".to_string(), make_float(value));
+            worker_user.insert("__op_min_latency".to_string(), make_op("min"));
+            tracker
+                .merge_worker_state(worker_user, HashMap::new())
+                .unwrap();
+        }
+
+        let global = tracker.user_tracked.lock().unwrap();
+        assert_eq!(
+            global.get("min_latency").unwrap().as_float().unwrap(),
+            0.001
+        );
+    }
+
+    #[test]
+    fn test_merge_worker_state_max_operation_with_floats() {
+        let tracker = GlobalTracker::new();
+
+        for value in [186.39_f64, 2914.06, 191.37] {
+            let mut worker_user = HashMap::new();
+            worker_user.insert("max_latency".to_string(), make_float(value));
+            worker_user.insert("__op_max_latency".to_string(), make_op("max"));
+            tracker
+                .merge_worker_state(worker_user, HashMap::new())
+                .unwrap();
+        }
+
+        let global = tracker.user_tracked.lock().unwrap();
+        assert_eq!(
+            global.get("max_latency").unwrap().as_float().unwrap(),
+            2914.06
+        );
+    }
+
+    #[test]
+    fn test_merge_worker_state_max_mixed_int_and_float_partitions() {
+        let tracker = GlobalTracker::new();
+
+        // One partition saw only whole numbers, another saw fractional ones —
+        // comparison has to cross the type boundary.
+        let mut worker1_user = HashMap::new();
+        worker1_user.insert("peak".to_string(), make_int(50));
+        worker1_user.insert("__op_peak".to_string(), make_op("max"));
+        tracker
+            .merge_worker_state(worker1_user, HashMap::new())
+            .unwrap();
+
+        let mut worker2_user = HashMap::new();
+        worker2_user.insert("peak".to_string(), make_float(2914.06));
+        worker2_user.insert("__op_peak".to_string(), make_op("max"));
+        tracker
+            .merge_worker_state(worker2_user, HashMap::new())
+            .unwrap();
+
+        let mut worker3_user = HashMap::new();
+        worker3_user.insert("peak".to_string(), make_int(90));
+        worker3_user.insert("__op_peak".to_string(), make_op("max"));
+        tracker
+            .merge_worker_state(worker3_user, HashMap::new())
+            .unwrap();
+
+        let global = tracker.user_tracked.lock().unwrap();
+        assert_eq!(global.get("peak").unwrap().as_float().unwrap(), 2914.06);
+    }
+
+    #[test]
+    fn test_merge_worker_state_max_keeps_winner_type_unconverted() {
+        let tracker = GlobalTracker::new();
+
+        // The sequential path stores the value as the script produced it, so an
+        // int winner must survive the merge as an int even when it is compared
+        // against a float.
+        let mut worker1_user = HashMap::new();
+        worker1_user.insert("status".to_string(), make_int(504));
+        worker1_user.insert("__op_status".to_string(), make_op("max"));
+        tracker
+            .merge_worker_state(worker1_user, HashMap::new())
+            .unwrap();
+
+        let mut worker2_user = HashMap::new();
+        worker2_user.insert("status".to_string(), make_float(200.5));
+        worker2_user.insert("__op_status".to_string(), make_op("max"));
+        tracker
+            .merge_worker_state(worker2_user, HashMap::new())
+            .unwrap();
+
+        let global = tracker.user_tracked.lock().unwrap();
+        let merged = global.get("status").unwrap();
+        assert!(merged.is_int(), "int winner was converted to {merged:?}");
+        assert_eq!(merged.as_int().unwrap(), 504);
     }
 
     #[test]
