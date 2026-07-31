@@ -892,8 +892,9 @@ pub struct Cli {
     #[arg(
         long = "freq",
         value_name = "FIELD",
+        value_delimiter = ',',
         help_heading = "Metrics and Stats",
-        help = "Frequency table: count occurrences per distinct value of FIELD.\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Nested fields use dotted paths (e.g. user.id).\nResults are sorted by count descending, so piping the tsv output to head gives\nthe top-N and tail gives the bottom-N (no --top/--bottom flags needed).\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. To tally a derived value, call\ntrack_freq directly in a script stage — it accepts any expression, names the\nmetric itself, and needs no throwaway field:\n  -m --exec 'track_freq(\"hour\", meta.parsed_ts.round_to(\"1h\"))'   # per hour\n  -m --exec 'track_freq(\"class\", e.status / 100)'                  # per 1xx/2xx/...\nBy itself --freq tallies the whole run: adding --span does NOT window it. For\nper-window tallies add --span-summary, which puts each window's deltas in a row:\n  --span 1m --freq level --span-summary\n\nExamples:\n  --freq level\n  --filter 'e.status>=500' --freq url\n  --freq url | head        # top URLs (tsv auto-selected when piped)\n  --freq url | tail        # rarest URLs"
+        help = "Frequency table: count occurrences per distinct value of FIELD.\n\nShorthand for track_freq(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Takes one or more fields: repeat the flag or pass a\ncomma-separated list (--freq level,service). Nested fields use dotted paths\n(e.g. user.id).\nResults are sorted by count descending, so piping the tsv output to head gives\nthe top-N and tail gives the bottom-N (no --top/--bottom flags needed).\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. To tally a derived value, call\ntrack_freq directly in a script stage — it accepts any expression, names the\nmetric itself, and needs no throwaway field:\n  -m --exec 'track_freq(\"hour\", meta.parsed_ts.round_to(\"1h\"))'   # per hour\n  -m --exec 'track_freq(\"class\", e.status / 100)'                  # per 1xx/2xx/...\nBy itself --freq tallies the whole run: adding --span does NOT window it. For\nper-window tallies add --span-summary, which puts each window's deltas in a row:\n  --span 1m --freq level --span-summary\n\nExamples:\n  --freq level\n  --filter 'e.status>=500' --freq url\n  --freq url | head        # top URLs (tsv auto-selected when piped)\n  --freq url | tail        # rarest URLs"
     )]
     pub freq: Vec<String>,
 
@@ -901,8 +902,9 @@ pub struct Cli {
     #[arg(
         long = "describe",
         value_name = "FIELD",
+        value_delimiter = ',',
         help_heading = "Metrics and Stats",
-        help = "Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.\n\nShorthand for track_stats(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Repeatable. Non-numeric/missing values are skipped.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. For a derived value, call track_stats\ndirectly in a script stage:\n  -m --exec 'track_stats(\"seconds\", e.duration_ms / 1000.0)'\n\nExample:\n  --describe duration_ms"
+        help = "Summarize a numeric FIELD: count, min, max, avg, p50/p95/p99.\n\nShorthand for track_stats(\"FIELD\", e.FIELD). Runs after all filters/transforms\nand implies -m. Takes one or more fields: repeat the flag or pass a\ncomma-separated list (--describe duration_ms,bytes). Non-numeric/missing values\nare skipped.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. For a derived value, call track_stats\ndirectly in a script stage:\n  -m --exec 'track_stats(\"seconds\", e.duration_ms / 1000.0)'\n\nExample:\n  --describe duration_ms"
     )]
     pub describe: Vec<String>,
 
@@ -910,8 +912,9 @@ pub struct Cli {
     #[arg(
         long = "card",
         value_name = "FIELD",
+        value_delimiter = ',',
         help_heading = "Metrics and Stats",
-        help = "Estimate the number of distinct values of FIELD (HyperLogLog).\n\nShorthand for track_cardinality(\"FIELD\", e.FIELD). Runs after all\nfilters/transforms and implies -m. Repeatable. Missing values are skipped.\nThe count is approximate (~1% error) but uses constant memory, so it scales to\nhigh-cardinality fields where track_freq/track_unique would not.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. For a derived value, call\ntrack_cardinality directly in a script stage:\n  -m --exec 'track_cardinality(\"prefix\", e.client_ip.split(\".\")[0])'\n\nExamples:\n  --card user.id\n  --filter 'e.status>=500' --card client_ip"
+        help = "Estimate the number of distinct values of FIELD (HyperLogLog).\n\nShorthand for track_cardinality(\"FIELD\", e.FIELD). Runs after all\nfilters/transforms and implies -m. Takes one or more fields: repeat the flag or\npass a comma-separated list (--card user_id,trace_id). Missing values are\nskipped.\nThe count is approximate (~1% error) but uses constant memory, so it scales to\nhigh-cardinality fields where track_freq/track_unique would not.\nControl output with --metrics=short|full|tsv|json or --metrics-file.\n\nTakes a field name, not an expression. For a derived value, call\ntrack_cardinality directly in a script stage:\n  -m --exec 'track_cardinality(\"prefix\", e.client_ip.split(\".\")[0])'\n\nExamples:\n  --card user.id\n  --filter 'e.status>=500' --card client_ip"
     )]
     pub card: Vec<String>,
 

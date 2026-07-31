@@ -2006,6 +2006,12 @@ const SUGAR_INPUT: &str = r#"{"level":"INFO","service":"api","ms":10}
 {"level":"ERROR","service":"db","ms":300}
 {"level":"WARN","service":"api","ms":30}"#;
 
+/// Two numeric fields, so one input exercises `--freq`, `--describe` and
+/// `--card` with the same two-field list.
+const SUGAR_LIST_INPUT: &str = r#"{"ms":10,"other_ms":1}
+{"ms":20,"other_ms":2}
+{"ms":300,"other_ms":3}"#;
+
 #[test]
 fn sugar_freq_matches_explicit_track_freq() {
     let (sugar_out, _e1, c1) =
@@ -2070,6 +2076,54 @@ fn sugar_card_matches_explicit_track_cardinality() {
     assert_eq!(
         sugar_out, explicit_out,
         "--card FIELD should equal track_cardinality(\"FIELD\", e.FIELD) -m"
+    );
+}
+
+#[test]
+fn sugar_flags_accept_a_comma_separated_list() {
+    // #366: `-k`/`-l`/`-f` all take comma lists, so `--card a,n` is the natural
+    // thing to type. It used to be taken as one literal field name, which found
+    // nothing and then blamed the field names for the empty result.
+    for flag in ["--card", "--freq", "--describe"] {
+        let (list_out, list_err, list_code) =
+            run_kelora_with_input(&["-f", "json", flag, "ms,other_ms"], SUGAR_LIST_INPUT);
+        let (repeat_out, _e, repeat_code) = run_kelora_with_input(
+            &["-f", "json", flag, "ms", flag, "other_ms"],
+            SUGAR_LIST_INPUT,
+        );
+
+        assert_eq!(list_code, 0, "{flag}: {list_err}");
+        assert_eq!(repeat_code, 0, "{flag} repeated");
+        assert_eq!(
+            list_out, repeat_out,
+            "{flag} a,b should equal {flag} a {flag} b"
+        );
+        assert!(
+            !list_err.contains("likely a field-name typo"),
+            "{flag}: present fields must not be blamed as typos: {list_err}"
+        );
+        assert!(
+            !list_out.is_empty(),
+            "{flag}: a comma list should still produce metrics"
+        );
+    }
+}
+
+#[test]
+fn sugar_expression_containing_a_comma_still_names_the_mechanism() {
+    // The comma split runs before the shape test, so an expression with an
+    // argument list arrives as fragments. It is invalid input either way — but
+    // it must keep pointing at the mechanism that does take an expression
+    // rather than degrading into a field-name typo report.
+    let input = "{\"n\":1}\n{\"n\":2}\n";
+
+    let (_stdout, stderr, code) =
+        run_kelora_with_input(&["-f", "json", "--freq", "round(e.n, 2)"], input);
+
+    assert_eq!(code, 0, "{stderr}");
+    assert!(
+        stderr.contains("take a field name, not an expression"),
+        "an expression in a FIELD slot should still be named as such: {stderr}"
     );
 }
 

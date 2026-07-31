@@ -49,6 +49,14 @@ kelora -j examples/simple_json.jsonl --describe duration_ms
 kelora -j examples/simple_json.jsonl --card user.id
 ```
 
+Each takes one or more fields, spelled either way — repeat the flag, or pass a
+comma-separated list as you would to `-k`/`-l`:
+
+```bash
+kelora -j examples/simple_json.jsonl --freq level,service
+kelora -j examples/simple_json.jsonl --freq level --freq service
+```
+
 There is no `--top`/`--bottom` flag: `--freq` already sorts by count
 descending, so let the shell rank for you. Piped or redirected output
 auto-switches to a tab-separated record stream (like `ls`), so `head` is
