@@ -2496,6 +2496,14 @@ fn handle_pipeline_success(
                     let formatted = config.format_warning_message(&message);
                     stderr.writeln(&formatted).unwrap_or(());
                 }
+                // Cascade events whose own `_format` field was kept instead of
+                // being overwritten by the format tag. Exit stays 0 — no data
+                // was lost — but the tag's absence would otherwise be a mystery,
+                // and since #404 the cascade may not have been asked for (#406).
+                if let Some(message) = s.format_cascade_collision_warning() {
+                    let formatted = config.format_warning_message(&message);
+                    stderr.writeln(&formatted).unwrap_or(());
+                }
             }
 
             if hints_allowed_runtime && terminal_allowed {

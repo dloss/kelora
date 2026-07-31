@@ -103,6 +103,10 @@ pub struct ProcessingStats {
     /// Per-format event counts when running in cascade mode. Empty otherwise.
     /// Keyed by the short format name used in `_format` (e.g. "json", "line").
     pub cascade_format_counts: IndexMap<String, usize>,
+    /// Number of cascade events whose parsed record already carried a field
+    /// literally named `_format`, so the cascade tag was skipped to keep the
+    /// log's own value. A recovery, not an error: exit code stays 0 (#406).
+    pub cascade_format_collisions: usize,
     pub assertion_failures: usize, // Total assertion failures
     pub assertion_failures_by_expr: HashMap<String, usize>, // Per-assertion tracking
     pub csv_rows_extra_columns: usize, // CSV/TSV rows wider than the header (extras kept as cN)
@@ -171,6 +175,13 @@ static LINE_BYTE_CAP: AtomicUsize = AtomicUsize::new(0);
 // atomics and are merged like the truncation counters above.
 static LINES_PREFILTERED: AtomicUsize = AtomicUsize::new(0);
 static LEVEL_PREFILTER_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+// Cascade `_format` tags skipped because the parsed record already had that
+// field. Atomic for the same reason as the pre-filter counter (parsing runs on
+// worker threads under --parallel), and deliberately *not* gated on
+// `stats_enabled()`: it drives a default-on warning, so it must be counted on
+// every run, not only under --stats (#406).
+static CASCADE_FORMAT_COLLISIONS: AtomicUsize = AtomicUsize::new(0);
 
 pub fn set_collect_stats(enabled: bool) {
     COLLECT_STATS.store(enabled, Ordering::Relaxed);
@@ -412,6 +423,22 @@ pub fn stats_add_cascade_format_hit(format: &str) {
     });
 }
 
+/// Record that a cascade parser skipped its `_format` tag because the parsed
+/// record already carried that field, so the log's own value was kept (#406).
+///
+/// Not gated on stats collection: this drives a warning that shows by default,
+/// so it has to be counted on every run. Collisions are rare and the counter is
+/// only reached on a cascade hit, so always counting costs nothing measurable.
+pub fn stats_add_cascade_format_collision() {
+    CASCADE_FORMAT_COLLISIONS.fetch_add(1, Ordering::Relaxed);
+}
+
+/// Number of skipped cascade `_format` tags (process-wide). Exposed so the
+/// parallel tracker can merge it into its final stats.
+pub fn cascade_format_collision_count() -> usize {
+    CASCADE_FORMAT_COLLISIONS.load(Ordering::Relaxed)
+}
+
 pub fn stats_set_detected_format(format: String) {
     if !stats_enabled() {
         return;
@@ -572,6 +599,7 @@ pub fn get_thread_stats() -> ProcessingStats {
         s.line_byte_cap = LINE_BYTE_CAP.load(Ordering::Relaxed);
         s.lines_prefiltered = LINES_PREFILTERED.load(Ordering::Relaxed);
         s.level_prefilter_active = LEVEL_PREFILTER_ACTIVE.load(Ordering::Relaxed);
+        s.cascade_format_collisions = CASCADE_FORMAT_COLLISIONS.load(Ordering::Relaxed);
         s
     })
 }
@@ -929,6 +957,12 @@ impl ProcessingStats {
                 .collect();
             format.insert("cascade".to_string(), Value::Object(counts));
         }
+        if self.cascade_format_collisions > 0 {
+            format.insert(
+                "cascade_tag_skipped".to_string(),
+                json!(self.cascade_format_collisions),
+            );
+        }
         if !format.is_empty() {
             root.insert("format".to_string(), Value::Object(format));
         }
@@ -1214,6 +1248,11 @@ impl ProcessingStats {
             output.push('\n');
         }
 
+        if let Some(message) = self.format_cascade_collision_warning() {
+            output.push_str(&crate::config::format_warning_message_auto(&message));
+            output.push('\n');
+        }
+
         // Time span: show generic label when identical, specific labels when different
         let has_original = self.first_timestamp.is_some() && self.last_timestamp.is_some();
         let has_result =
@@ -1458,6 +1497,36 @@ impl ProcessingStats {
             } else {
                 "were"
             }
+        ))
+    }
+
+    /// Warning for cascade events that already carried a `_format` field, so the
+    /// cascade tag was skipped rather than overwriting the log's own value.
+    /// Returns `None` when nothing collided, which is every ordinary run.
+    ///
+    /// The tag is the recoverable half of the collision — `--stats` prints the
+    /// per-format breakdown and `-v` names the cascade — so data wins and the
+    /// missing tag is explained here rather than left mysterious. Since #404 a
+    /// plain `-f auto` run can pick a cascade on its own, so the advice names the
+    /// way back to single-format parsing (#406).
+    pub fn format_cascade_collision_warning(&self) -> Option<String> {
+        if self.cascade_format_collisions == 0 {
+            return None;
+        }
+        Some(format!(
+            "{} event{} already had a '{}' field, so the cascade format tag was not added to {} — the input value was kept. Per-format counts are in --stats, and -v names the cascade in use. Pass an explicit -f FORMAT to parse with a single format instead.",
+            self.cascade_format_collisions,
+            if self.cascade_format_collisions == 1 {
+                ""
+            } else {
+                "s"
+            },
+            crate::parsers::FORMAT_FIELD,
+            if self.cascade_format_collisions == 1 {
+                "it"
+            } else {
+                "them"
+            },
         ))
     }
 

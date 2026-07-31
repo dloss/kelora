@@ -3,7 +3,9 @@
 //! When users pass a comma-separated format list like `--format json,logfmt,line`,
 //! each line is tried against each parser in order. The first parser that
 //! returns `Ok` handles the event, and the winning format name is written to
-//! the `_format` field on the event for debugging and downstream filtering.
+//! the `_format` field on the event for debugging and downstream filtering —
+//! unless the parsed record already has a field of that name, in which case the
+//! log's own value is kept and the skipped tag is reported once per run.
 //!
 //! Cascade is intentionally restricted to schema-less formats — CSV/TSV and
 //! cols/regex formats are rejected at CLI parse time because their schemas
@@ -53,12 +55,42 @@ impl CascadingParser {
     }
 }
 
+/// Tag `event` with the winning format name, unless the parsed record already
+/// carries a field literally named `_format`.
+///
+/// A blind `set_field` there would destroy the log's own value — an ECS record
+/// with `"_format":"ecs-1.6"` would come out saying `"json"` — and that value is
+/// unreconstructable, whereas the parser name is also available from `--stats`
+/// (`Cascade formats: …`) and the `-v` detection notice. So data wins the
+/// collision, and the skipped tag is counted for a once-per-run warning rather
+/// than passing silently (#406).
+///
+/// The format hit is counted either way: it records which parser handled the
+/// line, which is true regardless of whether the tag could be written.
+///
+/// A `Dynamic::UNIT` under the key is *not* a collision. The projected parsers
+/// insert one for every key they chose not to materialize, specifically to keep
+/// the field-name set identical to a full parse (see `json.rs`), so it holds no
+/// value to protect — skipping the tag for it would lose the tag and preserve
+/// nothing.
+fn tag_format(event: &mut Event, name: &str) {
+    let has_input_value = event
+        .fields
+        .get(FORMAT_FIELD)
+        .is_some_and(|existing| !existing.is_unit());
+    if has_input_value {
+        crate::stats::stats_add_cascade_format_collision();
+    } else {
+        event.set_field(FORMAT_FIELD.to_string(), Dynamic::from(name.to_string()));
+    }
+    crate::stats::stats_add_cascade_format_hit(name);
+}
+
 impl EventParser for CascadingParser {
     fn parse(&self, line: &str) -> Result<Event> {
         for (name, parser) in &self.parsers {
             if let Ok(mut event) = parser.parse(line) {
-                event.set_field(FORMAT_FIELD.to_string(), Dynamic::from(name.clone()));
-                crate::stats::stats_add_cascade_format_hit(name);
+                tag_format(&mut event, name);
                 return Ok(event);
             }
         }
@@ -84,9 +116,12 @@ impl EventParser for CascadingParser {
         for (name, parser) in &self.parsers {
             if let Ok(mut event) = parser.parse_projected(line, projection) {
                 // `_format` is appended after parsing, so it is unaffected by
-                // the projection dropping the member's own fields.
-                event.set_field(FORMAT_FIELD.to_string(), Dynamic::from(name.clone()));
-                crate::stats::stats_add_cascade_format_hit(name);
+                // the projection dropping the member's own fields. A collision
+                // is therefore only possible when the record's own `_format`
+                // survived the projection; if the projection dropped it, the
+                // tag is written normally and nothing was lost silently — the
+                // user asked for that field to go.
+                tag_format(&mut event, name);
                 return Ok(event);
             }
         }
@@ -147,6 +182,86 @@ mod tests {
         assert!(
             err.contains("cascade(json)") && err.contains("catch-all"),
             "error should name the cascade and suggest a catch-all: {err}"
+        );
+    }
+
+    /// A record carrying its own `_format` keeps it: overwriting would destroy
+    /// input data that cannot be reconstructed, while the tag is still available
+    /// from `--stats` and `-v` (#406).
+    #[test]
+    fn cascade_keeps_an_existing_format_field() {
+        let cascade = CascadingParser::new(vec![
+            ("json".to_string(), Box::new(JsonlParser::new())),
+            ("line".to_string(), Box::new(LineParser::new())),
+        ]);
+        let ev = cascade
+            .parse(r#"{"_format":"ecs-1.6","level":"info"}"#)
+            .unwrap();
+        assert_eq!(
+            ev.fields
+                .get(FORMAT_FIELD)
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "ecs-1.6",
+            "the log's own _format value must survive the cascade tag"
+        );
+        assert!(ev.fields.contains_key("level"));
+    }
+
+    /// Same protection on the projected path, which has its own tag call site.
+    #[test]
+    fn cascade_projected_keeps_an_existing_format_field() {
+        use crate::projection::Projection;
+
+        let cascade = CascadingParser::new(vec![
+            ("json".to_string(), Box::new(JsonlParser::new())),
+            ("line".to_string(), Box::new(LineParser::new())),
+        ]);
+        let projection = Projection::Only(
+            [FORMAT_FIELD.to_string(), "level".to_string()]
+                .into_iter()
+                .collect(),
+        );
+        let ev = cascade
+            .parse_projected(r#"{"_format":"ecs-1.6","level":"info"}"#, &projection)
+            .unwrap();
+        assert_eq!(
+            ev.fields
+                .get(FORMAT_FIELD)
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "ecs-1.6"
+        );
+    }
+
+    /// When the projection does not materialize the record's own `_format`, the
+    /// key holds only a `Dynamic::UNIT` placeholder — no value to protect, so the
+    /// tag is written as usual. Skipping it here would lose the tag and preserve
+    /// nothing.
+    #[test]
+    fn cascade_projected_tags_over_a_placeholder_value() {
+        use crate::projection::Projection;
+
+        let cascade = CascadingParser::new(vec![
+            ("json".to_string(), Box::new(JsonlParser::new())),
+            ("line".to_string(), Box::new(LineParser::new())),
+        ]);
+        let projection = Projection::Only(["level".to_string()].into_iter().collect());
+        let ev = cascade
+            .parse_projected(r#"{"_format":"ecs-1.6","level":"info"}"#, &projection)
+            .unwrap();
+        assert_eq!(
+            ev.fields
+                .get(FORMAT_FIELD)
+                .unwrap()
+                .clone()
+                .into_string()
+                .unwrap(),
+            "json"
         );
     }
 

@@ -574,6 +574,11 @@ field is **only** added in cascade mode — single-format runs are unchanged.
 Filter or group by it in Rhai, or inspect it in the output to debug
 classification.
 
+If a record already carries a field of its own named `_format`, that value is
+kept and the tag is **not** added to it — your data is never overwritten. A
+warning reports how many events this affected, and the format name is still
+available from `--stats` and the `-v` detection notice.
+
 **Diagnostic counts:** With `--stats`, cascade mode adds a per-format
 breakdown so silent misclassification surfaces immediately:
 

@@ -553,6 +553,91 @@ fn test_auto_detect_mixed_file_builds_cascade() {
     );
 }
 
+/// A log carrying its own field named `_format` must keep that value: the
+/// cascade tag is skipped rather than overwriting input data, and the skip is
+/// explained by a warning instead of passing silently (#406). Since `-f auto`
+/// can now select a cascade on its own, this is reachable with no flags at all.
+#[test]
+fn test_cascade_keeps_input_format_field_and_warns() {
+    let dir = TempDir::new().expect("tempdir");
+    let ecs = write_input(
+        &dir,
+        "es.jsonl",
+        "{\"_format\":\"ecs-1.6\",\"level\":\"info\",\"msg\":\"start\"}\njava.lang.NullPointerException: boom\n{\"_format\":\"ecs-1.6\",\"level\":\"error\",\"msg\":\"fail\"}\n",
+    );
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(&["-f", "auto"], &[&ecs]);
+
+    assert_eq!(exit_code, 0, "a recovery must not fail the run: {}", stderr);
+    assert_eq!(
+        stdout.matches("_format='ecs-1.6'").count(),
+        2,
+        "the log's own _format value must survive on every JSON event, got: {}",
+        stdout
+    );
+    assert!(
+        stdout.contains("_format='line'"),
+        "the plain-text line had no _format of its own, so it is still tagged, got: {}",
+        stdout
+    );
+    assert!(
+        stderr.contains("cascade format tag was not added"),
+        "the skipped tag must be explained, got: {}",
+        stderr
+    );
+}
+
+/// The collision report is a warning, so `--no-warnings` silences it — and the
+/// input value survives either way.
+#[test]
+fn test_cascade_format_collision_warning_obeys_no_warnings() {
+    let dir = TempDir::new().expect("tempdir");
+    let ecs = write_input(
+        &dir,
+        "es.jsonl",
+        "{\"_format\":\"ecs-1.6\",\"level\":\"info\",\"msg\":\"start\"}\njava.lang.NullPointerException: boom\n",
+    );
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_files(&["-f", "json,line", "--no-warnings"], &[&ecs]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stdout.contains("_format='ecs-1.6'"),
+        "the input value must survive regardless of warning settings, got: {}",
+        stdout
+    );
+    assert!(
+        !stderr.contains("cascade format tag was not added"),
+        "--no-warnings must silence the collision warning, got: {}",
+        stderr
+    );
+}
+
+/// The per-format breakdown counts which parser handled each line, so it stays
+/// complete even for events whose tag was skipped — it is the fallback channel
+/// the fix relies on for recovering the format name.
+#[test]
+fn test_cascade_stats_count_lines_whose_tag_was_skipped() {
+    let dir = TempDir::new().expect("tempdir");
+    let ecs = write_input(
+        &dir,
+        "es.jsonl",
+        "{\"_format\":\"ecs-1.6\",\"level\":\"info\",\"msg\":\"start\"}\njava.lang.NullPointerException: boom\n{\"_format\":\"ecs-1.6\",\"level\":\"error\",\"msg\":\"fail\"}\n",
+    );
+
+    let (stdout, stderr, exit_code) =
+        run_kelora_with_files(&["-f", "json,line", "--stats"], &[&ecs]);
+
+    let combined = format!("{}{}", stdout, stderr);
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        combined.contains("json=2") && combined.contains("line=1"),
+        "cascade counts must include events whose tag was skipped, got: {}",
+        combined
+    );
+}
+
 /// A stray banner line at the head of an otherwise-JSON file used to pin the
 /// whole file to `line`; head sampling must see past it.
 #[test]
