@@ -29,9 +29,14 @@ pub struct ConfMutationError;
 
 impl std::fmt::Display for ConfMutationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Naming the alternative here matters more than it looks: the
+        // unknown-variable hint used to send users to `conf` for accumulators,
+        // and this was the message that closed that door without opening
+        // another (#360). It is seen at the exact moment `state` is needed.
         write!(
             f,
-            "conf map is read-only outside --begin; modifications are not allowed"
+            "conf map is read-only outside --begin; modifications are not allowed. \
+             Use state[\"key\"] for mutable cross-event state (sequential mode only)."
         )
     }
 }
@@ -3123,6 +3128,41 @@ mod tests {
             out.contains("has_path"),
             "output should suggest has_path for checking nested paths; got: {out}"
         );
+    }
+
+    /// Drift guard for #360: the fallback listing went stale because it was a
+    /// hardcoded string with nothing tying it to the real scope. Every variable
+    /// a script can see must have an entry, so adding one to the scope without
+    /// documenting it fails here instead of silently going unmentioned.
+    #[test]
+    fn every_script_variable_is_documented_for_the_fallback_hint() {
+        let engine = RhaiEngine::new();
+        let documented: Vec<&str> = super::debug::SCRIPT_VARIABLE_DOCS
+            .iter()
+            .map(|(name, _)| *name)
+            .collect();
+
+        // The per-event template, plus the three pushed later: `state` by
+        // push_state_to_scope, `metrics` by --end/--span-close, `span` by the
+        // latter alone.
+        let mut expected: Vec<String> = engine
+            .scope_template
+            .iter()
+            .map(|(name, _, _)| name.to_string())
+            .collect();
+        expected.extend([
+            "state".to_string(),
+            "metrics".to_string(),
+            "span".to_string(),
+        ]);
+
+        for name in expected {
+            assert!(
+                documented.contains(&name.as_str()),
+                "scope variable '{name}' has no SCRIPT_VARIABLE_DOCS entry, so the \
+                 unknown-variable hint will not mention it"
+            );
+        }
     }
 
     #[test]

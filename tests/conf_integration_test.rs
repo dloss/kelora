@@ -152,6 +152,14 @@ fn test_init_map_immutability() {
         "Should surface immutability error. stderr: {}",
         stderr
     );
+    // #360: users are routed here by the unknown-variable hint when they reach
+    // for an accumulator, so this message must name the map that does accept
+    // writes instead of only closing the door.
+    assert!(
+        stderr.contains("state[\"key\"]"),
+        "the immutability error should name state as the mutable alternative. stderr: {}",
+        stderr
+    );
 }
 
 #[test]

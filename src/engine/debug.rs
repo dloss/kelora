@@ -109,6 +109,23 @@ impl Clone for DebugTracker {
     }
 }
 
+/// The script variables this hint teaches, in teaching order, each with the
+/// scope caveat that decides whether reaching for it can work.
+///
+/// Hitting "Variable not found" almost always means reaching for cross-event
+/// state, so `state` and `metrics` are the two entries that can actually help —
+/// and both were missing from the hardcoded list this replaces (#360), which
+/// named `conf` instead and so routed users to the one map they cannot write to.
+pub(crate) const SCRIPT_VARIABLE_DOCS: &[(&str, &str)] = &[
+    ("e", "event"),
+    ("meta", "metadata"),
+    ("state", "mutable cross-event state, sequential only"),
+    ("metrics", "track_* results, read in --end"),
+    ("span", "current span, in --span-close"),
+    ("conf", "initialization data, read-only after --begin"),
+    ("line", "raw line"),
+];
+
 pub struct ErrorEnhancer {
     debug_config: DebugConfig,
 }
@@ -116,6 +133,28 @@ pub struct ErrorEnhancer {
 impl ErrorEnhancer {
     pub fn new(debug_config: DebugConfig) -> Self {
         ErrorEnhancer { debug_config }
+    }
+
+    /// List the documented variables the *failing stage* actually has, so the
+    /// hint cannot name one that is out of scope there — `metrics` exists in
+    /// `--end` and `--span-close` but not in a per-event stage, and `span` only
+    /// in the latter. The fuzzy "Did you mean" path already reads the live
+    /// scope; reading it here too keeps the two from disagreeing about what
+    /// exists, which is how #360 arose.
+    fn available_variables_hint(scope: &Scope) -> String {
+        let present: std::collections::HashSet<&str> =
+            scope.iter().map(|(name, _, _)| name).collect();
+        // A scope holding none of them is synthetic (a stage that failed before
+        // setup, or a unit test): absence proves nothing there, so list all.
+        let scope_is_usable = SCRIPT_VARIABLE_DOCS
+            .iter()
+            .any(|(name, _)| present.contains(name));
+        let listed: Vec<String> = SCRIPT_VARIABLE_DOCS
+            .iter()
+            .filter(|(name, _)| !scope_is_usable || present.contains(name))
+            .map(|(name, description)| format!("{name} ({description})"))
+            .collect();
+        format!("Available variables: {}", listed.join(", "))
     }
 
     pub fn enhance_error(
@@ -198,7 +237,7 @@ impl ErrorEnhancer {
                     } else if var_name.starts_with("e.") {
                         Some("Try using bracket notation for special characters: e[\"field-name\"] or e[\"field.with.dots\"]".to_string())
                     } else {
-                        Some("Available variables: e (event), meta (metadata), conf (initialization data), line (raw line)".to_string())
+                        Some(Self::available_variables_hint(scope))
                     }
                 }
             }
@@ -746,6 +785,65 @@ impl ErrorEnhancer {
 mod tests {
     use super::*;
     use std::collections::BTreeSet;
+
+    /// #360: the fallback listing omitted `state` and `metrics` — the only two
+    /// variables that can help someone who just hit "Variable not found", since
+    /// hitting it almost always means reaching for cross-event state.
+    #[test]
+    fn fallback_variable_list_names_state_and_metrics_when_in_scope() {
+        let mut scope = Scope::new();
+        scope.push("line", "");
+        scope.push("e", Map::new());
+        scope.push("meta", Map::new());
+        scope.push("conf", Map::new());
+        scope.push("state", Map::new());
+        scope.push("metrics", Map::new());
+
+        let hint = ErrorEnhancer::available_variables_hint(&scope);
+        assert!(hint.contains("state"), "state must be listed: {hint}");
+        assert!(hint.contains("metrics"), "metrics must be listed: {hint}");
+        assert!(
+            hint.contains("sequential only"),
+            "state's scope caveat is the part that makes it actionable: {hint}"
+        );
+        assert!(
+            hint.contains("read-only after --begin"),
+            "conf must carry the caveat that made it a dead end: {hint}"
+        );
+    }
+
+    /// The complement: naming a variable the failing stage does not have would
+    /// be the same class of mistake in the other direction.
+    #[test]
+    fn fallback_variable_list_omits_out_of_scope_variables() {
+        let mut scope = Scope::new();
+        scope.push("line", "");
+        scope.push("e", Map::new());
+        scope.push("meta", Map::new());
+        scope.push("conf", Map::new());
+        scope.push("state", Map::new());
+
+        let hint = ErrorEnhancer::available_variables_hint(&scope);
+        assert!(
+            !hint.contains("metrics"),
+            "metrics is not readable in a per-event stage: {hint}"
+        );
+        assert!(
+            !hint.contains("span"),
+            "span exists only in --span-close: {hint}"
+        );
+        assert!(hint.contains("state"), "state is in scope here: {hint}");
+    }
+
+    /// A synthetic scope proves nothing about absence, so listing everything
+    /// beats listing nothing.
+    #[test]
+    fn fallback_variable_list_falls_back_to_all_on_an_empty_scope() {
+        let hint = ErrorEnhancer::available_variables_hint(&Scope::new());
+        for (name, _) in SCRIPT_VARIABLE_DOCS {
+            assert!(hint.contains(name), "{name} missing from: {hint}");
+        }
+    }
 
     /// Function name and the type of its first parameter, e.g.
     /// `format(_: &mut ...DateTimeWrapper, _: string)` -> `("format", "&mut ...DateTimeWrapper")`.
