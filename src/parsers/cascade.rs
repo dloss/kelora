@@ -73,6 +73,11 @@ impl CascadingParser {
 /// the field-name set identical to a full parse (see `json.rs`), so it holds no
 /// value to protect — skipping the tag for it would lose the tag and preserve
 /// nothing.
+///
+/// That test also takes in a literal `{"_format":null}`, which is intentional:
+/// a null carries no value the user could lose, the key survives either way, and
+/// distinguishing it from a projection placeholder would mean plumbing the
+/// projection state down here to buy nothing.
 fn tag_format(event: &mut Event, name: &str) {
     let has_input_value = event
         .fields

@@ -1505,16 +1505,20 @@ impl ProcessingStats {
     /// Returns `None` when nothing collided, which is every ordinary run.
     ///
     /// The tag is the recoverable half of the collision — `--stats` prints the
-    /// per-format breakdown and `-v` names the cascade — so data wins and the
-    /// missing tag is explained here rather than left mysterious. Since #404 a
-    /// plain `-f auto` run can pick a cascade on its own, so the advice names the
-    /// way back to single-format parsing (#406).
+    /// per-format breakdown either way — so data wins and the missing tag is
+    /// explained here rather than left mysterious. Since #404 a plain `-f auto`
+    /// run can pick a cascade on its own, so the advice names the way back to
+    /// single-format parsing (#406).
+    ///
+    /// Deliberately does not promise the `-v` detection notice: that fires only
+    /// for an auto-selected cascade, and this warning is reachable from an
+    /// explicit `-f json,line` too.
     pub fn format_cascade_collision_warning(&self) -> Option<String> {
         if self.cascade_format_collisions == 0 {
             return None;
         }
         Some(format!(
-            "{} event{} already had a '{}' field, so the cascade format tag was not added to {} — the input value was kept. Per-format counts are in --stats, and -v names the cascade in use. Pass an explicit -f FORMAT to parse with a single format instead.",
+            "{} event{} already had a '{}' field, so the cascade format tag was not added to {} — the input value was kept. The per-format breakdown is in --stats. Pass a single explicit -f FORMAT to parse with one format instead.",
             self.cascade_format_collisions,
             if self.cascade_format_collisions == 1 {
                 ""
