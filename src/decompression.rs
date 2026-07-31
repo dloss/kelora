@@ -59,6 +59,22 @@ impl Read for DecompressionReader {
     }
 }
 
+/// True if the first bytes of a stream carry a gzip (1F 8B 08) or zstd
+/// (28 B5 2F FD) magic signature — the formats this module transparently
+/// decompresses. Pass at least the first 4 bytes; shorter slices simply can't
+/// match the longer signature.
+pub fn looks_compressed(head: &[u8]) -> bool {
+    is_gzip_magic(head) || is_zstd_magic(head)
+}
+
+fn is_gzip_magic(head: &[u8]) -> bool {
+    head.len() >= 3 && head[0] == 0x1F && head[1] == 0x8B && head[2] == 0x08
+}
+
+fn is_zstd_magic(head: &[u8]) -> bool {
+    head.len() >= 4 && head[0] == 0x28 && head[1] == 0xB5 && head[2] == 0x2F && head[3] == 0xFD
+}
+
 /// Detect compression format by magic bytes and return appropriate reader
 /// Reads first 4 bytes to check for gzip (1F 8B 08) or zstd (28 B5 2F FD) magic signatures
 fn detect_compression_file(mut file: File) -> std::io::Result<DecompressionReader> {
@@ -69,12 +85,8 @@ fn detect_compression_file(mut file: File) -> std::io::Result<DecompressionReade
     let prefix = Cursor::new(head[..n].to_vec());
     let chained = prefix.chain(file);
 
-    // Check for gzip magic bytes: 1F 8B 08
-    let is_gzip = n >= 3 && head[0] == 0x1F && head[1] == 0x8B && head[2] == 0x08;
-
-    // Check for zstd magic bytes: 28 B5 2F FD
-    let is_zstd =
-        n >= 4 && head[0] == 0x28 && head[1] == 0xB5 && head[2] == 0x2F && head[3] == 0xFD;
+    let is_gzip = is_gzip_magic(&head[..n]);
+    let is_zstd = is_zstd_magic(&head[..n]);
 
     if is_gzip {
         let decoder = MultiGzDecoder::new(chained);
@@ -101,12 +113,8 @@ pub fn maybe_decompress<R: Read + Send + 'static>(
     let prefix = Cursor::new(head[..n].to_vec());
     let chained: Chain<Cursor<Vec<u8>>, R> = prefix.chain(reader);
 
-    // Check for gzip magic bytes: 1F 8B 08
-    let is_gzip = n >= 3 && head[0] == 0x1F && head[1] == 0x8B && head[2] == 0x08;
-
-    // Check for zstd magic bytes: 28 B5 2F FD
-    let is_zstd =
-        n >= 4 && head[0] == 0x28 && head[1] == 0xB5 && head[2] == 0x2F && head[3] == 0xFD;
+    let is_gzip = is_gzip_magic(&head[..n]);
+    let is_zstd = is_zstd_magic(&head[..n]);
 
     if is_gzip {
         Ok(Box::new(MultiGzDecoder::new(chained)))

@@ -469,7 +469,11 @@ The following names cannot be used: `original_line`, `parsed_ts`, `fields`
 detection uses the first non-empty line (a live pipe never waits for more
 input). Reading from files, detection samples the file head — up to the first
 64 non-empty lines (capped at 256 KiB) — so a stray banner line or a mix of
-formats can't mislead it.
+formats can't mislead it. Plain (uncompressed) files of 32 KiB or more are
+additionally probed at a few deeper offsets (1/4, 1/2, 3/4, and the tail), so
+a format change partway through the file — concatenated rotations, a service
+that switched formats mid-file — is still caught; gzip/zstd files sample the
+head only, since compressed streams aren't seekable.
 
 **Detection Order:**
 

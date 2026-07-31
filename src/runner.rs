@@ -671,9 +671,12 @@ fn spawn_file_reader_auto_per_file(
             let mut peekable_reader = readers::PeekableLineReader::new(reader);
             // Per-file detection samples the file head (like `auto` on files);
             // the sampled bytes stay buffered in the peekable reader and are
-            // replayed below, so nothing is read twice or skipped.
-            let detected =
-                detection::detect_format_from_peekable_reader_sampled(&mut peekable_reader)?;
+            // replayed below, so nothing is read twice or skipped. Mid-file
+            // probes use a separate read-only handle on the path.
+            let detected = detection::detect_format_from_peekable_reader_sampled(
+                &mut peekable_reader,
+                Some(&file_path),
+            )?;
 
             detection::emit_detected_format_notice(&config, &detected);
 

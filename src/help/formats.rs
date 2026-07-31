@@ -133,7 +133,11 @@ Meta formats (select or combine the concrete formats above):
 auto (default)
   Auto-detect format: from the first non-empty line on stdin (a live pipe
   never waits for more input), from a sample of the file head — up to the
-  first 64 non-empty lines, capped at 256 KiB — for file input
+  first 64 non-empty lines, capped at 256 KiB — for file input. Plain
+  (uncompressed) files of 32 KiB or more are additionally probed at a few
+  deeper offsets (1/4, 1/2, 3/4, tail), so a format change partway through
+  the file — concatenated rotations, say — is still caught; gzip/zstd files
+  sample the head only (compressed streams aren't seekable)
   Detection order: json → syslog → cef → combined → cri → logfmt → csv
                    → application-log formats (regex) → line
   Note: Detects once and applies to all lines

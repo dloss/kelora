@@ -696,3 +696,42 @@ fn test_auto_per_file_mixed_file_gets_cascade() {
         stdout
     );
 }
+
+/// A large file that switches format partway through (concatenated rotations):
+/// the head sample sees only JSON, so mid-file probing must catch the plain-text
+/// half and build the cascade.
+#[test]
+fn test_auto_detect_probes_catch_late_format_change() {
+    let dir = TempDir::new().expect("tempdir");
+    let json_half: String = (0..600)
+        .map(|i| {
+            format!("{{\"level\":\"info\",\"msg\":\"padding padding padding\",\"seq\":{i}}}\n")
+        })
+        .collect();
+    let text_half: String = (0..600)
+        .map(|i| format!("plain text payload without any structure at all {i}\n"))
+        .collect();
+    let mixed = write_input(&dir, "rotated.log", &format!("{json_half}{text_half}"));
+
+    let (stdout, stderr, exit_code) = run_kelora_with_files(
+        &["-f", "auto", "-v", "--filter", "e._format == \"line\""],
+        &[&mixed],
+    );
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stderr.contains("cascade(json,line)") && stderr.contains("mid-file lines"),
+        "probing must detect the late format change: {}",
+        stderr
+    );
+    assert!(
+        stdout.contains("plain text payload without any structure at all 0"),
+        "text-half lines must parse as line events: {}",
+        stdout
+    );
+    assert!(
+        !stderr.contains("Parse errors"),
+        "no line should fail to parse: {}",
+        stderr
+    );
+}
