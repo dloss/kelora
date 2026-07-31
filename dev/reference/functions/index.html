@@ -9206,14 +9206,20 @@ timestamp, date, time, num.
 <code>timestamp</code> also covers calendar dates that span several tokens — ctime/asctime
 (<code>Mon Jun 13 03:55:15 2005</code>, with or without the year) and the bare syslog form
 (<code>Jun 13 03:55:15</code>) — so one message doesn't split into a template per weekday.
+Sizes with units mask as one <code>&lt;size_kb&gt;</code>-style token however they were spelled
+(<code>18.4 KB</code>, <code>10MB</code>), and spaced durations (<code>took 5 seconds</code>) as <code>&lt;duration&gt;</code>, so
+a value spanning several tokens stays one token.
 Only the matched span is masked, so the literal part of a token survives:
 <code>uid=0</code> → <code>uid=&lt;num&gt;</code>, <code>worker-3</code> → <code>worker-&lt;num&gt;</code>, <code>GET /api/v1/users?id=5</code> →
 <code>GET &lt;path&gt;?id=&lt;num&gt;</code>. A digit inside a word belongs to the word and is left
 alone, so <code>ssh2</code>, <code>utf8</code> and <code>sha256</code> stay as they are.
 What no filter catches, Drain itself generalizes: a position the events in one
-template disagree on is reported as <code>&lt;*&gt;</code>, with <code>sample</code> giving a real line.
+template disagree on is reported as <code>&lt;*&gt;</code>, with <code>sample</code> giving a real line —
+including across token counts, so an optional segment (<code>(1.13 KB)</code>) or a value
+of varying width (<code>lifetime 00:03</code> / <code>lifetime &lt;1 sec</code>) folds into one template
+whose <code>&lt;*&gt;</code> covers the varying stretch.
 An explicit <code>filters</code> list masks exactly those patterns, without the multi-token
-calendar dates.
+collapses.
 For lightweight normalization without Drain, use <code>normalized()</code> on the field instead.</p>
 <p>Optional <code>options</code> map keys:</p>
 <ul>

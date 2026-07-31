@@ -7448,10 +7448,15 @@ timestamp, date, time, num.
 <code>timestamp</code> also covers calendar dates spanning several tokens — ctime/asctime
 (<code>Mon Jun 13 03:55:15 2005</code>, with or without the year) and the bare syslog form
 (<code>Jun 13 03:55:15</code>) — so one message doesn't split into a template per weekday.
+Sizes with units mask as one <code>&lt;size_kb&gt;</code>-style token however they were spelled
+(<code>18.4 KB</code>, <code>10MB</code>), and spaced durations (<code>took 5 seconds</code>) as <code>&lt;duration&gt;</code>.
 Only the matched span is masked, so the literal part of a token survives:
 <code>uid=0</code> → <code>uid=&lt;num&gt;</code>, <code>worker-3</code> → <code>worker-&lt;num&gt;</code>, <code>GET /api/v1/users?id=5</code> →
 <code>GET &lt;path&gt;?id=&lt;num&gt;</code>. A digit inside a word belongs to the word and is left
-alone, so <code>ssh2</code>, <code>utf8</code> and <code>sha256</code> stay as they are.
+alone, so <code>ssh2</code>, <code>utf8</code> and <code>sha256</code> stay as they are. Templates that differ
+only in how many tokens a value spans (an optional <code>(1.13 KB)</code> segment,
+<code>lifetime 00:03</code> vs <code>lifetime &lt;1 sec</code>) merge at end of input, with <code>&lt;*&gt;</code>
+covering the varying stretch.
 What no filter catches, Drain itself generalizes: a position the events in one
 template disagree on is shown as <code>&lt;*&gt;</code> (<code>session closed for user &lt;*&gt;</code>), with
 <code>--drain=full</code>'s <code>sample:</code> giving a real line for the concrete value.</p>
