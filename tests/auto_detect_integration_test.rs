@@ -735,3 +735,80 @@ fn test_auto_detect_probes_catch_late_format_change() {
         stderr
     );
 }
+
+/// Detection's sample doubles as a stack-trace scanner: spotting Java frames
+/// produces a once-per-run hint suggesting the matching --multiline preset.
+#[test]
+fn test_multiline_hint_fires_for_java_traces() {
+    let dir = TempDir::new().expect("tempdir");
+    let traces = write_input(
+        &dir,
+        "app.log",
+        "2024-01-02 15:04:05,123 ERROR [main] com.example.Service - boom\n\
+         java.lang.IllegalStateException: boom\n\
+         \tat com.example.Service.run(Service.java:42)\n",
+    );
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(&[], &[&traces]);
+
+    assert_eq!(exit_code, 0, "kelora should exit successfully: {}", stderr);
+    assert!(
+        stderr.contains("--multiline java") && stderr.contains("Java stack traces"),
+        "expected the multiline hint on stderr: {}",
+        stderr
+    );
+    assert_eq!(
+        stderr.matches("--multiline java").count(),
+        1,
+        "hint must appear exactly once: {}",
+        stderr
+    );
+}
+
+/// The hint stays quiet when --multiline is already configured (the user has
+/// chosen a strategy) and under --no-hints.
+#[test]
+fn test_multiline_hint_respects_gating() {
+    let dir = TempDir::new().expect("tempdir");
+    let traces = write_input(
+        &dir,
+        "app.log",
+        "2024-01-02 15:04:05,123 ERROR [main] com.example.Service - boom\n\
+         \tat com.example.Service.run(Service.java:42)\n",
+    );
+
+    let (_stdout, stderr, _exit) = run_kelora_with_files(&["-M", "java"], &[&traces]);
+    assert!(
+        !stderr.contains("Input contains Java stack traces"),
+        "hint must not second-guess an explicit --multiline: {}",
+        stderr
+    );
+
+    let (_stdout, stderr, _exit) = run_kelora_with_files(&["--no-hints"], &[&traces]);
+    assert!(
+        !stderr.contains("--multiline java"),
+        "hint must honor --no-hints: {}",
+        stderr
+    );
+}
+
+/// Ordinary structured logs (no trace shapes) must not trigger the hint.
+#[test]
+fn test_multiline_hint_stays_quiet_without_traces() {
+    let dir = TempDir::new().expect("tempdir");
+    let clean = write_input(
+        &dir,
+        "clean.log",
+        "{\"level\":\"info\",\"msg\":\"at the end (finally) we shipped\"}\n\
+         {\"level\":\"warn\",\"msg\":\"panic averted\"}\n",
+    );
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_files(&[], &[&clean]);
+
+    assert_eq!(exit_code, 0);
+    assert!(
+        !stderr.contains("--multiline"),
+        "no trace shapes, no hint: {}",
+        stderr
+    );
+}

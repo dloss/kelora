@@ -82,6 +82,81 @@ pub struct DetectedFormat {
     /// input wasn't probed: stdin, compressed, or small files). Only used to
     /// word the `-v` notice.
     pub probe_lines: usize,
+    /// A stack-trace shape spotted in the sampled lines, if any. Feeds the
+    /// advisory "consider --multiline <preset>" hint; never affects the
+    /// detected format itself.
+    pub multiline_hint: Option<&'static MultilineSignature>,
+}
+
+/// A multiline (stack-trace) shape that detection can spot in its sample and
+/// map to the `--multiline` preset that handles it.
+#[derive(Debug)]
+pub struct MultilineSignature {
+    /// Human-readable name for the hint text, e.g. "Java stack traces".
+    pub description: &'static str,
+    /// The `--multiline` preset to suggest.
+    pub preset: &'static str,
+}
+
+static JAVA_TRACES: MultilineSignature = MultilineSignature {
+    description: "Java stack traces",
+    preset: "java",
+};
+static PYTHON_TRACES: MultilineSignature = MultilineSignature {
+    description: "Python tracebacks",
+    preset: "python",
+};
+static GO_TRACES: MultilineSignature = MultilineSignature {
+    description: "Go panics/goroutine dumps",
+    preset: "go",
+};
+
+/// Scan sampled lines for high-confidence stack-trace shapes.
+///
+/// Deliberately conservative: a miss costs nothing (status quo — the trace
+/// lines still parse, just as separate events), while a match only produces an
+/// advisory hint, so each signature keys on markers that essentially don't
+/// occur outside their language's traces. The multiline *behavior* stays
+/// opt-in: merging lines changes event boundaries (counts, filters, spans),
+/// which is never guessed at — see `--help-multiline`.
+pub fn detect_multiline_signature<'a, I>(lines: I) -> Option<&'static MultilineSignature>
+where
+    I: IntoIterator<Item = &'a str>,
+{
+    for line in lines {
+        let trimmed = line.trim_start();
+        let indented = trimmed.len() != line.len();
+
+        // Java/JVM frame (`\tat com.example.Foo.bar(Foo.java:42)`, possibly
+        // with a trailing `~[jar:…]`) or a `Caused by:` chain header.
+        if (indented
+            && trimmed.starts_with("at ")
+            && trimmed.contains('(')
+            && trimmed.contains(')'))
+            || trimmed.starts_with("Caused by: ")
+        {
+            return Some(&JAVA_TRACES);
+        }
+
+        // Python traceback header or an indented frame line
+        // (`  File "app.py", line 12, in main`).
+        if trimmed.starts_with("Traceback (most recent call last):")
+            || (indented && trimmed.starts_with("File \"") && trimmed.contains(", line "))
+        {
+            return Some(&PYTHON_TRACES);
+        }
+
+        // Go runtime panic or goroutine dump header (`goroutine 7 [running]:`)
+        // — both start at column 0.
+        if line.starts_with("panic: ")
+            || (line.starts_with("goroutine ")
+                && line.contains(" [")
+                && line.trim_end().ends_with("]:"))
+        {
+            return Some(&GO_TRACES);
+        }
+    }
+    None
 }
 
 impl DetectedFormat {
@@ -108,6 +183,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
             saw_content: false,
             sample_lines: 0,
             probe_lines: 0,
+            multiline_hint: None,
         }),
         Some(line) => {
             // Remove newline for detection
@@ -119,6 +195,7 @@ pub fn detect_format_from_peekable_reader<R: std::io::BufRead>(
                 saw_content: true,
                 sample_lines: 1,
                 probe_lines: 0,
+                multiline_hint: None,
             })
         }
     }
@@ -150,6 +227,7 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
             saw_content: false,
             sample_lines: 0,
             probe_lines: 0,
+            multiline_hint: None,
         });
     }
     let probe_lines = probe_path.map(probe_file_offsets).unwrap_or_default();
@@ -159,12 +237,17 @@ pub fn detect_format_from_peekable_reader_sampled<R: std::io::BufRead>(
         .map(|line| line.trim_end_matches(&['\r', '\n'][..]))
         .collect();
     let detected = parsers::detect_format_from_sample(trimmed.iter().copied())?;
+    // Piggyback on the same sample to spot stack-trace shapes for the
+    // advisory --multiline hint. Indentation matters to the signatures, so
+    // scan the untrimmed-start lines (only the trailing newline is gone).
+    let multiline_hint = detect_multiline_signature(trimmed.iter().copied());
     Ok(DetectedFormat {
         format: detected,
         had_input: true,
         saw_content: true,
         sample_lines: head_lines.len(),
         probe_lines: probe_lines.len(),
+        multiline_hint,
     })
 }
 
@@ -379,6 +462,7 @@ pub fn detect_format_for_parallel_mode(
                 saw_content: false,
                 sample_lines: 0,
                 probe_lines: 0,
+                multiline_hint: None,
             },
             None,
         ));
@@ -467,10 +551,46 @@ pub fn format_detected_format_notice(
 /// design* (it says what each file was read as, which differs between files).
 static FALLBACK_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
 
+/// Tracks whether the "--multiline <preset>" hint already went out this run.
+/// Like the fallback hint, per-file detection (`auto-per-file`) would otherwise
+/// repeat the identical advice for every file that contains a trace.
+static MULTILINE_HINT_EMITTED: AtomicBool = AtomicBool::new(false);
+
+/// Build the advisory "consider --multiline <preset>" hint (💡) when the
+/// detection sample contained a stack-trace shape.
+///
+/// Only advises — the multiline behavior itself stays opt-in, because merging
+/// lines changes event boundaries (counts, filters, spans) and a wrong merge
+/// is silent. Follows the standard hint gating (`--no-hints`, `--silent`,
+/// data-only modes), and stays quiet when `--multiline` is already set: the
+/// user has made their choice, second-guessing the strategy would be noise.
+pub fn multiline_hint_message(config: &KeloraConfig, detected: &DetectedFormat) -> Option<String> {
+    let signature = detected.multiline_hint?;
+    if !config.hints_allowed() || config.input.multiline.is_some() {
+        return None;
+    }
+    Some(config.format_hint_message(&format!(
+        "Input contains {}; without multiline handling each trace line becomes its own event. Consider --multiline {} (see --help-multiline).",
+        signature.description, signature.preset
+    )))
+}
+
 /// Emit a notice about detected format to stderr
 pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFormat) {
     if let Some(message) = format_detected_format_notice(config, detected) {
         if detected.fell_back_to_line() && FALLBACK_HINT_EMITTED.swap(true, Ordering::Relaxed) {
+            eprint_multiline_hint(config, detected);
+            return;
+        }
+        eprintln!("{}", message);
+    }
+    eprint_multiline_hint(config, detected);
+}
+
+/// Emit the --multiline hint at most once per run.
+fn eprint_multiline_hint(config: &KeloraConfig, detected: &DetectedFormat) {
+    if let Some(message) = multiline_hint_message(config, detected) {
+        if MULTILINE_HINT_EMITTED.swap(true, Ordering::Relaxed) {
             return;
         }
         eprintln!("{}", message);
@@ -757,6 +877,118 @@ mod tests {
     }
 
     #[test]
+    fn multiline_signature_detects_trace_shapes() {
+        // Java: indented frame and Caused-by chain header.
+        for lines in [
+            vec![
+                "2024-01-02 15:04:05,123 ERROR [main] com.example.Service - boom",
+                "java.lang.IllegalStateException: boom",
+                "\tat com.example.Service.run(Service.java:42) ~[classes/:na]",
+            ],
+            vec!["Caused by: java.io.IOException: closed"],
+        ] {
+            let sig =
+                detect_multiline_signature(lines.iter().copied()).expect("java signature expected");
+            assert_eq!(sig.preset, "java");
+        }
+
+        // Python: header and indented File frame.
+        for lines in [
+            vec!["Traceback (most recent call last):"],
+            vec!["  File \"app.py\", line 12, in main"],
+        ] {
+            let sig = detect_multiline_signature(lines.iter().copied())
+                .expect("python signature expected");
+            assert_eq!(sig.preset, "python");
+        }
+
+        // Go: panic line and goroutine dump header.
+        for lines in [
+            vec!["panic: runtime error: invalid memory address"],
+            vec!["goroutine 7 [running]:"],
+        ] {
+            let sig =
+                detect_multiline_signature(lines.iter().copied()).expect("go signature expected");
+            assert_eq!(sig.preset, "go");
+        }
+    }
+
+    #[test]
+    fn multiline_signature_ignores_ordinary_log_lines() {
+        let lines = [
+            "2024-01-02 15:04:05,123 INFO [main] com.example.Service - up",
+            "{\"level\":\"info\",\"msg\":\"at the end (finally) we shipped\"}",
+            // 'at' + parens but not indented: prose, not a frame.
+            "at last (finally) the deploy finished",
+            // 'File "' but not indented.
+            "File \"config.yaml\", line 3 was ignored",
+            "level=info msg=\"panic averted\"",
+            "goroutine count is [12]",
+        ];
+        assert!(detect_multiline_signature(lines.iter().copied()).is_none());
+    }
+
+    #[test]
+    fn multiline_hint_respects_gating() {
+        let detected = DetectedFormat {
+            format: config::InputFormat::Named(
+                crate::parsers::lnav_formats::by_name("log4j").expect("log4j exists"),
+            ),
+            had_input: true,
+            saw_content: true,
+            sample_lines: 10,
+            probe_lines: 0,
+            multiline_hint: detect_multiline_signature(["\tat com.example.Foo.bar(Foo.java:1)"]),
+        };
+        assert!(detected.multiline_hint.is_some());
+
+        // Allowed by default...
+        let cfg = base_config();
+        let message = multiline_hint_message(&cfg, &detected).expect("hint expected");
+        assert!(
+            message.contains("--multiline java") && message.contains("Java stack traces"),
+            "message was {message}"
+        );
+
+        // ...suppressed by --no-hints...
+        let mut no_hints = base_config();
+        no_hints.processing.suppress_hints = true;
+        assert!(multiline_hint_message(&no_hints, &detected).is_none());
+
+        // ...and quiet when --multiline is already configured.
+        let mut with_multiline = base_config();
+        with_multiline.input.multiline =
+            Some(config::MultilineConfig::parse("java").expect("preset parses"));
+        assert!(multiline_hint_message(&with_multiline, &detected).is_none());
+
+        // No signature, no hint.
+        let clean = DetectedFormat {
+            multiline_hint: None,
+            ..detected
+        };
+        assert!(multiline_hint_message(&cfg, &clean).is_none());
+    }
+
+    #[test]
+    fn sampled_detection_reports_multiline_signature() {
+        let dir = tempfile::TempDir::new().expect("tempdir");
+        let path = write_input(
+            &dir,
+            "app.log",
+            "2024-01-02 15:04:05,123 INFO [main] com.example.Service - up\n\
+             2024-01-02 15:04:06,123 ERROR [main] com.example.Service - boom\n\
+             java.lang.IllegalStateException: boom\n\
+             \tat com.example.Service.run(Service.java:42)\n\
+             \tat com.example.Main.main(Main.java:10)\n",
+        );
+
+        let detected = detect_format_from_files(&[path], false).expect("detection");
+
+        let sig = detected.multiline_hint.expect("signature expected");
+        assert_eq!(sig.preset, "java");
+    }
+
+    #[test]
     fn file_detection_stays_single_format_for_homogeneous_files() {
         // Sampling must not change the result for files that detect cleanly.
         let dir = tempfile::TempDir::new().expect("tempdir");
@@ -782,6 +1014,7 @@ mod tests {
             saw_content: true,
             sample_lines: 42,
             probe_lines: 0,
+            multiline_hint: None,
         };
 
         let mut verbose_cfg = base_config();
@@ -858,6 +1091,7 @@ mod tests {
             saw_content: true,
             sample_lines: 1,
             probe_lines: 0,
+            multiline_hint: None,
         };
 
         // A confident auto-detection is silent on a normal run...
