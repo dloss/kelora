@@ -923,6 +923,24 @@ impl KeloraConfig {
         !self.processing.silent && !self.processing.suppress_hints
     }
 
+    /// Whether hints are hushed only because a data-only mode
+    /// (`-s`/`-m`/`--freq`/`--describe`/`--card`/`--drain`/`--discover`/
+    /// `--span-summary`) implied it — as opposed to an explicit
+    /// `--no-hints`/`--no-diagnostics`/`KELORA_NO_HINTS` or `--silent`.
+    ///
+    /// Signals whose *consequence is quantitative* consult this to escalate to
+    /// warning tier: a hint about partially parsed input is advisory on a
+    /// normal run (the events are on screen), but in a data-only mode the
+    /// same condition silently skews the numbers, which is a warning-grade
+    /// anomaly — and warnings deliberately survive data-only modes (#239).
+    /// An explicit user opt-out of hints still wins: escalating around a real
+    /// `--no-hints` would second-guess a choice the user actually made.
+    pub fn hints_hushed_by_data_mode(&self) -> bool {
+        self.processing.suppress_hints
+            && !self.processing.hints_user_suppressed
+            && !self.processing.silent
+    }
+
     /// Whether the "no input format detected" fallback hint may be emitted.
     ///
     /// Same rules as [`hints_allowed`](Self::hints_allowed), except that

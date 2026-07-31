@@ -636,6 +636,41 @@ pub fn unparsed_formats_hint_message(
     Some(config.format_hint_message(&unparsed_formats_hint_text(detected)?))
 }
 
+/// Build the warning (🔸) that replaces the dropped-formats hint in data-only
+/// modes (`--freq`/`-s`/`-m`/…), where hints are hushed.
+///
+/// On a normal run the dropped formats are self-evident — the affected events
+/// sit on screen as `line='…'` — so a hint is the right tier. In a data-only
+/// mode the same condition is invisible and *quantitative*: `--freq level`
+/// over a multi-service file silently counts only the lines the dominant
+/// format parses. Wrong-looking numbers with no explanation are a
+/// warning-grade anomaly, and warnings deliberately survive data-only modes.
+/// An explicit `--no-hints` (or `--silent`/`--no-warnings`) still wins — see
+/// `KeloraConfig::hints_hushed_by_data_mode`.
+pub fn unparsed_formats_data_mode_warning(
+    config: &KeloraConfig,
+    detected: &DetectedFormat,
+) -> Option<String> {
+    if !config.hints_hushed_by_data_mode() || !config.warnings_allowed() {
+        return None;
+    }
+    // Under --discover the fell-back-to-line notice still embeds the hint
+    // text (see `format_fallback_hint_allowed`); don't say it twice.
+    if detected.fell_back_to_line() && config.format_fallback_hint_allowed() {
+        return None;
+    }
+    let suggestion = detected.cascade_suggestion.as_ref()?;
+    let names = detected.unparsed_formats.join(", ");
+    let plural = if detected.unparsed_formats.len() > 1 {
+        "s"
+    } else {
+        ""
+    };
+    Some(config.format_warning_message(&format!(
+        "Sampled lines also match the {names} format{plural} but parse as whole 'line' events, so field-based results may under-count. To parse them too: -f {suggestion}. See --help-formats."
+    )))
+}
+
 /// Emit a notice about detected format to stderr
 pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFormat) {
     if let Some(message) = format_detected_format_notice(config, detected) {
@@ -649,10 +684,13 @@ pub fn emit_detected_format_notice(config: &KeloraConfig, detected: &DetectedFor
     eprint_multiline_hint(config, detected);
 }
 
-/// Emit the dropped-formats hint at most once per run (auto-per-file would
-/// otherwise repeat near-identical advice for every mixed file).
+/// Emit the dropped-formats hint — or its data-only-mode warning escalation —
+/// at most once per run (auto-per-file would otherwise repeat near-identical
+/// advice for every mixed file).
 fn eprint_unparsed_formats_hint(config: &KeloraConfig, detected: &DetectedFormat) {
-    if let Some(message) = unparsed_formats_hint_message(config, detected) {
+    let message = unparsed_formats_hint_message(config, detected)
+        .or_else(|| unparsed_formats_data_mode_warning(config, detected));
+    if let Some(message) = message {
         if UNPARSED_FORMATS_HINT_EMITTED.swap(true, Ordering::Relaxed) {
             return;
         }
@@ -1104,6 +1142,62 @@ mod tests {
             message.contains("cascade(json,line)") && message.contains("first 42 lines"),
             "message was {message}"
         );
+    }
+
+    #[test]
+    fn unparsed_formats_signal_escalates_to_warning_in_data_modes() {
+        let detected = DetectedFormat {
+            format: config::InputFormat::Cascade(vec![
+                config::InputFormat::Json,
+                config::InputFormat::Line,
+            ]),
+            had_input: true,
+            saw_content: true,
+            sample_lines: 42,
+            probe_lines: 0,
+            multiline_hint: None,
+            unparsed_formats: vec!["logfmt".to_string()],
+            cascade_suggestion: Some("json,logfmt,line".to_string()),
+        };
+
+        // Normal run: hint tier, no warning.
+        let cfg = base_config();
+        assert!(unparsed_formats_hint_message(&cfg, &detected).is_some());
+        assert!(unparsed_formats_data_mode_warning(&cfg, &detected).is_none());
+
+        // Data-only mode (hints hushed implicitly): warning tier takes over —
+        // the numbers on stdout are silently partial, which is anomaly-grade.
+        let mut data_mode = base_config();
+        data_mode.processing.suppress_hints = true;
+        data_mode.processing.hints_user_suppressed = false;
+        assert!(unparsed_formats_hint_message(&data_mode, &detected).is_none());
+        let warning = unparsed_formats_data_mode_warning(&data_mode, &detected)
+            .expect("data-only mode must escalate to a warning");
+        assert!(
+            warning.contains("under-count") && warning.contains("-f json,logfmt,line"),
+            "warning was {warning}"
+        );
+
+        // An explicit --no-hints is a user choice, not a mode side effect:
+        // no escalation around it.
+        let mut user_no_hints = base_config();
+        user_no_hints.processing.suppress_hints = true;
+        user_no_hints.processing.hints_user_suppressed = true;
+        assert!(unparsed_formats_data_mode_warning(&user_no_hints, &detected).is_none());
+
+        // --no-warnings silences the escalated tier like any other warning.
+        let mut no_warnings = base_config();
+        no_warnings.processing.suppress_hints = true;
+        no_warnings.processing.suppress_warnings = true;
+        assert!(unparsed_formats_data_mode_warning(&no_warnings, &detected).is_none());
+
+        // Nothing was dropped → nothing to say in any mode.
+        let clean = DetectedFormat {
+            unparsed_formats: Vec::new(),
+            cascade_suggestion: None,
+            ..detected
+        };
+        assert!(unparsed_formats_data_mode_warning(&data_mode, &clean).is_none());
     }
 
     #[test]
