@@ -2770,7 +2770,7 @@
 <tbody>
 <tr>
 <td><code>auto</code></td>
-<td>Auto-detect from first non-empty line (default)</td>
+<td>Auto-detect (default): first non-empty line on stdin, sampled file head on files</td>
 </tr>
 <tr>
 <td><code>json</code></td>
@@ -3450,7 +3450,15 @@ e.g. <code>--input-tz Europe/Berlin</code>.</p>
 </ul>
 <h3 id="auto-detection">Auto-Detection<a class="headerlink" href="#auto-detection" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong> <code>-f auto</code></p>
-<p><strong>Description:</strong> Automatically detect format from first non-empty line.</p>
+<p><strong>Description:</strong> Automatically detect the input format. Reading from stdin,
+detection uses the first non-empty line (a live pipe never waits for more
+input). Reading from files, detection samples the file head — up to the first
+64 non-empty lines (capped at 256 KiB) — so a stray banner line or a mix of
+formats can't mislead it. Plain (uncompressed) files of 32 KiB or more are
+additionally probed at a few deeper offsets (1/4, 1/2, 3/4, and the tail), so
+a format change partway through the file — concatenated rotations, a service
+that switched formats mid-file — is still caught; gzip/zstd files sample the
+head only, since compressed streams aren't seekable.</p>
 <p><strong>Detection Order:</strong></p>
 <ol>
 <li>JSON (starts with <code>{</code>)</li>
@@ -3466,15 +3474,24 @@ e.g. <code>--input-tz Europe/Berlin</code>.</p>
 <p><strong>Notes:</strong></p>
 <ul>
 <li>Detects once, applies to all lines</li>
-<li>With multiple files, detection uses the first non-empty line across the inputs
-  in order — leading files that are empty or contain only blank lines are
-  skipped, so a freshly rotated (empty) log doesn't force everything to <code>line</code></li>
-<li>Not suitable for mixed-format files — use <strong>cascade mode</strong> instead</li>
+<li>With multiple files, detection samples the first file that has content —
+  leading files that are empty or contain only blank lines are skipped, so a
+  freshly rotated (empty) log doesn't force everything to <code>line</code></li>
+<li><strong>Mixed-format files (file input only):</strong> when the sampled head shows more
+  than one format, kelora parses with a cascade of the detected formats
+  (e.g. <code>cascade(json,line)</code>), exactly as if you had passed <code>-f json,line</code>.
+  Each event gets an <code>_format</code> field naming the format that parsed it; see
+  <strong>cascade mode</strong> below. CSV/TSV can't participate: a file whose first line
+  reads as CSV is parsed entirely as CSV, and a CSV-looking line later in a
+  non-CSV file is treated as <code>line</code></li>
+<li>On stdin, mixed input still pins to the first line's format — pass an
+  explicit cascade (<code>-f json,line</code>) for mixed streams</li>
 </ul>
 <h3 id="auto-detection-per-file">Auto-Detection Per File<a class="headerlink" href="#auto-detection-per-file" title="Permanent link">&para;</a></h3>
 <p><strong>Syntax:</strong> <code>-f auto-per-file</code></p>
-<p><strong>Description:</strong> Automatically detect format from the first non-empty line of
-each input file, then apply that parser to the rest of the file.</p>
+<p><strong>Description:</strong> Automatically detect the format of each input file (sampling
+the file head, like <code>-f auto</code> on files), then apply that parser to the rest of
+the file.</p>
 <p><strong>Good fit:</strong> Batch runs where each file is internally consistent, but
 different files use different formats.</p>
 <p><strong>Example Usage:</strong>
@@ -3487,8 +3504,8 @@ different files use different formats.</p>
 <p><strong>Notes:</strong></p>
 <ul>
 <li>Detects once per file</li>
-<li>Uses the same first-non-empty-line semantics as <code>-f auto</code></li>
-<li>For mixed formats within a single file, use <strong>cascade mode</strong> instead</li>
+<li>Uses the same head-sampling semantics as <code>-f auto</code> on files, so a file that
+  mixes formats gets a per-file cascade</li>
 <li>Not supported with <code>--parallel</code> or <code>--merge-sorted</code></li>
 </ul>
 <h3 id="cascade-mode">Cascade Mode<a class="headerlink" href="#cascade-mode" title="Permanent link">&para;</a></h3>

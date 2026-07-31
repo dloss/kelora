@@ -6650,7 +6650,7 @@
 <p>Specify input format. Supports standard formats, column parsing, and CSV with type annotations.</p>
 <p><strong>Standard Formats:</strong></p>
 <ul>
-<li><code>auto</code> - Auto-detect format from the first non-empty line (default)</li>
+<li><code>auto</code> - Auto-detect format (default): from the first non-empty line on stdin, from a sample of the file head on files (mixed-format files get a cascade automatically)</li>
 <li><code>auto-per-file</code> - Auto-detect once per file; useful when different files use different formats</li>
 <li><code>json</code> - JSON lines (one JSON object per line)</li>
 <li><code>line</code> - Plain text (one line per event)</li>
