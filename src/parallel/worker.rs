@@ -4,6 +4,7 @@
 
 use anyhow::Result;
 use crossbeam_channel::{select, Receiver, Sender};
+use rhai::Dynamic;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
@@ -124,6 +125,41 @@ fn processing_stats_is_empty(stats: &crate::stats::ProcessingStats) -> bool {
         && stats.naive_timestamps == 0
         && stats.window_escaped_events == 0
         && stats.cascade_format_counts.is_empty()
+}
+
+/// Collect a finished batch's user-metric deltas, plus the `__op_{key}`
+/// metadata that tells the global merge how to combine each one (without it,
+/// batches merge with the lossy "replace" fallback).
+///
+/// Tracking state changes hands twice per script stage: the pipeline context
+/// owns it between stages, the thread-local owns it during one. A batch
+/// boundary is always between stages, so `ctx` holds the state — but the
+/// thread-local is harvested too, and last, so that anything a mid-flight stage
+/// left behind (an event whose script threw, say) still ships.
+fn collect_batch_user_deltas(ctx: &pipeline::PipelineContext) -> HashMap<String, Dynamic> {
+    let mut deltas = HashMap::new();
+
+    for (key, value) in &ctx.tracker {
+        deltas.insert(key.clone(), value.clone());
+    }
+    for (key, value) in ctx
+        .internal_tracker
+        .iter()
+        .filter(|(key, _)| key.starts_with("__op_"))
+    {
+        deltas.insert(key.clone(), value.clone());
+    }
+
+    for (key, value) in tracking::get_thread_tracking_state() {
+        deltas.insert(key, value);
+    }
+    for (key, value) in tracking::get_thread_internal_state() {
+        if key.starts_with("__op_") {
+            deltas.insert(key, value);
+        }
+    }
+
+    deltas
 }
 
 fn internal_stats_is_empty(stats: &pipeline::InternalStats) -> bool {
@@ -396,30 +432,7 @@ fn worker_flush_pipeline(
                 return Ok(());
             }
 
-            let mut flush_user_updates = HashMap::new();
-
-            for (key, value) in &ctx.tracker {
-                flush_user_updates.insert(key.clone(), value.clone());
-            }
-
-            for (key, value) in ctx
-                .internal_tracker
-                .iter()
-                .filter(|(k, _)| k.starts_with("__op_"))
-            {
-                flush_user_updates.insert(key.clone(), value.clone());
-            }
-
-            let thread_user = tracking::get_thread_tracking_state();
-            for (key, value) in thread_user {
-                flush_user_updates.insert(key, value);
-            }
-
-            for (key, value) in tracking::get_thread_internal_state() {
-                if key.starts_with("__op_") {
-                    flush_user_updates.insert(key, value);
-                }
-            }
+            let flush_user_updates = collect_batch_user_deltas(ctx);
 
             let flush_batch_result = BatchResult {
                 batch_id: u64::MAX - 1,
@@ -436,7 +449,7 @@ fn worker_flush_pipeline(
             // this flush are now delivered, so clear them before the next
             // flush (mid-run multiline flushes precede the final one).
             ctx.tracker.clear();
-            tracking::set_thread_tracking_state(&HashMap::new());
+            tracking::clear_thread_tracking_state();
             Ok(())
         }
         Err(e) => {
@@ -579,19 +592,7 @@ fn worker_process_batch(
 
     let internal_deltas = std::collections::HashMap::new();
 
-    let mut user_deltas = std::collections::HashMap::new();
-    let thread_user = tracking::get_thread_tracking_state();
-    for (key, value) in thread_user {
-        user_deltas.insert(key, value);
-    }
-
-    let thread_internal_meta = tracking::get_thread_internal_state();
-    for (key, value) in thread_internal_meta
-        .iter()
-        .filter(|(k, _)| k.starts_with("__op_"))
-    {
-        user_deltas.insert(key.clone(), value.clone());
-    }
+    let user_deltas = collect_batch_user_deltas(ctx);
 
     let batch_result = BatchResult {
         batch_id: batch.id,
@@ -609,7 +610,7 @@ fn worker_process_batch(
     // User metrics are additive deltas: clear both the context copy and the
     // thread-local state once sent, or the next flush re-merges them.
     ctx.tracker.clear();
-    tracking::set_thread_tracking_state(&HashMap::new());
+    tracking::clear_thread_tracking_state();
 
     Ok(true)
 }
@@ -740,22 +741,7 @@ fn worker_process_event_batch(
 
     let internal_deltas = std::collections::HashMap::new();
 
-    let mut user_deltas = std::collections::HashMap::new();
-    let thread_user = tracking::get_thread_tracking_state();
-    for (key, value) in thread_user {
-        user_deltas.insert(key, value);
-    }
-
-    // Attach `__op_{key}` metadata so the global merge knows each metric's
-    // aggregation strategy (same as the line-batch path above); without it,
-    // event batches merge with the lossy "replace" fallback.
-    let thread_internal_meta = tracking::get_thread_internal_state();
-    for (key, value) in thread_internal_meta
-        .iter()
-        .filter(|(k, _)| k.starts_with("__op_"))
-    {
-        user_deltas.insert(key.clone(), value.clone());
-    }
+    let user_deltas = collect_batch_user_deltas(ctx);
 
     let batch_result = BatchResult {
         batch_id: event_batch.id,
@@ -773,7 +759,7 @@ fn worker_process_event_batch(
     // User metrics are additive deltas: clear both the context copy and the
     // thread-local state once sent, or the next flush re-merges them.
     ctx.tracker.clear();
-    tracking::set_thread_tracking_state(&HashMap::new());
+    tracking::clear_thread_tracking_state();
 
     Ok(true)
 }

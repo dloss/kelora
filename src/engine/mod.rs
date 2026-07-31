@@ -1016,6 +1016,40 @@ impl CompiledExpression {
     }
 }
 
+/// Lends the pipeline's `track_*` state to the thread-local for the duration of
+/// one script stage, and hands it back when the stage ends.
+///
+/// Rhai functions reach their metric state through a thread-local, while the
+/// pipeline owns it between stages, so it changes hands twice per stage per
+/// event. The metrics themselves move rather than being copied, which keeps the
+/// hand-off pointer-sized however much they have accumulated — copying is what
+/// used to make `--freq` on a high-cardinality field cost O(events × distinct
+/// values). See `tracking::state` for why the internal half is still copied.
+///
+/// `Drop` does the hand-back, so a script error returns the state too. That
+/// includes whatever the failing event recorded before it threw, which is the
+/// same accounting the parallel workers do at a batch boundary.
+struct TrackingStateGuard<'a> {
+    metrics: &'a mut HashMap<String, Dynamic>,
+    internal: &'a mut HashMap<String, Dynamic>,
+}
+
+impl<'a> TrackingStateGuard<'a> {
+    fn install(
+        metrics: &'a mut HashMap<String, Dynamic>,
+        internal: &'a mut HashMap<String, Dynamic>,
+    ) -> Self {
+        rhai_functions::tracking::install_thread_tracking_state(metrics, internal);
+        Self { metrics, internal }
+    }
+}
+
+impl Drop for TrackingStateGuard<'_> {
+    fn drop(&mut self) {
+        rhai_functions::tracking::take_thread_tracking_state(self.metrics, self.internal);
+    }
+}
+
 pub struct RhaiEngine {
     engine: Engine,
     compiled_filters: Vec<CompiledExpression>,
@@ -1203,17 +1237,14 @@ impl RhaiEngine {
         Some(snippet)
     }
 
-    // Thread-local state management functions
-    pub fn set_thread_tracking_state(
-        metrics: &HashMap<String, Dynamic>,
-        internal: &HashMap<String, Dynamic>,
-    ) {
-        rhai_functions::tracking::set_thread_tracking_state(metrics);
-        rhai_functions::tracking::set_thread_internal_state(internal);
-    }
-
-    pub fn get_thread_tracking_state() -> HashMap<String, Dynamic> {
-        rhai_functions::tracking::get_thread_tracking_state()
+    /// Lend the pipeline's tracking state to the thread-local for one script
+    /// stage. See [`TrackingStateGuard`] — the returned guard hands it back, so
+    /// this is the only way a stage should reach the thread-local state.
+    fn lend_tracking_state<'a>(
+        metrics: &'a mut HashMap<String, Dynamic>,
+        internal: &'a mut HashMap<String, Dynamic>,
+    ) -> TrackingStateGuard<'a> {
+        TrackingStateGuard::install(metrics, internal)
     }
 
     pub fn get_thread_internal_state() -> HashMap<String, Dynamic> {
@@ -1878,15 +1909,16 @@ impl RhaiEngine {
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
         if let Some(native) = &compiled.native_predicate {
-            Self::set_thread_tracking_state(metrics, internal);
+            let lent = Self::lend_tracking_state(metrics, internal);
             if let Some(result) = native.evaluate(event) {
-                *metrics = Self::get_thread_tracking_state();
-                *internal = Self::get_thread_internal_state();
                 return Ok(result);
             }
+            // Not handled natively: hand the state back before the scripted
+            // path below lends it out again.
+            drop(lent);
         }
 
-        Self::set_thread_tracking_state(metrics, internal);
+        let _lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_optimized(
             event,
             compiled.uses_line,
@@ -1955,8 +1987,6 @@ impl RhaiEngine {
             }
         }
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
         Ok(result)
     }
 
@@ -1967,7 +1997,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let _lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_optimized(
             event,
             compiled.uses_line,
@@ -2039,8 +2069,6 @@ impl RhaiEngine {
         }
         // No exec gate counter: exec is best-effort, so it never fails the run
         // on its own (only --strict does). See the gate notes in tracking::errors.
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
         Ok(())
     }
 
@@ -2050,7 +2078,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<rhai::Map> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let _lent = Self::lend_tracking_state(metrics, internal);
 
         // Set begin phase flag to allow read_file/read_lines
         crate::rhai_functions::conf::set_begin_phase(true);
@@ -2077,9 +2105,6 @@ impl RhaiEngine {
 
         // Reset begin phase flag
         crate::rhai_functions::conf::set_begin_phase(false);
-
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
 
         // Extract the conf map from scope and store it
         let mut conf_map = scope.get_value::<rhai::Map>("conf").unwrap_or_default();
@@ -2144,14 +2169,15 @@ impl RhaiEngine {
         internal: &mut HashMap<String, Dynamic>,
         span: crate::rhai_functions::span::SpanBinding,
     ) -> Result<()> {
-        Self::set_thread_tracking_state(metrics, internal);
-
         let mut scope = self.scope_template.clone();
 
         // Finalize sketch-backed metrics for script consumption; see the
-        // equivalent call in `execute_compiled_end`.
+        // equivalent call in `execute_compiled_end`. This reads the pipeline's
+        // maps, so it has to happen before they are lent to the thread-local.
         let metrics_map =
             crate::rhai_functions::tracking::finalize_metrics_for_script(metrics, internal);
+
+        let _lent = Self::lend_tracking_state(metrics, internal);
         scope.set_value("metrics", metrics_map);
         scope.push_constant("span", Dynamic::from(span));
 
@@ -2186,9 +2212,6 @@ impl RhaiEngine {
         let ops = crate::rhai_functions::file_ops::take_pending_ops();
         crate::rhai_functions::file_ops::execute_ops(&ops)?;
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
-
         Ok(())
     }
 
@@ -2201,7 +2224,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<bool> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let _lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
 
         // Add execution tracing for windowed filter execution
@@ -2276,8 +2299,6 @@ impl RhaiEngine {
             }
         }
 
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
         Ok(result)
     }
 
@@ -2289,7 +2310,7 @@ impl RhaiEngine {
         metrics: &mut HashMap<String, Dynamic>,
         internal: &mut HashMap<String, Dynamic>,
     ) -> Result<()> {
-        Self::set_thread_tracking_state(metrics, internal);
+        let _lent = Self::lend_tracking_state(metrics, internal);
         let mut scope = self.create_scope_for_event_with_window(event, window, compiled.meta_usage);
 
         // Add execution tracing for windowed exec execution
@@ -2366,8 +2387,6 @@ impl RhaiEngine {
             self.update_event_from_scope(event, &scope);
         }
         // No exec gate counter: exec is best-effort (see tracking::errors gate notes).
-        *metrics = Self::get_thread_tracking_state();
-        *internal = Self::get_thread_internal_state();
         Ok(())
     }
 
@@ -3602,6 +3621,123 @@ mod tests {
         assert!(
             out.contains("Filters must return true/false"),
             "type mismatch in filter should remind about boolean return; got: {out}"
+        );
+    }
+
+    /// A tracking value that reports every deep copy made of it.
+    ///
+    /// Metric state is handed to the engine before a script stage and taken
+    /// back afterwards. If that hand-off copies the values, the cost is
+    /// proportional to how much a metric has accumulated — for a frequency
+    /// table, one copy of the whole table per event per stage — so the run
+    /// goes quadratic on a high-cardinality field. This type turns "was
+    /// anything copied?" into an assertion.
+    #[derive(Debug)]
+    struct CloneCounter;
+
+    static TRACKING_VALUE_CLONES: std::sync::atomic::AtomicUsize =
+        std::sync::atomic::AtomicUsize::new(0);
+
+    impl Clone for CloneCounter {
+        fn clone(&self) -> Self {
+            TRACKING_VALUE_CLONES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            CloneCounter
+        }
+    }
+
+    #[test]
+    fn per_event_tracking_sync_does_not_copy_metric_values() {
+        let mut engine = RhaiEngine::new();
+        let exec = engine.compile_exec("e.n = 1").expect("compile exec");
+        let filter = engine.compile_filter("true").expect("compile filter");
+
+        // Only the user half is asserted on. The internal half — operation
+        // metadata and error counters, a few scalars per metric — is still
+        // copied on purpose, because the pipeline writes to it between stages;
+        // its cost is bounded by the number of metrics, not by how much data
+        // they have absorbed.
+        let mut metrics = std::collections::HashMap::new();
+        metrics.insert("counted".to_string(), Dynamic::from(CloneCounter));
+        let mut internal = std::collections::HashMap::new();
+        internal.insert("__op_counted".to_string(), Dynamic::from(1_i64));
+        TRACKING_VALUE_CLONES.store(0, std::sync::atomic::Ordering::Relaxed);
+
+        for _ in 0..10 {
+            let mut event = build_event_with_line("x");
+            engine
+                .execute_compiled_exec(&exec, &mut event, &mut metrics, &mut internal)
+                .expect("exec should run");
+            engine
+                .execute_compiled_filter(&filter, &event, &mut metrics, &mut internal)
+                .expect("filter should run");
+        }
+
+        assert_eq!(
+            TRACKING_VALUE_CLONES.load(std::sync::atomic::Ordering::Relaxed),
+            0,
+            "handing metrics to a script stage and taking them back must move \
+             them, not deep-copy them: the per-event cost has to stay \
+             independent of how much each metric holds"
+        );
+        assert!(
+            metrics.contains_key("counted"),
+            "the metric must still be there after the round trip"
+        );
+        assert!(
+            internal.contains_key("__op_counted"),
+            "internal tracking state must survive the round trip too"
+        );
+    }
+
+    #[test]
+    fn tracking_state_returns_to_the_caller_when_a_script_fails() {
+        // The error path takes an early return out of the engine. Whatever the
+        // hand-off does, the caller's map may never come back empty — the run's
+        // accumulated metrics live in it.
+        let mut engine = RhaiEngine::new();
+        let exec = engine
+            .compile_exec(r#"track_sum("during", 1); throw "boom""#)
+            .expect("compile exec");
+
+        let mut metrics = std::collections::HashMap::new();
+        metrics.insert("before".to_string(), Dynamic::from(7_i64));
+        let mut internal = std::collections::HashMap::new();
+
+        let mut event = build_event_with_line("x");
+        let result = engine.execute_compiled_exec(&exec, &mut event, &mut metrics, &mut internal);
+
+        assert!(result.is_err(), "the script throws");
+        assert_eq!(
+            metrics
+                .get("before")
+                .and_then(|v| v.as_int().ok())
+                .unwrap_or_default(),
+            7,
+            "metrics accumulated before the failing event must survive it"
+        );
+    }
+
+    #[test]
+    fn tracking_state_round_trips_new_metrics_out_of_a_script() {
+        let mut engine = RhaiEngine::new();
+        let exec = engine
+            .compile_exec(r#"track_sum("seen", 2)"#)
+            .expect("compile exec");
+
+        let mut metrics = std::collections::HashMap::new();
+        let mut internal = std::collections::HashMap::new();
+
+        for _ in 0..3 {
+            let mut event = build_event_with_line("x");
+            engine
+                .execute_compiled_exec(&exec, &mut event, &mut metrics, &mut internal)
+                .expect("exec should run");
+        }
+
+        assert_eq!(
+            metrics.get("seen").and_then(|v| v.as_int().ok()),
+            Some(6),
+            "each event's contribution must come back to the caller: {metrics:?}"
         );
     }
 }

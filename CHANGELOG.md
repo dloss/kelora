@@ -154,6 +154,14 @@ Two things to know before upgrading: `--drain` templates and template IDs change
 
 - **The "No input format detected" hint is printed once per run, not once per file** - Detection runs per file under `-f auto-per-file`, so a run over a directory of plain-text logs opened with a wall of identical multi-line advice. The hint names no file and its advice doesn't vary, so it is emitted at most once. The `-v` "Auto-detected format: X" status line is unaffected.
 
+- **A metric recorded by an event whose script then failed is no longer discarded** - `--exec 'track_freq("lvl", e.level); if bad { throw "…" }'` executed the `track_freq` call and then lost that event's contribution, because the failing event's metrics never made it out of the script stage and the next event overwrote them. The call ran, so it now counts. Only events whose script errors are affected — a run with no script errors reports exactly what it did before, and sequential and `--parallel` still agree. Error counts, exit codes, and the `--strict` behavior are unchanged.
+
+### Performance
+
+- **`--freq` (and every other `track_*` metric) no longer slows down as it accumulates** - Aggregating a high-cardinality field was quadratic in event count: metric state was deep-copied into and out of a thread-local around *every script stage of every event*, so each event copied the entire frequency table built so far. A 200,000-event JSON log took **60.8 s** for `--freq user` over 5,000 distinct users and would have taken roughly twenty minutes over 200,000 distinct trace IDs; both now finish in **1.8–2.1 s** against a 0.6 s parse-only baseline. The copy is a move now, so the per-event cost is the same whether a metric holds four entries or four million. Every stage paid its own copy, which made the cost scale with pipeline length too — a `--filter … --exec … --freq` run over 50,000 events with 20,000 distinct values went from **146 s to 0.53 s**. `--describe` improves as a side effect (7.1 s → 5.5 s at 200k events). `--parallel` was never affected: workers hand their state over once per batch, not once per event.
+
+  Two things this does *not* fix. `--card` is unchanged (11.4 s at 200k events): its cost is serializing the HyperLogLog sketch to JSON and parsing it back on every event, which is a constant per event rather than a growing one, and is a separate fix. And a low-cardinality `--freq level` was never slow to begin with (1.75 s), because there was almost nothing to copy.
+
 ## [2.0.1] - 2026-07-19
 
 A maintenance release: one fix for following live streams, plus faster parsing and aggregation across the board. Output is unchanged from 2.0.0 — no new options and nothing to migrate.

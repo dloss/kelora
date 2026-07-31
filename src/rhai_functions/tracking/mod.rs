@@ -38,8 +38,9 @@ use rank::{
     track_unique_string_impl,
 };
 pub use state::{
-    get_thread_internal_state, get_thread_snapshot, get_thread_tracking_state,
-    set_thread_internal_state, set_thread_tracking_state, with_internal_tracking,
+    clear_thread_tracking_state, get_thread_internal_state, get_thread_snapshot,
+    get_thread_tracking_state, install_thread_tracking_state, set_thread_internal_state,
+    set_thread_tracking_state, take_thread_tracking_state, with_internal_tracking,
     with_user_tracking, TrackingSnapshot,
 };
 
@@ -655,7 +656,13 @@ pub fn register_functions(engine: &mut Engine) {
     );
 }
 
-/// Merge thread-local tracking state into context tracker for sequential mode
+/// Reconcile the run's tracking state once a sequential run is over.
+///
+/// While the run is going, the metrics live in `ctx` between script stages and
+/// in the thread-local during one, so at the end they have to be brought
+/// together: anything a stage left in the thread-local is merged into `ctx`, and
+/// the reconciled state is published back to the thread-local, which is where
+/// the runner collects the run's final snapshot from.
 pub fn merge_thread_tracking_to_context(ctx: &mut crate::pipeline::PipelineContext) {
     let snapshot = get_thread_snapshot();
     for (key, value) in snapshot.user {
@@ -664,6 +671,9 @@ pub fn merge_thread_tracking_to_context(ctx: &mut crate::pipeline::PipelineConte
     for (key, value) in snapshot.internal {
         ctx.internal_tracker.insert(key, value);
     }
+
+    set_thread_tracking_state(&ctx.tracker);
+    set_thread_internal_state(&ctx.internal_tracker);
 }
 
 /// Finalize a single tracking value for exposure to user-visible Rhai scopes
