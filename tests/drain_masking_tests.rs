@@ -90,6 +90,47 @@ fn test_key_value_masking_keeps_the_key() {
 }
 
 #[test]
+fn test_parentheses_do_not_make_a_token_a_function_call() {
+    // The `function` mask replaced `name(args)` -- identifier included -- and it
+    // decided what a "function call" was by the parentheses alone. So a CPU
+    // model, an English plural and a syslog facility all mined as `<function>`,
+    // and lines that share nothing but a pair of parens merged. It is no longer
+    // in the default set; whatever varies inside the parens is masked by the
+    // patterns that own it.
+    let input = "Intel(R) Xeon(TM) CPU 3.60GHz stepping 03\n\
+                 Intel(R) Xeon(TM) CPU 2.80GHz stepping 04\n";
+
+    let stdout = drain_templates(input);
+    assert!(
+        stdout.contains("2: Intel(R) Xeon(TM) CPU <*> stepping <num>"),
+        "expected the CPU model to survive masking, got:\n{}",
+        stdout
+    );
+}
+
+#[test]
+fn test_the_identifier_before_parentheses_keeps_templates_apart() {
+    // `pam_unix(sshd:auth)` and `pam_unix(sshd:session)` are different events.
+    // Masking both to `<function>` folded them into one template whose text no
+    // longer said which had happened.
+    let input = "pam_unix(sshd:auth): session opened for user root\n\
+                 pam_unix(sshd:session): session opened for user news\n";
+
+    let stdout = drain_templates(input);
+    assert!(
+        stdout.contains("templates (2 items):"),
+        "expected the two facilities to stay apart, got:\n{}",
+        stdout
+    );
+    assert!(
+        stdout.contains("1: pam_unix(sshd:auth): session opened for user root")
+            && stdout.contains("1: pam_unix(sshd:session): session opened for user news"),
+        "expected both facilities named, got:\n{}",
+        stdout
+    );
+}
+
+#[test]
 fn test_key_value_masking_survives_placeholder_names_with_digits() {
     // `<ipv4>` contains a digit, so a second masking pass would collapse
     // `rhost=<ipv4>` to `<num>` and lose the key again.
