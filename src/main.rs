@@ -783,15 +783,43 @@ fn resolve_multiline_idle_timeout(
     }
 }
 
+/// Field names a `--filter` expression reads off the event.
+///
+/// `e.<ident>` is a field read, but `e.<ident>(` is a **method call** and names
+/// no field at all (#365). Without that distinction the zero-match hint reported
+/// `has` — a method the tool itself recommends — as a field to go hunt a typo
+/// in, on an expression that was entirely correct. A hint firing on a *correct*
+/// filter is worse than none: the zero matches were the true answer.
+///
+/// `e.has("field")` is the one method whose argument *is* a field reference, so
+/// its literal is collected instead, which makes the hint name the field really
+/// under test. Dotted literals are skipped deliberately: `discovered_keys` holds
+/// top-level names, so a nested path would be reported as "never present" —
+/// the misinformation #371 tracks.
 fn collect_filter_field_references(config: &KeloraConfig) -> BTreeSet<String> {
     let mut fields = BTreeSet::new();
-    let re = regex::Regex::new(r"\be\.([A-Za-z_][A-Za-z0-9_]*)").expect("valid filter regex");
+    // Group 2 is present only for a call. `[ \t]*` rather than `\s*` so an
+    // unrelated parenthesis opening the next line cannot disqualify a field.
+    let re =
+        regex::Regex::new(r"\be\.([A-Za-z_][A-Za-z0-9_]*)[ \t]*(\()?").expect("valid filter regex");
+    let has_arg = regex::Regex::new(r#"\be\.has[ \t]*\([ \t]*"([^"\\]+)""#)
+        .expect("valid has-argument regex");
 
     for stage in &config.processing.stages {
         if let ScriptStageType::Filter { script, .. } = stage {
             for captures in re.captures_iter(script) {
+                if captures.get(2).is_some() {
+                    continue;
+                }
                 if let Some(field) = captures.get(1) {
                     fields.insert(field.as_str().to_string());
+                }
+            }
+            for captures in has_arg.captures_iter(script) {
+                if let Some(field) = captures.get(1) {
+                    if !field.as_str().contains('.') {
+                        fields.insert(field.as_str().to_string());
+                    }
                 }
             }
         }

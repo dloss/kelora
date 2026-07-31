@@ -248,6 +248,83 @@ fn test_zero_results_with_unseen_filter_field_emits_hint() {
 }
 
 #[test]
+fn test_method_call_on_event_is_not_reported_as_unseen_field() {
+    // #365: the hint scanned identifiers after `e.` and picked up method names,
+    // so `e.has("nope")` reported `has` as an unseen field — a confident claim
+    // about a method the tool itself recommends, on a filter that was correct.
+    let input = "{\"a\":\"x=1 y=2\",\"n\":1}\n{\"a\":\"x=3 y=4\",\"n\":2}\n";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--filter", r#"e.has("nope")"#], input);
+
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(
+        !stderr.contains("unseen field: has")
+            && !stderr.contains("unseen fields: has")
+            && !stderr.contains(": has,"),
+        "a method name must never be reported as a field: {stderr}"
+    );
+    // The string argument is the field genuinely under test, so naming it makes
+    // the hint correct rather than merely quiet.
+    assert!(
+        stderr.contains("nope"),
+        "the field under test should be named instead: {stderr}"
+    );
+}
+
+#[test]
+fn test_chained_methods_on_event_produce_no_field_typo_hint() {
+    // Methods reached directly off `e` in a well-formed filter that legitimately
+    // matches nothing: silence is the correct answer, not a typo hunt.
+    let input = "{\"a\":\"x=1 y=2\",\"n\":1}\n";
+
+    let (_stdout, stderr, exit_code) =
+        run_kelora_with_input(&["-f", "json", "--filter", "e.keys().len() > 5"], input);
+
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(
+        !stderr.contains("unseen field"),
+        "a correct filter over methods should not accuse any field: {stderr}"
+    );
+}
+
+#[test]
+fn test_present_field_via_has_produces_no_hint() {
+    // `e.has("a")` on a log that does carry `a`: the zero result comes from the
+    // other clause, and no field in the expression is missing.
+    let input = "{\"a\":\"x=1 y=2\",\"n\":1}\n";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--filter", r#"e.has("a") && e.n > 99"#],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(
+        !stderr.contains("unseen field"),
+        "no field in this filter is absent: {stderr}"
+    );
+}
+
+#[test]
+fn test_nested_path_in_has_is_not_claimed_absent() {
+    // A dotted literal is a nested path; `discovered_keys` holds top-level names
+    // only, so claiming it "never present" would repeat the #371 misinformation.
+    let input = "{\"http\":{\"status\":200}}\n";
+
+    let (_stdout, stderr, exit_code) = run_kelora_with_input(
+        &["-f", "json", "--filter", r#"e.has("http.status")"#],
+        input,
+    );
+
+    assert_eq!(exit_code, 0, "{stderr}");
+    assert!(
+        !stderr.contains("unseen field"),
+        "a nested path must not be reported as never present: {stderr}"
+    );
+}
+
+#[test]
 fn test_bare_field_reference_suggests_e_prefix() {
     // The most common newcomer mistake: referencing a field without the `e.`
     // prefix. The hint should point straight at `e.<field>` rather than a
