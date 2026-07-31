@@ -303,13 +303,62 @@ pub static LNAV_FORMATS: &[LnavFormat] = &[
 /// built-in format applies. Patterns are compiled on demand; this runs once per
 /// input during auto-detection, so a fresh compile is cheaper than caching.
 pub fn detect(line: &str) -> Option<&'static LnavFormat> {
-    LNAV_FORMATS.iter().find(|fmt| {
-        fmt.patterns.iter().any(|pattern| {
-            RegexParser::new(pattern)
-                .map(|parser| parser.parse(line).is_ok())
-                .unwrap_or(false)
+    (0..LNAV_FORMATS.len())
+        .find(|&idx| {
+            format_parsers(idx)
+                .iter()
+                .any(|parser| parser.parse(line).is_ok())
         })
+        .map(|idx| &LNAV_FORMATS[idx])
+}
+
+/// Compiled detection parsers for one entry of [`LNAV_FORMATS`], built at most
+/// once per process and per format.
+///
+/// Detection is called once per *sampled line* — up to `SAMPLE_MAX_LINES` head
+/// lines plus mid-file probes — and every line reaching the lnav step is one no
+/// earlier detector claimed, so it is tried against all 13 patterns, including
+/// the very large S3 and HAProxy ones. Compiling those per call made head
+/// sampling cost hundreds of milliseconds on plain-text files. Compilation is
+/// inherent; repeating it is not.
+///
+/// Caching is per format rather than one eager batch so the callers that need a
+/// single format — [`matches_named`] for the dedicated `cri` step, which runs
+/// for every sampled line — don't pay to compile the other twelve. A file that
+/// detects as json or logfmt never reaches [`detect`] at all.
+///
+/// A pattern that fails to compile is dropped rather than fatal: it can only
+/// make detection miss that format, and `all_formats_parse_their_samples`
+/// already fails the test suite if any built-in pattern is malformed.
+fn format_parsers(idx: usize) -> &'static [RegexParser] {
+    static PARSERS: std::sync::OnceLock<Vec<std::sync::OnceLock<Vec<RegexParser>>>> =
+        std::sync::OnceLock::new();
+    let cells = PARSERS.get_or_init(|| {
+        LNAV_FORMATS
+            .iter()
+            .map(|_| std::sync::OnceLock::new())
+            .collect()
+    });
+    cells[idx].get_or_init(|| {
+        LNAV_FORMATS[idx]
+            .patterns
+            .iter()
+            .filter_map(|pattern| RegexParser::new(pattern).ok())
+            .collect()
     })
+}
+
+/// Test `line` against a single built-in format, reusing the same cached
+/// parsers as [`detect`]. Used by the dedicated `cri` detection step, which runs
+/// ahead of the generic lnav step (see [`crate::parsers::auto_detect`]).
+pub fn matches_named(name: &str, line: &str) -> Option<&'static LnavFormat> {
+    let idx = LNAV_FORMATS
+        .iter()
+        .position(|fmt| fmt.name.eq_ignore_ascii_case(name))?;
+    format_parsers(idx)
+        .iter()
+        .any(|parser| parser.parse(line).is_ok())
+        .then_some(&LNAV_FORMATS[idx])
 }
 
 /// Look up a built-in named format by its identifier (e.g. for `-f log4j`).

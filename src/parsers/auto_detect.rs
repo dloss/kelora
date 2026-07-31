@@ -188,31 +188,55 @@ fn detect_json(line: &str) -> bool {
     serde_json::from_str::<serde_json::Value>(line).is_ok()
 }
 
+/// Detection parsers are built once per process and shared by every classified
+/// line.
+///
+/// Detection runs per *sampled* line — up to `SAMPLE_MAX_LINES` head lines plus
+/// mid-file probe lines — and the syslog/combined parsers each compile several
+/// regexes at construction. Rebuilding them per line turned a fixed startup cost
+/// into a per-line one, which dominated the run on small files.
+///
+/// A parser whose regexes fail to compile is simply absent, which makes its
+/// detector return `false` — the same outcome the previous per-call code had for
+/// a compile error, and unreachable in practice for these static patterns.
+fn cef_detector() -> &'static CefParser {
+    static PARSER: std::sync::OnceLock<CefParser> = std::sync::OnceLock::new();
+    // Strict mode for detection - we only want true positives.
+    PARSER.get_or_init(|| CefParser::new_without_auto_timestamp().with_strict(true))
+}
+
+fn syslog_detector() -> Option<&'static SyslogParser> {
+    static PARSER: std::sync::OnceLock<Option<SyslogParser>> = std::sync::OnceLock::new();
+    PARSER
+        .get_or_init(|| SyslogParser::new_without_auto_timestamp().ok())
+        .as_ref()
+}
+
+fn combined_detector() -> Option<&'static CombinedParser> {
+    static PARSER: std::sync::OnceLock<Option<CombinedParser>> = std::sync::OnceLock::new();
+    PARSER
+        .get_or_init(|| CombinedParser::new_without_auto_timestamp().ok())
+        .as_ref()
+}
+
+fn logfmt_detector() -> &'static LogfmtParser {
+    static PARSER: std::sync::OnceLock<LogfmtParser> = std::sync::OnceLock::new();
+    PARSER.get_or_init(LogfmtParser::new_without_auto_timestamp)
+}
+
 /// Detect CEF format using actual parser for 100% accuracy
 fn detect_cef(line: &str) -> bool {
-    // Use strict mode for detection - we only want true positives
-    let parser = CefParser::new_without_auto_timestamp().with_strict(true);
-    parser.parse(line).is_ok()
+    cef_detector().parse(line).is_ok()
 }
 
 /// Detect Syslog format using actual parser for 100% accuracy
 fn detect_syslog(line: &str) -> bool {
-    // SyslogParser::new() compiles regexes, returns Result
-    if let Ok(parser) = SyslogParser::new_without_auto_timestamp() {
-        parser.parse(line).is_ok()
-    } else {
-        false // Regex compilation failed (shouldn't happen)
-    }
+    syslog_detector().is_some_and(|parser| parser.parse(line).is_ok())
 }
 
 /// Detect combined log formats (Apache/Nginx) using actual parser for 100% accuracy
 fn detect_combined_logs(line: &str) -> bool {
-    // CombinedParser::new() compiles regexes, returns Result
-    if let Ok(parser) = CombinedParser::new_without_auto_timestamp() {
-        parser.parse(line).is_ok()
-    } else {
-        false // Regex compilation failed (shouldn't happen)
-    }
+    combined_detector().is_some_and(|parser| parser.parse(line).is_ok())
 }
 
 /// Detect the Kubernetes CRI / containerd container-log layout
@@ -221,19 +245,12 @@ fn detect_combined_logs(line: &str) -> bool {
 /// Returns the static format definition so the auto-detect notice and `--stats`
 /// show the name `cri` (rather than a bare `regex`).
 fn detect_cri(line: &str) -> Option<&'static crate::parsers::lnav_formats::LnavFormat> {
-    let fmt = crate::parsers::lnav_formats::by_name("cri")?;
-    let matches = fmt.patterns.iter().any(|pattern| {
-        crate::parsers::RegexParser::new(pattern)
-            .map(|parser| parser.parse(line).is_ok())
-            .unwrap_or(false)
-    });
-    matches.then_some(fmt)
+    crate::parsers::lnav_formats::matches_named("cri", line)
 }
 
 /// Detect logfmt format using actual parser for 100% accuracy
 fn detect_logfmt(line: &str) -> bool {
-    let parser = LogfmtParser::new_without_auto_timestamp();
-    parser.parse(line).is_ok()
+    logfmt_detector().parse(line).is_ok()
 }
 
 /// Detect CSV/TSV variants
