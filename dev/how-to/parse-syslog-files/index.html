@@ -2572,7 +2572,7 @@
 <h2 id="step-2-filter-by-severity-or-facility">Step 2: Filter by Severity or Facility<a class="headerlink" href="#step-2-filter-by-severity-or-facility" title="Permanent link">&para;</a></h2>
 <p>Focus on critical events first, then expand scope.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.severity &lt;= 3'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,process,message
 </code></pre></div>
 <p>Helpful ranges:</p>
@@ -2584,8 +2584,8 @@
 <h2 id="step-3-target-specific-services">Step 3: Target Specific Services<a class="headerlink" href="#step-3-target-specific-services" title="Permanent link">&para;</a></h2>
 <p>Investigate authentication flows or infrastructure components.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.process == &quot;sshd&quot; &amp;&amp; e.message.contains(&quot;Failed password&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.username = e.message.extract_regex(#&quot;for ([^ ]+)&quot;#, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.process == "sshd" &amp;&amp; e.message.contains("Failed password")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.username = e.message.extract_regex(#"for ([^ ]+)"#, 1)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,username,message
 </code></pre></div>
 <ul>
@@ -2595,21 +2595,21 @@
 <h2 id="step-4-add-enrichment-and-metrics">Step 4: Add Enrichment and Metrics<a class="headerlink" href="#step-4-add-enrichment-and-metrics" title="Permanent link">&para;</a></h2>
 <p>Capture per-host or per-IP trends while reviewing raw events.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;let ip = e.message.extract_ip(); if ip != &quot;&quot; { track_freq(&quot;ip&quot;, ip) }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.severity &lt;= 3'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'let ip = e.message.extract_ip(); if ip != "" { track_freq("ip", ip) }'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <ul>
 <li><code>track_freq("hostname", e.hostname)</code> surfaces noisy machines.</li>
 <li>Record severity names for reporting:
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-e<span class="w"> </span><span class="s1">&#39;e.severity_name = [&quot;EMERG&quot;,&quot;ALERT&quot;,&quot;CRIT&quot;,&quot;ERROR&quot;,&quot;WARN&quot;,&quot;NOTICE&quot;,&quot;INFO&quot;,&quot;DEBUG&quot;][e.severity]&#39;</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>-e<span class="w"> </span><span class="s1">'e.severity_name = ["EMERG","ALERT","CRIT","ERROR","WARN","NOTICE","INFO","DEBUG"][e.severity]'</span>
 </code></pre></div></li>
 </ul>
 <h2 id="step-5-export-for-stakeholders">Step 5: Export for Stakeholders<a class="headerlink" href="#step-5-export-for-stakeholders" title="Permanent link">&para;</a></h2>
 <p>Hand off filtered events to incident responders or auditors.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;today 00:00&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.severity &lt;= 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"today 00:00"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.severity &lt;= 3'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,process,severity,message<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span>-F<span class="w"> </span>csv<span class="w"> </span>&gt;<span class="w"> </span>syslog-critical.csv
 </code></pre></div>
@@ -2622,24 +2622,24 @@
 <ul>
 <li><strong>RFC 5424 structured data</strong><br />
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>app-5424.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;message&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.absorb_kv("message")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,hostname,app_id,msgid,message
 </code></pre></div></li>
 <li>
 <p><strong>Network device monitoring</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>firewall.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.facility == 4&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.src_ip = e.message.extract_regex(#&quot;SRC=([^ ]+)&quot;#, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_freq(&quot;src_ip&quot;, e.src_ip)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.facility == 4'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.src_ip = e.message.extract_regex(#"SRC=([^ ]+)"#, 1)'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'track_freq("src_ip", e.src_ip)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Time-boxed reporting</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>syslog<span class="w"> </span>/var/log/syslog<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;1 hour ago&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.hour = to_datetime(e.timestamp).format(&quot;%Y-%m-%d %H:00&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_freq(&quot;hour&quot;, e.hour)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"1 hour ago"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.hour = to_datetime(e.timestamp).format("%Y-%m-%d %H:00")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'track_freq("hour", e.hour)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 </li>

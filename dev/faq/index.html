@@ -2808,7 +2808,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--exclude-levels<span class="w"> </span>trace,debug,info<span class="w"> </span>app.log
 </code></pre></div>
 <p><strong>Use a real threshold</strong> by mapping levels to numbers in a Rhai filter, when you want one cutoff to cover many level names:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;#{&quot;trace&quot;:0, &quot;debug&quot;:1, &quot;info&quot;:2, &quot;warn&quot;:3, &quot;error&quot;:4, &quot;fatal&quot;:5}.get(e.level.to_lower(), -1) &gt;= 3&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'#{"trace":0, "debug":1, "info":2, "warn":3, "error":4, "fatal":5}.get(e.level.to_lower(), -1) &gt;= 3'</span><span class="w"> </span>app.log
 </code></pre></div>
 <p>The <code>-l</code>/<code>-L</code> flags are the faster choice; reach for the Rhai filter only when you need a numeric threshold. See the <a href="../reference/cli-reference/">CLI Reference</a> for level-filtering details.</p>
 <h2 id="how-do-i-debug-filters-or-rhai-scripts">How do I debug filters or Rhai scripts?<a class="headerlink" href="#how-do-i-debug-filters-or-rhai-scripts" title="Permanent link">&para;</a></h2>

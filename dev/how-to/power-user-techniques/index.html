@@ -2672,11 +2672,11 @@ placeholders so they collapse into one pattern.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command/Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;msg&quot;:&quot;User 192.168.1.1 sent email to alice@example.com with ID a1b2c3d4-e5f6-7890-1234-567890abcdef&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.pattern = e.msg.normalized()&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"msg":"User 192.168.1.1 sent email to alice@example.com with ID a1b2c3d4-e5f6-7890-1234-567890abcdef"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.pattern = e.msg.normalized()'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>pattern
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pattern=&#39;User &lt;ipv4&gt; sent email to &lt;email&gt; with ID &lt;uuid&gt;&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pattern='User &lt;ipv4&gt; sent email to &lt;email&gt; with ID &lt;uuid&gt;'
 </code></pre></div>
 </div>
 </div>
@@ -2717,8 +2717,8 @@ tells you what to use.</p>
 <p>When you know what the change looks like but not when it happened, split on a
 predicate instead and skip the timestamp entirely — <code>--cut-before</code> when the
 matching line opens the new regime, <code>--cut-after</code> when it closes the old one:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-before<span class="w"> </span><span class="s1">&#39;e.msg.contains(&quot;deploy started&quot;)&#39;</span><span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-after<span class="w"> </span><span class="s1">&#39;e.msg.contains(&quot;deploy finished&quot;)&#39;</span><span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-before<span class="w"> </span><span class="s1">'e.msg.contains("deploy started")'</span><span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>--cut-after<span class="w"> </span><span class="s1">'e.msg.contains("deploy finished")'</span><span class="w"> </span>incident.log<span class="w"> </span>-k<span class="w"> </span>msg
 </code></pre></div>
 <p>Comparisons use per-side <em>shares</em>, so a 10-minute incident capture diffs
 fairly against a 24-hour baseline. <code>--filter</code>/<code>--exec</code> run before the
@@ -2726,7 +2726,7 @@ comparison (diff only errors, or normalize custom tokens first).</p>
 <p>For scripting, a bare <code>--drain-diff</code> already switches to a tab-separated record
 stream when stdout is piped (the same rule <code>-m</code> follows), so the report never
 has to be parsed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>before.log<span class="w"> </span>after.log<span class="w"> </span>-k<span class="w"> </span>msg<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">&#39;\t&#39;</span><span class="w"> </span><span class="s1">&#39;$1==&quot;new&quot;&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>--drain-diff<span class="w"> </span>before.log<span class="w"> </span>after.log<span class="w"> </span>-k<span class="w"> </span>msg<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">'\t'</span><span class="w"> </span><span class="s1">'$1=="new"'</span>
 </code></pre></div>
 <p><code>--drain-diff=json</code> carries the totals, spans and per-entry statistics too;
 <code>--drain-diff=table</code> forces the report through a pipe.
@@ -2739,10 +2739,10 @@ every run, every rotation, every service.</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/user-activity.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.user_id.bucket() % 20 == 0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.user_id.bucket() % 20 == 0'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>user_id,action,timestamp
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>user_id=&#39;user_v5w6x&#39; action=&#39;checkout&#39; timestamp=&#39;2024-01-15T10:07:00Z&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>user_id='user_v5w6x' action='checkout' timestamp='2024-01-15T10:07:00Z'
 </code></pre></div>
 </div>
 </div>
@@ -2755,12 +2755,12 @@ every run, every rotation, every service.</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/deeply-nested.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.flat = e.api.flattened()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;print(e.flat.to_json())&#39;</span><span class="w"> </span>-q
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.flat = e.api.flattened()'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'print(e.flat.to_json())'</span><span class="w"> </span>-q
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;queries[0].results.users[0].id&quot;:1,&quot;queries[0].results.users[0].permissions.read&quot;:true,&quot;queries[0].results.users[0].permissions.write&quot;:true}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;queries[0].results.users[0].id&quot;:2,&quot;queries[0].results.users[0].permissions.read&quot;:true,&quot;queries[0].results.users[0].permissions.write&quot;:false,&quot;queries[0].results.users[1].id&quot;:3,&quot;queries[0].results.users[1].permissions.read&quot;:false,&quot;queries[0].results.users[1].permissions.write&quot;:false}
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{&quot;queries[0].results.users[0].id&quot;:4,&quot;queries[0].results.users[0].permissions.admin&quot;:true,&quot;queries[0].results.users[0].permissions.read&quot;:true,&quot;queries[0].results.users[0].permissions.write&quot;:true}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{"queries[0].results.users[0].id":1,"queries[0].results.users[0].permissions.read":true,"queries[0].results.users[0].permissions.write":true}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{"queries[0].results.users[0].id":2,"queries[0].results.users[0].permissions.read":true,"queries[0].results.users[0].permissions.write":false,"queries[0].results.users[1].id":3,"queries[0].results.users[1].permissions.read":false,"queries[0].results.users[1].permissions.write":false}
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{"queries[0].results.users[0].id":4,"queries[0].results.users[0].permissions.admin":true,"queries[0].results.users[0].permissions.read":true,"queries[0].results.users[0].permissions.write":true}
 </code></pre></div>
 </div>
 </div>
@@ -2775,29 +2775,29 @@ claims <code>exp</code>/<code>iat</code>/<code>nbf</code> come back as datetimes
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;token&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let jwt = e.token.parse_jwt();</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.has("token")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'let jwt = e.token.parse_jwt();</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">          e.user = jwt.claims.sub;</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          e.role = jwt.claims.role;</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">          e.expires = jwt.expires_at.to_iso();</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">          e.token = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">          e.token = ()'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,user,role,expires
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; user=&#39;user123&#39; role=&#39;admin&#39; expires=&#39;2024-11-21T01:46:40+00:00&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:05:00Z&#39; user=&#39;user456&#39; role=&#39;user&#39; expires=&#39;2024-11-21T02:46:40+00:00&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:10:00Z&#39; user=&#39;user789&#39; role=&#39;guest&#39; expires=&#39;2023-11-14T22:13:20+00:00&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:15:00Z&#39; user=&#39;user111&#39; role=&#39;moderator&#39; expires=&#39;2024-11-21T03:46:40+00:00&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp='2024-01-15T10:00:00Z' user='user123' role='admin' expires='2024-11-21T01:46:40+00:00'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp='2024-01-15T10:05:00Z' user='user456' role='user' expires='2024-11-21T02:46:40+00:00'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp='2024-01-15T10:10:00Z' user='user789' role='guest' expires='2023-11-14T22:13:20+00:00'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp='2024-01-15T10:15:00Z' user='user111' role='moderator' expires='2024-11-21T03:46:40+00:00'
 </code></pre></div>
 </div>
 </div>
 </div>
 <p>Find expired tokens by comparing the decoded expiry against the current time:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.token.parse_jwt().expires_at &lt; now()&#39;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.token.parse_jwt().expires_at &lt; now()'</span>
 </code></pre></div>
 <p>To flatten the claims straight onto the event in one step (dropping the token),
 use <code>absorb_jwt()</code> — the JWT member of the <a href="../../reference/functions/#eabsorb_jwtfield-options">absorb family</a>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_jwt(&quot;token&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/auth-logs.jsonl<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.absorb_jwt("token")'</span>
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -2809,13 +2809,13 @@ use <code>absorb_jwt()</code> — the JWT member of the <a href="../../reference
 <div class="tabbed-set tabbed-alternate" data-tabs="5:1"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Command/Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;line&quot;:&quot;2024-01-15 10:00:00 | INFO | User logged in&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.timestamp = e.line.before(&quot; | &quot;);</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">                     e.level = e.line.after(&quot; | &quot;).before(&quot; | &quot;);</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">                     e.message = e.line.after(&quot; | &quot;, -1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"line":"2024-01-15 10:00:00 | INFO | User logged in"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>kelora<span class="w"> </span>-j<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.timestamp = e.line.before(" | ");</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">                     e.level = e.line.after(" | ").before(" | ");</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">                     e.message = e.line.after(" | ", -1)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,message
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15 10:00:00&#39; level=&#39;INFO&#39; message=&#39;User logged in&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp='2024-01-15 10:00:00' level='INFO' message='User logged in'
 </code></pre></div>
 </div>
 </div>
@@ -2829,14 +2829,14 @@ use <code>absorb_jwt()</code> — the JWT member of the <a href="../../reference
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/error-logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.similarity = e.error.edit_distance(&quot;connection timeout&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.similarity &lt; 5&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.similarity = e.error.edit_distance("connection timeout")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.similarity &lt; 5'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-k<span class="w"> </span>error,similarity
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>error=&#39;connection timeout&#39; similarity=0
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>error=&#39;connection timed out&#39; similarity=2
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>error=&#39;conecttion timeout&#39; similarity=2
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>error=&#39;conection timeot&#39; similarity=2
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>error='connection timeout' similarity=0
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>error='connection timed out' similarity=2
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>error='conecttion timeout' similarity=2
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>error='conection timeot' similarity=2
 </code></pre></div>
 </div>
 </div>
@@ -2848,9 +2848,9 @@ consistent anonymous IDs (HMAC with <code>KELORA_SECRET</code>).</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="7:1"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Command/Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">&quot;your-secret-key&quot;</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>examples/analytics.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.anon_user = pseudonym(e.email, &quot;users&quot;);</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">          e.email = ()&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">KELORA_SECRET</span><span class="o">=</span><span class="s2">"your-secret-key"</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>examples/analytics.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.anon_user = pseudonym(e.email, "users");</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">          e.email = ()'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-k<span class="w"> </span>anon_user,page,duration<span class="w"> </span>-F<span class="w"> </span>csv
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>anon_user,page,duration
@@ -2871,12 +2871,12 @@ consistent anonymous IDs (HMAC with <code>KELORA_SECRET</code>).</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="8:1"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Command/Output</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;2024-01-15 ERROR: Failed with response: {&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>kelora<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.data = e.line.extract_json()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;data&quot;)&#39;</span><span class="w"> </span>-k<span class="w"> </span>line,data
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'2024-01-15 ERROR: Failed with response: {"code":500,"message":"Internal error"}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>kelora<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.data = e.line.extract_json()'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.has("data")'</span><span class="w"> </span>-k<span class="w"> </span>line,data
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora hint: No input format detected; keeping whole lines as &#39;line&#39;. For &#39;timestamp LEVEL message&#39; app logs, extract fields with -f &#39;cols:ts(2) level *msg&#39; (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f &#39;cols:ts(2) level *msg&#39;. See --help-formats.
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>line=&#39;2024-01-15 ERROR: Failed with response: {&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}&#39; data={&quot;code&quot;:500,&quot;message&quot;:&quot;Internal error&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora hint: No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(2) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(2) level *msg'. See --help-formats.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>line='2024-01-15 ERROR: Failed with response: {"code":500,"message":"Internal error"}' data={"code":500,"message":"Internal error"}
 </code></pre></div>
 </div>
 </div>
@@ -2889,10 +2889,10 @@ pairs to fields. → <a href="../../reference/functions/">Function Reference</a>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;response_time&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.has("response_time")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;let bucket = (e.response_time / 0.5).floor() * 0.5;</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_freq(&quot;response_ms&quot;, bucket)&#39;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'let bucket = (e.response_time / 0.5).floor() * 0.5;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">          track_freq("response_ms", bucket)'</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>response_ms 0   11
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>response_ms 0.5 1
@@ -2914,11 +2914,11 @@ pairs to fields. → <a href="../../reference/functions/">Function Reference</a>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,logfmt,line<span class="w"> </span>examples/nightmare_mixed_formats.log<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-5
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{&quot;line&quot;:&quot;2024-01-15 10:00:00 [INFO] Server starting&quot;,&quot;_format&quot;:&quot;line&quot;}
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:01Z&quot;,&quot;level&quot;:&quot;DEBUG&quot;,&quot;message&quot;:&quot;Connection pool initialized&quot;,&quot;format&quot;:&quot;json&quot;,&quot;connections&quot;:50,&quot;_format&quot;:&quot;json&quot;}
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:02Z&quot;,&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;Cache layer ready&quot;,&quot;format&quot;:&quot;logfmt&quot;,&quot;size&quot;:1024,&quot;_format&quot;:&quot;logfmt&quot;}
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{&quot;line&quot;:&quot;&lt;34&gt;Jan 15 10:00:03 appserver syslog: Authentication module loaded&quot;,&quot;_format&quot;:&quot;line&quot;}
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>{&quot;line&quot;:&quot;web_1    | 2024-01-15 10:00:04 [INFO] HTTP server listening on port 8080&quot;,&quot;_format&quot;:&quot;line&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>{"line":"2024-01-15 10:00:00 [INFO] Server starting","_format":"line"}
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{"timestamp":"2024-01-15T10:00:01Z","level":"DEBUG","message":"Connection pool initialized","format":"json","connections":50,"_format":"json"}
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>{"timestamp":"2024-01-15T10:00:02Z","level":"info","msg":"Cache layer ready","format":"logfmt","size":1024,"_format":"logfmt"}
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>{"line":"&lt;34&gt;Jan 15 10:00:03 appserver syslog: Authentication module loaded","_format":"line"}
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>{"line":"web_1    | 2024-01-15 10:00:04 [INFO] HTTP server listening on port 8080","_format":"line"}
 </code></pre></div>
 </div>
 </div>
@@ -2932,8 +2932,8 @@ across events.</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.level] = (state.get(e.level) ?? 0) + 1&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;print(state.to_map().to_logfmt())&#39;</span><span class="w"> </span>-q
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state[e.level] = (state.get(e.level) ?? 0) + 1'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">'print(state.to_map().to_logfmt())'</span><span class="w"> </span>-q
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>CRITICAL=1 DEBUG=4 ERROR=3 INFO=9 WARN=3
 </code></pre></div>
@@ -2951,16 +2951,16 @@ counting prefer <code>track_*()</code>, which works in parallel.</p>
 <p>The payoff is composition — fan out nested orders, normalize errors, hash
 users, take a deterministic sample, and aggregate, in one command:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-responses.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.api_version == &quot;v2&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.get_path(&quot;data.orders&quot;, []))&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;emit_each(e.items)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.error_pattern = e.get(&quot;error_msg&quot;, &quot;&quot;).normalized();</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s1">          e.user_hash = e.user_id.hash(&quot;xxh3&quot;);</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.api_version == "v2"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'emit_each(e.get_path("data.orders", []))'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'emit_each(e.items)'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.error_pattern = e.get("error_msg", "").normalized();</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s1">          e.user_hash = e.user_id.hash("xxh3");</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s1">          e.sample_group = e.order_id.bucket() % 10;</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s1">          e.user_id = ()&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.sample_group &lt; 3&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s1">          e.user_id = ()'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.sample_group &lt; 3'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span>--metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;error_pattern&quot;, e.error_pattern)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'track_freq("error_pattern", e.error_pattern)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span>-k<span class="w"> </span>order_id,sku,quantity,error_pattern<span class="w"> </span>-F<span class="w"> </span>csv
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>

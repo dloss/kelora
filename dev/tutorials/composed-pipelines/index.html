@@ -3268,23 +3268,24 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/incident_story.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-06-19T12:32:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-06-19T12:37:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2024-06-19T12:32:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2024-06-19T12:37:00Z"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--stats
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/incident_story.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-06-19T12:32:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-06-19T12:37:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2024-06-19T12:32:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2024-06-19T12:37:00Z"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--stats
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Detected format: line
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Lines processed: 6 total, 0 filtered (0.0%), 0 errors (0.0%)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Events created: 6 total, 0 output, 6 filtered (100.0%)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 462 lines/s in 13ms
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Throughput: 447 lines/s in 13ms
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Timestamp: (none found, 6 events) - 0/0 parsed (0.0%); 6 missing. Hint: Try --ts-field or --ts-format.
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Keys seen: line
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora warning: 6 events dropped by --since/--until with no parsed timestamp: the window could not place them, and it runs before every script stage, so they reached no --filter, --exec or --assert. Point the parser at the timestamp with --ts-field/--ts-format, or — if these events carry none, as the plain-text lines of a cascade do — narrow with a --filter instead of the window. See --help-time.
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>Keys seen: line
 </code></pre></div>
 </div>
 </div>
@@ -3301,24 +3302,25 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>examples/incident_story.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-06-19T12:32:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-06-19T12:37:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2024-06-19T12:32:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2024-06-19T12:37:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.absorb_kv("line")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,pod,detail
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/incident_story.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-06-19T12:32:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-06-19T12:37:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2024-06-19T12:32:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2024-06-19T12:37:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.absorb_kv("line")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,pod,detail
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora hint: No input format detected; keeping whole lines as &#39;line&#39;. For &#39;timestamp LEVEL message&#39; app logs, extract fields with -f &#39;cols:ts(2) level *msg&#39; (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f &#39;cols:ts(2) level *msg&#39;. See --help-formats.
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora hint: 0 events matched. --since/--until is set, but no timestamps were parsed (0/6 events). Set --ts-field/--ts-format; see --help-time.
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora hint: -k/--keys names fields never present in the input: timestamp, level, pod, detail. Present fields: line.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora hint: No input format detected; keeping whole lines as 'line'. For 'timestamp LEVEL message' app logs, extract fields with -f 'cols:ts(2) level *msg' (or a regex:). Mixed file? Cascade with repeated -f, e.g. -f json -f 'cols:ts(2) level *msg'. See --help-formats.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kelora warning: 6 events dropped by --since/--until with no parsed timestamp: the window could not place them, and it runs before every script stage, so they reached no --filter, --exec or --assert. Point the parser at the timestamp with --ts-field/--ts-format, or — if these events carry none, as the plain-text lines of a cascade do — narrow with a --filter instead of the window. See --help-time.
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora hint: 0 events matched. --since/--until is set, but no timestamps were parsed (0/6 events). Set --ts-field/--ts-format; see --help-time.
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora hint: -k/--keys names fields never present in the input: timestamp, level, pod, detail. Present fields: line.
 </code></pre></div>
 </div>
 </div>
@@ -3336,30 +3338,30 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>examples/incident_story.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-06-19T12:32:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-06-19T12:37:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    track_sum(&quot;total_errors&quot;, 1);</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">    track_top(&quot;error_source&quot;, e.get_path(&quot;pod&quot;, &quot;unknown&quot;), 10);</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2024-06-19T12:32:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2024-06-19T12:37:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.absorb_kv("line")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    track_sum("total_errors", 1);</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">    track_top("error_source", e.get_path("pod", "unknown"), 10);</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span>--metrics
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>examples/incident_story.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2024-06-19T12:32:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2024-06-19T12:37:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    track_sum(&quot;total_errors&quot;, 1);</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    track_top(&quot;error_source&quot;, e.get_path(&quot;pod&quot;, &quot;unknown&quot;), 10);</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2024-06-19T12:32:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2024-06-19T12:37:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.absorb_kv("line")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    track_sum("total_errors", 1);</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    track_top("error_source", e.get_path("pod", "unknown"), 10);</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>--metrics
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora warning: 6 events dropped by --since/--until with no parsed timestamp: the window could not place them, and it runs before every script stage, so they reached no --filter, --exec or --assert. Point the parser at the timestamp with --ts-field/--ts-format, or — if these events carry none, as the plain-text lines of a cascade do — narrow with a --filter instead of the window. See --help-time.
 </code></pre></div>
 </div>
 </div>
@@ -3374,20 +3376,20 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>line=&#39;2024-01-15 10:01:00 ERROR Failed to process request\nTraceback (most recent call last):\n  File &quot;/app/server.py&quot;, line 42, in handle_request\n    result = process_data(request.body)\n  File &quot;/app/processor.py&quot;, line 15, in process_data\n    return json.loads(data)\nValueError: Invalid JSON format at line 3&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>line=&#39;2024-01-15 10:02:00 ERROR Database connection failed\njava.sql.SQLException: Connection timeout\n\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\n\tat com.example.api.UserController.getUser(UserController.java:45)\n\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)\nCaused by: java.net.SocketTimeoutException: Read timed out\n\tat java.net.SocketInputStream.socketRead0(Native Method)\n\tat java.net.SocketInputStream.read(SocketInputStream.java:150)&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>line=&#39;2024-01-15 10:03:00 ERROR Unhandled exception in worker thread\nRuntimeError: Maximum retry attempts exceeded\n  File &quot;/app/worker.py&quot;, line 67, in run\n    self.process_job(job)\n  File &quot;/app/worker.py&quot;, line 98, in process_job\n    raise RuntimeError(&quot;Maximum retry attempts exceeded&quot;)&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>line='2024-01-15 10:01:00 ERROR Failed to process request\nTraceback (most recent call last):\n  File "/app/server.py", line 42, in handle_request\n    result = process_data(request.body)\n  File "/app/processor.py", line 15, in process_data\n    return json.loads(data)\nValueError: Invalid JSON format at line 3'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>line='2024-01-15 10:02:00 ERROR Database connection failed\njava.sql.SQLException: Connection timeout\n\tat com.example.db.ConnectionPool.getConnection(ConnectionPool.java:123)\n\tat com.example.api.UserController.getUser(UserController.java:45)\n\tat com.example.api.RequestHandler.handle(RequestHandler.java:89)\nCaused by: java.net.SocketTimeoutException: Read timed out\n\tat java.net.SocketInputStream.socketRead0(Native Method)\n\tat java.net.SocketInputStream.read(SocketInputStream.java:150)'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>line='2024-01-15 10:03:00 ERROR Unhandled exception in worker thread\nRuntimeError: Maximum retry attempts exceeded\n  File "/app/worker.py", line 67, in run\n    self.process_job(job)\n  File "/app/worker.py", line 98, in process_job\n    raise RuntimeError("Maximum retry attempts exceeded")'
 </code></pre></div>
 </div>
 </div>
@@ -3406,40 +3408,40 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">    // Extract timestamp/level from the first line only</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">    let header = e.line.split(&quot;\n&quot;)[0];</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    e.timestamp = header.col(&quot;0:2&quot;); // date + time</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    e.level = header.col(&quot;2&quot;);</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">    let header = e.line.split("\n")[0];</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    e.timestamp = header.col("0:2"); // date + time</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    e.level = header.col("2");</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    // Extract error message from the first line</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    e.error_summary = header.col(&quot;3:&quot;);</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    e.error_summary = header.col("3:");</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,error_summary<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    // Extract timestamp/level from the first line only</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    let header = e.line.split(&quot;\n&quot;)[0];</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    e.timestamp = header.col(&quot;0:2&quot;); // date + time</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    e.level = header.col(&quot;2&quot;);</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    let header = e.line.split("\n")[0];</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    e.timestamp = header.col("0:2"); // date + time</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    e.level = header.col("2");</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    // Extract error message from the first line</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    e.error_summary = header.col(&quot;3:&quot;);</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    e.error_summary = header.col("3:");</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,level,error_summary<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>--take<span class="w"> </span><span class="m">3</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15 10:01:00&#39; level=&#39;ERROR&#39; error_summary=&#39;Failed to process request&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15 10:02:00&#39; level=&#39;ERROR&#39; error_summary=&#39;Database connection failed&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15 10:03:00&#39; level=&#39;ERROR&#39; error_summary=&#39;Unhandled exception in worker thread&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp='2024-01-15 10:01:00' level='ERROR' error_summary='Failed to process request'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp='2024-01-15 10:02:00' level='ERROR' error_summary='Database connection failed'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp='2024-01-15 10:03:00' level='ERROR' error_summary='Unhandled exception in worker thread'
 </code></pre></div>
 </div>
 </div>
@@ -3450,15 +3452,15 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>line
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>examples/multiline_stacktrace.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^[0-9]{4}-[0-9]{2}-[0-9]{2}'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--drain<span class="w"> </span>-k<span class="w"> </span>line
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>templates (3 items):
@@ -3471,10 +3473,10 @@
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    at java.net.SocketInputStream.socketRead0(Native Method)
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    at java.net.SocketInputStream.read(SocketInputStream.java:&lt;num&gt;)
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  1: &lt;date&gt; &lt;time&gt; ERROR Failed to process request
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Traceback (most recent call last):  File &quot;&lt;path&gt;&quot;, line &lt;num&gt;, in handle_request    result = process_data(request.body)  File &quot;&lt;path&gt;&quot;, line &lt;num&gt;, in process_data    return json.loads(data)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>Traceback (most recent call last):  File "&lt;path&gt;", line &lt;num&gt;, in handle_request    result = process_data(request.body)  File "&lt;path&gt;", line &lt;num&gt;, in process_data    return json.loads(data)
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>ValueError: Invalid JSON format at line &lt;num&gt;
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  1: &lt;date&gt; &lt;time&gt; ERROR Unhandled exception in worker thread
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>RuntimeError: Maximum retry attempts exceeded  File &quot;&lt;path&gt;&quot;, line &lt;num&gt;, in run    self.process_job(job)  File &quot;&lt;path&gt;&quot;, line &lt;num&gt;, in process_job    raise RuntimeError(&quot;Maximum retry attempts exceeded&quot;)
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>RuntimeError: Maximum retry attempts exceeded  File "&lt;path&gt;", line &lt;num&gt;, in run    self.process_job(job)  File "&lt;path&gt;", line &lt;num&gt;, in process_job    raise RuntimeError("Maximum retry attempts exceeded")
 </code></pre></div>
 </div>
 </div>
@@ -3495,17 +3497,17 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth-service&quot; &amp;&amp; e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.service == "auth-service" &amp;&amp; e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,message,status
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth-service&quot; &amp;&amp; e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.service == "auth-service" &amp;&amp; e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,message,status
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; service=&#39;auth-service&#39; message=&#39;Connection timeout while validating user credentials&#39; status=500
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; service=&#39;auth-service&#39; message=&#39;Unauthorized access attempt detected&#39; status=403
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp='2025-01-15T10:24:12Z' service='auth-service' message='Connection timeout while validating user credentials' status=500
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp='2025-01-15T10:26:44Z' service='auth-service' message='Unauthorized access attempt detected' status=403
 </code></pre></div>
 </div>
 </div>
@@ -3516,23 +3518,23 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth-service&quot; &amp;&amp; e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s1">    track_sum(&quot;errors&quot;, 1);</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s1">    track_stats(&quot;response_time&quot;, e.get_path(&quot;response_time&quot;, 0.0));</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s1">    track_top(&quot;error_type&quot;, e.message, 5);</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.service == "auth-service" &amp;&amp; e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s1">    track_sum("errors", 1);</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s1">    track_stats("response_time", e.get_path("response_time", 0.0));</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s1">    track_top("error_type", e.message, 5);</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span>--metrics
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth-service&quot; &amp;&amp; e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    track_sum(&quot;errors&quot;, 1);</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    track_stats(&quot;response_time&quot;, e.get_path(&quot;response_time&quot;, 0.0));</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    track_top(&quot;error_type&quot;, e.message, 5);</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.service == "auth-service" &amp;&amp; e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    track_sum("errors", 1);</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    track_stats("response_time", e.get_path("response_time", 0.0));</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    track_top("error_type", e.message, 5);</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>error_type  Connection timeout while validating user credentials    1
@@ -3556,45 +3558,45 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth-service&quot; &amp;&amp; e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">    track_sum(&quot;errors&quot;, 1);</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="s1">    track_stats(&quot;response_time&quot;, e.get_path(&quot;response_time&quot;, 0.0));</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.service == "auth-service" &amp;&amp; e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">    track_sum("errors", 1);</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="s1">    track_stats("response_time", e.get_path("response_time", 0.0));</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">'</span>
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="s1">    let m = span.metrics;</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="s1">    let errors = m.get_path(&quot;errors&quot;, 0);</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="s1">    let avg_time = m.get_path(&quot;response_time_avg&quot;, 0);</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="s1">    let errors = m.get_path("errors", 0);</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="s1">    let avg_time = m.get_path("response_time_avg", 0);</span>
 <a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="s1">    print(`${span.start.to_iso()}: ${errors} errors, avg ${avg_time}s response time`);</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="s1">  '</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;auth-service&quot; &amp;&amp; e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    track_sum(&quot;errors&quot;, 1);</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    track_stats(&quot;response_time&quot;, e.get_path(&quot;response_time&quot;, 0.0));</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.service == "auth-service" &amp;&amp; e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    track_sum("errors", 1);</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    track_stats("response_time", e.get_path("response_time", 0.0));</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--span<span class="w"> </span>1m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">'</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    let m = span.metrics;</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    let errors = m.get_path(&quot;errors&quot;, 0);</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    let avg_time = m.get_path(&quot;response_time_avg&quot;, 0);</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    let errors = m.get_path("errors", 0);</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    let avg_time = m.get_path("response_time_avg", 0);</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    print(`${span.start.to_iso()}: ${errors} errors, avg ${avg_time}s response time`);</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">  '</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>2025-01-15T10:23:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; level=&#39;ERROR&#39; message=&#39;Connection timeout while validating user credentials&#39; service=&#39;auth-service&#39; request_id=&#39;req-e5f6g7h8&#39; user_id=103 response_time=5.123 status=500 client_ip=&#39;10.0.5.23&#39; path=&#39;/api/auth/login&#39; method=&#39;POST&#39; error=&#39;ConnectionError: timeout after 5000ms&#39; stack_trace=&#39;at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora warning: span.metrics omits &#39;response_time_max&#39; (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora warning: span.metrics omits &#39;response_time_p50&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora warning: span.metrics omits &#39;response_time_p95&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora warning: span.metrics omits &#39;response_time_p99&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora warning: span.metrics omits &#39;response_time_min&#39; (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp='2025-01-15T10:24:12Z' level='ERROR' message='Connection timeout while validating user credentials' service='auth-service' request_id='req-e5f6g7h8' user_id=103 response_time=5.123 status=500 client_ip='10.0.5.23' path='/api/auth/login' method='POST' error='ConnectionError: timeout after 5000ms' stack_trace='at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kelora warning: span.metrics omits 'response_time_p95' (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>kelora warning: span.metrics omits 'response_time_min' (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>kelora warning: span.metrics omits 'response_time_max' (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>kelora warning: span.metrics omits 'response_time_p99' (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>kelora warning: span.metrics omits 'response_time_p50' (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>2025-01-15T10:24:00+00:00: 1 errors, avg 5.123s response time
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>2025-01-15T10:25:00+00:00: 0 errors, avg 0s response time
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; level=&#39;ERROR&#39; message=&#39;Unauthorized access attempt detected&#39; service=&#39;auth-service&#39; request_id=&#39;req-g3h4i5j6&#39; user_id=999 status=403 client_ip=&#39;172.16.88.6&#39; path=&#39;/api/admin/users&#39; method=&#39;DELETE&#39; source_ip=&#39;172.16.88.6&#39;
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp='2025-01-15T10:26:44Z' level='ERROR' message='Unauthorized access attempt detected' service='auth-service' request_id='req-g3h4i5j6' user_id=999 status=403 client_ip='172.16.88.6' path='/api/admin/users' method='DELETE' source_ip='172.16.88.6'
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>2025-01-15T10:26:00+00:00: 1 errors, avg 0.0s response time
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>2025-01-15T10:27:00+00:00: 0 errors, avg 0s response time
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>2025-01-15T10:28:00+00:00: 0 errors, avg 0s response time
@@ -3622,19 +3624,19 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;response_time&quot;, 0.0) &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.get_path("response_time", 0.0) &gt; 1.0'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,path,response_time
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;response_time&quot;, 0.0) &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.get_path("response_time", 0.0) &gt; 1.0'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,path,response_time
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; service=&#39;auth-service&#39; path=&#39;/api/auth/login&#39; response_time=5.123
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:25:01Z&#39; service=&#39;payment-service&#39; path=&#39;/api/payments&#39; response_time=2.567
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2025-01-15T10:29:11Z&#39; service=&#39;analytics&#39; path=&#39;/api/analytics&#39; response_time=1.789
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2025-01-15T10:30:35Z&#39; service=&#39;order-service&#39; path=&#39;/api/orders&#39; response_time=1.123
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp='2025-01-15T10:24:12Z' service='auth-service' path='/api/auth/login' response_time=5.123
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp='2025-01-15T10:25:01Z' service='payment-service' path='/api/payments' response_time=2.567
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp='2025-01-15T10:29:11Z' service='analytics' path='/api/analytics' response_time=1.789
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp='2025-01-15T10:30:35Z' service='order-service' path='/api/orders' response_time=1.123
 </code></pre></div>
 </div>
 </div>
@@ -3645,39 +3647,39 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;response_time&quot;, 0.0) &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">    let rt = e.get_path(&quot;response_time&quot;, 0.0);</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.get_path("response_time", 0.0) &gt; 1.0'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">    let rt = e.get_path("response_time", 0.0);</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="s1">    e.latency_class = if rt &gt; 5.0 {</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s1">      &quot;critical&quot;</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="s1">      "critical"</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s1">    } else if rt &gt; 2.0 {</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s1">      &quot;high&quot;</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s1">      "high"</span>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s1">    } else {</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="s1">      &quot;moderate&quot;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="s1">      "moderate"</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="s1">    };</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,response_time,latency_class
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;response_time&quot;, 0.0) &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    let rt = e.get_path(&quot;response_time&quot;, 0.0);</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.get_path("response_time", 0.0) &gt; 1.0'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    let rt = e.get_path("response_time", 0.0);</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    e.latency_class = if rt &gt; 5.0 {</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">      &quot;critical&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">      "critical"</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    } else if rt &gt; 2.0 {</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">      &quot;high&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">      "high"</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    } else {</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      &quot;moderate&quot;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      "moderate"</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    };</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,response_time,latency_class
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; service=&#39;auth-service&#39; response_time=5.123 latency_class=&#39;critical&#39;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2025-01-15T10:25:01Z&#39; service=&#39;payment-service&#39; response_time=2.567 latency_class=&#39;high&#39;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2025-01-15T10:29:11Z&#39; service=&#39;analytics&#39; response_time=1.789 latency_class=&#39;moderate&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2025-01-15T10:30:35Z&#39; service=&#39;order-service&#39; response_time=1.123 latency_class=&#39;moderate&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp='2025-01-15T10:24:12Z' service='auth-service' response_time=5.123 latency_class='critical'
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp='2025-01-15T10:25:01Z' service='payment-service' response_time=2.567 latency_class='high'
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp='2025-01-15T10:29:11Z' service='analytics' response_time=1.789 latency_class='moderate'
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp='2025-01-15T10:30:35Z' service='order-service' response_time=1.123 latency_class='moderate'
 </code></pre></div>
 </div>
 </div>
@@ -3688,45 +3690,45 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;response_time&quot;, 0.0) &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="s1">    let rt = e.get_path(&quot;response_time&quot;, 0.0);</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.get_path("response_time", 0.0) &gt; 1.0'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="s1">    let rt = e.get_path("response_time", 0.0);</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="s1">    e.latency_class = if rt &gt; 5.0 {</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="s1">      &quot;critical&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="s1">      "critical"</span>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="s1">    } else if rt &gt; 2.0 {</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="s1">      &quot;high&quot;</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="s1">      "high"</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="s1">    } else {</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s1">      &quot;moderate&quot;</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="s1">      "moderate"</span>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="s1">    };</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.latency_class == &quot;critical&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="s1">    track_sum(&quot;critical_requests&quot;, 1);</span>
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="s1">    track_top(&quot;service&quot;, e.service, 10);</span>
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="s1">    track_stats(&quot;latency&quot;, e.response_time);</span>
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.latency_class == "critical"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="s1">    track_sum("critical_requests", 1);</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="s1">    track_top("service", e.service, 10);</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="s1">    track_stats("latency", e.response_time);</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">  </span>--metrics
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;response_time&quot;, 0.0) &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    let rt = e.get_path(&quot;response_time&quot;, 0.0);</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.get_path("response_time", 0.0) &gt; 1.0'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    let rt = e.get_path("response_time", 0.0);</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    e.latency_class = if rt &gt; 5.0 {</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">      &quot;critical&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">      "critical"</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    } else if rt &gt; 2.0 {</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">      &quot;high&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">      "high"</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    } else {</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      &quot;moderate&quot;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">      "moderate"</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    };</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.latency_class == &quot;critical&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">    track_sum(&quot;critical_requests&quot;, 1);</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="s1">    track_top(&quot;service&quot;, e.service, 10);</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="s1">    track_stats(&quot;latency&quot;, e.response_time);</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.latency_class == "critical"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">    track_sum("critical_requests", 1);</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="s1">    track_top("service", e.service, 10);</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="s1">    track_stats("latency", e.response_time);</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>critical_requests       1
@@ -3758,18 +3760,18 @@
 <p>For line-by-line mixed streams, cascade mode is the simplest approach:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Parse JSON when possible, fall back to plain text</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>examples/mixed_format.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;(e._format == &quot;json&quot; &amp;&amp; e.level == &quot;ERROR&quot;) || (e._format == &quot;line&quot; &amp;&amp; e.line.contains(&quot;ERROR&quot;))&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'(e._format == "json" &amp;&amp; e.level == "ERROR") || (e._format == "line" &amp;&amp; e.line.contains("ERROR"))'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span>-k<span class="w"> </span>_format,timestamp,message,line
 </code></pre></div>
 <h3 id="approach-2-process-each-format-separately">Approach 2: Process Each Format Separately<a class="headerlink" href="#approach-2-process-each-format-separately" title="Permanent link">&para;</a></h3>
 <p>If the split logic is more irregular than a simple parser cascade, preprocess upstream:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Extract and analyze JSON errors</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>grep<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>examples/mixed_format.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>-k<span class="w"> </span>timestamp,message
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>grep<span class="w"> </span><span class="s1">'^{'</span><span class="w"> </span>examples/mixed_format.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span>-k<span class="w"> </span>timestamp,message
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># Extract and analyze text errors</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;^{&#39;</span><span class="w"> </span>examples/mixed_format.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span><span class="w"> </span>-k<span class="w"> </span>line
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">'^{'</span><span class="w"> </span>examples/mixed_format.log<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span>kelora<span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span><span class="w"> </span>-k<span class="w"> </span>line
 </code></pre></div>
 <p><strong>Best practice:</strong> Use cascade mode first for standard mixed streams. Fall back to
 preprocessing when the file needs custom routing rules that parser selection
@@ -3782,38 +3784,38 @@ alone cannot express.</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-15T10:24:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-15T10:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot; || e.get_path(&quot;response_time&quot;, 0.0) &gt; 2.0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2025-01-15T10:24:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2025-01-15T10:30:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR" || e.get_path("response_time", 0.0) &gt; 2.0'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span>--exec-file<span class="w"> </span>examples/incident_workflow_exec.rhai<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">'</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="s1">    let m = span.metrics;</span>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="s1">    print(`\n=== Window: ${span.start.to_iso()} ===$()`);</span>
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="s1">    print(`  Total issues: ${span.size}`);</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="s1">    print(`  Errors: ${m.get_path(&quot;error&quot;, 0)}`);</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="s1">    print(`  Latency: ${m.get_path(&quot;latency&quot;, 0)}`);</span>
-<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="s1">    print(`  Avg response: ${m.get_path(&quot;response_time_avg&quot;, 0)}s`);</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="s1">    print(`  P95 response: ${m.get_path(&quot;response_time_p95&quot;, 0)}s`);</span>
-<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="s1">    print(`  Errors: ${m.get_path("error", 0)}`);</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="s1">    print(`  Latency: ${m.get_path("latency", 0)}`);</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="s1">    print(`  Avg response: ${m.get_path("response_time_avg", 0)}s`);</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="s1">    print(`  P95 response: ${m.get_path("response_time_p95", 0)}s`);</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="s1">  '</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">&quot;2025-01-15T10:24:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">&quot;2025-01-15T10:30:00Z&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot; || e.get_path(&quot;response_time&quot;, 0.0) &gt; 2.0&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--since<span class="w"> </span><span class="s2">"2025-01-15T10:24:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--until<span class="w"> </span><span class="s2">"2025-01-15T10:30:00Z"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR" || e.get_path("response_time", 0.0) &gt; 2.0'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--exec-file<span class="w"> </span>examples/incident_workflow_exec.rhai<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--span<span class="w"> </span>2m<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">&#39;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--span-close<span class="w"> </span><span class="s1">'</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    let m = span.metrics;</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    print(`\n=== Window: ${span.start.to_iso()} ===$()`);</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">    print(`  Total issues: ${span.size}`);</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    print(`  Errors: ${m.get_path(&quot;error&quot;, 0)}`);</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    print(`  Latency: ${m.get_path(&quot;latency&quot;, 0)}`);</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">    print(`  Avg response: ${m.get_path(&quot;response_time_avg&quot;, 0)}s`);</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    print(`  P95 response: ${m.get_path(&quot;response_time_p95&quot;, 0)}s`);</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">  &#39;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">    print(`  Errors: ${m.get_path("error", 0)}`);</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">    print(`  Latency: ${m.get_path("latency", 0)}`);</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s1">    print(`  Avg response: ${m.get_path("response_time_avg", 0)}s`);</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s1">    print(`  P95 response: ${m.get_path("response_time_p95", 0)}s`);</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="s1">  '</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>\n=== Window: 2025-01-15T10:22:00+00:00 ===$()
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  Total issues: 0
@@ -3821,31 +3823,31 @@ alone cannot express.</p>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  Latency: 0
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  Avg response: 0s
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  P95 response: 0s
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2025-01-15T10:24:12Z&#39; level=&#39;ERROR&#39; message=&#39;Connection timeout while validating user credentials&#39; service=&#39;auth-service&#39; request_id=&#39;req-e5f6g7h8&#39; user_id=103 response_time=5.123 status=500 client_ip=&#39;10.0.5.23&#39; path=&#39;/api/auth/login&#39; method=&#39;POST&#39; error=&#39;ConnectionError: timeout after 5000ms&#39; stack_trace=&#39;at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)&#39; issue_type=&#39;error&#39;
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2025-01-15T10:25:01Z&#39; level=&#39;WARN&#39; message=&#39;Payment processing timeout - retrying&#39; service=&#39;payment-service&#39; request_id=&#39;req-m3n4o5p6&#39; user_id=42 response_time=2.567 status=200 client_ip=&#39;192.168.1.100&#39; path=&#39;/api/payments&#39; method=&#39;POST&#39; referer=&#39;https://checkout.example.com&#39; issue_type=&#39;latency&#39;
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2025-01-15T10:25:18Z&#39; level=&#39;ERROR&#39; severity=&#39;critical&#39; message=&#39;Database connection pool exhausted&#39; service=&#39;database&#39; request_id=&#39;req-q7r8s9t0&#39; response_time=0.001 error=&#39;PoolExhausted: no available connections&#39; issue_type=&#39;error&#39;
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2025-01-15T10:25:45Z&#39; level=&#39;ERROR&#39; message=&#39;Invalid JWT token provided&#39; service=&#39;api-gateway&#39; request_id=&#39;req-u1v2w3x4&#39; status=401 client_ip=&#39;198.51.100.77&#39; path=&#39;/api/admin&#39; method=&#39;GET&#39; token=&#39;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzA1MzE3NjAwfQ.dGVzdC1zaWduYXR1cmU&#39; issue_type=&#39;error&#39;
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora warning: span.metrics omits &#39;response_time_p50&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>kelora warning: span.metrics omits &#39;response_time_min&#39; (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>kelora warning: span.metrics omits &#39;service_issue&#39; (track_top): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>kelora warning: span.metrics omits &#39;response_time_p99&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>kelora warning: span.metrics omits &#39;response_time_max&#39; (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>kelora warning: span.metrics omits &#39;response_time_p95&#39; (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp='2025-01-15T10:24:12Z' level='ERROR' message='Connection timeout while validating user credentials' service='auth-service' request_id='req-e5f6g7h8' user_id=103 response_time=5.123 status=500 client_ip='10.0.5.23' path='/api/auth/login' method='POST' error='ConnectionError: timeout after 5000ms' stack_trace='at validateCredentials (auth.js:234)\n  at processLogin (handler.js:89)' issue_type='error'
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp='2025-01-15T10:25:01Z' level='WARN' message='Payment processing timeout - retrying' service='payment-service' request_id='req-m3n4o5p6' user_id=42 response_time=2.567 status=200 client_ip='192.168.1.100' path='/api/payments' method='POST' referer='https://checkout.example.com' issue_type='latency'
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp='2025-01-15T10:25:18Z' level='ERROR' severity='critical' message='Database connection pool exhausted' service='database' request_id='req-q7r8s9t0' response_time=0.001 error='PoolExhausted: no available connections' issue_type='error'
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp='2025-01-15T10:25:45Z' level='ERROR' message='Invalid JWT token provided' service='api-gateway' request_id='req-u1v2w3x4' status=401 client_ip='198.51.100.77' path='/api/admin' method='GET' token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMTIzIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzA1MzE3NjAwfQ.dGVzdC1zaWduYXR1cmU' issue_type='error'
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>kelora warning: span.metrics omits 'response_time_max' (track_max): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>kelora warning: span.metrics omits 'service_issue' (track_top): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>kelora warning: span.metrics omits 'response_time_min' (track_min): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>kelora warning: span.metrics omits 'response_time_p50' (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>kelora warning: span.metrics omits 'response_time_p95' (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>kelora warning: span.metrics omits 'response_time_p99' (track_percentiles): non-additive aggregators have no per-window value; iterate span.events to compute per-window min/max/percentiles/etc.
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>\n=== Window: 2025-01-15T10:24:00+00:00 ===$()
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>  Total issues: 4
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  Errors: 0
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  Latency: 0
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>  Avg response: 1.9227500000000002s
 <a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>  P95 response: 0s
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>timestamp=&#39;2025-01-15T10:26:44Z&#39; level=&#39;ERROR&#39; message=&#39;Unauthorized access attempt detected&#39; service=&#39;auth-service&#39; request_id=&#39;req-g3h4i5j6&#39; user_id=999 status=403 client_ip=&#39;172.16.88.6&#39; path=&#39;/api/admin/users&#39; method=&#39;DELETE&#39; source_ip=&#39;172.16.88.6&#39; issue_type=&#39;error&#39;
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>timestamp=&#39;2025-01-15T10:27:26Z&#39; level=&#39;ERROR&#39; message=&#39;File upload failed - size limit exceeded&#39; service=&#39;storage&#39; request_id=&#39;req-o1p2q3r4&#39; user_id=156 status=413 client_ip=&#39;198.51.100.88&#39; path=&#39;/api/upload&#39; method=&#39;POST&#39; error=&#39;FileSizeError: maximum size 10MB exceeded&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>timestamp='2025-01-15T10:26:44Z' level='ERROR' message='Unauthorized access attempt detected' service='auth-service' request_id='req-g3h4i5j6' user_id=999 status=403 client_ip='172.16.88.6' path='/api/admin/users' method='DELETE' source_ip='172.16.88.6' issue_type='error'
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>timestamp='2025-01-15T10:27:26Z' level='ERROR' message='File upload failed - size limit exceeded' service='storage' request_id='req-o1p2q3r4' user_id=156 status=413 client_ip='198.51.100.88' path='/api/upload' method='POST' error='FileSizeError: maximum size 10MB exceeded' issue_type='error'
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>\n=== Window: 2025-01-15T10:26:00+00:00 ===$()
 <a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>  Total issues: 2
 <a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>  Errors: 0
 <a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>  Latency: 0
 <a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>  Avg response: 0.0s
 <a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>  P95 response: 0s
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>timestamp=&#39;2025-01-15T10:28:50Z&#39; level=&#39;ERROR&#39; message=&#39;Endpoint not found&#39; service=&#39;api-gateway&#39; request_id=&#39;req-e7f8g9h0&#39; status=404 client_ip=&#39;172.16.88.7&#39; path=&#39;/wp-admin&#39; method=&#39;GET&#39; issue_type=&#39;error&#39;
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>timestamp='2025-01-15T10:28:50Z' level='ERROR' message='Endpoint not found' service='api-gateway' request_id='req-e7f8g9h0' status=404 client_ip='172.16.88.7' path='/wp-admin' method='GET' issue_type='error'
 <a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>\n=== Window: 2025-01-15T10:28:00+00:00 ===$()
 <a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>  Total issues: 1
 <a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>  Errors: 0
@@ -3884,27 +3886,27 @@ alone cannot express.</p>
 <h3 id="export-filtered-events">Export Filtered Events<a class="headerlink" href="#export-filtered-events" title="Permanent link">&para;</a></h3>
 <p>Save filtered events to a file:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;message&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.absorb_kv("message")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>errors-export.jsonl
 </code></pre></div>
 <h3 id="export-metrics-to-json">Export Metrics to JSON<a class="headerlink" href="#export-metrics-to-json" title="Permanent link">&para;</a></h3>
 <p>Compute metrics and save to file:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="s1">    track_sum(&quot;total&quot;, 1);</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="s1">    track_top(&quot;service&quot;, e.service, 10);</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="s1">    track_stats(&quot;response_time&quot;, e.get_path(&quot;response_time&quot;, 0.0));</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="s1">    track_sum("total", 1);</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="s1">    track_top("service", e.service, 10);</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="s1">    track_stats("response_time", e.get_path("response_time", 0.0));</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">  </span>--metrics-file<span class="w"> </span>incident-metrics.json<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">  </span>--silent
 </code></pre></div>
 <h3 id="combined-events-metrics">Combined: Events + Metrics<a class="headerlink" href="#combined-events-metrics" title="Permanent link">&para;</a></h3>
 <p>Export events to stdout, metrics to file:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/api_logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'track_freq("service", e.service)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span>--metrics-file<span class="w"> </span>metrics.json<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">  </span>-F<span class="w"> </span>json<span class="w"> </span>&gt;<span class="w"> </span>events.jsonl
 </code></pre></div>
@@ -3917,44 +3919,44 @@ alone cannot express.</p>
 <hr />
 <h2 id="common-mistakes">Common Mistakes<a class="headerlink" href="#common-mistakes" title="Permanent link">&para;</a></h2>
 <p><strong>❌ Problem:</strong> Forgetting multiline reconstruction loses context
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>stack-traces.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>kelora<span class="w"> </span>stack-traces.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1"># Stack traces are split across events</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Use <code>--multiline</code> with <code>--multiline-join=newline</code> to reconstruct:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>stack-traces.log<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^[0-9]{4}-&#39;</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;ERROR&quot;)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>kelora<span class="w"> </span>stack-traces.log<span class="w"> </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^[0-9]{4}-'</span><span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("ERROR")'</span>
 </code></pre></div>
 <em>Note: <code>--multiline-join=newline</code> preserves line breaks in the grouped stack trace, keeping the structure intact.</em></p>
 <hr />
 <p><strong>❌ Problem:</strong> Wrong filter order processes too much data
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;expensive_transform(e)&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'expensive_transform(e)'</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Transform runs on ALL events, then filters</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Filter first, then transform:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;expensive_transform(e)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">'expensive_transform(e)'</span>
 </code></pre></div></p>
 <hr />
 <p><strong>❌ Problem:</strong> Not using safe field access causes crashes
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>api.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.response_time &gt; 1.0&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kelora<span class="w"> </span>api.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.response_time &gt; 1.0'</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1"># Crashes if response_time field is missing</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Use <code>.get_path()</code> with defaults:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>api.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.get_path(&quot;response_time&quot;, 0.0) &gt; 1.0&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>kelora<span class="w"> </span>api.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.get_path("response_time", 0.0) &gt; 1.0'</span>
 </code></pre></div></p>
 <hr />
 <p><strong>❌ Problem:</strong> Span mode incompatible with parallel processing
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--parallel<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--parallel<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">'...'</span>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="c1"># Error: --span incompatible with --parallel</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Remove --parallel for span processing:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">&#39;...&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>kelora<span class="w"> </span>huge.log<span class="w"> </span>--span<span class="w"> </span>5m<span class="w"> </span>--span-close<span class="w"> </span><span class="s1">'...'</span>
 </code></pre></div></p>
 <hr />
 <p><strong>❌ Problem:</strong> Time filters on unsorted logs miss events
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>unsorted.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kelora<span class="w"> </span>unsorted.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">"2024-01-15T10:00:00Z"</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="c1"># May miss events if timestamps are out of order</span>
 </code></pre></div>
 <strong>✅ Solution:</strong> Pre-sort by timestamp or use line-based filtering:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>sort<span class="w"> </span>-t<span class="s1">&#39;&quot;&#39;</span><span class="w"> </span>-k4<span class="w"> </span>unsorted.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>sort<span class="w"> </span>-t<span class="s1">'"'</span><span class="w"> </span>-k4<span class="w"> </span>unsorted.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--since<span class="w"> </span><span class="s2">"2024-01-15T10:00:00Z"</span>
 </code></pre></div></p>
 <hr />
 <h2 id="tips-best-practices">Tips &amp; Best Practices<a class="headerlink" href="#tips-best-practices" title="Permanent link">&para;</a></h2>
@@ -3970,30 +3972,30 @@ alone cannot express.</p>
 <p><strong>Pattern: Funnel Analysis</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Wide → narrow with metrics at each stage</span>
 <a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;errors&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.service == &quot;api&quot;&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;api_errors&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'track_sum("total", 1)'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'track_sum("errors", 1)'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.service == "api"'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'track_sum("api_errors", 1)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 <p><strong>Pattern: Enrich Then Filter</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Add computed fields, then filter on them</span>
 <a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>kelora<span class="w"> </span>api.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_slow = e.response_time &gt; 1.0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.is_error = e.status &gt;= 500&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.is_slow &amp;&amp; e.is_error&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.is_slow = e.response_time &gt; 1.0'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.is_error = e.status &gt;= 500'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.is_slow &amp;&amp; e.is_error'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 <p><strong>Pattern: Multi-Dimensional Aggregation</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="c1"># Track multiple dimensions in one pass</span>
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="s1">    track_freq(&quot;level&quot;, e.level);</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="s1">    track_freq(&quot;service&quot;, e.service);</span>
-<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="s1">    track_freq(&quot;level_service&quot;, e.level + &quot;:&quot; + e.service);</span>
-<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="s1">    track_stats(&quot;latency&quot;, e.response_time);</span>
-<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a><span class="s1">  &#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="s1">    track_freq("level", e.level);</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="s1">    track_freq("service", e.service);</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="s1">    track_freq("level_service", e.level + ":" + e.service);</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="s1">    track_stats("latency", e.response_time);</span>
+<a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a><span class="s1">  '</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a><span class="w">  </span>--metrics
 </code></pre></div></p>
 <h3 id="performance-optimization">Performance Optimization<a class="headerlink" href="#performance-optimization" title="Permanent link">&para;</a></h3>
@@ -4007,16 +4009,16 @@ alone cannot express.</p>
 <h3 id="debugging-pipelines">Debugging Pipelines<a class="headerlink" href="#debugging-pipelines" title="Permanent link">&para;</a></h3>
 <p><strong>Check each stage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Stage 1: Verify time filtering</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--stats
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">"2024-01-15T10:00:00Z"</span><span class="w"> </span>--stats
 <a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
 <a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># Stage 2: Add error filtering</span>
-<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--stats
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">"2024-01-15T10:00:00Z"</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span>--stats
 <a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>
 <a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="c1"># Stage 3: Add parsing</span>
-<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_kv(&quot;line&quot;)&#39;</span><span class="w"> </span>-J
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">"2024-01-15T10:00:00Z"</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.absorb_kv("line")'</span><span class="w"> </span>-J
 <a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>
 <a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a><span class="c1"># Stage 4: Add metrics</span>
-<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">&quot;2024-01-15T10:00:00Z&quot;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_sum(&quot;total&quot;, 1)&#39;</span><span class="w"> </span>-m
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--since<span class="w"> </span><span class="s2">"2024-01-15T10:00:00Z"</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">'track_sum("total", 1)'</span><span class="w"> </span>-m
 </code></pre></div></p>
 <p><strong>Use inspect format:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--take<span class="w"> </span><span class="m">1</span><span class="w"> </span>-F<span class="w"> </span>inspect
@@ -4026,7 +4028,7 @@ alone cannot express.</p>
 <p>Use Kelora's alias system for reusable pipelines:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># In .kelora.ini</span>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="k">[aliases]</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="na">errors = --filter &#39;e.level =</span><span class="o">=</span><span class="w"> </span><span class="s">&quot;ERROR&quot;</span><span class="na">&#39; --exec &#39;track_sum(&quot;total&quot;, 1); track_top(&quot;service&quot;, e.service, 10)&#39; --metrics</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="na">errors = --filter 'e.level =</span><span class="o">=</span><span class="w"> </span><span class="s">"ERROR"</span><span class="na">' --exec 'track_sum("total", 1); track_top("service", e.service, 10)' --metrics</span>
 </code></pre></div>
 <p>Then run: <code>kelora -a errors app.log</code></p>
 <hr />

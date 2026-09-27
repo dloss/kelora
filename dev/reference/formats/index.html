@@ -2830,7 +2830,7 @@
 <p><strong>Syntax:</strong> <code>-f json</code> or <code>-j</code></p>
 <p><strong>Description:</strong> JSON Lines format (one object per line). Nested structures preserved.</p>
 <p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;api&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Connection failed&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-15T10:30:00Z"</span><span class="p">,</span><span class="w"> </span><span class="nt">"level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ERROR"</span><span class="p">,</span><span class="w"> </span><span class="nt">"service"</span><span class="p">:</span><span class="w"> </span><span class="s2">"api"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Connection failed"</span><span class="p">}</span>
 </code></pre></div></p>
 <p><strong>Output Fields:</strong> All JSON fields become event fields with original names and types.</p>
 <p><strong>Notes:</strong></p>
@@ -2897,7 +2897,7 @@ artifacts are kept exactly as read.</p>
 <p><strong>Syntax:</strong> <code>-f logfmt</code></p>
 <p><strong>Description:</strong> Heroku-style key-value pairs.</p>
 <p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-01-15T10:30:00Z level=ERROR service=api message=&quot;Connection failed&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=2024-01-15T10:30:00Z level=ERROR service=api message="Connection failed"
 </code></pre></div></p>
 <p><strong>Output Fields:</strong> All key-value pairs become top-level fields.</p>
 <p><strong>Notes:</strong></p>
@@ -2920,7 +2920,7 @@ artifacts are kept exactly as read.</p>
 </ul>
 <p><strong>Type Annotations:</strong></p>
 <p>Specify field types for automatic conversion:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;csv status:int bytes:int response_time:float&#39;</span><span class="w"> </span>access.csv
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'csv status:int bytes:int response_time:float'</span><span class="w"> </span>access.csv
 </code></pre></div></p>
 <p>Supported types: <code>int</code>, <code>float</code>, <code>bool</code></p>
 <p><strong>Notes:</strong></p>
@@ -3056,13 +3056,13 @@ artifacts are kept exactly as read.</p>
 </ul>
 <p><strong>Input Examples:</strong></p>
 <p>Common:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] &quot;GET /index.html HTTP/1.0&quot; 200 1234
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /index.html HTTP/1.0" 200 1234
 </code></pre></div></p>
 <p>Combined:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] &quot;GET /api/data HTTP/1.1&quot; 200 1234 &quot;http://example.com/&quot; &quot;Mozilla/5.0&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>192.168.1.1 - user [15/Jan/2024:10:30:00 +0000] "GET /api/data HTTP/1.1" 200 1234 "http://example.com/" "Mozilla/5.0"
 </code></pre></div></p>
 <p>Nginx with request_time:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] &quot;GET /api/data HTTP/1.1&quot; 200 1234 &quot;-&quot; &quot;curl/7.68.0&quot; &quot;0.123&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>192.168.1.1 - - [15/Jan/2024:10:30:00 +0000] "GET /api/data HTTP/1.1" 200 1234 "-" "curl/7.68.0" "0.123"
 </code></pre></div></p>
 <p><strong>Output Fields:</strong></p>
 <table>
@@ -3274,7 +3274,7 @@ log shippers (Fluent Bit, Vector, promtail) read before forwarding. The message
 is often itself JSON or logfmt; it is kept verbatim in <code>msg</code> for an optional
 second-stage parse.</p>
 <p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>2024-07-17T12:12:05.123456789Z stdout F {&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;started&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>2024-07-17T12:12:05.123456789Z stdout F {"level":"info","msg":"started"}
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>2024-07-17T12:12:06.223456789Z stderr P panic: runtime error: nil pointer
 </code></pre></div></p>
 <p><strong>Output Fields:</strong></p>
@@ -3311,10 +3311,10 @@ second-stage parse.</p>
 </table>
 <p><strong>Example Usage:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Show only stderr lines from a pod log file</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>-f<span class="w"> </span>cri<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.stream == &quot;stderr&quot;&#39;</span><span class="w"> </span>-k<span class="w"> </span>ts,msg
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>-f<span class="w"> </span>cri<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.stream == "stderr"'</span><span class="w"> </span>-k<span class="w"> </span>ts,msg
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Fan a structured JSON payload back into top-level fields, then filter on it</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>-f<span class="w"> </span>cri<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.absorb_json(&quot;msg&quot;)&#39;</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;error&quot;&#39;</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>-f<span class="w"> </span>cri<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.absorb_json("msg")'</span><span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "error"'</span>
 </code></pre></div></p>
 <p><strong>Notes:</strong></p>
 <ul>
@@ -3344,7 +3344,7 @@ raw line is always available to a script as <code>line</code> / <code>meta.line<
 column can be recovered with a second-stage parse, e.g. extracting a trailing
 quoted column off the raw line:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>s3<span class="w"> </span>access.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;e.tail = meta.line.extract_regex(&quot;\&quot;[^\&quot;]*\&quot;\\s*$&quot;, 0)&#39;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'e.tail = meta.line.extract_regex("\"[^\"]*\"\\s*$", 0)'</span>
 </code></pre></div>
 <p><code>postgres</code> matches the default <code>log_line_prefix = '%m [%p] '</code>
 (<code>2024-01-02 15:04:05.123 UTC [1234] LOG:  …</code>); a customized prefix (adding
@@ -3381,16 +3381,16 @@ e.g. <code>--input-tz Europe/Berlin</code>.</p>
 </ul>
 <p><strong>Examples:</strong></p>
 <p>Simple fields:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Input: ERROR api &quot;Connection failed&quot;</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:level service *msg&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Input: ERROR api "Connection failed"</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:level service *msg'</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Multi-token timestamp:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Input: 2024-01-15 10:30:00 INFO Connection failed</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>ts
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:ts(2) level *msg'</span><span class="w"> </span>app.log<span class="w"> </span>--ts-field<span class="w"> </span>ts
 </code></pre></div></p>
 <p>Custom separator:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Input: name|age|city</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:name age:int city&#39;</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">&#39;|&#39;</span><span class="w"> </span>data.txt
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:name age:int city'</span><span class="w"> </span>--cols-sep<span class="w"> </span><span class="s1">'|'</span><span class="w"> </span>data.txt
 </code></pre></div></p>
 <p><strong>Output Fields:</strong> Field names from specification with applied type conversions.</p>
 <p><strong>Notes:</strong></p>
@@ -3409,15 +3409,15 @@ e.g. <code>--input-tz Europe/Berlin</code>.</p>
 <p><strong>Examples:</strong></p>
 <p>Simple extraction:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Input: 404 Not found</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;code:int&gt;\d+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:(?P&lt;code:int&gt;\d+) (?P&lt;msg&gt;.*)'</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Structured logs:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Input: 2025-01-15T10:00:00Z [ERROR] Database connection failed</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ts&gt;\S+) \[(?P&lt;level&gt;\w+)\] (?P&lt;msg&gt;.+)$&#39;</span><span class="w"> </span>app.log
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:^(?P&lt;ts&gt;\S+) \[(?P&lt;level&gt;\w+)\] (?P&lt;msg&gt;.+)$'</span><span class="w"> </span>app.log
 </code></pre></div></p>
 <p>Apache-style logs with typed fields:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Input: 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] &quot;GET /api/users HTTP/1.1&quot; 200 1234</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:^(?P&lt;ip&gt;\S+) - - \[(?P&lt;timestamp&gt;[^\]]+)\] &quot;(?P&lt;method&gt;\w+) (?P&lt;path&gt;\S+) HTTP/[\d.]+&quot; (?P&lt;status:int&gt;\d+) (?P&lt;bytes:int&gt;\d+)$&#39;</span><span class="w"> </span>access.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Input: 192.168.1.1 - - [15/Jan/2025:10:00:00 +0000] "GET /api/users HTTP/1.1" 200 1234</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:^(?P&lt;ip&gt;\S+) - - \[(?P&lt;timestamp&gt;[^\]]+)\] "(?P&lt;method&gt;\w+) (?P&lt;path&gt;\S+) HTTP/[\d.]+" (?P&lt;status:int&gt;\d+) (?P&lt;bytes:int&gt;\d+)$'</span><span class="w"> </span>access.log
 </code></pre></div></p>
 <p><strong>Output Fields:</strong> Field names from capture groups with applied type conversions.</p>
 <p><strong>Behavior:</strong></p>
@@ -3529,9 +3529,9 @@ exact <code>-f json,syslog,line</code> that would parse the rest, and you paste 
 Piped input (<code>kubectl logs … | kelora</code>) always wants the explicit list, since
 stdin detection never samples beyond the first line.</p>
 <p><strong>Input Example:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>{&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;hello&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>{"level":"info","msg":"hello"}
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Server starting on port 8080
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>{&quot;level&quot;:&quot;error&quot;,&quot;msg&quot;:&quot;connection refused&quot;}
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>{"level":"error","msg":"connection refused"}
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>java.lang.NullPointerException
 </code></pre></div></p>
 <p><strong>Example Usage:</strong>
@@ -3542,7 +3542,7 @@ stdin detection never samples beyond the first line.</p>
 <a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,logfmt,line<span class="w"> </span>mixed.log
 <a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1"># Segment downstream by how each event was parsed</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e._format == &quot;line&quot;&#39;</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e._format == "line"'</span>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
 <a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="c1"># See per-format breakdown</span>
 <a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json,line<span class="w"> </span>app.log<span class="w"> </span>--stats
@@ -3573,11 +3573,11 @@ breakdown so silent misclassification surfaces immediately:</p>
 <p><strong>Cascades with <code>cols:</code>/<code>regex:</code> — use repeated <code>-f</code>.</strong> Pass one <code>-f</code> per
 format and they are tried in order, exactly like a comma list, but each spec
 is taken whole so <code>cols:</code>/<code>regex:</code> work as members:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># JSON lines plus a &#39;timestamp LEVEL message&#39; app log in one file</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># JSON lines plus a 'timestamp LEVEL message' app log in one file</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:ts(2) level *msg'</span><span class="w"> </span>app.log
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Selective regex first, raw line as the catch-all for anything else</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;regex:(?P&lt;ts&gt;\S+ \S+) (?P&lt;level&gt;\w+) (?P&lt;msg&gt;.*)&#39;</span><span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">'regex:(?P&lt;ts&gt;\S+ \S+) (?P&lt;level&gt;\w+) (?P&lt;msg&gt;.*)'</span><span class="w"> </span>-f<span class="w"> </span>line<span class="w"> </span>app.log
 </code></pre></div>
 <p>A comma list and repeated <code>-f</code> can be combined; comma-list members are
 flattened into the cascade in order.</p>

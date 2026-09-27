@@ -2575,7 +2575,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--parallel<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'track_freq("service", e.service)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <ul>
@@ -2604,8 +2604,8 @@
 <p>If output order is irrelevant (metrics only, exports to sorted files), add <code>--unordered</code> for higher throughput.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;track_sum(&quot;errors&quot;, 1)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'track_freq("service", e.service)'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'track_sum("errors", 1)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--metrics
 </code></pre></div>
 <ul>
@@ -2617,16 +2617,16 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="ch">#!/usr/bin/env bash</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nv">ARCHIVE_GLOB</span><span class="o">=</span><span class="s2">&quot;/var/log/app/app-</span><span class="k">$(</span>date<span class="w"> </span>+%Y-%m<span class="k">)</span><span class="s2">-*.jsonl.gz&quot;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nv">OUTPUT</span><span class="o">=</span><span class="s2">&quot;reports/errors-</span><span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span><span class="s2">.json&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nv">ARCHIVE_GLOB</span><span class="o">=</span><span class="s2">"/var/log/app/app-</span><span class="k">$(</span>date<span class="w"> </span>+%Y-%m<span class="k">)</span><span class="s2">-*.jsonl.gz"</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nv">OUTPUT</span><span class="o">=</span><span class="s2">"reports/errors-</span><span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d<span class="k">)</span><span class="s2">.json"</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="nv">$ARCHIVE_GLOB</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>-l<span class="w"> </span>error<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,service,message<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>-J<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUTPUT</span><span class="s2">&quot;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>-J<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$OUTPUT</span><span class="s2">"</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUTPUT</span><span class="s2">&quot;</span><span class="w"> </span>--stats
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>kelora<span class="w"> </span>-j<span class="w"> </span><span class="s2">"</span><span class="nv">$OUTPUT</span><span class="s2">"</span><span class="w"> </span>--stats
 </code></pre></div>
 <ul>
 <li>Log <code>--stats</code> output for traceability (processed lines, parse errors, throughput).</li>
@@ -2644,16 +2644,16 @@
 </li>
 <li>
 <p><strong>Recursive discovery</strong><br />
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>find<span class="w"> </span>/archives/app<span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.jsonl.gz&quot;</span><span class="w"> </span>-print0<span class="w"> </span><span class="p">|</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>find<span class="w"> </span>/archives/app<span class="w"> </span>-name<span class="w"> </span><span class="s2">"*.jsonl.gz"</span><span class="w"> </span>-print0<span class="w"> </span><span class="p">|</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>xargs<span class="w"> </span>-0<span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>--parallel<span class="w"> </span>--unordered<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">&#39;track_freq(&quot;service&quot;, e.service)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>-e<span class="w"> </span><span class="s1">'track_freq("service", e.service)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>--metrics
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Performance sweep</strong><br />
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">for</span><span class="w"> </span>size<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">500</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="m">5000</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Batch size </span><span class="nv">$size</span><span class="s2">&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Batch size </span><span class="nv">$size</span><span class="s2">"</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nb">time</span><span class="w"> </span>kelora<span class="w"> </span>-j<span class="w"> </span>logs/2024-04-*.jsonl.gz<span class="w"> </span>--parallel<span class="w"> </span>--batch-size<span class="w"> </span><span class="nv">$size</span><span class="w"> </span>-q
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">done</span>
 </code></pre></div></p>

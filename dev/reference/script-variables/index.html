@@ -3001,7 +3001,7 @@
 <p>Example: Processing 3 files maintains one shared state:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># State persists across all 3 files</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>file1.json<span class="w"> </span>file2.json<span class="w"> </span>file3.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.user] = true&#39;</span><span class="w">  </span><span class="c1"># Deduplicates across ALL files</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state[e.user] = true'</span><span class="w">  </span><span class="c1"># Deduplicates across ALL files</span>
 </code></pre></div></p>
 <h4 id="operations">Operations<a class="headerlink" href="#operations" title="Permanent link">&para;</a></h4>
 <p><strong>Direct operations</strong> (no conversion needed):</p>
@@ -3023,17 +3023,17 @@
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>}
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>// Time-based expiration
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>if !state.contains(&quot;cleanup_time&quot;) {
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    state[&quot;cleanup_time&quot;] = now();
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>if !state.contains("cleanup_time") {
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    state["cleanup_time"] = now();
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>}
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>if (now() - state[&quot;cleanup_time&quot;]).as_secs() &gt; 3600 {
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>if (now() - state["cleanup_time"]).as_secs() &gt; 3600 {
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    // Remove old entries
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    for key in state.keys() {
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        if should_expire(state[key]) {
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>            state.remove(key);
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        }
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    }
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    state[&quot;cleanup_time&quot;] = now();
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    state["cleanup_time"] = now();
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>}
 </code></pre></div>
 <p><strong>Sequential processing</strong>: State requires sequential mode, which processes one event at a time. For large files (100M+ events), consider:</p>
@@ -3046,27 +3046,27 @@
 <p>Inspect state at any point:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Print state size periodically</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[&quot;count&quot;] = (state[&quot;count&quot;] ?? 0) + 1;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">           if state[&quot;count&quot;] % 1000 == 0 {</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">             eprint(&quot;State size: &quot; + state.len() + &quot; keys&quot;);</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">           }&#39;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state["count"] = (state["count"] ?? 0) + 1;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">           if state["count"] % 1000 == 0 {</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">             eprint("State size: " + state.len() + " keys");</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">           }'</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># Dump final state as JSON</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.user] = true&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;print(state.to_map().to_json())&#39;</span><span class="w"> </span>-q<span class="w"> </span>&gt;<span class="w"> </span>state_dump.json
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state[e.user] = true'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">'print(state.to_map().to_json())'</span><span class="w"> </span>-q<span class="w"> </span>&gt;<span class="w"> </span>state_dump.json
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># Check state contents in --end stage</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.level] = (state.get(e.level) ?? 0) + 1&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;eprint(&quot;Final state: &quot; + state.to_map().to_kv())&#39;</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state[e.level] = (state.get(e.level) ?? 0) + 1'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">'eprint("Final state: " + state.to_map().to_kv())'</span>
 </code></pre></div>
 <h4 id="parallel-mode-restriction">Parallel Mode Restriction<a class="headerlink" href="#parallel-mode-restriction" title="Permanent link">&para;</a></h4>
 <p>Accessing <code>state</code> in <code>--parallel</code> mode causes a runtime panic with a clear error message. State requires sequential processing to maintain consistency:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># This will fail:</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.jsonl<span class="w"> </span>--parallel<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[&quot;count&quot;] += 1&#39;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Error: &#39;state&#39; is not available in --parallel mode</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state["count"] += 1'</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Error: 'state' is not available in --parallel mode</span>
 </code></pre></div>
 <p>For parallel-safe tracking, use <code>track_*()</code> functions instead.</p>
 <h4 id="example-use-cases">Example Use Cases<a class="headerlink" href="#example-use-cases" title="Permanent link">&para;</a></h4>
@@ -3086,22 +3086,22 @@
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>let user_data = state[e.user];
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>user_data.login_count += 1;
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>user_data.last_seen = e.timestamp;
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>if e.has(&quot;error&quot;) {
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>if e.has("error") {
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    user_data.errors.push(e.error);
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>}
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>state[e.user] = user_data;
 </code></pre></div></p>
 <p><strong>State machines for protocol analysis:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>if !state.contains(e.conn_id) {
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    state[e.conn_id] = &quot;NEW&quot;;
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    state[e.conn_id] = "NEW";
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>}
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>let current_state = state[e.conn_id];
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>// State transitions
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>if current_state == &quot;NEW&quot; &amp;&amp; e.event == &quot;SYN&quot; {
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    state[e.conn_id] = &quot;SYN_SENT&quot;;
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>} else if current_state == &quot;SYN_SENT&quot; &amp;&amp; e.event == &quot;SYN_ACK&quot; {
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    state[e.conn_id] = &quot;ESTABLISHED&quot;;
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>if current_state == "NEW" &amp;&amp; e.event == "SYN" {
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    state[e.conn_id] = "SYN_SENT";
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>} else if current_state == "SYN_SENT" &amp;&amp; e.event == "SYN_ACK" {
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    state[e.conn_id] = "ESTABLISHED";
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>} else {
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    e.protocol_error = true;  // Invalid transition
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>}

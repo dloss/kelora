@@ -2634,7 +2634,7 @@ attaches to the line that logged it.</p>
 <h2 id="step-5-regex-based-boundaries">Step 5: Regex-Based Boundaries<a class="headerlink" href="#step-5-regex-based-boundaries" title="Permanent link">&para;</a></h2>
 <p>Use custom patterns when timestamps or indentation are unreliable.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">&#39;regex:match=^(ERROR|Exception|Traceback)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--multiline<span class="w"> </span><span class="s1">'regex:match=^(ERROR|Exception|Traceback)'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-n<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
 <p>Variants:</p>
@@ -2668,8 +2668,8 @@ attaches to the line that logged it.</p>
 <li>
 <p><strong>Extract stack trace metadata</strong>
   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kelora<span class="w"> </span>--multiline<span class="w"> </span>timestamp<span class="w"> </span>--multiline-join<span class="o">=</span>newline<span class="w"> </span>app.log<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.line.contains(&quot;Traceback&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">&#39;e.frames = e.line.split(&quot;\\n&quot;).len()&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.line.contains("Traceback")'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="s1">'e.frames = e.line.split("\\n").len()'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,frames,line
 </code></pre></div></p>
 </li>

@@ -2916,15 +2916,15 @@
 <h2 id="variables-types">Variables &amp; Types<a class="headerlink" href="#variables-types" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>let x = 42;                          // Integer (i64)
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>let price = 19.99;                   // Float (f64)
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>let name = &quot;alice&quot;;                  // String (double quotes only!)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>let re = #&quot;\d+&quot;#;                    // Raw string, no escape processing (best for regexes)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>let name = "alice";                  // String (double quotes only!)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>let re = #"\d+"#;                    // Raw string, no escape processing (best for regexes)
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>let active = true;                   // Boolean (true/false)
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>let tags = [1, &quot;two&quot;, 3.0];          // Array (mixed types ok)
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>let user = #{name: &quot;bob&quot;, age: 30};  // Map/object literal
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>let empty = ();                      // Unit type (Rhai&#39;s &quot;nothing&quot;)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>let tags = [1, "two", 3.0];          // Array (mixed types ok)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>let user = #{name: "bob", age: 30};  // Map/object literal
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>let empty = ();                      // Unit type (Rhai's "nothing")
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>type_of(x)                           // Returns: &quot;i64&quot;, &quot;string&quot;, &quot;array&quot;, &quot;map&quot;, &quot;()&quot;
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>x = &quot;hello&quot;;                         // Dynamic typing: can change type
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>type_of(x)                           // Returns: "i64", "string", "array", "map", "()"
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>x = "hello";                         // Dynamic typing: can change type
 </code></pre></div>
 <p><strong>Key Points:</strong></p>
 <ul>
@@ -2956,25 +2956,25 @@
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>1..=5    // Inclusive: 1, 2, 3, 4, 5
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
 <a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>// Membership
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>&quot;key&quot; in map                         // Check if key exists
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>"key" in map                         // Check if key exists
 </code></pre></div>
 <h2 id="string-interpolation">String Interpolation<a class="headerlink" href="#string-interpolation" title="Permanent link">&para;</a></h2>
 <p>Rhai supports string interpolation using <code>${...}</code> syntax within backtick strings:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>let name = &quot;Alice&quot;;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>let name = "Alice";
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>let age = 30;
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>let message = `Hello, ${name}! You are ${age} years old.`;
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>// Result: &quot;Hello, Alice! You are 30 years old.&quot;
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>// Result: "Hello, Alice! You are 30 years old."
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>// Complex expressions in interpolation
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>let x = 10;
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>let y = 20;
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>let result = `Sum: ${x + y}, Product: ${x * y}`;
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>// Result: &quot;Sum: 30, Product: 200&quot;
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>// Result: "Sum: 30, Product: 200"
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>// Nested interpolations
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>let status = &quot;active&quot;;
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>let status = "active";
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>let msg = `User ${name} is ${`currently ${status}`}`;
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>// Result: &quot;User Alice is currently active&quot;
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>// Result: "User Alice is currently active"
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>// Multi-line interpolated strings
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>let report = `
@@ -2992,29 +2992,29 @@
 </ul>
 <h2 id="raw-strings">Raw Strings<a class="headerlink" href="#raw-strings" title="Permanent link">&para;</a></h2>
 <p>Disable escape sequences with <code>#"..."#</code> (ideal for regexes and file paths):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>let regex = #&quot;\d{3}-\d{2}-\d{4}&quot;#;        // vs &quot;\\d{3}-\\d{2}-\\d{4}&quot;
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>let path = #&quot;C:\Users\data&quot;#;             // Windows paths
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>let s = ##&quot;Has &quot;quotes&quot; inside&quot;##;        // Multiple # to include &quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>let regex = #"\d{3}-\d{2}-\d{4}"#;        // vs "\\d{3}-\\d{2}-\\d{4}"
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>let path = #"C:\Users\data"#;             // Windows paths
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>let s = ##"Has "quotes" inside"##;        // Multiple # to include "
 </code></pre></div>
 <h2 id="control-flow">Control Flow<a class="headerlink" href="#control-flow" title="Permanent link">&para;</a></h2>
 <h3 id="if-else">If-Else<a class="headerlink" href="#if-else" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>if x &gt; 10 {
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    print(&quot;big&quot;);
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    print("big");
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>} else if x &gt; 5 {
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    print(&quot;medium&quot;);
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    print("medium");
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>} else {
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    print(&quot;small&quot;);
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    print("small");
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>}
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>// Ternary-style (if is an expression)
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>let category = if x &gt; 10 { &quot;big&quot; } else { &quot;small&quot; };
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>let category = if x &gt; 10 { "big" } else { "small" };
 </code></pre></div>
 <h3 id="switch">Switch<a class="headerlink" href="#switch" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>let category = switch x {
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    1 =&gt; &quot;one&quot;,
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    2 | 3 =&gt; &quot;two or three&quot;,          // Multiple cases
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    4..=6 =&gt; &quot;four to six&quot;,            // Range matching
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    _ =&gt; &quot;other&quot;                       // Default (underscore)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    1 =&gt; "one",
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    2 | 3 =&gt; "two or three",          // Multiple cases
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    4..=6 =&gt; "four to six",            // Range matching
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    _ =&gt; "other"                       // Default (underscore)
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>};
 </code></pre></div>
 <h3 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h3>
@@ -3025,7 +3025,7 @@
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>// Array iteration
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>for item in array { print(item); }
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>// Map iteration (maps aren&#39;t directly iterable; iterate keys, then index)
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>// Map iteration (maps aren't directly iterable; iterate keys, then index)
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>for key in map.keys() {
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    print(`${key} = ${map[key]}`);
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>}
@@ -3048,7 +3048,7 @@
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>}
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>fn greet(name) {
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    return &quot;Hello, &quot; + name;          // Explicit return
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    return "Hello, " + name;          // Explicit return
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>}
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>// Closures
@@ -3062,8 +3062,8 @@
 <h2 id="rhai-special-feature-function-as-method">Rhai Special Feature: Function-as-Method<a class="headerlink" href="#rhai-special-feature-function-as-method" title="Permanent link">&para;</a></h2>
 <p>Rhai allows calling any function as a method on its first argument:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>// These are equivalent:
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>extract_regex(e.line, #&quot;\d+&quot;#)          // Function call style
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>e.line.extract_regex(#&quot;\d+&quot;#)           // Method call style
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>extract_regex(e.line, #"\d+"#)          // Function call style
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>e.line.extract_regex(#"\d+"#)           // Method call style
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>// Use method style for chaining:
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>e.domain = e.url
@@ -3082,16 +3082,16 @@
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>e.user.name                           // Nested field (maps)
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>e.scores[1]                           // Array indexing (0-based)
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>e.scores[-1]                          // Negative indexing (last element)
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>e.headers[&quot;user-agent&quot;]               // Bracket notation for special chars
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>e.headers["user-agent"]               // Bracket notation for special chars
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>// Field existence checking
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>&quot;field&quot; in e                          // Check top-level field exists
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>e.has(&quot;field&quot;)                        // True only if value not ()
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>e.has_path(&quot;user.role&quot;)               // Check nested path exists
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>"field" in e                          // Check top-level field exists
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>e.has("field")                        // True only if value not ()
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>e.has_path("user.role")               // Check nested path exists
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>// Safe field access with defaults
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>e.get_path(&quot;user.role&quot;, &quot;guest&quot;)      // Get nested with fallback
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>e.get_path(&quot;scores[0]&quot;, 0)            // Works with array paths
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>e.get_path("user.role", "guest")      // Get nested with fallback
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>e.get_path("scores[0]", 0)            // Works with array paths
 <a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>// Field removal
 <a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>e.password = ()                       // Remove field (unit assignment)
@@ -3105,12 +3105,12 @@
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>reversed(e.items)                     // Reverse order
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>unique(e.tags)                        // Remove duplicates
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>dedup(e.values)                       // Remove consecutive duplicates
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>sorted_by(e.users, &quot;age&quot;)             // Sort objects by field
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>sorted_by(e.users, "age")             // Sort objects by field
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>// Array methods
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>e.tags.len()                          // Length
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>e.tags.is_empty()                     // Check if empty
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>e.tags.join(&quot;, &quot;)                     // Join to string
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>e.tags.join(", ")                     // Join to string
 <a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>e.scores.sum()                        // Sum numbers
 <a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>e.scores.min()                        // Minimum value
 <a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>e.scores.max()                        // Maximum value
@@ -3123,9 +3123,9 @@
 <a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>
 <a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>// Fan-out: convert array elements to separate events
 <a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>emit_each(e.items)                    // Each element becomes an event
-<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>emit_each(e.items, #{ctx: &quot;value&quot;})   // Add base fields to each
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>emit_each(e.items, #{ctx: "value"})   // Add base fields to each
 <a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>
-<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>// Map operations (maps aren&#39;t directly iterable; iterate keys, then index)
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>// Map operations (maps aren't directly iterable; iterate keys, then index)
 <a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a>for key in e.keys() {
 <a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a>    print(`${key} = ${e[key]}`);
 <a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a>}
@@ -3147,16 +3147,16 @@
 <a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>// Type checking
 <a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>type_of(e.field)                      // Get type as string
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>type_of(e.field) != &quot;()&quot;              // Check if field has value
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>type_of(e.field) != "()"              // Check if field has value
 </code></pre></div>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="safe-nested-access">Safe Nested Access<a class="headerlink" href="#safe-nested-access" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>// With default fallback
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let role = e.get_path(&quot;user.role&quot;, &quot;guest&quot;);
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>let role = e.get_path("user.role", "guest");
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>let port = e.port.to_int_or(8080);
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>// With existence check
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>if e.has_path(&quot;user.profile.avatar&quot;) {
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>if e.has_path("user.profile.avatar") {
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    e.avatar = e.user.profile.avatar;
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>}
 <a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
@@ -3167,7 +3167,7 @@
 </code></pre></div>
 <h3 id="conditional-field-removal">Conditional Field Removal<a class="headerlink" href="#conditional-field-removal" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>// Remove debug fields in production
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>if e.level != &quot;DEBUG&quot; {
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>if e.level != "DEBUG" {
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    e.stack_trace = ();
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    e.debug_info = ();
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>}
@@ -3184,7 +3184,7 @@
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>// Parse and extract from structured text
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>e.error_line = e.stack_trace
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    .extract_regex(#&quot;line (\d+)&quot;#, 1)
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    .extract_regex(#"line (\d+)"#, 1)
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    .to_int_or(0);
 </code></pre></div>
 <h3 id="array-processing">Array Processing<a class="headerlink" href="#array-processing" title="Permanent link">&para;</a></h3>
@@ -3192,29 +3192,29 @@
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>e.top_3 = sorted(e.scores)[-3:];
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>// Extract names from sorted users
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.winners = sorted_by(e.users, &quot;score&quot;)
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>e.winners = sorted_by(e.users, "score")
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    .reverse()
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    .map(|u| u.name);
 <a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
 <a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>// Filter and count
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>e.active_items = e.items.filter(|i| i.status == &quot;active&quot;);
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>e.active_items = e.items.filter(|i| i.status == "active");
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>e.active_count = e.active_items.len();
 </code></pre></div>
 <h3 id="multi-level-fan-out">Multi-Level Fan-Out<a class="headerlink" href="#multi-level-fan-out" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a># First exec: batches → separate events
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>--exec &#39;emit_each(e.batches)&#39;
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>--exec 'emit_each(e.batches)'
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a># Second exec: items → separate events with context
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>--exec &#39;let ctx = #{batch_id: e.id}; emit_each(e.items, ctx)&#39;
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>--exec 'let ctx = #{batch_id: e.id}; emit_each(e.items, ctx)'
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a># Filter the final events
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>--filter &#39;e.status == &quot;active&quot;&#39;
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>--filter 'e.status == "active"'
 </code></pre></div>
 <h2 id="global-context">Global Context<a class="headerlink" href="#global-context" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>conf                                  // Global config map (read-only after --begin)
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>metrics                               // Global metrics map (from track_* calls)
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>meta                                  // Event metadata (filename, line numbers, raw line)
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Environment variable access
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>get_env("VAR", "default")             // Environment variable access
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>// meta attributes:
 <a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>meta.line                             // Original raw line (always available)
@@ -3223,14 +3223,14 @@
 <a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>meta.parsed_ts                        // Parsed UTC timestamp before scripts (or () if missing)
 <a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
 <a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>// Example usage:
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>--begin &#39;conf.env = get_env(&quot;ENVIRONMENT&quot;, &quot;dev&quot;)&#39;
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>--filter &#39;conf.env == &quot;prod&quot; || e.level == &quot;ERROR&quot;&#39;
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>--begin 'conf.env = get_env("ENVIRONMENT", "dev")'
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>--filter 'conf.env == "prod" || e.level == "ERROR"'
 <a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>
 <a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>// Multi-file tracking
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>--exec &#39;if e.level == &quot;ERROR&quot; { track_freq(&quot;file&quot;, meta.filename) }&#39;
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>--exec 'if e.level == "ERROR" { track_freq("file", meta.filename) }'
 <a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>
 <a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>// Debugging with line numbers
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>--exec &#39;eprint(&quot;Error at &quot; + meta.filename + &quot;:&quot; + meta.line_num)&#39;
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>--exec 'eprint("Error at " + meta.filename + ":" + meta.line_num)'
 </code></pre></div>
 <h2 id="error-handling-modes">Error Handling Modes<a class="headerlink" href="#error-handling-modes" title="Permanent link">&para;</a></h2>
 <p><strong>Default (resilient):</strong></p>
@@ -3270,17 +3270,17 @@
 <p><strong>Common mistakes:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>// ❌ Wrong
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>x = 1                                 // Error: x not declared
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>let name = &#39;alice&#39;;                   // Error: single quotes not allowed
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>if x &gt; 5: print(&quot;big&quot;)                // Error: colon not allowed, braces required
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>&quot;5&quot; + 3                               // Error: no implicit conversion
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>let n = state[&quot;x&quot;] = 1;               // Error: assignment is not an expression
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>let name = 'alice';                   // Error: single quotes not allowed
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>if x &gt; 5: print("big")                // Error: colon not allowed, braces required
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>"5" + 3                               // Error: no implicit conversion
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>let n = state["x"] = 1;               // Error: assignment is not an expression
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>// ✅ Correct
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>let x = 1;                            // Declare with let
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>let name = &quot;alice&quot;;                   // Double quotes
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>if x &gt; 5 { print(&quot;big&quot;); }            // Braces required
-<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>&quot;5&quot;.to_int() + 3                      // Explicit conversion
-<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>state[&quot;x&quot;] = 1; let n = state[&quot;x&quot;];   // Assign, then read on separate statements
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>let name = "alice";                   // Double quotes
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>if x &gt; 5 { print("big"); }            // Braces required
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>"5".to_int() + 3                      // Explicit conversion
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>state["x"] = 1; let n = state["x"];   // Assign, then read on separate statements
 </code></pre></div>
 <p><strong>Special behaviors:</strong></p>
 <ul>
@@ -3304,11 +3304,11 @@
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>// Type checking
 <a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>type_of(e.field)                      // Get type
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>&quot;field&quot; in e                          // Field exists
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>"field" in e                          // Field exists
 <a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
 <a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>// Safe access
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>e.get_path(&quot;a.b.c&quot;, default)          // Nested with fallback
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>e.has_path(&quot;a.b.c&quot;)                   // Check nested exists
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>e.get_path("a.b.c", default)          // Nested with fallback
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>e.has_path("a.b.c")                   // Check nested exists
 <a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>
 <a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>// Conversions
 <a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>val.to_int_or(0)                      // Safe int conversion
@@ -3329,11 +3329,11 @@
 <a id="__codelineno-19-30" name="__codelineno-19-30" href="#__codelineno-19-30"></a>e.text.to_lower()                     // Lowercase
 <a id="__codelineno-19-31" name="__codelineno-19-31" href="#__codelineno-19-31"></a>e.text.to_upper()                     // Uppercase
 <a id="__codelineno-19-32" name="__codelineno-19-32" href="#__codelineno-19-32"></a>e.text.strip()                        // Trim whitespace
-<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>e.text.contains(&quot;word&quot;)               // Substring check
-<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>e.text.extract_regex(#&quot;(\d+)&quot;#, 1)    // Regex extraction
+<a id="__codelineno-19-33" name="__codelineno-19-33" href="#__codelineno-19-33"></a>e.text.contains("word")               // Substring check
+<a id="__codelineno-19-34" name="__codelineno-19-34" href="#__codelineno-19-34"></a>e.text.extract_regex(#"(\d+)"#, 1)    // Regex extraction
 <a id="__codelineno-19-35" name="__codelineno-19-35" href="#__codelineno-19-35"></a>
 <a id="__codelineno-19-36" name="__codelineno-19-36" href="#__codelineno-19-36"></a>// Environment &amp; Context
-<a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>get_env(&quot;VAR&quot;, &quot;default&quot;)             // Get env var
+<a id="__codelineno-19-37" name="__codelineno-19-37" href="#__codelineno-19-37"></a>get_env("VAR", "default")             // Get env var
 <a id="__codelineno-19-38" name="__codelineno-19-38" href="#__codelineno-19-38"></a>conf.key                              // Read config (from --begin)
 <a id="__codelineno-19-39" name="__codelineno-19-39" href="#__codelineno-19-39"></a>metrics.key                           // Read metrics (in --end)
 <a id="__codelineno-19-40" name="__codelineno-19-40" href="#__codelineno-19-40"></a>meta.filename                         // Current source filename

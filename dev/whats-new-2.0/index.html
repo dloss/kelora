@@ -2802,7 +2802,7 @@ so nothing Kelora already detected changes. (The definitions are adapted from
 lines — an <code>ERROR:</code>/<code>STATEMENT:</code> record followed by tab-indented query
 continuation — so pair it with <code>-M indent</code>, which folds the indented lines into
 the preceding record before parsing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>postgres<span class="w"> </span>-M<span class="w"> </span>indent<span class="w"> </span>postgresql.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.level == &quot;ERROR&quot;&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>postgres<span class="w"> </span>-M<span class="w"> </span>indent<span class="w"> </span>postgresql.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.level == "ERROR"'</span>
 </code></pre></div>
 <p>A Kelora-original <code>cri</code> format covers Kubernetes container logs — the
 CRI/containerd on-disk layout <code>&lt;RFC3339Nano&gt; &lt;stream&gt; &lt;tag&gt; &lt;message&gt;</code> that
@@ -2812,13 +2812,13 @@ parses <code>ts</code>, <code>stream</code> (stdout/stderr), <code>tag</code> (<
 built-in format detected <em>early</em> (before the logfmt/CSV steps) so auto-detection
 works regardless of the payload; fan a JSON message back into fields with a
 second-stage <code>--exec 'e.absorb_json("msg")'</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">&#39;e.stream == &quot;stderr&quot;&#39;</span><span class="w"> </span>-k<span class="w"> </span>ts,msg
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>pod.log<span class="w"> </span>--filter<span class="w"> </span><span class="s1">'e.stream == "stderr"'</span><span class="w"> </span>-k<span class="w"> </span>ts,msg
 </code></pre></div>
 <h3 id="composable-parser-cascades-with-repeatable-f">Composable parser cascades with repeatable <code>-f</code><a class="headerlink" href="#composable-parser-cascades-with-repeatable-f" title="Permanent link">&para;</a></h3>
 <p><code>-f</code> is now repeatable, building a cascade from each spec in order. This is the
 only way to put spec-based parsers (<code>cols:</code>, <code>regex:</code>) into a cascade, since a
 regex pattern may itself contain commas:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:ts(2) level *msg&#39;</span><span class="w"> </span>app.log
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-f<span class="w"> </span>json<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:ts(2) level *msg'</span><span class="w"> </span>app.log
 </code></pre></div>
 <p>This closes the common "JSON lines mixed with custom <code>timestamp LEVEL message</code>
 plain text in one file" case. Catch-alls (<code>line</code>, <code>raw</code>, <code>cols:</code>) must come
@@ -2853,7 +2853,7 @@ stream when piped or redirected. So ranking is left to the shell, which
 composes far more flexibly than baked-in selectors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>url<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w">     </span><span class="c1"># top-N</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>url<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w">     </span><span class="c1"># bottom-N</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>url<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">&#39;\t&#39;</span><span class="w"> </span><span class="s1">&#39;$3 &gt;= 100&#39;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--freq<span class="w"> </span>url<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span>-F<span class="s1">'\t'</span><span class="w"> </span><span class="s1">'$3 &gt;= 100'</span>
 </code></pre></div>
 <p><code>--metrics=full</code> forces the table through a pipe; <code>--metrics=tsv</code> forces the
 stream even to a terminal; <code>--metrics=json</code> is unchanged. (Note: <code>kelora -m … &gt;
@@ -2887,12 +2887,12 @@ distinct value, replacing both the old one-argument <code>track_count(value)</co
 Counts now land in separate per-name sub-maps, so different metrics can no
 longer collide. Values are stringified automatically.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Old (1.x)</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_count(e.level)&#39;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_bucket(&quot;status&quot;, e.status)&#39;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'track_count(e.level)'</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'track_bucket("status", e.status)'</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># New (2.0)</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;level&quot;, e.level)&#39;</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_freq(&quot;status&quot;, e.status)&#39;</span><span class="w">   </span><span class="c1"># no to_string() needed</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'track_freq("level", e.level)'</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'track_freq("status", e.status)'</span><span class="w">   </span><span class="c1"># no to_string() needed</span>
 </code></pre></div>
 <p>The name is "freq" rather than "count" because <em>count</em> was ambiguous — it read
 equally as a per-value frequency table and as a single scalar counter. For a
@@ -2901,10 +2901,10 @@ plain counter, use the dedicated <code>track_inc("errors")</code> (or <code>trac
 to <code>track_top_by(name, item, score [, n])</code> (and likewise
 <code>track_bottom_by</code>). <code>n</code> now defaults to 10 in all four ranking functions.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Old (1.x)</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_top(&quot;slow&quot;, e.url, 5, e.ms)&#39;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'track_top("slow", e.url, 5, e.ms)'</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># New (2.0)</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;track_top_by(&quot;slow&quot;, e.url, e.ms, 5)&#39;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'track_top_by("slow", e.url, e.ms, 5)'</span>
 </code></pre></div>
 <p>The old forms error with a migration hint, so you won't silently get wrong
 results. Other notes:</p>
@@ -2987,8 +2987,8 @@ parse/filter/exec error.</p>
 </ul>
 <p>The signal is computed independently of output collection, so the exit code is
 now consistent across <code>--metrics</code>, <code>--drain</code>, <code>-q</code>, and <code>--no-diagnostics</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--strict<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;…&#39;</span><span class="w">   </span><span class="c1"># fail on the first runtime/parse error</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--assert<span class="w"> </span><span class="s1">&#39;…&#39;</span><span class="w">          </span><span class="c1"># fail on explicit data-quality rules</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--strict<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'…'</span><span class="w">   </span><span class="c1"># fail on the first runtime/parse error</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>--assert<span class="w"> </span><span class="s1">'…'</span><span class="w">          </span><span class="c1"># fail on explicit data-quality rules</span>
 </code></pre></div>
 <p><strong>Action:</strong> if a script relied on a nonzero exit for a broken <code>--exec</code>, add
 <code>--strict</code> (exec is now best-effort). If a pipeline relied on exit <code>1</code> for <em>any</em>
@@ -3010,7 +3010,7 @@ can't satisfy the declared type now becomes <code>()</code> (explicitly absent) 
 resilient mode, instead of silently keeping the original string. <code>--strict</code>
 still aborts. For tolerant coercion with a chosen fallback, drop the annotation
 and coerce in a script stage:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;cols:status&#39;</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.status = to_int_or(e.status, 0)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-f<span class="w"> </span><span class="s1">'cols:status'</span><span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.status = to_int_or(e.status, 0)'</span>
 </code></pre></div>
 <h3 id="breaking-ragged-csvtsv-rows-are-kept-and-strict-rejects-them">Breaking: ragged CSV/TSV rows are kept, and <code>--strict</code> rejects them<a class="headerlink" href="#breaking-ragged-csvtsv-rows-are-kept-and-strict-rejects-them" title="Permanent link">&para;</a></h3>
 <p>Rows with more columns than the header used to lose the extra fields silently.
@@ -3030,11 +3030,11 @@ format — a real hazard in mixed-format cascades.</p>
 <p>A value is now coerced only when it is a valid JSON number (no leading zeros, no
 leading <code>+</code>, no <code>inf</code>/<code>nan</code>); everything else stays a string.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Old (1.x): leading zero silently lost</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;zip=02134&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'zip=02134'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># zip=2134</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># New (2.0): preserved as a string</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;zip=02134&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'zip=02134'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kelora<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>-F<span class="w"> </span>logfmt
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># zip=02134</span>
 </code></pre></div>
 <p>Genuine numbers still infer exactly as before (<code>status=500</code>, <code>dur=1.5</code>, <code>n=-5</code>,
@@ -3048,7 +3048,7 @@ annotations.</p>
 <p><strong>Action:</strong> if a script compared a now-string field numerically (e.g. <code>code=007</code>
 matched with <code>== 7</code>), either compare as a string (<code>== "007"</code>) or coerce in a
 script stage:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>--exec<span class="w"> </span><span class="s1">&#39;e.code = to_int_or(e.code, 0)&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>kelora<span class="w"> </span>app.log<span class="w"> </span>-f<span class="w"> </span>logfmt<span class="w"> </span>--exec<span class="w"> </span><span class="s1">'e.code = to_int_or(e.code, 0)'</span>
 </code></pre></div>
 <h3 id="breaking-default-format-word-wrapping-is-now-tty-aware">Breaking: default-format word-wrapping is now TTY-aware<a class="headerlink" href="#breaking-default-format-word-wrapping-is-now-tty-aware" title="Permanent link">&para;</a></h3>
 <p>The default output format no longer wraps wide events onto continuation lines

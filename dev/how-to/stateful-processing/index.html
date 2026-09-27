@@ -2626,13 +2626,13 @@ parallel-safe accumulation, use <code>track_*()</code> instead.</p>
 <h2 id="deduplication-process-each-id-once">Deduplication — process each ID once<a class="headerlink" href="#deduplication-process-each-id-once" title="Permanent link">&para;</a></h2>
 <p>Drop repeated entries for the same key, keeping only the first occurrence:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if !state.contains(e.request_id) {</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'if !state.contains(e.request_id) {</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">    state[e.request_id] = true;</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    e.is_first = true;</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">  } else {</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    e.is_first = false;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.is_first == true&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  }'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.is_first == true'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>-k<span class="w"> </span>request_id,status
 </code></pre></div>
 <h2 id="track-complex-per-key-state">Track complex per-key state<a class="headerlink" href="#track-complex-per-key-state" title="Permanent link">&para;</a></h2>
@@ -2641,42 +2641,42 @@ parallel-safe accumulation, use <code>track_*()</code> instead.</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/user-events.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if !state.contains(e.user) {</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'if !state.contains(e.user) {</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="s1">    state[e.user] = #{login_count: 0, last_seen: (), errors: []};</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">  }</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">  let user_state = state[e.user];</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">  user_state.login_count += 1;</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">  user_state.last_seen = e.timestamp;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">  if e.has(&quot;error&quot;) {</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">  if e.has("error") {</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">    user_state.errors.push(e.error);</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="s1">  }</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="s1">  state[e.user] = user_state;</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  e.user_login_count = user_state.login_count&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s1">  e.user_login_count = user_state.login_count'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,user,user_login_count
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp=&#39;2024-01-15T10:00:00Z&#39; user=&#39;alice&#39; user_login_count=1
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp=&#39;2024-01-15T10:01:00Z&#39; user=&#39;bob&#39; user_login_count=1
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp=&#39;2024-01-15T10:02:00Z&#39; user=&#39;alice&#39; user_login_count=2
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp=&#39;2024-01-15T10:03:00Z&#39; user=&#39;alice&#39; user_login_count=3
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp=&#39;2024-01-15T10:04:00Z&#39; user=&#39;bob&#39; user_login_count=2
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp=&#39;2024-01-15T10:05:00Z&#39; user=&#39;charlie&#39; user_login_count=1
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp=&#39;2024-01-15T10:06:00Z&#39; user=&#39;alice&#39; user_login_count=4
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp=&#39;2024-01-15T10:07:00Z&#39; user=&#39;bob&#39; user_login_count=3
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp=&#39;2024-01-15T10:08:00Z&#39; user=&#39;charlie&#39; user_login_count=2
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp=&#39;2024-01-15T10:09:00Z&#39; user=&#39;alice&#39; user_login_count=5
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>timestamp='2024-01-15T10:00:00Z' user='alice' user_login_count=1
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>timestamp='2024-01-15T10:01:00Z' user='bob' user_login_count=1
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>timestamp='2024-01-15T10:02:00Z' user='alice' user_login_count=2
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>timestamp='2024-01-15T10:03:00Z' user='alice' user_login_count=3
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>timestamp='2024-01-15T10:04:00Z' user='bob' user_login_count=2
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>timestamp='2024-01-15T10:05:00Z' user='charlie' user_login_count=1
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>timestamp='2024-01-15T10:06:00Z' user='alice' user_login_count=4
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>timestamp='2024-01-15T10:07:00Z' user='bob' user_login_count=3
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>timestamp='2024-01-15T10:08:00Z' user='charlie' user_login_count=2
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>timestamp='2024-01-15T10:09:00Z' user='alice' user_login_count=5
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:00Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;event&quot;:&quot;login&quot;}
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:00Z&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;event&quot;:&quot;login&quot;}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:02:00Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;event&quot;:&quot;view_page&quot;}
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:03:00Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;event&quot;:&quot;error&quot;,&quot;error&quot;:&quot;timeout&quot;}
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:04:00Z&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;event&quot;:&quot;purchase&quot;}
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:05:00Z&quot;,&quot;user&quot;:&quot;charlie&quot;,&quot;event&quot;:&quot;login&quot;}
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:06:00Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;event&quot;:&quot;login&quot;}
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:07:00Z&quot;,&quot;user&quot;:&quot;bob&quot;,&quot;event&quot;:&quot;error&quot;,&quot;error&quot;:&quot;payment_failed&quot;}
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:08:00Z&quot;,&quot;user&quot;:&quot;charlie&quot;,&quot;event&quot;:&quot;view_page&quot;}
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:09:00Z&quot;,&quot;user&quot;:&quot;alice&quot;,&quot;event&quot;:&quot;logout&quot;}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{"timestamp":"2024-01-15T10:00:00Z","user":"alice","event":"login"}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{"timestamp":"2024-01-15T10:01:00Z","user":"bob","event":"login"}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{"timestamp":"2024-01-15T10:02:00Z","user":"alice","event":"view_page"}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{"timestamp":"2024-01-15T10:03:00Z","user":"alice","event":"error","error":"timeout"}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{"timestamp":"2024-01-15T10:04:00Z","user":"bob","event":"purchase"}
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>{"timestamp":"2024-01-15T10:05:00Z","user":"charlie","event":"login"}
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>{"timestamp":"2024-01-15T10:06:00Z","user":"alice","event":"login"}
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>{"timestamp":"2024-01-15T10:07:00Z","user":"bob","event":"error","error":"payment_failed"}
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>{"timestamp":"2024-01-15T10:08:00Z","user":"charlie","event":"view_page"}
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>{"timestamp":"2024-01-15T10:09:00Z","user":"alice","event":"logout"}
 </code></pre></div>
 </div>
 </div>
@@ -2684,8 +2684,8 @@ parallel-safe accumulation, use <code>track_*()</code> instead.</p>
 <h2 id="sequential-event-numbering">Sequential event numbering<a class="headerlink" href="#sequential-event-numbering" title="Permanent link">&para;</a></h2>
 <p>Assign a global counter across all events:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--begin<span class="w"> </span><span class="s1">&#39;state[&quot;count&quot;] = 0&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[&quot;count&quot;] += 1; e.seq = state[&quot;count&quot;]&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--begin<span class="w"> </span><span class="s1">'state["count"] = 0'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state["count"] += 1; e.seq = state["count"]'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-k<span class="w"> </span>seq,timestamp,message<span class="w"> </span>-F<span class="w"> </span>csv
 </code></pre></div>
 <p>For simple counting by category, prefer <code>track_freq("category", e.category)</code>.</p>
@@ -2696,18 +2696,18 @@ using map helpers like <code>.to_logfmt()</code> or <code>.to_kv()</code>:</p>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>examples/simple_json.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;state[e.level] = (state.get(e.level) ?? 0) + 1&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">&#39;print(state.to_map().to_logfmt())&#39;</span><span class="w"> </span>-q
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'state[e.level] = (state.get(e.level) ?? 0) + 1'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--end<span class="w"> </span><span class="s1">'print(state.to_map().to_logfmt())'</span><span class="w"> </span>-q
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>CRITICAL=1 DEBUG=4 ERROR=3 INFO=9 WARN=3
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:00Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;service&quot;:&quot;api&quot;,&quot;message&quot;:&quot;Application started&quot;,&quot;version&quot;:&quot;1.2.3&quot;}
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:05Z&quot;,&quot;level&quot;:&quot;DEBUG&quot;,&quot;service&quot;:&quot;api&quot;,&quot;message&quot;:&quot;Loading configuration&quot;,&quot;config_file&quot;:&quot;/etc/app/config.yml&quot;}
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:00:10Z&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;service&quot;:&quot;database&quot;,&quot;message&quot;:&quot;Connection pool initialized&quot;,&quot;max_connections&quot;:50}
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:00Z&quot;,&quot;level&quot;:&quot;WARN&quot;,&quot;service&quot;:&quot;api&quot;,&quot;message&quot;:&quot;High memory usage detected&quot;,&quot;memory_percent&quot;:85}
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{&quot;timestamp&quot;:&quot;2024-01-15T10:01:30Z&quot;,&quot;level&quot;:&quot;ERROR&quot;,&quot;service&quot;:&quot;database&quot;,&quot;message&quot;:&quot;Query timeout&quot;,&quot;query&quot;:&quot;SELECT * FROM users&quot;,&quot;duration_ms&quot;:5000}
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>{"timestamp":"2024-01-15T10:00:00Z","level":"INFO","service":"api","message":"Application started","version":"1.2.3"}
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>{"timestamp":"2024-01-15T10:00:05Z","level":"DEBUG","service":"api","message":"Loading configuration","config_file":"/etc/app/config.yml"}
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>{"timestamp":"2024-01-15T10:00:10Z","level":"INFO","service":"database","message":"Connection pool initialized","max_connections":50}
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>{"timestamp":"2024-01-15T10:01:00Z","level":"WARN","service":"api","message":"High memory usage detected","memory_percent":85}
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>{"timestamp":"2024-01-15T10:01:30Z","level":"ERROR","service":"database","message":"Query timeout","query":"SELECT * FROM users","duration_ms":5000}
 </code></pre></div>
 </div>
 </div>
@@ -2715,80 +2715,80 @@ using map helpers like <code>.to_logfmt()</code> or <code>.to_kv()</code>:</p>
 <h2 id="event-correlation-requestresponse-pairs">Event correlation (request/response pairs)<a class="headerlink" href="#event-correlation-requestresponse-pairs" title="Permanent link">&para;</a></h2>
 <p>Match requests to responses, compute latency, and emit complete transactions:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-events.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.event_type == &quot;request&quot; {</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'if e.event_type == "request" {</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="s1">    state[e.request_id] = #{sent_at: e.timestamp, method: e.method};</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    e = ();  # Don&#39;</span>t<span class="w"> </span>emit<span class="w"> </span><span class="k">until</span><span class="w"> </span>we<span class="w"> </span>see<span class="w"> </span>the<span class="w"> </span>response
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="o">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span>e.event_type<span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;response&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>state.contains<span class="o">(</span>e.request_id<span class="o">)</span><span class="w"> </span><span class="o">{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    e = ();  # Don'</span>t<span class="w"> </span>emit<span class="w"> </span><span class="k">until</span><span class="w"> </span>we<span class="w"> </span>see<span class="w"> </span>the<span class="w"> </span>response
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="o">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span>e.event_type<span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"response"</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>state.contains<span class="o">(</span>e.request_id<span class="o">)</span><span class="w"> </span><span class="o">{</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nb">let</span><span class="w"> </span><span class="nv">req</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>state<span class="o">[</span>e.request_id<span class="o">]</span><span class="p">;</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>e.duration_ms<span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">(</span>e.timestamp<span class="w"> </span>-<span class="w"> </span>req.sent_at<span class="o">)</span>.as_millis<span class="o">()</span><span class="p">;</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>e.method<span class="w"> </span><span class="o">=</span><span class="w"> </span>req.method<span class="p">;</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span>state.remove<span class="o">(</span>e.request_id<span class="o">)</span><span class="p">;</span><span class="w">  </span><span class="c1"># Clean up</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span><span class="o">}</span><span class="err">&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span><span class="o">}</span><span class="err">'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span>-k<span class="w"> </span>request_id,method,duration_ms,status
 </code></pre></div>
 <h2 id="state-machines-for-protocol-analysis">State machines for protocol analysis<a class="headerlink" href="#state-machines-for-protocol-analysis" title="Permanent link">&para;</a></h2>
 <p>Track connections through their lifecycle and flag invalid transitions:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>network-events.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if !state.contains(e.conn_id) {</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s1">    state[e.conn_id] = &quot;NEW&quot;;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'if !state.contains(e.conn_id) {</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="s1">    state[e.conn_id] = "NEW";</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">  }</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">  let current_state = state[e.conn_id];</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">  if current_state == &quot;NEW&quot; &amp;&amp; e.event == &quot;SYN&quot; {</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">    state[e.conn_id] = &quot;SYN_SENT&quot;;</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">  } else if current_state == &quot;SYN_SENT&quot; &amp;&amp; e.event == &quot;SYN_ACK&quot; {</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s1">    state[e.conn_id] = &quot;ESTABLISHED&quot;;</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s1">  } else if current_state == &quot;ESTABLISHED&quot; &amp;&amp; e.event == &quot;FIN&quot; {</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s1">    state[e.conn_id] = &quot;CLOSING&quot;;</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s1">  } else if e.event != &quot;DATA&quot; {</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">  if current_state == "NEW" &amp;&amp; e.event == "SYN" {</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">    state[e.conn_id] = "SYN_SENT";</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">  } else if current_state == "SYN_SENT" &amp;&amp; e.event == "SYN_ACK" {</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s1">    state[e.conn_id] = "ESTABLISHED";</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s1">  } else if current_state == "ESTABLISHED" &amp;&amp; e.event == "FIN" {</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s1">    state[e.conn_id] = "CLOSING";</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s1">  } else if e.event != "DATA" {</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="s1">    e.protocol_error = true;  # Invalid transition</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="s1">  }</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="s1">  e.connection_state = state[e.conn_id]&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">&#39;e.has(&quot;protocol_error&quot;)&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="s1">  e.connection_state = state[e.conn_id]'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">  </span>--filter<span class="w"> </span><span class="s1">'e.has("protocol_error")'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,conn_id,event,connection_state
 </code></pre></div>
 <h2 id="session-reconstruction">Session reconstruction<a class="headerlink" href="#session-reconstruction" title="Permanent link">&para;</a></h2>
 <p>Accumulate events into a session and emit only when it ends:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>user-events.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if e.event == &quot;login&quot; {</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'if e.event == "login" {</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s1">    state[e.session_id] = #{ user: e.user, events: [], start: e.timestamp };</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">  }</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">  if state.contains(e.session_id) {</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">    state[e.session_id].events.push(#{event: e.event, ts: e.timestamp});</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">  }</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">  if e.event == &quot;logout&quot; {</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">  if e.event == "logout" {</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s1">    let session = state[e.session_id];</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    session.end = e.timestamp;</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    session.event_count = session.events.len();</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">    print(session.to_json());</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">    state.remove(e.session_id);</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s1">  }</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s1">  e = ()&#39;</span><span class="w"> </span>-q<span class="w">  </span><span class="c1"># Only emit complete sessions</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s1">  e = ()'</span><span class="w"> </span>-q<span class="w">  </span><span class="c1"># Only emit complete sessions</span>
 </code></pre></div>
 <h2 id="rate-limiting-first-n-per-key">Rate limiting — first N per key<a class="headerlink" href="#rate-limiting-first-n-per-key" title="Permanent link">&para;</a></h2>
 <p>Emit only the first 100 events per API key, then suppress the rest:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>api-logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if !state.contains(e.api_key) {</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'if !state.contains(e.api_key) {</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s1">    state[e.api_key] = 0;</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="s1">  }</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">  state[e.api_key] += 1;</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">  if state[e.api_key] &gt; 100 {</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">    e = ();  # Drop after first 100 per key</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">  }'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span>-k<span class="w"> </span>timestamp,api_key,endpoint
 </code></pre></div>
 <h2 id="memory-management-for-large-state">Memory management for large state<a class="headerlink" href="#memory-management-for-large-state" title="Permanent link">&para;</a></h2>
 <p>For millions of keys, cap and reset state periodically:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kelora<span class="w"> </span>-j<span class="w"> </span>huge-logs.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">&#39;if !state.contains(&quot;counter&quot;) { state[&quot;counter&quot;] = 0; }</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s1">  state[&quot;counter&quot;] += 1;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--exec<span class="w"> </span><span class="s1">'if !state.contains("counter") { state["counter"] = 0; }</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s1">  state["counter"] += 1;</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s1">  # Periodic cleanup every 100k events</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s1">  if state[&quot;counter&quot;] % 100000 == 0 {</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s1">    eprint(&quot;State size: &quot; + state.len() + &quot; keys&quot;);</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s1">  if state["counter"] % 100000 == 0 {</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s1">    eprint("State size: " + state.len() + " keys");</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s1">    if state.len() &gt; 500000 {</span>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="s1">      state.clear();</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s1">      eprint(&quot;State cleared&quot;);</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s1">      eprint("State cleared");</span>
 <a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="s1">    }</span>
 <a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s1">  }</span>
 <a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
@@ -2796,7 +2796,7 @@ using map helpers like <code>.to_logfmt()</code> or <code>.to_kv()</code>:</p>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="s1">    state[e.request_id] = true;</span>
 <a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="s1">  } else {</span>
 <a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="s1">    e = ();</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="s1">  }&#39;</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="s1">  }'</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
