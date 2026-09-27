@@ -25,7 +25,7 @@ clap = { version = "4.0", features = ["derive"] }  # Command-line argument parsi
 clap_complete = "4.5"  # Shell completion script generation
 
 # Core functionality
-rhai = { version = "1.25", features = ["sync", "debugging", "internals"] }  # Embedded scripting engine for log filtering and transformation
+rhai = { version = "1.26", features = ["sync", "debugging", "internals"] }  # Embedded scripting engine for log filtering and transformation
 anyhow = "1.0"  # Error handling and propagation
 
 # Serialization and parsing
@@ -107,7 +107,7 @@ bench-alloc = []
 # tests can check the suggestion catalogue against the functions actually registered.
 # Dev-only on purpose: metadata adds ~1.9 MB to the release binary, and under
 # resolver v2 (edition 2021) dev-dependency features do not reach normal builds.
-rhai = { version = "1.25", features = ["sync", "debugging", "internals", "metadata"] }
+rhai = { version = "1.26", features = ["sync", "debugging", "internals", "metadata"] }
 criterion = { version = "0.7", features = ["html_reports"] }  # Benchmarking framework with statistical analysis
 tempfile = "3.8"  # Temporary file/directory creation for integration tests
 proptest = "1.5"  # Property-based testing for fuzzing parser edge cases

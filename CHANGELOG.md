@@ -56,6 +56,8 @@ Headline changes: stack-trace presets for `--multiline`, `--span-summary` for pe
 
 ### Changed
 
+- **Rhai upgraded to 1.26.1** - Picks up upstream fixes to bugs that were reachable from kelora scripts: the optimizer could delete statements it judged dead even though the variable access in them had side effects; a function pointer called method-style with curried arguments passed them in the wrong order; and `switch` failed to match a range arm when no exact-match arm hit, or to match a shared value at all. No kelora flag, function or signature changed, and no script needs editing — a script that hit one of these gets the right answer now.
+
 - **Logfmt auto-detection requires two pairs and balanced quotes** - Detection was "does the logfmt parser accept the line", and the parser — correctly tolerant under an explicit `-f logfmt` — accepts any line whose every token contains `=`. That claimed URLs with query strings, base64 padding, env dumps, CLI flags, and any prose behind `msg="…`, each of which could recruit logfmt into a cascade for the whole file. Detection now demands at least two `key=value` pairs and rejects unterminated quotes. **`-f logfmt` itself is unchanged**, so a single-pair log (`cache=hit`) still parses — it just wants the explicit flag.
 
 - **Syslog (RFC3164) requires a real timestamp** - The pattern accepted any three-letter word as the month and any `\d\d:\d\d:\d\d` as the clock, so `Job 15 12:00:00 worker task: completed` parsed as syslog, inventing `ts`, `host` and `prog` from a line that was never syslog. The month must now be a month name, the day 1–31, and the clock a valid 24h time. This tightens explicit `-f syslog` too.
