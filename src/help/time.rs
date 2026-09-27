@@ -144,6 +144,20 @@ Splitting a log for template diffing with --cut-at (same formats as --since):
         --exec 'e.derived = to_datetime(e.date + "T" + e.time + "Z")' \
         --filter 'e.derived >= to_datetime("2024-05-01T00:00:00Z")'
 
+    An event the parser gave no timestamp at all is dropped by the window: it
+    cannot be placed inside or outside it. That is not the same as being
+    excluded, and because the window runs first such an event reaches no
+    --filter, --exec or --assert — an --assert gate can pass without having
+    examined it. kelora warns with a count when this happens. Which fix applies
+    depends on why the event is undated:
+    - Timestamp is in the data but unparsed: --ts-field/--ts-format, as above.
+    - Continuation lines (stack traces, wrapped output): merge them into their
+      dated parent with --multiline, and they stop being separate events.
+    - Genuinely no timestamp: the plain-text members of a cascade are the
+      common case, and -f auto now builds cascade(json,line) by itself on a
+      mixed file. No window can place those — narrow with a --filter instead
+      of --since/--until.
+
   Common timestamp field names are auto-detected:
     ts, _ts, timestamp, at, time, @timestamp, log_timestamp, event_time,
     datetime, date_time, created_at, logged_at, _t, @t, t

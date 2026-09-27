@@ -1999,3 +1999,180 @@ fn test_out_of_range_window_alone_stays_silent() {
         "an ordinary empty window needs no hint: {stderr}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Events the window cannot place: no parsed timestamp at all.
+//
+// These are *indeterminate*, not out-of-range — nothing established whether
+// they fall inside the window. Because the window runs ahead of every script
+// stage, such an event reaches no --filter/--exec/--assert, so a gate can
+// report success over input it never examined. The drop stays (exit 0, the
+// events are genuinely unwindowable) but must not be silent.
+// ---------------------------------------------------------------------------
+
+/// One good timestamp, one unparseable, and a window that admits the good one.
+const UNDATED_INPUT: &str = concat!(
+    r#"{"ts":"2024-06-01T00:00:00Z","id":"good","status":200}"#,
+    "\n",
+    r#"{"ts":"not-a-timestamp","id":"undated","status":500}"#,
+    "\n"
+);
+
+#[test]
+fn test_undated_events_dropped_by_window_warn() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--since", "2024-05-01", "-k", "id"],
+        UNDATED_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stdout.contains("id='good'"),
+        "dated event survives: {stdout}"
+    );
+    assert!(
+        !stdout.contains("id='undated'"),
+        "the undated event is still dropped: {stdout}"
+    );
+    assert!(
+        stderr.contains("dropped by --since/--until with no parsed timestamp"),
+        "the drop must be reported: {stderr}"
+    );
+}
+
+/// The hazard this warning exists for: the assertion passes because it never
+/// saw the offending event. Exit 0 is correct given the drop, so the warning is
+/// the only thing standing between the user and a gate that silently narrowed.
+#[test]
+fn test_undated_event_bypasses_assert_but_warns() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--since",
+            "2024-05-01",
+            "--assert",
+            "e.status != 500",
+            "-k",
+            "id",
+        ],
+        UNDATED_INPUT,
+    );
+
+    assert_eq!(
+        code, 0,
+        "the examined events all pass the assertion: {stderr}"
+    );
+    assert!(
+        stderr.contains("dropped by --since/--until with no parsed timestamp"),
+        "a gate that never examined an event must say so: {stderr}"
+    );
+}
+
+/// Without a window nothing is dropped for want of a timestamp, so the warning
+/// must stay quiet — undated events are perfectly ordinary otherwise.
+#[test]
+fn test_undated_warning_needs_a_window() {
+    let (stdout, stderr, code) = run_kelora_with_input(&["-f", "json", "-k", "id"], UNDATED_INPUT);
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stdout.contains("id='undated'"),
+        "both events print: {stdout}"
+    );
+    assert!(
+        !stderr.contains("no parsed timestamp"),
+        "no window means no drop to report: {stderr}"
+    );
+}
+
+/// Every event dated: nothing to report.
+#[test]
+fn test_undated_warning_quiet_when_all_events_are_dated() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json", "--since", "2024-05-01", "-k", "id"],
+        IN_WINDOW_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        !stderr.contains("no parsed timestamp"),
+        "a fully dated run is silent: {stderr}"
+    );
+}
+
+#[test]
+fn test_undated_warning_obeys_no_warnings() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--since",
+            "2024-05-01",
+            "--no-warnings",
+            "-k",
+            "id",
+        ],
+        UNDATED_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        !stderr.contains("no parsed timestamp"),
+        "--no-warnings must suppress it like any other warning: {stderr}"
+    );
+}
+
+/// Worker-local counts are merged, so `--parallel` reports the same anomaly.
+#[test]
+fn test_undated_warning_in_parallel_mode() {
+    let (_stdout, stderr, code) = run_kelora_with_input(
+        &[
+            "-f",
+            "json",
+            "--parallel",
+            "--threads",
+            "2",
+            "--since",
+            "2024-05-01",
+            "-k",
+            "id",
+        ],
+        UNDATED_INPUT,
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stderr.contains("dropped by --since/--until with no parsed timestamp"),
+        "--parallel must agree with sequential mode: {stderr}"
+    );
+}
+
+/// The way 2.1.0 makes this easy to hit: `-f auto` builds `cascade(json,line)`
+/// on a mixed file by itself, and the `line` members carry no timestamp — so a
+/// window silently keeps the JSON events and drops the plain-text ones.
+#[test]
+fn test_cascade_line_events_dropped_by_window_warn() {
+    let (stdout, stderr, code) = run_kelora_with_input(
+        &["-f", "json,line", "--since", "2024-05-01"],
+        concat!(
+            r#"{"ts":"2024-06-01T00:00:00Z","id":"structured"}"#,
+            "\n",
+            "plain text line with no timestamp\n"
+        ),
+    );
+
+    assert_eq!(code, 0, "run failed: {stderr}");
+    assert!(
+        stdout.contains("structured"),
+        "the dated json event survives: {stdout}"
+    );
+    assert!(
+        !stdout.contains("plain text line"),
+        "the undated line event is dropped: {stdout}"
+    );
+    assert!(
+        stderr.contains("dropped by --since/--until with no parsed timestamp"),
+        "a cascade's line members vanishing under a window must be reported: {stderr}"
+    );
+}

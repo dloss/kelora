@@ -48,6 +48,9 @@ fn processing_stats_delta(
         window_escaped_events: after
             .window_escaped_events
             .saturating_sub(before.window_escaped_events),
+        window_undated_events: after
+            .window_undated_events
+            .saturating_sub(before.window_undated_events),
         csv_rows_extra_columns: after
             .csv_rows_extra_columns
             .saturating_sub(before.csv_rows_extra_columns),
@@ -123,6 +126,7 @@ fn processing_stats_is_empty(stats: &crate::stats::ProcessingStats) -> bool {
         && stats.yearless_timestamps == 0
         && stats.naive_timestamps == 0
         && stats.window_escaped_events == 0
+        && stats.window_undated_events == 0
         && stats.cascade_format_counts.is_empty()
 }
 

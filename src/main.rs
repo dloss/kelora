@@ -2496,6 +2496,15 @@ fn handle_pipeline_success(
                     let formatted = config.format_warning_message(&message);
                     stderr.writeln(&formatted).unwrap_or(());
                 }
+                // Events the window could not place, because the parser gave
+                // them no timestamp. Exit stays 0 — they are genuinely
+                // unwindowable — but the window runs ahead of the script
+                // stages, so these reached no --assert and a gate can report
+                // success over input it never examined.
+                if let Some(message) = s.format_window_undated_warning() {
+                    let formatted = config.format_warning_message(&message);
+                    stderr.writeln(&formatted).unwrap_or(());
+                }
                 // Cascade events whose own `_format` field was kept instead of
                 // being overwritten by the format tag. Exit stays 0 — no data
                 // was lost — but the tag's absence would otherwise be a mystery,

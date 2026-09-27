@@ -1281,7 +1281,12 @@ impl ScriptStage for TimestampFilterStage {
                         "Event has no valid timestamp for --since/--until filtering".to_string(),
                     );
                 } else {
-                    // Filter out events without valid timestamps (resilient mode)
+                    // Filter out events without valid timestamps (resilient
+                    // mode). The window runs ahead of every script stage, so
+                    // this event reaches no --filter/--exec/--assert: an
+                    // assertion gate can exit 0 without having examined it.
+                    // Count it so the end-of-run warning can say so.
+                    crate::stats::stats_add_window_undated_event();
                     return ScriptResult::Skip;
                 }
             }

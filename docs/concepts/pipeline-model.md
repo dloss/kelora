@@ -272,6 +272,18 @@ This is what keeps aggregates honest: metrics accumulated in a script stage — 
 
 The window is evaluated against the timestamp the **parser** produced. Scripts cannot move an event in or out of it: assigning to a timestamp field in `--exec` does not change which window the event falls in. To resolve timestamps differently, use `--ts-field`/`--ts-format`/`--input-tz`, which act at parse time.
 
+An event the parser gave **no** timestamp is dropped by the window, since it cannot be placed inside or outside it. That is not the same as being excluded — nothing established where it belongs — and the selection semantics above mean it reaches no `--filter`, `--exec` or `--assert`, so a gate can report success over an event it never examined.
+
+The drop is deliberate. kelora *could* infer a position from the surrounding events, but only by assuming the input is time-ordered, which `--since`/`--until` does not require — merged container logs and multi-source fan-in routinely are not. The inference would also have to agree between sequential and `--parallel` runs, where "the previous dated event" is worker-local and depends on batching. And it would most often fire where the real fix is upstream: a format that didn't parse, a malformed `ts`, or continuation lines that `--multiline` should have merged into their dated parent. A visible, counted drop beats a silent guess, so the drop is not silent:
+
+```
+kelora warning: 1 event dropped by --since/--until with no parsed timestamp: the window
+could not place it, and it runs before every script stage, so it reached no --filter,
+--exec or --assert. …
+```
+
+If those events matter to the run, there are three routes, depending on why they are undated. If the timestamp is in the data but unparsed, point the parser at it with `--ts-field`/`--ts-format`. If they are continuation lines, merge them into their dated parent with `--multiline`. If they genuinely carry no timestamp — the plain-text members of a `cascade(json,line)` are the common case, and auto-detection now builds those unprompted — then no window can place them: drop `--since`/`--until` and narrow with a `--filter` instead.
+
 Because of that, a script *can* leave the printed output disagreeing with the window it was given — a rewritten timestamp, or an event the script created after the window ran. kelora does not filter those out (the window's verdict is fixed by then), but it does not hide them either:
 
 ```

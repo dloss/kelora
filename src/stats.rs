@@ -98,6 +98,14 @@ pub struct ProcessingStats {
     /// can neither move an event into the window nor out of it; this counts the
     /// events where that gap became visible in the output (#345).
     pub window_escaped_events: usize,
+    /// Count of events the `--since`/`--until` window dropped because the parser
+    /// produced no timestamp for them. These are *indeterminate*, not excluded:
+    /// nothing established whether they fall inside the window. Because the
+    /// window runs before every script stage, such an event reaches neither
+    /// `--filter`/`--exec` nor `--assert`, so a gate can pass over input it never
+    /// examined. Counted so that silence can be broken; see
+    /// [`ProcessingStats::format_window_undated_warning`].
+    pub window_undated_events: usize,
     pub detected_format: Option<String>, // Format detected for this processing session
     pub detected_format_counts: IndexMap<String, usize>, // Per-file detected format counts
     /// Per-format event counts when running in cascade mode. Empty otherwise.
@@ -484,6 +492,17 @@ pub fn stats_add_window_escaped_event() {
     }
     THREAD_STATS.with(|stats| {
         stats.borrow_mut().window_escaped_events += 1;
+    });
+}
+
+/// Record an event the `--since`/`--until` window dropped for want of a parsed
+/// timestamp (see [`ProcessingStats::window_undated_events`]).
+pub fn stats_add_window_undated_event() {
+    if !stats_enabled() {
+        return;
+    }
+    THREAD_STATS.with(|stats| {
+        stats.borrow_mut().window_undated_events += 1;
     });
 }
 
@@ -1014,6 +1033,7 @@ impl ProcessingStats {
                 "absent": self.timestamp_absent_events,
                 "yearless_inferred": self.yearless_timestamps,
                 "outside_window": self.window_escaped_events,
+                "undated_dropped_by_window": self.window_undated_events,
             }),
         );
 
@@ -1248,6 +1268,11 @@ impl ProcessingStats {
             output.push('\n');
         }
 
+        if let Some(message) = self.format_window_undated_warning() {
+            output.push_str(&crate::config::format_warning_message_auto(&message));
+            output.push('\n');
+        }
+
         if let Some(message) = self.format_cascade_collision_warning() {
             output.push_str(&crate::config::format_warning_message_auto(&message));
             output.push('\n');
@@ -1478,6 +1503,31 @@ impl ProcessingStats {
             } else {
                 "y"
             },
+        ))
+    }
+
+    /// Warning for events the `--since`/`--until` window dropped because the
+    /// parser produced no timestamp for them. Returns `None` when every event
+    /// carried one, which is the ordinary case.
+    ///
+    /// Distinct from [`Self::format_window_escape_warning`]: that one reports
+    /// events the window *judged* and the output contradicted. This reports
+    /// events the window could not judge at all. An undated event is
+    /// indeterminate rather than out-of-range, and since the window runs ahead
+    /// of every script stage it never reaches `--filter`/`--exec`/`--assert` —
+    /// so an `--assert` gate can exit `0` having never examined it. Exit stays
+    /// `0` (the events are genuinely unwindowable), but the skip must not be
+    /// silent.
+    pub fn format_window_undated_warning(&self) -> Option<String> {
+        if self.window_undated_events == 0 {
+            return None;
+        }
+        Some(format!(
+            "{} event{} dropped by --since/--until with no parsed timestamp: the window could not place {}, and it runs before every script stage, so {} reached no --filter, --exec or --assert. Point the parser at the timestamp with --ts-field/--ts-format, or — if these events carry none, as the plain-text lines of a cascade do — narrow with a --filter instead of the window. See --help-time.",
+            self.window_undated_events,
+            if self.window_undated_events == 1 { "" } else { "s" },
+            if self.window_undated_events == 1 { "it" } else { "them" },
+            if self.window_undated_events == 1 { "it" } else { "they" },
         ))
     }
 
