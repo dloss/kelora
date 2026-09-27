@@ -8,7 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Headline changes: stack-trace presets for `--multiline`, `--span-summary` for per-window rollups without a script, `--drain-diff` for comparing two logs at the template level, and a rebuilt `--drain` clustering engine. The rest is fixes, mostly in multiline handling, timestamps, and diagnostics.
 
+**Why a minor release, when so much below changes what kelora prints.** Most of it changes because the old output was wrong: a timestamp read as year 17 AD and reported beside "100% parsed", `ts`/`host`/`prog` invented from a line that was never syslog, the same event printed twice under `-C`, a `--drain` template naming one value for the events that said another. In each case the new output is what the old output was trying to be — upgrading gets you the answer you were already asking for, so these are fixes rather than a changed contract. No CLI flag or Rhai function was removed, renamed, or had its signature changed, which is the stability promise in the [README](README.md).
+
+**Breaking** below is the short list where that reasoning does *not* hold: where a defensible before and a defensible after genuinely differ, or where something downstream has to be re-baselined. If you read nothing else before upgrading, read those four.
+
 ### Breaking
+
+- **A mixed file under `-f auto` now emits a `_format` field on every event** - Auto-detection can select a cascade by itself (see Added), and cascade mode tags each event with the parser that claimed it. So a file that detection judges mixed gains a `_format` key it did not have in 2.0.1 — a downstream consumer with a fixed schema sees a new field appear unprompted, and `-F json` output changes shape. Homogeneous files are unaffected: they detect exactly as before and carry no tag. To keep the old shape, name the format explicitly (`-f json`), which skips the cascade, or drop the field with `--exclude-keys _format`. The event *count* changes too, and that part is the fix — the lines that previously became parse errors now parse.
 
 - **`--drain` templates and template IDs change for many messages** - The clustering engine was rebuilt (see Fixed below); anything that was fragmented across templates now groups into one. Dashboards, alerts or baselines keyed on a template ID need re-baselining.
 
