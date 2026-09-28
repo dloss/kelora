@@ -72,6 +72,7 @@ feature-depth = 1
 ignore = [
     #"a-crate-that-is-yanked@0.1.1", # you can also ignore yanked crate versions if you wish
     #{ crate = "a-crate-that-is-yanked@0.1.1", reason = "you can specify why you are ignoring the yanked crate" },
+    { id = "RUSTSEC-2026-0249", reason = "smartstring is unmaintained, but it is pulled in by rhai with no alternative; revisit when rhai drops it" },
 ]
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
