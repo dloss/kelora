@@ -169,3 +169,5 @@ This is a single-developer spare-time project, and support is best-effort. Revie
 ## License
 
 Kelora is open source software licensed under the [MIT License](https://github.com/dloss/kelora/blob/main/LICENSE).
+
+The grok pattern engine in `src/drain/grok/` is derived from the [grok](https://github.com/daschl/grok) crate and its bundled patterns from [logstash-patterns-core](https://github.com/logstash-plugins/logstash-patterns-core); it remains under the [Apache License 2.0](https://github.com/dloss/kelora/blob/main/src/drain/grok/LICENSE).

@@ -4,7 +4,7 @@ version = "2.1.0"
 edition = "2021"
 authors = ["Dirk Loss <mail@dirk-loss.de>"]
 description = "A command-line log analysis tool with embedded Rhai scripting"
-license = "MIT"
+license = "MIT AND Apache-2.0"
 repository = "https://github.com/dloss/kelora"
 keywords = ["logging", "parser", "cli", "logfmt", "json"]
 categories = ["command-line-utilities", "parsing"]
@@ -94,7 +94,7 @@ hyperloglog = { version = "1.0", features = ["with_serde"] }  # HyperLogLog algo
 # Rhai built-in functions - networking
 url = "2.5"  # URL parsing and manipulation exposed to Rhai scripts
 ipnet = "2.9"  # IP address and network parsing/matching exposed to Rhai scripts
-grok = "1.2"
+onig = { version = "6.1", default-features = false }  # Regex engine behind the drain grok patterns (src/drain/grok); no bindgen, uses the bundled bindings
 
 [features]
 # Wrap the global allocator in a counting shim that reports total allocations
@@ -115,9 +115,6 @@ proptest = "1.5"  # Property-based testing for fuzzing parser edge cases
 [profile.release]
 lto = "thin"     # Cross-crate optimization; ~same runtime as fat LTO here at roughly half the compile time
 panic = "abort"  # ~7-8% faster + 12% smaller: removes unwind landing pads from the Drop-heavy per-event hot path (no runtime catch_unwind exists)
-
-[patch.crates-io]
-grok = { path = "vendor/grok" }
 
 [[bench]]
 name = "micro_search"

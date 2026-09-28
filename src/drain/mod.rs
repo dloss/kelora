@@ -1,3 +1,4 @@
+mod grok;
 mod merge;
 mod tree;
 
